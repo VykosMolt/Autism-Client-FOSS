@@ -25,16 +25,16 @@ public final class ClickItemCommand extends Command {
       RequiredArgumentBuilder<AutismCommandSource, String> item = (RequiredArgumentBuilder<AutismCommandSource, String>)RequiredArgumentBuilder.<AutismCommandSource, String>argument(
             "item-name", autismclient.commands.arguments.ContainerItemNameArgumentType.itemName()
          )
-         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.of("Left", ContainerInput.PICKUP, 0), 1));
-      SlotClickCommandHelper.register(item, ClickItemCommand::init);
+         .executes(context -> clickSlot(context, SlotClickCommandHelper.ClickSpec.of("Left", ContainerInput.PICKUP, 0), 1));
+      SlotClickCommandHelper.register(item, ClickItemCommand::clickSlot);
       root.then(item);
    }
 
-   private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
+   private static int clickSlot(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
          String requestedName = autismclient.commands.arguments.ContainerItemNameArgumentType.getItemName(context, "item-name");
-         int handlerSlot = init(mc.player.containerMenu, requestedName);
+         int handlerSlot = findSlotByName(mc.player.containerMenu, requestedName);
          if (handlerSlot < 0) {
             AutismClientMessaging.sendPrefixed("§cNo visible item named §f" + requestedName + "§c exists in the current GUI.");
             return 1;
@@ -47,7 +47,7 @@ public final class ClickItemCommand extends Command {
       }
    }
 
-   private static int init(AbstractContainerMenu menu, String requestedName) {
+   private static int findSlotByName(AbstractContainerMenu menu, String requestedName) {
       String normalizedTarget = autismclient.util.macro.MacroItemTarget.normalizeForMatch(requestedName);
       if (normalizedTarget.isEmpty()) {
          return -1;

@@ -33,7 +33,7 @@ final class AiRide {
    static AiOperation ride(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiRide.Inner_DataUtil action = init(AiJson.getString(args, "action", "mount"));
+         final AiRide.Inner_DataUtil action = parseMode(AiJson.getString(args, "action", "mount"));
          final int entityId = AiJson.getInt(args, "entityId", -1);
          final boolean place = AiJson.getBoolean(args, "place", true);
          final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 180)));
@@ -59,35 +59,35 @@ final class AiRide {
                public AiOperation.Result tick() {
                   if (!this.load_Z && mc.player != null && mc.level != null) {
                      if (System.nanoTime() > this.deadlineNanos) {
-                        return this.init(AiOperation.Status.TIMED_OUT, "Ride deadline reached");
+                        return this.finish(AiOperation.Status.TIMED_OUT, "Ride deadline reached");
                      }
 
                      if (action == AiRide.Inner_DataUtil.DISMOUNT) {
                         if (mc.player.getVehicle() == null) {
-                           return this.init(AiOperation.Status.SUCCEEDED, "Not riding anything");
+                           return this.finish(AiOperation.Status.SUCCEEDED, "Not riding anything");
                         }
 
                         if (!this.hasSafeStep()) {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.FAILED,
                               "No safe dismount spot within reach (lava, a drop or unloaded terrain on every side); move the vehicle over solid ground first"
                            );
                         }
 
                         mc.player.stopRiding();
-                        return mc.player.getVehicle() == null ? this.init(AiOperation.Status.SUCCEEDED, "Dismounted") : this.init("Dismounting");
+                        return mc.player.getVehicle() == null ? this.finish(AiOperation.Status.SUCCEEDED, "Dismounted") : this.running("Dismounting");
                      } else {
                         if (action == AiRide.Inner_DataUtil.TRAVEL) {
-                           return this.load();
+                           return this.tickRide();
                         }
 
                         Entity riding = mc.player.getVehicle();
                         return riding != null
-                           ? this.init(AiOperation.Status.SUCCEEDED, "Already riding " + BuiltInRegistries.ENTITY_TYPE.getKey(riding.getType()))
+                           ? this.finish(AiOperation.Status.SUCCEEDED, "Already riding " + BuiltInRegistries.ENTITY_TYPE.getKey(riding.getType()))
                            : this.init_AiOperation_Result_24();
                      }
                   } else {
-                     return this.init(AiOperation.Status.CANCELLED, "Ride cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Ride cancelled");
                   }
                }
 
@@ -103,13 +103,13 @@ final class AiRide {
                         if (carried == null) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty("minecraft:oak_boat", 1);
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.FAILED, "No vehicle nearby and none in the inventory", AiJson.objectOf("missing", missing)
                            );
                         }
 
                         if (AiItems.equipHotbar(AiItems.resolve(BuiltInRegistries.ITEM.getKey(carried).toString())) < 0) {
-                           return this.init(AiOperation.Status.FAILED, "Could not hold the vehicle item");
+                           return this.finish(AiOperation.Status.FAILED, "Could not hold the vehicle item");
                         }
 
                         this.aim.aimAt(mc.player.position().add(mc.player.getLookAngle().x * 3.0, -1.2, mc.player.getLookAngle().z * 3.0));
@@ -117,9 +117,9 @@ final class AiRide {
                         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                         Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                         this.init_Z = true;
-                        return this.init("Placing a vehicle");
+                        return this.running("Placing a vehicle");
                      } else {
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.FAILED,
                            "No rideable vehicle within 24 blocks" + (place ? " and placing one did not produce a vehicle" : " and place is disabled")
                         );
@@ -135,15 +135,15 @@ final class AiRide {
 
                         AiOperation.Result legResult = this.init_AiOperation.tick();
                         if (!legResult.terminal()) {
-                           return this.init("Walking to the vehicle");
+                           return this.running("Walking to the vehicle");
                         } else {
                            this.init_AiOperation.cancel();
                            this.init_AiOperation = null;
                            if (legResult.status() != AiOperation.Status.SUCCEEDED) {
                               this.mount = null;
-                              return this.init("No route to that vehicle; looking for another");
+                              return this.running("No route to that vehicle; looking for another");
                            } else {
-                              return this.init("Arrived at the vehicle");
+                              return this.running("Arrived at the vehicle");
                            }
                         }
                      } else {
@@ -155,11 +155,11 @@ final class AiRide {
                         this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.mount));
                         this.aim.tick();
                         if (++this.init_I > 80) {
-                           return this.init(AiOperation.Status.FAILED, "The vehicle did not accept the player");
+                           return this.finish(AiOperation.Status.FAILED, "The vehicle did not accept the player");
                         }
 
                         if (!autismclient.ai.engine.AiAim.isLookingAtEntity(this.mount)) {
-                           return this.init("Turning toward the vehicle");
+                           return this.running("Turning toward the vehicle");
                         }
 
                         mc.gameMode
@@ -170,23 +170,23 @@ final class AiRide {
                               InteractionHand.MAIN_HAND
                            );
                         return mc.player.getVehicle() != null
-                           ? this.init(AiOperation.Status.SUCCEEDED, "Mounted " + BuiltInRegistries.ENTITY_TYPE.getKey(mc.player.getVehicle().getType()))
-                           : this.init("Mounting");
+                           ? this.finish(AiOperation.Status.SUCCEEDED, "Mounted " + BuiltInRegistries.ENTITY_TYPE.getKey(mc.player.getVehicle().getType()))
+                           : this.running("Mounting");
                      }
                   }
                }
 
-               AiOperation.Result load() {
+               AiOperation.Result tickRide() {
                   Entity riding = mc.player.getVehicle();
                   if (riding == null) {
-                     return this.init(AiOperation.Status.FAILED, "Not riding anything; mount first");
+                     return this.finish(AiOperation.Status.FAILED, "Not riding anything; mount first");
                   }
 
                   Vec3 target = Vec3.atCenterOf(destination);
                   double distance = riding.position().distanceTo(new Vec3(target.x, riding.getY(), target.z));
                   if (distance <= 3.0) {
                      this.releaseForward();
-                     return this.init(AiOperation.Status.SUCCEEDED, "Arrived within " + (int)distance + "m of the destination");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Arrived within " + (int)distance + "m of the destination");
                   }
 
                   if (distance < this.init_D - 0.5) {
@@ -194,7 +194,7 @@ final class AiRide {
                      this.load_I = 0;
                   } else if (++this.load_I > 200) {
                      this.releaseForward();
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.FAILED, "The vehicle stopped making progress " + (int)distance + "m out; it is probably beached or blocked"
                      );
                   }
@@ -203,7 +203,7 @@ final class AiRide {
                   this.aim.aimAt(new Vec3(target.x, riding.getEyeY(), target.z));
                   this.aim.tick();
                   mc.options.keyUp.setDown(true);
-                  return this.init("Sailing (" + (int)distance + "m to go)");
+                  return this.running("Sailing (" + (int)distance + "m to go)");
                }
 
                boolean hasSafeStep() {
@@ -224,7 +224,7 @@ final class AiRide {
                      double bestDistanceSq = 576.0;
 
                      for (Entity entity : mc.level.entitiesForRendering()) {
-                        if (entity.isAlive() && AiRide.init(entity) && entity.getPassengers().isEmpty()) {
+                        if (entity.isAlive() && AiRide.isRideable(entity) && entity.getPassengers().isEmpty()) {
                            double distance = entity.distanceToSqr(mc.player);
                            if (distance < bestDistanceSq) {
                               bestDistanceSq = distance;
@@ -236,7 +236,7 @@ final class AiRide {
                      return best;
                   } else {
                      Entity explicit = mc.level.getEntity(entityId);
-                     return explicit != null && explicit.isAlive() && AiRide.init(explicit) ? explicit : null;
+                     return explicit != null && explicit.isAlive() && AiRide.isRideable(explicit) ? explicit : null;
                   }
                }
 
@@ -290,7 +290,7 @@ final class AiRide {
                   JsonArray nearby = new JsonArray();
                   if (mc.level != null) {
                      for (Entity entity : mc.level.entitiesForRendering()) {
-                        if (nearby.size() < 8 && entity.isAlive() && AiRide.init(entity) && !(entity.distanceToSqr(mc.player) > 576.0)) {
+                        if (nearby.size() < 8 && entity.isAlive() && AiRide.isRideable(entity) && !(entity.distanceToSqr(mc.player) > 576.0)) {
                            nearby.add(
                               AiJson.objectOf(
                                  "entityId",
@@ -311,15 +311,15 @@ final class AiRide {
                   return out;
                }
 
-               AiOperation.Result init(String message) {
+               AiOperation.Result running(String message) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.evidence().toString(), List.of());
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message) {
-                  return this.init(status, message, null);
+               AiOperation.Result finish(AiOperation.Status status, String message) {
+                  return this.finish(status, message, null);
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+               AiOperation.Result finish(AiOperation.Status status, String message, JsonObject extra) {
                   JsonObject data = this.evidence();
                   if (extra != null) {
                      for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -350,7 +350,7 @@ final class AiRide {
       }
    }
 
-   static boolean init(Entity entity) {
+   static boolean isRideable(Entity entity) {
       if (!(entity instanceof AbstractBoat) && !(entity instanceof AbstractMinecart)) {
          String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
          return List.of(
@@ -371,7 +371,7 @@ final class AiRide {
       }
    }
 
-   private static AiRide.Inner_DataUtil init(String text) {
+   private static AiRide.Inner_DataUtil parseMode(String text) {
       try {
          return AiRide.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {

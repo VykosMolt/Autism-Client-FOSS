@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 public class StopMacroAction implements MacroAction {
    public String macroName = "";
    public StopMacroAction.Inner_DataUtil target = StopMacroAction.Inner_DataUtil.SELF;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -23,7 +23,7 @@ public class StopMacroAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("target", this.target.name());
       tag.putString("macroName", this.macroName == null ? "" : this.macroName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -37,7 +37,7 @@ public class StopMacroAction implements MacroAction {
 
       this.macroName = tag.getStringOr("macroName", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -62,12 +62,12 @@ public class StopMacroAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {

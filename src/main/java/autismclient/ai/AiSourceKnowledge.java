@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 
 final class AiSourceKnowledge {
    private static volatile Map<String, String> init_Map = Map.of();
-   private static volatile Map<String, String> load = Map.of();
+   private static volatile Map<String, String> knownHashes = Map.of();
    private static volatile String init_Str = "unloaded";
 
    static void load() throws IOException {
@@ -33,7 +33,7 @@ final class AiSourceKnowledge {
          }
 
          init_Map = Map.copyOf(compiled);
-         load = Map.copyOf(hashes);
+         knownHashes = Map.copyOf(hashes);
          init_Str = AiJson.sha256Hex(json);
       }
    }
@@ -44,7 +44,7 @@ final class AiSourceKnowledge {
    }
 
    static String docsFor(Class<?> type) {
-      return load.getOrDefault(type.getName(), "");
+      return knownHashes.getOrDefault(type.getName(), "");
    }
 
    static String overview() {

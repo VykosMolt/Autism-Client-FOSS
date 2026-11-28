@@ -54,8 +54,8 @@ public final class ProfilesLibraryView {
    private ScrollbarMetricsHelper.Metrics scrollbarMetrics;
    private boolean draggingScrollbar;
    private int dragGrabOffset;
-   private int sync;
-   private int flush;
+   private int layoutWidth;
+   private int layoutHeight;
    private float partialTick;
 
    public ProfilesLibraryView(Font font) {
@@ -87,8 +87,8 @@ public final class ProfilesLibraryView {
       this.colors = ctx.init_TableIndex().colors();
       this.area = area;
       this.partialTick = delta;
-      this.sync = ctx.read();
-      this.flush = ctx.write();
+      this.layoutWidth = ctx.read();
+      this.layoutHeight = ctx.write();
       this.hitRegions.clear();
       this.inputs.clear();
       this.scrollbarMetrics = null;
@@ -116,7 +116,7 @@ public final class ProfilesLibraryView {
          if (this.pendingSwitch != null) {
             this.renderUnsavedPrompt(ctx);
          } else {
-            this.init(ctx);
+            this.drawModal(ctx);
          }
       }
    }
@@ -128,7 +128,7 @@ public final class ProfilesLibraryView {
       if (dirty) {
          int saveW = buttonWidthFor(ctx, "Save active profile");
          right -= saveW;
-         this.init(
+         this.drawIconButton(
             ctx,
             NetHelper.init(right, bar.write(), saveW, bar.sync()),
             "Save active profile",
@@ -141,7 +141,7 @@ public final class ProfilesLibraryView {
 
       if (profile != null) {
          int backW = buttonWidthFor(ctx, "Library");
-         this.init(ctx, NetHelper.init(bar.read(), bar.write(), backW, bar.sync()), "Library", null, CachePool.Inner_DataUtil.load, this::closeProfileDetail);
+         this.drawIconButton(ctx, NetHelper.init(bar.read(), bar.write(), backW, bar.sync()), "Library", null, CachePool.Inner_DataUtil.load, this::closeProfileDetail);
          int x = bar.read() + backW + 4;
          ctx.init_PoolEntry()
             .drawEllipsized(
@@ -155,13 +155,13 @@ public final class ProfilesLibraryView {
       } else {
          int newW = buttonWidthFor(ctx, "New profile") + 16;
          right -= newW;
-         this.init(
+         this.drawIconButton(
             ctx,
             NetHelper.init(right, bar.write(), newW, bar.sync()),
             "New profile",
             GuiIconAtlas.PLUS,
             CachePool.Inner_DataUtil.read,
-            () -> this.init(ProfilesLibraryView.Inner_StreamUtil.CREATE)
+            () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.CREATE)
          );
          this.renderInput(ctx, this.searchInput, NetHelper.init(bar.read(), bar.write(), right - 4 - bar.read(), bar.sync()));
       }
@@ -185,7 +185,7 @@ public final class ProfilesLibraryView {
 
       try {
          if (profile == null) {
-            this.init(content, entries, this.listArea.read(), top, w, cols);
+            this.drawProfileGrid(content, entries, this.listArea.read(), top, w, cols);
          } else {
             this.renderProfileCard(content, profile, this.listArea.read(), top, w);
          }
@@ -238,7 +238,7 @@ public final class ProfilesLibraryView {
          && (server.name != null && server.name.toLowerCase(Locale.ROOT).contains(query) || server.ip.toLowerCase(Locale.ROOT).contains(query));
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx, List<AutismProfile> profiles, int x, int y, int w, int cols) {
+   private void drawProfileGrid(autismclient.gui.f.SyncManager ctx, List<AutismProfile> profiles, int x, int y, int w, int cols) {
       if (profiles.isEmpty()) {
          ctx.init_PoolEntry().drawCentered(ctx.init_GuiGraphicsExtract(), "No matching profiles", NetHelper.init(x, y + 4, w, sync_I()), this.colors.textSecondary);
       } else {
@@ -292,7 +292,7 @@ public final class ProfilesLibraryView {
                }
 
                ctx.init_PoolEntry().drawEllipsized(ctx.init_GuiGraphicsExtract(), subtitle, tx, textY + write_I(), card.init() - 4 - tx, this.colors.textSecondary);
-               this.addHitRegion(card, () -> this.init(profile));
+               this.addHitRegion(card, () -> this.selectProfile(profile));
             }
          }
       }
@@ -309,20 +309,20 @@ public final class ProfilesLibraryView {
       };
       Runnable[] actions = new Runnable[]{
          active ? null : () -> this.switchToProfile(p),
-         () -> this.init(ProfilesLibraryView.Inner_StreamUtil.RENAME),
-         () -> this.init(ProfilesLibraryView.Inner_StreamUtil.DUPLICATE),
+         () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.RENAME),
+         () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.DUPLICATE),
          canDelete ? () -> this.deleteProfile(p) : null
       };
 
       for (int i = 0; i < labels.length; i++) {
          NetHelper cell = NetHelper.init(x + i % slots * (cellW + 2), y + i / slots * (inputHeight() + 2), cellW, inputHeight());
-         this.init(ctx, cell, labels[i], null, tones[i], actions[i]);
+         this.drawIconButton(ctx, cell, labels[i], null, tones[i], actions[i]);
       }
 
-      int cy = y + write(w) + 4;
-      cy = this.init(ctx, x, cy, w, "Auto-save changes", p.autoSave, () -> this.profileManager.setAutoSave(p, !p.autoSave));
-      cy = this.init(ctx, x, cy, w, "Own macro library", p.ownMacroLibrary, () -> this.profileManager.setOwnMacroLibrary(p, !p.ownMacroLibrary));
-      cy = this.init(ctx, x, cy, w, "Own theme color", p.ownThemeColor, () -> this.profileManager.setOwnThemeColor(p, !p.ownThemeColor));
+      int cy = y + formHeight(w) + 4;
+      cy = this.drawToggleRow(ctx, x, cy, w, "Auto-save changes", p.autoSave, () -> this.profileManager.setAutoSave(p, !p.autoSave));
+      cy = this.drawToggleRow(ctx, x, cy, w, "Own macro library", p.ownMacroLibrary, () -> this.profileManager.setOwnMacroLibrary(p, !p.ownMacroLibrary));
+      cy = this.drawToggleRow(ctx, x, cy, w, "Own theme color", p.ownThemeColor, () -> this.profileManager.setOwnThemeColor(p, !p.ownThemeColor));
       cy += 2;
       String serverHeading = "Auto-apply on servers";
       ctx.init_PoolEntry()
@@ -332,11 +332,11 @@ public final class ProfilesLibraryView {
       int addW = buttonWidthFor(ctx, "Add");
       int fieldW = w - useW - addW - 4;
       this.renderInput(ctx, this.serverInput, NetHelper.init(x, cy, fieldW, inputHeight()));
-      this.init(ctx, NetHelper.init(x + fieldW + 2, cy, addW, inputHeight()), "Add", null, CachePool.Inner_DataUtil.read, this::addServerPattern);
-      this.init(ctx, NetHelper.init(x + w - useW, cy, useW, inputHeight()), "Use current", null, CachePool.Inner_DataUtil.load, this::fillCurrentServer);
+      this.drawIconButton(ctx, NetHelper.init(x + fieldW + 2, cy, addW, inputHeight()), "Add", null, CachePool.Inner_DataUtil.read, this::addServerPattern);
+      this.drawIconButton(ctx, NetHelper.init(x + w - useW, cy, useW, inputHeight()), "Use current", null, CachePool.Inner_DataUtil.load, this::fillCurrentServer);
       cy += inputHeight() + 4;
       if (p.serverPatterns.isEmpty()) {
-         this.init(ctx, "No server rules", x, cy, w, this.colors.textSecondary);
+         this.drawClippedText(ctx, "No server rules", x, cy, w, this.colors.textSecondary);
       } else {
          for (String pattern : p.serverPatterns) {
             NetHelper rule = NetHelper.init(x, cy, w, sync_I());
@@ -353,7 +353,7 @@ public final class ProfilesLibraryView {
                   label = server.name + "  |  " + label;
                }
 
-               this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.colors.textPrimary);
+               this.drawClippedText(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.colors.textPrimary);
                IconButtonRenderer.renderIcon(
                   ctx.init_GuiGraphicsExtract(), this.font, remove, GuiIconAtlas.CLOSE, this.isHovered(ctx, remove), true, true
                );
@@ -373,7 +373,7 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx) {
+   private void drawModal(autismclient.gui.f.SyncManager ctx) {
       boolean create = this.mode == ProfilesLibraryView.Inner_StreamUtil.CREATE;
       NetHelper box = this.centeredModalBox(220, this.load_I());
       this.drawModalSurface(ctx, box);
@@ -399,37 +399,37 @@ public final class ProfilesLibraryView {
       NetHelper inner = box.init(6);
       int x = inner.read();
       int w = inner.update();
-      this.init(ctx, title, x, inner.write(), w, this.colors.textPrimary);
+      this.drawClippedText(ctx, title, x, inner.write(), w, this.colors.textPrimary);
       int cy = inner.write() + sync_I() + 4;
       this.renderInput(ctx, this.nameInput, NetHelper.init(x, cy, w, inputHeight()));
       cy += inputHeight() + 4;
       if (create) {
-         cy = this.init(ctx, x, cy, w, "Auto-save changes", this.autoSave, () -> this.autoSave = !this.autoSave);
-         cy = this.init(ctx, x, cy, w, "Own macro library", this.ownMacroLibrary, () -> this.ownMacroLibrary = !this.ownMacroLibrary);
-         cy = this.init(ctx, x, cy, w, "Own theme color", this.ownThemeColor, () -> this.ownThemeColor = !this.ownThemeColor);
+         cy = this.drawToggleRow(ctx, x, cy, w, "Auto-save changes", this.autoSave, () -> this.autoSave = !this.autoSave);
+         cy = this.drawToggleRow(ctx, x, cy, w, "Own macro library", this.ownMacroLibrary, () -> this.ownMacroLibrary = !this.ownMacroLibrary);
+         cy = this.drawToggleRow(ctx, x, cy, w, "Own theme color", this.ownThemeColor, () -> this.ownThemeColor = !this.ownThemeColor);
          cy += 2;
       }
 
       int okW = buttonWidthFor(ctx, create ? "Create" : "Save");
       int cancelW = buttonWidthFor(ctx, "Cancel");
       int start = inner.init() - okW - cancelW - 4;
-      this.init(ctx, NetHelper.init(start, cy, okW, inputHeight()), create ? "Create" : "Save", null, CachePool.Inner_DataUtil.read, this::submitProfileName);
-      this.init(ctx, NetHelper.init(start + okW + 4, cy, cancelW, inputHeight()), "Cancel", null, CachePool.Inner_DataUtil.load, this::cancelCreate);
+      this.drawIconButton(ctx, NetHelper.init(start, cy, okW, inputHeight()), create ? "Create" : "Save", null, CachePool.Inner_DataUtil.read, this::submitProfileName);
+      this.drawIconButton(ctx, NetHelper.init(start + okW + 4, cy, cancelW, inputHeight()), "Cancel", null, CachePool.Inner_DataUtil.load, this::cancelCreate);
    }
 
    private void renderUnsavedPrompt(autismclient.gui.f.SyncManager ctx) {
       NetHelper box = this.centeredModalBox(240, read_I());
       this.drawModalSurface(ctx, box);
       NetHelper inner = box.init(6);
-      this.init(ctx, "Unsaved changes", inner.read(), inner.write(), inner.update(), this.colors.textPrimary);
+      this.drawClippedText(ctx, "Unsaved changes", inner.read(), inner.write(), inner.update(), this.colors.textPrimary);
       AutismProfile active = this.profileManager.active();
       String name = active == null ? "the active profile" : active.displayName;
-      this.init(ctx, "Save " + name + " before switching?", inner.read(), inner.write() + sync_I(), inner.update(), this.colors.textSecondary);
+      this.drawClippedText(ctx, "Save " + name + " before switching?", inner.read(), inner.write() + sync_I(), inner.update(), this.colors.textSecondary);
       int cy = inner.write() + sync_I() * 2 + 4;
       int w = (inner.update() - 8) / 3;
-      this.init(ctx, NetHelper.init(inner.read(), cy, w, inputHeight()), "Save", null, CachePool.Inner_DataUtil.write, () -> this.init(true));
-      this.init(ctx, NetHelper.init(inner.read() + w + 4, cy, w, inputHeight()), "Discard", null, CachePool.Inner_DataUtil.update, () -> this.init(false));
-      this.init(
+      this.drawIconButton(ctx, NetHelper.init(inner.read(), cy, w, inputHeight()), "Save", null, CachePool.Inner_DataUtil.write, () -> this.finishSwitch(true));
+      this.drawIconButton(ctx, NetHelper.init(inner.read() + w + 4, cy, w, inputHeight()), "Discard", null, CachePool.Inner_DataUtil.update, () -> this.finishSwitch(false));
+      this.drawIconButton(
          ctx,
          NetHelper.init(inner.read() + (w + 4) * 2, cy, w, inputHeight()),
          "Cancel",
@@ -465,13 +465,13 @@ public final class ProfilesLibraryView {
       return width >= 200 ? 4 : 2;
    }
 
-   private static int write(int width) {
+   private static int formHeight(int width) {
       int rows = 4 / read_I_I(width);
       return rows * (inputHeight() + 2) - 2;
    }
 
    private static int cardHeight(AutismProfile profile, int width) {
-      return write(width) + 12 + 5 * sync_I() + 6 + inputHeight() + Math.max(0, profile.serverPatterns.size() - 1) * (sync_I() + 2);
+      return formHeight(width) + 12 + 5 * sync_I() + 6 + inputHeight() + Math.max(0, profile.serverPatterns.size() - 1) * (sync_I() + 2);
    }
 
    private int load_I() {
@@ -507,7 +507,7 @@ public final class ProfilesLibraryView {
       return UiDensityMetrics.buttonWidthForText(ctx.init_PoolEntry().measureWidth(label));
    }
 
-   private void init(AutismProfile profile) {
+   private void selectProfile(AutismProfile profile) {
       if (this.selectedProfileId == null) {
          this.savedScroll = this.scroll;
       }
@@ -556,7 +556,7 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private void init(boolean save) {
+   private void finishSwitch(boolean save) {
       AutismProfile target = this.pendingSwitch;
       this.pendingSwitch = null;
       if (target != null) {
@@ -576,7 +576,7 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private void init(ProfilesLibraryView.Inner_StreamUtil mode) {
+   private void setMode(ProfilesLibraryView.Inner_StreamUtil mode) {
       this.blurInputs();
       this.mode = mode;
       if (mode == ProfilesLibraryView.Inner_StreamUtil.CREATE) {
@@ -614,7 +614,7 @@ public final class ProfilesLibraryView {
                case CREATE:
                   AutismProfile p = this.profileManager.create(name, this.autoSave, this.ownMacroLibrary, this.ownThemeColor);
                   if (p != null) {
-                     this.init(p);
+                     this.selectProfile(p);
                      this.profileManager.switchToAsync(p);
                   }
                   break;
@@ -628,7 +628,7 @@ public final class ProfilesLibraryView {
                   AutismProfile sel = this.profileManager.byId(this.selectedProfileId);
                   AutismProfile d = this.profileManager.duplicate(sel, name);
                   if (d != null) {
-                     this.init(d);
+                     this.selectProfile(d);
                   }
             }
 
@@ -783,7 +783,7 @@ public final class ProfilesLibraryView {
             return true;
          }
 
-         autismclient.gui.ui.layout.LayoutContext ctx = this.layoutContext(null, this.sync, this.flush);
+         autismclient.gui.ui.layout.LayoutContext ctx = this.layoutContext(null, this.layoutWidth, this.layoutHeight);
 
          for (TextInputWidget input : this.inputs) {
             if (input.isFocused() && input.keyPressed(ctx, key, scanCode, modifiers)) {
@@ -796,7 +796,7 @@ public final class ProfilesLibraryView {
    }
 
    public boolean charTyped(char chr, int modifiers) {
-      autismclient.gui.ui.layout.LayoutContext ctx = this.layoutContext(null, this.sync, this.flush);
+      autismclient.gui.ui.layout.LayoutContext ctx = this.layoutContext(null, this.layoutWidth, this.layoutHeight);
 
       for (TextInputWidget input : this.inputs) {
          if (input.isFocused() && input.charTyped(ctx, chr, modifiers)) {
@@ -839,7 +839,7 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx, NetHelper box, String label, Identifier icon, CachePool.Inner_DataUtil tone, Runnable action) {
+   private void drawIconButton(autismclient.gui.f.SyncManager ctx, NetHelper box, String label, Identifier icon, CachePool.Inner_DataUtil tone, Runnable action) {
       boolean hovered = action != null && this.isHovered(ctx, box);
       if (icon == null) {
          CachePool.init(ctx, box, label, tone, hovered, false);
@@ -854,7 +854,7 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private int init(autismclient.gui.f.SyncManager ctx, int x, int y, int w, String label, boolean value, Runnable action) {
+   private int drawToggleRow(autismclient.gui.f.SyncManager ctx, int x, int y, int w, String label, boolean value, Runnable action) {
       NetHelper row = NetHelper.init(x, y, w, sync_I());
       boolean hovered = this.isHovered(ctx, row);
       PacketUtil.load(ctx.init_GuiGraphicsExtract(), row, 3, hovered ? this.colors.cardSurfaceElevated : this.colors.cardSurface);
@@ -863,7 +863,7 @@ public final class ProfilesLibraryView {
       return row.load() + 2;
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx, String text, int x, int y, int w, int color) {
+   private void drawClippedText(autismclient.gui.f.SyncManager ctx, String text, int x, int y, int w, int color) {
       ctx.init_PoolEntry().drawEllipsized(ctx.init_GuiGraphicsExtract(), text, x, ctx.init_PoolEntry().centerTextY(NetHelper.init(x, y, w, sync_I())), w, color);
    }
 

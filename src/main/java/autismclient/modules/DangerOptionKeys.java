@@ -28,7 +28,7 @@ final class DangerOptionKeys {
             )) {
             result.put(
                trajectory,
-               Boolean.toString(init(saved, kind.id() + "-trajectories", "trajectories") || init(saved, kind.id() + "-landings", "landings"))
+               Boolean.toString(isEnabledFor(saved, kind.id() + "-trajectories", "trajectories") || isEnabledFor(saved, kind.id() + "-landings", "landings"))
             );
          }
 
@@ -47,7 +47,7 @@ final class DangerOptionKeys {
       return result;
    }
 
-   private static boolean init(Map<String, String> saved, String key, String shared) {
+   private static boolean isEnabledFor(Map<String, String> saved, String key, String shared) {
       String value = saved.getOrDefault(key, saved.getOrDefault(shared, "true"));
       return value != null && Boolean.parseBoolean(value.trim());
    }

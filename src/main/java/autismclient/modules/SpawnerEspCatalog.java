@@ -45,9 +45,9 @@ public final class SpawnerEspCatalog {
       new SpawnerEspCatalog.Inner_DataUtil("minecraft:slime", "Slime", -864299446)
    );
    public static final String DEFAULT_IDS;
-   private static final Map<String, SpawnerEspCatalog.Inner_DataUtil> init_Map = new LinkedHashMap<>();
-   private static volatile String load_Str;
-   private static volatile List<String> load_List = List.of();
+   private static final Map<String, SpawnerEspCatalog.Inner_DataUtil> MOBS_BY_ID = new LinkedHashMap<>();
+   private static volatile String cachedListValue;
+   private static volatile List<String> cachedIds = List.of();
    private static final int load_I = -855688389;
 
    private SpawnerEspCatalog() {
@@ -63,7 +63,7 @@ public final class SpawnerEspCatalog {
          value = "";
       }
 
-      if (!value.equals(load_Str)) {
+      if (!value.equals(cachedListValue)) {
          List<String> ids = new ArrayList<>();
 
          for (String raw : value.split("\\|")) {
@@ -73,25 +73,25 @@ public final class SpawnerEspCatalog {
             }
          }
 
-         load_List = List.copyOf(ids);
-         load_Str = value;
+         cachedIds = List.copyOf(ids);
+         cachedListValue = value;
       }
 
-      return load_List;
+      return cachedIds;
    }
 
    public static boolean init(String entityId) {
-      return entityId != null && init_Map.containsKey(entityId.toLowerCase(Locale.ROOT));
+      return entityId != null && MOBS_BY_ID.containsKey(entityId.toLowerCase(Locale.ROOT));
    }
 
-   public static int init_I(Module module, String entityId) {
+   public static int colorFor(Module module, String entityId) {
       String key = "color-" + entityId;
       String stored = module == null ? "" : module.value(key);
       if (stored != null && !stored.isBlank()) {
          return am.init_I_Module(module, key, -855688389);
       }
 
-      SpawnerEspCatalog.Inner_DataUtil natural = init_Map.get(entityId);
+      SpawnerEspCatalog.Inner_DataUtil natural = MOBS_BY_ID.get(entityId);
       return natural != null ? natural.defaultColor() : -855688389;
    }
 
@@ -105,7 +105,7 @@ public final class SpawnerEspCatalog {
             int playerChunkX = player.chunkPosition().x();
             int playerChunkZ = player.chunkPosition().z();
             EspChunkWorker.setLevel(level);
-            String stamp = "spawner|" + listValue + "|" + init_Str(module, listValue);
+            String stamp = "spawner|" + listValue + "|" + colorSignature(module, listValue);
             long gameTime = level.getGameTime();
             ClientChunkCache chunks = level.getChunkSource();
 
@@ -113,9 +113,9 @@ public final class SpawnerEspCatalog {
                for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                   LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.EspBox entry : EspChunkWorker.spawners.scan(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
+                     for (EspChunkWorker.EspBox entry : EspChunkWorker.spawners.scan(chunk, gameTime, stamp, (scanned, out) -> scanChunk(level, scanned, module, listValue, out))) {
                         Vec3 trace = entry.tracer();
-                        if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
+                        if (!(distanceSq(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                            if (boxEmit != null) {
                               boxEmit.accept(entry.box(), entry.color());
                            }
@@ -132,7 +132,7 @@ public final class SpawnerEspCatalog {
       }
    }
 
-   private static void init(ClientLevel level, LevelChunk chunk, Module module, String listValue, List<EspChunkWorker.EspBox> out) {
+   private static void scanChunk(ClientLevel level, LevelChunk chunk, Module module, String listValue, List<EspChunkWorker.EspBox> out) {
       for (Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
          if (out.size() >= 512) {
             break;
@@ -143,33 +143,33 @@ public final class SpawnerEspCatalog {
          if (pos != null) {
             String mobId;
             if (be instanceof SpawnerBlockEntity spawner) {
-               mobId = init(spawner);
+               mobId = spawnerEntityId(spawner);
             } else {
                if (!(be instanceof TrialSpawnerBlockEntity trialSpawner)) {
                   continue;
                }
 
-               mobId = init(trialSpawner);
+               mobId = trialSpawnerEntityId(trialSpawner);
             }
 
             if (mobId != null && isSelected(module, mobId)) {
-               out.add(new EspChunkWorker.EspBox(init(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), init_I(module, mobId)));
+               out.add(new EspChunkWorker.EspBox(boxFor(level, pos), new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), colorFor(module, mobId)));
             }
          }
       }
    }
 
-   private static String init(SpawnerBlockEntity spawner) {
+   private static String spawnerEntityId(SpawnerBlockEntity spawner) {
       try {
          BaseSpawner baseSpawner = spawner.getSpawner();
          SpawnData data = ((AutismBaseSpawnerAccessor)baseSpawner).autism$getNextSpawnData();
-         return init(data);
+         return entityIdOf(data);
       } catch (Throwable ignored) {
          return null;
       }
    }
 
-   private static String init(TrialSpawnerBlockEntity blockEntity) {
+   private static String trialSpawnerEntityId(TrialSpawnerBlockEntity blockEntity) {
       try {
          TrialSpawner trialSpawner = blockEntity.getTrialSpawner();
          if (trialSpawner == null) {
@@ -182,13 +182,13 @@ public final class SpawnerEspCatalog {
          }
 
          Optional<SpawnData> next = ((AutismTrialSpawnerStateDataAccessor)data).autism$getNextSpawnData();
-         return next != null && !next.isEmpty() ? init(next.get()) : null;
+         return next != null && !next.isEmpty() ? entityIdOf(next.get()) : null;
       } catch (Throwable ignored) {
          return null;
       }
    }
 
-   private static String init(SpawnData data) {
+   private static String entityIdOf(SpawnData data) {
       if (data == null) {
          return null;
       }
@@ -198,26 +198,26 @@ public final class SpawnerEspCatalog {
       return id.isBlank() ? null : id.toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str(Module module, String listValue) {
+   private static String colorSignature(Module module, String listValue) {
       StringBuilder sig = new StringBuilder();
 
       for (String raw : listValue.split("\\|")) {
          String id = raw.trim().toLowerCase(Locale.ROOT);
          if (!id.isEmpty()) {
-            sig.append(id).append('=').append(init_I(module, id)).append(';');
+            sig.append(id).append('=').append(colorFor(module, id)).append(';');
          }
       }
 
       return sig.toString();
    }
 
-   private static AABB init(ClientLevel level, BlockPos pos) {
+   private static AABB boxFor(ClientLevel level, BlockPos pos) {
       BlockState state = level.getBlockState(pos);
       VoxelShape shape = state.getShape(level, pos);
       return shape != null && !shape.isEmpty() ? shape.bounds().move(pos.getX(), pos.getY(), pos.getZ()) : new AABB(pos);
    }
 
-   private static double init(Vec3 from, double x, double y, double z) {
+   private static double distanceSq(Vec3 from, double x, double y, double z) {
       double dx = from.x - x;
       double dy = from.y - y;
       double dz = from.z - z;
@@ -228,7 +228,7 @@ public final class SpawnerEspCatalog {
       StringBuilder def = new StringBuilder();
 
       for (SpawnerEspCatalog.Inner_DataUtil target : TARGETS) {
-         init_Map.put(target.id(), target);
+         MOBS_BY_ID.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
          }

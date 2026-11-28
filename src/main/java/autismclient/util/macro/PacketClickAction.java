@@ -13,7 +13,7 @@ public class PacketClickAction implements MacroAction {
    public String mode = ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
    public int times = 1;
    public boolean queue = false;
-   private transient boolean init = false;
+   private transient boolean holdingOpen = false;
 
    public PacketClickAction() {
    }
@@ -22,16 +22,16 @@ public class PacketClickAction implements MacroAction {
       this.target = target;
       this.times = Math.max(1, times);
       this.queue = queue;
-      this.load();
+      this.holdContainerOpen();
    }
 
    public void setTarget(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
-      this.read();
-      this.target = newTarget == null ? null : newTarget.withMode(this.init_bo_DataUtil());
-      this.load();
+      this.releaseHoldOffline();
+      this.target = newTarget == null ? null : newTarget.withMode(this.effectiveMode());
+      this.holdContainerOpen();
    }
 
-   private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil() {
+   private ContainerClickSnapshot.Inner_DataUtil effectiveMode() {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
          return this.target.mode() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.mode();
       } else {
@@ -39,28 +39,28 @@ public class PacketClickAction implements MacroAction {
       }
    }
 
-   private void load() {
-      if (this.target != null && !this.init) {
+   private void holdContainerOpen() {
+      if (this.target != null && !this.holdingOpen) {
          autismclient.util.ContainerCloseGuard.holdOpen(this.target.containerId());
-         this.init = true;
+         this.holdingOpen = true;
       }
    }
 
-   private void load(ClientPacketListener conn) {
-      if (this.init && this.target != null) {
+   private void releaseHold(ClientPacketListener conn) {
+      if (this.holdingOpen && this.target != null) {
          autismclient.util.ContainerCloseGuard.hold(this.target.containerId(), conn);
-         this.init = false;
+         this.holdingOpen = false;
       } else {
-         this.init = false;
+         this.holdingOpen = false;
       }
    }
 
-   private void read() {
-      if (this.init && this.target != null) {
+   private void releaseHoldOffline() {
+      if (this.holdingOpen && this.target != null) {
          autismclient.util.ContainerCloseGuard.hold(this.target.containerId(), (ClientPacketListener)null);
-         this.init = false;
+         this.holdingOpen = false;
       } else {
-         this.init = false;
+         this.holdingOpen = false;
       }
    }
 
@@ -73,7 +73,7 @@ public class PacketClickAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cPacket Click has no captured target.");
          } else {
             int count = Math.max(1, this.times);
-            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.withMode(this.init_bo_DataUtil());
+            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.withMode(this.effectiveMode());
 
             for (int i = 0; i < count; i++) {
                ServerboundContainerClickPacket packet = effectiveTarget.toPacket();
@@ -84,28 +84,28 @@ public class PacketClickAction implements MacroAction {
                }
             }
 
-            this.load(mc.getConnection());
+            this.releaseHold(mc.getConnection());
          }
       }
    }
 
    public void init_V_15() {
-      this.read();
+      this.releaseHoldOffline();
    }
 
    public void init(ClientPacketListener conn) {
-      this.load(conn);
+      this.releaseHold(conn);
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putString("mode", this.init_bo_DataUtil().name());
+      tag.putString("mode", this.effectiveMode().name());
       tag.putInt("times", Math.max(1, this.times));
       tag.putBoolean("queue", this.queue);
       if (this.target != null) {
-         tag.put("target", this.target.withMode(this.init_bo_DataUtil()).toTag());
+         tag.put("target", this.target.withMode(this.effectiveMode()).toTag());
       }
 
       return tag;
@@ -124,7 +124,7 @@ public class PacketClickAction implements MacroAction {
       }
 
       if (this.target != null) {
-         this.target = this.target.withMode(this.init_bo_DataUtil());
+         this.target = this.target.withMode(this.effectiveMode());
       }
    }
 
@@ -140,7 +140,7 @@ public class PacketClickAction implements MacroAction {
       }
 
       String suffix = this.times > 1 ? " x" + this.times : "";
-      return "Packet Click " + this.target.withMode(this.init_bo_DataUtil()).init_Str() + suffix;
+      return "Packet Click " + this.target.withMode(this.effectiveMode()).init_Str() + suffix;
    }
 
    @Override

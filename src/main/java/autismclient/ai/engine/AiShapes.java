@@ -10,9 +10,9 @@ public final class AiShapes {
    public static final short load_S = 1;
    public static final short read = -1;
    private static final int init_I = 8192;
-   private static final List<AABB> init_List = List.of(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
-   private static final List<List<AABB>> load_List = new CopyOnWriteArrayList<>();
-   private static final ConcurrentHashMap<List<AABB>, Short> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private static final List<AABB> FULL_BLOCK = List.of(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
+   private static final List<List<AABB>> shapesById = new CopyOnWriteArrayList<>();
+   private static final ConcurrentHashMap<List<AABB>, Short> idsByShape = new ConcurrentHashMap<>();
 
    private AiShapes() {
    }
@@ -24,24 +24,24 @@ public final class AiShapes {
             return 1;
          }
 
-         Short known = init_ConcurrentHashMap.get(key);
+         Short known = idsByShape.get(key);
          if (known != null) {
             return known;
          }
 
-         synchronized (load_List) {
-            known = init_ConcurrentHashMap.get(key);
+         synchronized (shapesById) {
+            known = idsByShape.get(key);
             if (known != null) {
                return known;
             }
 
-            if (load_List.size() >= 8192) {
+            if (shapesById.size() >= 8192) {
                return 1;
             }
 
-            short id = (short)load_List.size();
-            load_List.add(key);
-            init_ConcurrentHashMap.put(key, id);
+            short id = (short)shapesById.size();
+            shapesById.add(key);
+            idsByShape.put(key, id);
             return id;
          }
       } else {
@@ -50,7 +50,7 @@ public final class AiShapes {
    }
 
    public static List<AABB> boxes(short id) {
-      return id >= 0 && id < load_List.size() ? load_List.get(id) : init_List;
+      return id >= 0 && id < shapesById.size() ? shapesById.get(id) : FULL_BLOCK;
    }
 
    public static double topOf(short id) {
@@ -88,9 +88,9 @@ public final class AiShapes {
    }
 
    static {
-      load_List.add(List.of());
-      load_List.add(init_List);
-      init_ConcurrentHashMap.put(load_List.get(0), (short)0);
-      init_ConcurrentHashMap.put(load_List.get(1), (short)1);
+      shapesById.add(List.of());
+      shapesById.add(FULL_BLOCK);
+      idsByShape.put(shapesById.get(0), (short)0);
+      idsByShape.put(shapesById.get(1), (short)1);
    }
 }

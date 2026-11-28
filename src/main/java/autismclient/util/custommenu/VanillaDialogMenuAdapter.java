@@ -71,28 +71,28 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
          return CustomMenuEvent.CLEAR;
       } else {
          return packet instanceof ClientboundShowDialogPacket show && show.dialog() != null
-            ? CustomMenuEvent.open(load(show.dialog().value(), phase))
+            ? CustomMenuEvent.open(snapshotOf(show.dialog().value(), phase))
             : CustomMenuEvent.NONE;
       }
    }
 
    public static CustomMenuSnapshot snapshot(Dialog dialog, String phase) {
-      return dialog == null ? null : load(dialog, phase);
+      return dialog == null ? null : snapshotOf(dialog, phase);
    }
 
-   private static CustomMenuSnapshot load(Dialog dialog, String phase) {
+   private static CustomMenuSnapshot snapshotOf(Dialog dialog, String phase) {
       List<CustomMenuInput> inputs = new ArrayList<>();
       int inputIndex = 1;
 
       for (Input input : dialog.common().inputs()) {
-         inputs.add(init(inputIndex++, input));
+         inputs.add(toInput(inputIndex++, input));
       }
 
-      List<ActionButton> actions = init(dialog);
+      List<ActionButton> actions = actionsOf(dialog);
       List<CustomMenuButton> buttons = new ArrayList<>();
 
       for (int i = 0; i < actions.size(); i++) {
-         buttons.add(init(i + 1, actions.get(i)));
+         buttons.add(toButton(i + 1, actions.get(i)));
       }
 
       return new CustomMenuSnapshot(
@@ -100,7 +100,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       );
    }
 
-   private static CustomMenuInput init(int index, Input input) {
+   private static CustomMenuInput toInput(int index, Input input) {
       String key = input.key();
       if (input.control() instanceof TextInput text) {
          return new CustomMenuInput(index, key, text.label().getString(), CustomMenuInput.Kind.TEXT, text.initial(), text.maxLength(), 0.0, 0.0, 0.0, List.of());
@@ -125,7 +125,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
             key,
             number.label().getString(),
             CustomMenuInput.Kind.NUMBER,
-            init(initial),
+            formatNumber(initial),
             0,
             Math.min(range.start(), range.end()),
             Math.max(range.start(), range.end()),
@@ -142,7 +142,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
    }
 
-   private static List<ActionButton> init(Dialog dialog) {
+   private static List<ActionButton> actionsOf(Dialog dialog) {
       List<ActionButton> result = new ArrayList<>();
       if (dialog instanceof SimpleDialog simple) {
          result.addAll(simple.mainActions());
@@ -168,9 +168,9 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       return List.copyOf(result);
    }
 
-   private static CustomMenuButton init(int index, ActionButton button) {
+   private static CustomMenuButton toButton(int index, ActionButton button) {
       String label = button.button().label().getString();
-      String color = init(button.button().label());
+      String color = colorOf(button.button().label());
       if (button.action().isEmpty()) {
          return new CustomMenuButton(index, label, "", CustomMenuButton.Kind.EMPTY, color);
       }
@@ -201,7 +201,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       return new CustomMenuButton(index, label, actionId, kind, color);
    }
 
-   private static String init(Component label) {
+   private static String colorOf(Component label) {
       if (label == null) {
          return "";
       }
@@ -213,7 +213,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
 
       for (Component sibling : label.getSiblings()) {
-         String nested = init(sibling);
+         String nested = colorOf(sibling);
          if (!nested.isEmpty()) {
             return nested;
          }
@@ -238,7 +238,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
 
             for (Input input : state.init_Dialog().common().inputs()) {
                String raw = submission.values().get(input.key());
-               getters.put(input.key(), init(input, raw));
+               getters.put(input.key(), valueGetter(input, raw));
             }
 
             Optional<ClickEvent> click = selected.action().get().createAction(getters);
@@ -259,7 +259,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
                return CustomMenuSubmitResult.packets(List.of(new ServerboundChatCommandPacket(value)));
             } else {
                return click.get() instanceof ShowDialog nested
-                  ? CustomMenuSubmitResult.replacement(load(nested.dialog().value(), snapshot.phase()), click.get())
+                  ? CustomMenuSubmitResult.replacement(snapshotOf(nested.dialog().value(), snapshot.phase()), click.get())
                   : CustomMenuSubmitResult.failure("Dialog action is not safe for automation");
             }
          } else {
@@ -270,17 +270,17 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
    }
 
-   private static ValueGetter init(Input input, String supplied) {
+   private static ValueGetter valueGetter(Input input, String supplied) {
       if (input.control() instanceof TextInput text) {
          String value = supplied == null ? text.initial() : supplied;
          if (value.length() > text.maxLength()) {
             throw new IllegalArgumentException("Input '" + input.key() + "' exceeds max length");
          } else {
-            return init(StringTag.escapeWithoutQuotes(value), StringTag.valueOf(value));
+            return fixedValue(StringTag.escapeWithoutQuotes(value), StringTag.valueOf(value));
          }
       } else if (input.control() instanceof BooleanInput bool) {
          boolean value = supplied == null ? bool.initial() : init_Z(input.key(), supplied);
-         return init(value ? bool.onTrue() : bool.onFalse(), ByteTag.valueOf(value));
+         return fixedValue(value ? bool.onTrue() : bool.onFalse(), ByteTag.valueOf(value));
       } else if (input.control() instanceof NumberRangeInput number) {
          RangeInfo range = number.rangeInfo();
          float value = supplied == null ? range.initial().orElse((range.start() + range.end()) / 2.0F) : init_F(input.key(), supplied);
@@ -295,7 +295,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
                }
             }
 
-            return init(init(value), FloatTag.valueOf(value));
+            return fixedValue(formatNumber(value), FloatTag.valueOf(value));
          } else {
             throw new IllegalArgumentException("Input '" + input.key() + "' is outside its range");
          }
@@ -304,14 +304,14 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
          if (option.entries().stream().noneMatch(entry -> entry.id().equals(value))) {
             throw new IllegalArgumentException("Input '" + input.key() + "' is not a valid option");
          } else {
-            return init(value, StringTag.valueOf(value));
+            return fixedValue(value, StringTag.valueOf(value));
          }
       } else {
          throw new IllegalArgumentException("Unsupported input '" + input.key() + "'");
       }
    }
 
-   private static ValueGetter init(final String text, final Tag tag) {
+   private static ValueGetter fixedValue(final String text, final Tag tag) {
       return new ValueGetter() {
          @Override
          public String asTemplateSubstitution() {
@@ -355,7 +355,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
    }
 
-   private static String init(float value) {
+   private static String formatNumber(float value) {
       int integer = (int)value;
       return integer == value ? Integer.toString(integer) : Float.toString(value);
    }

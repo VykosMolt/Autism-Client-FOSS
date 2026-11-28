@@ -109,7 +109,7 @@ public final class AiSchematicApproach implements AiOperation {
             return AiOperation.Result.failed(AiFailure.TIMEOUT, "Construction planning reached its ten-second limit", "{}");
          } else {
             if (System.nanoTime() >= this.deadline) {
-               return this.load(AiOperation.Status.TIMED_OUT, "Placement approach deadline");
+               return this.finish(AiOperation.Status.TIMED_OUT, "Placement approach deadline");
             }
 
             if (this.child != null
@@ -129,15 +129,15 @@ public final class AiSchematicApproach implements AiOperation {
             if (this.child == null) {
                this.draft.planSlice(2000000L);
                if (!this.draft.isFinished()) {
-                  return init(AiOperation.Status.RUNNING, "Planning reusable construction batch (" + this.draft.clickCheckCount + " click checks)");
+                  return result(AiOperation.Status.RUNNING, "Planning reusable construction batch (" + this.draft.clickCheckCount + " click checks)");
                }
 
                if (this.draft.init_Z_Vec3(mc.player.position())) {
-                  return init(AiOperation.Status.RUNNING, "Updating the itinerary from the actual handoff position");
+                  return result(AiOperation.Status.RUNNING, "Updating the itinerary from the actual handoff position");
                }
 
                if (this.draft.unplacedTargets().isEmpty()) {
-                  return this.load(AiOperation.Status.SUCCEEDED, "Prepared batch already satisfied; reobserving");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Prepared batch already satisfied; reobserving");
                }
 
                AiSchematicBatchPlan.Inner_ConfigStore scheduled = this.draft.init_c_ConfigStore();
@@ -180,7 +180,7 @@ public final class AiSchematicApproach implements AiOperation {
                      AiWalkingWork.init(this.child, this.look, this.click);
                   } else {
                      this.draft.rejected = this.draft.update.get(scheduled.station()).probe.feet;
-                     this.draft.update();
+                     this.draft.clearBatchChoice();
                   }
                }
 
@@ -205,27 +205,27 @@ public final class AiSchematicApproach implements AiOperation {
 
                this.child.cancel();
                this.child = null;
-               this.draft.update();
+               this.draft.clearBatchChoice();
                return AiOperation.Result.failed(AiFailure.TIMEOUT, "Batch planning route needs another workstation: " + r.message(), r.dataJson());
             } else {
                return r;
             }
          }
       } else {
-         return this.load(AiOperation.Status.CANCELLED, "Placement approach cancelled");
+         return this.finish(AiOperation.Status.CANCELLED, "Placement approach cancelled");
       }
    }
 
-   private static AiOperation.Result init(AiOperation.Status status, String message) {
+   private static AiOperation.Result result(AiOperation.Status status, String message) {
       return new AiOperation.Result(status, message, "{}", List.of());
    }
 
-   private AiOperation.Result load(AiOperation.Status status, String message) {
+   private AiOperation.Result finish(AiOperation.Status status, String message) {
       if (this.child != null) {
          this.child.cancel();
       }
 
-      return init(status, message);
+      return result(status, message);
    }
 
    @Override
@@ -251,11 +251,11 @@ public final class AiSchematicApproach implements AiOperation {
       return AiSchematicApproach.Inner_DataUtil.init_Z_VoxelShape(shape);
    }
 
-   static LevelReader init(LevelReader world, Set<BlockPos> clear) {
+   static LevelReader simulatedView(LevelReader world, Set<BlockPos> clear) {
       return AiSchematicApproach.Inner_DataUtil.simulatedView(world, clear);
    }
 
-   static boolean init(BlockGetter world, Map<BlockPos, BlockState> expected) {
+   static boolean matchesExpected(BlockGetter world, Map<BlockPos, BlockState> expected) {
       for (Entry<BlockPos, BlockState> entry : expected.entrySet()) {
          if (world.getBlockState(entry.getKey()) != entry.getValue()) {
             return false;
@@ -265,7 +265,7 @@ public final class AiSchematicApproach implements AiOperation {
       return true;
    }
 
-   static void init(BlockGetter world, Vec3 eye, Vec3 end, Map<BlockPos, BlockState> observed) {
+   static void recordRayStates(BlockGetter world, Vec3 eye, Vec3 end, Map<BlockPos, BlockState> observed) {
       BlockGetter.traverseBlocks(eye, end, observed, (states, cell) -> {
          states.put(cell.immutable(), world.getBlockState(cell));
          return null;
@@ -695,7 +695,7 @@ public final class AiSchematicApproach implements AiOperation {
                )) {
                BlockPlacementPlanner.PlacementPlan hit = probe.view == null
                   ? PlacementGoal.planPlacement(this.mc, target.pos(), target.item(), target.constraint(), probe.position, 32)
-                  : this.init(target, probe.position, probe.body, probe.clearCells, probe.view);
+                  : this.planTargetPlacement(target, probe.position, probe.body, probe.clearCells, probe.view);
                if (hit != null) {
                   double height = PlacementGoal.standingEyeHeight(this.mc, target.pos(), target.item(), target.constraint(), true);
                   if (probe.supported
@@ -762,7 +762,7 @@ public final class AiSchematicApproach implements AiOperation {
                BlockPos support = proof.support();
                observed.put(support, this.level.getBlockState(support));
                Vec3 eye = Vec3.atBottomCenterOf(probe.feet).add(0.0, proof.eyeHeight(), 0.0);
-               AiSchematicApproach.init(
+               AiSchematicApproach.recordRayStates(
                   this.level,
                   eye,
                   proof.point().add(-proof.face().getStepX() * 0.001, -proof.face().getStepY() * 0.001, -proof.face().getStepZ() * 0.001),
@@ -837,7 +837,7 @@ public final class AiSchematicApproach implements AiOperation {
             return false;
          }
 
-         if (!AiSchematicApproach.init(this.level, station.observed)) {
+         if (!AiSchematicApproach.matchesExpected(this.level, station.observed)) {
             return false;
          }
 
@@ -909,7 +909,7 @@ public final class AiSchematicApproach implements AiOperation {
                .toList();
          }
 
-         this.update();
+         this.clearBatchChoice();
          return List.of();
       }
 
@@ -961,7 +961,7 @@ public final class AiSchematicApproach implements AiOperation {
          return this.batchChoice.nextStop(completed);
       }
 
-      private void update() {
+      private void clearBatchChoice() {
          this.batchChoice = null;
       }
 
@@ -1079,7 +1079,7 @@ public final class AiSchematicApproach implements AiOperation {
          return false;
       }
 
-      private BlockPlacementPlanner.PlacementPlan init(PlacementGoal.PlacementRequest target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
+      private BlockPlacementPlanner.PlacementPlan planTargetPlacement(PlacementGoal.PlacementRequest target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
          PlacementGoal.PlaceConstraint constraint = target.constraint();
          if (target.requested() != null && !target.requested().canSurvive(view, target.pos())) {
             return null;

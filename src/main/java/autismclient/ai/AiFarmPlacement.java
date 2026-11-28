@@ -26,7 +26,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    private final BlockPos load_BlockPos;
    private final boolean init_Z;
    private BlockPos read_BlockPos;
-   private BlockPos write;
+   private BlockPos previousStand;
    private boolean load_Z;
    private boolean read_Z;
    private double init_D = 6.0;
@@ -43,10 +43,10 @@ final class AiFarmPlacement extends AiPlacementSession {
          this.init_Str = cropBlock;
          this.load_Str = AiFarmArea.substrateFor(AiJson.objectOf("substrate", substrate), cropBlock);
          this.read_BlockPos = previous == null ? null : previous.from();
-         this.write = previous == null ? mc.player.blockPosition().below() : previous.to();
+         this.previousStand = previous == null ? mc.player.blockPosition().below() : previous.to();
          this.load_Z = previous != null;
          this.init_BlockPos = this.read_BlockPos;
-         this.load_BlockPos = this.write;
+         this.load_BlockPos = this.previousStand;
          this.init_Z = this.load_Z;
          this.write_V();
       } else {
@@ -67,7 +67,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    AiFarmArea.Area getArea() {
-      return this.load_Z ? new AiFarmArea.Area(this.read_BlockPos, this.write) : null;
+      return this.load_Z ? new AiFarmArea.Area(this.read_BlockPos, this.previousStand) : null;
    }
 
    @Override
@@ -83,7 +83,7 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    @Override
    public BlockPos getOrigin() {
-      return this.write;
+      return this.previousStand;
    }
 
    @Override
@@ -108,7 +108,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       if (!this.isActive()) {
          return false;
       } else if (!this.load_Z) {
-         this.read_BlockPos = this.write.immutable();
+         this.read_BlockPos = this.previousStand.immutable();
          this.load_Z = true;
          this.write_V();
          return false;
@@ -167,7 +167,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          "first",
          this.read_BlockPos == null ? new JsonObject() : posJson(this.read_BlockPos),
          "second",
-         posJson(this.write),
+         posJson(this.previousStand),
          "status",
          this.getStatus(),
          "width",
@@ -189,14 +189,14 @@ final class AiFarmPlacement extends AiPlacementSession {
             double reach = (mc.options.getEffectiveRenderDistance() + 2) * 16.0;
             BlockHitResult hit = this.level.clip(new ClipContext(eye, eye.add(direction.scale(reach)), Block.OUTLINE, Fluid.NONE, mc.player));
             if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.level, hit.getBlockPos())) {
-               this.write = this.init_BlockPos_BlockPos(hit.getBlockPos());
-               this.init_D = Vec3.atCenterOf(this.write).distanceTo(eye);
+               this.previousStand = this.init_BlockPos_BlockPos(hit.getBlockPos());
+               this.init_D = Vec3.atCenterOf(this.previousStand).distanceTo(eye);
             } else {
-               this.init_D = AiPlacementControls.distanceToY(eye, direction, this.write.getY() + 1, this.init_D);
-               this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
+               this.init_D = AiPlacementControls.distanceToY(eye, direction, this.previousStand.getY() + 1, this.init_D);
+               this.previousStand = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
             }
          } else {
-            this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
+            this.previousStand = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
          }
 
          this.write_V();
@@ -226,12 +226,12 @@ final class AiFarmPlacement extends AiPlacementSession {
       if (this.isActive()) {
          Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
          if (this.init_Vec3 == null) {
-            Vec3 delta = Vec3.atCenterOf(this.write).subtract(eye);
+            Vec3 delta = Vec3.atCenterOf(this.previousStand).subtract(eye);
             this.init_Vec3 = delta.lengthSqr() < 0.01 ? Minecraft.getInstance().player.getLookAngle() : delta.normalize();
          }
 
          this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
-         this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, this.init_Vec3, this.init_D));
+         this.previousStand = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, this.init_Vec3, this.init_D));
          this.write_V();
       }
    }
@@ -239,8 +239,8 @@ final class AiFarmPlacement extends AiPlacementSession {
    @Override
    public void snapToGround() {
       if (this.isActive()) {
-         this.write = new BlockPos(
-            this.write.getX(), this.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.write.getX(), this.write.getZ()) - 1, this.write.getZ()
+         this.previousStand = new BlockPos(
+            this.previousStand.getX(), this.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.previousStand.getX(), this.previousStand.getZ()) - 1, this.previousStand.getZ()
          );
          this.write_V();
       }
@@ -249,7 +249,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    @Override
    public void init(int x, int y, int z) {
       if (this.isActive()) {
-         this.write = this.write.offset(x, y, z);
+         this.previousStand = this.previousStand.offset(x, y, z);
          this.write_V();
       }
    }
@@ -258,7 +258,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    public void init(BlockPos position, int rotation, String mirror) {
       if (this.isActive()) {
          this.read_BlockPos = this.init_BlockPos;
-         this.write = this.load_BlockPos;
+         this.previousStand = this.load_BlockPos;
          this.load_Z = this.init_Z;
          this.write_V();
       }
@@ -268,7 +268,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       List<AiBuilder.CellSpec> cells;
       BlockPos origin;
       if (!this.load_Z) {
-         origin = this.write;
+         origin = this.previousStand;
          cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.soilBlock(this.load_Str)));
       } else {
          AiFarmArea.Area area = this.getArea();

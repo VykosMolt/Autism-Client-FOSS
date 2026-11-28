@@ -22,8 +22,8 @@ public final class MsdfFontAtlas {
    private final Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> glyphs;
    private final double lineHeight;
    private final double ascender;
-   private final double read;
-   private final double write;
+   private final double descender;
+   private final double capHeight;
    private final int atlasWidth;
    private final int atlasHeight;
    private final MsdfFontAtlas.Inner_StreamUtil spaceGlyph;
@@ -49,8 +49,8 @@ public final class MsdfFontAtlas {
       this.glyphs = glyphs;
       this.lineHeight = lineHeight;
       this.ascender = ascender;
-      this.read = descender;
-      this.write = capHeight;
+      this.descender = descender;
+      this.capHeight = capHeight;
       this.atlasWidth = atlasWidth;
       this.atlasHeight = atlasHeight;
       this.spaceGlyph = spaceAdvance;
@@ -138,11 +138,11 @@ public final class MsdfFontAtlas {
    }
 
    public double read() {
-      return this.read;
+      return this.descender;
    }
 
    public double write() {
-      return this.write;
+      return this.capHeight;
    }
 
    public boolean hasGlyph(int codePoint) {
@@ -324,11 +324,11 @@ public final class MsdfFontAtlas {
          RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, pixels);
       }
 
-      public int init() {
+      public int width() {
          return this.getTexture().getWidth(0);
       }
 
-      public int load() {
+      public int height() {
          return this.getTexture().getHeight(0);
       }
    }

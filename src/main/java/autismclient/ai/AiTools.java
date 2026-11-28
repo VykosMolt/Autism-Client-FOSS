@@ -71,7 +71,7 @@ final class AiTools {
       "client:world_delete"
    );
    private final Map<String, Integer> dispatchCounts = new HashMap<>();
-   private static final Map<String, Integer> load = Map.ofEntries(
+   private static final Map<String, Integer> DEFAULT_TIMEOUTS = Map.ofEntries(
       Map.entry("game:navigate", 300),
       Map.entry("game:goto", 300),
       Map.entry("game:surface", 180),
@@ -2788,14 +2788,14 @@ final class AiTools {
          }
 
          if (seen >= 2) {
-            JsonObject prior = this.load(tool, args, generation);
+            JsonObject prior = this.runTool(tool, args, generation);
             prior.addProperty("note", "Already looked up; the earlier result is still valid - do not repeat this call");
             return prior;
          }
       }
 
       try {
-         JsonObject result = this.load(tool, args, generation);
+         JsonObject result = this.runTool(tool, args, generation);
          this.retryGuard.recordResult(key, AiRetryGuard.isInterrupt(result) ? "INTERRUPTED" : AiJson.getString(result, "status", ""));
          return result;
       } catch (CancellationException e) {
@@ -2806,7 +2806,7 @@ final class AiTools {
       }
    }
 
-   private JsonObject load(String tool, JsonObject args, long generation) throws Exception {
+   private JsonObject runTool(String tool, JsonObject args, long generation) throws Exception {
       this.service.checkGeneration(generation);
       if (Set.of("macro_save", "script_run", "procedure_run").contains(tool)) {
          this.service.markAttemptedAction();
@@ -2879,7 +2879,7 @@ final class AiTools {
             String id = AiJson.getString(args, "id", "");
             AiCatalog.Entry entry = this.service.getCatalogSnapshot().get(id);
             if (entry == null) {
-               throw new IllegalArgumentException("Unknown capability " + id + this.load(id));
+               throw new IllegalArgumentException("Unknown capability " + id + this.suggestIds(id));
             }
 
             String given = AiJson.getString(args, "fingerprint", "");
@@ -2974,7 +2974,7 @@ final class AiTools {
                JsonObject var351 = var34x;
                var10000 = var351;
             } else {
-               JsonObject result = this.service.runOperation(generation, id, entry.fingerprint(), () -> this.read(id, arguments));
+               JsonObject result = this.service.runOperation(generation, id, entry.fingerprint(), () -> this.createOperationChecked(id, arguments));
                this.procedures.remember(id, entry.fingerprint(), arguments, result);
                if (!ignored.isEmpty()) {
                   result.add("ignoredArguments", AiJson.GSON.toJsonTree(ignored));
@@ -3172,7 +3172,7 @@ final class AiTools {
          );
    }
 
-   private String load(String id) {
+   private String suggestIds(String id) {
       List<String> ids = new ArrayList<>();
 
       for (AiCatalog.Entry e : this.service.getCatalogSnapshot().search(id.replace(':', ' ').replace('_', ' '), 0, 3)) {
@@ -3259,7 +3259,7 @@ final class AiTools {
    }
 
    static JsonObject withDefaultTimeout(String id, JsonObject args) {
-      Integer fallback = load.get(id);
+      Integer fallback = DEFAULT_TIMEOUTS.get(id);
       if (fallback != null && !args.has("timeoutSeconds")) {
          if ((id.equals("game:goto") || id.equals("game:navigate")) && AiJson.getBoolean(args, "parkour", false)) {
             return args;
@@ -3313,14 +3313,14 @@ final class AiTools {
    }
 
    static AiOperation operation(String id, JsonObject args) {
-      return init_AiOperation_Str(id, args, load(id, args));
+      return init_AiOperation_Str(id, args, createOperation(id, args));
    }
 
    private static AiOperation init_AiOperation_Str(String id, JsonObject args, AiOperation op) {
       return op != null && (AiGuard.isLowHealthRecoveryOp(id, args) || AiGuard.isSafeLowHealthNavigationOp(id)) ? AiGuard.allowDuringLowHealth(op) : op;
    }
 
-   private static AiOperation load(String id, JsonObject args) {
+   private static AiOperation createOperation(String id, JsonObject args) {
       args = withDefaultTimeout(id, args);
       AiOperation var10000;
       switch (id) {
@@ -3628,7 +3628,7 @@ final class AiTools {
       return var10000;
    }
 
-   private AiOperation read(String id, JsonObject args) {
+   private AiOperation createOperationChecked(String id, JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.player.isAlive()) {
          if (id.startsWith("module:")) {

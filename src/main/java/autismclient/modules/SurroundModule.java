@@ -71,8 +71,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private int flush_I = -2147483648;
    private final autismclient.util.BlockPlacementPlanner.RayBudget rayBudget = new autismclient.util.BlockPlacementPlanner.RayBudget(4);
    private int previousSlot = -1;
-   private int open = -1;
-   private int poll;
+   private int switchedToSlot = -1;
+   private int switchBackDelay;
    private final KillAuraModule.TickCachedFlag init_aa_JsonUtil = new KillAuraModule.TickCachedFlag();
    private String raw;
    private Set<Block> allowedBlocks = Set.of();
@@ -150,8 +150,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       this.breakProgress.clear();
       this.lastTick = -2147483648;
       this.previousSlot = -1;
-      this.open = -1;
-      this.poll = 0;
+      this.switchedToSlot = -1;
+      this.switchBackDelay = 0;
       autismclient.util.InventorySlotArbiter.releaseAllClaims(this.id());
    }
 
@@ -343,7 +343,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       this.toPlace.clear();
       AABB box = MC.player.getBoundingBox();
       int feetY = Mth.floor(box.minY + 0.001);
-      List<BlockPos> hole = this.init(box, feetY);
+      List<BlockPos> hole = this.surroundCells(box, feetY);
       Set<BlockPos> seen = new HashSet<>(hole);
       List<BlockPos> ring = new ArrayList<>();
       List<BlockPos> down = new ArrayList<>();
@@ -430,7 +430,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private List<BlockPos> init(AABB box, int feetY) {
+   private List<BlockPos> surroundCells(AABB box, int feetY) {
       BlockPos feet = new BlockPos(Mth.floor((box.minX + box.maxX) * 0.5), feetY, Mth.floor((box.minZ + box.maxZ) * 0.5));
       if (!"Hitbox".equals(this.choice("ring"))) {
          return List.of(feet);
@@ -486,24 +486,24 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             SurroundModule.Inner_StreamUtil plan = this.findPlacement(from, material, null);
             if (plan == null) {
                this.releaseRotation();
-               this.open();
+               this.restoreSlot();
             } else {
-               this.poll = 0;
+               this.switchBackDelay = 0;
                boolean slotReady = slot == MC.player.getInventory().getSelectedSlot();
-               BlockHitResult hit = wireRotation == null ? null : this.init(plan, wireRotation);
+               BlockHitResult hit = wireRotation == null ? null : this.hitFor(plan, wireRotation);
                boolean fire = hit != null && slotReady && !BedDefenderModule.init_Z_10() && this.isNewTick();
                boolean aimed;
                if (fire) {
                   SurroundModule.Inner_StreamUtil next = this.findPlacement(from, material, plan.cell());
-                  aimed = this.init(next != null ? next.goalRotation() : plan.goalRotation(), true);
+                  aimed = this.requestRotation(next != null ? next.goalRotation() : plan.goalRotation(), true);
                } else {
-                  aimed = this.init(plan.goalRotation(), false);
+                  aimed = this.requestRotation(plan.goalRotation(), false);
                }
 
                if (fire && aimed) {
                   RotationMath.Rotation outgoing = SilentMovementCoordinator.getRenderRotation(MC.player);
                   if (outgoing != null && !(Math.abs(outgoing.pitch() - wireRotation.pitch()) > 0.05F)) {
-                     this.init(plan, hit);
+                     this.placeAt(plan, hit);
                   }
                } else if (!slotReady) {
                   this.init_V_I_9(slot);
@@ -511,12 +511,12 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             }
          } else {
             this.releaseRotation();
-            this.open();
+            this.restoreSlot();
          }
       }
    }
 
-   private boolean init(RotationMath.Rotation goal, boolean holdPitch) {
+   private boolean requestRotation(RotationMath.Rotation goal, boolean holdPitch) {
       autismclient.util.SilentRotationManager.requestRotation(this.id(), 25, goal);
       this.flush_I = AutismSessionState.getInstance().getClientTick();
       if (!this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
@@ -584,7 +584,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          .withRayBudget(this.rayBudget);
 
       for (BlockPos cell : this.toPlace) {
-         if (!cell.equals(skip) && !this.init(cell, placed, playerBox, delta)) {
+         if (!cell.equals(skip) && !this.isCellBlocked(cell, placed, playerBox, delta)) {
             this.rayBudget.reset(4);
             autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request.withTargetCell(cell));
             if (candidate != null) {
@@ -596,7 +596,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return null;
    }
 
-   private boolean init(BlockPos cell, BlockState placed, AABB playerBox, Vec3 delta) {
+   private boolean isCellBlocked(BlockPos cell, BlockState placed, AABB playerBox, Vec3 delta) {
       AABB box = new AABB(cell);
       if (!box.intersects(playerBox) && !box.intersects(playerBox.move(delta)) && !box.intersects(playerBox.move(delta.scale(-1.0)))) {
          return placed != null
@@ -607,7 +607,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, RotationMath.Rotation rotation) {
+   private BlockHitResult hitFor(SurroundModule.Inner_StreamUtil plan, RotationMath.Rotation rotation) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       autismclient.util.BlockPlacementPlanner.Query gate = new autismclient.util.BlockPlacementPlanner.Query(
@@ -624,7 +624,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return AutismSessionState.getInstance().getClientTick() != this.lastTick;
    }
 
-   private void init(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
+   private void placeAt(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
       if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
@@ -712,27 +712,27 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             }
 
             autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
-            this.open = slot;
+            this.switchedToSlot = slot;
          } finally {
             autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
          }
       }
    }
 
-   private void open() {
+   private void restoreSlot() {
       if (this.previousSlot >= 0) {
          if (!this.bool("switch-back")) {
             this.previousSlot = -1;
-            this.open = -1;
-         } else if (this.open >= 0 && MC.player.getInventory().getSelectedSlot() != this.open) {
+            this.switchedToSlot = -1;
+         } else if (this.switchedToSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.switchedToSlot) {
             this.previousSlot = -1;
-            this.open = -1;
-         } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
+            this.switchedToSlot = -1;
+         } else if (++this.switchBackDelay >= 6 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, this.previousSlot);
                this.previousSlot = -1;
-               this.open = -1;
-               this.poll = 0;
+               this.switchedToSlot = -1;
+               this.switchBackDelay = 0;
             } finally {
                autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }

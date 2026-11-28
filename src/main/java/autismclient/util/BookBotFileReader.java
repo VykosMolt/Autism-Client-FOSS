@@ -12,9 +12,9 @@ import java.nio.file.Path;
 
 public final class BookBotFileReader {
    private static final int init_I = 4194304;
-   private static final Charset init_Charset = Charset.forName("windows-1252");
-   private static final Charset load = Charset.forName("UTF-32LE");
-   private static final Charset read = Charset.forName("UTF-32BE");
+   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
+   private static final Charset UTF_32LE = Charset.forName("UTF-32LE");
+   private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
 
    private BookBotFileReader() {
    }
@@ -32,18 +32,18 @@ public final class BookBotFileReader {
       if (bytes.length > 4194304) {
          throw new IOException("file exceeds the 4 MiB BookBot limit");
       } else {
-         return init_Str(bytes);
+         return decode(bytes);
       }
    }
 
-   static String init_Str(byte[] bytes) {
+   static String decode(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
-         BookBotFileReader.Inner_DataUtil encoding = init_a_DataUtil(bytes);
+         BookBotFileReader.Inner_DataUtil encoding = detectBom(bytes);
          String decoded;
          if (encoding != null) {
-            decoded = new String(bytes, encoding.init_I(), bytes.length - encoding.init_I(), encoding.init_Charset());
+            decoded = new String(bytes, encoding.bomLength(), bytes.length - encoding.bomLength(), encoding.charset());
          } else {
-            decoded = load(bytes);
+            decoded = decodeStrictUtf8(bytes);
          }
 
          return normalize(decoded);
@@ -62,7 +62,7 @@ public final class BookBotFileReader {
       }
    }
 
-   private static String load(byte[] bytes) {
+   private static String decodeStrictUtf8(byte[] bytes) {
       try {
          return StandardCharsets.UTF_8
             .newDecoder()
@@ -71,29 +71,29 @@ public final class BookBotFileReader {
             .decode(ByteBuffer.wrap(bytes))
             .toString();
       } catch (CharacterCodingException ignored) {
-         return new String(bytes, init_Charset);
+         return new String(bytes, WINDOWS_1252);
       }
    }
 
-   private static BookBotFileReader.Inner_DataUtil init_a_DataUtil(byte[] bytes) {
+   private static BookBotFileReader.Inner_DataUtil detectBom(byte[] bytes) {
       int length = bytes.length;
-      if (length >= 4 && init(bytes[0]) == 0 && init(bytes[1]) == 0 && init(bytes[2]) == 254 && init(bytes[3]) == 255) {
-         return new BookBotFileReader.Inner_DataUtil(read, 4);
+      if (length >= 4 && unsigned(bytes[0]) == 0 && unsigned(bytes[1]) == 0 && unsigned(bytes[2]) == 254 && unsigned(bytes[3]) == 255) {
+         return new BookBotFileReader.Inner_DataUtil(UTF_32BE, 4);
       }
 
-      if (length >= 4 && init(bytes[0]) == 255 && init(bytes[1]) == 254 && init(bytes[2]) == 0 && init(bytes[3]) == 0) {
-         return new BookBotFileReader.Inner_DataUtil(load, 4);
+      if (length >= 4 && unsigned(bytes[0]) == 255 && unsigned(bytes[1]) == 254 && unsigned(bytes[2]) == 0 && unsigned(bytes[3]) == 0) {
+         return new BookBotFileReader.Inner_DataUtil(UTF_32LE, 4);
       }
 
-      if (length >= 3 && init(bytes[0]) == 239 && init(bytes[1]) == 187 && init(bytes[2]) == 191) {
+      if (length >= 3 && unsigned(bytes[0]) == 239 && unsigned(bytes[1]) == 187 && unsigned(bytes[2]) == 191) {
          return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_8, 3);
       }
 
-      if (length >= 2 && init(bytes[0]) == 254 && init(bytes[1]) == 255) {
+      if (length >= 2 && unsigned(bytes[0]) == 254 && unsigned(bytes[1]) == 255) {
          return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16BE, 2);
       }
 
-      if (length >= 2 && init(bytes[0]) == 255 && init(bytes[1]) == 254) {
+      if (length >= 2 && unsigned(bytes[0]) == 255 && unsigned(bytes[1]) == 254) {
          return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16LE, 2);
       }
 
@@ -126,10 +126,10 @@ public final class BookBotFileReader {
       return null;
    }
 
-   private static int init(byte value) {
+   private static int unsigned(byte value) {
       return value & 0xFF;
    }
 
-   private record Inner_DataUtil(Charset init_Charset, int init_I) {
+   private record Inner_DataUtil(Charset charset, int bomLength) {
    }
 }

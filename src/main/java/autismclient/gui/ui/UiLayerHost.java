@@ -8,25 +8,25 @@ import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.SyncManager;
 
 public final class UiLayerHost {
-   private final Map<UiLayer, List<UiLayerComponent>> init = new EnumMap<>(UiLayer.class);
+   private final Map<UiLayer, List<UiLayerComponent>> layers = new EnumMap<>(UiLayer.class);
 
    public void clear() {
-      this.init.clear();
+      this.layers.clear();
    }
 
    public void add(UiLayer layer, UiLayerComponent component) {
       if (layer != null && component != null) {
-         this.init.computeIfAbsent(layer, ignored -> new ArrayList<>()).add(component);
+         this.layers.computeIfAbsent(layer, ignored -> new ArrayList<>()).add(component);
       }
    }
 
-   public void load(UiLayer layer, UiLayerComponent component) {
+   public void addComponent(UiLayer layer, UiLayerComponent component) {
       if (layer != null && component != null) {
-         List<UiLayerComponent> components = this.init.get(layer);
+         List<UiLayerComponent> components = this.layers.get(layer);
          if (components != null) {
             components.remove(component);
             if (components.isEmpty()) {
-               this.init.remove(layer);
+               this.layers.remove(layer);
             }
          }
       }
@@ -34,14 +34,14 @@ public final class UiLayerHost {
 
    public void read(UiLayer layer, UiLayerComponent component) {
       if (layer != null && component != null) {
-         this.load(layer, component);
+         this.addComponent(layer, component);
          this.add(layer, component);
       }
    }
 
-   public void init_V_TextFormat(UiLayer layer) {
+   public void clearLayer(UiLayer layer) {
       if (layer != null) {
-         this.init.remove(layer);
+         this.layers.remove(layer);
       }
    }
 
@@ -49,7 +49,7 @@ public final class UiLayerHost {
       boolean first = true;
 
       for (UiLayer layer : UiLayer.values()) {
-         List<UiLayerComponent> components = this.init.get(layer);
+         List<UiLayerComponent> components = this.layers.get(layer);
          if (components != null) {
             for (UiLayerComponent component : components) {
                if (!first) {
@@ -70,35 +70,35 @@ public final class UiLayerHost {
    }
 
    public UiInputResult dispatchClick(int mouseX, int mouseY, int button) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseClicked(mouseX, mouseY, button));
+      return this.dispatchAt(mouseX, mouseY, component -> component.onMouseClicked(mouseX, mouseY, button));
    }
 
    public UiInputResult mouseReleased(int mouseX, int mouseY, int button) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseReleased(mouseX, mouseY, button));
+      return this.dispatchAt(mouseX, mouseY, component -> component.onMouseReleased(mouseX, mouseY, button));
    }
 
    public UiInputResult mouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY));
+      return this.dispatchAt(mouseX, mouseY, component -> component.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY));
    }
 
    public UiInputResult dispatchScroll(int mouseX, int mouseY, double amount) {
-      return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseScrolled(mouseX, mouseY, amount));
+      return this.dispatchAt(mouseX, mouseY, component -> component.onMouseScrolled(mouseX, mouseY, amount));
    }
 
    public UiInputResult keyPressed(int key, int scanCode, int modifiers) {
-      return this.init_EventBus_ByteReader_DataUti(component -> component.onKeyPressed(key, scanCode, modifiers));
+      return this.dispatchTopDown(component -> component.onKeyPressed(key, scanCode, modifiers));
    }
 
    public UiInputResult dispatchChar(char chr) {
-      return this.init_EventBus_ByteReader_DataUti(component -> component.onCharTyped(chr));
+      return this.dispatchTopDown(component -> component.onCharTyped(chr));
    }
 
-   private UiInputResult init_EventBus_ByteReader_DataUti(UiLayerHost.Inner_DataUtil call) {
+   private UiInputResult dispatchTopDown(UiLayerHost.Inner_DataUtil call) {
       UiLayer[] order = UiLayer.values();
 
       for (int layerIndex = order.length - 1; layerIndex >= 0; layerIndex--) {
          UiLayer layer = order[layerIndex];
-         List<UiLayerComponent> components = this.init.get(layer);
+         List<UiLayerComponent> components = this.layers.get(layer);
          if (components != null && !components.isEmpty()) {
             for (int i = components.size() - 1; i >= 0; i--) {
                if (call.invoke(components.get(i)) == UiInputResult.HANDLED) {
@@ -115,12 +115,12 @@ public final class UiLayerHost {
       return UiInputResult.IGNORED;
    }
 
-   private UiInputResult init_EventBus_I_3(int mouseX, int mouseY, UiLayerHost.Inner_DataUtil call) {
+   private UiInputResult dispatchAt(int mouseX, int mouseY, UiLayerHost.Inner_DataUtil call) {
       UiLayer[] order = UiLayer.values();
 
       for (int layerIndex = order.length - 1; layerIndex >= 0; layerIndex--) {
          UiLayer layer = order[layerIndex];
-         List<UiLayerComponent> components = this.init.get(layer);
+         List<UiLayerComponent> components = this.layers.get(layer);
          if (components != null && !components.isEmpty()) {
             for (int i = components.size() - 1; i >= 0; i--) {
                UiLayerComponent component = components.get(i);
@@ -130,7 +130,7 @@ public final class UiLayerHost {
                }
             }
 
-            if (init_Z_TextFormat(layer)) {
+            if (isBlockingLayer(layer)) {
                return UiInputResult.HANDLED;
             }
          }
@@ -139,7 +139,7 @@ public final class UiLayerHost {
       return UiInputResult.IGNORED;
    }
 
-   private static boolean init_Z_TextFormat(UiLayer layer) {
+   private static boolean isBlockingLayer(UiLayer layer) {
       return layer == UiLayer.DROPDOWN || layer == UiLayer.MODAL;
    }
 

@@ -14,10 +14,10 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    private double init_D;
    private double load_D;
    private boolean update_Z;
-   private int open;
-   private int poll;
-   private int push;
-   private int pop;
+   private int panelX;
+   private int panelY;
+   private int panelWidth;
+   private int panelHeight;
 
    public AutismProfilesOverlay(Font font) {
       super("autism-profiles", 300, 170);
@@ -43,16 +43,16 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    public void load(boolean v) {
       if (v != this.update_Z) {
          if (v) {
-            this.open = this.windowX;
-            this.poll = this.windowY;
-            this.push = this.windowWidth;
-            this.pop = this.windowHeight;
+            this.panelX = this.windowX;
+            this.panelY = this.windowY;
+            this.panelWidth = this.windowWidth;
+            this.panelHeight = this.windowHeight;
             this.windowCollapsed = false;
          } else {
-            this.windowX = this.open;
-            this.windowY = this.poll;
-            this.windowWidth = this.push;
-            this.windowHeight = this.pop;
+            this.windowX = this.panelX;
+            this.windowY = this.panelY;
+            this.windowWidth = this.panelWidth;
+            this.windowHeight = this.panelHeight;
          }
 
          this.update_Z = v;
@@ -66,10 +66,10 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       }
 
       if (!v && this.update_Z) {
-         this.windowX = this.open;
-         this.windowY = this.poll;
-         this.windowWidth = this.push;
-         this.windowHeight = this.pop;
+         this.windowX = this.panelX;
+         this.windowY = this.panelY;
+         this.windowWidth = this.panelWidth;
+         this.windowHeight = this.panelHeight;
          this.update_Z = false;
       }
 
@@ -115,7 +115,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
    public void render(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
       if (this.windowVisible || this.isClosing()) {
          if (this.update_Z) {
-            this.load(ctx, mx, my, delta);
+            this.renderWindowContents(ctx, mx, my, delta);
          } else {
             this.windowWidth = this.libraryView.preferredWidth() + 2;
             int want = this.libraryView.contentHeight(this.windowWidth - 2) + 14 + 1;
@@ -141,7 +141,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
+   private void renderWindowContents(GuiGraphicsExtractor ctx, int mx, int my, float delta) {
       int sw = cA.init_I();
       int sh = cA.load_I();
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1073741824);

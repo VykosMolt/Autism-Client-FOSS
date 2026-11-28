@@ -16,9 +16,9 @@ public final class ToastNotificationStack {
    private final long lifetimeMs;
    private final float enterMs;
    private final float exitMs;
-   private final int update;
-   private final int sync;
-   private final int flush;
+   private final int maxVisible;
+   private final int gap;
+   private final int toastHeight;
 
    public ToastNotificationStack() {
       this(1800L, 140.0F, 220.0F, 4, 3, 15);
@@ -28,16 +28,16 @@ public final class ToastNotificationStack {
       this.lifetimeMs = Math.max(1L, lifetimeMs);
       this.enterMs = Math.max(1.0F, enterMs);
       this.exitMs = Math.max(1.0F, exitMs);
-      this.update = Math.max(1, maxVisible);
-      this.sync = Math.max(0, gap);
-      this.flush = Math.max(1, height);
+      this.maxVisible = Math.max(1, maxVisible);
+      this.gap = Math.max(0, gap);
+      this.toastHeight = Math.max(1, height);
    }
 
    public void init(String message, int accentColor) {
       if (message != null && !message.isBlank()) {
          long nowNanos = System.nanoTime();
          this.expire(nowNanos);
-         if (this.toasts.size() >= this.update) {
+         if (this.toasts.size() >= this.maxVisible) {
             this.toasts.remove(0);
          }
 
@@ -88,7 +88,7 @@ public final class ToastNotificationStack {
             int maxToastWidth = Math.max(1, Math.min(anchorWidth, 260));
             int padX = 6;
             int lineHeight = 10;
-            int verticalPad = Math.max(4, this.flush - lineHeight);
+            int verticalPad = Math.max(4, this.toastHeight - lineHeight);
             int maxTextWidth = Math.max(1, maxToastWidth - padX * 2);
             int y = anchorY;
 
@@ -106,14 +106,14 @@ public final class ToastNotificationStack {
 
                   int toastWidth = Math.min(maxToastWidth, Math.max(Math.min(48, maxToastWidth), widest + padX * 2));
                   int textBlockHeight = lines.size() * lineHeight;
-                  int toastHeight = Math.max(this.flush, textBlockHeight + verticalPad);
+                  int toastHeight = Math.max(this.toastHeight, textBlockHeight + verticalPad);
                   int drawX = anchorX + Math.max(0, (anchorWidth - toastWidth) / 2);
                   float slide = clamp01(ageMs / this.enterMs);
                   float eased = 1.0F - (1.0F - slide) * (1.0F - slide) * (1.0F - slide);
-                  int drawY = y - Math.round((1.0F - eased) * (toastHeight + this.sync + 2));
+                  int drawY = y - Math.round((1.0F - eased) * (toastHeight + this.gap + 2));
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, toastWidth, toastHeight);
                   autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-                  int fill = init(colors.windowSurface & 16777215, toast.color(), 0.22F);
+                  int fill = blendColor(colors.windowSurface & 16777215, toast.color(), 0.22F);
                   autismclient.gui.f.PacketUtil.load(
                      context.init_GuiGraphicsExtract(),
                      bounds,
@@ -130,7 +130,7 @@ public final class ToastNotificationStack {
                      context.init_PoolEntry().draw(context.init_GuiGraphicsExtract(), line, lineX, textTop + li * lineHeight, textColor);
                   }
 
-                  y += toastHeight + this.sync;
+                  y += toastHeight + this.gap;
                }
             }
          }
@@ -145,7 +145,7 @@ public final class ToastNotificationStack {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
-   private static int init(int baseRgb, int accentColor, float t) {
+   private static int blendColor(int baseRgb, int accentColor, float t) {
       int r = baseRgb >> 16 & 0xFF;
       int g = baseRgb >> 8 & 0xFF;
       int b = baseRgb & 0xFF;

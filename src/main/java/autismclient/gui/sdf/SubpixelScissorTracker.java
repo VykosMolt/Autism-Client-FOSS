@@ -15,7 +15,7 @@ public final class SubpixelScissorTracker {
    private SubpixelScissorTracker() {
    }
 
-   public static int[] init(ScreenRectangle rectangle) {
+   public static int[] exactFor(ScreenRectangle rectangle) {
       return rectangle != null && !exactRects.isEmpty() ? exactRects.get(rectangle) : null;
    }
 
@@ -32,31 +32,31 @@ public final class SubpixelScissorTracker {
 
       Vector2f topLeft = pose.transformPosition(x0, y0, new Vector2f());
       Vector2f bottomRight = pose.transformPosition(x1, y1, new Vector2f());
-      int[] exact = init(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, guiScale);
+      int[] exact = toExact(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, guiScale);
       if (init_Z_F(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, guiScale, exact)) {
          return false;
       }
 
       ScreenRectangle parent = stack.peek();
-      int[] parentExact = parent == null ? new int[]{0, 0, minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight()} : init(parent, guiScale);
-      int[] outward = init(exact, guiScale);
+      int[] parentExact = parent == null ? new int[]{0, 0, minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight()} : exactOrScaled(parent, guiScale);
+      int[] outward = toGui(exact, guiScale);
       stack.push(new ScreenRectangle(outward[0], outward[1], outward[2] - outward[0], outward[3] - outward[1]));
       ScreenRectangle top = stack.peek();
       if (top != null && top != ScreenRectangle.empty()) {
-         exactRects.put(top, init(exact, parentExact));
+         exactRects.put(top, intersect(exact, parentExact));
       }
 
       return true;
    }
 
-   private static int[] init(ScreenRectangle rectangle, int guiScale) {
+   private static int[] exactOrScaled(ScreenRectangle rectangle, int guiScale) {
       int[] known = exactRects.get(rectangle);
       return known != null
          ? known
          : new int[]{rectangle.left() * guiScale, rectangle.top() * guiScale, rectangle.right() * guiScale, rectangle.bottom() * guiScale};
    }
 
-   static int[] init(float x0, float y0, float x1, float y1, int guiScale) {
+   static int[] toExact(float x0, float y0, float x1, float y1, int guiScale) {
       return new int[]{Math.round(x0 * guiScale), Math.round(y0 * guiScale), Math.round(x1 * guiScale), Math.round(y1 * guiScale)};
    }
 
@@ -68,7 +68,7 @@ public final class SubpixelScissorTracker {
       return left * guiScale == exact[0] && top * guiScale == exact[1] && right * guiScale == exact[2] && bottom * guiScale == exact[3];
    }
 
-   static int[] init(int[] exact, int guiScale) {
+   static int[] toGui(int[] exact, int guiScale) {
       int x0 = Math.floorDiv(exact[0], guiScale);
       int y0 = Math.floorDiv(exact[1], guiScale);
       int x1 = Math.max(x0, -Math.floorDiv(-exact[2], guiScale));
@@ -76,7 +76,7 @@ public final class SubpixelScissorTracker {
       return new int[]{x0, y0, x1, y1};
    }
 
-   static int[] init(int[] a, int[] b) {
+   static int[] intersect(int[] a, int[] b) {
       int x0 = Math.max(a[0], b[0]);
       int y0 = Math.max(a[1], b[1]);
       int x1 = Math.max(x0, Math.min(a[2], b[2]));

@@ -21,7 +21,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
    public String saveAs = "";
    public transient volatile Packet<?> matchedPacket;
    public transient volatile String matchedDirection = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    public WaitForPacketAction() {
    }
@@ -113,7 +113,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("packetName", this.packetName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       ListTag list = new ListTag();
@@ -133,7 +133,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -187,12 +187,12 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override

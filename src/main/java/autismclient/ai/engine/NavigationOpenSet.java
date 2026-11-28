@@ -28,7 +28,7 @@ final class NavigationOpenSet {
       return this.isEmpty() ? 1.0 / 0.0 : this.priority(this.init_t_DataUtilArr[0].cost, this.init_t_DataUtilArr[0].heuristic);
    }
 
-   private boolean init(NavigationOpenSet.Inner_DataUtil a, NavigationOpenSet.Inner_DataUtil b) {
+   private boolean isBefore(NavigationOpenSet.Inner_DataUtil a, NavigationOpenSet.Inner_DataUtil b) {
       int order = Double.compare(this.priority(a.cost, a.heuristic), this.priority(b.cost, b.heuristic));
       if (order == 0) {
          order = Double.compare(a.heuristic, b.heuristic);
@@ -57,7 +57,7 @@ final class NavigationOpenSet {
 
       while (i > 0) {
          int parent = i - 1 >>> 1;
-         if (!this.init(node, this.init_t_DataUtilArr[parent])) {
+         if (!this.isBefore(node, this.init_t_DataUtilArr[parent])) {
             break;
          }
 
@@ -83,11 +83,11 @@ final class NavigationOpenSet {
 
       while (i * 2 + 1 < this.init_I) {
          int child = i * 2 + 1;
-         if (child + 1 < this.init_I && this.init(this.init_t_DataUtilArr[child + 1], this.init_t_DataUtilArr[child])) {
+         if (child + 1 < this.init_I && this.isBefore(this.init_t_DataUtilArr[child + 1], this.init_t_DataUtilArr[child])) {
             child++;
          }
 
-         if (!this.init(this.init_t_DataUtilArr[child], tail)) {
+         if (!this.isBefore(this.init_t_DataUtilArr[child], tail)) {
             break;
          }
 

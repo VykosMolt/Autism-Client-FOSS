@@ -23,7 +23,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    public boolean waitForGuiAfter = true;
    public String guiName = "";
    public boolean raycast = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public boolean isRaycast() {
@@ -40,7 +40,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
          return AimTargetAction.AimTarget.ofBlock(this.blockPos);
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.init_E_2();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.resolveTarget();
          if (target == null) {
             return null;
          } else {
@@ -49,7 +49,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   private autismclient.util.InteractionTargetRef init_E_2() {
+   private autismclient.util.InteractionTargetRef resolveTarget() {
       for (String ref : this.targetRefs()) {
          if (ref != null && !ref.isBlank()) {
             autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.ofEntityRef(ref);
@@ -140,7 +140,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   public String load() {
+   public String describe() {
       return describeTarget(this.entityTarget);
    }
 
@@ -194,12 +194,12 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -254,7 +254,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("raycast", this.raycast);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -293,7 +293,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    private List<String> targetRefs() {

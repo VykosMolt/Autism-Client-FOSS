@@ -1037,10 +1037,10 @@ final class PrintClicks {
          }
 
          public Vec3 get(int index) {
-            return this.init(index);
+            return this.pointFor(index);
          }
 
-         public Vec3 init(int index) {
+         public Vec3 pointFor(int index) {
             Objects.checkIndex(index, this.size());
             double fu = us[index / vs.length];
             double fv = vs[index % vs.length];

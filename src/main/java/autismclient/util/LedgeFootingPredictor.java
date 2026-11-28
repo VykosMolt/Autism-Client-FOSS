@@ -29,7 +29,7 @@ public final class LedgeFootingPredictor {
             Vec3 motion = player.getDeltaMovement();
             AABB box = player.getBoundingBox();
             double drop = player.maxUpStep();
-            double inset = init(level, player, box.deflate(0.2, 0.0, 0.2), drop) ? 0.2 : 0.0;
+            double inset = hasFootingBelow(level, player, box.deflate(0.2, 0.0, 0.2), drop) ? 0.2 : 0.0;
             return worldYaw -> {
                double r = Math.toRadians(worldYaw);
                double dx = -Math.sin(r);
@@ -49,7 +49,7 @@ public final class LedgeFootingPredictor {
 
                   x += vx;
                   z += vz;
-                  if (!init(level, player, moved.deflate(inset, 0.0, inset), drop)) {
+                  if (!hasFootingBelow(level, player, moved.deflate(inset, 0.0, inset), drop)) {
                      return tick;
                   }
 
@@ -67,7 +67,7 @@ public final class LedgeFootingPredictor {
       }
    }
 
-   private static boolean init(Level level, LocalPlayer player, AABB box, double drop) {
+   private static boolean hasFootingBelow(Level level, LocalPlayer player, AABB box, double drop) {
       return !level.noCollision(player, new AABB(box.minX, box.minY - drop - 1.0E-5, box.minZ, box.maxX, box.minY, box.maxZ));
    }
 }

@@ -24,7 +24,7 @@ final class AiClientCommand {
       }
 
       String prefix = autismclient.commands.CommandManager.getPrefix();
-      String line = init(init(args), name, Arrays.asList(command.aliases()), prefix, word -> {
+      String line = normalizeCommandLine(bodyOf(args), name, Arrays.asList(command.aliases()), prefix, word -> {
          Command other = autismclient.commands.CommandManager.getCommand(word);
          return other != null && other != command ? autismclient.commands.CommandManager.getPrimaryName(other) : null;
       });
@@ -38,18 +38,18 @@ final class AiClientCommand {
       List<String> forms = autismclient.commands.CommandManager.getUsageForms(command);
       String typed = prefix + line;
       JsonObject data = AiJson.objectOf(
-         "command", name, "body", line, "typed", typed, "dispatch", dispatch.status().name(), "replies", init(raw), "forms", forms
+         "command", name, "body", line, "typed", typed, "dispatch", dispatch.status().name(), "replies", toneLines(raw), "forms", forms
       );
       AiOperation var10000;
       switch (dispatch.status()) {
          case EXECUTED:
-            String refusal = init(raw, "error");
+            String refusal = firstWithTone(raw, "error");
             if (refusal != null) {
                var10000 = AiGameOperations.immediateFailure(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " refused: " + refusal, data);
             } else {
                String said = raw.isEmpty()
                   ? "Client command " + typed + " executed" + (dispatch.message().isEmpty() ? "" : " (" + dispatch.message() + ")")
-                  : "Client command " + typed + " executed: " + load(raw.get(0));
+                  : "Client command " + typed + " executed: " + stripCodes(raw.get(0));
                var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, said, data);
             }
             break;
@@ -78,7 +78,7 @@ final class AiClientCommand {
       return var10000;
    }
 
-   static String init(JsonObject args) {
+   static String bodyOf(JsonObject args) {
       for (String key : List.of("body", "line", "text", "args", "arguments", "command")) {
          if (args.has(key) && args.get(key).isJsonPrimitive()) {
             return args.get(key).getAsString();
@@ -88,20 +88,20 @@ final class AiClientCommand {
       return "";
    }
 
-   static String init(String body, String name, Collection<String> aliases, String prefix, Function<String, String> otherCommand) {
+   static String normalizeCommandLine(String body, String name, Collection<String> aliases, String prefix, Function<String, String> otherCommand) {
       String line = body == null ? "" : body.trim();
       if (!prefix.isEmpty() && line.startsWith(prefix)) {
          line = line.substring(prefix.length()).trim();
-      } else if (line.length() > 1 && (line.charAt(0) == '.' || line.charAt(0) == '/') && init(read(line.substring(1)), name, aliases)) {
+      } else if (line.length() > 1 && (line.charAt(0) == '.' || line.charAt(0) == '/') && matchesName(firstWord(line.substring(1)), name, aliases)) {
          line = line.substring(1).trim();
       }
 
       if (line.isEmpty()) {
          return name;
       } else {
-         String first = read(line);
+         String first = firstWord(line);
          String rest = line.substring(first.length()).trim();
-         if (init(first, name, aliases)) {
+         if (matchesName(first, name, aliases)) {
             return rest.isEmpty() ? name : name + " " + rest;
          } else {
             String other = otherCommand.apply(first);
@@ -116,7 +116,7 @@ final class AiClientCommand {
       }
    }
 
-   static JsonArray init(List<String> raw) {
+   static JsonArray toneLines(List<String> raw) {
       JsonArray out = new JsonArray();
 
       for (String line : raw) {
@@ -124,16 +124,16 @@ final class AiClientCommand {
             break;
          }
 
-         String text = load(line);
+         String text = stripCodes(line);
          if (!text.isEmpty()) {
-            out.add(AiJson.objectOf("text", text, "tone", init(line)));
+            out.add(AiJson.objectOf("text", text, "tone", toneOf(line)));
          }
       }
 
       return out;
    }
 
-   static String init(String raw) {
+   static String toneOf(String raw) {
       String line = raw == null ? "" : raw.stripLeading();
       if (line.length() >= 2 && line.charAt(0) == 167) {
          switch (Character.toLowerCase(line.charAt(1))) {
@@ -152,21 +152,21 @@ final class AiClientCommand {
       return "info";
    }
 
-   static String load(String raw) {
+   static String stripCodes(String raw) {
       return raw == null ? "" : raw.replaceAll("§.", "").trim();
    }
 
-   private static String init(List<String> raw, String tone) {
+   private static String firstWithTone(List<String> raw, String tone) {
       for (String line : raw) {
-         if (init(line).equals(tone)) {
-            return load(line);
+         if (toneOf(line).equals(tone)) {
+            return stripCodes(line);
          }
       }
 
       return null;
    }
 
-   private static boolean init(String word, String name, Collection<String> aliases) {
+   private static boolean matchesName(String word, String name, Collection<String> aliases) {
       if (word.equalsIgnoreCase(name)) {
          return true;
       }
@@ -180,7 +180,7 @@ final class AiClientCommand {
       return false;
    }
 
-   private static String read(String line) {
+   private static String firstWord(String line) {
       int space = line.indexOf(32);
       return space < 0 ? line : line.substring(0, space);
    }

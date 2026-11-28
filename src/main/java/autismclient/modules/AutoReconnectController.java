@@ -11,11 +11,11 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 
 public final class AutoReconnectController {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static ServerData init_ServerData;
-   private static ServerAddress init_ServerAddress;
-   private static Screen init_Screen;
-   private static int init_I;
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static ServerData rememberedServer;
+   private static ServerAddress rememberedAddress;
+   private static Screen countdownScreen;
+   private static int ticksLeft;
 
    private AutoReconnectController() {
    }
@@ -30,15 +30,15 @@ public final class AutoReconnectController {
       if (server != null && (server.ip != null && !server.ip.isBlank() || address != null)) {
          ServerData copy = new ServerData(server.name, server.ip, server.type());
          copy.copyFrom(server);
-         init_ServerData = copy;
-         init_ServerAddress = address != null ? address : ServerAddress.parseString(server.ip);
-         init_Screen = null;
-         init_I = init_I();
+         rememberedServer = copy;
+         rememberedAddress = address != null ? address : ServerAddress.parseString(server.ip);
+         countdownScreen = null;
+         ticksLeft = delayTicks();
       }
    }
 
    public static ServerData lastServer() {
-      ServerData last = init_ServerData;
+      ServerData last = rememberedServer;
       if (last == null) {
          return null;
       }
@@ -48,18 +48,18 @@ public final class AutoReconnectController {
       return copy;
    }
 
-   public static boolean init_Z() {
+   public static boolean hasReconnectTarget() {
       Module module = al.init_Module_Str("auto-reconnect");
-      return module != null && module.isEnabled() && init_ServerData != null && init_ServerAddress != null && init_Minecraft.allowsMultiplayer();
+      return module != null && module.isEnabled() && rememberedServer != null && rememberedAddress != null && MC.allowsMultiplayer();
    }
 
-   public static boolean load_Z() {
+   public static boolean isModuleEnabled() {
       Module module = al.init_Module_Str("auto-reconnect");
       return module != null && module.isEnabled();
    }
 
    public static boolean canReconnect() {
-      return init_ServerData != null && init_ServerAddress != null && init_Minecraft.allowsMultiplayer();
+      return rememberedServer != null && rememberedAddress != null && MC.allowsMultiplayer();
    }
 
    public static void toggle() {
@@ -70,19 +70,19 @@ public final class AutoReconnectController {
    }
 
    public static String buttonLabel() {
-      if (!load_Z()) {
+      if (!isModuleEnabled()) {
          return "Auto Reconnect: OFF";
       }
 
-      if (update()) {
+      if (macroHandlesRejoin()) {
          return "Auto Reconnect: ON  (paused)";
       }
 
-      double seconds = write() ? Math.max(0.0, init_I / 20.0) : init_D();
+      double seconds = isCountingDown() ? Math.max(0.0, ticksLeft / 20.0) : delaySeconds();
       return String.format(Locale.ROOT, "Auto Reconnect: ON  (%.1fs)", seconds);
    }
 
-   private static double init_D() {
+   private static double delaySeconds() {
       Module module = al.init_Module_Str("auto-reconnect");
       if (module == null) {
          return 3.5;
@@ -95,62 +95,62 @@ public final class AutoReconnectController {
       }
    }
 
-   public static void init(Screen screen, Screen parent) {
-      if (!init_Z()) {
-         init_Screen = null;
+   public static void tickDisconnectScreen(Screen screen, Screen parent) {
+      if (!hasReconnectTarget()) {
+         countdownScreen = null;
       } else {
-         if (init_Screen != screen) {
-            init_Screen = screen;
-            init_I = init_I();
+         if (countdownScreen != screen) {
+            countdownScreen = screen;
+            ticksLeft = delayTicks();
          }
 
-         if (update()) {
-            init_I = init_I();
-         } else if (init_I > 0) {
-            init_I--;
+         if (macroHandlesRejoin()) {
+            ticksLeft = delayTicks();
+         } else if (ticksLeft > 0) {
+            ticksLeft--;
          } else {
-            init(parent);
+            reconnect(parent);
          }
       }
    }
 
-   public static boolean write() {
-      return init_Z() && init_I > 0 && !update();
+   public static boolean isCountingDown() {
+      return hasReconnectTarget() && ticksLeft > 0 && !macroHandlesRejoin();
    }
 
-   private static boolean update() {
+   private static boolean macroHandlesRejoin() {
       return MacroExecutor.hasRejoiningMacro();
    }
 
    public static void tick() {
-      Screen screen = OverlayScreenController.getActualScreen(init_Minecraft);
+      Screen screen = OverlayScreenController.getActualScreen(MC);
       if (screen instanceof DisconnectedScreen) {
          Screen parent = screen instanceof autismclient.mixin.duck.DisconnectedScreenDuck access ? access.autism$parent() : screen;
-         init(screen, parent);
+         tickDisconnectScreen(screen, parent);
       } else {
-         init_Screen = null;
+         countdownScreen = null;
       }
    }
 
-   public static void init(Screen parent) {
-      if (init_Z()) {
-         Screen nextParent = parent == null ? OverlayScreenController.getActualScreen(init_Minecraft) : parent;
-         ConnectScreen.startConnecting(nextParent, init_Minecraft, init_ServerAddress, init_ServerData, false, null);
-         init_Screen = null;
-         init_I = init_I();
+   public static void reconnect(Screen parent) {
+      if (hasReconnectTarget()) {
+         Screen nextParent = parent == null ? OverlayScreenController.getActualScreen(MC) : parent;
+         ConnectScreen.startConnecting(nextParent, MC, rememberedAddress, rememberedServer, false, null);
+         countdownScreen = null;
+         ticksLeft = delayTicks();
       }
    }
 
-   public static String load_Str() {
-      if (!init_Z()) {
+   public static String countdownText() {
+      if (!hasReconnectTarget()) {
          return "";
       }
 
-      double seconds = Math.max(0.0, init_I / 20.0);
+      double seconds = Math.max(0.0, ticksLeft / 20.0);
       return String.format(Locale.ROOT, "Auto reconnect in %.1fs", seconds);
    }
 
-   private static int init_I() {
+   private static int delayTicks() {
       Module module = al.init_Module_Str("auto-reconnect");
       if (module == null) {
          return 70;

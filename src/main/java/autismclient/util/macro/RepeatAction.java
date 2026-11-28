@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 public class RepeatAction implements MacroAction {
    public int stepCount = 1;
    public int repeatCount = 2;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public RepeatAction() {
    }
@@ -26,7 +26,7 @@ public class RepeatAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putInt("stepCount", this.stepCount);
       tag.putInt("repeatCount", this.repeatCount);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -41,7 +41,7 @@ public class RepeatAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -62,11 +62,11 @@ public class RepeatAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

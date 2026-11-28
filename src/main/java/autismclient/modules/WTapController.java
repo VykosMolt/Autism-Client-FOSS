@@ -46,7 +46,7 @@ final class WTapController {
       if (attacker == MC.player
          && entity instanceof LivingEntity target
          && SprintStateTracker.attackStartSprinting()
-         && this.update()
+         && this.canTap()
          && MC.player.input.keyPresses.forward()
          && !MC.player.input.keyPresses.backward()
          && target.isAlive()
@@ -59,7 +59,7 @@ final class WTapController {
          int chance = this.settings.chance();
          boolean selected = chance > 0 && this.random.nextInt(100) < chance;
          if (this.timing
-            .arm(now, clientTick(), this.init(this.settings.delayRange(), 0), this.init(this.settings.releaseRange(), 1), selected)) {
+            .arm(now, clientTick(), this.sampleDelay(this.settings.delayRange(), 0), this.sampleDelay(this.settings.releaseRange(), 1), selected)) {
             this.level = MC.level;
             this.connection = MC.getConnection();
             this.attacker = attacker;
@@ -86,7 +86,7 @@ final class WTapController {
       }
 
       boolean valid = this.isSameSession()
-         && this.update()
+         && this.canTap()
          && this.settings.chance() > 0
          && original.forward()
          && !original.backward()
@@ -119,7 +119,7 @@ final class WTapController {
    }
 
    boolean isTapping() {
-      return this.timing.isReleasing() && this.isSameSession() && this.update();
+      return this.timing.isReleasing() && this.isSameSession() && this.canTap();
    }
 
    boolean pollActive() {
@@ -131,7 +131,7 @@ final class WTapController {
       if (!this.timing.activeAt(System.nanoTime())) {
          this.clearTarget();
       } else if (this.isSameSession()
-         && this.update()
+         && this.canTap()
          && this.settings.chance() > 0
          && this.isHoldingWeapon()
          && MC.options.keyUp.isDown()
@@ -181,7 +181,7 @@ final class WTapController {
       return MC.player.getInventory().getSelectedSlot() == this.slot && MC.player.getMainHandItem().is(this.weapon);
    }
 
-   private boolean update() {
+   private boolean canTap() {
       if (MC.isSameThread()
          && MC.player != null
          && MC.level != null
@@ -218,7 +218,7 @@ final class WTapController {
       }
    }
 
-   private long init(ValueRange range, int minimum) {
+   private long sampleDelay(ValueRange range, int minimum) {
       ValueRange band = (range == null ? (minimum > 0 ? DEFAULT_RELEASE_MS : DEFAULT_DELAY_MS) : range).clamp(minimum, 200.0);
       this.drift = this.drift * 0.92 + this.random.nextGaussian() * 0.035;
       double style = (autismclient.util.HumanHandProfile.shared().close() - 0.9) * 0.5;

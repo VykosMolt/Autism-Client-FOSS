@@ -8,22 +8,22 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
 public final class RemoteViewController {
-   private static volatile Player init_Player;
-   private static volatile UUID init_UUID;
-   private static volatile String init_Str = "";
-   private static volatile ClientLevel init_ClientLevel;
-   private static CameraType init_CameraType = CameraType.FIRST_PERSON;
-   private static boolean init_Z;
+   private static volatile Player target;
+   private static volatile UUID targetUuid;
+   private static volatile String targetName = "";
+   private static volatile ClientLevel level;
+   private static CameraType previousCamera = CameraType.FIRST_PERSON;
+   private static boolean wasThirdPerson;
 
    private RemoteViewController() {
    }
 
    public static boolean isActive() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.TableIndex.init() ? false : init_UUID != null;
+      return !AutismLiteVariant.enabled() && !autismclient.e.TableIndex.init() ? false : targetUuid != null;
    }
 
    public static String getOldName() {
-      return init_Str;
+      return targetName;
    }
 
    public static RemoteViewController.Inner_DataUtil startViewing(Player player) {
@@ -41,7 +41,7 @@ public final class RemoteViewController {
             return new RemoteViewController.Inner_DataUtil(false, "Disable Freecam first.");
          }
 
-         if (isActive() && player.getUUID().equals(init_UUID)) {
+         if (isActive() && player.getUUID().equals(targetUuid)) {
             stop(false);
             return new RemoteViewController.Inner_DataUtil(true, "Remote view stopped.");
          }
@@ -50,15 +50,15 @@ public final class RemoteViewController {
             stop(false);
          }
 
-         init_CameraType = mc.options.getCameraType();
-         init_Z = !init_CameraType.isFirstPerson();
-         init_Player = player;
-         init_UUID = player.getUUID();
-         init_Str = init_Str(player);
-         init_ClientLevel = mc.level;
+         previousCamera = mc.options.getCameraType();
+         wasThirdPerson = !previousCamera.isFirstPerson();
+         target = player;
+         targetUuid = player.getUUID();
+         targetName = nameOf(player);
+         level = mc.level;
          mc.options.setCameraType(CameraType.FIRST_PERSON);
          mc.setCameraEntity(player);
-         return new RemoteViewController.Inner_DataUtil(true, "Viewing " + init_Str + ". Use " + autismclient.commands.CommandManager.getPrefix() + "rv stop to leave.");
+         return new RemoteViewController.Inner_DataUtil(true, "Viewing " + targetName + ". Use " + autismclient.commands.CommandManager.getPrefix() + "rv stop to leave.");
       } else {
          return new RemoteViewController.Inner_DataUtil(false, "Join a world first.");
       }
@@ -66,11 +66,11 @@ public final class RemoteViewController {
 
    public static void stop(boolean notify) {
       Minecraft mc = Minecraft.getInstance();
-      Player oldTarget = init_Player;
-      String oldName = init_Str;
-      boolean restorePerspective = init_Z;
-      CameraType restoreType = init_CameraType;
-      load();
+      Player oldTarget = target;
+      String oldName = targetName;
+      boolean restorePerspective = wasThirdPerson;
+      CameraType restoreType = previousCamera;
+      clearState();
       if (mc != null) {
          Entity camera = mc.getCameraEntity();
          if (mc.player != null && (camera == oldTarget || camera == null || camera.isRemoved())) {
@@ -90,35 +90,35 @@ public final class RemoteViewController {
    public static void tick() {
       if (isActive()) {
          Minecraft mc = Minecraft.getInstance();
-         Player current = init_Player;
+         Player current = target;
          if (mc == null
             || mc.player == null
             || mc.level == null
             || mc.getConnection() == null
-            || mc.level != init_ClientLevel
+            || mc.level != level
             || current == null
             || current.isRemoved()
-            || !current.getUUID().equals(init_UUID)
+            || !current.getUUID().equals(targetUuid)
             || mc.getCameraEntity() != current) {
             stop(true);
          }
       }
    }
 
-   public static Player init_Player() {
+   public static Player viewedPlayer() {
       Minecraft mc = Minecraft.getInstance();
-      Player current = init_Player;
-      return isActive() && current != null && !current.isRemoved() && mc != null && mc.level == init_ClientLevel && mc.getCameraEntity() == current
+      Player current = target;
+      return isActive() && current != null && !current.isRemoved() && mc != null && mc.level == level && mc.getCameraEntity() == current
          ? current
          : null;
    }
 
    public static Player init_Player(Player multiPilot) {
-      return multiPilot != null ? multiPilot : init_Player();
+      return multiPilot != null ? multiPilot : viewedPlayer();
    }
 
    public static Entity swapCamera(Minecraft mc) {
-      Player current = init_Player();
+      Player current = viewedPlayer();
       if (current != null && mc != null && mc.player != null && mc.getCameraEntity() == current) {
          mc.setCameraEntity(mc.player);
          return current;
@@ -128,12 +128,12 @@ public final class RemoteViewController {
    }
 
    public static void restoreCamera(Minecraft mc, Entity restore) {
-      if (mc != null && restore != null && isActive() && restore == init_Player && !restore.isRemoved() && mc.getCameraEntity() == mc.player) {
+      if (mc != null && restore != null && isActive() && restore == target && !restore.isRemoved() && mc.getCameraEntity() == mc.player) {
          mc.setCameraEntity(restore);
       }
    }
 
-   private static String init_Str(Player player) {
+   private static String nameOf(Player player) {
       String name = player.getGameProfile() == null ? null : player.getGameProfile().name();
       if (name == null || name.isBlank()) {
          name = player.getName().getString();
@@ -142,13 +142,13 @@ public final class RemoteViewController {
       return name != null && !name.isBlank() ? name : "player";
    }
 
-   private static void load() {
-      init_Player = null;
-      init_UUID = null;
-      init_Str = "";
-      init_ClientLevel = null;
-      init_CameraType = CameraType.FIRST_PERSON;
-      init_Z = false;
+   private static void clearState() {
+      target = null;
+      targetUuid = null;
+      targetName = "";
+      level = null;
+      previousCamera = CameraType.FIRST_PERSON;
+      wasThirdPerson = false;
    }
 
    public record Inner_DataUtil(boolean success, String message) {

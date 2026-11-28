@@ -24,7 +24,7 @@ final class AiDefense {
       return AiRunResources.hasMinDurability(shield, 8) && shield.get(DataComponents.BLOCKS_ATTACKS) != null && !mc.player.getCooldowns().isOnCooldown(shield);
    }
 
-   static int init_I(Minecraft mc) {
+   static int shieldDelay(Minecraft mc) {
       BlocksAttacks component = mc.player.getOffhandItem().get(DataComponents.BLOCKS_ATTACKS);
       if (component == null) {
          return 2147483647;
@@ -48,7 +48,7 @@ final class AiDefense {
          return false;
       }
 
-      int remaining = init_I(mc);
+      int remaining = shieldDelay(mc);
       return remaining == 0 || ticksUntilImpact >= remaining + 2;
    }
 

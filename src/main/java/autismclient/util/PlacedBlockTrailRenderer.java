@@ -15,10 +15,10 @@ public final class PlacedBlockTrailRenderer {
    private static final float init_F = 0.55F;
    private static final int[] XS = new int[32];
    private static final int[] YS = new int[32];
-   private static final int[] read = new int[32];
+   private static final int[] trailZ = new int[32];
    private static final long[] PLACED_AT = new long[32];
    private static final PlacedBlockTrailRenderer.Inner_DataUtil[] SOURCES = new PlacedBlockTrailRenderer.Inner_DataUtil[32];
-   private static final int[] write = new int[32];
+   private static final int[] trailColor = new int[32];
    private static final boolean[] CUSTOM_COLOR = new boolean[32];
    private static final PlacedBlockTrailRenderer.Inner_StreamUtil[] STYLES = new PlacedBlockTrailRenderer.Inner_StreamUtil[]{
       new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373), new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373)
@@ -65,10 +65,10 @@ public final class PlacedBlockTrailRenderer {
       if (style.enabled() && pos != null) {
          XS[nextIndex] = pos.getX();
          YS[nextIndex] = pos.getY();
-         read[nextIndex] = pos.getZ();
+         trailZ[nextIndex] = pos.getZ();
          PLACED_AT[nextIndex] = System.nanoTime();
          SOURCES[nextIndex] = source;
-         write[nextIndex] = style.argb() | 0xFF000000;
+         trailColor[nextIndex] = style.argb() | 0xFF000000;
          CUSTOM_COLOR[nextIndex] = style.load();
          nextIndex = (nextIndex + 1) % 32;
       }
@@ -126,14 +126,14 @@ public final class PlacedBlockTrailRenderer {
                                  if (t != 0L) {
                                     long age = now - t;
                                     if (age >= 0L && age < 320000000L) {
-                                       init(
+                                       drawBlock(
                                           pose,
                                           buffer,
                                           XS[i] - origin.x,
                                           YS[i] - origin.y,
-                                          read[i] - origin.z,
+                                          trailZ[i] - origin.z,
                                           age / 3.2E8,
-                                          CUSTOM_COLOR[i] ? write[i] : accent
+                                          CUSTOM_COLOR[i] ? trailColor[i] : accent
                                        );
                                     }
                                  }
@@ -146,7 +146,7 @@ public final class PlacedBlockTrailRenderer {
          );
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, double bx, double by, double bz, double t, int argb) {
+   private static void drawBlock(Pose pose, VertexConsumer buffer, double bx, double by, double bz, double t, int argb) {
       double inv = 1.0 - t;
       double scale = 1.0 - inv * inv * inv;
       double fade = t < 0.62 ? 1.0 : 1.0 - (t - 0.62) / 0.38;
@@ -160,16 +160,16 @@ public final class PlacedBlockTrailRenderer {
          double x2 = bx + 0.5 + half;
          double y2 = by + 0.5 + half;
          double z2 = bz + 0.5 + half;
-         init(pose, buffer, x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, c);
-         init(pose, buffer, x1, y2, z2, x2, y2, z2, x2, y2, z1, x1, y2, z1, c);
-         init(pose, buffer, x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, c);
-         init(pose, buffer, x2, y1, z1, x1, y1, z1, x1, y2, z1, x2, y2, z1, c);
-         init(pose, buffer, x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, c);
-         init(pose, buffer, x2, y1, z2, x2, y1, z1, x2, y2, z1, x2, y2, z2, c);
+         drawQuad(pose, buffer, x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, c);
+         drawQuad(pose, buffer, x1, y2, z2, x2, y2, z2, x2, y2, z1, x1, y2, z1, c);
+         drawQuad(pose, buffer, x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, c);
+         drawQuad(pose, buffer, x2, y1, z1, x1, y1, z1, x1, y2, z1, x2, y2, z1, c);
+         drawQuad(pose, buffer, x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, c);
+         drawQuad(pose, buffer, x2, y1, z2, x2, y1, z1, x2, y2, z1, x2, y2, z2, c);
       }
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,

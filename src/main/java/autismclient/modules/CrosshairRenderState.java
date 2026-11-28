@@ -3,21 +3,21 @@ package autismclient.modules;
 import autismclient.util.AutismLiteVariant;
 
 public final class CrosshairRenderState {
-   private static volatile CrosshairRenderState.Inner_DataUtil init;
+   private static volatile CrosshairRenderState.Inner_DataUtil activeState;
 
    private CrosshairRenderState() {
    }
 
    static void setState(CrosshairRenderState.Inner_DataUtil value) {
-      init = value;
+      activeState = value;
    }
 
    static void clear() {
-      init = null;
+      activeState = null;
    }
 
    public static CrosshairRenderState.Inner_DataUtil current() {
-      CrosshairRenderState.Inner_DataUtil current = init;
+      CrosshairRenderState.Inner_DataUtil current = activeState;
       return current != null && init_Z() ? current : null;
    }
 

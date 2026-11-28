@@ -39,7 +39,7 @@ public final class AiInventoryController implements AiOperation {
    private final Set<Integer> allowedSources;
    private final Set<Integer> allowedDestinations;
    private final ItemStack savedStack;
-   private final int flush;
+   private final int savedDestination;
    private final ItemStack exactInventoryStack;
    private final Object startLevel = this.mc == null ? null : this.mc.level;
    private final Object startPlayer = this.mc == null ? null : this.mc.player;
@@ -92,7 +92,7 @@ public final class AiInventoryController implements AiOperation {
       this.allowedSources = allowedSources == null ? null : Set.copyOf(allowedSources);
       this.allowedDestinations = allowedDestinations == null ? null : Set.copyOf(allowedDestinations);
       this.savedStack = savedStack.copy();
-      this.flush = savedDestination;
+      this.savedDestination = savedDestination;
       if (savedDestination >= 0 && savedStack.isEmpty()) {
          throw new IllegalArgumentException("A saved storage slot requires a nonempty stack");
       }
@@ -138,7 +138,7 @@ public final class AiInventoryController implements AiOperation {
          if (this.pendingPickup != null) {
             AiContainerTransactions.ReceiptState state = this.pendingPickup.checkStatus(menu, System.nanoTime());
             if (state == AiContainerTransactions.ReceiptState.WAITING) {
-               return this.init("Waiting for the server's storage slots and cursor");
+               return this.running("Waiting for the server's storage slots and cursor");
             }
 
             if (state != AiContainerTransactions.ReceiptState.CONFIRMED) {
@@ -155,9 +155,9 @@ public final class AiInventoryController implements AiOperation {
                return this.finish(AiOperation.Status.FAILED, "Clear the cursor stack before reconciliation");
             }
 
-            if (this.flush >= 0) {
+            if (this.savedDestination >= 0) {
                AiInventoryController.Inner_StreamUtil transfer = planTransferTo(
-                  menu, this.mc.player.getInventory(), this.mc.player, this.flush, this.savedStack
+                  menu, this.mc.player.getInventory(), this.mc.player, this.savedDestination, this.savedStack
                );
                if (transfer.state() == AiInventoryController.Inner_DataUtil.SATISFIED) {
                   return this.finish(AiOperation.Status.SUCCEEDED, "Saved storage slot and empty cursor verified");
@@ -176,7 +176,7 @@ public final class AiInventoryController implements AiOperation {
                }
 
                this.sourceSlot = transfer.source();
-               this.destinationSlot = this.flush;
+               this.destinationSlot = this.savedDestination;
                this.transferAmount = transfer.amount();
                return this.init_AiOperation_Result_AbstractContainerM_Str(menu, "Picking up the saved storage item");
             } else {
@@ -196,7 +196,7 @@ public final class AiInventoryController implements AiOperation {
                   for (Slot slot : menu.slots) {
                      if ((this.allowedSources == null || this.allowedSources.contains(slot.index))
                         && slot.container == this.mc.player.getInventory() == deposit
-                        && this.init(slot.getItem())
+                        && this.matchesItem(slot.getItem())
                         && slot.mayPickup(this.mc.player)
                         && (pass != 0 || AiItems.isPlainItem(slot.getItem()))) {
                         this.sourceSlot = slot.index;
@@ -228,11 +228,11 @@ public final class AiInventoryController implements AiOperation {
          } else {
             if (this.sync != 1) {
                this.sync = 0;
-               return this.init("Checking reconciled inventory");
+               return this.running("Checking reconciled inventory");
             }
 
             if (this.transferAmount > 0) {
-               AiInventoryController.Inner_CachePool choice = init(menu, this.destinationSlot, this.transferAmount);
+               AiInventoryController.Inner_CachePool choice = planMove(menu, this.destinationSlot, this.transferAmount);
                if (choice == null) {
                   return this.finish(
                      AiOperation.Status.UNCERTAIN, "Storage or cursor changed before the next transfer; inspect before continuing"
@@ -254,10 +254,10 @@ public final class AiInventoryController implements AiOperation {
                }
 
                this.transferAmount = this.transferAmount - choice.amount();
-               return this.init("Transferring the exact quantity into storage or inventory");
+               return this.running("Transferring the exact quantity into storage or inventory");
             } else if (menu.getCarried().isEmpty()) {
                this.sync = 0;
-               return this.init("Checking reconciled inventory");
+               return this.running("Checking reconciled inventory");
             } else {
                ItemStack cursor = menu.getCarried();
                Slot slot = menu.getSlot(this.sourceSlot);
@@ -268,7 +268,7 @@ public final class AiInventoryController implements AiOperation {
                   && (existing.isEmpty() || ItemStack.isSameItemSameComponents(existing, cursor))
                   && this.sendVerifiedClick(this.sourceSlot, 0, cursor.copyWithCount(count), menu.getSlot(this.destinationSlot).getItem(), ItemStack.EMPTY)) {
                   this.sync = 2;
-                  return this.init("Returning the unused stack without disposal");
+                  return this.running("Returning the unused stack without disposal");
                } else {
                   return this.finish(
                      AiOperation.Status.UNCERTAIN, "The source slot cannot safely take back the cursor stack. Inspect the open storage."
@@ -283,7 +283,7 @@ public final class AiInventoryController implements AiOperation {
       }
    }
 
-   static AiInventoryController.Inner_CachePool init(AbstractContainerMenu menu, int destination, int remaining) {
+   static AiInventoryController.Inner_CachePool planMove(AbstractContainerMenu menu, int destination, int remaining) {
       if (remaining > 0 && destination >= 0 && destination < menu.slots.size()) {
          ItemStack cursor = menu.getCarried();
          Slot slot = menu.getSlot(destination);
@@ -361,7 +361,7 @@ public final class AiInventoryController implements AiOperation {
       }
 
       this.sync = 1;
-      return this.init(message);
+      return this.running(message);
    }
 
    private boolean sendVerifiedClick(int slot, int button, ItemStack from, ItemStack to, ItemStack cursor) {
@@ -398,7 +398,7 @@ public final class AiInventoryController implements AiOperation {
          : countMatching(this.mc.player.getInventory(), this.exactInventoryStack);
    }
 
-   private boolean init(ItemStack stack) {
+   private boolean matchesItem(ItemStack stack) {
       return !stack.isEmpty()
          && (
             this.exactInventoryStack.isEmpty()
@@ -407,7 +407,7 @@ public final class AiInventoryController implements AiOperation {
          );
    }
 
-   private AiOperation.Result init(String text) {
+   private AiOperation.Result running(String text) {
       return this.finish(AiOperation.Status.RUNNING, text);
    }
 
@@ -493,7 +493,7 @@ public final class AiInventoryController implements AiOperation {
             "containerId",
             this.containerId,
             "savedSlot",
-            this.flush,
+            this.savedDestination,
             "savedCount",
             this.savedStack.getCount(),
             "cursorMayContainItems",

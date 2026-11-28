@@ -21,7 +21,7 @@ public final class WindowHeaderHelper {
       return closeButton(windowBounds, headerHeight).init_Z((int)mouseX, (int)mouseY);
    }
 
-   public static boolean load(autismclient.gui.f.NetHelper windowBounds, int headerHeight, double mouseX, double mouseY) {
+   public static boolean isOverHeader(autismclient.gui.f.NetHelper windowBounds, int headerHeight, double mouseX, double mouseY) {
       return collapseButton(windowBounds, headerHeight).init_Z((int)mouseX, (int)mouseY);
    }
 
@@ -36,7 +36,7 @@ public final class WindowHeaderHelper {
       if (!read(windowBounds, headerHeight, mouseX, mouseY)) {
          return false;
       } else {
-         return hasClose && overClose(windowBounds, headerHeight, mouseX, mouseY) ? false : !hasCollapse || !load(windowBounds, headerHeight, mouseX, mouseY);
+         return hasClose && overClose(windowBounds, headerHeight, mouseX, mouseY) ? false : !hasCollapse || !isOverHeader(windowBounds, headerHeight, mouseX, mouseY);
       }
    }
 

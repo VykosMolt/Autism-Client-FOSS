@@ -16,20 +16,20 @@ final class AutismConfigSnapshotter {
    }
 
    static AutismConfig snapshot(AutismConfig source) {
-      return init(source, true);
+      return copyConfig(source, true);
    }
 
    static AutismConfig persistentSnapshot(AutismConfig source) {
-      return init(source, false);
+      return copyConfig(source, false);
    }
 
-   private static AutismConfig init(AutismConfig source, boolean applyDefaults) {
+   private static AutismConfig copyConfig(AutismConfig source, boolean applyDefaults) {
       if (source == null) {
          return new AutismConfig();
       }
 
       try {
-         AutismConfig copy = (AutismConfig)init(source, new IdentityHashMap<>());
+         AutismConfig copy = (AutismConfig)deepCopy(source, new IdentityHashMap<>());
          if (applyDefaults) {
             copy.applyRuntimeDefaults();
          }
@@ -40,8 +40,8 @@ final class AutismConfigSnapshotter {
       }
    }
 
-   private static Object init(Object value, IdentityHashMap<Object, Object> seen) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-      if (value != null && !init(value.getClass())) {
+   private static Object deepCopy(Object value, IdentityHashMap<Object, Object> seen) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+      if (value != null && !isImmutable(value.getClass())) {
          Object prior = seen.get(value);
          if (prior != null) {
             return prior;
@@ -52,7 +52,7 @@ final class AutismConfigSnapshotter {
             seen.put(value, copy);
 
             for (Object element : list) {
-               copy.add(init(element, seen));
+               copy.add(deepCopy(element, seen));
             }
 
             return copy;
@@ -66,14 +66,14 @@ final class AutismConfigSnapshotter {
             constructor.setAccessible(true);
             Object copy = constructor.newInstance();
             seen.put(value, copy);
-            init(value, copy, type, seen);
+            copyFields(value, copy, type, seen);
             return copy;
          } else {
             LinkedHashMap copy = new LinkedHashMap(Math.max(4, map.size()));
             seen.put(value, copy);
 
             for (Entry<?, ?> entry : map.entrySet()) {
-               copy.put(init(entry.getKey(), seen), init(entry.getValue(), seen));
+               copy.put(deepCopy(entry.getKey(), seen), deepCopy(entry.getValue(), seen));
             }
 
             return copy;
@@ -83,19 +83,19 @@ final class AutismConfigSnapshotter {
       }
    }
 
-   private static void init(Object source, Object target, Class<?> type, IdentityHashMap<Object, Object> seen) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+   private static void copyFields(Object source, Object target, Class<?> type, IdentityHashMap<Object, Object> seen) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
       for (Class<?> current = type; current != null && current != Object.class; current = current.getSuperclass()) {
          for (Field field : current.getDeclaredFields()) {
             int modifiers = field.getModifiers();
             if (!Modifier.isStatic(modifiers) && !Modifier.isTransient(modifiers)) {
                field.setAccessible(true);
-               field.set(target, init(field.get(source), seen));
+               field.set(target, deepCopy(field.get(source), seen));
             }
          }
       }
    }
 
-   private static boolean init(Class<?> type) {
+   private static boolean isImmutable(Class<?> type) {
       return type.isPrimitive()
          || type.isEnum()
          || type == String.class

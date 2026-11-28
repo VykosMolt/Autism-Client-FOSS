@@ -16,13 +16,13 @@ import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket;
 import net.minecraft.network.protocol.common.ServerboundPongPacket;
 
 public final class PacketGateManager {
-   private static final ConcurrentHashMap<String, PacketGateManager.Inner_DataUtil> init_ConcurrentHashMap = new ConcurrentHashMap<>();
-   private static volatile String init_Str = null;
+   private static final ConcurrentHashMap<String, PacketGateManager.Inner_DataUtil> GATES = new ConcurrentHashMap<>();
+   private static volatile String newestKey = null;
 
    private PacketGateManager() {
    }
 
-   public static void init(PacketGateAction action) {
+   public static void openGate(PacketGateAction action) {
       open(action, 0L);
    }
 
@@ -39,9 +39,9 @@ public final class PacketGateManager {
          if (action.mode == PacketGateAction.GateMode.DISABLE_GATE) {
             close(id, ownerRunId);
          } else {
-            String key = init(ownerRunId, id);
-            init_ConcurrentHashMap.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
-            init_Str = key;
+            String key = gateKey(ownerRunId, id);
+            GATES.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
+            newestKey = key;
          }
       }
    }
@@ -49,8 +49,8 @@ public final class PacketGateManager {
    public static void removeGate(String id) {
       if (id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
          String target = id.trim();
-         init_ConcurrentHashMap.entrySet().removeIf(entry -> entry.getValue().id.equalsIgnoreCase(target));
-         read();
+         GATES.entrySet().removeIf(entry -> entry.getValue().id.equalsIgnoreCase(target));
+         refreshNewestKey();
       } else {
          clearAll();
       }
@@ -61,13 +61,13 @@ public final class PacketGateManager {
          removeGate(id);
       } else {
          if (id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
-            init_ConcurrentHashMap.remove(init(ownerRunId, id));
-            init_ConcurrentHashMap.remove(init(0L, id));
+            GATES.remove(gateKey(ownerRunId, id));
+            GATES.remove(gateKey(0L, id));
          } else {
-            init_ConcurrentHashMap.entrySet().removeIf(entry -> entry.getValue().ownerRunId == ownerRunId);
+            GATES.entrySet().removeIf(entry -> entry.getValue().ownerRunId == ownerRunId);
          }
 
-         read();
+         refreshNewestKey();
       }
    }
 
@@ -81,7 +81,7 @@ public final class PacketGateManager {
       } else if (ownerRunId > 0L || id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
          ArrayList<PacketGateManager.Inner_DataUtil> removed = new ArrayList<>();
          if (id == null || id.isBlank() || id.equalsIgnoreCase("all")) {
-            init_ConcurrentHashMap.entrySet().removeIf(entry -> {
+            GATES.entrySet().removeIf(entry -> {
                if (entry.getValue().ownerRunId != ownerRunId) {
                   return false;
                }
@@ -90,13 +90,13 @@ public final class PacketGateManager {
                return true;
             });
          } else if (ownerRunId > 0L) {
-            PacketGateManager.Inner_DataUtil gate = init_ConcurrentHashMap.remove(init(ownerRunId, id));
+            PacketGateManager.Inner_DataUtil gate = GATES.remove(gateKey(ownerRunId, id));
             if (gate != null) {
                removed.add(gate);
             }
          } else {
             String target = id.trim();
-            init_ConcurrentHashMap.entrySet().removeIf(entry -> {
+            GATES.entrySet().removeIf(entry -> {
                if (!entry.getValue().id.equalsIgnoreCase(target)) {
                   return false;
                }
@@ -106,7 +106,7 @@ public final class PacketGateManager {
             });
          }
 
-         read();
+         refreshNewestKey();
          boolean shouldFlush = flushRequested || removed.stream().anyMatch(gate -> gate.flushOnDisable);
          if (shouldFlush && !hasDelayGate()) {
             AutismSessionState.getInstance().flushDelayedPackets(connection);
@@ -120,9 +120,9 @@ public final class PacketGateManager {
       if (autismclient.modules.aD.read_Z()) {
          clearAll();
       } else {
-         String key = init_Str;
+         String key = newestKey;
          if (key != null) {
-            PacketGateManager.Inner_DataUtil gate = init_ConcurrentHashMap.get(key);
+            PacketGateManager.Inner_DataUtil gate = GATES.get(key);
             if (gate != null) {
                close(gate.id, gate.ownerRunId, Minecraft.getInstance().getConnection(), true);
             }
@@ -131,15 +131,15 @@ public final class PacketGateManager {
    }
 
    public static void clearAll() {
-      init_ConcurrentHashMap.clear();
-      init_Str = null;
+      GATES.clear();
+      newestKey = null;
    }
 
    public static void onConnectionChange(ClientPacketListener connection) {
       if (autismclient.modules.aD.read_Z()) {
          clearAll();
       } else {
-         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY && g.flushOnDisable);
+         boolean flush = GATES.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY && g.flushOnDisable);
          clearAll();
          if (flush) {
             AutismSessionState.getInstance().flushDelayedPackets(connection);
@@ -154,27 +154,27 @@ public final class PacketGateManager {
    }
 
    private static boolean hasDelayGate() {
-      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY);
+      return GATES.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY);
    }
 
-   private static String init_Str() {
+   private static String findNewestKey() {
       String newest = null;
 
-      for (String key : init_ConcurrentHashMap.keySet()) {
+      for (String key : GATES.keySet()) {
          newest = key;
       }
 
       return newest;
    }
 
-   private static void read() {
-      String current = init_Str;
-      if (current == null || !init_ConcurrentHashMap.containsKey(current)) {
-         init_Str = init_Str();
+   private static void refreshNewestKey() {
+      String current = newestKey;
+      if (current == null || !GATES.containsKey(current)) {
+         newestKey = findNewestKey();
       }
    }
 
-   private static String init(long ownerRunId, String id) {
+   private static String gateKey(long ownerRunId, String id) {
       String normalized = id != null && !id.isBlank() ? id.trim().toLowerCase(Locale.ROOT) : "auto";
       return ownerRunId + "\u0000" + normalized;
    }
@@ -182,7 +182,7 @@ public final class PacketGateManager {
    static int countForRun(long ownerRunId) {
       int count = 0;
 
-      for (PacketGateManager.Inner_DataUtil gate : init_ConcurrentHashMap.values()) {
+      for (PacketGateManager.Inner_DataUtil gate : GATES.values()) {
          if (gate.ownerRunId == ownerRunId) {
             count++;
          }
@@ -196,25 +196,25 @@ public final class PacketGateManager {
          return PacketGateManager.Inner_StreamUtil.PASS;
       }
 
-      if (packet != null && !init_ConcurrentHashMap.isEmpty()) {
-         if (init(packet)) {
+      if (packet != null && !GATES.isEmpty()) {
+         if (isKeepAlivePacket(packet)) {
             return PacketGateManager.Inner_StreamUtil.PASS;
          }
 
          PacketGateManager.Inner_StreamUtil result = PacketGateManager.Inner_StreamUtil.PASS;
          ClientPacketListener current = Minecraft.getInstance().getConnection();
-         Iterator<PacketGateManager.Inner_DataUtil> gates = init_ConcurrentHashMap.values().iterator();
+         Iterator<PacketGateManager.Inner_DataUtil> gates = GATES.values().iterator();
 
          while (gates.hasNext()) {
             PacketGateManager.Inner_DataUtil gate = gates.next();
             // Gates without a run owner end with the connection they were made on.
             if (gate.ownerRunId == 0L && gate.connection != current) {
                gates.remove();
-               read();
+               refreshNewestKey();
                continue;
             }
 
-            boolean packetMatches = gate.load || init(gate.normalized, packet, direction);
+            boolean packetMatches = gate.matchAll || matchesAny(gate.normalized, packet, direction);
             switch (gate.mode) {
                case CANCEL:
                   if (packetMatches) {
@@ -240,16 +240,16 @@ public final class PacketGateManager {
       }
    }
 
-   private static boolean init(Packet<?> packet) {
+   private static boolean isKeepAlivePacket(Packet<?> packet) {
       return packet instanceof ServerboundPongPacket
          || packet instanceof ClientboundPingPacket
          || packet instanceof ServerboundKeepAlivePacket
          || packet instanceof ClientboundKeepAlivePacket;
    }
 
-   private static boolean init(String[] normalizedPatterns, Packet<?> packet, String direction) {
+   private static boolean matchesAny(String[] normalizedPatterns, Packet<?> packet, String direction) {
       for (int i = 0; i < normalizedPatterns.length; i++) {
-         if (load(normalizedPatterns[i], packet, direction)) {
+         if (matchesPattern(normalizedPatterns[i], packet, direction)) {
             return true;
          }
       }
@@ -258,35 +258,35 @@ public final class PacketGateManager {
    }
 
    public static boolean hasActiveGates() {
-      return autismclient.modules.aD.read_Z() ? false : !init_ConcurrentHashMap.isEmpty();
+      return autismclient.modules.aD.read_Z() ? false : !GATES.isEmpty();
    }
 
    public static boolean matches(String expected, Packet<?> packet, String direction) {
-      return expected != null && !expected.isBlank() ? load(resolvePacketName(expected), packet, direction) : true;
+      return expected != null && !expected.isBlank() ? matchesPattern(resolvePacketName(expected), packet, direction) : true;
    }
 
-   private static boolean load(String want, Packet<?> packet, String direction) {
+   private static boolean matchesPattern(String want, Packet<?> packet, String direction) {
       if (want.isEmpty()) {
          return false;
       }
 
-      if (init(want, resolvePacketName(PacketNameResolver.directionalName(packet, direction)))) {
+      if (namesMatch(want, resolvePacketName(PacketNameResolver.directionalName(packet, direction)))) {
          return true;
       }
 
-      if (init(want, resolvePacketName(PacketNameResolver.nameOf(packet)))) {
+      if (namesMatch(want, resolvePacketName(PacketNameResolver.nameOf(packet)))) {
          return true;
       }
 
-      if (init(want, resolvePacketName(packet.getClass().getSimpleName()))) {
+      if (namesMatch(want, resolvePacketName(packet.getClass().getSimpleName()))) {
          return true;
       }
 
       String registry = resolvePacketName(PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packet.getClass()));
-      return init(want, registry);
+      return namesMatch(want, registry);
    }
 
-   private static boolean init(String a, String b) {
+   private static boolean namesMatch(String a, String b) {
       return !a.isEmpty() && !b.isEmpty() && (a.equals(b) || a.endsWith(b) || b.endsWith(a));
    }
 
@@ -301,7 +301,7 @@ public final class PacketGateManager {
       public final ArrayList<String> packets;
       public final boolean flushOnDisable;
       final String[] normalized;
-      final boolean load;
+      final boolean matchAll;
       final ClientPacketListener connection;
 
       Inner_DataUtil(long ownerRunId, String id, PacketGateAction.GateMode mode, ArrayList<String> packets, boolean flushOnDisable) {
@@ -324,7 +324,7 @@ public final class PacketGateManager {
             }
          }
 
-         this.load = all;
+         this.matchAll = all;
          this.normalized = normalized;
       }
    }

@@ -71,7 +71,7 @@ final class PrintFlightWorkstations {
       edges.add(high);
 
       for (AABB box : boxes) {
-         if (init(column, box)) {
+         if (overlapsXZ(column, box)) {
             double below = box.minY - 1.8;
             double above = box.maxY;
             if (below > low && below < high) {
@@ -115,7 +115,7 @@ final class PrintFlightWorkstations {
       return List.copyOf(points);
    }
 
-   private static boolean init(AABB a, AABB b) {
+   private static boolean overlapsXZ(AABB a, AABB b) {
       return a.minX < b.maxX && a.maxX > b.minX && a.minZ < b.maxZ && a.maxZ > b.minZ;
    }
 }

@@ -13,7 +13,7 @@ public final class CaptureButtonRenderer {
    private CaptureButtonRenderer() {
    }
 
-   public static OverlayActionButton init(
+   public static OverlayActionButton draw(
       GuiGraphicsExtractor graphics,
       Font font,
       NetHelper bounds,
@@ -56,7 +56,7 @@ public final class CaptureButtonRenderer {
       return button;
    }
 
-   public static String init(autismclient.gui.macro.editor.CaptureMode mode, boolean capturing) {
+   public static String labelFor(autismclient.gui.macro.editor.CaptureMode mode, boolean capturing) {
       return label(mode, capturing, null, null);
    }
 

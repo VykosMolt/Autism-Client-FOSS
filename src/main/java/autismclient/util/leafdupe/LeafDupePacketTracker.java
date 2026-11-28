@@ -27,7 +27,7 @@ public final class LeafDupePacketTracker {
    private static BlockPos load_BlockPos;
    private static boolean fullyBroken;
    private static BlockPos currentTarget;
-   private static BlockPos write;
+   private static BlockPos breakingPos;
    private static double breakDamage;
    private static long breakStartMs;
    private static int lastCarriedSlot = -1;
@@ -68,7 +68,7 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundSetCarriedItemPacket packet, Object scope) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil recordSlotChange(ServerboundSetCarriedItemPacket packet, Object scope) {
       return trackSlot(packet, scope, null);
    }
 
@@ -99,10 +99,10 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized boolean init(Packet<?> packet, boolean scopeValid) {
-      return init(packet, scopeValid, System.nanoTime());
+      return allowsSend(packet, scopeValid, System.nanoTime());
    }
 
-   static synchronized boolean init(Packet<?> packet, boolean scopeValid, long now) {
+   static synchronized boolean allowsSend(Packet<?> packet, boolean scopeValid, long now) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = receipts.get(packet);
       if (receipt == null) {
          return true;
@@ -138,14 +138,14 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized long waitMs() {
-      if (write == null) {
+      if (breakingPos == null) {
          return 0L;
       } else {
-         return breakDamage <= 0.0 ? 9223372036854775807L : init(System.currentTimeMillis(), breakDamage, breakStartMs);
+         return breakDamage <= 0.0 ? 9223372036854775807L : nextBreakTime(System.currentTimeMillis(), breakDamage, breakStartMs);
       }
    }
 
-   static long init(long now, double damage, long lastTime) {
+   static long nextBreakTime(long now, double damage, long lastTime) {
       double delay = Double.isInfinite(damage) ? 0.0 : Math.ceil(1.0 / damage) * 50.0;
       return Math.max(0L, (long)Math.ceil(delay) - (now - lastTime));
    }
@@ -177,11 +177,11 @@ public final class LeafDupePacketTracker {
       if (packet instanceof ServerboundSetCarriedItemPacket carried) {
          setCarriedSlot(carried.getSlot());
       } else if (packet instanceof ServerboundPlayerActionPacket action) {
-         init(action, receipt == null ? null : receipt.damage);
+         recordActionWithDamage(action, receipt == null ? null : receipt.damage);
       } else if (packet instanceof ServerboundMovePlayerPacket || packet instanceof CompatSwingPacket) {
-         write();
+         refreshBreakDamage();
       } else if (packet instanceof ServerboundPongPacket pong) {
-         load(pong.getId());
+         dropPredictionsFor(pong.getId());
       }
 
       if (receipt != null) {
@@ -190,23 +190,23 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   static synchronized void init(ServerboundPlayerActionPacket packet) {
-      init(packet, null);
+   static synchronized void recordAction(ServerboundPlayerActionPacket packet) {
+      recordActionWithDamage(packet, null);
    }
 
-   private static void init(ServerboundPlayerActionPacket packet, Double preparedDamage) {
+   private static void recordActionWithDamage(ServerboundPlayerActionPacket packet, Double preparedDamage) {
       BlockPos pos = packet.getPos().immutable();
       long now = System.currentTimeMillis();
       switch (packet.getAction()) {
          case START_DESTROY_BLOCK:
             breakGeneration++;
-            double damage = preparedDamage == null ? init(pos, false) : preparedDamage;
+            double damage = preparedDamage == null ? breakDamageAt(pos, false) : preparedDamage;
             fullyBroken = damage >= 1.0;
             load_BlockPos = null;
             init_BlockPos = pos;
             currentTarget = damage < 1.0 ? pos : null;
-            breakStartMs = now - (write == null ? 50L : 0L);
-            write = pos;
+            breakStartMs = now - (breakingPos == null ? 50L : 0L);
+            breakingPos = pos;
             breakDamage = damage;
             break;
          case ABORT_DESTROY_BLOCK:
@@ -214,7 +214,7 @@ public final class LeafDupePacketTracker {
             init_BlockPos = null;
             break;
          case STOP_DESTROY_BLOCK:
-            if (write != null) {
+            if (breakingPos != null) {
                breakStartMs = now;
             }
 
@@ -231,25 +231,25 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   private static synchronized void write() {
-      if (write != null) {
-         breakDamage = Math.max(breakDamage, init(write, true));
+   private static synchronized void refreshBreakDamage() {
+      if (breakingPos != null) {
+         breakDamage = Math.max(breakDamage, breakDamageAt(breakingPos, true));
       }
    }
 
-   static synchronized void load(int id) {
+   static synchronized void dropPredictionsFor(int id) {
       predictions.values().removeIf(prediction -> prediction.entityId != null && prediction.entityId == id);
    }
 
    public static void onReceive(Packet<?> packet) {
       if (packet instanceof ClientboundBlockChangedAckPacket ack) {
-         read(ack.sequence());
+         ackSequence(ack.sequence());
       } else if (packet instanceof ClientboundPingPacket ping) {
-         write(ping.getId());
+         bindAckedEntity(ping.getId());
       }
    }
 
-   static synchronized void read(int sequence) {
+   static synchronized void ackSequence(int sequence) {
       for (LeafDupePacketTracker.Inner_DataUtil prediction : predictions.values()) {
          if (prediction.sequence <= sequence) {
             prediction.init_Z = true;
@@ -257,7 +257,7 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   static synchronized void write(int id) {
+   static synchronized void bindAckedEntity(int id) {
       for (LeafDupePacketTracker.Inner_DataUtil prediction : predictions.values()) {
          if (prediction.init_Z && prediction.entityId == null) {
             prediction.entityId = id;
@@ -280,13 +280,13 @@ public final class LeafDupePacketTracker {
       load_BlockPos = null;
       fullyBroken = false;
       currentTarget = null;
-      write = null;
+      breakingPos = null;
       breakDamage = 0.0;
       breakStartMs = 0L;
       predictions.clear();
    }
 
-   private static double init(BlockPos pos, boolean predictionAware) {
+   private static double breakDamageAt(BlockPos pos, boolean predictionAware) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          if (predictionAware && predictions.containsKey(pos.asLong())) {
@@ -308,12 +308,12 @@ public final class LeafDupePacketTracker {
    public static final class Inner_CachePool {
       private final WeakReference<Object> owner;
       private final Vec3 eye;
-      private final Vec3 load;
+      private final Vec3 serverEye;
 
       public Inner_CachePool(Object owner, Vec3 eye, Vec3 serverEye) {
          this.owner = new WeakReference<>(owner);
          this.eye = eye;
-         this.load = serverEye;
+         this.serverEye = serverEye;
       }
 
       public Object init() {
@@ -324,7 +324,7 @@ public final class LeafDupePacketTracker {
          return currentOwner != null
             && currentOwner == this.owner.get()
             && this.eye.distanceToSqr(currentEye) < 1.0E-8
-            && this.load.distanceToSqr(currentServerEye) < 1.0E-8;
+            && this.serverEye.distanceToSqr(currentServerEye) < 1.0E-8;
       }
    }
 

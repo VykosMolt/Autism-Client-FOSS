@@ -17,8 +17,8 @@ import net.minecraft.network.chat.Component;
 
 public class XCarrySlotArgumentType implements ArgumentType<Integer> {
    public static final int init_I = -2147483648;
-   private static final Map<String, Integer> init_Map = new LinkedHashMap<>();
-   private static final SimpleCommandExceptionType init_SimpleCommandExcep = new SimpleCommandExceptionType(
+   private static final Map<String, Integer> SLOTS = new LinkedHashMap<>();
+   private static final SimpleCommandExceptionType UNKNOWN_SLOT = new SimpleCommandExceptionType(
       Component.literal("Unknown XCarry slot — use craft1..craft5 / helmet / chestplate / leggings / boots / offhand / cursor.")
    );
 
@@ -31,7 +31,7 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
    }
 
    public static String slotName(int slotId) {
-      for (Entry<String, Integer> e : init_Map.entrySet()) {
+      for (Entry<String, Integer> e : SLOTS.entrySet()) {
          if (e.getValue() == slotId) {
             return e.getKey();
          }
@@ -41,14 +41,14 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
    }
 
    public Integer parse(StringReader reader) throws CommandSyntaxException {
-      return this.init_Integer_StringReader(reader);
+      return this.parseToken(reader);
    }
 
-   public Integer init_Integer_StringReader(StringReader reader) throws CommandSyntaxException {
+   public Integer parseToken(StringReader reader) throws CommandSyntaxException {
       String raw = reader.readUnquotedString().toLowerCase(Locale.ROOT);
-      Integer id = init_Map.get(raw);
+      Integer id = SLOTS.get(raw);
       if (id == null) {
-         throw init_SimpleCommandExcep.create();
+         throw UNKNOWN_SLOT.create();
       } else {
          return id;
       }
@@ -58,7 +58,7 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (String name : init_Map.keySet()) {
+      for (String name : SLOTS.keySet()) {
          if (name.startsWith(remaining)) {
             builder.suggest(name);
          }
@@ -68,18 +68,18 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
    }
 
    static {
-      init_Map.put("craft1", 1);
-      init_Map.put("craft2", 2);
-      init_Map.put("craft3", 3);
-      init_Map.put("craft4", 4);
-      init_Map.put("craft5", 0);
-      init_Map.put("crafting5", 0);
-      init_Map.put("result", 0);
-      init_Map.put("helmet", 5);
-      init_Map.put("chestplate", 6);
-      init_Map.put("leggings", 7);
-      init_Map.put("boots", 8);
-      init_Map.put("offhand", 45);
-      init_Map.put("cursor", -2147483648);
+      SLOTS.put("craft1", 1);
+      SLOTS.put("craft2", 2);
+      SLOTS.put("craft3", 3);
+      SLOTS.put("craft4", 4);
+      SLOTS.put("craft5", 0);
+      SLOTS.put("crafting5", 0);
+      SLOTS.put("result", 0);
+      SLOTS.put("helmet", 5);
+      SLOTS.put("chestplate", 6);
+      SLOTS.put("leggings", 7);
+      SLOTS.put("boots", 8);
+      SLOTS.put("offhand", 45);
+      SLOTS.put("cursor", -2147483648);
    }
 }

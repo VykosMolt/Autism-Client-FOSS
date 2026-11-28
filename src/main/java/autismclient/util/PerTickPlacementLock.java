@@ -1,24 +1,24 @@
 package autismclient.util;
 
 public final class PerTickPlacementLock {
-   private static String init_Str;
-   private static int init_I = -2147483648;
+   private static String ownerModule;
+   private static int lockTick = -2147483648;
 
    private PerTickPlacementLock() {
    }
 
    public static synchronized boolean init(String moduleId) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick != init_I) {
-         init_Str = moduleId;
-         init_I = tick;
+      if (tick != lockTick) {
+         ownerModule = moduleId;
+         lockTick = tick;
          return true;
       } else {
-         return init_Str != null && init_Str.equals(moduleId);
+         return ownerModule != null && ownerModule.equals(moduleId);
       }
    }
 
    public static synchronized String init() {
-      return AutismSessionState.getInstance().getClientTick() == init_I ? init_Str : null;
+      return AutismSessionState.getInstance().getClientTick() == lockTick ? ownerModule : null;
    }
 }

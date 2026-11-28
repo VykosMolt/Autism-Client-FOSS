@@ -26,40 +26,40 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonLinks;
 
 public class StealthPauseScreen extends Screen {
-   private static final Component init_Component = Component.translatable("menu.returnToGame");
-   private static final Component load = Component.translatable("gui.advancements");
-   private static final Component read = Component.translatable("gui.stats");
-   private static final Component write = Component.translatable("menu.sendFeedback");
-   private static final Component update = Component.translatable("menu.reportBugs");
-   private static final Component sync = Component.translatable("menu.options");
-   private static final Component flush = Component.translatable("menu.multiplayerOptions.button");
-   private static final Component close = Component.translatable("menu.playerReporting");
-   private static final Component open = Component.translatable("menu.game");
-   private FriendsButton init_FriendsButton;
+   private static final Component RETURN_TO_GAME = Component.translatable("menu.returnToGame");
+   private static final Component ADVANCEMENTS = Component.translatable("gui.advancements");
+   private static final Component STATS = Component.translatable("gui.stats");
+   private static final Component SEND_FEEDBACK = Component.translatable("menu.sendFeedback");
+   private static final Component REPORT_BUGS = Component.translatable("menu.reportBugs");
+   private static final Component OPTIONS = Component.translatable("menu.options");
+   private static final Component MULTIPLAYER_OPTIONS = Component.translatable("menu.multiplayerOptions.button");
+   private static final Component PLAYER_REPORTING = Component.translatable("menu.playerReporting");
+   private static final Component GAME = Component.translatable("menu.game");
+   private FriendsButton friendsButton;
 
    public StealthPauseScreen() {
-      super(open);
+      super(GAME);
    }
 
    @Override
    protected void init() {
-      this.load();
+      this.createPauseMenu();
       int textWidth = this.font.width(this.title);
       this.addRenderableWidget(new StringWidget(this.width / 2 - textWidth / 2, 40, textWidth, 9, this.title, this.font));
    }
 
-   private void load() {
+   private void createPauseMenu() {
       GridLayout gridLayout = new GridLayout();
       gridLayout.defaultCellSetting().padding(4, 4, 4, 0);
       RowHelper helper = gridLayout.createRowHelper(2);
-      helper.addChild(Button.builder(init_Component, b -> {
+      helper.addChild(Button.builder(RETURN_TO_GAME, b -> {
          this.minecraft.gui.setScreen(null);
          this.minecraft.mouseHandler.grabMouse();
       }).width(204).build(), 2, gridLayout.newCellSettings().paddingTop(50));
-      helper.addChild(this.init(load, () -> new AdvancementsScreen(this.minecraft.player.connection.getAdvancements(), this)));
-      helper.addChild(this.init(read, () -> new StatsScreen(this, this.minecraft.player.getStats())));
+      helper.addChild(this.init(ADVANCEMENTS, () -> new AdvancementsScreen(this.minecraft.player.connection.getAdvancements(), this)));
+      helper.addChild(this.init(STATS, () -> new StatsScreen(this, this.minecraft.player.getStats())));
       LinearLayout iconButtonRow = LinearLayout.horizontal().spacing(4);
-      SpriteIconButton reportBugsButton = SpriteIconButton.builder(update, ConfirmLinkScreen.confirmLink(this, CommonLinks.SNAPSHOT_BUGS_FEEDBACK), true)
+      SpriteIconButton reportBugsButton = SpriteIconButton.builder(REPORT_BUGS, ConfirmLinkScreen.confirmLink(this, CommonLinks.SNAPSHOT_BUGS_FEEDBACK), true)
          .width(20)
          .sprite(Identifier.withDefaultNamespace("pause_menu/bug"), 15, 15)
          .withTootip()
@@ -67,7 +67,7 @@ public class StealthPauseScreen extends Screen {
       reportBugsButton.active = !SharedConstants.getCurrentVersion().dataVersion().isSideSeries();
       iconButtonRow.addChild(reportBugsButton);
       SpriteIconButton feedbackButton = SpriteIconButton.builder(
-            write,
+            SEND_FEEDBACK,
             ConfirmLinkScreen.confirmLink(this, SharedConstants.getCurrentVersion().stable() ? CommonLinks.RELEASE_FEEDBACK : CommonLinks.SNAPSHOT_FEEDBACK),
             true
          )
@@ -76,13 +76,13 @@ public class StealthPauseScreen extends Screen {
          .withTootip()
          .build();
       iconButtonRow.addChild(feedbackButton);
-      this.init_FriendsButton = CommonButtons.friends(
+      this.friendsButton = CommonButtons.friends(
          20,
          b -> OnlineOptionsScreen.confirmFriendsListEnabled(this.minecraft, () -> this.minecraft.gui.setScreen(new FriendsOverlayScreen(this)), this),
          !this.minecraft.isDemo()
       );
-      iconButtonRow.addChild(this.init_FriendsButton);
-      SpriteIconButton playerReportingButton = SpriteIconButton.builder(close, b -> this.minecraft.gui.setScreen(new SocialInteractionsScreen(this)), true)
+      iconButtonRow.addChild(this.friendsButton);
+      SpriteIconButton playerReportingButton = SpriteIconButton.builder(PLAYER_REPORTING, b -> this.minecraft.gui.setScreen(new SocialInteractionsScreen(this)), true)
          .width(20)
          .sprite(Identifier.withDefaultNamespace("pause_menu/player_reporting"), 15, 15)
          .withTootip()
@@ -90,11 +90,11 @@ public class StealthPauseScreen extends Screen {
       iconButtonRow.addChild(playerReportingButton);
       helper.addChild(iconButtonRow, 2, gridLayout.newCellSettings().alignHorizontallyCenter());
       if (this.minecraft.hasSingleplayerServer()) {
-         helper.addChild(this.init(sync, () -> Compat263.newOptionsScreen(this, this.minecraft.options, true)));
-         helper.addChild(this.init(flush, () -> Compat263.newOptionsScreen(this, this.minecraft.options, true)));
+         helper.addChild(this.init(OPTIONS, () -> Compat263.newOptionsScreen(this, this.minecraft.options, true)));
+         helper.addChild(this.init(MULTIPLAYER_OPTIONS, () -> Compat263.newOptionsScreen(this, this.minecraft.options, true)));
       } else {
          helper.addChild(
-            Button.builder(sync, b -> this.minecraft.gui.setScreen(Compat263.newOptionsScreen(this, this.minecraft.options, true))).width(204).build(), 2
+            Button.builder(OPTIONS, b -> this.minecraft.gui.setScreen(Compat263.newOptionsScreen(this, this.minecraft.options, true))).width(204).build(), 2
          );
       }
 
@@ -113,8 +113,8 @@ public class StealthPauseScreen extends Screen {
 
    @Override
    public void tick() {
-      if (this.init_FriendsButton != null) {
-         this.init_FriendsButton.refreshIncomingRequestCount();
+      if (this.friendsButton != null) {
+         this.friendsButton.refreshIncomingRequestCount();
       }
    }
 

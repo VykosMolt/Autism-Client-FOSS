@@ -36,7 +36,7 @@ public final class AiSchematicMachinePlan {
    private final Set<Long> hopperCells;
    private final Map<Long, BlockState> containerStates;
    private final Map<Long, BlockState> outcomes;
-   private final Map<Long, BlockState> write;
+   private final Map<Long, BlockState> clockContext;
    private final Set<Long> clockSections;
 
    private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.RailVehicleSpec> vehicles) {
@@ -67,7 +67,7 @@ public final class AiSchematicMachinePlan {
       this.hopperCells = Set.copyOf(hopperCells);
       this.containerStates = Map.copyOf(containerStates);
       this.outcomes = Map.copyOf(outcomes);
-      this.write = Map.copyOf(clockContext);
+      this.clockContext = Map.copyOf(clockContext);
       this.clockSections = Set.copyOf(clockSections);
    }
 
@@ -97,7 +97,7 @@ public final class AiSchematicMachinePlan {
          }
       }
 
-      return new AiSchematicMachinePlan(plan.containerContents, plan.vehicles, plan.offRailCells, plan.hopperCells, plan.containerStates, outcomes, plan.write, plan.clockSections, plan.frames);
+      return new AiSchematicMachinePlan(plan.containerContents, plan.vehicles, plan.offRailCells, plan.hopperCells, plan.containerStates, outcomes, plan.clockContext, plan.clockSections, plan.frames);
    }
 
    AiSchematicMachinePlan init(AiBuilder.Blueprint selected) {
@@ -239,15 +239,15 @@ public final class AiSchematicMachinePlan {
    }
 
    List<AiSchematicMachinePlan.ContainerPlan> containerPlans(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.containerContents.keySet());
+      return this.containerPlansFor(origin, registries, this.containerContents.keySet());
    }
 
    List<AiSchematicMachinePlan.ContainerPlan> hopperPlans(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.hopperCells);
+      return this.containerPlansFor(origin, registries, this.hopperCells);
    }
 
-   List<AiSchematicMachinePlan.ContainerPlan> read(BlockPos origin, Provider registries) {
-      return this.init(origin, registries, this.containerStates.keySet());
+   List<AiSchematicMachinePlan.ContainerPlan> stateContainerPlans(BlockPos origin, Provider registries) {
+      return this.containerPlansFor(origin, registries, this.containerStates.keySet());
    }
 
    AiSchematicMachinePlan.MachineSpec machineSpec(BlockPos origin, Provider registries) {
@@ -256,9 +256,9 @@ public final class AiSchematicMachinePlan {
       }
 
       ArrayList<autismclient.ai.print.PrintSkippedContents> unavailable = new ArrayList<>();
-      List<AiSchematicMachinePlan.ContainerPlan> decoded = this.init(origin, registries, this.containerStates.keySet(), unavailable);
+      List<AiSchematicMachinePlan.ContainerPlan> decoded = this.containerPlansFor(origin, registries, this.containerStates.keySet(), unavailable);
       HashMap<BlockPos, BlockState> source = new HashMap<>();
-      this.write.forEach((key, state) -> source.put(origin.offset(BlockPos.of(key)), state));
+      this.clockContext.forEach((key, state) -> source.put(origin.offset(BlockPos.of(key)), state));
       List<autismclient.ai.print.PrintClockSpec> clocks = AiHopperClockPlan.plan(
          source,
          decoded,
@@ -272,11 +272,11 @@ public final class AiSchematicMachinePlan {
          this.outcomeStates(origin),
          unavailable,
          clocks,
-         this.write(origin, registries)
+         this.framePlans(origin, registries)
       );
    }
 
-   List<autismclient.ai.print.PrintItemFrame.FrameSpec> write(BlockPos origin, Provider registries) {
+   List<autismclient.ai.print.PrintItemFrame.FrameSpec> framePlans(BlockPos origin, Provider registries) {
       if (this.frames.isEmpty()) {
          return List.of();
       }
@@ -306,11 +306,11 @@ public final class AiSchematicMachinePlan {
       return List.copyOf(out);
    }
 
-   private List<AiSchematicMachinePlan.ContainerPlan> init(BlockPos origin, Provider registries, Set<Long> keys) {
-      return this.init(origin, registries, keys, null);
+   private List<AiSchematicMachinePlan.ContainerPlan> containerPlansFor(BlockPos origin, Provider registries, Set<Long> keys) {
+      return this.containerPlansFor(origin, registries, keys, null);
    }
 
-   private List<AiSchematicMachinePlan.ContainerPlan> init(BlockPos origin, Provider registries, Set<Long> keys, List<autismclient.ai.print.PrintSkippedContents> unavailable) {
+   private List<AiSchematicMachinePlan.ContainerPlan> containerPlansFor(BlockPos origin, Provider registries, Set<Long> keys, List<autismclient.ai.print.PrintSkippedContents> unavailable) {
       if (keys.isEmpty()) {
          return List.of();
       }

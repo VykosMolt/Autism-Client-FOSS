@@ -1,32 +1,32 @@
 package autismclient.util;
 
 public final class ActivationModeLatch {
-   private boolean init;
-   private boolean load;
-   private boolean read;
+   private boolean wasDown;
+   private boolean toggled;
+   private boolean holdConsumed;
 
    public boolean update(String mode, boolean keyDown) {
-      boolean rising = keyDown && !this.init;
-      this.init = keyDown;
+      boolean rising = keyDown && !this.wasDown;
+      this.wasDown = keyDown;
       if (!keyDown) {
-         this.read = false;
+         this.holdConsumed = false;
       }
 
       boolean var10000;
       switch (mode) {
          case "Hold":
-            this.load = false;
-            var10000 = keyDown && !this.read;
+            this.toggled = false;
+            var10000 = keyDown && !this.holdConsumed;
             break;
          case "Press":
             if (rising) {
-               this.load = !this.load;
+               this.toggled = !this.toggled;
             }
 
-            var10000 = this.load;
+            var10000 = this.toggled;
             break;
          default:
-            this.load = false;
+            this.toggled = false;
             var10000 = true;
       }
 
@@ -35,17 +35,17 @@ public final class ActivationModeLatch {
 
    public void init(String mode) {
       if ("Press".equals(mode)) {
-         this.load = false;
+         this.toggled = false;
       }
 
       if ("Hold".equals(mode)) {
-         this.read = true;
+         this.holdConsumed = true;
       }
    }
 
    public void reset() {
-      this.init = false;
-      this.load = false;
-      this.read = false;
+      this.wasDown = false;
+      this.toggled = false;
+      this.holdConsumed = false;
    }
 }

@@ -19,12 +19,12 @@ public final class MiningCost {
    private MiningCost() {
    }
 
-   public static double init(Minecraft mc, ItemStack stack, BlockState state) {
+   public static double effectiveBreakSpeed(Minecraft mc, ItemStack stack, BlockState state) {
       double base = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.breakSpeed(mc, stack, state);
       LocalPlayer player = mc.player;
       int haste = MobEffectUtil.hasDigSpeed(player) ? MobEffectUtil.getDigSpeedAmplification(player) + 1 : 0;
       int fatigue = player.hasEffect(MobEffects.MINING_FATIGUE) ? player.getEffect(MobEffects.MINING_FATIGUE).getAmplifier() : -1;
-      return init(
+      return applySpeedModifiers(
          base,
          haste,
          fatigue,
@@ -34,7 +34,7 @@ public final class MiningCost {
       );
    }
 
-   static double init(double base, int haste, int fatigue, double blockSpeed, double submerged, boolean grounded) {
+   static double applySpeedModifiers(double base, int haste, int fatigue, double blockSpeed, double submerged, boolean grounded) {
       double var10000;
       switch (fatigue) {
          case -1:
@@ -62,7 +62,7 @@ public final class MiningCost {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       } else {
          return AiPathfinder.MoveCosts.breakBlockTicksCompat(
-            hardness, init(mc, stack, state), !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state)
+            hardness, effectiveBreakSpeed(mc, stack, state), !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state)
          );
       }
    }
@@ -72,19 +72,19 @@ public final class MiningCost {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       }
 
-      if (stack != null && stack.is(Items.IRON_PICKAXE) && init_Z_I(init(stack), f.ironReserve(), f.stonePick(), init(state))) {
+      if (stack != null && stack.is(Items.IRON_PICKAXE) && init_Z_I(durabilityLeft(stack), f.ironReserve(), f.stonePick(), stonePickaxeSuffices(state))) {
          return 1.0 / 0.0;
       }
 
       double base = stack != null && !stack.isEmpty() ? autismclient.util.BlockBreakSpeedHelper.breakSpeed(mc, stack, state) : 1.0;
       return AiPathfinder.MoveCosts.breakBlockTicksCompat(
          hardness,
-         init(base, f.haste(), f.fatigue(), f.blockSpeed(), 1.0, true),
+         applySpeedModifiers(base, f.haste(), f.fatigue(), f.blockSpeed(), 1.0, true),
          !state.requiresCorrectToolForDrops() || stack != null && !stack.isEmpty() && stack.isCorrectToolForDrops(state)
       );
    }
 
-   public static int init(Minecraft mc, BlockState state, boolean requireDrops) {
+   public static int bestHotbarToolSlot(Minecraft mc, BlockState state, boolean requireDrops) {
       return init_I_Minecraft(mc, state, requireDrops, 9);
    }
 
@@ -103,7 +103,7 @@ public final class MiningCost {
    private static int init_I_Minecraft(Minecraft mc, BlockState state, boolean requireDrops, int slots, BiPredicate<BlockState, ItemStack> accepted) {
       Inventory inventory = mc.player.getInventory();
       boolean snowCover = state.is(Blocks.SNOW) && state.getValue(SnowLayerBlock.LAYERS) == 1;
-      boolean needsTool = !mc.player.hasInfiniteMaterials() && init(state.requiresCorrectToolForDrops(), snowCover, requireDrops);
+      boolean needsTool = !mc.player.hasInfiniteMaterials() && needsCorrectTool(state.requiresCorrectToolForDrops(), snowCover, requireDrops);
       int tool = -1;
       double bestSpeed = 1.0;
 
@@ -118,7 +118,7 @@ public final class MiningCost {
          }
       }
 
-      if (tool >= 0 && inventory.getItem(tool).is(Items.IRON_PICKAXE) && init_Z_I(init(inventory.getItem(tool)), AiRestock.reservedStrikes(), true, init(state))) {
+      if (tool >= 0 && inventory.getItem(tool).is(Items.IRON_PICKAXE) && init_Z_I(durabilityLeft(inventory.getItem(tool)), AiRestock.reservedStrikes(), true, stonePickaxeSuffices(state))) {
          for (int slot = 0; slot < slots; slot++) {
             ItemStack stack = inventory.getItem(slot);
             if (stack.is(Items.STONE_PICKAXE) && AiItems.hasEnoughDurability(stack, 2) && accepted.test(state, stack)) {
@@ -141,12 +141,12 @@ public final class MiningCost {
 
          return -1;
       } else {
-         int hand = init(mc, slots);
+         int hand = nonToolSlot(mc, slots);
          return accepted.test(state, inventory.getItem(hand)) ? hand : -1;
       }
    }
 
-   static boolean init(boolean requiresCorrectTool, boolean singleSnowLayer, boolean requireDrops) {
+   static boolean needsCorrectTool(boolean requiresCorrectTool, boolean singleSnowLayer, boolean requireDrops) {
       return requiresCorrectTool && (requireDrops || !singleSnowLayer);
    }
 
@@ -154,16 +154,16 @@ public final class MiningCost {
       return reserve > 0 && remaining <= reserve && stoneAvailable && stoneHarvests;
    }
 
-   private static boolean init(BlockState state) {
+   private static boolean stonePickaxeSuffices(BlockState state) {
       ItemStack stone = new ItemStack(Items.STONE_PICKAXE);
       return stone.isCorrectToolForDrops(state) && stone.getDestroySpeed(state) > 1.0F;
    }
 
-   private static int init(ItemStack stack) {
+   private static int durabilityLeft(ItemStack stack) {
       return stack.getMaxDamage() - stack.getDamageValue();
    }
 
-   static int init(Minecraft mc, int slots) {
+   static int nonToolSlot(Minecraft mc, int slots) {
       Inventory inventory = mc.player.getInventory();
       int selected = inventory.getSelectedSlot();
       if (!inventory.getItem(selected).isDamageableItem()) {
@@ -200,7 +200,7 @@ public final class MiningCost {
 
          for (int i = 0; i < 36; i++) {
             ItemStack stack = player.getInventory().getItem(i);
-            if (stack.is(Items.STONE_PICKAXE) && MiningCost.init(stack) > 2) {
+            if (stack.is(Items.STONE_PICKAXE) && MiningCost.durabilityLeft(stack) > 2) {
                stone = true;
             }
          }

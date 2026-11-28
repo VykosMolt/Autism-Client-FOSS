@@ -38,7 +38,7 @@ import net.minecraft.util.ARGB;
 
 public final class StealthTitleScreen extends Screen {
    private static final Component TITLE = Component.translatable("narrator.screen.title");
-   private static final Component load = Component.translatable("title.credits");
+   private static final Component CREDITS = Component.translatable("title.credits");
    private static final Random RANDOM = new Random();
    private static List<String> cachedSplashes;
    private final LogoRenderer logo = new LogoRenderer(false);
@@ -84,17 +84,17 @@ public final class StealthTitleScreen extends Screen {
             friendsAvailable
          )
       );
-      this.friendsButton.setPosition(this.init(1, 3, 20), iconRowY);
+      this.friendsButton.setPosition(this.centeredStartX(1, 3, 20), iconRowY);
       SpriteIconButton language = this.addRenderableWidget(
          CommonButtons.language(
             20, b -> this.minecraft.gui.setScreen(new LanguageSelectScreen(this, this.minecraft.options, this.minecraft.getLanguageManager())), true
          )
       );
-      language.setPosition(this.init(2, 3, 20), iconRowY);
+      language.setPosition(this.centeredStartX(2, 3, 20), iconRowY);
       SpriteIconButton accessibility = this.addRenderableWidget(
          CommonButtons.accessibility(20, b -> this.minecraft.gui.setScreen(new AccessibilityOptionsScreen(this, this.minecraft.options)), true)
       );
-      accessibility.setPosition(this.init(3, 3, 20), iconRowY);
+      accessibility.setPosition(this.centeredStartX(3, 3, 20), iconRowY);
       int optionsRowY = iconRowY + spacing;
       this.addRenderableWidget(
          Button.builder(
@@ -106,21 +106,21 @@ public final class StealthTitleScreen extends Screen {
       this.addRenderableWidget(
          Button.builder(Component.translatable("menu.quit"), b -> this.minecraft.stop()).bounds(this.width / 2 + 2, optionsRowY, 98, 20).build()
       );
-      int copyrightWidth = this.font.width(load);
+      int copyrightWidth = this.font.width(CREDITS);
       this.addRenderableWidget(
          new PlainTextButton(
             this.width - copyrightWidth - 2,
             this.height - 10,
             copyrightWidth,
             10,
-            load,
+            CREDITS,
             b -> this.minecraft.gui.setScreen(new CreditsAndAttributionScreen(this)),
             this.font
          )
       );
    }
 
-   private int init(int currentButton, int numberOfButtons, int buttonWidth) {
+   private int centeredStartX(int currentButton, int numberOfButtons, int buttonWidth) {
       int totalWidth = numberOfButtons * buttonWidth + (numberOfButtons - 1) * 4;
       return this.width / 2 - totalWidth / 2 + (currentButton - 1) * (buttonWidth + 4);
    }

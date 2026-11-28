@@ -74,7 +74,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       }
 
       for (WaitPacketMatchAction.Inner_CachePool rule : activeRules) {
-         if (this.init(rule, packet, packetDirection)) {
+         if (this.matches(rule, packet, packetDirection)) {
             return true;
          }
       }
@@ -82,7 +82,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       return false;
    }
 
-   private boolean init(WaitPacketMatchAction.Inner_CachePool rule, Packet<?> packet, String packetDirection) {
+   private boolean matches(WaitPacketMatchAction.Inner_CachePool rule, Packet<?> packet, String packetDirection) {
       if (rule.direction != WaitPacketMatchAction.Inner_DataUtil.ANY && !rule.direction.name().equalsIgnoreCase(packetDirection)) {
          return false;
       }
@@ -275,7 +275,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       if (tag.contains("rules")) {
          for (Tag element : tag.getList("rules").orElse(new ListTag())) {
             if (element instanceof CompoundTag compound) {
-               this.rules.add(WaitPacketMatchAction.Inner_CachePool.init(compound));
+               this.rules.add(WaitPacketMatchAction.Inner_CachePool.ruleFromTag(compound));
             }
          }
       }
@@ -353,7 +353,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
          return tag;
       }
 
-      static WaitPacketMatchAction.Inner_CachePool init(CompoundTag tag) {
+      static WaitPacketMatchAction.Inner_CachePool ruleFromTag(CompoundTag tag) {
          WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
          rule.direction = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
          rule.packetName = tag.getStringOr("packetName", "");

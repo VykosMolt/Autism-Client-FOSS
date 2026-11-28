@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AiTaskStatus {
-   private static final Pattern init_Pattern = Pattern.compile("\\bfurnace\\s+(\\d+)\\s*/\\s*(\\d+)", 2);
+   private static final Pattern FURNACE_PROGRESS = Pattern.compile("\\bfurnace\\s+(\\d+)\\s*/\\s*(\\d+)", 2);
    static final int init_I = 200;
    static final long init_J = 1500000000L;
    private static final AiGoal.StableLabel init_W_StreamUtil = new AiGoal.StableLabel();
@@ -17,19 +17,19 @@ public final class AiTaskStatus {
    }
 
    static AiTaskStatus.Inner_StreamUtil progressStatus(String title, String activity, int completed, int target) {
-      String heading = init(title);
+      String heading = singleLine(title);
       if (heading.isEmpty()) {
          return AiTaskStatus.Inner_StreamUtil.EMPTY;
       }
 
-      String action = init(activity);
+      String action = singleLine(activity);
       int percent = target > 0 ? (int)(100L * Math.clamp(completed, 0, target) / target) : -1;
       return new AiTaskStatus.Inner_StreamUtil(heading, action.isEmpty() ? "In progress" : action, "", percent);
    }
 
    public static String phaseLabel(String diagnostic, String fallback) {
-      String phase = load(diagnostic, fallback);
-      Matcher furnace = init_Pattern.matcher(init(diagnostic));
+      String phase = describeDiagnostic(diagnostic, fallback);
+      Matcher furnace = FURNACE_PROGRESS.matcher(singleLine(diagnostic));
       return furnace.find()
             && (
                phase.startsWith("Waiting")
@@ -43,10 +43,10 @@ public final class AiTaskStatus {
          : phase;
    }
 
-   private static String load(String diagnostic, String fallback) {
-      String message = init(diagnostic).toLowerCase(Locale.ROOT);
+   private static String describeDiagnostic(String diagnostic, String fallback) {
+      String message = singleLine(diagnostic).toLowerCase(Locale.ROOT);
       if (message.isEmpty()) {
-         return init(fallback);
+         return singleLine(fallback);
       } else if (message.contains("paused")) {
          return "Paused";
       } else if (message.contains("eating") || message.contains("recovering health") || message.contains("low health")) {
@@ -98,12 +98,12 @@ public final class AiTaskStatus {
       } else if (message.contains("preparing")) {
          return "Preparing materials";
       } else {
-         return !message.startsWith("mine ") && !message.startsWith("mining ") ? init(fallback) : "Mining nearby blocks";
+         return !message.startsWith("mine ") && !message.startsWith("mining ") ? singleLine(fallback) : "Mining nearby blocks";
       }
    }
 
    static AiTaskStatus.Inner_StreamUtil pickStatus(Collection<AiTaskStatus.Inner_DataUtil> candidates, long now) {
-      AiTaskStatus.Inner_DataUtil chosen = init_cs_DataUtil(candidates);
+      AiTaskStatus.Inner_DataUtil chosen = choose(candidates);
       if (chosen == null) {
          init_W_StreamUtil.reset();
          load.reset();
@@ -119,12 +119,12 @@ public final class AiTaskStatus {
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil init_cs_StreamUtil(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
-      AiTaskStatus.Inner_DataUtil chosen = init_cs_DataUtil(candidates);
+   static AiTaskStatus.Inner_StreamUtil chosenContent(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
+      AiTaskStatus.Inner_DataUtil chosen = choose(candidates);
       return chosen == null ? AiTaskStatus.Inner_StreamUtil.EMPTY : chosen.content;
    }
 
-   private static AiTaskStatus.Inner_DataUtil init_cs_DataUtil(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
+   private static AiTaskStatus.Inner_DataUtil choose(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
       AiTaskStatus.Inner_DataUtil chosen = null;
 
       for (AiTaskStatus.Inner_DataUtil candidate : candidates) {
@@ -147,7 +147,7 @@ public final class AiTaskStatus {
       return (int)Math.max(1L, Math.min(Math.max(1, available), Math.max(0, widest) + 10L));
    }
 
-   private static String init(String value) {
+   private static String singleLine(String value) {
       return value == null ? "" : value.strip().replaceAll("[\\r\\n\\t]+", " ");
    }
 

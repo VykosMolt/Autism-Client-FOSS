@@ -74,9 +74,9 @@ public final class AiPacketSend {
                out.addProperty("regenerated", regenerate && wire != packet);
                break;
             case "queue":
-               autismclient.util.AutismSessionState.getInstance().enqueueDelayedPacket(packet, init(regenerate));
+               autismclient.util.AutismSessionState.getInstance().enqueueDelayedPacket(packet, replayMode(regenerate));
                out.addProperty("queued", true);
-               out.addProperty("replayMode", init(regenerate).name());
+               out.addProperty("replayMode", replayMode(regenerate).name());
                out.addProperty("queueSize", autismclient.util.AutismSessionState.getInstance().getDelayedPackets().size());
                break;
             case "delay":
@@ -92,12 +92,12 @@ public final class AiPacketSend {
                   autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
                   shared.setDelayUnit(hasMs ? autismclient.util.AutismSessionState.DelayUnit.MS : autismclient.util.AutismSessionState.DelayUnit.TICKS);
                   List<autismclient.util.AutismSessionState.DelayedPacket> queued = shared.getDelayedPackets();
-                  queued.add(new autismclient.util.AutismSessionState.DelayedPacket(packet, delay, init(regenerate)));
+                  queued.add(new autismclient.util.AutismSessionState.DelayedPacket(packet, delay, replayMode(regenerate)));
                   shared.replaceDelayedPackets(queued);
                   out.addProperty("queued", true);
                   out.addProperty("delay", delay);
                   out.addProperty("delayMode", hasMs ? "MS" : "TICKS");
-                  out.addProperty("replayMode", init(regenerate).name());
+                  out.addProperty("replayMode", replayMode(regenerate).name());
                   out.addProperty("queueSize", shared.getDelayedPackets().size());
                   break;
                }
@@ -110,7 +110,7 @@ public final class AiPacketSend {
          return out;
       } else {
          String reason = built == null ? "no builder accepted the arguments" : built.message();
-         String help = init(PacketCommandBuilder.usage(packetClass), 2000);
+         String help = truncate(PacketCommandBuilder.usage(packetClass), 2000);
          throw new IllegalArgumentException("Could not build " + name + ": " + reason + (help.isEmpty() ? "" : "\n" + help));
       }
    }
@@ -121,7 +121,7 @@ public final class AiPacketSend {
       JsonObject var10000;
       switch (action) {
          case "list":
-            var10000 = init(shared, args);
+            var10000 = listQueued(shared, args);
             break;
          case "clear":
             int cleared = shared.getDelayedPackets().size();
@@ -160,7 +160,7 @@ public final class AiPacketSend {
       return var10000;
    }
 
-   private static JsonObject init(autismclient.util.AutismSessionState shared, JsonObject args) {
+   private static JsonObject listQueued(autismclient.util.AutismSessionState shared, JsonObject args) {
       List<autismclient.util.AutismSessionState.DelayedPacket> packets = shared.getDelayedPackets();
       int offset = Math.max(0, AiJson.getInt(args, "offset", 0));
       int limit = Math.max(1, Math.min(AiJson.getInt(args, "limit", 50), 100));
@@ -177,7 +177,7 @@ public final class AiPacketSend {
                   "id",
                   queued.getId(),
                   "name",
-                  init(queued.packet),
+                  packetName(queued.packet),
                   "packetClass",
                   queued.packet.getClass().getName(),
                   "delay",
@@ -280,16 +280,16 @@ public final class AiPacketSend {
          };
    }
 
-   private static autismclient.util.AutismSessionState.ReplayMode init(boolean regenerate) {
+   private static autismclient.util.AutismSessionState.ReplayMode replayMode(boolean regenerate) {
       return regenerate ? autismclient.util.AutismSessionState.ReplayMode.REGENERATE : autismclient.util.AutismSessionState.ReplayMode.EXACT;
    }
 
-   private static String init(Packet<?> packet) {
+   private static String packetName(Packet<?> packet) {
       String name = autismclient.util.PacketTypeRegistry.getPacketName((Class<? extends Packet<?>>)packet.getClass());
       return name == null ? packet.getClass().getSimpleName() : name;
    }
 
-   private static String init(String value, int max) {
+   private static String truncate(String value, int max) {
       if (value == null) {
          return "";
       } else {

@@ -55,11 +55,11 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    private float uiMouseY;
    private int dragStartX;
    private int dragStartY;
-   private int pop;
-   private int tick;
-   private int run = 230;
-   private int get = 0;
-   private int set = 0;
+   private int panelX;
+   private int panelY;
+   private int panelWidth = 230;
+   private int panelHeight = 0;
+   private int contentHeight = 0;
    private boolean close_Z = false;
    private int put = 0;
    private Consumer<Class<? extends Packet<?>>> onSelect;
@@ -91,7 +91,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private void setupLayout() {
-      this.run = this.computeMinWidth();
+      this.panelWidth = this.computeMinWidth();
       this.windowNode.setCenterTitle(false);
       this.windowNode.setTitleTone(autismclient.gui.f.b.l.load);
       this.windowNode.setHeaderButtons(true, true);
@@ -113,7 +113,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.body().addChild(this.listSpacer);
       this.countLabel.text(this.multiSelectMode ? this.filteredPackets.size() + " packets | Selected " + this.selectedPackets.size() : this.filteredPackets.size() + " packets");
       this.windowNode.body().addChild(this.countLabel);
-      this.set = this.filteredPackets.size() * this.rowHeight();
+      this.contentHeight = this.filteredPackets.size() * this.rowHeight();
       this.push_Z = false;
    }
 
@@ -142,7 +142,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.openSelect(onSelect, this.s2cPackets, excludedPackets, closeOnSelect);
    }
 
-   public void read(Consumer<Class<? extends Packet<?>>> onSelect, Collection<Class<? extends Packet<?>>> excludedPackets, boolean closeOnSelect) {
+   public void openFor(Consumer<Class<? extends Packet<?>>> onSelect, Collection<Class<? extends Packet<?>>> excludedPackets, boolean closeOnSelect) {
       this.openSelect(onSelect, this.write_List, excludedPackets, closeOnSelect);
    }
 
@@ -222,17 +222,17 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.rebuildLayout();
       autismclient.gui.ui.layout.LayoutContext metrics = this.layoutHost.createMeasureContext();
       if (metrics != null) {
-         this.get = Math.round(this.windowNode.measureHeight(metrics, this.run));
+         this.panelHeight = Math.round(this.windowNode.measureHeight(metrics, this.panelWidth));
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
-      this.pop = Math.max(8, Math.round((viewport.width() - this.run) / 2.0F));
-      this.tick = Math.max(8, Math.round((viewport.height() - this.get) / 2.0F));
-      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.overlayVisible, this.collapsed));
-      this.pop = clamped.x;
-      this.tick = clamped.y;
-      this.run = clamped.width;
-      this.get = clamped.height;
+      this.panelX = Math.max(8, Math.round((viewport.width() - this.panelWidth) / 2.0F));
+      this.panelY = Math.max(8, Math.round((viewport.height() - this.panelHeight) / 2.0F));
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.overlayVisible, this.collapsed));
+      this.panelX = clamped.x;
+      this.panelY = clamped.y;
+      this.panelWidth = clamped.width;
+      this.panelHeight = clamped.height;
       this.searchInput.setValue("");
       this.searchInput.setFocused(true);
       this.windowNode.setShowBody(true);
@@ -264,7 +264,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.searchList.setItems(pool);
       this.searchList.setQuery(query);
       this.filteredPackets = this.searchList.filtered();
-      this.set = this.filteredPackets.size() * this.rowHeight();
+      this.contentHeight = this.filteredPackets.size() * this.rowHeight();
       this.rebuildLayout();
    }
 
@@ -276,14 +276,14 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          this.visibilityTransition
             .render(
                context,
-               autismclient.gui.f.NetHelper.init(this.pop, this.tick, this.run, Math.max(this.theme.load(), this.get)),
+               autismclient.gui.f.NetHelper.init(this.panelX, this.panelY, this.panelWidth, Math.max(this.theme.load(), this.panelHeight)),
                true,
-               () -> this.load(context, closing ? -10000 : mouseX, closing ? -10000 : mouseY, delta)
+               () -> this.renderWindowContents(context, closing ? -10000 : mouseX, closing ? -10000 : mouseY, delta)
             );
       }
    }
 
-   private void load(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+   private void renderWindowContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if (this.push_Z) {
          this.rebuildLayout();
       }
@@ -299,14 +299,14 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.setExpanded(!this.collapsed);
       this.windowNode.setActive(true);
       this.windowNode.setHeaderHovered(headerHovered);
-      this.get = Math.round(this.windowNode.measureHeight(metrics, this.run));
-      this.get = Math.max(this.theme.load(), this.get);
-      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.pop, this.tick, this.run, this.get, this.overlayVisible, this.collapsed));
-      this.pop = clamped.x;
-      this.tick = clamped.y;
-      this.run = clamped.width;
-      this.get = clamped.height;
-      this.windowNode.setBounds(this.pop, this.tick, this.run, this.get);
+      this.panelHeight = Math.round(this.windowNode.measureHeight(metrics, this.panelWidth));
+      this.panelHeight = Math.max(this.theme.load(), this.panelHeight);
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.overlayVisible, this.collapsed));
+      this.panelX = clamped.x;
+      this.panelY = clamped.y;
+      this.panelWidth = clamped.width;
+      this.panelHeight = clamped.height;
+      this.windowNode.setBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight);
       this.layoutHost.render(context, mouseX, mouseY, delta);
       context.nextStratum();
       if (this.windowNode.pushBodyClip(context)) {
@@ -350,7 +350,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
             this.listView.endFrame(context);
          }
 
-         this.init(context, viewX, viewY, viewW, viewH, uiMouseX, uiMouseY);
+         this.renderList(context, viewX, viewY, viewW, viewH, uiMouseX, uiMouseY);
       }
    }
 
@@ -372,7 +372,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDividerColored(context, x + 4, y + this.rowHeight() - 1, width - 8, UiColorPalette.subtleDivider());
    }
 
-   private void init(GuiGraphicsExtractor context, int viewX, int viewY, int viewW, int viewH, float uiMouseX, float uiMouseY) {
+   private void renderList(GuiGraphicsExtractor context, int viewX, int viewY, int viewW, int viewH, float uiMouseX, float uiMouseY) {
       if (this.listView != null) {
          this.listView.renderScrollbar(context, uiMouseX, uiMouseY);
       }
@@ -395,12 +395,12 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       if (button == 0 && this.isOverHeaderUi(uiMouseX, uiMouseY)) {
          this.dragging = true;
          this.dragMoved = false;
-         this.dragOffsetX = uiMouseX - this.pop;
-         this.dragOffsetY = uiMouseY - this.tick;
+         this.dragOffsetX = uiMouseX - this.panelX;
+         this.dragOffsetY = uiMouseY - this.panelY;
          this.uiMouseX = uiMouseX;
          this.uiMouseY = uiMouseY;
-         this.dragStartX = this.pop;
-         this.dragStartY = this.tick;
+         this.dragStartX = this.panelX;
+         this.dragStartY = this.panelY;
          return true;
       }
 
@@ -473,7 +473,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      if (!this.isInsideRect(this.pop, this.tick, this.run, this.get, uiMouseX, uiMouseY)) {
+      if (!this.isInsideRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight, uiMouseX, uiMouseY)) {
          this.layoutHost.clearFocus();
          return true;
       } else {
@@ -490,8 +490,8 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          boolean moved = this.dragMoved
             || Math.abs(uiMouseX - this.uiMouseX) >= 3.0F
             || Math.abs(uiMouseY - this.uiMouseY) >= 3.0F
-            || this.pop != this.dragStartX
-            || this.tick != this.dragStartY;
+            || this.panelX != this.dragStartX
+            || this.panelY != this.dragStartY;
          this.dragging = false;
          this.dragMoved = false;
          if (!moved && this.isOverHeaderUi(uiMouseX, uiMouseY) && !this.isOverCloseButton(uiMouseX, uiMouseY)) {
@@ -506,7 +506,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
          return !this.collapsed && this.layoutHost.mouseReleased(mouseX, mouseY, button)
             ? true
-            : this.overlayVisible && this.isInsideRect(this.pop, this.tick, this.run, this.get, uiMouseX, uiMouseY);
+            : this.overlayVisible && this.isInsideRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight, uiMouseX, uiMouseY);
       }
    }
 
@@ -527,9 +527,9 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
          this.dragMoved = true;
          int nextX = Math.round(uiMouseX - this.dragOffsetX);
          int nextY = Math.round(uiMouseY - this.dragOffsetY);
-         OverlayBounds clamped = this.clampBounds(new OverlayBounds(nextX, nextY, this.run, this.get, this.overlayVisible, this.collapsed));
-         this.pop = clamped.x;
-         this.tick = clamped.y;
+         OverlayBounds clamped = this.clampBounds(new OverlayBounds(nextX, nextY, this.panelWidth, this.panelHeight, this.overlayVisible, this.collapsed));
+         this.panelX = clamped.x;
+         this.panelY = clamped.y;
          return true;
       } else if (!this.collapsed
          && this.isInsideRect(
@@ -547,7 +547,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       } else {
          return !this.collapsed && this.layoutHost.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)
             ? true
-            : this.overlayVisible && this.isInsideRect(this.pop, this.tick, this.run, this.get, uiMouseX, uiMouseY);
+            : this.overlayVisible && this.isInsideRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight, uiMouseX, uiMouseY);
       }
    }
 
@@ -601,7 +601,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
             this.listView.mouseScrolled(uiMouseX, uiMouseY, amount);
             return true;
          } else {
-            return this.searchInput.isFocused() ? false : this.isInsideRect(this.pop, this.tick, this.run, this.get, uiMouseX, uiMouseY);
+            return this.searchInput.isFocused() ? false : this.isInsideRect(this.panelX, this.panelY, this.panelWidth, this.panelHeight, uiMouseX, uiMouseY);
          }
       }
    }
@@ -637,17 +637,17 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.pop, this.tick, this.run, this.get, this.overlayVisible, this.collapsed);
+      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.overlayVisible, this.collapsed);
    }
 
    @Override
    public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampBounds(bounds);
-         this.pop = clamped.x;
-         this.tick = clamped.y;
-         this.run = clamped.width;
-         this.get = clamped.height;
+         this.panelX = clamped.x;
+         this.panelY = clamped.y;
+         this.panelWidth = clamped.width;
+         this.panelHeight = clamped.height;
          this.overlayVisible = clamped.visible;
          this.collapsed = clamped.collapsed;
          this.windowNode.setShowBody(!this.collapsed);
@@ -688,8 +688,8 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
-      int renderedHeight = this.collapsed ? this.theme.load() : this.get;
-      return this.isInsideRect(this.pop, this.tick, this.run, renderedHeight, uiMouseX, uiMouseY);
+      int renderedHeight = this.collapsed ? this.theme.load() : this.panelHeight;
+      return this.isInsideRect(this.panelX, this.panelY, this.panelWidth, renderedHeight, uiMouseX, uiMouseY);
    }
 
    @Override
@@ -715,12 +715,12 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isOverHeaderUi(float uiMouseX, float uiMouseY) {
-      return uiMouseX >= this.pop && uiMouseX < this.pop + this.run && uiMouseY >= this.tick && uiMouseY < this.tick + this.theme.load();
+      return uiMouseX >= this.panelX && uiMouseX < this.panelX + this.panelWidth && uiMouseY >= this.panelY && uiMouseY < this.panelY + this.theme.load();
    }
 
    private boolean isOverCloseButton(float uiMouseX, float uiMouseY) {
       return autismclient.gui.ui.widgets.WindowHeaderHelper.overClose(
-         autismclient.gui.f.NetHelper.init(this.pop, this.tick, this.run, Math.max(this.theme.load(), this.get)),
+         autismclient.gui.f.NetHelper.init(this.panelX, this.panelY, this.panelWidth, Math.max(this.theme.load(), this.panelHeight)),
          this.theme.load(),
          uiMouseX,
          uiMouseY

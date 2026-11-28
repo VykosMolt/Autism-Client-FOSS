@@ -7,7 +7,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class WorldLineRenderer {
-   private static final ThreadLocal<Vector3f> init = ThreadLocal.withInitial(Vector3f::new);
+   private static final ThreadLocal<Vector3f> SCRATCH = ThreadLocal.withInitial(Vector3f::new);
 
    private WorldLineRenderer() {
    }
@@ -25,7 +25,7 @@ public final class WorldLineRenderer {
    public static void line(
       Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color1, int color2, float width
    ) {
-      Vector3f normal = init.get().set((float)(x2 - x1), (float)(y2 - y1), (float)(z2 - z1));
+      Vector3f normal = SCRATCH.get().set((float)(x2 - x1), (float)(y2 - y1), (float)(z2 - z1));
       if (!(normal.lengthSquared() <= 1.0E-8F)) {
          normal.normalize();
          pose.transformNormal(normal, normal);
@@ -49,15 +49,15 @@ public final class WorldLineRenderer {
    }
 
    public static void box(Pose pose, VertexConsumer buffer, AABB b, int color) {
-      init(pose, buffer, color, b.minX, b.minY, b.minZ, b.maxX, b.minY, b.minZ, b.maxX, b.minY, b.maxZ, b.minX, b.minY, b.maxZ);
-      init(pose, buffer, color, b.minX, b.maxY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.maxX, b.maxY, b.minZ, b.minX, b.maxY, b.minZ);
-      init(pose, buffer, color, b.minX, b.minY, b.maxZ, b.maxX, b.minY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.minX, b.maxY, b.maxZ);
-      init(pose, buffer, color, b.maxX, b.minY, b.minZ, b.minX, b.minY, b.minZ, b.minX, b.maxY, b.minZ, b.maxX, b.maxY, b.minZ);
-      init(pose, buffer, color, b.minX, b.minY, b.minZ, b.minX, b.minY, b.maxZ, b.minX, b.maxY, b.maxZ, b.minX, b.maxY, b.minZ);
-      init(pose, buffer, color, b.maxX, b.minY, b.maxZ, b.maxX, b.minY, b.minZ, b.maxX, b.maxY, b.minZ, b.maxX, b.maxY, b.maxZ);
+      drawQuad(pose, buffer, color, b.minX, b.minY, b.minZ, b.maxX, b.minY, b.minZ, b.maxX, b.minY, b.maxZ, b.minX, b.minY, b.maxZ);
+      drawQuad(pose, buffer, color, b.minX, b.maxY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.maxX, b.maxY, b.minZ, b.minX, b.maxY, b.minZ);
+      drawQuad(pose, buffer, color, b.minX, b.minY, b.maxZ, b.maxX, b.minY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.minX, b.maxY, b.maxZ);
+      drawQuad(pose, buffer, color, b.maxX, b.minY, b.minZ, b.minX, b.minY, b.minZ, b.minX, b.maxY, b.minZ, b.maxX, b.maxY, b.minZ);
+      drawQuad(pose, buffer, color, b.minX, b.minY, b.minZ, b.minX, b.minY, b.maxZ, b.minX, b.maxY, b.maxZ, b.minX, b.maxY, b.minZ);
+      drawQuad(pose, buffer, color, b.maxX, b.minY, b.maxZ, b.maxX, b.minY, b.minZ, b.maxX, b.maxY, b.minZ, b.maxX, b.maxY, b.maxZ);
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       int color,

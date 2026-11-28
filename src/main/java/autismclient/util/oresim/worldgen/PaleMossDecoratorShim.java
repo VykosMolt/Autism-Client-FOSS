@@ -43,7 +43,7 @@ public final class PaleMossDecoratorShim {
             if (random.nextFloat() < trunkProbability) {
                BlockPos down = pos.below();
                if (context.isAir(down)) {
-                  init(down, context);
+                  growHangingMoss(down, context);
                }
             }
          });
@@ -51,14 +51,14 @@ public final class PaleMossDecoratorShim {
             if (random.nextFloat() < leavesProbability) {
                BlockPos down = pos.below();
                if (context.isAir(down)) {
-                  init(down, context);
+                  growHangingMoss(down, context);
                }
             }
          });
       }
    }
 
-   private static void init(BlockPos pos, Context context) {
+   private static void growHangingMoss(BlockPos pos, Context context) {
       while (context.isAir(pos.below()) && !(context.random().nextFloat() < 0.5F)) {
          context.setBlock(pos, Blocks.PALE_HANGING_MOSS.defaultBlockState().setValue(HangingMossBlock.TIP, false));
          pos = pos.below();

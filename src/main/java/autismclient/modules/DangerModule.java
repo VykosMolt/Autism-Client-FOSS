@@ -82,17 +82,17 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    private Entity interceptTarget;
    private boolean intercepting;
    private boolean load_Z;
-   private int sync;
-   private int flush = -2147483648;
-   private int close;
-   private int open = -2147483648;
-   private int poll = -2147483648;
+   private int interceptStartTick;
+   private int lastInterceptTick = -2147483648;
+   private int acknowledgedMotionCount;
+   private int currentTick = -2147483648;
+   private int strikeReadyTick = -2147483648;
    private double read_D = 0.0 / 0.0;
    private String decisionReason = "";
    private String status = "Idle";
    private RotationMath.Rotation init_ce_DataUtil;
    private RotationMath.Rotation load_ce_DataUtil;
-   private int push = -2147483648;
+   private int rotationStartTick = -2147483648;
    private RotationMath.Rotation read_ce_DataUtil;
 
    public DangerModule() {
@@ -138,7 +138,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       this.add(
-         new DoubleSetting("warning-scale", "Warning Scale", 1.0, 0.5, 4.0, 0.5).group("Display").description("Size of warning icons").visibleWhen(this::pop)
+         new DoubleSetting("warning-scale", "Warning Scale", 1.0, 0.5, 4.0, 0.5).group("Display").description("Size of warning icons").visibleWhen(this::anyHudKindEnabled)
       );
       this.add(
          new BoolSetting("bed-warning", "Enabled", true)
@@ -218,10 +218,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    public static boolean init_Z_52() {
       DangerModule danger = instance();
-      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.isWithinTickWindow(AutismSessionState.getInstance().getClientTick(), danger.poll, 1);
+      return danger != null && danger.isEnabled() && danger.strikeReadyTick != -2147483648 && ClutchFallPhysics.isWithinTickWindow(AutismSessionState.getInstance().getClientTick(), danger.strikeReadyTick, 1);
    }
 
-   private boolean pop() {
+   private boolean anyHudKindEnabled() {
       for (IncomingProjectileScanner.ProjectileKind kind : IncomingProjectileScanner.ProjectileKind.values()) {
          if (this.isKindOptionEnabled(kind, "hud")) {
             return true;
@@ -299,7 +299,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    public int init_I_31() {
-      return this.close;
+      return this.acknowledgedMotionCount;
    }
 
    public List<IncomingProjectileScanner.ProjectileWarning> incoming() {
@@ -362,7 +362,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!this.isEnabled() && this.intercepting) {
-         this.open = AutismSessionState.getInstance().getClientTick();
+         this.currentTick = AutismSessionState.getInstance().getClientTick();
          this.flush_V_10();
       }
 
@@ -390,11 +390,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          }
 
          int nextTick = AutismSessionState.getInstance().getClientTick();
-         if (this.intercepting && nextTick - this.open > 1) {
+         if (this.intercepting && nextTick - this.currentTick > 1) {
             autismclient.util.SilentRotationManager.syncFromServerRotation();
          }
 
-         this.open = nextTick;
+         this.currentTick = nextTick;
          this.tickReturnRotation();
          this.sync_V_13();
          if (MC.player.onGround()) {
@@ -403,13 +403,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
          this.write_V_22();
          this.read_V_23();
-         if (this.isEnabled() && this.isKindEnabled(IncomingProjectileScanner.ProjectileKind.FIREBALL) && this.bool("auto-return") && this.set()) {
+         if (this.isEnabled() && this.isKindEnabled(IncomingProjectileScanner.ProjectileKind.FIREBALL) && this.bool("auto-return") && this.canIntercept()) {
             DangerModule.Inner_CachePool best = null;
             boolean landingPriority = false;
 
             for (DangerModule.Inner_CachePool threat : this.threats) {
                DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(threat.entity.getUUID());
-               if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.open - attempt.tick))) {
+               if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.currentTick - attempt.tick))) {
                   Fireball ball = (Fireball)threat.entity;
                   RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(ball);
                   ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
@@ -431,8 +431,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   int turn = FireballInterceptMath.turnTicks(yawDifference, pitchDifference, step, RotationMath.gcdStep());
                   boolean current = this.intercepting && !this.load_Z && this.interceptTarget == ball;
                   if (this.init_Z_I_D_2(turn, strike)) {
-                     int start = this.get() ? turn : Math.max(turn, turnTicks(yawDifference, pitchDifference));
-                     boolean holdBridge = threat.load_Z && strike >= 0.0 && strike <= 14.0 && run();
+                     int start = this.isScaffoldAirborne() ? turn : Math.max(turn, turnTicks(yawDifference, pitchDifference));
+                     boolean holdBridge = threat.load_Z && strike >= 0.0 && strike <= 14.0 && isScaffoldBridging();
                      if (current || holdBridge || strike >= 0.0 && strike <= init_I_I_5(start) || threat.load_Z && threat.init_D <= 1.0) {
                         best = threat;
                         break;
@@ -457,15 +457,15 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
                if (this.interceptTarget != best.entity) {
                   this.interceptTarget = best.entity;
-                  this.sync = this.open;
+                  this.interceptStartTick = this.currentTick;
                   autismclient.util.SilentRotationManager.syncFromServerRotation();
                   this.intercepting = true;
                   this.read_ce_DataUtil = null;
                   this.load_ce_DataUtil = autismclient.util.SilentRotationManager.getCurrentRotation();
                }
 
-               if (this.open - this.sync >= Math.max(12, 14) + 6) {
-                  this.interceptAttempts.put(this.interceptTarget.getUUID(), new DangerModule.Inner_DataUtil(this.open, this.interceptTarget.getDeltaMovement(), this.interceptTarget.getId()));
+               if (this.currentTick - this.interceptStartTick >= Math.max(12, 14) + 6) {
+                  this.interceptAttempts.put(this.interceptTarget.getUUID(), new DangerModule.Inner_DataUtil(this.currentTick, this.interceptTarget.getDeltaMovement(), this.interceptTarget.getId()));
                   this.decisionReason = "Return window ended";
                   this.flush_V_10();
                } else {
@@ -487,7 +487,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      MC.player.entityInteractionRange() - 0.025,
                      40
                   );
-                  if (this.get()) {
+                  if (this.isScaffoldAirborne()) {
                      autismclient.util.SilentRotationManager.stepDangerRotation(
                         MC.player, FireballInterceptMath.turnStep(RotationMath.angleDelta(goal.yaw(), from.yaw()), goal.pitch() - from.pitch(), strike, best.init_D, RotationMath.gcdStep())
                      );
@@ -521,7 +521,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          for (DangerModule.Inner_CachePool threat : this.threats) {
             if (threat.init_Z && threat.load_Z) {
                DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(threat.entity.getUUID());
-               if (attempt == null || FireballInterceptMath.init(this.open - attempt.tick)) {
+               if (attempt == null || FireballInterceptMath.init(this.currentTick - attempt.tick)) {
                   Fireball ball = (Fireball)threat.entity;
                   double strike = FireballInterceptMath.init_D_Vec3(
                      MC.player.getEyePosition(),
@@ -534,7 +534,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      40
                   );
                   if (strike >= 0.0 && strike <= 8.0) {
-                     this.poll = this.open;
+                     this.strikeReadyTick = this.currentTick;
                      return;
                   }
                }
@@ -567,11 +567,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return isIntercepting();
    }
 
-   private static boolean run() {
+   private static boolean isScaffoldBridging() {
       return MC.player.onGround() && ScaffoldModule.read_Z_12() && ScaffoldModule.resumeRotation() != null;
    }
 
-   private boolean get() {
+   private boolean isScaffoldAirborne() {
       return !MC.player.onGround() && !MC.player.getAbilities().flying && ScaffoldModule.resumeRotation() != null;
    }
 
@@ -591,14 +591,14 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          }
 
          int returnTurn = 1;
-         int placing = 2 * init(floor, motion, landing);
+         int placing = 2 * countMissingFloor(floor, motion, landing);
          return strike >= 0.0 && Math.max(turn, strike) + returnTurn + placing < landing;
       } else {
          return true;
       }
    }
 
-   private static int init(double floor, Vec3 motion, int landing) {
+   private static int countMissingFloor(double floor, Vec3 motion, int landing) {
       Vec3 from = MC.player.position();
       int row = Mth.floor(floor - 0.5);
       Set<Long> seen = new HashSet<>();
@@ -615,7 +615,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return missing;
    }
 
-   private boolean set() {
+   private boolean canIntercept() {
       return (!ClutchModule.init_Z_49() || ClutchModule.open_Z_5())
          && MC != null
          && MC.player != null
@@ -638,7 +638,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       Integer acknowledged;
       while ((acknowledged = this.init_ConcurrentLinkedQu.poll()) != null) {
          if (this.pendingMotionById.remove(acknowledged) != null) {
-            this.close++;
+            this.acknowledgedMotionCount++;
          }
       }
 
@@ -693,7 +693,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       this.interceptAttempts.entrySet().removeIf(entry -> {
          int id = entry.getValue().load;
          Entity live = MC.level.getEntity(id);
-         if (this.open - entry.getValue().tick <= 80 && live != null && live.getUUID().equals(entry.getKey())) {
+         if (this.currentTick - entry.getValue().tick <= 80 && live != null && live.getUUID().equals(entry.getKey())) {
             return false;
          }
 
@@ -917,15 +917,15 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void sync_V_13() {
-      if (!this.isEnabled() || !this.intercepting || this.load_Z || this.interceptTarget == null || !this.interceptTarget.isAlive() || !this.set()) {
+      if (!this.isEnabled() || !this.intercepting || this.load_Z || this.interceptTarget == null || !this.interceptTarget.isAlive() || !this.canIntercept()) {
          this.status = "Inactive";
-      } else if (!read_Z_22() || this.flush == this.open) {
+      } else if (!read_Z_22() || this.lastInterceptTick == this.currentTick) {
          this.status = "Rotation or attack interval";
       } else if (SprintStateTracker.isServerSprinting()) {
          this.status = "Sprint still announced";
       } else {
          DangerModule.Inner_DataUtil previousAttempt = this.interceptAttempts.get(this.interceptTarget.getUUID());
-         if (previousAttempt != null && !FireballInterceptMath.init(this.open - previousAttempt.tick)) {
+         if (previousAttempt != null && !FireballInterceptMath.init(this.currentTick - previousAttempt.tick)) {
             this.status = "Retry interval";
          } else {
             RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.getCurrentRotation();
@@ -969,8 +969,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      }
 
                      Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
-                     this.interceptAttempts.put(this.interceptTarget.getUUID(), new DangerModule.Inner_DataUtil(this.open, incoming, this.interceptTarget.getId()));
-                     this.flush = this.open;
+                     this.interceptAttempts.put(this.interceptTarget.getUUID(), new DangerModule.Inner_DataUtil(this.currentTick, incoming, this.interceptTarget.getId()));
+                     this.lastInterceptTick = this.currentTick;
                      this.decisionReason = "Return sent";
                      this.status = "Sent";
                      this.load_Z = true;
@@ -1051,7 +1051,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!danger.intercepting || danger.load_Z) {
-         float progress = (AutismSessionState.getInstance().getClientTick() - danger.push + partialTick) / 2.0F;
+         float progress = (AutismSessionState.getInstance().getClientTick() - danger.rotationStartTick + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
             return RotationMath.lerp(danger.read_ce_DataUtil, new RotationMath.Rotation(MC.player.getYRot(), MC.player.getXRot()), progress);
@@ -1068,7 +1068,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void close_V_9() {
-      this.push = AutismSessionState.getInstance().getClientTick();
+      this.rotationStartTick = AutismSessionState.getInstance().getClientTick();
       this.read_ce_DataUtil = this.load_ce_DataUtil;
    }
 
@@ -1149,7 +1149,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       this.decisionReason = "";
       this.init_ce_DataUtil = this.load_ce_DataUtil = this.read_ce_DataUtil = null;
       this.read_D = 0.0 / 0.0;
-      this.poll = -2147483648;
+      this.strikeReadyTick = -2147483648;
    }
 
    public record Inner_CachePool(Entity entity, double init_D, double load_D, String init_Str, boolean init_Z, boolean load_Z) {

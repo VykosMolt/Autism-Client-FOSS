@@ -56,10 +56,10 @@ public final class AiDigLine {
             AABB box = shape.bounds().move(cell);
 
             for (Direction face : Direction.values()) {
-               if (init(eye, box, face)) {
+               if (faceVisibleFrom(eye, box, face)) {
                   for (double a : HEAD_GRID) {
                      for (double b : HEAD_GRID) {
-                        Vec3 point = init(box, face, a, b);
+                        Vec3 point = pointOnFace(box, face, a, b);
                         Vec3 d = point.subtract(eye);
                         if (!(d.length() > reach) && !(d.lengthSqr() < 1.0E-8)) {
                            Vec3 dir = d.normalize();
@@ -68,14 +68,14 @@ public final class AiDigLine {
                            if (!chain.isEmpty() && heads.contains(chain.get(0))) {
                               float ly = yawOf(dir);
                               float lp = pitchOf(dir);
-                              double turn = Math.abs(init(ly - yaw)) + Math.abs(lp - pitch);
+                              double turn = Math.abs(wrapDegrees(ly - yaw)) + Math.abs(lp - pitch);
                               double score = chain.size() * 60.0 - turn + Math.min(margin[0], 0.3) * 10.0;
                               if (heads.size() > 1 && chain.containsAll(heads)) {
                                  score += 60.0;
                               }
 
                               if (!Float.isNaN(pathYaw)) {
-                                 score -= Math.abs(init(ly - pathYaw)) * 0.6;
+                                 score -= Math.abs(wrapDegrees(ly - pathYaw)) * 0.6;
                               }
 
                               if (score > bestScore) {
@@ -228,7 +228,7 @@ public final class AiDigLine {
                   Set<BlockPos> gone = new HashSet<>(state.gone());
                   gone.addAll(line.chain());
                   next.add(
-                     new AiDigLine.Inner_StreamUtil(List.copyOf(lines), gone, line.yaw(), line.pitch(), state.turn() + init(state.yaw(), state.pitch(), line))
+                     new AiDigLine.Inner_StreamUtil(List.copyOf(lines), gone, line.yaw(), line.pitch(), state.turn() + aimError(state.yaw(), state.pitch(), line))
                   );
                }
             }
@@ -303,7 +303,7 @@ public final class AiDigLine {
                costs.add(breakTicks.applyAsDouble(cell));
             }
 
-            double turn = init(lookYaw, lookPitch, line);
+            double turn = aimError(lookYaw, lookPitch, line);
             double time = AiMiningTargetCost.estimateTicks(costs, needed, 0.0, turn > 1.0E-6 ? 1.0 : 0.0);
             BlockPos first = line.chain().get(0);
             choices.add(new AiMiningTargetCost.TargetChoice(i, time, turn, first.distToCenterSqr(eye), first.asLong()));
@@ -325,8 +325,8 @@ public final class AiDigLine {
       return List.copyOf(plan);
    }
 
-   static double init(float yaw, float pitch, AiDigLine.Inner_DataUtil line) {
-      return Math.abs(init(line.yaw() - yaw)) + Math.abs(line.pitch() - pitch);
+   static double aimError(float yaw, float pitch, AiDigLine.Inner_DataUtil line) {
+      return Math.abs(wrapDegrees(line.yaw() - yaw)) + Math.abs(line.pitch() - pitch);
    }
 
    static List<AiDigLine.Inner_DataUtil> candidateLines(
@@ -367,10 +367,10 @@ public final class AiDigLine {
                AABB box = shape.bounds().move(cell);
 
                for (Direction face : Direction.values()) {
-                  if (init(eye, box, face)) {
+                  if (faceVisibleFrom(eye, box, face)) {
                      for (double a : grid) {
                         for (double b : grid) {
-                           Vec3 point = init(box, face, a, b);
+                           Vec3 point = pointOnFace(box, face, a, b);
                            Vec3 d = point.subtract(eye);
                            if (!(d.length() > reach) && !(d.lengthSqr() < 1.0E-8)) {
                               Vec3 dir = d.normalize();
@@ -379,7 +379,7 @@ public final class AiDigLine {
                               if (!chain.isEmpty() && heads.contains(chain.get(0))) {
                                  float ly = yawOf(dir);
                                  float lp = pitchOf(dir);
-                                 double key = Math.abs(init(ly - yaw)) + Math.abs(lp - pitch) - Math.min(margin[0], 0.3) * 10.0;
+                                 double key = Math.abs(wrapDegrees(ly - yaw)) + Math.abs(lp - pitch) - Math.min(margin[0], 0.3) * 10.0;
                                  Double had = keyOf.get(chain);
                                  if (had == null || key < had) {
                                     keyOf.put(chain, key);
@@ -460,7 +460,7 @@ public final class AiDigLine {
       return eye.add(dir.scale(t));
    }
 
-   static boolean init(Vec3 eye, AABB box, Direction face) {
+   static boolean faceVisibleFrom(Vec3 eye, AABB box, Direction face) {
       double eps = 0.001;
       boolean var10000;
       switch (face) {
@@ -489,7 +489,7 @@ public final class AiDigLine {
       return var10000;
    }
 
-   static Vec3 init(AABB box, Direction face, double a, double b) {
+   static Vec3 pointOnFace(AABB box, Direction face, double a, double b) {
       double x = box.minX + (box.maxX - box.minX) * a;
       double y = box.minY + (box.maxY - box.minY) * a;
       double zb = box.minZ + (box.maxZ - box.minZ) * b;
@@ -549,7 +549,7 @@ public final class AiDigLine {
       return (float)(-Math.toDegrees(Math.atan2(dir.y, Math.hypot(dir.x, dir.z))));
    }
 
-   static float init(float degrees) {
+   static float wrapDegrees(float degrees) {
       float d = degrees % 360.0F;
       if (d >= 180.0F) {
          d -= 360.0F;

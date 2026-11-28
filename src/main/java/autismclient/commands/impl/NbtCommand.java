@@ -27,7 +27,7 @@ public class NbtCommand extends Command {
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("copy").executes(ctx -> {
-         load();
+         showHeldNbt();
          return 1;
       }));
    }
@@ -62,7 +62,7 @@ public class NbtCommand extends Command {
       }
    }
 
-   private static void load() {
+   private static void showHeldNbt() {
       ItemStack stack = heldStack();
       if (stack.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");

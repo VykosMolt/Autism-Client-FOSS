@@ -15,7 +15,7 @@ public record PacketFieldSnapshot(PacketSchemaRegistry.Inner_DataUtil init_bx_Da
       return this.init_bx_DataUtil == null ? "Object" : this.init_bx_DataUtil.load();
    }
 
-   public String read() {
+   public String typeLabel() {
       return this.init_bx_DataUtil == null ? "object" : this.init_bx_DataUtil.read();
    }
 

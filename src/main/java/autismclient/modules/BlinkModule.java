@@ -26,7 +26,7 @@ public final class BlinkModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init();
+      this.applySettings();
       BlinkPacketManager.captureOriginSnapshot();
    }
 
@@ -47,7 +47,7 @@ public final class BlinkModule extends Module {
    protected void onOptionValueChanged(String optionId) {
       if (this.isEnabled()) {
          boolean wasHoldingMovement = BlinkPacketManager.auditHoldingMovement();
-         this.init();
+         this.applySettings();
          if (!wasHoldingMovement && BlinkPacketManager.auditHoldingMovement()) {
             BlinkPacketManager.captureOriginSnapshot();
          }
@@ -65,7 +65,7 @@ public final class BlinkModule extends Module {
       return reset >= 0 ? held + " | " + String.format(Locale.ROOT, "%.1fs", reset / 20.0) : Integer.toString(held);
    }
 
-   private void init() {
+   private void applySettings() {
       BlinkPacketManager.setHoldDirections(this.bool("incoming"), this.bool("outgoing"));
       BlinkPacketManager.setOutgoingHoldTypes(this.bool("hold-movement"), this.bool("hold-actions"));
       BlinkPacketManager.setShowClone(this.bool("show-position"));

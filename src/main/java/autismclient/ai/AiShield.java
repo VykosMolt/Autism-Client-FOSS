@@ -50,18 +50,18 @@ final class AiShield {
       int bestDepth = 2147483647;
 
       for (BlockPos first : line) {
-         if (init(mc, first)) {
+         if (isFreeCoverCell(mc, first)) {
             BlockPos cell = first;
 
             for (int depth = 0; depth < 4 && depth < bestDepth && !(Vec3.atCenterOf(cell).distanceTo(eye) > 4.2); depth++) {
-               if (load(mc, cell)) {
+               if (hasSolidNeighbor(mc, cell)) {
                   best = cell;
                   bestDepth = depth;
                   break;
                }
 
                BlockPos under = cell.below();
-               if (under.asLong() == own1 || under.asLong() == own2 || !init(mc, under)) {
+               if (under.asLong() == own1 || under.asLong() == own2 || !isFreeCoverCell(mc, under)) {
                   break;
                }
 
@@ -87,24 +87,24 @@ final class AiShield {
          return null;
       }
 
-      if (!init(mc, cell)) {
+      if (!isFreeCoverCell(mc, cell)) {
          return null;
       }
 
-      if (load(mc, cell)) {
+      if (hasSolidNeighbor(mc, cell)) {
          return cell;
       }
 
       BlockPos under = cell.below();
-      return init(mc, under) && load(mc, under) ? under : null;
+      return isFreeCoverCell(mc, under) && hasSolidNeighbor(mc, under) ? under : null;
    }
 
-   static boolean init(Minecraft mc, BlockPos cell) {
+   static boolean isFreeCoverCell(Minecraft mc, BlockPos cell) {
       BlockState state = mc.level.getBlockState(cell);
       if (state.getCollisionShape(mc.level, cell).isEmpty()
          && (state.getFluidState().isEmpty() || state.getFluidState().is(FluidTags.WATER))
          && state.canBeReplaced()) {
-         return init(mc.player.getBoundingBox()).intersects(new AABB(cell))
+         return standingBox(mc.player.getBoundingBox()).intersects(new AABB(cell))
             ? false
             : mc.level.getEntitiesOfClass(LivingEntity.class, new AABB(cell), e -> e.isAlive() && !e.isSpectator()).isEmpty();
       } else {
@@ -112,11 +112,11 @@ final class AiShield {
       }
    }
 
-   static AABB init(AABB body) {
+   static AABB standingBox(AABB body) {
       return new AABB(body.minX, body.minY, body.minZ, body.maxX, Math.max(body.maxY, body.minY + 1.8), body.maxZ);
    }
 
-   static boolean load(Minecraft mc, BlockPos cell) {
+   static boolean hasSolidNeighbor(Minecraft mc, BlockPos cell) {
       for (Direction d : Direction.values()) {
          BlockPos side = cell.relative(d);
          if (!mc.level.getBlockState(side).getCollisionShape(mc.level, side).isEmpty()) {

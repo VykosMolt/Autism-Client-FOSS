@@ -12,35 +12,35 @@ import net.minecraft.client.Minecraft;
 
 final class DebouncedPersistenceScheduler {
    static final long init_J = 300L;
-   private static final Object init_Obj = new Object();
-   private static final Map<String, Runnable> init_Map = new HashMap<>();
-   private static final Map<String, Boolean> load_Map = new HashMap<>();
-   private static final Map<String, ScheduledFuture<?>> read = new HashMap<>();
-   private static final Map<String, Long> write = new HashMap<>();
-   private static final ScheduledExecutorService init_ScheduledExecutorS = Executors.newSingleThreadScheduledExecutor(r -> {
+   private static final Object LOCK = new Object();
+   private static final Map<String, Runnable> pendingWork = new HashMap<>();
+   private static final Map<String, Boolean> draining = new HashMap<>();
+   private static final Map<String, ScheduledFuture<?>> scheduled = new HashMap<>();
+   private static final Map<String, Long> versions = new HashMap<>();
+   private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
       Thread thread = new Thread(r, "autism-persistence");
       thread.setDaemon(true);
       return thread;
    });
-   private static AutismConfig init_AutismConfig;
-   private static long load_J;
-   private static final String init_Str = "config-capture";
+   private static AutismConfig pendingConfig;
+   private static long configVersion;
+   private static final String CONFIG_CAPTURE_KEY = "config-capture";
 
    private DebouncedPersistenceScheduler() {
    }
 
    static void schedule(AutismConfig config) {
       if (config != null) {
-         synchronized (init_Obj) {
-            init_AutismConfig = config;
-            long version = ++load_J;
-            load("config-capture", 300L, () -> load(version));
+         synchronized (LOCK) {
+            pendingConfig = config;
+            long version = ++configVersion;
+            scheduleLocked("config-capture", 300L, () -> dispatchCapture(version));
          }
       }
    }
 
-   private static void load(long version) {
-      Runnable capture = () -> read(version);
+   private static void dispatchCapture(long version) {
+      Runnable capture = () -> captureConfig(version);
 
       try {
          Minecraft client = Minecraft.getInstance();
@@ -55,15 +55,15 @@ final class DebouncedPersistenceScheduler {
       capture.run();
    }
 
-   private static void read(long version) {
+   private static void captureConfig(long version) {
       AutismConfig config;
-      synchronized (init_Obj) {
-         if (version != load_J || init_AutismConfig == null) {
+      synchronized (LOCK) {
+         if (version != configVersion || pendingConfig == null) {
             return;
          }
 
-         config = init_AutismConfig;
-         init_AutismConfig = null;
+         config = pendingConfig;
+         pendingConfig = null;
       }
 
       AutismConfigPersistence.persist(config);
@@ -71,77 +71,77 @@ final class DebouncedPersistenceScheduler {
 
    static void flushConfig() {
       AutismConfig config;
-      synchronized (init_Obj) {
-         config = init_AutismConfig;
+      synchronized (LOCK) {
+         config = pendingConfig;
          if (config == null) {
             return;
          }
 
-         init_AutismConfig = null;
-         load_J++;
-         init("config-capture");
+         pendingConfig = null;
+         configVersion++;
+         cancelLocked("config-capture");
       }
 
       AutismConfigPersistence.persist(config);
    }
 
-   static void init(String key, long delayMs, Runnable work) {
+   static void schedule(String key, long delayMs, Runnable work) {
       if (key != null && work != null) {
-         synchronized (init_Obj) {
-            load(key, delayMs, work);
+         synchronized (LOCK) {
+            scheduleLocked(key, delayMs, work);
          }
       }
    }
 
-   private static void load(String key, long delayMs, Runnable work) {
-      ScheduledFuture<?> old = read.remove(key);
+   private static void scheduleLocked(String key, long delayMs, Runnable work) {
+      ScheduledFuture<?> old = scheduled.remove(key);
       if (old != null) {
          old.cancel(false);
       }
 
-      long version = write.getOrDefault(key, 0L) + 1L;
-      write.put(key, version);
-      ScheduledFuture<?> next = init_ScheduledExecutorS.schedule(() -> {
-         synchronized (init_Obj) {
-            if (write.getOrDefault(key, 0L) != version) {
+      long version = versions.getOrDefault(key, 0L) + 1L;
+      versions.put(key, version);
+      ScheduledFuture<?> next = EXECUTOR.schedule(() -> {
+         synchronized (LOCK) {
+            if (versions.getOrDefault(key, 0L) != version) {
                return;
             }
 
-            read.remove(key);
+            scheduled.remove(key);
          }
 
          work.run();
       }, Math.max(0L, delayMs), TimeUnit.MILLISECONDS);
-      read.put(key, next);
+      scheduled.put(key, next);
    }
 
-   private static void init(String key) {
-      ScheduledFuture<?> pending = read.remove(key);
+   private static void cancelLocked(String key) {
+      ScheduledFuture<?> pending = scheduled.remove(key);
       if (pending != null) {
          pending.cancel(false);
       }
 
-      write.put(key, write.getOrDefault(key, 0L) + 1L);
+      versions.put(key, versions.getOrDefault(key, 0L) + 1L);
    }
 
    static void schedule(String key, Runnable work) {
       if (key != null && work != null) {
-         synchronized (init_Obj) {
-            init_Map.put(key, work);
-            if (load_Map.putIfAbsent(key, Boolean.TRUE) == null) {
-               init_ScheduledExecutorS.execute(() -> load(key));
+         synchronized (LOCK) {
+            pendingWork.put(key, work);
+            if (draining.putIfAbsent(key, Boolean.TRUE) == null) {
+               EXECUTOR.execute(() -> drain(key));
             }
          }
       }
    }
 
-   private static void load(String key) {
+   private static void drain(String key) {
       while (true) {
          Runnable work;
-         synchronized (init_Obj) {
-            work = init_Map.remove(key);
+         synchronized (LOCK) {
+            work = pendingWork.remove(key);
             if (work == null) {
-               load_Map.remove(key);
+               draining.remove(key);
                return;
             }
          }
@@ -157,7 +157,7 @@ final class DebouncedPersistenceScheduler {
    static void flushAll(long timeoutMs) {
       flushConfig();
       CountDownLatch latch = new CountDownLatch(1);
-      init_ScheduledExecutorS.execute(latch::countDown);
+      EXECUTOR.execute(latch::countDown);
 
       try {
          latch.await(Math.max(0L, timeoutMs), TimeUnit.MILLISECONDS);

@@ -9,7 +9,7 @@ public final class ToggleTransitionCache {
    private static final long init_J = 150000000L;
    private static final long load = 30000000000L;
    private static final Map<String, ToggleTransitionCache.Inner_DataUtil> STATES = new HashMap<>();
-   private static long read;
+   private static long lastPruneNanos;
 
    private ToggleTransitionCache() {
    }
@@ -24,14 +24,14 @@ public final class ToggleTransitionCache {
       }
 
       if (state.init_Z != on) {
-         state.init_F = state.init(now);
+         state.init_F = state.progress(now);
          state.init_Z = on;
          state.init_J = now;
       }
 
       state.load_J = now;
-      if (now - read > 30000000000L) {
-         read = now;
+      if (now - lastPruneNanos > 30000000000L) {
+         lastPruneNanos = now;
          Iterator<ToggleTransitionCache.Inner_DataUtil> it = STATES.values().iterator();
 
          while (it.hasNext()) {
@@ -41,7 +41,7 @@ public final class ToggleTransitionCache {
          }
       }
 
-      return state.init(now);
+      return state.progress(now);
    }
 
    public static String init(NetHelper bounds) {
@@ -63,7 +63,7 @@ public final class ToggleTransitionCache {
          this.load_J = now;
       }
 
-      float init(long now) {
+      float progress(long now) {
          float elapsed = Math.min(1.0F, (float)(now - this.init_J) / 1.5E8F);
          float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
          this.load_F = this.init_F + ((this.init_Z ? 1.0F : 0.0F) - this.init_F) * eased;

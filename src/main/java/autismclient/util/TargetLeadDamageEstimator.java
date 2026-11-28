@@ -8,14 +8,14 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class TargetLeadDamageEstimator {
-   private final EntityMotionTracker init = new EntityMotionTracker();
+   private final EntityMotionTracker motion = new EntityMotionTracker();
 
    public void init(LivingEntity target, int tick) {
-      this.init.track(target, tick);
+      this.motion.track(target, tick);
    }
 
    public AABB predictedBox(LivingEntity target, int tick, int horizonTicks, double maxLead) {
-      Vec3 base = this.init.isTracking(target) ? this.init.trackedPosition() : EntityMotionTracker.observedPosition(target);
+      Vec3 base = this.motion.isTracking(target) ? this.motion.trackedPosition() : EntityMotionTracker.observedPosition(target);
       AABB box = target.getBoundingBox().move(base.subtract(target.position()));
       if (horizonTicks <= 0) {
          return box;
@@ -32,7 +32,7 @@ public final class TargetLeadDamageEstimator {
    }
 
    public void init() {
-      this.init.reset();
+      this.motion.reset();
    }
 
    public static AABB leadBox(LivingEntity target) {

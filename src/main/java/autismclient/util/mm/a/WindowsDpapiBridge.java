@@ -11,40 +11,40 @@ import java.lang.invoke.MethodHandle;
 import java.util.Locale;
 
 final class WindowsDpapiBridge {
-   private static final MemoryLayout init_MemoryLayout = MemoryLayout.structLayout(
+   private static final MemoryLayout DATA_BLOB = MemoryLayout.structLayout(
       ValueLayout.JAVA_INT.withName("cbData"), MemoryLayout.paddingLayout(4L), ValueLayout.ADDRESS.withName("pbData")
    );
    private static final long init_J = 8L;
    private static final int init_I = 1;
-   private static final MethodHandle init_MethodHandle;
-   private static final MethodHandle load;
-   private static final MethodHandle read;
-   private static final boolean init_Z;
+   private static final MethodHandle CRYPT_PROTECT;
+   private static final MethodHandle CRYPT_UNPROTECT;
+   private static final MethodHandle LOCAL_FREE;
+   private static final boolean AVAILABLE;
 
    private WindowsDpapiBridge() {
    }
 
-   static boolean init() {
-      return init_Z;
+   static boolean isAvailable() {
+      return AVAILABLE;
    }
 
    static byte[] init(byte[] plain) {
-      return init(init_MethodHandle, plain);
+      return transformBlob(CRYPT_PROTECT, plain);
    }
 
    static byte[] load(byte[] cipher) {
-      return init(load, cipher);
+      return transformBlob(CRYPT_UNPROTECT, cipher);
    }
 
-   private static byte[] init(MethodHandle fn, byte[] in) {
-      if (init_Z && fn != null && in != null) {
+   private static byte[] transformBlob(MethodHandle fn, byte[] in) {
+      if (AVAILABLE && fn != null && in != null) {
          try (Arena arena = Arena.ofConfined()) {
             MemorySegment inData = arena.allocate(Math.max(1, in.length));
             MemorySegment.copy(MemorySegment.ofArray(in), 0L, inData, 0L, in.length);
-            MemorySegment inBlob = arena.allocate(init_MemoryLayout);
+            MemorySegment inBlob = arena.allocate(DATA_BLOB);
             inBlob.set(ValueLayout.JAVA_INT, 0L, in.length);
             inBlob.set(ValueLayout.ADDRESS, 8L, inData);
-            MemorySegment outBlob = arena.allocate(init_MemoryLayout);
+            MemorySegment outBlob = arena.allocate(DATA_BLOB);
             outBlob.set(ValueLayout.JAVA_INT, 0L, 0);
             outBlob.set(ValueLayout.ADDRESS, 8L, MemorySegment.NULL);
             int ok = (int)fn.invoke(
@@ -71,7 +71,7 @@ final class WindowsDpapiBridge {
                      MemorySegment.copy(pb.reinterpret(cb), 0L, MemorySegment.ofArray(out), 0L, cb);
                      return out;
                   } finally {
-                     read.invoke((MemorySegment)pb);
+                     LOCAL_FREE.invoke((MemorySegment)pb);
                   }
                } else {
                   return null;
@@ -115,9 +115,9 @@ final class WindowsDpapiBridge {
          }
       }
 
-      init_MethodHandle = protect;
-      load = unprotect;
-      read = localFree;
-      init_Z = ok;
+      CRYPT_PROTECT = protect;
+      CRYPT_UNPROTECT = unprotect;
+      LOCAL_FREE = localFree;
+      AVAILABLE = ok;
    }
 }

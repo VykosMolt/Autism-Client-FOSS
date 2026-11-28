@@ -147,9 +147,9 @@ public final class PayloadStudyTracker {
          stats.init_J = stats.init_J + Math.max(0, snapshot.byteLength());
          String direction = snapshot.direction() == null ? "" : snapshot.direction().trim().toUpperCase(Locale.ROOT);
          if ("C2S".equals(direction)) {
-            stats.load++;
+            stats.c2sCount++;
          } else if ("S2C".equals(direction)) {
-            stats.read++;
+            stats.s2cCount++;
          }
 
          boolean matched = init_List.isEmpty();
@@ -271,8 +271,8 @@ public final class PayloadStudyTracker {
       private final String channel;
       private final Set<String> patterns = new LinkedHashSet<>();
       private int count;
-      private int load;
-      private int read;
+      private int c2sCount;
+      private int s2cCount;
       private long init_J;
 
       private Inner_DataUtil(String channel) {

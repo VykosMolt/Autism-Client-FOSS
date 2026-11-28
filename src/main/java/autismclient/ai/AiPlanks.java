@@ -43,7 +43,7 @@ public final class AiPlanks {
       return itemId != null && itemId.endsWith("bamboo_block") ? 2 : 4;
    }
 
-   static String init(ItemStack stack) {
+   static String planksFor(ItemStack stack) {
       if (stack.isEmpty()) {
          return null;
       }
@@ -62,7 +62,7 @@ public final class AiPlanks {
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (init(stack) != null) {
+         if (planksFor(stack) != null) {
             total += stack.getCount() * init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
          }
       }
@@ -76,7 +76,7 @@ public final class AiPlanks {
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         String planks = init(stack);
+         String planks = planksFor(stack);
          if (planks != null) {
             byPlanks.merge(planks, stack.getCount(), Integer::sum);
             perLog.put(planks, init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()));

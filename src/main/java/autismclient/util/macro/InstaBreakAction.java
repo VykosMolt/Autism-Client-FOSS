@@ -21,7 +21,7 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
    public boolean waitForGuiAfter = false;
    public String guiName = "";
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean raycast = false;
 
    @Override
@@ -64,7 +64,7 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -97,7 +97,7 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
@@ -162,11 +162,11 @@ public class InstaBreakAction implements PacketOrderAware, AimTargetAction, Macr
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 }

@@ -15,7 +15,7 @@ public final class GuiDesyncHelper {
       if (mc != null && mc.gui.screen() != null && mc.player != null) {
          AutismSessionState.getInstance().storeGuiScreen(mc.gui.screen(), mc.player.containerMenu);
          if (notify) {
-            bi.init(init(), -13248397);
+            bi.init(storedMessage(), -13248397);
          }
 
          return true;
@@ -28,7 +28,7 @@ public final class GuiDesyncHelper {
       }
    }
 
-   private static String init() {
+   private static String storedMessage() {
       int keyCode = AutismConfig.getGlobal().keybindLoadGui;
       return keyCode == -1 ? "GUI stored." : "GUI stored. Press " + AutismKeybindOverlay.keyName(keyCode) + " to restore.";
    }

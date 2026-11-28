@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public class LabelAction implements MacroAction {
    public String name = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -30,7 +30,7 @@ public class LabelAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "LABEL");
       tag.putString("name", this.name == null ? "" : this.name);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -38,7 +38,7 @@ public class LabelAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       this.name = tag.getStringOr("name", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -54,11 +54,11 @@ public class LabelAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

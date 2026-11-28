@@ -44,7 +44,7 @@ public final class TooltipRenderer {
          }
 
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(
-            init(x, 4, Math.max(4, context.init_I() - 4 - w)), init(y, 4, Math.max(4, context.load_I() - 4 - h)), w, h
+            clamp(x, 4, Math.max(4, context.init_I() - 4 - w)), clamp(y, 4, Math.max(4, context.load_I() - 4 - h)), w, h
          );
          autismclient.gui.f.PacketUtil.init(context, bounds, context.init_TableIndex().colors().popupSurface, context.init_TableIndex().colors().borderSubtle);
 
@@ -61,7 +61,7 @@ public final class TooltipRenderer {
       }
    }
 
-   private static int init(int value, int min, int max) {
+   private static int clamp(int value, int min, int max) {
       return Math.max(min, Math.min(value, max));
    }
 }

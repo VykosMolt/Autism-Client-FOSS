@@ -4,14 +4,14 @@ import java.util.Random;
 
 final class ScaffoldPlaceRateTracker {
    static final int init = 200;
-   private int load;
-   private int read;
-   private int write = -1;
-   private int update;
-   private int sync;
+   private int lastRate;
+   private int carryPercent;
+   private int jitterRate = -1;
+   private int jitter;
+   private int pendingPlaces;
 
    boolean arm(int percentage, boolean climbing, Random random) {
-      this.sync = 0;
+      this.pendingPlaces = 0;
       int rate = Math.clamp(percentage, 0, 200);
       if (rate == 0) {
          this.reset();
@@ -22,10 +22,10 @@ final class ScaffoldPlaceRateTracker {
          return false;
       }
 
-      this.sync = this.init(rate, random);
-      this.read = this.load(rate);
-      this.load = rate;
-      this.write = -1;
+      this.pendingPlaces = this.init(rate, random);
+      this.carryPercent = this.accumulated(rate);
+      this.lastRate = rate;
+      this.jitterRate = -1;
       return this.armed();
    }
 
@@ -35,41 +35,41 @@ final class ScaffoldPlaceRateTracker {
          return 0;
       }
 
-      if (this.write != rate) {
-         this.write = rate;
-         this.update = random.nextInt(100);
+      if (this.jitterRate != rate) {
+         this.jitterRate = rate;
+         this.jitter = random.nextInt(100);
       }
 
-      return Math.clamp(Math.floorDiv(this.load(rate) + 99 - this.update, 100), rate / 100, init(rate));
+      return Math.clamp(Math.floorDiv(this.accumulated(rate) + 99 - this.jitter, 100), rate / 100, maxPlacesPerTick(rate));
    }
 
-   private int load(int rate) {
-      return Math.min(100 * (init(rate) + 1), (rate == this.load ? this.read : 0) + rate);
+   private int accumulated(int rate) {
+      return Math.min(100 * (maxPlacesPerTick(rate) + 1), (rate == this.lastRate ? this.carryPercent : 0) + rate);
    }
 
    boolean armed() {
-      return this.sync > 0;
+      return this.pendingPlaces > 0;
    }
 
    int pending() {
-      return this.sync;
+      return this.pendingPlaces;
    }
 
-   static int init(int percentage) {
+   static int maxPlacesPerTick(int percentage) {
       return (Math.clamp(percentage, 0, 200) + 99) / 100;
    }
 
    void consume() {
-      if (this.sync > 0) {
-         this.sync--;
-         this.read = Math.max(-100, this.read - 100);
+      if (this.pendingPlaces > 0) {
+         this.pendingPlaces--;
+         this.carryPercent = Math.max(-100, this.carryPercent - 100);
       }
    }
 
    void reset() {
-      this.load = 0;
-      this.read = 0;
-      this.write = -1;
-      this.sync = 0;
+      this.lastRate = 0;
+      this.carryPercent = 0;
+      this.jitterRate = -1;
+      this.pendingPlaces = 0;
    }
 }

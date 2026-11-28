@@ -19,25 +19,25 @@ public final class BlockNbtFormatter {
       String blockId = state.getStringOr("Name", "minecraft:air");
       String raw = root.toString();
       List<ItemNbtInspector.InspectLine> nice = new ArrayList<>();
-      init(nice, "Identity", UiColorPalette.warmWhite());
-      load(nice, "Block: " + blockId, UiColorPalette.softWhite());
-      load(nice, "State: " + root.getStringOr("block_state", blockId), UiColorPalette.textBody());
-      load(nice, "Dimension: " + root.getStringOr("dimension", "<unknown>"), UiColorPalette.textBody());
+      addTitle(nice, "Identity", UiColorPalette.warmWhite());
+      addLine(nice, "Block: " + blockId, UiColorPalette.softWhite());
+      addLine(nice, "State: " + root.getStringOr("block_state", blockId), UiColorPalette.textBody());
+      addLine(nice, "Dimension: " + root.getStringOr("dimension", "<unknown>"), UiColorPalette.textBody());
       int[] pos = root.getIntArray("position").orElse(new int[0]);
-      load(nice, "Position: " + init(pos), UiColorPalette.textBody());
-      load(nice, "Source: " + root.getStringOr("source", "client"), UiColorPalette.textMuted());
+      addLine(nice, "Position: " + formatPos(pos), UiColorPalette.textBody());
+      addLine(nice, "Source: " + root.getStringOr("source", "client"), UiColorPalette.textMuted());
       CompoundTag entity = root.getCompound("block_entity").orElse(null);
       if (entity != null) {
          init_V(nice);
-         init(nice, "Block Entity", UiColorPalette.cyan());
-         load(nice, "Type: " + entity.getStringOr("id", "<unknown>"), UiColorPalette.softWhite());
-         load(nice, "Fields: " + entity.size(), UiColorPalette.textBody());
+         addTitle(nice, "Block Entity", UiColorPalette.cyan());
+         addLine(nice, "Type: " + entity.getStringOr("id", "<unknown>"), UiColorPalette.softWhite());
+         addLine(nice, "Fields: " + entity.size(), UiColorPalette.textBody());
       }
 
       if (!items.isEmpty() || root.getBooleanOr("contents_available", false)) {
          init_V(nice);
-         init(nice, "Contents", UiColorPalette.mint());
-         load(nice, "Slots: " + root.getIntOr("container_slots", items.size()), UiColorPalette.textBody());
+         addTitle(nice, "Contents", UiColorPalette.mint());
+         addLine(nice, "Slots: " + root.getIntOr("container_slots", items.size()), UiColorPalette.textBody());
          int nonEmpty = 0;
 
          for (int slot = 0; slot < items.size(); slot++) {
@@ -45,23 +45,23 @@ public final class BlockNbtFormatter {
             if (stack != null && !stack.isEmpty()) {
                nonEmpty++;
                String id = String.valueOf(BuiltInRegistries.ITEM.getKey(stack.getItem()));
-               load(nice, "Slot " + slot + ": " + stack.getCount() + "x " + id + " (" + stack.getHoverName().getString() + ")", UiColorPalette.softWhite());
+               addLine(nice, "Slot " + slot + ": " + stack.getCount() + "x " + id + " (" + stack.getHoverName().getString() + ")", UiColorPalette.softWhite());
             }
          }
 
          if (nonEmpty == 0) {
-            load(nice, "Container is empty.", UiColorPalette.textMuted());
+            addLine(nice, "Container is empty.", UiColorPalette.textMuted());
          }
       }
 
       if (note != null && !note.isBlank()) {
          init_V(nice);
-         init(nice, "Access", UiColorPalette.amber());
-         load(nice, note, UiColorPalette.textBody());
+         addTitle(nice, "Access", UiColorPalette.amber());
+         addLine(nice, note, UiColorPalette.textBody());
       }
 
       List<ItemNbtInspector.InspectLine> rawLines = new ArrayList<>();
-      init(rawLines, "Raw Block SNBT", UiColorPalette.warmWhite());
+      addTitle(rawLines, "Raw Block SNBT", UiColorPalette.warmWhite());
       boolean truncated = raw.length() > 40000;
       String shown = truncated ? raw.substring(0, 40000) : raw;
 
@@ -70,7 +70,7 @@ public final class BlockNbtFormatter {
       }
 
       if (truncated) {
-         load(rawLines, "... (display truncated; Copy Raw keeps everything)", UiColorPalette.textMuted());
+         addLine(rawLines, "... (display truncated; Copy Raw keeps everything)", UiColorPalette.textMuted());
       }
 
       StringBuilder pretty = new StringBuilder("Block NBT - ").append(blockId);
@@ -96,20 +96,20 @@ public final class BlockNbtFormatter {
       }
    }
 
-   private static String init(int[] pos) {
+   private static String formatPos(int[] pos) {
       return pos.length >= 3 ? pos[0] + ", " + pos[1] + ", " + pos[2] : "<unknown>";
    }
 
-   private static void init(List<ItemNbtInspector.InspectLine> lines, String title, int color) {
-      load(lines, "[" + title + "]", color);
+   private static void addTitle(List<ItemNbtInspector.InspectLine> lines, String title, int color) {
+      addLine(lines, "[" + title + "]", color);
    }
 
-   private static void load(List<ItemNbtInspector.InspectLine> lines, String text, int color) {
+   private static void addLine(List<ItemNbtInspector.InspectLine> lines, String text, int color) {
       lines.add(new ItemNbtInspector.InspectLine(text == null ? "" : text, color));
    }
 
    private static void init_V(List<ItemNbtInspector.InspectLine> lines) {
-      load(lines, "", UiColorPalette.textMuted());
+      addLine(lines, "", UiColorPalette.textMuted());
    }
 
    public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.InspectLine> lines, List<ItemNbtInspector.InspectLine> rawLines, String load_Str, String read)

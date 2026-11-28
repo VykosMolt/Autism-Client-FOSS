@@ -39,14 +39,14 @@ final class AiCollect {
    );
    private static final int init_I = 32;
    private static final String init_Str = "minecraft:iron_pickaxe";
-   static final Map<String, Set<String>> load = Map.of(
+   static final Map<String, Set<String>> ALT_SOURCES = Map.of(
       "minecraft:wheat_seeds", Set.of("minecraft:short_grass", "minecraft:tall_grass", "minecraft:fern", "minecraft:large_fern")
    );
 
    private AiCollect() {
    }
 
-   static List<AiCollect.Inner_DataUtil> init(List<AiCollect.Inner_DataUtil> targets) {
+   static List<AiCollect.Inner_DataUtil> orderTargets(List<AiCollect.Inner_DataUtil> targets) {
       List<AiCollect.Inner_DataUtil> ordered = new ArrayList<>(targets);
       ordered.sort(
          Comparator.<AiCollect.Inner_DataUtil, Boolean>comparing(t -> t.drop())
@@ -60,12 +60,12 @@ final class AiCollect {
       return ordered;
    }
 
-   static String init(String blockId, String asItemId) {
+   static String dropOf(String blockId, String asItemId) {
       return ORE_DROPS.getOrDefault(blockId, asItemId);
    }
 
-   static boolean init(String blockId, String asItemId, String item) {
-      return init(blockId, asItemId).equals(item) || load.getOrDefault(item, Set.of()).contains(blockId);
+   static boolean yieldsItem(String blockId, String asItemId, String item) {
+      return dropOf(blockId, asItemId).equals(item) || ALT_SOURCES.getOrDefault(item, Set.of()).contains(blockId);
    }
 
    static int init_I(int count, int baseline, boolean additional) {
@@ -76,11 +76,11 @@ final class AiCollect {
       return exact && count != target ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED;
    }
 
-   static String init(String item, int count, int target) {
+   static String noMoreSourcesMessage(String item, int count, int target) {
       return "No more reachable sources for " + item + " (collected " + count + " of " + target + ")";
    }
 
-   static boolean init(List<JsonObject> skipped, AiCollect.Inner_DataUtil target, String reason) {
+   static boolean recordSkip(List<JsonObject> skipped, AiCollect.Inner_DataUtil target, String reason) {
       if (skipped.size() >= 32) {
          return false;
       }
@@ -93,7 +93,7 @@ final class AiCollect {
       return true;
    }
 
-   static boolean init(boolean requiresCorrectTool, boolean anyCarriedToolHarvests) {
+   static boolean canHarvest(boolean requiresCorrectTool, boolean anyCarriedToolHarvests) {
       return !requiresCorrectTool || anyCarriedToolHarvests;
    }
 
@@ -108,7 +108,7 @@ final class AiCollect {
       return missing;
    }
 
-   static String load(String blockId, String toolId) {
+   static String noToolMessage(String blockId, String toolId) {
       return "no carried tool can harvest " + blockId + " (needs " + toolId + ")";
    }
 
@@ -129,9 +129,9 @@ final class AiCollect {
 
                for (Block block : BuiltInRegistries.BLOCK) {
                   String blockId = BuiltInRegistries.BLOCK.getKey(block).toString();
-                  if (init(blockId, BuiltInRegistries.ITEM.getKey(block.asItem()).toString(), item)) {
+                  if (yieldsItem(blockId, BuiltInRegistries.ITEM.getKey(block.asItem()).toString(), item)) {
                      BlockState state = block.defaultBlockState();
-                     if (!init(state.requiresCorrectToolForDrops(), init(client, state))) {
+                     if (!canHarvest(state.requiresCorrectToolForDrops(), hasHarvestTool(client, state))) {
                         tierGated = requiredToolId(state);
                      } else {
                         sources.add(blockId);
@@ -159,37 +159,37 @@ final class AiCollect {
                   )
                );
                return new AiOperation() {
-                  boolean init;
+                  boolean cancelled;
 
                   @Override
                   public AiOperation.Result tick() {
-                     if (this.init) {
-                        return this.init(AiOperation.Status.CANCELLED, "Collection cancelled");
+                     if (this.cancelled) {
+                        return this.finish(AiOperation.Status.CANCELLED, "Collection cancelled");
                      }
 
                      AiOperation.Result r = gather.tick();
                      int count = AiGameState.countInventoryItem(item);
                      if (count < target) {
                         if (!r.terminal()) {
-                           return this.init(r.message());
+                           return this.running(r.message());
                         } else if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.init(AiOperation.Status.CANCELLED, "Collection cancelled");
+                           return this.finish(AiOperation.Status.CANCELLED, "Collection cancelled");
                         } else if (r.status() == AiOperation.Status.TIMED_OUT) {
-                           return this.init(AiOperation.Status.TIMED_OUT, "Collection deadline reached");
+                           return this.finish(AiOperation.Status.TIMED_OUT, "Collection deadline reached");
                         } else {
                            return missingTool != null
-                              ? this.init(
+                              ? this.finish(
                                  AiOperation.Status.FAILED,
-                                 AiCollect.init(item, count - baseline, target)
+                                 AiCollect.noMoreSourcesMessage(item, count - baseline, target)
                                     + "; no carried tool can harvest the remaining sources; craft "
                                     + missingTool
                                     + " first"
                               )
-                              : this.init(AiOperation.Status.FAILED, AiCollect.init(item, count - baseline, target) + " - " + r.message());
+                              : this.finish(AiOperation.Status.FAILED, AiCollect.noMoreSourcesMessage(item, count - baseline, target) + " - " + r.message());
                         }
                      } else {
                         gather.cancel();
-                        return this.init(
+                        return this.finish(
                            AiCollect.init_AiOperation_Status(count, target, exact),
                            exact && count != target
                               ? "Surplus " + item + " retained; exact target requires storage reconciliation"
@@ -198,13 +198,13 @@ final class AiCollect {
                      }
                   }
 
-                  AiOperation.Result init(String message) {
+                  AiOperation.Result running(String message) {
                      return AiGameOperations.result(
                         AiOperation.Status.RUNNING, message, AiJson.objectOf("item", item, "count", AiGameState.countInventoryItem(item), "target", target)
                      );
                   }
 
-                  AiOperation.Result init(AiOperation.Status status, String message) {
+                  AiOperation.Result finish(AiOperation.Status status, String message) {
                      int count = AiGameState.countInventoryItem(item);
                      JsonObject data = AiJson.objectOf(
                         "item",
@@ -231,8 +231,8 @@ final class AiCollect {
 
                   @Override
                   public void cancel() {
-                     if (!this.init) {
-                        this.init = true;
+                     if (!this.cancelled) {
+                        this.cancelled = true;
                         gather.cancel();
                      }
                   }
@@ -248,7 +248,7 @@ final class AiCollect {
       }
    }
 
-   static boolean init(Minecraft mc, BlockState state) {
+   static boolean hasHarvestTool(Minecraft mc, BlockState state) {
       if (!state.requiresCorrectToolForDrops()) {
          return true;
       }
@@ -271,7 +271,7 @@ final class AiCollect {
          return new AiCollect.Inner_DataUtil(pos, entityId, distanceSqr);
       }
 
-      static AiCollect.Inner_DataUtil block(BlockPos pos, double distanceSqr) {
+      static AiCollect.Inner_DataUtil ofBlock(BlockPos pos, double distanceSqr) {
          return new AiCollect.Inner_DataUtil(pos, -1, distanceSqr);
       }
    }

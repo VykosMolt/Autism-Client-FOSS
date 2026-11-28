@@ -17,8 +17,8 @@ import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
 public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAdapter {
    private static final int init_I = 4096;
    private static final Map<Connection, Map<Packet<?>, Boolean>> init_Map = new IdentityHashMap<>();
-   private static int load;
-   private static int read;
+   private static int pendingCount;
+   private static int consumeAttempts;
    private final Connection connection;
 
    public OutboundPacketFilterHandler(Connection connection) {
@@ -31,7 +31,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          super.write(ctx, msg, promise);
       } else {
          Packet<?> packet = (Packet<?>)msg;
-         if (load(this.connection, packet)) {
+         if (consumePending(this.connection, packet)) {
             super.write(ctx, msg, promise);
          } else {
             OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.verdict(this.connection, packet);
@@ -52,8 +52,8 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   public static boolean init(Connection connection, Channel channel, Packet<?> packet) {
-      if (connection != null && init(channel) && (packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket)) {
+   public static boolean handleOutbound(Connection connection, Channel channel, Packet<?> packet) {
+      if (connection != null && isLive(channel) && (packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket)) {
          OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.verdict(connection, packet);
          Packet var10000;
          switch (verdict.kind) {
@@ -76,8 +76,8 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             return false;
          }
 
-         boolean filtered = init(connection, channel);
-         if (filtered && !init(connection, outbound)) {
+         boolean filtered = isHandlerInstalled(connection, channel);
+         if (filtered && !markPending(connection, outbound)) {
             return false;
          }
 
@@ -85,20 +85,20 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             ChannelFuture future = channel.writeAndFlush(outbound);
             if (future == null) {
                if (filtered) {
-                  load(connection, outbound);
+                  consumePending(connection, outbound);
                }
 
                return false;
             } else {
                if (filtered) {
-                  future.addListener(ignored -> load(connection, outbound));
+                  future.addListener(ignored -> consumePending(connection, outbound));
                }
 
                return !future.isDone() || future.isSuccess();
             }
          } catch (RuntimeException | Error failure) {
             if (filtered) {
-               load(connection, outbound);
+               consumePending(connection, outbound);
             }
 
             throw failure;
@@ -120,26 +120,26 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             boolean marked = false;
 
             try {
-               if (!init(connection, channel)) {
+               if (!isHandlerInstalled(connection, channel)) {
                   return true;
                }
 
-               return init(connection, packet);
+               return markPending(connection, packet);
             } catch (RuntimeException | Error failure) {
                if (marked) {
-                  load(connection, packet);
+                  consumePending(connection, packet);
                }
 
                throw failure;
             }
          case REPLACE:
             Packet<?> replacement = verdict.replacement;
-            if (replacement != null && init(channel)) {
+            if (replacement != null && isLive(channel)) {
                boolean markedRep = false;
 
                try {
-                  if (init(connection, channel)) {
-                     markedRep = init(connection, replacement);
+                  if (isHandlerInstalled(connection, channel)) {
+                     markedRep = markPending(connection, replacement);
                      if (!markedRep) {
                         return false;
                      }
@@ -154,7 +154,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
 
                   if (future == null) {
                      if (markedRep) {
-                        load(connection, replacement);
+                        consumePending(connection, replacement);
                      }
 
                      return false;
@@ -163,7 +163,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
                   boolean cleanupMarked = markedRep;
                   future.addListener(ignored -> {
                      if (cleanupMarked) {
-                        load(connection, replacement);
+                        consumePending(connection, replacement);
                      }
                   });
                   if (listener != null) {
@@ -173,7 +173,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
                   return false;
                } catch (RuntimeException | Error failure) {
                   if (markedRep) {
-                     load(connection, replacement);
+                     consumePending(connection, replacement);
                   }
 
                   throw failure;
@@ -188,7 +188,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   private static boolean init(Channel channel) {
+   private static boolean isLive(Channel channel) {
       return channel != null && channel.isOpen() && channel.isActive();
    }
 
@@ -198,20 +198,20 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
 
    public static ChannelFuture init(Connection connection, Object packet, ChannelFuture future) {
       if (future == null) {
-         load(connection, (Packet<?>)packet);
+         consumePending(connection, (Packet<?>)packet);
       } else {
-         future.addListener(ignored -> load(connection, (Packet<?>)packet));
+         future.addListener(ignored -> consumePending(connection, (Packet<?>)packet));
       }
 
       return future;
    }
 
    public static void init(Connection connection, Object packet) {
-      load(connection, (Packet<?>)packet);
+      consumePending(connection, (Packet<?>)packet);
    }
 
-   private static boolean init(Connection connection, Channel channel) {
-      if (connection != null && init(channel)) {
+   private static boolean isHandlerInstalled(Connection connection, Channel channel) {
+      if (connection != null && isLive(channel)) {
          ChannelPipeline pipeline = channel.pipeline();
          if (pipeline == null) {
             return false;
@@ -224,7 +224,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   private static boolean init(Connection connection, Packet<?> packet) {
+   private static boolean markPending(Connection connection, Packet<?> packet) {
       if (connection != null && packet != null) {
          synchronized (init_Map) {
             Map<Packet<?>, Boolean> byPacket = init_Map.get(connection);
@@ -232,7 +232,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
                return true;
             }
 
-            if (load >= 4096) {
+            if (pendingCount >= 4096) {
                return false;
             }
 
@@ -242,7 +242,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             }
 
             byPacket.put(packet, Boolean.TRUE);
-            load++;
+            pendingCount++;
             return true;
          }
       } else {
@@ -250,12 +250,12 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   private static boolean load(Connection connection, Packet<?> packet) {
+   private static boolean consumePending(Connection connection, Packet<?> packet) {
       synchronized (init_Map) {
-         read++;
+         consumeAttempts++;
          Map<Packet<?>, Boolean> byPacket = init_Map.get(connection);
          if (byPacket != null && byPacket.remove(packet) != null) {
-            load--;
+            pendingCount--;
             if (byPacket.isEmpty()) {
                init_Map.remove(connection);
             }
@@ -271,28 +271,28 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       synchronized (init_Map) {
          Map<Packet<?>, Boolean> removed = init_Map.remove(connection);
          if (removed != null) {
-            load = load - removed.size();
+            pendingCount = pendingCount - removed.size();
          }
       }
    }
 
    static int init_I() {
       synchronized (init_Map) {
-         return load;
+         return pendingCount;
       }
    }
 
-   static int load() {
+   static int consumeAttemptCount() {
       synchronized (init_Map) {
-         return read;
+         return consumeAttempts;
       }
    }
 
    static void init_V() {
       synchronized (init_Map) {
          init_Map.clear();
-         load = 0;
-         read = 0;
+         pendingCount = 0;
+         consumeAttempts = 0;
       }
    }
 }

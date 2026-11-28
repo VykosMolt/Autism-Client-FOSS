@@ -22,7 +22,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    public String guiName = "";
    public boolean useHandlerSlots = true;
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public int getItemCount(int index) {
       if (index >= 0 && index < this.itemCounts.size()) {
@@ -33,7 +33,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    public boolean hasTargetFilter() {
-      for (MacroItemTarget target : this.load()) {
+      for (MacroItemTarget target : this.resolvedTargets()) {
          if (target != null && (target.hasItemFilter() || target.hasSlot())) {
             return true;
          }
@@ -43,13 +43,13 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    public List<MacroItemTarget> targets() {
-      return List.copyOf(this.load());
+      return List.copyOf(this.resolvedTargets());
    }
 
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
-         List<MacroItemTarget> targets = this.load();
+         List<MacroItemTarget> targets = this.resolvedTargets();
          if (!this.hasTargetFilter()) {
             if (this.mode == DropAction.Inner_DataUtil.ALL) {
                for (int i = 0; i < 36; i++) {
@@ -57,10 +57,10 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                      if (this.useHandlerSlots) {
                         int resolved = autismclient.util.InventorySlotHelper.toScreenSlot(mc, i);
                         if (resolved >= 0) {
-                           this.load(mc, resolved, 0);
+                           this.dropHandlerSlot(mc, resolved, 0);
                         }
                      } else {
-                        this.init(mc, i, 0);
+                        this.dropInventorySlot(mc, i, 0);
                      }
                   }
                }
@@ -70,10 +70,10 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                if (this.useHandlerSlots) {
                   int resolved = autismclient.util.InventorySlotHelper.toScreenSlot(mc, selected);
                   if (resolved >= 0) {
-                     this.load(mc, resolved, count);
+                     this.dropHandlerSlot(mc, resolved, count);
                   }
                } else {
-                  this.init(mc, selected, count);
+                  this.dropInventorySlot(mc, selected, count);
                }
             }
          } else if (!targets.isEmpty()) {
@@ -84,18 +84,18 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                   String entryName = entrySpec(entryTarget.toSpecString());
                   int configuredSlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                   if (configuredSlot >= 0 && !entryName.isEmpty()) {
-                     this.init(mc, configuredSlot, entryTarget, count);
+                     this.dropFromSlot(mc, configuredSlot, entryTarget, count);
                   } else if (configuredSlot >= 0) {
                      if (this.useHandlerSlots) {
                         int resolvedSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, configuredSlot);
                         if (resolvedSlot >= 0) {
-                           this.load(mc, resolvedSlot, count);
+                           this.dropHandlerSlot(mc, resolvedSlot, count);
                         }
                      } else {
-                        this.init(mc, configuredSlot, count);
+                        this.dropInventorySlot(mc, configuredSlot, count);
                      }
                   } else if (!entryName.isEmpty()) {
-                     this.init(mc, entryTarget, count);
+                     this.dropMatching(mc, entryTarget, count);
                   }
                }
             }
@@ -103,11 +103,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
    }
 
-   private void init(Minecraft mc, int configuredSlot, String itemName, int count) {
-      this.init(mc, configuredSlot, MacroItemTarget.parse(itemName), count);
+   private void dropFromSlotByName(Minecraft mc, int configuredSlot, String itemName, int count) {
+      this.dropFromSlot(mc, configuredSlot, MacroItemTarget.parse(itemName), count);
    }
 
-   private void init(Minecraft mc, int configuredSlot, MacroItemTarget target, int count) {
+   private void dropFromSlot(Minecraft mc, int configuredSlot, MacroItemTarget target, int count) {
       if (target.hasItemFilter()) {
          if (this.useHandlerSlots) {
             AbstractContainerMenu handler = mc.player.containerMenu;
@@ -119,7 +119,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, resolvedSlot);
                      if (target.matches(slot.getItem(), visibleSlot)) {
                         int toDrop = count == 0 ? 0 : Math.min(count, slot.getItem().getCount());
-                        this.load(mc, resolvedSlot, toDrop);
+                        this.dropHandlerSlot(mc, resolvedSlot, toDrop);
                      }
                   }
                }
@@ -128,17 +128,17 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
             ItemStack stack = mc.player.getInventory().getItem(configuredSlot);
             if (!stack.isEmpty() && target.matches(stack, configuredSlot)) {
                int toDrop = count == 0 ? 0 : Math.min(count, stack.getCount());
-               this.init(mc, configuredSlot, toDrop);
+               this.dropInventorySlot(mc, configuredSlot, toDrop);
             }
          }
       }
    }
 
-   private void init(Minecraft mc, String itemName, int count) {
-      this.init(mc, MacroItemTarget.parse(itemName), count);
+   private void dropByName(Minecraft mc, String itemName, int count) {
+      this.dropMatching(mc, MacroItemTarget.parse(itemName), count);
    }
 
-   private void init(Minecraft mc, MacroItemTarget target, int count) {
+   private void dropMatching(Minecraft mc, MacroItemTarget target, int count) {
       if (target.hasItemFilter()) {
          int remaining = count;
          if (this.useHandlerSlots) {
@@ -149,14 +149,14 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, s.index);
                      if (target.matches(s.getItem(), visibleSlot)) {
                         if (count == 0) {
-                           this.load(mc, s.index, 0);
+                           this.dropHandlerSlot(mc, s.index, 0);
                         } else {
                            if (remaining <= 0) {
                               break;
                            }
 
                            int toDrop = Math.min(remaining, s.getItem().getCount());
-                           this.load(mc, s.index, toDrop);
+                           this.dropHandlerSlot(mc, s.index, toDrop);
                            remaining -= toDrop;
                         }
                      }
@@ -168,14 +168,14 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                ItemStack stack = mc.player.getInventory().getItem(i);
                if (!stack.isEmpty() && target.matches(stack, i)) {
                   if (count == 0) {
-                     this.init(mc, i, 0);
+                     this.dropInventorySlot(mc, i, 0);
                   } else {
                      if (remaining <= 0) {
                         break;
                      }
 
                      int toDrop = Math.min(remaining, stack.getCount());
-                     this.init(mc, i, toDrop);
+                     this.dropInventorySlot(mc, i, toDrop);
                      remaining -= toDrop;
                   }
                }
@@ -184,11 +184,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       }
    }
 
-   private void init(Minecraft mc, int invSlot, int count) {
+   private void dropInventorySlot(Minecraft mc, int invSlot, int count) {
       autismclient.util.InventoryDropHelper.dropFromInventory(mc, invSlot, count);
    }
 
-   private void load(Minecraft mc, int handlerSlotId, int count) {
+   private void dropHandlerSlot(Minecraft mc, int handlerSlotId, int count) {
       autismclient.util.InventoryDropHelper.dropFromHandler(mc, handlerSlotId, count);
    }
 
@@ -238,7 +238,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       tag.putString("type", "DROP");
       tag.putString("mode", this.mode.name());
       tag.putInt("count", this.dropCount);
-      tag.put("itemNames", MacroItemTarget.toListTag(this.load()));
+      tag.put("itemNames", MacroItemTarget.toListTag(this.resolvedTargets()));
       ListTag counts = new ListTag();
 
       for (int c : this.itemCounts) {
@@ -250,7 +250,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("useHandlerSlots", this.useHandlerSlots);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -300,7 +300,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
 
       this.useHandlerSlots = true;
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
@@ -308,7 +308,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
 
    @Override
    public String getDisplayName() {
-      List<MacroItemTarget> targets = this.load();
+      List<MacroItemTarget> targets = this.resolvedTargets();
       if (targets.isEmpty()) {
          String untargeted = this.mode == DropAction.Inner_DataUtil.ALL ? "Drop Entire Inventory" : "Drop Held Item x" + Math.max(1, this.dropCount);
          return untargeted + GuiWaitAware.waitSuffix(this);
@@ -341,12 +341,12 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    private static int entrySlot(String entry) {
@@ -377,7 +377,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
       return separator >= 0 && separator + 1 < entry.length() ? entry.substring(separator + 1).trim() : "";
    }
 
-   private List<MacroItemTarget> load() {
+   private List<MacroItemTarget> resolvedTargets() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
@@ -393,7 +393,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    private MacroItemTarget targetAt(int index) {
-      List<MacroItemTarget> targets = this.load();
+      List<MacroItemTarget> targets = this.resolvedTargets();
       return index >= 0 && index < targets.size() ? targets.get(index) : new MacroItemTarget();
    }
 

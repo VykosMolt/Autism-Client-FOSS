@@ -1,30 +1,30 @@
 package autismclient.util;
 
 public final class OverlayWindowSizeStore {
-   private final String init;
+   private final String key;
 
    public OverlayWindowSizeStore(String key) {
-      this.init = key;
+      this.key = key;
    }
 
    public boolean hasSavedSize() {
-      AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
+      AutismConfig.WindowSize s = this.storedSize();
       return s != null && (s.width > 0 || s.height > 0);
    }
 
    public int width(int auto, int min, int max) {
-      AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
+      AutismConfig.WindowSize s = this.storedSize();
       return s != null && s.width > 0 ? clamp(s.width, min, max) : auto;
    }
 
    public int height(int auto, int min, int max) {
-      AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
+      AutismConfig.WindowSize s = this.storedSize();
       return s != null && s.height > 0 ? clamp(s.height, min, max) : auto;
    }
 
    public void save(int width, int height) {
       try {
-         AutismConfig.WindowSize s = AutismConfig.getGlobal().windowSizes.computeIfAbsent(this.init, k -> new AutismConfig.WindowSize());
+         AutismConfig.WindowSize s = AutismConfig.getGlobal().windowSizes.computeIfAbsent(this.key, k -> new AutismConfig.WindowSize());
          s.width = Math.max(0, width);
          s.height = Math.max(0, height);
       } catch (Throwable var4) {
@@ -40,16 +40,16 @@ public final class OverlayWindowSizeStore {
 
    public void clear() {
       try {
-         if (AutismConfig.getGlobal().windowSizes.remove(this.init) != null) {
+         if (AutismConfig.getGlobal().windowSizes.remove(this.key) != null) {
             AutismConfig.getGlobal().save();
          }
       } catch (Throwable var2) {
       }
    }
 
-   private AutismConfig.WindowSize init_AutismConfig_Windo() {
+   private AutismConfig.WindowSize storedSize() {
       try {
-         return AutismConfig.getGlobal().windowSizes.get(this.init);
+         return AutismConfig.getGlobal().windowSizes.get(this.key);
       } catch (Throwable t) {
          return null;
       }

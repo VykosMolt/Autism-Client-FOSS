@@ -150,7 +150,7 @@ public final class CandidatePoolSelector {
       }
    }
 
-   public static Optional<CandidatePoolSelector.Inner_StreamUtil> init(List<String> pool, CandidatePoolSelector.Inner_CachePool selection, CandidatePoolSelector.Inner_BufferHelper state) {
+   public static Optional<CandidatePoolSelector.Inner_StreamUtil> select(List<String> pool, CandidatePoolSelector.Inner_CachePool selection, CandidatePoolSelector.Inner_BufferHelper state) {
       return init(pool, selection, 1, state);
    }
 
@@ -180,7 +180,7 @@ public final class CandidatePoolSelector {
                   List<Integer> unused = new ArrayList<>();
 
                   for (int i = 0; i < pool.size(); i++) {
-                     if (!state.used.contains(init(pool.get(i)))) {
+                     if (!state.used.contains(lower(pool.get(i)))) {
                         unused.add(i);
                      }
                   }
@@ -194,7 +194,7 @@ public final class CandidatePoolSelector {
                   }
 
                   int picked = unused.get(ThreadLocalRandom.current().nextInt(unused.size()));
-                  state.used.add(init(pool.get(picked)));
+                  state.used.add(lower(pool.get(picked)));
                   var10000 = picked;
                }
                break;
@@ -218,7 +218,7 @@ public final class CandidatePoolSelector {
       }
    }
 
-   private static String init(String value) {
+   private static String lower(String value) {
       return value == null ? "" : value.toLowerCase(Locale.ROOT);
    }
 

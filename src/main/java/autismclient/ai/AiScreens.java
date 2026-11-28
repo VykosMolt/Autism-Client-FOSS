@@ -48,12 +48,12 @@ final class AiScreens {
       try {
          Screen screen = mc.gui.screen();
          out.addProperty("screen", screen == null ? "none" : screen.getClass().getSimpleName());
-         out.addProperty("title", screen == null ? "" : init(init(screen.getTitle()), 256));
+         out.addProperty("title", screen == null ? "" : truncate(textOf(screen.getTitle()), 256));
          out.addProperty("connected", mc.player != null && mc.level != null);
          if (screen instanceof DisconnectedScreen disconnected) {
-            String reason = init(disconnected);
+            String reason = disconnectDetails(disconnected);
             if (!reason.isEmpty()) {
-               out.addProperty("disconnectReason", init(reason, 1024));
+               out.addProperty("disconnectReason", truncate(reason, 1024));
             }
          }
 
@@ -69,7 +69,7 @@ final class AiScreens {
                      break;
                   }
 
-                  widgets.add(init(widget, index++).json());
+                  widgets.add(describeWidget(widget, index++).json());
                }
             }
 
@@ -81,7 +81,7 @@ final class AiScreens {
 
                   autismclient.gui.f.NetHelper b = entry.getValue();
                   widgets.add(
-                     new AiScreens.Inner_CachePool(index++, "button", init(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()).json()
+                     new AiScreens.Inner_CachePool(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()).json()
                   );
                }
             }
@@ -107,7 +107,7 @@ final class AiScreens {
 
                   ServerData data = servers.get(i);
                   if (data != null) {
-                     list.add(init(data, i));
+                     list.add(serverSummary(data, i));
                   }
                }
             }
@@ -121,7 +121,7 @@ final class AiScreens {
          out.add("menus", AiGameplay.readMenu());
       } catch (Throwable t) {
          out.addProperty("screen", "unavailable");
-         out.addProperty("error", init(String.valueOf(t.getMessage()), 128));
+         out.addProperty("error", truncate(String.valueOf(t.getMessage()), 128));
       }
 
       return out;
@@ -130,14 +130,14 @@ final class AiScreens {
    static JsonObject click(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       AiScreens.Inner_DataUtil live = captureScreen(mc);
-      int position = init(live.infos(), args);
+      int position = selectWidgetIndex(live.infos(), args);
       AiScreens.Inner_CachePool target = live.infos().get(position);
       if (position >= live.widgets().size()) {
          autismclient.gui.f.NetHelper b = live.customBounds().get(position - live.widgets().size());
          double centerX = b.read() + b.update() / 2.0;
          double centerY = b.write() + b.sync() / 2.0;
          if (!live.screen().mouseClicked(new MouseButtonEvent(centerX, centerY, Compat263.newGlfwMouseButtonInfo(0, 0)), false)) {
-            throw new IllegalArgumentException("Click was not accepted by button \"" + init(target.label(), 64) + "\"");
+            throw new IllegalArgumentException("Click was not accepted by button \"" + truncate(target.label(), 64) + "\"");
          }
 
          JsonObject customOut = describe(mc);
@@ -154,15 +154,15 @@ final class AiScreens {
          }
 
          if (!widget.visible) {
-            throw new IllegalArgumentException("Widget \"" + init(target.label(), 64) + "\" is not visible");
+            throw new IllegalArgumentException("Widget \"" + truncate(target.label(), 64) + "\" is not visible");
          }
 
          if (!widget.active) {
-            throw new IllegalArgumentException("Widget \"" + init(target.label(), 64) + "\" is disabled");
+            throw new IllegalArgumentException("Widget \"" + truncate(target.label(), 64) + "\" is disabled");
          }
 
-         if (!init(widget)) {
-            throw new IllegalArgumentException("Click was not accepted by widget \"" + init(target.label(), 64) + "\"");
+         if (!clickWidgetCenter(widget)) {
+            throw new IllegalArgumentException("Click was not accepted by widget \"" + truncate(target.label(), 64) + "\"");
          }
 
          JsonObject out = describe(mc);
@@ -179,7 +179,7 @@ final class AiScreens {
       }
 
       boolean sendPacket = AiJson.getBoolean(args, "sendPacket", true);
-      String title = init(screen.getTitle() == null ? screen.getClass().getSimpleName() : screen.getTitle().getString(), 256);
+      String title = truncate(screen.getTitle() == null ? screen.getClass().getSimpleName() : screen.getTitle().getString(), 256);
       boolean closed = sendPacket ? autismclient.util.GuiDesyncHelper.init(mc, true, false) : autismclient.util.GuiDesyncHelper.read(mc, false);
       if (!closed) {
          throw new IllegalStateException(
@@ -228,7 +228,7 @@ final class AiScreens {
       boolean append = AiJson.getBoolean(args, "append", false);
       Minecraft mc = Minecraft.getInstance();
       AiScreens.Inner_DataUtil live = captureScreen(mc);
-      int position = init(live.infos(), args);
+      int position = selectWidgetIndex(live.infos(), args);
       if (position < 0 || position >= live.widgets().size()) {
          throw new IllegalArgumentException("Widget " + position + " is not a standard text field");
       }
@@ -246,7 +246,7 @@ final class AiScreens {
          }
 
          JsonObject out = describe(mc);
-         out.add("typed", AiJson.objectOf("index", position, "value", init(box.getValue(), 256), "truncated", !box.getValue().equals(requested)));
+         out.add("typed", AiJson.objectOf("index", position, "value", truncate(box.getValue(), 256), "truncated", !box.getValue().equals(requested)));
          return out;
       } else {
          throw new IllegalArgumentException("Widget " + position + " (" + live.infos().get(position).type() + ") is not a text field");
@@ -299,14 +299,14 @@ final class AiScreens {
                List<String> ips = new ArrayList<>();
 
                for (int i = 0; i < size && ips.size() < 16; i++) {
-                  ips.add(init(servers.get(i).ip, 48));
+                  ips.add(truncate(servers.get(i).ip, 48));
                }
 
-               throw new IllegalArgumentException("No server ip matches \"" + init(ip, 64) + "\". Available: " + String.join(", ", ips));
+               throw new IllegalArgumentException("No server ip matches \"" + truncate(ip, 64) + "\". Available: " + String.join(", ", ips));
             }
          }
 
-         JsonObject out = load(servers.get(matchIndex), matchIndex);
+         JsonObject out = serverDetails(servers.get(matchIndex), matchIndex);
          out.addProperty("serverListSize", size);
          return out;
       } else {
@@ -316,19 +316,19 @@ final class AiScreens {
 
    static AiOperation joinServer(JsonObject args) {
       final String address = addressArg(args);
-      String name = init(AiJson.getString(args, "name", "").trim(), 64);
+      String name = truncate(AiJson.getString(args, "name", "").trim(), 64);
       if (name.isEmpty()) {
          name = address;
       }
 
-      final int timeout = init(args, 45, 120);
+      final int timeout = timeoutSeconds(args, 45, 120);
       final Minecraft mc = Minecraft.getInstance();
       if (autismclient.util.OverlayScreenController.getActualScreen(mc) instanceof ConnectScreen) {
          throw new IllegalArgumentException("A connection attempt is already in progress");
       }
 
       ServerData current = mc.getCurrentServer();
-      if (mc.getConnection() != null && current != null && init(current.ip, address)) {
+      if (mc.getConnection() != null && current != null && sameServerAddress(current.ip, address)) {
          throw new IllegalArgumentException("Already connected to " + address);
       }
 
@@ -343,9 +343,9 @@ final class AiScreens {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z) {
-               return this.init(AiOperation.Status.CANCELLED, "Connection to " + address + " cancelled", AiJson.objectOf("server", address));
+               return this.finish(AiOperation.Status.CANCELLED, "Connection to " + address + " cancelled", AiJson.objectOf("server", address));
             } else if (mc.player != null && mc.level != null && mc.level != initialLevel) {
-               return this.init(
+               return this.finish(
                   AiOperation.Status.SUCCEEDED,
                   "Connected to " + address + "; world observed",
                   AiJson.objectOf("server", address, "worldObserved", true)
@@ -353,10 +353,10 @@ final class AiScreens {
             } else {
                Screen screen = autismclient.util.OverlayScreenController.getActualScreen(mc);
                if (screen instanceof DisconnectedScreen disconnected) {
-                  String reason = AiScreens.init(AiScreens.init(disconnected), 1024);
-                  return this.init(
+                  String reason = AiScreens.truncate(AiScreens.disconnectDetails(disconnected), 1024);
+                  return this.finish(
                      AiOperation.Status.FAILED,
-                     "Connection to " + address + " rejected: " + AiScreens.init(reason, 256),
+                     "Connection to " + address + " rejected: " + AiScreens.truncate(reason, 256),
                      AiJson.objectOf("server", address, "reason", reason, "screen", "DisconnectedScreen")
                   );
                } else if (System.nanoTime() > this.deadlineNanos) {
@@ -376,7 +376,7 @@ final class AiScreens {
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message, JsonObject datax) {
+         AiOperation.Result finish(AiOperation.Status status, String message, JsonObject datax) {
             this.init_Z = true;
             return AiGameOperations.result(status, message, datax);
          }
@@ -385,7 +385,7 @@ final class AiScreens {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               AiScreens.init(autismclient.util.OverlayScreenController.getActualScreen(mc));
+               AiScreens.pressConnectScreenButton(autismclient.util.OverlayScreenController.getActualScreen(mc));
             }
          }
       };
@@ -405,7 +405,7 @@ final class AiScreens {
       return out;
    }
 
-   static int init(List<AiScreens.Inner_CachePool> widgets, JsonObject args) {
+   static int selectWidgetIndex(List<AiScreens.Inner_CachePool> widgets, JsonObject args) {
       boolean hasIndex = args.has("index") && args.get("index").isJsonPrimitive();
       String label = args.has("label") && !args.get("label").isJsonNull() ? args.get("label").getAsString() : "";
       if (hasIndex == !label.isBlank()) {
@@ -432,7 +432,7 @@ final class AiScreens {
             }
          }
 
-         throw new IllegalArgumentException("No widget label contains \"" + init(label, 64) + "\". Available labels: " + init(widgets));
+         throw new IllegalArgumentException("No widget label contains \"" + truncate(label, 64) + "\". Available labels: " + describeLabels(widgets));
       }
    }
 
@@ -456,22 +456,22 @@ final class AiScreens {
       } else if (address.length() > 255) {
          throw new IllegalArgumentException("address must be at most 255 characters");
       } else if (!ServerAddress.isValidAddress(address)) {
-         throw new IllegalArgumentException("Invalid server address \"" + init(address, 64) + "\"; expected host or host:port with port 0..65535");
+         throw new IllegalArgumentException("Invalid server address \"" + truncate(address, 64) + "\"; expected host or host:port with port 0..65535");
       } else {
          String host = ServerAddress.parseString(address).getHost();
          if (!host.isEmpty() && !host.chars().anyMatch(Character::isWhitespace)) {
             return address;
          } else {
-            throw new IllegalArgumentException("Invalid server address \"" + init(address, 64) + "\"; host must not contain whitespace");
+            throw new IllegalArgumentException("Invalid server address \"" + truncate(address, 64) + "\"; host must not contain whitespace");
          }
       }
    }
 
-   static int init(JsonObject args, int fallback, int max) {
+   static int timeoutSeconds(JsonObject args, int fallback, int max) {
       return Math.max(1, Math.min(max, AiJson.getInt(args, "timeoutSeconds", fallback)));
    }
 
-   static boolean init(String a, String b) {
+   static boolean sameServerAddress(String a, String b) {
       try {
          ServerAddress first = ServerAddress.parseString(a);
          ServerAddress second = ServerAddress.parseString(b);
@@ -481,7 +481,7 @@ final class AiScreens {
       }
    }
 
-   static String init(String text, int max) {
+   static String truncate(String text, int max) {
       if (text == null) {
          return "";
       } else {
@@ -489,12 +489,12 @@ final class AiScreens {
       }
    }
 
-   private static String init(List<AiScreens.Inner_CachePool> widgets) {
+   private static String describeLabels(List<AiScreens.Inner_CachePool> widgets) {
       List<String> labels = new ArrayList<>();
 
       for (AiScreens.Inner_CachePool widget : widgets) {
          if (!widget.label().isBlank() && labels.size() < 16) {
-            labels.add("\"" + init(widget.label(), 48) + "\"");
+            labels.add("\"" + truncate(widget.label(), 48) + "\"");
          }
       }
 
@@ -517,7 +517,7 @@ final class AiScreens {
                break;
             }
 
-            infos.add(init(widget, widgets.size()));
+            infos.add(describeWidget(widget, widgets.size()));
             widgets.add(widget);
          }
       }
@@ -531,7 +531,7 @@ final class AiScreens {
             }
 
             autismclient.gui.f.NetHelper b = entry.getValue();
-            infos.add(new AiScreens.Inner_CachePool(index++, "button", init(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()));
+            infos.add(new AiScreens.Inner_CachePool(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()));
             customBounds.add(b);
          }
       }
@@ -539,13 +539,13 @@ final class AiScreens {
       return new AiScreens.Inner_DataUtil(screen, widgets, infos, customBounds);
    }
 
-   private static AiScreens.Inner_CachePool init(AbstractWidget widget, int index) {
+   private static AiScreens.Inner_CachePool describeWidget(AbstractWidget widget, int index) {
       String type = widget instanceof EditBox ? "edit" : (widget instanceof Checkbox ? "checkbox" : (widget instanceof AbstractButton ? "button" : "other"));
-      String value = widget instanceof EditBox box ? init(box.getValue(), 256) : "";
+      String value = widget instanceof EditBox box ? truncate(box.getValue(), 256) : "";
       return new AiScreens.Inner_CachePool(
          index,
          type,
-         init(init(widget.getMessage()), 256),
+         truncate(textOf(widget.getMessage()), 256),
          value,
          widget.active,
          widget.visible,
@@ -556,17 +556,17 @@ final class AiScreens {
       );
    }
 
-   private static boolean init(AbstractWidget widget) {
+   private static boolean clickWidgetCenter(AbstractWidget widget) {
       double centerX = widget.getX() + widget.getWidth() / 2.0;
       double centerY = widget.getY() + widget.getHeight() / 2.0;
       return widget.mouseClicked(new MouseButtonEvent(centerX, centerY, Compat263.newGlfwMouseButtonInfo(0, 0)), false);
    }
 
-   private static void init(Screen screen) {
+   private static void pressConnectScreenButton(Screen screen) {
       if (screen instanceof ConnectScreen) {
          try {
             for (Object child : screen.children()) {
-               if (child instanceof AbstractButton button && button.active && init(button)) {
+               if (child instanceof AbstractButton button && button.active && clickWidgetCenter(button)) {
                   return;
                }
             }
@@ -575,9 +575,9 @@ final class AiScreens {
       }
    }
 
-   private static JsonObject init(ServerData data, int index) {
+   private static JsonObject serverSummary(ServerData data, int index) {
       JsonObject out = AiJson.objectOf(
-         "index", index, "name", init(data.name, 128), "ip", init(data.ip, 128), "motd", init(init(data.motd), 256), "state", data.state().name()
+         "index", index, "name", truncate(data.name, 128), "ip", truncate(data.ip, 128), "motd", truncate(textOf(data.motd), 256), "state", data.state().name()
       );
       if (data.players != null) {
          out.addProperty("onlinePlayers", data.players.online());
@@ -591,10 +591,10 @@ final class AiScreens {
       return out;
    }
 
-   private static JsonObject load(ServerData data, int index) {
-      JsonObject out = init(data, index);
-      out.addProperty("status", init(init(data.status), 256));
-      out.addProperty("version", init(init(data.version), 128));
+   private static JsonObject serverDetails(ServerData data, int index) {
+      JsonObject out = serverSummary(data, index);
+      out.addProperty("status", truncate(textOf(data.status), 256));
+      out.addProperty("version", truncate(textOf(data.version), 128));
       out.addProperty("protocol", data.protocol);
       out.addProperty("ping", data.ping);
       out.addProperty("type", data.type().name());
@@ -605,7 +605,7 @@ final class AiScreens {
 
       for (Object line : data.playerList) {
          if (hover.size() < 16) {
-            hover.add(init(line instanceof Component component ? component.getString() : "", 64));
+            hover.add(truncate(line instanceof Component component ? component.getString() : "", 64));
          }
       }
 
@@ -613,9 +613,9 @@ final class AiScreens {
       return out;
    }
 
-   private static String init(DisconnectedScreen screen) {
+   private static String disconnectDetails(DisconnectedScreen screen) {
       try {
-         Field field = AiScreens.Inner_StreamUtil.init;
+         Field field = AiScreens.Inner_StreamUtil.DETAILS_FIELD;
          if (field == null) {
             return "";
          } else {
@@ -626,7 +626,7 @@ final class AiScreens {
       }
    }
 
-   private static String init(Component component) {
+   private static String textOf(Component component) {
       return component == null ? "" : component.getString();
    }
 
@@ -664,9 +664,9 @@ final class AiScreens {
    }
 
    private static final class Inner_StreamUtil {
-      private static final Field init = init(DisconnectedScreen.class, "details");
+      private static final Field DETAILS_FIELD = accessibleField(DisconnectedScreen.class, "details");
 
-      private static Field init(Class<?> type, String name) {
+      private static Field accessibleField(Class<?> type, String name) {
          try {
             Field field = type.getDeclaredField(name);
             field.setAccessible(true);

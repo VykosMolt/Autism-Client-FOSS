@@ -9,8 +9,8 @@ import net.minecraft.world.phys.Vec3;
 final class PrintMover {
    static final int init_I = 7;
    static final int load = 60;
-   private static final int[][] init_IArr2 = new int[][]{{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-   static final boolean init_Z = !"false".equals(System.getProperty("autism.ai.print.braking", "true"));
+   private static final int[][] NEIGHBOR_OFFSETS = new int[][]{{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+   static final boolean BRAKING = !"false".equals(System.getProperty("autism.ai.print.braking", "true"));
 
    static boolean atGoal(AiPhysics.MotionState s, PrintMover.Inner_DataUtil goal) {
       double dx = s.x() - goal.feet().x;
@@ -32,7 +32,7 @@ final class PrintMover {
          boolean crouched = sneak == 1;
          if (!goal.crouch() || crouched) {
             for (int jump = 0; jump <= (tryJump ? 1 : 0); jump++) {
-               for (int[] d : init_IArr2) {
+               for (int[] d : NEIGHBOR_OFFSETS) {
                   PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(d[0] > 0, d[0] < 0, d[1] > 0, d[1] < 0, jump == 1, crouched, false);
                   if (!keys.moving() || !autismclient.ai.engine.AiFallGuard.isSafeStep(world, start, toMoveInput(keys, yaw))) {
                      double cost = moveCost(start, world, yaw, keys, goal, false);
@@ -40,9 +40,9 @@ final class PrintMover {
                         cost = Math.min(cost, moveCost(start, world, yaw, keys, goal, true));
                      }
 
-                     if (init_Z && keys.moving() && jump == 0 && !crouched && goal.stop()) {
+                     if (BRAKING && keys.moving() && jump == 0 && !crouched && goal.stop()) {
                         for (int held = 1; held < 7; held++) {
-                           cost = Math.min(cost, init(start, world, yaw, keys, goal, held, true));
+                           cost = Math.min(cost, simulateApproach(start, world, yaw, keys, goal, held, true));
                         }
                      }
 
@@ -71,7 +71,7 @@ final class PrintMover {
       double bestCost = 1.0 / 0.0;
       boolean bestWorks = false;
 
-      for (int[] direction : init_IArr2) {
+      for (int[] direction : NEIGHBOR_OFFSETS) {
          PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
             direction[0] > 0, direction[0] < 0, direction[1] > 0, direction[1] < 0, false, goal.crouch(), false
          );
@@ -106,10 +106,10 @@ final class PrintMover {
       PrintMover.Inner_DataUtil goal,
       boolean tap
    ) {
-      return init(start, world, yaw, keys, goal, tap ? 1 : 7, false);
+      return simulateApproach(start, world, yaw, keys, goal, tap ? 1 : 7, false);
    }
 
-   static double init(
+   static double simulateApproach(
       AiPhysics.MotionState start,
       AiPhysics.PhysicsWorld world,
       float yaw,
@@ -136,8 +136,8 @@ final class PrintMover {
             return 1.0 / 0.0;
          }
 
-         if (init_Z_NodeWalker_CachePo(world, next.x(), next.y(), next.z(), startA, startB)
-            || init_Z_NodeWalker_CachePo(world, next.x(), next.y() - 0.2, next.z(), startA, startB)) {
+         if (collidesExcept(world, next.x(), next.y(), next.z(), startA, startB)
+            || collidesExcept(world, next.x(), next.y() - 0.2, next.z(), startA, startB)) {
             return 1.0 / 0.0;
          }
 
@@ -214,7 +214,7 @@ final class PrintMover {
       return false;
    }
 
-   static LongOpenHashSet init(double x, double y, double z) {
+   static LongOpenHashSet footprintCells(double x, double y, double z) {
       LongOpenHashSet out = new LongOpenHashSet(12);
       double r = 0.299;
 
@@ -229,7 +229,7 @@ final class PrintMover {
       return out;
    }
 
-   private static boolean init_Z_NodeWalker_CachePo(AiPhysics.PhysicsWorld world, double x, double y, double z, long skipA, long skipB) {
+   private static boolean collidesExcept(AiPhysics.PhysicsWorld world, double x, double y, double z, long skipA, long skipB) {
       int bx = (int)Math.floor(x);
       int by = (int)Math.floor(y);
       int bz = (int)Math.floor(z);

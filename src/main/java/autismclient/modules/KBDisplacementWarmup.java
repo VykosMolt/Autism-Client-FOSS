@@ -9,21 +9,21 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class KBDisplacementWarmup {
-   private static final AtomicBoolean init = new AtomicBoolean();
+   private static final AtomicBoolean WARMED = new AtomicBoolean();
 
    private KBDisplacementWarmup() {
    }
 
    static void start() {
-      if (init.compareAndSet(false, true)) {
-         Thread thread = new Thread(KBDisplacementWarmup::load, "KBDisplacement warm-up");
+      if (WARMED.compareAndSet(false, true)) {
+         Thread thread = new Thread(KBDisplacementWarmup::warmUp, "KBDisplacement warm-up");
          thread.setDaemon(true);
          thread.setPriority(1);
          thread.start();
       }
    }
 
-   private static void load() {
+   private static void warmUp() {
       try {
          AABB body = new AABB(0.2, 10.0, 0.2, 0.8, 11.8, 0.8);
          KnockbackThrowPlanner.CounterSteer counter = KnockbackThrowPlanner.CounterSteer.forYaw(180.0F, 0.13, 0.026);

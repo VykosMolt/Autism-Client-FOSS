@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 
 public final class WTappingModule extends Module {
-   private final WTapController init = new WTapController(new WTapController.Inner_DataUtil() {
+   private final WTapController controller = new WTapController(new WTapController.Inner_DataUtil() {
       @Override
       public int chance() {
          return WTappingModule.this.integer("chance");
@@ -61,7 +61,7 @@ public final class WTappingModule extends Module {
             built.cancelTap();
          }
 
-         return m.init;
+         return m.controller;
       } else {
          return built;
       }
@@ -98,31 +98,31 @@ public final class WTappingModule extends Module {
 
    @Override
    public void preMovementTick() {
-      this.init.tick();
+      this.controller.tick();
    }
 
    @Override
    public void onEnable() {
-      this.init.resetAll();
+      this.controller.resetAll();
    }
 
    @Override
    public void onDisable() {
-      this.init.resetAll();
+      this.controller.resetAll();
    }
 
    @Override
    public void onGameJoin() {
-      this.init.resetAll();
+      this.controller.resetAll();
    }
 
    @Override
    public void onGameLeft() {
-      this.init.resetAll();
+      this.controller.resetAll();
    }
 
    @Override
    public String info() {
-      return this.init.tapCount() == 0L ? "Ready" : this.init.tapCount() + " taps";
+      return this.controller.tapCount() == 0L ? "Ready" : this.controller.tapCount() + " taps";
    }
 }

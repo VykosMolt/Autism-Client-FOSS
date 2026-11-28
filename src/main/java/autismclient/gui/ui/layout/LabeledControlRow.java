@@ -1,26 +1,26 @@
 package autismclient.gui.ui.layout;
 
 public class LabeledControlRow extends LayoutContainer {
-   private final LayoutNode init_TableIndex;
+   private final LayoutNode label;
    private final LayoutNode control;
-   private EdgeInsets init_IoWorker;
-   private int init_I;
-   private float sync;
+   private EdgeInsets padding;
+   private int gap;
+   private float fixedLabelWidth;
    private boolean alignControlEnd;
 
    public LabeledControlRow(LayoutNode labelNode, LayoutNode controlNode) {
-      this.init_IoWorker = EdgeInsets.ZERO;
-      this.init_I = 0;
-      this.sync = -1.0F;
+      this.padding = EdgeInsets.ZERO;
+      this.gap = 0;
+      this.fixedLabelWidth = -1.0F;
       this.alignControlEnd = false;
-      this.init_TableIndex = this.addChild(labelNode);
+      this.label = this.addChild(labelNode);
       this.control = this.addChild(controlNode);
    }
 
    public LabeledControlRow setPadding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
-      if (!this.init_IoWorker.equals(next)) {
-         this.init_IoWorker = next;
+      if (!this.padding.equals(next)) {
+         this.padding = next;
          this.markLayoutDirty();
       }
 
@@ -29,8 +29,8 @@ public class LabeledControlRow extends LayoutContainer {
 
    public LabeledControlRow setGap(int gap) {
       int next = Math.max(0, gap);
-      if (this.init_I != next) {
-         this.init_I = next;
+      if (this.gap != next) {
+         this.gap = next;
          this.markLayoutDirty();
       }
 
@@ -39,8 +39,8 @@ public class LabeledControlRow extends LayoutContainer {
 
    public LabeledControlRow setLabelWidth(float labelWidth) {
       float next = Math.max(0.0F, labelWidth);
-      if (Float.compare(this.sync, next) != 0) {
-         this.sync = next;
+      if (Float.compare(this.fixedLabelWidth, next) != 0) {
+         this.fixedLabelWidth = next;
          this.markLayoutDirty();
       }
 
@@ -57,28 +57,28 @@ public class LabeledControlRow extends LayoutContainer {
    }
 
    public LayoutNode getLabel() {
-      return this.init_TableIndex;
+      return this.label;
    }
 
    public LayoutNode getControl() {
       return this.control;
    }
 
-   private float load_F(LayoutContext context) {
-      if (this.sync > 0.0F) {
-         return this.sync;
+   private float labelWidthFor(LayoutContext context) {
+      if (this.fixedLabelWidth > 0.0F) {
+         return this.fixedLabelWidth;
       } else {
-         return this.init_TableIndex == null ? 0.0F : this.init_TableIndex.measurePreferredWidth(context);
+         return this.label == null ? 0.0F : this.label.measurePreferredWidth(context);
       }
    }
 
    @Override
    public float measurePreferredWidth(LayoutContext context) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.theme().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
+      int scaledGap = context.theme().load(this.gap);
       float total = scaledPadding.init_I();
-      total += this.load_F(context);
-      if (this.init_TableIndex != null && this.init_TableIndex.isVisible() && this.control != null && this.control.isVisible()) {
+      total += this.labelWidthFor(context);
+      if (this.label != null && this.label.isVisible() && this.control != null && this.control.isVisible()) {
          total += scaledGap;
       }
 
@@ -91,9 +91,9 @@ public class LabeledControlRow extends LayoutContainer {
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      float labelHeight = this.init_TableIndex != null && this.init_TableIndex.isVisible()
-         ? this.init_TableIndex.measureHeight(context, availableWidth)
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
+      float labelHeight = this.label != null && this.label.isVisible()
+         ? this.label.measureHeight(context, availableWidth)
          : 0.0F;
       float controlHeight = this.control != null && this.control.isVisible()
          ? this.control.measureHeight(context, availableWidth)
@@ -103,18 +103,18 @@ public class LabeledControlRow extends LayoutContainer {
 
    @Override
    protected void layoutChildren(LayoutContext context) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.theme().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
+      int scaledGap = context.theme().load(this.gap);
       float innerX = this.nodeX + scaledPadding.read();
       float innerY = this.nodeY + scaledPadding.write();
       float innerWidth = Math.max(0.0F, this.nodeWidth - scaledPadding.init_I());
       float innerHeight = Math.max(0.0F, this.nodeHeight - scaledPadding.load());
-      float resolvedLabelWidth = Math.min(this.load_F(context), innerWidth);
+      float resolvedLabelWidth = Math.min(this.labelWidthFor(context), innerWidth);
       float controlX = innerX;
-      if (this.init_TableIndex != null && this.init_TableIndex.isVisible()) {
-         float labelHeight = Math.min(innerHeight, this.init_TableIndex.measureHeight(context, resolvedLabelWidth));
+      if (this.label != null && this.label.isVisible()) {
+         float labelHeight = Math.min(innerHeight, this.label.measureHeight(context, resolvedLabelWidth));
          float labelY = innerY + Math.max(0.0F, (innerHeight - labelHeight) / 2.0F);
-         this.init_TableIndex.setBounds(innerX, labelY, resolvedLabelWidth, labelHeight);
+         this.label.setBounds(innerX, labelY, resolvedLabelWidth, labelHeight);
          controlX = innerX + resolvedLabelWidth + (this.control != null && this.control.isVisible() ? scaledGap : 0);
       }
 

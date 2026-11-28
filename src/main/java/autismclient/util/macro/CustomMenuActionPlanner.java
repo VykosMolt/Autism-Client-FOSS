@@ -12,11 +12,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class CustomMenuActionPlanner {
-   private static final List<String> init = List.of(
+   private static final List<String> POSITIVE_WORDS = List.of(
       "login", "register", "submit", "continue", "confirm", "yes", "ok", "accept", "agree", "agreed", "done", "join", "enter"
    );
-   private static final List<String> load = List.of("cancel", "quit", "back", "deny", "decline", "no", "exit", "disconnect", "close");
-   private static final List<String> read = List.of("accept", "agree", "agreed", "consent", "understood", "acknowledge", "confirm");
+   private static final List<String> NEGATIVE_WORDS = List.of("cancel", "quit", "back", "deny", "decline", "no", "exit", "disconnect", "close");
+   private static final List<String> CONSENT_WORDS = List.of("accept", "agree", "agreed", "consent", "understood", "acknowledge", "confirm");
 
    private CustomMenuActionPlanner() {
    }
@@ -55,11 +55,11 @@ public final class CustomMenuActionPlanner {
                try {
                   out = safeResolver.apply(init_Str(fields.get(i)));
                } catch (RuntimeException error) {
-                  return CustomMenuActionPlanner.Inner_DataUtil.init("Text field value " + (i + 1) + " is unavailable");
+                  return CustomMenuActionPlanner.Inner_DataUtil.ofError("Text field value " + (i + 1) + " is unavailable");
                }
 
                if (out == null) {
-                  return CustomMenuActionPlanner.Inner_DataUtil.init("Text field value " + (i + 1) + " is unavailable");
+                  return CustomMenuActionPlanner.Inner_DataUtil.ofError("Text field value " + (i + 1) + " is unavailable");
                }
 
                resolved.add(out);
@@ -76,20 +76,20 @@ public final class CustomMenuActionPlanner {
             }
          }
 
-         CustomMenuButton button = init(action, snapshot.buttons());
+         CustomMenuButton button = pickButton(action, snapshot.buttons());
          return button == null
-            ? CustomMenuActionPlanner.Inner_DataUtil.init(
+            ? CustomMenuActionPlanner.Inner_DataUtil.ofError(
                init_Str(action.clickButton).isBlank()
                   ? "No obvious button to press; type the button's text (e.g. Register)"
                   : "No button matched \"" + action.clickButton + "\" on this screen"
             )
-            : CustomMenuActionPlanner.Inner_DataUtil.init(new CustomMenuSubmission(values, button));
+            : CustomMenuActionPlanner.Inner_DataUtil.ofSubmission(new CustomMenuSubmission(values, button));
       } else {
-         return CustomMenuActionPlanner.Inner_DataUtil.init("No custom screen is open");
+         return CustomMenuActionPlanner.Inner_DataUtil.ofError("No custom screen is open");
       }
    }
 
-   public static CustomMenuButton init(CustomMenuAction action, List<CustomMenuButton> buttons) {
+   public static CustomMenuButton pickButton(CustomMenuAction action, List<CustomMenuButton> buttons) {
       if (buttons != null && !buttons.isEmpty()) {
          List<CustomMenuButton> usable = new ArrayList<>();
 
@@ -105,7 +105,7 @@ public final class CustomMenuActionPlanner {
 
          String want = init_Str(action == null ? "" : action.clickButton).trim();
          if (want.isEmpty()) {
-            return write(usable);
+            return pickPreferred(usable);
          }
 
          if (want.startsWith("#")) {
@@ -153,7 +153,7 @@ public final class CustomMenuActionPlanner {
       }
 
       for (CustomMenuButton button : buttons) {
-         if (button.serverRelevant() && (init(button.label(), read) || init(button.actionId(), read))) {
+         if (button.serverRelevant() && (containsWord(button.label(), CONSENT_WORDS) || containsWord(button.actionId(), CONSENT_WORDS))) {
             return button;
          }
       }
@@ -161,7 +161,7 @@ public final class CustomMenuActionPlanner {
       return null;
    }
 
-   public static CustomMenuButton load(List<CustomMenuButton> buttons) {
+   public static CustomMenuButton pickServerButton(List<CustomMenuButton> buttons) {
       if (buttons == null) {
          return null;
       }
@@ -174,14 +174,14 @@ public final class CustomMenuActionPlanner {
          }
       }
 
-      return usable.isEmpty() ? null : write(usable);
+      return usable.isEmpty() ? null : pickPreferred(usable);
    }
 
-   private static CustomMenuButton write(List<CustomMenuButton> usable) {
+   private static CustomMenuButton pickPreferred(List<CustomMenuButton> usable) {
       List<CustomMenuButton> nonNegative = new ArrayList<>();
 
       for (CustomMenuButton button : usable) {
-         if (!init(button.label(), load) && !init(button.actionId(), load)) {
+         if (!containsWord(button.label(), NEGATIVE_WORDS) && !containsWord(button.actionId(), NEGATIVE_WORDS)) {
             nonNegative.add(button);
          }
       }
@@ -193,7 +193,7 @@ public final class CustomMenuActionPlanner {
       List<CustomMenuButton> positive = new ArrayList<>();
 
       for (CustomMenuButton button : nonNegative) {
-         if (init(button.label(), init) || init(button.actionId(), init)) {
+         if (containsWord(button.label(), POSITIVE_WORDS) || containsWord(button.actionId(), POSITIVE_WORDS)) {
             positive.add(button);
          }
       }
@@ -221,7 +221,7 @@ public final class CustomMenuActionPlanner {
       List<CustomMenuButton> nonNegative = new ArrayList<>();
 
       for (CustomMenuButton button : usable) {
-         if (!init(button.label(), load) && !init(button.actionId(), load)) {
+         if (!containsWord(button.label(), NEGATIVE_WORDS) && !containsWord(button.actionId(), NEGATIVE_WORDS)) {
             nonNegative.add(button);
          }
       }
@@ -233,7 +233,7 @@ public final class CustomMenuActionPlanner {
       }
 
       for (CustomMenuButton button : nonNegative) {
-         if (init(button.label(), init) || init(button.actionId(), init)) {
+         if (containsWord(button.label(), POSITIVE_WORDS) || containsWord(button.actionId(), POSITIVE_WORDS)) {
             return button;
          }
       }
@@ -268,7 +268,7 @@ public final class CustomMenuActionPlanner {
       }
    }
 
-   private static boolean init(String value, List<String> words) {
+   private static boolean containsWord(String value, List<String> words) {
       String[] tokens = init_Str(value).toLowerCase(Locale.ROOT).split("[^a-z0-9]+");
 
       for (String token : tokens) {
@@ -291,11 +291,11 @@ public final class CustomMenuActionPlanner {
          return this.submission != null && this.error.isEmpty();
       }
 
-      static CustomMenuActionPlanner.Inner_DataUtil init(CustomMenuSubmission submission) {
+      static CustomMenuActionPlanner.Inner_DataUtil ofSubmission(CustomMenuSubmission submission) {
          return new CustomMenuActionPlanner.Inner_DataUtil(submission, "");
       }
 
-      static CustomMenuActionPlanner.Inner_DataUtil init(String error) {
+      static CustomMenuActionPlanner.Inner_DataUtil ofError(String error) {
          return new CustomMenuActionPlanner.Inner_DataUtil(null, error == null ? "Custom screen failed" : error);
       }
    }

@@ -9,10 +9,10 @@ import net.minecraft.resources.Identifier;
 
 public final class IconButtonRenderer {
    public static final String init = "X";
-   public static final String load = "^";
-   public static final String read = "v";
-   public static final String write = "+";
-   public static final String update = "-";
+   public static final String SYMBOL_UP = "^";
+   public static final String SYMBOL_DOWN = "v";
+   public static final String SYMBOL_PLUS = "+";
+   public static final String SYMBOL_MINUS = "-";
 
    private IconButtonRenderer() {
    }
@@ -23,7 +23,7 @@ public final class IconButtonRenderer {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-         int radius = init(bounds);
+         int radius = strokeWidth(bounds);
          int fill = danger ? ThemePaletteManager.recolor(-868936937, ThemePaletteManager.ColorRole.DANGER) : -1156179423;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.danger : colors.borderControl);
          float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered && active);
@@ -39,7 +39,7 @@ public final class IconButtonRenderer {
          if ("X".equals(symbol)) {
             autismclient.gui.f.PacketUtil.read(graphics, bounds.init(3), color);
          } else if ("^".equals(symbol) || "v".equals(symbol)) {
-            autismclient.gui.f.NetHelper glyph = init(bounds, 3);
+            autismclient.gui.f.NetHelper glyph = glyphBox(bounds, 3);
             if ("^".equals(symbol)) {
                autismclient.gui.f.PacketUtil.write(graphics, glyph, color);
             } else {
@@ -49,13 +49,13 @@ public final class IconButtonRenderer {
             String glyph = symbol == null ? "" : symbol;
             context.init_PoolEntry().drawCentered(graphics, glyph, bounds, color);
          } else {
-            autismclient.gui.f.NetHelper glyph = init(bounds, 3);
+            autismclient.gui.f.NetHelper glyph = glyphBox(bounds, 3);
             GuiIconAtlas.draw(graphics, "+".equals(symbol) ? GuiIconAtlas.PLUS : GuiIconAtlas.MINUS, glyph.read(), glyph.write(), glyph.update(), glyph.sync(), color);
          }
       }
    }
 
-   private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds, int inset) {
+   private static autismclient.gui.f.NetHelper glyphBox(autismclient.gui.f.NetHelper bounds, int inset) {
       int gs = Math.max(4, Math.min(bounds.update(), bounds.sync()) - inset * 2);
       int box = Math.min(bounds.update(), bounds.sync());
       if ((box - gs & 1) != 0) {
@@ -67,7 +67,7 @@ public final class IconButtonRenderer {
       );
    }
 
-   private static int init(autismclient.gui.f.NetHelper bounds) {
+   private static int strokeWidth(autismclient.gui.f.NetHelper bounds) {
       return Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
    }
 
@@ -77,7 +77,7 @@ public final class IconButtonRenderer {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-         int radius = init(bounds);
+         int radius = strokeWidth(bounds);
          int fill = danger ? -799925730 : -1156179423;
          int borderColor = danger ? -1947062 : colors.borderControl;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, borderColor);
@@ -101,7 +101,7 @@ public final class IconButtonRenderer {
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics, Font font, autismclient.gui.f.NetHelper bounds, String symbol, int color, float alpha) {
+   public static void drawSymbol(GuiGraphicsExtractor graphics, Font font, autismclient.gui.f.NetHelper bounds, String symbol, int color, float alpha) {
       if (graphics != null && font != null && bounds != null && !(alpha <= 0.001F)) {
          int resolved = autismclient.gui.f.PacketUtil.init(color, alpha);
          String glyph = symbol == null ? "" : symbol;

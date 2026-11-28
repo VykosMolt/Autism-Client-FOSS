@@ -64,7 +64,7 @@ public final class OreGhostModelCache {
 
       OreGhostModelCache.Inner_StreamUtil built;
       try {
-         built = init(set, state);
+         built = buildModel(set, state);
       } catch (Throwable error) {
          AutismClientAddon.LOG.debug("OreSim ghost model build failed", error);
          built = OreGhostModelCache.Inner_StreamUtil.EMPTY;
@@ -74,7 +74,7 @@ public final class OreGhostModelCache {
       return built;
    }
 
-   private static OreGhostModelCache.Inner_StreamUtil init(BlockStateModelSet set, BlockState state) {
+   private static OreGhostModelCache.Inner_StreamUtil buildModel(BlockStateModelSet set, BlockState state) {
       PARTS.clear();
       RANDOM.setSeed(42L);
       set.get(state).collectParts(RANDOM, PARTS);
@@ -82,17 +82,17 @@ public final class OreGhostModelCache {
 
       for (BlockStateModelPart part : PARTS) {
          for (Direction direction : Direction.values()) {
-            init(part.getQuads(direction), direction, faces);
+            collectQuads(part.getQuads(direction), direction, faces);
          }
 
-         init(part.getQuads(null), null, faces);
+         collectQuads(part.getQuads(null), null, faces);
       }
 
       PARTS.clear();
       return faces.isEmpty() ? OreGhostModelCache.Inner_StreamUtil.EMPTY : new OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
    }
 
-   private static void init(List<BakedQuad> quads, Direction cull, List<OreGhostModelCache.Inner_DataUtil> out) {
+   private static void collectQuads(List<BakedQuad> quads, Direction cull, List<OreGhostModelCache.Inner_DataUtil> out) {
       if (quads != null && !quads.isEmpty()) {
          for (BakedQuad quad : quads) {
             float[] data = new float[20];

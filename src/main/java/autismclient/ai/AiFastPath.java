@@ -9,29 +9,29 @@ import java.util.regex.Pattern;
 final class AiFastPath {
    private static final String init_Str = "(?:please\\s+)?(parkour|go|goto|walk|run|move|travel|head|navigate|get)\\s*(?:to|towards|toward|over\\s+to|back\\s+to)?\\s*(?:the\\s+)?";
    private static final String load_Str = "(-?\\d+(?:\\.\\d+)?)";
-   private static final Pattern init_Pattern = Pattern.compile(
+   private static final Pattern GOTO_XYZ = Pattern.compile(
       "^(?:please\\s+)?(parkour|go|goto|walk|run|move|travel|head|navigate|get)\\s*(?:to|towards|toward|over\\s+to|back\\s+to)?\\s*(?:the\\s+)?(?:coords?|coordinates?|position|pos|block|location)?\\s*:?\\s*(?:x\\s*[:=]?\\s*)?(-?\\d+(?:\\.\\d+)?)[,\\s]+(?:y\\s*[:=]?\\s*)?(-?\\d+(?:\\.\\d+)?)[,\\s]+(?:z\\s*[:=]?\\s*)?(-?\\d+(?:\\.\\d+)?)\\s*$",
       2
    );
-   private static final Pattern load_Pattern = Pattern.compile(
+   private static final Pattern GOTO_XZ = Pattern.compile(
       "^(?:please\\s+)?(parkour|go|goto|walk|run|move|travel|head|navigate|get)\\s*(?:to|towards|toward|over\\s+to|back\\s+to)?\\s*(?:the\\s+)?(?:coords?|coordinates?|position|pos|xz)?\\s*:?\\s*(?:x\\s*[:=]?\\s*)?(-?\\d+(?:\\.\\d+)?)[,\\s]+(?:z\\s*[:=]?\\s*)?(-?\\d+(?:\\.\\d+)?)\\s*$",
       2
    );
    private static final String read_Str = "(north|south|east|west|forward|forwards|ahead|straight|back|backward|backwards|left|right)";
-   private static final Pattern read_Pattern = Pattern.compile(
+   private static final Pattern MOVE_AMOUNT_DIRECTION = Pattern.compile(
       "^(?:please\\s+)?(parkour|go|walk|run|move|travel|head|sprint)\\s+(-?\\d+(?:\\.\\d+)?)\\s*(?:blocks?|meters?|metres?|m)?\\s+(north|south|east|west|forward|forwards|ahead|straight|back|backward|backwards|left|right)\\s*$",
       2
    );
-   private static final Pattern write = Pattern.compile(
+   private static final Pattern MOVE_DIRECTION_AMOUNT = Pattern.compile(
       "^(?:please\\s+)?(parkour|go|walk|run|move|travel|head|sprint)\\s+(north|south|east|west|forward|forwards|ahead|straight|back|backward|backwards|left|right)\\s+(?:for\\s+|by\\s+)?(-?\\d+(?:\\.\\d+)?)\\s*(?:blocks?|meters?|metres?|m)?\\s*$",
       2
    );
-   private static final Pattern update = Pattern.compile("^(?:(?:can|could|would|will)\\s+you\\s+|please\\s+|pls\\s+|just\\s+|now\\s+)+", 2);
-   private static final Pattern sync = Pattern.compile(
+   private static final Pattern POLITE_PREFIX = Pattern.compile("^(?:(?:can|could|would|will)\\s+you\\s+|please\\s+|pls\\s+|just\\s+|now\\s+)+", 2);
+   private static final Pattern TRAILING_FILLER = Pattern.compile(
       "(?:\\s*,?\\s*(?:and\\s+then|and|then)?\\s*(?:stop|halt|stay(?:\\s+there)?|wait(?:\\s+there)?)|\\s+(?:please|pls|now|for\\s+me|thanks?|thank\\s+you))+$",
       2
    );
-   private static final Pattern flush = Pattern.compile(
+   private static final Pattern GOTO_WAYPOINT = Pattern.compile(
       "^(?:please\\s+)?(parkour|go|goto|walk|run|move|travel|head|navigate|get)\\s*(?:to|towards|toward|over\\s+to|back\\s+to)?\\s*(?:the\\s+)?(?:waypoint\\s+|wp\\s+)?[\"']?([A-Za-z][A-Za-z0-9 _-]{0,31})[\"']?\\s*$",
       2
    );
@@ -45,44 +45,44 @@ final class AiFastPath {
       }
 
       String text = objective.trim().replaceAll("[.!?]+$", "").trim();
-      text = sync.matcher(update.matcher(text).replaceFirst("")).replaceFirst("").replaceAll("[.!?,]+$", "").trim();
+      text = TRAILING_FILLER.matcher(POLITE_PREFIX.matcher(text).replaceFirst("")).replaceFirst("").replaceAll("[.!?,]+$", "").trim();
       if (!text.isEmpty() && text.length() <= 96) {
-         Matcher m = init_Pattern.matcher(text);
+         Matcher m = GOTO_XYZ.matcher(text);
          if (m.matches()) {
             boolean parkour = "parkour".equalsIgnoreCase(m.group(1));
-            int x = init(m.group(2));
-            int y = init(m.group(3));
-            int z = init(m.group(4));
+            int x = floorInt(m.group(2));
+            int y = floorInt(m.group(3));
+            int z = floorInt(m.group(4));
             JsonObject args = AiJson.objectOf("x", x, "y", y, "z", z);
             if (parkour) {
-               init(args, true);
+               applyParkourDefaults(args, true);
             }
 
             return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + x + " " + y + " " + z);
          } else {
-            m = load_Pattern.matcher(text);
+            m = GOTO_XZ.matcher(text);
             if (m.matches()) {
                boolean parkour = "parkour".equalsIgnoreCase(m.group(1));
-               int x = init(m.group(2));
-               int z = init(m.group(3));
+               int x = floorInt(m.group(2));
+               int z = floorInt(m.group(3));
                JsonObject args = AiJson.objectOf("x", x, "z", z);
                if (parkour) {
-                  init(args, true);
+                  applyParkourDefaults(args, true);
                }
 
                return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + "x=" + x + " z=" + z + " (nearest standable height)");
             } else {
-               m = read_Pattern.matcher(text);
+               m = MOVE_AMOUNT_DIRECTION.matcher(text);
                if (m.matches()) {
-                  return init("parkour".equalsIgnoreCase(m.group(1)), m.group(3), m.group(2));
+                  return relativeMove("parkour".equalsIgnoreCase(m.group(1)), m.group(3), m.group(2));
                }
 
-               m = write.matcher(text);
+               m = MOVE_DIRECTION_AMOUNT.matcher(text);
                if (m.matches()) {
-                  return init("parkour".equalsIgnoreCase(m.group(1)), m.group(2), m.group(3));
+                  return relativeMove("parkour".equalsIgnoreCase(m.group(1)), m.group(2), m.group(3));
                }
 
-               m = flush.matcher(text);
+               m = GOTO_WAYPOINT.matcher(text);
                if (m.matches()) {
                   boolean parkour = "parkour".equalsIgnoreCase(m.group(1));
                   String name = m.group(2).trim();
@@ -97,7 +97,7 @@ final class AiFastPath {
 
                   JsonObject args = AiJson.objectOf("x", at[0], "y", at[1], "z", at[2]);
                   if (parkour) {
-                     init(args, true);
+                     applyParkourDefaults(args, true);
                   }
 
                   return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + "waypoint '" + name + "' at " + at[0] + " " + at[1] + " " + at[2]);
@@ -111,7 +111,7 @@ final class AiFastPath {
       }
    }
 
-   private static AiFastPath.Inner_DataUtil init(boolean parkour, String direction, String amount) {
+   private static AiFastPath.Inner_DataUtil relativeMove(boolean parkour, String direction, String amount) {
       double distance = Double.parseDouble(amount);
       if (distance > 0.0 && !(distance > 512.0)) {
          String dir = direction.toLowerCase(Locale.ROOT);
@@ -133,7 +133,7 @@ final class AiFastPath {
          String canonical = var10000;
          JsonObject args = AiJson.objectOf("direction", canonical, "distance", distance);
          if (parkour) {
-            init(args, false);
+            applyParkourDefaults(args, false);
          }
 
          return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour " : "go ") + (int)distance + " blocks " + canonical);
@@ -142,7 +142,7 @@ final class AiFastPath {
       }
    }
 
-   private static void init(JsonObject args, boolean coordinates) {
+   private static void applyParkourDefaults(JsonObject args, boolean coordinates) {
       args.addProperty("parkour", true);
       args.addProperty("allowDig", false);
       args.addProperty("allowPillar", false);
@@ -152,7 +152,7 @@ final class AiFastPath {
       }
    }
 
-   private static int init(String number) {
+   private static int floorInt(String number) {
       return (int)Math.floor(Double.parseDouble(number));
    }
 

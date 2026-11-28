@@ -53,14 +53,14 @@ public class ContainerClickSequenceAction implements MacroAction {
          }
 
          ContainerInput input = MacroNbtCodecHelper.parseEnum(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
-         mc.gameMode.handleContainerInput(this.init(mc), handlerSlot, buttonNum, input, mc.player);
+         mc.gameMode.handleContainerInput(this.containerIdFor(mc), handlerSlot, buttonNum, input, mc.player);
          return true;
       } else {
          return false;
       }
    }
 
-   private int init(Minecraft mc) {
+   private int containerIdFor(Minecraft mc) {
       int var10000;
       switch (this.containerSource) {
          case CURRENT:

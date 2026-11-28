@@ -4,21 +4,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public final class MissingAddonAction implements MacroAction {
-   private String init_Str;
-   private CompoundTag init_CompoundTag;
+   private String typeId;
+   private CompoundTag rawTag;
 
    public MissingAddonAction() {
-      this.init_Str = "";
-      this.init_CompoundTag = new CompoundTag();
+      this.typeId = "";
+      this.rawTag = new CompoundTag();
    }
 
    public MissingAddonAction(String typeId, CompoundTag raw) {
-      this.init_Str = typeId == null ? "" : typeId;
-      this.init_CompoundTag = raw == null ? new CompoundTag() : raw;
+      this.typeId = typeId == null ? "" : typeId;
+      this.rawTag = raw == null ? new CompoundTag() : raw;
    }
 
-   public String init() {
-      return this.init_Str;
+   public String addonTypeId() {
+      return this.typeId;
    }
 
    @Override
@@ -27,25 +27,25 @@ public final class MissingAddonAction implements MacroAction {
 
    @Override
    public CompoundTag toTag() {
-      return this.init_CompoundTag.copy();
+      return this.rawTag.copy();
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
       if (tag != null) {
-         this.init_CompoundTag = tag.copy();
-         this.init_Str = tag.getStringOr("type", this.init_Str);
+         this.rawTag = tag.copy();
+         this.typeId = tag.getStringOr("type", this.typeId);
       }
    }
 
    @Override
    public String getTypeId() {
-      return this.init_Str;
+      return this.typeId;
    }
 
    @Override
    public String getDisplayName() {
-      return "! Missing: " + this.init_Str;
+      return "! Missing: " + this.typeId;
    }
 
    @Override
@@ -55,12 +55,12 @@ public final class MissingAddonAction implements MacroAction {
 
    @Override
    public void sanitizeForSharing() {
-      if (this.init_CompoundTag != null) {
-         this.init_CompoundTag.remove("customFilePath");
-         this.init_CompoundTag.remove("javaSource");
-         this.init_CompoundTag.remove("payloadScript");
-         this.init_CompoundTag.remove("payloadScriptEnabled");
-         this.init_CompoundTag.remove("commandAfter");
+      if (this.rawTag != null) {
+         this.rawTag.remove("customFilePath");
+         this.rawTag.remove("javaSource");
+         this.rawTag.remove("payloadScript");
+         this.rawTag.remove("payloadScriptEnabled");
+         this.rawTag.remove("commandAfter");
       }
    }
 }

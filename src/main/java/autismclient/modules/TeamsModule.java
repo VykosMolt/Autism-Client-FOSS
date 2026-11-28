@@ -34,7 +34,7 @@ public final class TeamsModule extends Module {
    private String friendsCacheKey;
    private Set<String> friendsCache = Set.of();
    private boolean init_Z;
-   private final Set<UUID> read = new HashSet<>();
+   private final Set<UUID> knownTeammates = new HashSet<>();
    private Object init_Obj;
 
    public TeamsModule() {
@@ -247,26 +247,26 @@ public final class TeamsModule extends Module {
       }
 
       if (this.init_Obj != MC.level) {
-         this.read.clear();
+         this.knownTeammates.clear();
          this.init_Obj = MC.level;
       }
 
       UUID id = suspected.getUUID();
-      TeamsModule.Inner_DataUtil verdict = init(self, suspected);
+      TeamsModule.Inner_DataUtil verdict = relationTo(self, suspected);
       if (verdict == TeamsModule.Inner_DataUtil.TEAMMATE) {
-         this.read.add(id);
+         this.knownTeammates.add(id);
          return true;
-      } else if (!this.read.contains(id)) {
+      } else if (!this.knownTeammates.contains(id)) {
          return false;
-      } else if (verdict == TeamsModule.Inner_DataUtil.OPPONENT && !write(self) && !write(suspected)) {
-         this.read.remove(id);
+      } else if (verdict == TeamsModule.Inner_DataUtil.OPPONENT && !isUnsettled(self) && !isUnsettled(suspected)) {
+         this.knownTeammates.remove(id);
          return false;
       } else {
          return true;
       }
    }
 
-   static TeamsModule.Inner_DataUtil init(boolean allied, Object ownColor, Object theirColor, Integer ownHelmet, Integer theirHelmet) {
+   static TeamsModule.Inner_DataUtil relation(boolean allied, Object ownColor, Object theirColor, Integer ownHelmet, Integer theirHelmet) {
       if (allied) {
          return TeamsModule.Inner_DataUtil.TEAMMATE;
       } else if (ownColor != null && ownColor.equals(theirColor)) {
@@ -280,22 +280,22 @@ public final class TeamsModule extends Module {
       }
    }
 
-   private static TeamsModule.Inner_DataUtil init(LocalPlayer self, Player suspected) {
+   private static TeamsModule.Inner_DataUtil relationTo(LocalPlayer self, Player suspected) {
       Component ownName = self.getDisplayName();
       Component theirName = suspected.getDisplayName();
-      Integer ownColor = init(self, ownName);
-      Integer theirColor = init(suspected, theirName);
-      return init(self.isAlliedTo(suspected), ownColor, theirColor, init_Integer_Player(self), init_Integer_Player(suspected));
+      Integer ownColor = nameColorOf(self, ownName);
+      Integer theirColor = nameColorOf(suspected, theirName);
+      return relation(self.isAlliedTo(suspected), ownColor, theirColor, init_Integer_Player(self), init_Integer_Player(suspected));
    }
 
-   private static Integer init(Player player, Component display) {
+   private static Integer nameColorOf(Player player, Component display) {
       String name = player.getGameProfile().name();
       PlayerInfo info = MC.getConnection() == null ? null : MC.getConnection().getPlayerInfo(player.getUUID());
-      Integer color = init(name, info == null ? null : info.getTabListDisplayName());
-      return color != null ? color : init(name, display);
+      Integer color = nameColor(name, info == null ? null : info.getTabListDisplayName());
+      return color != null ? color : nameColor(name, display);
    }
 
-   static Integer init(String name, Component display) {
+   static Integer nameColor(String name, Component display) {
       if (AutismLiteVariant.enabled()) {
          return null;
       }
@@ -320,7 +320,7 @@ public final class TeamsModule extends Module {
       return !plain[0] && !conflict[0] ? rgb[0] : null;
    }
 
-   private static boolean write(Player player) {
+   private static boolean isUnsettled(Player player) {
       return player.tickCount < 100 || player.isSpectator();
    }
 

@@ -12,7 +12,7 @@ public final class NormalizedTextMatcher {
 
    public static String normalize(String text) {
       if (text != null && !text.isBlank()) {
-         String decomposed = Normalizer.normalize(load(text), Form.NFKD).toLowerCase(Locale.ROOT);
+         String decomposed = Normalizer.normalize(stripInvisible(text), Form.NFKD).toLowerCase(Locale.ROOT);
          StringBuilder out = new StringBuilder(decomposed.length());
          boolean spaced = true;
          int offset = 0;
@@ -20,7 +20,7 @@ public final class NormalizedTextMatcher {
          while (offset < decomposed.length()) {
             int codePoint = decomposed.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (!isCombiningMark(codePoint) && !load(codePoint)) {
+            if (!isCombiningMark(codePoint) && !isInvisible(codePoint)) {
                int folded = foldConfusable(codePoint);
                if ((folded < 97 || folded > 122) && (folded < 48 || folded > 57)) {
                   if (!spaced) {
@@ -45,7 +45,7 @@ public final class NormalizedTextMatcher {
       }
    }
 
-   public static String init(String text, String playerName, List<String> keywords, String mode) {
+   public static String matchKeyword(String text, String playerName, List<String> keywords, String mode) {
       String normalized = normalize(text);
       String normalizedName = normalize(playerName);
       if (!normalizedName.isBlank()) {
@@ -57,8 +57,8 @@ public final class NormalizedTextMatcher {
       for (String raw : keywords == null ? List.<String>of() : keywords) {
          String keyword = normalize(raw);
          if (keyword.isBlank()) {
-            String literal = load(raw == null ? "" : raw).trim().toLowerCase(Locale.ROOT);
-            if (!literal.isBlank() && load(text).toLowerCase(Locale.ROOT).contains(literal)) {
+            String literal = stripInvisible(raw == null ? "" : raw).trim().toLowerCase(Locale.ROOT);
+            if (!literal.isBlank() && stripInvisible(text).toLowerCase(Locale.ROOT).contains(literal)) {
                return raw.trim();
             }
          } else {
@@ -68,7 +68,7 @@ public final class NormalizedTextMatcher {
                   var10000 = normalized.equals(keyword);
                   break;
                case "Word":
-                  var10000 = read(normalized, keyword);
+                  var10000 = containsPhrase(normalized, keyword);
                   break;
                default:
                   var10000 = normalized.replace(" ", "").contains(keyword.replace(" ", "")) || normalized.contains(keyword);
@@ -84,7 +84,7 @@ public final class NormalizedTextMatcher {
       return "";
    }
 
-   public static List<String> init(List<String> keywords) {
+   public static List<String> normalizeKeywords(List<String> keywords) {
       List<String> out = new ArrayList<>();
       if (keywords == null) {
          return out;
@@ -101,8 +101,8 @@ public final class NormalizedTextMatcher {
    }
 
    public static boolean matchesName(String displayedName, String playerName) {
-      String rawDisplay = load(displayedName == null ? "" : displayedName).toLowerCase(Locale.ROOT);
-      String rawPlayer = load(playerName == null ? "" : playerName).trim().toLowerCase(Locale.ROOT);
+      String rawDisplay = stripInvisible(displayedName == null ? "" : displayedName).toLowerCase(Locale.ROOT);
+      String rawPlayer = stripInvisible(playerName == null ? "" : playerName).trim().toLowerCase(Locale.ROOT);
       if (rawPlayer.matches("[a-z0-9_]{1,16}")) {
          int from = 0;
 
@@ -113,8 +113,8 @@ public final class NormalizedTextMatcher {
             }
 
             int end = match + rawPlayer.length();
-            boolean leftBoundary = match == 0 || !init(rawDisplay.charAt(match - 1));
-            boolean rightBoundary = end == rawDisplay.length() || !init(rawDisplay.charAt(end));
+            boolean leftBoundary = match == 0 || !isWordChar(rawDisplay.charAt(match - 1));
+            boolean rightBoundary = end == rawDisplay.length() || !isWordChar(rawDisplay.charAt(end));
             if (leftBoundary && rightBoundary) {
                return true;
             }
@@ -161,11 +161,11 @@ public final class NormalizedTextMatcher {
       return len >= 3 && len <= 16 ? trimmed.indexOf(32) < 0 : false;
    }
 
-   private static boolean init(char character) {
+   private static boolean isWordChar(char character) {
       return character >= 'a' && character <= 'z' || character >= '0' && character <= '9' || character == '_';
    }
 
-   private static boolean read(String text, String phrase) {
+   private static boolean containsPhrase(String text, String phrase) {
       return text.equals(phrase) ? true : (" " + text + " ").contains(" " + phrase + " ");
    }
 
@@ -180,11 +180,11 @@ public final class NormalizedTextMatcher {
       return type == 6 || type == 8 || type == 7;
    }
 
-   private static boolean load(int codePoint) {
+   private static boolean isInvisible(int codePoint) {
       return codePoint == 167 || codePoint == 8203 || codePoint == 8204 || codePoint == 8205 || codePoint == 65279;
    }
 
-   private static String load(String text) {
+   private static String stripInvisible(String text) {
       if (text != null && !text.isEmpty()) {
          StringBuilder out = new StringBuilder(text.length());
 

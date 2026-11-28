@@ -14,14 +14,14 @@ import java.util.Objects;
 import java.util.function.IntConsumer;
 
 final class PrintWitnessCache {
-   private static final int[] init_IArr = new int[0];
+   private static final int[] EMPTY_IDS = new int[0];
    private final int maxEntries;
-   private final int load;
-   private final int read;
-   private final IntConsumer init_IntConsumer;
-   private final Int2ObjectLinkedOpenHashMap<PrintWitnessCache.Inner_DataUtil> init_Int2ObjectLinkedOp = new Int2ObjectLinkedOpenHashMap<>();
-   private final Long2ObjectOpenHashMap<IntOpenHashSet> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   private int write;
+   private final int maxLinks;
+   private final int maxDependencies;
+   private final IntConsumer onEvict;
+   private final Int2ObjectLinkedOpenHashMap<PrintWitnessCache.Inner_DataUtil> entries = new Int2ObjectLinkedOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<IntOpenHashSet> idsByCell = new Long2ObjectOpenHashMap<>();
+   private int linkCount;
 
    PrintWitnessCache(int maxEntries, int maxLinks, int maxDependencies) {
       this(maxEntries, maxLinks, maxDependencies, ignored -> {});
@@ -30,46 +30,46 @@ final class PrintWitnessCache {
    PrintWitnessCache(int maxEntries, int maxLinks, int maxDependencies, IntConsumer evicted) {
       if (maxEntries >= 1 && maxLinks >= 1 && maxDependencies >= 1) {
          this.maxEntries = maxEntries;
-         this.load = maxLinks;
-         this.read = Math.min(maxDependencies, maxLinks);
-         this.init_IntConsumer = Objects.requireNonNull(evicted);
+         this.maxLinks = maxLinks;
+         this.maxDependencies = Math.min(maxDependencies, maxLinks);
+         this.onEvict = Objects.requireNonNull(evicted);
       } else {
          throw new IllegalArgumentException("Witness cache limits");
       }
    }
 
    PrintCore.StanceWitness witness(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.getAndMoveToLast(id);
+      PrintWitnessCache.Inner_DataUtil entry = this.entries.getAndMoveToLast(id);
       return entry == null ? null : entry.witness();
    }
 
    PrintCore.StanceWitness peek(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.get(id);
+      PrintWitnessCache.Inner_DataUtil entry = this.entries.get(id);
       return entry == null ? null : entry.witness();
    }
 
    boolean contains(int id) {
-      return this.init_Int2ObjectLinkedOp.containsKey(id);
+      return this.entries.containsKey(id);
    }
 
    int size() {
-      return this.init_Int2ObjectLinkedOp.size();
+      return this.entries.size();
    }
 
    boolean isEmpty() {
-      return this.init_Int2ObjectLinkedOp.isEmpty();
+      return this.entries.isEmpty();
    }
 
-   int load() {
-      return this.write;
+   int totalLinks() {
+      return this.linkCount;
    }
 
-   int read() {
-      return this.init_Long2ObjectOpenHas.size();
+   int cellCount() {
+      return this.idsByCell.size();
    }
 
    int cellCount(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.get(id);
+      PrintWitnessCache.Inner_DataUtil entry = this.entries.get(id);
       return entry == null ? 0 : entry.cells().length;
    }
 
@@ -79,8 +79,8 @@ final class PrintWitnessCache {
          return previous;
       }
 
-      if (witness.required().size() <= this.read && witness.keep().size() <= this.read) {
-         LongOpenHashSet cells = new LongOpenHashSet(Math.min(this.read, witness.required().size() + witness.keep().size()));
+      if (witness.required().size() <= this.maxDependencies && witness.keep().size() <= this.maxDependencies) {
+         LongOpenHashSet cells = new LongOpenHashSet(Math.min(this.maxDependencies, witness.required().size() + witness.keep().size()));
 
          for (long cell : witness.required().keySet()) {
             cells.add(cell);
@@ -88,25 +88,25 @@ final class PrintWitnessCache {
 
          for (long cell : witness.keep()) {
             cells.add(cell);
-            if (cells.size() > this.read) {
+            if (cells.size() > this.maxDependencies) {
                return previous;
             }
          }
 
-         while (this.init_Int2ObjectLinkedOp.size() >= this.maxEntries || this.write + cells.size() > this.load) {
-            int idToEvict = this.init_Int2ObjectLinkedOp.firstIntKey();
+         while (this.entries.size() >= this.maxEntries || this.linkCount + cells.size() > this.maxLinks) {
+            int idToEvict = this.entries.firstIntKey();
             this.touch(idToEvict);
-            this.init_IntConsumer.accept(idToEvict);
+            this.onEvict.accept(idToEvict);
          }
 
          long[] indexed = cells.toLongArray();
-         this.init_Int2ObjectLinkedOp.put(id, new PrintWitnessCache.Inner_DataUtil(witness, indexed));
+         this.entries.put(id, new PrintWitnessCache.Inner_DataUtil(witness, indexed));
 
          for (long cell : indexed) {
-            this.init_Long2ObjectOpenHas.computeIfAbsent(cell, ignored -> new IntOpenHashSet()).add(id);
+            this.idsByCell.computeIfAbsent(cell, ignored -> new IntOpenHashSet()).add(id);
          }
 
-         this.write += indexed.length;
+         this.linkCount += indexed.length;
          return previous;
       } else {
          return previous;
@@ -114,60 +114,60 @@ final class PrintWitnessCache {
    }
 
    PrintCore.StanceWitness touch(int id) {
-      PrintWitnessCache.Inner_DataUtil removed = this.init_Int2ObjectLinkedOp.remove(id);
+      PrintWitnessCache.Inner_DataUtil removed = this.entries.remove(id);
       if (removed == null) {
          return null;
       }
 
-      this.init(id, removed);
+      this.unlinkCells(id, removed);
       return removed.witness();
    }
 
-   private void init(int id, PrintWitnessCache.Inner_DataUtil entry) {
+   private void unlinkCells(int id, PrintWitnessCache.Inner_DataUtil entry) {
       for (long cell : entry.cells()) {
-         IntOpenHashSet ids = this.init_Long2ObjectOpenHas.get(cell);
+         IntOpenHashSet ids = this.idsByCell.get(cell);
          ids.remove(id);
          if (ids.isEmpty()) {
-            this.init_Long2ObjectOpenHas.remove(cell);
+            this.idsByCell.remove(cell);
          }
       }
 
-      this.write = this.write - entry.cells().length;
+      this.linkCount = this.linkCount - entry.cells().length;
    }
 
    void clear() {
-      this.init_Int2ObjectLinkedOp.clear();
-      this.init_Long2ObjectOpenHas.clear();
-      this.write = 0;
+      this.entries.clear();
+      this.idsByCell.clear();
+      this.linkCount = 0;
    }
 
    void init_V_UiHelper_aM(PrintCore.StanceWitness marker) {
-      ObjectBidirectionalIterator<Entry<PrintWitnessCache.Inner_DataUtil>> iterator = this.init_Int2ObjectLinkedOp.int2ObjectEntrySet().fastIterator();
+      ObjectBidirectionalIterator<Entry<PrintWitnessCache.Inner_DataUtil>> iterator = this.entries.int2ObjectEntrySet().fastIterator();
 
       while (iterator.hasNext()) {
          Entry<PrintWitnessCache.Inner_DataUtil> entry = iterator.next();
          if (entry.getValue().witness() == marker) {
-            this.init(entry.getIntKey(), entry.getValue());
+            this.unlinkCells(entry.getIntKey(), entry.getValue());
             iterator.remove();
          }
       }
    }
 
    int[] witnessesAt(long cell) {
-      IntOpenHashSet ids = this.init_Long2ObjectOpenHas.get(cell);
-      return ids == null ? init_IArr : ids.toIntArray();
+      IntOpenHashSet ids = this.idsByCell.get(cell);
+      return ids == null ? EMPTY_IDS : ids.toIntArray();
    }
 
    Collection<PrintCore.StanceWitness> witnesses() {
       return new AbstractCollection<PrintCore.StanceWitness>() {
          @Override
          public int size() {
-            return PrintWitnessCache.this.init_Int2ObjectLinkedOp.size();
+            return PrintWitnessCache.this.entries.size();
          }
 
          @Override
          public Iterator<PrintCore.StanceWitness> iterator() {
-            final ObjectIterator<PrintWitnessCache.Inner_DataUtil> iterator = PrintWitnessCache.this.init_Int2ObjectLinkedOp.values().iterator();
+            final ObjectIterator<PrintWitnessCache.Inner_DataUtil> iterator = PrintWitnessCache.this.entries.values().iterator();
             return new Iterator<PrintCore.StanceWitness>() {
                @Override
                public boolean hasNext() {
@@ -175,10 +175,10 @@ final class PrintWitnessCache {
                }
 
                public PrintCore.StanceWitness next() {
-                  return this.init();
+                  return this.nextWitness();
                }
 
-               public PrintCore.StanceWitness init() {
+               public PrintCore.StanceWitness nextWitness() {
                   return iterator.next().witness();
                }
             };

@@ -28,7 +28,7 @@ public final class TextWrapLayout {
 
             while (cursor < paragraphEnd) {
                int end = breakIndex(source, cursor, paragraphEnd, available, width);
-               int renderEnd = init(source, cursor, end);
+               int renderEnd = trimTrailing(source, cursor, end);
                lines.add(new TextWrapLayout.Inner_DataUtil(cursor, end, renderEnd));
                cursor = end;
             }
@@ -51,8 +51,8 @@ public final class TextWrapLayout {
 
    public static int breakIndex(String source, int start, int limit, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
       if (source != null && !source.isEmpty()) {
-         int safeStart = init(source, Math.max(0, Math.min(start, source.length())));
-         int safeLimit = init(source, Math.max(safeStart, Math.min(limit, source.length())));
+         int safeStart = safeSplit(source, Math.max(0, Math.min(start, source.length())));
+         int safeLimit = safeSplit(source, Math.max(safeStart, Math.min(limit, source.length())));
          if (safeStart >= safeLimit) {
             return safeLimit;
          }
@@ -86,7 +86,7 @@ public final class TextWrapLayout {
 
          while (end > safeStart) {
             int index = source.offsetByCodePoints(end, -1);
-            if (init(source.codePointAt(index))) {
+            if (isBreakChar(source.codePointAt(index))) {
                return end;
             }
 
@@ -99,7 +99,7 @@ public final class TextWrapLayout {
       }
    }
 
-   private static int init(String source, int start, int end) {
+   private static int trimTrailing(String source, int start, int end) {
       int renderEnd;
       for (renderEnd = end; renderEnd > start; renderEnd--) {
          char ch = source.charAt(renderEnd - 1);
@@ -111,13 +111,13 @@ public final class TextWrapLayout {
       return renderEnd;
    }
 
-   private static int init(String source, int index) {
+   private static int safeSplit(String source, int index) {
       return index > 0 && index < source.length() && Character.isHighSurrogate(source.charAt(index - 1)) && Character.isLowSurrogate(source.charAt(index))
          ? index - 1
          : index;
    }
 
-   private static boolean init(int ch) {
+   private static boolean isBreakChar(int ch) {
       return Character.isWhitespace(ch) || ch == 44 || ch == 59 || ch == 58 || ch == 47 || ch == 41 || ch == 93 || ch == 125 || ch == 62;
    }
 

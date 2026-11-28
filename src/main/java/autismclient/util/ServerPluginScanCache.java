@@ -39,7 +39,7 @@ final class ServerPluginScanCache {
    private ServerPluginScanCache(File file) {
       this.init_File = file;
       this.init_Str = "plugin-scans:" + file.getAbsolutePath();
-      this.read_V();
+      this.loadFromDisk();
    }
 
    static ServerPluginScanCache getInstance() {
@@ -57,7 +57,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   static ServerPluginScanCache init_ServerPluginScanCa_File_2(File file) {
+   static ServerPluginScanCache forFile(File file) {
       return new ServerPluginScanCache(file);
    }
 
@@ -70,7 +70,7 @@ final class ServerPluginScanCache {
    }
 
    synchronized AutismConfig.PluginScanCacheEntry getScan(String key) {
-      return init_AutismConfig_Plugi_AutismConfig_Plugi(this.init_LinkedHashMap.get(key));
+      return copyEntry(this.init_LinkedHashMap.get(key));
    }
 
    synchronized AutismConfig.PluginScanCacheEntry findByAddress(String normalizedAddress) {
@@ -85,13 +85,13 @@ final class ServerPluginScanCache {
             }
          }
 
-         return init_AutismConfig_Plugi_AutismConfig_Plugi(newest);
+         return copyEntry(newest);
       } else {
          return null;
       }
    }
 
-   synchronized int init_I() {
+   synchronized int size() {
       return this.init_LinkedHashMap.size();
    }
 
@@ -100,19 +100,19 @@ final class ServerPluginScanCache {
    }
 
    synchronized Map<String, AutismConfig.PluginScanCacheEntry> snapshot() {
-      return init_LinkedHashMap_Map(this.init_LinkedHashMap);
+      return copyEntries(this.init_LinkedHashMap);
    }
 
    void putScan(String key, AutismConfig.PluginScanCacheEntry entry) {
       if (key != null && !key.isBlank() && entry != null) {
-         AutismConfig.PluginScanCacheEntry copied = init_AutismConfig_Plugi_AutismConfig_Plugi(entry);
-         long serializedSize = init_J_Str_AutismConfig_Plugi(key, copied);
+         AutismConfig.PluginScanCacheEntry copied = copyEntry(entry);
+         long serializedSize = entryJsonLength(key, copied);
          synchronized (this) {
             this.init_LinkedHashMap.put(key, copied);
             this.load_LinkedHashMap.put(key, serializedSize);
-            this.load_V();
+            this.pruneOldest();
             this.load_J++;
-            this.init_V();
+            this.scheduleSave();
          }
       }
    }
@@ -121,7 +121,7 @@ final class ServerPluginScanCache {
       if (key != null && this.init_LinkedHashMap.remove(key) != null) {
          this.load_LinkedHashMap.remove(key);
          this.load_J++;
-         this.init_V();
+         this.scheduleSave();
       }
    }
 
@@ -131,7 +131,7 @@ final class ServerPluginScanCache {
          if (changed) {
             this.load_LinkedHashMap.keySet().retainAll(this.init_LinkedHashMap.keySet());
             this.load_J++;
-            this.init_V();
+            this.scheduleSave();
          }
       }
    }
@@ -143,9 +143,9 @@ final class ServerPluginScanCache {
 
          for (Entry<String, AutismConfig.PluginScanCacheEntry> item : legacy.entrySet()) {
             if (item.getKey() != null && !item.getKey().isBlank() && item.getValue() != null) {
-               AutismConfig.PluginScanCacheEntry copied = init_AutismConfig_Plugi_AutismConfig_Plugi(item.getValue());
+               AutismConfig.PluginScanCacheEntry copied = copyEntry(item.getValue());
                candidates.put(item.getKey(), copied);
-               candidateSizes.put(item.getKey(), init_J_Str_AutismConfig_Plugi(item.getKey(), copied));
+               candidateSizes.put(item.getKey(), entryJsonLength(item.getKey(), copied));
             }
          }
 
@@ -156,7 +156,7 @@ final class ServerPluginScanCache {
          Map<String, AutismConfig.PluginScanCacheEntry> snapshot;
          long revision;
          synchronized (this) {
-            this.load_Map = Collections.unmodifiableMap(init_LinkedHashMap_Map(candidates));
+            this.load_Map = Collections.unmodifiableMap(copyEntries(candidates));
             boolean changed = false;
 
             for (Entry<String, AutismConfig.PluginScanCacheEntry> item : candidates.entrySet()) {
@@ -168,35 +168,35 @@ final class ServerPluginScanCache {
                }
             }
 
-            this.load_V();
+            this.pruneOldest();
             if (changed) {
                this.load_J++;
             }
 
             this.write = this.load_J;
-            snapshot = this.write();
+            snapshot = this.publishSnapshot();
             revision = this.load_J;
          }
 
-         return this.init_Z_Map_J(snapshot, revision);
+         return this.writeSnapshot(snapshot, revision);
       } else {
          return false;
       }
    }
 
-   private void init_V() {
-      Map<String, AutismConfig.PluginScanCacheEntry> snapshot = this.write();
+   private void scheduleSave() {
+      Map<String, AutismConfig.PluginScanCacheEntry> snapshot = this.publishSnapshot();
       long revision = this.load_J;
-      DebouncedPersistenceScheduler.schedule(this.init_Str, () -> this.init_Z_Map_J(snapshot, revision));
+      DebouncedPersistenceScheduler.schedule(this.init_Str, () -> this.writeSnapshot(snapshot, revision));
    }
 
-   private Map<String, AutismConfig.PluginScanCacheEntry> write() {
-      Map<String, AutismConfig.PluginScanCacheEntry> snapshot = init_LinkedHashMap_Map(this.init_LinkedHashMap);
+   private Map<String, AutismConfig.PluginScanCacheEntry> publishSnapshot() {
+      Map<String, AutismConfig.PluginScanCacheEntry> snapshot = copyEntries(this.init_LinkedHashMap);
       this.init_Map = Collections.unmodifiableMap(snapshot);
       return snapshot;
    }
 
-   private void load_V() {
+   private void pruneOldest() {
       if (!this.init_LinkedHashMap.isEmpty()) {
          List<Entry<String, AutismConfig.PluginScanCacheEntry>> newest = new ArrayList<>(this.init_LinkedHashMap.entrySet());
          newest.sort(
@@ -227,34 +227,34 @@ final class ServerPluginScanCache {
       }
    }
 
-   private static long init_J_Str_AutismConfig_Plugi(String key, AutismConfig.PluginScanCacheEntry entry) {
+   private static long entryJsonLength(String key, AutismConfig.PluginScanCacheEntry entry) {
       return init_Gson.toJson(Map.of(key, entry)).getBytes(StandardCharsets.UTF_8).length;
    }
 
-   private void read_V() {
-      ServerPluginScanCache.CacheFile cache = this.init_ServerPluginScanCa_File(this.init_File);
+   private void loadFromDisk() {
+      ServerPluginScanCache.CacheFile cache = this.readCacheFile(this.init_File);
       if (cache == null) {
-         File backup = this.init_File();
-         cache = this.init_ServerPluginScanCa_File(backup);
+         File backup = this.backupFile();
+         cache = this.readCacheFile(backup);
       }
 
       if (cache != null && cache.entries != null) {
-         this.init_LinkedHashMap.putAll(init_LinkedHashMap_Map(cache.entries));
+         this.init_LinkedHashMap.putAll(copyEntries(cache.entries));
 
          for (Entry<String, AutismConfig.PluginScanCacheEntry> item : this.init_LinkedHashMap.entrySet()) {
-            this.load_LinkedHashMap.put(item.getKey(), init_J_Str_AutismConfig_Plugi(item.getKey(), item.getValue()));
+            this.load_LinkedHashMap.put(item.getKey(), entryJsonLength(item.getKey(), item.getValue()));
          }
 
-         this.load_V();
+         this.pruneOldest();
          if (!this.init_LinkedHashMap.isEmpty()) {
             this.load_J++;
          }
 
-         this.write();
+         this.publishSnapshot();
       }
    }
 
-   private ServerPluginScanCache.CacheFile init_ServerPluginScanCa_File(File source) {
+   private ServerPluginScanCache.CacheFile readCacheFile(File source) {
       if (source != null && source.exists()) {
          try (FileReader reader = new FileReader(source)) {
             ServerPluginScanCache.CacheFile loaded = init_Gson.fromJson(reader, ServerPluginScanCache.CacheFile.class);
@@ -268,7 +268,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   private boolean init_Z_Map_J(Map<String, AutismConfig.PluginScanCacheEntry> snapshot, long revision) {
+   private boolean writeSnapshot(Map<String, AutismConfig.PluginScanCacheEntry> snapshot, long revision) {
       synchronized (this) {
          if (revision < this.read) {
             return true;
@@ -306,16 +306,16 @@ final class ServerPluginScanCache {
             }
 
             try {
-               if (this.init_File.exists() && this.init_ServerPluginScanCa_File(this.init_File) != null) {
-                  Files.copy(this.init_File.toPath(), this.init_File().toPath(), StandardCopyOption.REPLACE_EXISTING);
+               if (this.init_File.exists() && this.readCacheFile(this.init_File) != null) {
+                  Files.copy(this.init_File.toPath(), this.backupFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
                }
             } catch (Throwable t) {
                init_Logger.warn("Failed to back up server plugin cache", t);
             }
 
-            boolean persisted = init(tmp, this.init_File, "server plugin cache") && this.init_File.isFile();
+            boolean persisted = moveReplacing(tmp, this.init_File, "server plugin cache") && this.init_File.isFile();
             if (persisted) {
-               this.init_V_J(revision);
+               this.markSaved(revision);
             }
 
             return persisted;
@@ -326,7 +326,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   private synchronized void init_V_J(long revision) {
+   private synchronized void markSaved(long revision) {
       this.read = Math.max(this.read, revision);
       if (!this.load_Map.isEmpty() && revision >= this.write) {
          this.load_Map = Map.of();
@@ -334,11 +334,11 @@ final class ServerPluginScanCache {
       }
    }
 
-   private File init_File() {
+   private File backupFile() {
       return new File(this.init_File.getParentFile(), this.init_File.getName() + ".bak");
    }
 
-   private static boolean init(File tmp, File target, String description) {
+   private static boolean moveReplacing(File tmp, File target, String description) {
       try {
          Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
          return true;
@@ -354,7 +354,7 @@ final class ServerPluginScanCache {
       }
    }
 
-   private static LinkedHashMap<String, AutismConfig.PluginScanCacheEntry> init_LinkedHashMap_Map(Map<String, AutismConfig.PluginScanCacheEntry> source) {
+   private static LinkedHashMap<String, AutismConfig.PluginScanCacheEntry> copyEntries(Map<String, AutismConfig.PluginScanCacheEntry> source) {
       LinkedHashMap<String, AutismConfig.PluginScanCacheEntry> copy = new LinkedHashMap<>();
       if (source == null) {
          return copy;
@@ -362,14 +362,14 @@ final class ServerPluginScanCache {
 
       for (Entry<String, AutismConfig.PluginScanCacheEntry> item : source.entrySet()) {
          if (item.getKey() != null && item.getValue() != null) {
-            copy.put(item.getKey(), init_AutismConfig_Plugi_AutismConfig_Plugi(item.getValue()));
+            copy.put(item.getKey(), copyEntry(item.getValue()));
          }
       }
 
       return copy;
    }
 
-   private static AutismConfig.PluginScanCacheEntry init_AutismConfig_Plugi_AutismConfig_Plugi(AutismConfig.PluginScanCacheEntry source) {
+   private static AutismConfig.PluginScanCacheEntry copyEntry(AutismConfig.PluginScanCacheEntry source) {
       if (source == null) {
          return null;
       }
@@ -379,13 +379,13 @@ final class ServerPluginScanCache {
       copy.serverName = source.serverName == null ? "" : source.serverName;
       copy.serverAddress = source.serverAddress == null ? "" : source.serverAddress;
       copy.plugins = source.plugins == null ? new ArrayList<>() : new ArrayList<>(source.plugins);
-      copy.commands = load_LinkedHashMap_Map(source.commands);
+      copy.commands = copyLists(source.commands);
       copy.evidence = source.evidence == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.evidence);
-      copy.channels = load_LinkedHashMap_Map(source.channels);
-      copy.guis = load_LinkedHashMap_Map(source.guis);
+      copy.channels = copyLists(source.channels);
+      copy.guis = copyLists(source.guis);
       copy.confidence = source.confidence == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.confidence);
       copy.copyEvidence = source.copyEvidence == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.copyEvidence);
-      copy.copyCommands = load_LinkedHashMap_Map(source.copyCommands);
+      copy.copyCommands = copyLists(source.copyCommands);
       copy.scanStatus = source.scanStatus == null ? "COMPLETE" : source.scanStatus;
       copy.totalProbes = source.totalProbes;
       copy.answeredProbes = source.answeredProbes;
@@ -395,7 +395,7 @@ final class ServerPluginScanCache {
       return copy;
    }
 
-   private static LinkedHashMap<String, List<String>> load_LinkedHashMap_Map(Map<String, List<String>> source) {
+   private static LinkedHashMap<String, List<String>> copyLists(Map<String, List<String>> source) {
       LinkedHashMap<String, List<String>> copy = new LinkedHashMap<>();
       if (source == null) {
          return copy;

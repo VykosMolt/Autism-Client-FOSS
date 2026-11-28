@@ -15,7 +15,7 @@ public final class SneakPacketController {
    public static void press(Minecraft mc, String mode) {
       if (mc != null) {
          if (isPacketMode(mode)) {
-            load(mc, true);
+            sendSneakInput(mc, true);
          } else if (mc.options != null && mc.options.keyShift != null) {
             mc.options.keyShift.setDown(true);
          }
@@ -25,7 +25,7 @@ public final class SneakPacketController {
    public static void release(Minecraft mc, String mode) {
       if (mc != null) {
          if (isPacketMode(mode)) {
-            load(mc, false);
+            sendSneakInput(mc, false);
          }
 
          if (mc.options != null && mc.options.keyShift != null) {
@@ -44,11 +44,11 @@ public final class SneakPacketController {
             mc.player.setShiftKeyDown(sneak);
          }
 
-         load(mc, sneak);
+         sendSneakInput(mc, sneak);
       }
    }
 
-   public static void load(Minecraft mc, boolean sneak) {
+   public static void sendSneakInput(Minecraft mc, boolean sneak) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.options != null && mc.getConnection() != null) {
          Input input = new Input(
             mc.options.keyUp.isDown(),

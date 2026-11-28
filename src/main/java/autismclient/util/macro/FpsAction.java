@@ -12,7 +12,7 @@ public class FpsAction implements MacroAction {
    public int durationMs = 1000;
    public int durationTicks = 20;
    public boolean continueNextActions = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public FpsAction() {
    }
@@ -23,7 +23,7 @@ public class FpsAction implements MacroAction {
    }
 
    public FpsAction.Inner_DataUtil getEndMode() {
-      return FpsAction.Inner_DataUtil.init(this.endMode);
+      return FpsAction.Inner_DataUtil.parse(this.endMode);
    }
 
    public int getStepCount() {
@@ -51,7 +51,7 @@ public class FpsAction implements MacroAction {
       tag.putInt("durationMs", this.durationMs);
       tag.putInt("durationTicks", this.durationTicks);
       tag.putBoolean("continueNextActions", this.continueNextActions);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -62,7 +62,7 @@ public class FpsAction implements MacroAction {
       }
 
       if (tag.contains("endMode")) {
-         this.endMode = FpsAction.Inner_DataUtil.init(tag.getStringOr("endMode", FpsAction.Inner_DataUtil.TIMEOUT.name())).name();
+         this.endMode = FpsAction.Inner_DataUtil.parse(tag.getStringOr("endMode", FpsAction.Inner_DataUtil.TIMEOUT.name())).name();
       }
 
       if (tag.contains("stepCount")) {
@@ -86,7 +86,7 @@ public class FpsAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -125,12 +125,12 @@ public class FpsAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {
@@ -138,7 +138,7 @@ public class FpsAction implements MacroAction {
       STEPS,
       END;
 
-      public static FpsAction.Inner_DataUtil init(String raw) {
+      public static FpsAction.Inner_DataUtil parse(String raw) {
          if (raw == null) {
             return TIMEOUT;
          }

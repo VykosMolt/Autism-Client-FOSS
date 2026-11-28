@@ -53,14 +53,14 @@ public final class NativeImageMipmapBuilder {
 
       for (int y = 0; y < h; y++) {
          for (int x = 0; x < w; x++) {
-            out.setPixel(x, y, init(src, x * 2, y * 2));
+            out.setPixel(x, y, averagePixel(src, x * 2, y * 2));
          }
       }
 
       return out;
    }
 
-   private static int init(NativeImage src, int x, int y) {
+   private static int averagePixel(NativeImage src, int x, int y) {
       int a = 0;
       int r = 0;
       int g = 0;

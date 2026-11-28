@@ -46,7 +46,7 @@ public final class ContainerScreenToolbar {
             baseY + 48,
             defaultWidth,
             defaultHeight,
-            Component.literal("Send packets: " + init(shared.isSendPacketsEnabled())),
+            Component.literal("Send packets: " + onOff(shared.isSendPacketsEnabled())),
             shared.isSendPacketsEnabled() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
                boolean newValue = !shared.isSendPacketsEnabled();
@@ -61,7 +61,7 @@ public final class ContainerScreenToolbar {
             baseY + 72,
             defaultWidth,
             defaultHeight,
-            Component.literal("Delay packets: " + init(shared.isDelayPacketsEnabled())),
+            Component.literal("Delay packets: " + onOff(shared.isDelayPacketsEnabled())),
             shared.isDelayPacketsEnabled() ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
             () -> {
                boolean newValue = !shared.isDelayPacketsEnabled();
@@ -168,7 +168,7 @@ public final class ContainerScreenToolbar {
       return buttons;
    }
 
-   private static String init(boolean value) {
+   private static String onOff(boolean value) {
       return value ? "ON" : "OFF";
    }
 }

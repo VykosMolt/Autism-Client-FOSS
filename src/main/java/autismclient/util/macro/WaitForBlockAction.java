@@ -19,7 +19,7 @@ public class WaitForBlockAction implements MacroAction {
    public boolean mustBeInReach = false;
    public double searchRadius = 8.0;
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public MacroActionType getType() {
@@ -70,12 +70,12 @@ public class WaitForBlockAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -97,7 +97,7 @@ public class WaitForBlockAction implements MacroAction {
       }
 
       tag.put("blockIds", list);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -148,7 +148,7 @@ public class WaitForBlockAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);

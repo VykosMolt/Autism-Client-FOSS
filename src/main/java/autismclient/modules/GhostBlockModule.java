@@ -64,11 +64,11 @@ public final class GhostBlockModule extends Module {
    static final String DELAY_HINT = "Ticks between placements";
    static final String CLICK_REMOVE_HINT = "Click ghosts to remove";
    static final String SNEAK_REAL_HINT = "Sneak places real blocks";
-   static final String sync = "Clear ghosts on disable";
-   static final String flush = "Key clears all ghosts";
-   static final String close = "Outline ghost blocks";
-   static final String open = "Translucent ghost fill";
-   static final String poll = "Ghost highlight color";
+   static final String CLEAR_ON_DISABLE_LABEL = "Clear ghosts on disable";
+   static final String KEY_CLEARS_LABEL = "Key clears all ghosts";
+   static final String OUTLINE_LABEL = "Outline ghost blocks";
+   static final String FILL_LABEL = "Translucent ghost fill";
+   static final String COLOR_LABEL = "Ghost highlight color";
    private static final int init_I = 4096;
    private static final int load_I = 2001;
    private static final int read_I = 20;
@@ -156,7 +156,7 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public void onGameLeft() {
-      this.sync();
+      this.clearGhostState();
       this.stopFakeCreative();
       this.lastLevel = null;
       this.clearKeyDown = false;
@@ -166,13 +166,13 @@ public final class GhostBlockModule extends Module {
    public void tick() {
       if (MC != null && MC.level != null && MC.player != null) {
          if (MC.level != this.lastLevel) {
-            this.sync();
+            this.clearGhostState();
             this.lastLevel = MC.level;
          }
 
          this.pollClearKey();
          if (!this.isEnabled()) {
-            this.update();
+            this.dropOverwrittenGhosts();
          } else {
             this.write_V_4();
             if (++this.tickCounter >= 20) {
@@ -216,13 +216,13 @@ public final class GhostBlockModule extends Module {
 
       for (Entry<BlockPos, BlockState> entry : snapshot) {
          BlockPos pos = entry.getKey();
-         if (this.read(pos) && MC.level.getBlockState(pos) != entry.getValue()) {
+         if (this.isChunkLoaded(pos) && MC.level.getBlockState(pos) != entry.getValue()) {
             MC.level.setBlock(pos, entry.getValue(), 3);
          }
       }
    }
 
-   private void update() {
+   private void dropOverwrittenGhosts() {
       List<Entry<BlockPos, BlockState>> snapshot;
       synchronized (this.ghosts) {
          if (this.ghosts.isEmpty()) {
@@ -236,7 +236,7 @@ public final class GhostBlockModule extends Module {
 
       for (Entry<BlockPos, BlockState> entry : snapshot) {
          BlockPos pos = entry.getKey();
-         if (this.read(pos) && MC.level.getBlockState(pos) != entry.getValue()) {
+         if (this.isChunkLoaded(pos) && MC.level.getBlockState(pos) != entry.getValue()) {
             if (lost == null) {
                lost = new ArrayList<>();
             }
@@ -270,7 +270,7 @@ public final class GhostBlockModule extends Module {
                return false;
             }
 
-            if (!sneaking && this.init(MC.level.getBlockState(hit.getBlockPos()), hit.getBlockPos())) {
+            if (!sneaking && this.isInteractable(MC.level.getBlockState(hit.getBlockPos()), hit.getBlockPos())) {
                return false;
             }
 
@@ -293,7 +293,7 @@ public final class GhostBlockModule extends Module {
 
             if (stack.getItem() instanceof BlockItem blockItem) {
                ((AutismMinecraftAccessor)MC).autism$setRightClickDelay(Math.max(1, this.integer("place-delay")));
-               this.init(blockItem, hand, stack, hit, fromHand);
+               this.placeGhost(blockItem, hand, stack, hit, fromHand);
                return true;
             } else {
                return false;
@@ -306,7 +306,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private void init(BlockItem blockItem, InteractionHand hand, ItemStack stack, BlockHitResult hit, boolean fromHand) {
+   private void placeGhost(BlockItem blockItem, InteractionHand hand, ItemStack stack, BlockHitResult hit, boolean fromHand) {
       BlockPlaceContext context = new BlockPlaceContext(MC.player, hand, stack, hit);
       if (context.canPlace()) {
          BlockPos clicked = context.getClickedPos();
@@ -322,8 +322,8 @@ public final class GhostBlockModule extends Module {
                for (Entry<BlockPos, BlockState> entry : before.entrySet()) {
                   BlockState current = MC.level.getBlockState(entry.getKey());
                   if (current != entry.getValue()) {
-                     this.init(entry.getKey(), entry.getValue());
-                     this.load(entry.getKey(), current);
+                     this.rememberReal(entry.getKey(), entry.getValue());
+                     this.putGhost(entry.getKey(), current);
                   }
                }
 
@@ -347,20 +347,20 @@ public final class GhostBlockModule extends Module {
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof BlockHitResult hit && hit.getType() == Type.BLOCK ? this.load(hit.getBlockPos()) : false;
+      return hitResult instanceof BlockHitResult hit && hit.getType() == Type.BLOCK ? this.breakAsGhost(hit.getBlockPos()) : false;
    }
 
    @Override
    public boolean onStartDestroyBlock(BlockPos pos, Direction direction) {
-      return this.load(pos);
+      return this.breakAsGhost(pos);
    }
 
    @Override
    public boolean shouldCancelStartBreakingBlock(BlockPos pos, Direction direction) {
-      return this.load(pos);
+      return this.breakAsGhost(pos);
    }
 
-   private boolean load(BlockPos pos) {
+   private boolean breakAsGhost(BlockPos pos) {
       if (MC == null || MC.level == null || MC.player == null) {
          return false;
       }
@@ -371,7 +371,7 @@ public final class GhostBlockModule extends Module {
 
       if (this.isGhost(pos)) {
          if (this.bool("break-ghosts")) {
-            this.load(pos, true);
+            this.removeGhost(pos, true);
          }
 
          return true;
@@ -380,9 +380,9 @@ public final class GhostBlockModule extends Module {
       } else {
          BlockState state = MC.level.getBlockState(pos);
          if (!state.isAir() && !MC.level.isOutsideBuildHeight(pos)) {
-            this.init(pos, state);
+            this.rememberReal(pos, state);
             MC.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            this.load(pos, MC.level.getBlockState(pos));
+            this.putGhost(pos, MC.level.getBlockState(pos));
             MC.level.levelEvent(null, 2001, pos, Block.getId(state));
             return true;
          } else {
@@ -403,7 +403,7 @@ public final class GhostBlockModule extends Module {
 
       if (packet instanceof ServerboundPickItemFromBlockPacket pick) {
          if (!AutoTotemModule.init_Z_6()) {
-            this.init(pick.pos(), pick.includeData());
+            this.pickBlock(pick.pos(), pick.includeData());
          }
 
          return true;
@@ -415,7 +415,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private void init(BlockPos pos, boolean includeData) {
+   private void pickBlock(BlockPos pos, boolean includeData) {
       if (MC != null && MC.level != null && MC.player != null) {
          BlockState state = MC.level.getBlockState(pos);
          if (!state.isAir()) {
@@ -453,17 +453,17 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private boolean read(BlockPos pos) {
+   private boolean isChunkLoaded(BlockPos pos) {
       return MC.level.hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
    }
 
-   private void init(BlockPos pos, BlockState original) {
+   private void rememberReal(BlockPos pos, BlockState original) {
       synchronized (this.ghosts) {
          this.realStates.putIfAbsent(pos.immutable(), original);
       }
    }
 
-   private void load(BlockPos pos, BlockState state) {
+   private void putGhost(BlockPos pos, BlockState state) {
       synchronized (this.ghosts) {
          this.ghosts.put(pos.immutable(), state);
 
@@ -471,7 +471,7 @@ public final class GhostBlockModule extends Module {
             BlockPos eldest = this.ghosts.keySet().iterator().next();
             this.ghosts.remove(eldest);
             BlockState original = this.realStates.remove(eldest);
-            if (original != null && this.read(eldest)) {
+            if (original != null && this.isChunkLoaded(eldest)) {
                MC.level.setBlock(eldest, original, 3);
             }
          }
@@ -480,7 +480,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private void sync() {
+   private void clearGhostState() {
       synchronized (this.ghosts) {
          this.ghosts.clear();
          this.realStates.clear();
@@ -488,7 +488,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private void load(BlockPos pos, boolean effects) {
+   private void removeGhost(BlockPos pos, boolean effects) {
       BlockState ghost;
       BlockState original;
       synchronized (this.ghosts) {
@@ -499,7 +499,7 @@ public final class GhostBlockModule extends Module {
          }
       }
 
-      if (ghost != null && MC != null && MC.level != null && this.read(pos)) {
+      if (ghost != null && MC != null && MC.level != null && this.isChunkLoaded(pos)) {
          if (original != null) {
             MC.level.setBlock(pos, original, 3);
          }
@@ -517,7 +517,7 @@ public final class GhostBlockModule extends Module {
       }
 
       for (BlockPos pos : positions) {
-         this.load(pos, false);
+         this.removeGhost(pos, false);
       }
 
       return positions.size();
@@ -592,7 +592,7 @@ public final class GhostBlockModule extends Module {
       }
    }
 
-   private boolean init(BlockState state, BlockPos pos) {
+   private boolean isInteractable(BlockState state, BlockPos pos) {
       if (state.getMenuProvider(MC.level, pos) != null) {
          return true;
       }

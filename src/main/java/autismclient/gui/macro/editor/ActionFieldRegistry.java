@@ -80,7 +80,7 @@ public final class ActionFieldRegistry {
    private ActionFieldRegistry() {
    }
 
-   private static String[] init() {
+   private static String[] actionKinds() {
       if (AutismLiteVariant.enabled()) {
          return init_StrArr;
       }
@@ -1505,7 +1505,7 @@ public final class ActionFieldRegistry {
          MacroActionType.IF,
          ActionFieldSchema.builder()
             .condition("condition", "Condition")
-            .enumField("cond_kind", "Check", init())
+            .enumField("cond_kind", "Check", actionKinds())
             .enumField("cond_toolScope", "Target", "THIS_MACRO", "ANY_TOOL")
             .showWhenEnum("cond_kind", "TOOLS")
             .enumField("cond_toolFilter", "Tool", "")
@@ -1569,7 +1569,7 @@ public final class ActionFieldRegistry {
             .toggle("conditional", "Only If…")
             .condition("condition", "Condition")
             .showWhen("conditional")
-            .enumField("cond_kind", "Check", init())
+            .enumField("cond_kind", "Check", actionKinds())
             .showWhen("conditional")
             .enumField("cond_toolScope", "Target", "THIS_MACRO", "ANY_TOOL")
             .showWhenEnum("cond_kind", "TOOLS")

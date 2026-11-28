@@ -20,7 +20,7 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 final class AiAttachments {
-   private static final Pattern init = Pattern.compile(
+   private static final Pattern BUILD_REQUEST = Pattern.compile(
       "(?i)^(?:please\\s+)?(?:build|place|construct)(?:\\s+(?:the\\s+attached|the|this|attached))?(?:\\s+(?:schematic|file))?(?:\\s+(here|at\\s+-?\\d+\\s+-?\\d+\\s+-?\\d+))?[.!]*$"
    );
 
@@ -98,7 +98,7 @@ final class AiAttachments {
          return text;
       }
 
-      Matcher build = init.matcher(text.trim());
+      Matcher build = BUILD_REQUEST.matcher(text.trim());
       return files.size() == 1 && (text.isBlank() || build.matches())
          ? "build \"" + files.getFirst().name() + "\"" + (!text.isBlank() && build.group(1) != null ? " " + build.group(1) : "")
          : text + "\nAttached schematic files: " + AiJson.GSON.toJson(files.stream().map(AiAttachments.Inner_DataUtil::name).toList());

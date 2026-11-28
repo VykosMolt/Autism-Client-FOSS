@@ -42,14 +42,14 @@ public final class AiChatLedger {
    }
 
    public static void recordSystem(Component component, String source) {
-      init(component, source, "");
+      recordChat(component, source, "");
    }
 
-   public static void init(Component component, String source, String sender) {
+   public static void recordChat(Component component, String source, String sender) {
       if (component != null) {
-         String text = init(component.getString(), 2048);
+         String text = truncate(component.getString(), 2048);
          List<AiChatLedger.ClickAction> clicks = new ArrayList<>();
-         String hover = init(component, clicks);
+         String hover = collectClickActions(component, clicks);
          if (!text.isBlank() || !clicks.isEmpty()) {
             String candidate = sender == null ? "" : sender.trim();
             if (candidate.isBlank() || IGNORED_SENDERS.contains(candidate.toLowerCase(Locale.ROOT))) {
@@ -69,12 +69,12 @@ public final class AiChatLedger {
       }
    }
 
-   public static void init(Component component, UUID senderId) {
+   public static void recordChat(Component component, UUID senderId) {
       recordPlayer(component, senderId, "");
    }
 
    public static void recordPlayer(Component component, UUID senderId, String chatType) {
-      init(component, isPublicChat(chatType) ? "PLAYER" : "PLAYER_PRIVATE", init(senderId));
+      recordChat(component, isPublicChat(chatType) ? "PLAYER" : "PLAYER_PRIVATE", senderName(senderId));
    }
 
    static boolean isPublicChat(String chatType) {
@@ -83,10 +83,10 @@ public final class AiChatLedger {
    }
 
    public static void recordDisguised(Component component, String chatType) {
-      init(component, isPublicChat(chatType) ? "DISGUISED" : "PLAYER_PRIVATE", "");
+      recordChat(component, isPublicChat(chatType) ? "DISGUISED" : "PLAYER_PRIVATE", "");
    }
 
-   static String init(UUID senderId) {
+   static String senderName(UUID senderId) {
       if (senderId == null) {
          return "";
       }
@@ -175,11 +175,11 @@ public final class AiChatLedger {
       return matcher.find() ? matcher.group(1) : "";
    }
 
-   private static String init(String text, int max) {
+   private static String truncate(String text, int max) {
       return text == null ? "" : text.substring(0, Math.min(max, text.length()));
    }
 
-   private static String init(Component root, List<AiChatLedger.ClickAction> out) {
+   private static String collectClickActions(Component root, List<AiChatLedger.ClickAction> out) {
       Set<AiChatLedger.ClickAction> seen = new LinkedHashSet<>();
       String hover = "";
       Deque<Component> queue = new ArrayDeque<>();
@@ -191,13 +191,13 @@ public final class AiChatLedger {
       while (!queue.isEmpty() && nodes++ < 256 && seen.size() < 16) {
          Component node = queue.poll();
          Style style = node.getStyle().applyTo(inherited.poll());
-         AiChatLedger.ClickAction action = init(style.getClickEvent());
+         AiChatLedger.ClickAction action = toClickAction(style.getClickEvent());
          if (action != null && !action.value().isBlank()) {
             seen.add(action);
          }
 
          if (hover.isEmpty() && style.getHoverEvent() instanceof ShowText showText) {
-            hover = init(showText.value().getString(), 512);
+            hover = truncate(showText.value().getString(), 512);
          }
 
          for (Component sibling : node.getSiblings()) {
@@ -219,7 +219,7 @@ public final class AiChatLedger {
       return hover;
    }
 
-   private static AiChatLedger.ClickAction init(ClickEvent event) {
+   private static AiChatLedger.ClickAction toClickAction(ClickEvent event) {
       if (event instanceof RunCommand run) {
          return new AiChatLedger.ClickAction("RUN_COMMAND", run.command());
       } else if (event instanceof SuggestCommand suggest) {

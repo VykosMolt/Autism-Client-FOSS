@@ -56,24 +56,24 @@ public final class VillagerDupeDriver {
    private final Map<Integer, VillagerDupeDriver.TaskQueue> villagerTracks = new HashMap<>();
    private final ArrayDeque<int[]> pendingShearUses = new ArrayDeque<>();
    private ItemStack trackedShears = ItemStack.EMPTY;
-   private int flush;
+   private int shearsDamageBefore;
    private ClientLevel lastLevel;
    private boolean flickActive;
-   private int close = -1;
+   private int restoreSlot = -1;
    private boolean flickSlotEmpty;
    private boolean awaitingAnswers;
-   private int open = -2147483648;
-   private int poll;
+   private int flickStartTick = -2147483648;
+   private int flickWindowTicks;
    private boolean sawHandCleared;
    private long flickStartNanos;
    private long flickHoldNanos = 50000000L;
    private boolean gotHandUpdate;
-   private int push;
-   private int pop = -2147483648;
-   private int tick = -2147483648;
-   private int run = -2147483648;
+   private int slowHoldStreak;
+   private int lastSwapTick = -2147483648;
+   private int lastUseTick = -2147483648;
+   private int menuGuardTick = -2147483648;
    private boolean actionGroupOpen;
-   private int get;
+   private int closedMenuCount;
 
    public static VillagerDupeDriver getInstance() {
       return INSTANCE;
@@ -96,7 +96,7 @@ public final class VillagerDupeDriver {
    }
 
    public int init_I() {
-      return this.get;
+      return this.closedMenuCount;
    }
 
    public static void addWatcher(Predicate<Minecraft> body) {
@@ -126,12 +126,12 @@ public final class VillagerDupeDriver {
    }
 
    public void restoreSelectedSlot(Minecraft mc) {
-      if (this.flickActive && mc != null && mc.player != null && this.close >= 0 && this.close < 9 && !aD.read_Z()) {
-         mc.player.getInventory().setSelectedSlot(this.close);
+      if (this.flickActive && mc != null && mc.player != null && this.restoreSlot >= 0 && this.restoreSlot < 9 && !aD.read_Z()) {
+         mc.player.getInventory().setSelectedSlot(this.restoreSlot);
       }
 
       this.flickActive = false;
-      this.close = -1;
+      this.restoreSlot = -1;
       this.clearPendingAnswers();
    }
 
@@ -142,7 +142,7 @@ public final class VillagerDupeDriver {
 
       LocalPlayer player = mc.player;
       VillagerDupeDriver.ConfigStore emerald = this.init_DataUtil_ConfigSto_LocalPlayer_DataUtil_CachePool(player, opts);
-      return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.getInstance().getClientTick());
+      return emerald != null ? emerald : this.shearsStatus(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.getInstance().getClientTick());
    }
 
    public static boolean hasTrader(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
@@ -184,7 +184,7 @@ public final class VillagerDupeDriver {
       LocalPlayer player = mc.player;
       int now = AutismSessionState.getInstance().getClientTick();
       this.onLevelChanged(mc.level);
-      this.load(mc, player, opts, now);
+      this.scanVillagers(mc, player, opts, now);
       if (mc.gui.screen() != null) {
          if (!this.init_Z_Minecraft(mc) && player.containerMenu instanceof MerchantMenu) {
             this.clearObservedHands();
@@ -209,7 +209,7 @@ public final class VillagerDupeDriver {
             this.actionGroupOpen = false;
 
             try {
-               return this.init(mc, player, opts, now, mode);
+               return this.planStep(mc, player, opts, now, mode);
             } finally {
                if (this.actionGroupOpen) {
                   InventorySlotArbiter.endActionGroup("villager-dupe");
@@ -223,7 +223,7 @@ public final class VillagerDupeDriver {
       }
    }
 
-   private VillagerDupeDriver.BufferHelper init(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, int now, VillagerDupeDriver.StreamUtil mode) {
+   private VillagerDupeDriver.BufferHelper planStep(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, int now, VillagerDupeDriver.StreamUtil mode) {
       this.reconcileShearDurability(player);
       VillagerDupeDriver.ConfigStore emerald = this.init_DataUtil_ConfigSto(mc, player, opts, now);
       if (emerald != null) {
@@ -235,7 +235,7 @@ public final class VillagerDupeDriver {
       }
 
       boolean creative = player.hasInfiniteMaterials();
-      VillagerDupeDriver.ConfigStore shears = this.init(mc, player, opts, creative, now);
+      VillagerDupeDriver.ConfigStore shears = this.shearsStatus(mc, player, opts, creative, now);
       List<AbstractVillager> targets = this.reachableVillagers(mc, player, opts);
       if (targets.isEmpty()) {
          if (shears == null) {
@@ -252,13 +252,13 @@ public final class VillagerDupeDriver {
             return new VillagerDupeDriver.BufferHelper(0, shears);
          }
 
-         if (!this.isFlickWindowOpen(now) && ticksSince(now, this.tick) >= opts.init_I()) {
+         if (!this.isFlickWindowOpen(now) && ticksSince(now, this.lastUseTick) >= opts.init_I()) {
             targets.removeIf(villagerx -> this.init_Z_Minecraft_3(mc, villagerx, now));
             if (targets.isEmpty()) {
                return new VillagerDupeDriver.BufferHelper(0, VillagerDupeDriver.ConfigStore.WAITING);
             }
 
-            VillagerDupeDriver.ConfigStore ready = this.load(mc, player, opts, creative, now);
+            VillagerDupeDriver.ConfigStore ready = this.villagerStatus(mc, player, opts, creative, now);
             if (ready != null) {
                return new VillagerDupeDriver.BufferHelper(0, ready);
             }
@@ -288,8 +288,8 @@ public final class VillagerDupeDriver {
                Compat263.swing(player, InteractionHand.OFF_HAND);
             }
 
-            this.tick = now;
-            this.run = now;
+            this.lastUseTick = now;
+            this.menuGuardTick = now;
             if (!creative) {
                if (this.pendingShearUses.isEmpty()) {
                   this.resetShearTracking(player);
@@ -319,11 +319,11 @@ public final class VillagerDupeDriver {
             return VillagerDupeDriver.ConfigStore.WAITING;
          }
 
-         if (ticksSince(now, this.pop) == 0) {
+         if (ticksSince(now, this.lastSwapTick) == 0) {
             return VillagerDupeDriver.ConfigStore.BUSY;
          }
 
-         int slot = this.flickActive && isEmeraldHotbarSlot(inventory, this.close) ? this.close : findEmeraldHotbarSlot(inventory);
+         int slot = this.flickActive && isEmeraldHotbarSlot(inventory, this.restoreSlot) ? this.restoreSlot : findEmeraldHotbarSlot(inventory);
          if (slot < 0) {
             int from = findEmeraldInMainInventory(inventory);
             if (from < 0) {
@@ -360,7 +360,7 @@ public final class VillagerDupeDriver {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
 
-            this.pop = now;
+            this.lastSwapTick = now;
          }
 
          if (!player.getMainHandItem().is(Items.EMERALD)) {
@@ -409,7 +409,7 @@ public final class VillagerDupeDriver {
       return freed ? null : VillagerDupeDriver.ConfigStore.EMERALD_IN_OFFHAND;
    }
 
-   private VillagerDupeDriver.ConfigStore init(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, boolean creative, int now) {
+   private VillagerDupeDriver.ConfigStore shearsStatus(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, boolean creative, int now) {
       ItemStack offhand = player.getOffhandItem();
       boolean offhandShears = offhand.is(Items.SHEARS);
       if (!offhandShears || !creative && remainingShearUses(offhand, this.inflightShearCount(mc, now)) <= 0) {
@@ -438,8 +438,8 @@ public final class VillagerDupeDriver {
       }
    }
 
-   private VillagerDupeDriver.ConfigStore load(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, boolean creative, int now) {
-      VillagerDupeDriver.ConfigStore status = this.init(mc, player, opts, creative, now);
+   private VillagerDupeDriver.ConfigStore villagerStatus(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, boolean creative, int now) {
+      VillagerDupeDriver.ConfigStore status = this.shearsStatus(mc, player, opts, creative, now);
       if (status != null) {
          return status;
       }
@@ -467,10 +467,10 @@ public final class VillagerDupeDriver {
    private void reconcileShearDurability(LocalPlayer player) {
       ItemStack offhand = player.getOffhandItem();
       if (offhand != this.trackedShears) {
-         int done = offhand.getDamageValue() - this.flush;
+         int done = offhand.getDamageValue() - this.shearsDamageBefore;
          if (offhand.is(Items.SHEARS) && this.trackedShears.is(Items.SHEARS) && done >= 0) {
             this.trackedShears = offhand;
-            this.flush = offhand.getDamageValue();
+            this.shearsDamageBefore = offhand.getDamageValue();
 
             while (done > 0 && !this.pendingShearUses.isEmpty()) {
                int[] entry = this.pendingShearUses.peekFirst();
@@ -490,7 +490,7 @@ public final class VillagerDupeDriver {
    private void resetShearTracking(LocalPlayer player) {
       this.pendingShearUses.clear();
       this.trackedShears = player.getOffhandItem();
-      this.flush = this.trackedShears.getDamageValue();
+      this.shearsDamageBefore = this.trackedShears.getDamageValue();
    }
 
    private int inflightShearCount(Minecraft mc, int now) {
@@ -548,20 +548,20 @@ public final class VillagerDupeDriver {
       if (opts.sync()
          && !this.flickActive
          && !this.awaitingAnswers
-         && ticksSince(now, this.pop) != 0
+         && ticksSince(now, this.lastSwapTick) != 0
          && player.getMainHandItem().is(Items.EMERALD)
          && !player.isShiftKeyDown()
          && this.reachableVillagers(mc, player, opts).isEmpty()
          && this.anyTrackReadyToAsk(opts, now)) {
          Inventory inventory = player.getInventory();
-         int away = write(inventory);
+         int away = nextEmptyHotbarSlot(inventory);
          if (away >= 0 && this.ensureActionGroup()) {
             int from = inventory.getSelectedSlot();
             boolean empty = inventory.getItem(away).isEmpty();
             InventorySlotHelper.selectHotbarSlot(mc, away);
             if (inventory.getSelectedSlot() == away) {
-               this.pop = now;
-               this.close = from;
+               this.lastSwapTick = now;
+               this.restoreSlot = from;
                this.flickSlotEmpty = empty;
                this.flickActive = true;
                this.sawHandCleared = false;
@@ -590,13 +590,13 @@ public final class VillagerDupeDriver {
    }
 
    private static boolean canAskTrack(VillagerDupeDriver.TaskQueue track, int now) {
-      return track.misses < 3 || ticksSince(now, track.update) >= 100;
+      return track.misses < 3 || ticksSince(now, track.lastAttemptTick) >= 100;
    }
 
    private void endHotbarFlick(Minecraft mc, VillagerDupeDriver.CachePool opts, int now) {
       this.flickActive = false;
-      this.close = -1;
-      this.poll = pingTicks(mc) + 1;
+      this.restoreSlot = -1;
+      this.flickWindowTicks = pingTicks(mc) + 1;
       this.awaitingAnswers = false;
 
       for (VillagerDupeDriver.TaskQueue track : this.villagerTracks.values()) {
@@ -609,15 +609,15 @@ public final class VillagerDupeDriver {
          this.awaitingAnswers = this.awaitingAnswers | track.awaitingAnswer;
       }
 
-      this.open = now;
+      this.flickStartTick = now;
    }
 
    private boolean isFlickWindowOpen(int now) {
-      return this.flickActive || ticksSince(now, this.open) < this.poll;
+      return this.flickActive || ticksSince(now, this.flickStartTick) < this.flickWindowTicks;
    }
 
    private boolean init_Z_Minecraft_3(Minecraft mc, AbstractVillager villager, int now) {
-      if (this.flickActive || !this.sawHandCleared && ticksSince(now, this.open) <= answerWindowTicks(mc)) {
+      if (this.flickActive || !this.sawHandCleared && ticksSince(now, this.flickStartTick) <= answerWindowTicks(mc)) {
          VillagerDupeDriver.TaskQueue track = this.villagerTracks.get(villager.getId());
          return track != null && !track.itemChanged && track.observedHand != null ? !ItemStack.isSameItem(villager.getMainHandItem(), track.observedHand) : true;
       } else {
@@ -633,7 +633,7 @@ public final class VillagerDupeDriver {
       }
    }
 
-   private void load(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, int now) {
+   private void scanVillagers(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts, int now) {
       double reach = Math.max(0.0, player.entityInteractionRange());
 
       for (AbstractVillager villager : mc.level.getEntitiesOfClass(AbstractVillager.class, player.getBoundingBox().inflate(reach + 2.0), Entity::isAlive)) {
@@ -645,7 +645,7 @@ public final class VillagerDupeDriver {
                this.villagerTracks.put(villager.getId(), track);
             } else if (hand != track.lastHand) {
                track.lastHand = hand;
-               boolean sinceFlick = this.flickActive || ticksSince(now, this.open) <= answerWindowTicks(mc);
+               boolean sinceFlick = this.flickActive || ticksSince(now, this.flickStartTick) <= answerWindowTicks(mc);
                if (hand.isEmpty()) {
                   if (sinceFlick) {
                      track.handCleared = true;
@@ -687,14 +687,14 @@ public final class VillagerDupeDriver {
             waiting |= track.awaitingAnswer;
          }
 
-         if (!waiting || ticksSince(now, this.open) > answerWindowTicks(mc)) {
+         if (!waiting || ticksSince(now, this.flickStartTick) > answerWindowTicks(mc)) {
             boolean unanswered = false;
 
             for (VillagerDupeDriver.TaskQueue track : this.villagerTracks.values()) {
                if (track.awaitingAnswer) {
                   unanswered = true;
                   if (++track.misses >= 3) {
-                     track.update = now;
+                     track.lastAttemptTick = now;
                   }
                }
 
@@ -710,10 +710,10 @@ public final class VillagerDupeDriver {
    private void adaptFlickHold(boolean lost) {
       if (lost) {
          this.flickHoldNanos = Math.min(150000000L, this.flickHoldNanos + 50000000L);
-         this.push = 0;
-      } else if (this.flickHoldNanos > 50000000L && ++this.push >= 8) {
+         this.slowHoldStreak = 0;
+      } else if (this.flickHoldNanos > 50000000L && ++this.slowHoldStreak >= 8) {
          this.flickHoldNanos -= 50000000L;
-         this.push = 0;
+         this.slowHoldStreak = 0;
       }
    }
 
@@ -726,7 +726,7 @@ public final class VillagerDupeDriver {
    }
 
    private boolean init_Z_Minecraft(Minecraft mc) {
-      if (this.run == -2147483648 || mc == null || mc.player == null || mc.gui.screen() == null) {
+      if (this.menuGuardTick == -2147483648 || mc == null || mc.player == null || mc.gui.screen() == null) {
          return false;
       }
 
@@ -734,12 +734,12 @@ public final class VillagerDupeDriver {
          return false;
       }
 
-      if (ticksSince(AutismSessionState.getInstance().getClientTick(), this.run) > answerWindowTicks(mc)) {
+      if (ticksSince(AutismSessionState.getInstance().getClientTick(), this.menuGuardTick) > answerWindowTicks(mc)) {
          return false;
       }
 
       mc.player.closeContainer();
-      this.get++;
+      this.closedMenuCount++;
       return true;
    }
 
@@ -749,9 +749,9 @@ public final class VillagerDupeDriver {
          this.villagerTracks.clear();
          this.pendingShearUses.clear();
          this.awaitingAnswers = false;
-         this.run = -2147483648;
+         this.menuGuardTick = -2147483648;
          this.flickHoldNanos = 50000000L;
-         this.push = 0;
+         this.slowHoldStreak = 0;
       }
    }
 
@@ -825,7 +825,7 @@ public final class VillagerDupeDriver {
       return -1;
    }
 
-   private static int write(Inventory inventory) {
+   private static int nextEmptyHotbarSlot(Inventory inventory) {
       int selected = inventory.getSelectedSlot();
 
       for (int step = 1; step < 9; step++) {
@@ -1044,7 +1044,7 @@ public final class VillagerDupeDriver {
       int observedAt = -2147483648;
       int askedAt = -2147483648;
       int misses;
-      int update = -2147483648;
+      int lastAttemptTick = -2147483648;
       boolean awaitingAnswer;
       Item lastItem;
       boolean itemChanged;

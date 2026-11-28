@@ -107,12 +107,12 @@ public class NbtBookAction implements MacroAction {
    }
 
    private List<String> init_List_Minecraft_I(Minecraft mc, int numPages) {
-      String source = this.load();
+      String source = this.normalizedDataSource();
       if (!"Pasted".equals(source)) {
          if ("File".equals(source)) {
             String text = this.init_Str_8();
             if (text != null && !text.isBlank()) {
-               return this.load(mc.font, text, numPages);
+               return this.toPages(mc.font, text, numPages);
             }
 
             AutismClientMessaging.sendPrefixed("§cNBT Book file is missing or empty.");
@@ -122,17 +122,17 @@ public class NbtBookAction implements MacroAction {
          }
       } else {
          return this.customComponent != null && !this.customComponent.isBlank()
-            ? this.load(mc.font, this.customComponent, numPages)
+            ? this.toPages(mc.font, this.customComponent, numPages)
             : this.randomPages(numPages);
       }
    }
 
-   private List<String> load(Font font, String text, int numPages) {
+   private List<String> toPages(Font font, String text, int numPages) {
       return this.wordWrap ? wrapToPages(font, text, numPages) : splitToPages(text, numPages, this.characters);
    }
 
    private List<String> randomPages(int numPages) {
-      return BookBotPageGenerator.generate(numPages, this.characters, this.read(), new Random());
+      return BookBotPageGenerator.generate(numPages, this.characters, this.normalizedRandomType(), new Random());
    }
 
    public static File bookSourcesDir() {
@@ -378,8 +378,8 @@ public class NbtBookAction implements MacroAction {
       tag.putBoolean("sign", this.sign);
       tag.putBoolean("appendCount", this.appendCount);
       tag.putBoolean("onlyAscii", this.onlyAscii);
-      tag.putString("randomType", this.read());
-      tag.putString("dataSource", this.load());
+      tag.putString("randomType", this.normalizedRandomType());
+      tag.putString("dataSource", this.normalizedDataSource());
       tag.putString("customText", this.customComponent);
       tag.putString("customFilePath", this.customFilePath);
       tag.putBoolean("wordWrap", this.wordWrap);
@@ -429,7 +429,7 @@ public class NbtBookAction implements MacroAction {
       if (tag.contains("dataSource")) {
          this.dataSource = init_Str_Str_9(tag.getStringOr("dataSource", "Random"));
       } else {
-         this.dataSource = load(this.customComponent);
+         this.dataSource = sourceForText(this.customComponent);
       }
 
       if (tag.contains("delayTicks")) {
@@ -450,7 +450,7 @@ public class NbtBookAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String mode = "Random".equals(this.load()) ? this.read() : this.load();
+      String mode = "Random".equals(this.normalizedDataSource()) ? this.normalizedRandomType() : this.normalizedDataSource();
       String count = this.bookCount > 1 ? ", x" + this.bookCount : "";
       String extras = "";
       if (this.dropInventoryBefore) {
@@ -464,12 +464,12 @@ public class NbtBookAction implements MacroAction {
       return "NBT Book (" + this.pages + "pg, " + mode + count + extras + ")";
    }
 
-   private String load() {
+   private String normalizedDataSource() {
       this.dataSource = init_Str_Str_9(this.dataSource);
       return this.dataSource;
    }
 
-   private String read() {
+   private String normalizedRandomType() {
       this.randomType = BookBotPageGenerator.normalizeType(this.randomType);
       this.onlyAscii = "Ascii".equals(this.randomType);
       return this.randomType;
@@ -502,7 +502,7 @@ public class NbtBookAction implements MacroAction {
       return var10000;
    }
 
-   private static String load(String text) {
+   private static String sourceForText(String text) {
       return text != null && !text.isBlank() && !"Autism Inc - EldenRingLore".equals(text) ? "Pasted" : "Random";
    }
 

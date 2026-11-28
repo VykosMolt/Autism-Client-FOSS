@@ -22,13 +22,13 @@ import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
 public final class BedEspOverlayRenderer {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(65536);
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static final AutismBufferSource.LazySource BUFFERS = new AutismBufferSource.LazySource(65536);
 
    private BedEspOverlayRenderer() {
    }
 
-   private static List<BedEspModule.BedInfo> init_List() {
+   private static List<BedEspModule.BedInfo> currentBeds() {
       BedEspModule esp = BedEspModule.active();
       if (esp != null) {
          return esp.beds();
@@ -41,25 +41,25 @@ public final class BedEspOverlayRenderer {
    public static boolean isActive() {
       return !AutismLiteVariant.enabled() && !autismclient.e.HashUtil.init()
          ? false
-         : init_Minecraft.level != null
-            && init_Minecraft.player != null
-            && !init_List().isEmpty()
+         : MC.level != null
+            && MC.player != null
+            && !currentBeds().isEmpty()
             && !aD.init_Z()
-            && !init_Minecraft.gui.hud.isHidden()
+            && !MC.gui.hud.isHidden()
             && !am.clear();
    }
 
    public static void renderWorld(PoseStack matrices) {
       if (isActive()) {
          Vec3 camera = WorldProjectionHelper.cameraPosition();
-         AutismBufferSource source = init_c_DataUtil.init();
-         List<BedEspModule.BedInfo> beds = init_List();
+         AutismBufferSource source = BUFFERS.init();
+         List<BedEspModule.BedInfo> beds = currentBeds();
          boolean path = BedEspModule.policy().load();
          VertexConsumer fill = source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (BedEspModule.BedInfo bed : beds) {
             int rgb = bed.color().getTextureDiffuseColor();
-            WorldLineRenderer.box(matrices.last(), fill, bed.box().move(camera.scale(-1.0)), init(rgb, 32));
+            WorldLineRenderer.box(matrices.last(), fill, bed.box().move(camera.scale(-1.0)), withAlpha(rgb, 32));
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
                   WorldLineRenderer.box(matrices.last(), fill, new AABB(bed.load_List().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
@@ -71,7 +71,7 @@ public final class BedEspOverlayRenderer {
 
          for (BedEspModule.BedInfo bed : beds) {
             WorldLineRenderer.box(
-               matrices.last(), lines, bed.box().inflate(0.004).move(camera.scale(-1.0)), init(bed.color().getTextureDiffuseColor(), 204), 1.5F
+               matrices.last(), lines, bed.box().inflate(0.004).move(camera.scale(-1.0)), withAlpha(bed.color().getTextureDiffuseColor(), 204), 1.5F
             );
             if (path && bed.init_Z()) {
                for (int n = 0; n < bed.load_List().size(); n++) {
@@ -91,7 +91,7 @@ public final class BedEspOverlayRenderer {
          Matrix4f matrix = new Matrix4f();
          if (WorldProjectionHelper.projection(matrix)) {
             Vec3 camera = WorldProjectionHelper.cameraPosition();
-            autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, init_Minecraft.font, 0, 0);
+            autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, MC.font, 0, 0);
             int rowHeight = Math.max(
                12,
                (int)Math.ceil(
@@ -104,11 +104,11 @@ public final class BedEspOverlayRenderer {
             );
             int iconSize = Math.min(12, rowHeight - 2);
 
-            for (BedEspModule.BedInfo bed : init_List()) {
+            for (BedEspModule.BedInfo bed : currentBeds()) {
                double distance = Math.sqrt(bed.box().distanceToSqr(camera));
                float alpha = DistanceFadeCurve.fade(distance);
                if (!(alpha < 0.005F)) {
-                  float[] point = init(matrix, camera, bed.labelPos());
+                  float[] point = project(matrix, camera, bed.labelPos());
                   if (point != null) {
                      String name = bed.color().getName().replace('_', ' ');
                      name = Character.toUpperCase(name.charAt(0)) + name.substring(1) + " Bed";
@@ -135,7 +135,7 @@ public final class BedEspOverlayRenderer {
                         graphics.pose().scale(scale, scale);
                         graphics.pose().translate(0.0F, -height - 2);
                         int text = autismclient.gui.f.PacketUtil.init(-1, alpha);
-                        int count = autismclient.gui.f.PacketUtil.init(init(ui.init_TableIndex().colors().accent), alpha);
+                        int count = autismclient.gui.f.PacketUtil.init(liftedColor(ui.init_TableIndex().colors().accent), alpha);
                         int background = autismclient.gui.f.PacketUtil.init(-1879048192, alpha);
                         autismclient.gui.f.PacketUtil.init(graphics, 0.0F, 0.0F, widths, rowHeight, rowHeight / 2.0F, background);
                         graphics.pose().pushMatrix();
@@ -144,17 +144,17 @@ public final class BedEspOverlayRenderer {
                            int y = ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, 0, width, rowHeight));
                            autismclient.gui.f.b.k.init(
                               graphics,
-                              init_Minecraft.font,
+                              MC.font,
                               name,
                               autismclient.gui.f.a.DataUtil.init,
-                              autismclient.gui.f.PacketUtil.init(init(bed.color().getTextureDiffuseColor()), alpha),
+                              autismclient.gui.f.PacketUtil.init(liftedColor(bed.color().getTextureDiffuseColor()), alpha),
                               0,
                               y,
                               true
                            );
                            autismclient.gui.f.b.k.init(
                               graphics,
-                              init_Minecraft.font,
+                              MC.font,
                               time,
                               autismclient.gui.f.a.DataUtil.init,
                               autismclient.gui.f.PacketUtil.init(-2039584, alpha),
@@ -177,11 +177,11 @@ public final class BedEspOverlayRenderer {
                            try {
                               graphics.pose().translate(-rowWidth * 0.5F, 0.0F);
                               int y = ui.init_PoolEntry().centerTextY(autismclient.gui.f.NetHelper.init(0, row, rowWidth, rowHeight));
-                              autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, material.name(), autismclient.gui.f.a.DataUtil.init, text, 0, y, true);
+                              autismclient.gui.f.b.k.init(graphics, MC.font, material.name(), autismclient.gui.f.a.DataUtil.init, text, 0, y, true);
                               int x = ui.init_PoolEntry().measureWidth(material.name()) + 3;
-                              autismclient.gui.f.b.k.init(graphics, init_Minecraft.font, amount, autismclient.gui.f.a.DataUtil.init, count, x, y, true);
+                              autismclient.gui.f.b.k.init(graphics, MC.font, amount, autismclient.gui.f.a.DataUtil.init, count, x, y, true);
                               if (!material.icon().isEmpty()) {
-                                 init(
+                                 drawItem(
                                     graphics,
                                     material.icon(),
                                     x + ui.init_PoolEntry().measureWidth(amount) + 4,
@@ -205,11 +205,11 @@ public final class BedEspOverlayRenderer {
       }
    }
 
-   static int init(int argb, int alpha) {
+   static int withAlpha(int argb, int alpha) {
       return Math.clamp(alpha, 0, 255) << 24 | argb & 16777215;
    }
 
-   static int init(int rgb) {
+   static int liftedColor(int rgb) {
       int r = rgb >> 16 & 0xFF;
       int g = rgb >> 8 & 0xFF;
       int b = rgb & 0xFF;
@@ -218,10 +218,10 @@ public final class BedEspOverlayRenderer {
       return 0xFF000000 | (int)Math.round(r + (255 - r) * lift) << 16 | (int)Math.round(g + (255 - g) * lift) << 8 | (int)Math.round(b + (255 - b) * lift);
    }
 
-   private static void init(GuiGraphicsExtractor graphics, ItemStack item, int x, int y, int size, float alpha) {
+   private static void drawItem(GuiGraphicsExtractor graphics, ItemStack item, int x, int y, int size, float alpha) {
       graphics.blit(
          RenderPipelines.GUI_TEXTURED,
-         Identifier.withDefaultNamespace("textures/item/" + BuiltInRegistries.ITEM.getKey(init(item)).getPath() + ".png"),
+         Identifier.withDefaultNamespace("textures/item/" + BuiltInRegistries.ITEM.getKey(displayItem(item)).getPath() + ".png"),
          x,
          y,
          0.0F,
@@ -236,7 +236,7 @@ public final class BedEspOverlayRenderer {
       );
    }
 
-   static Item init(ItemStack stack) {
+   static Item displayItem(ItemStack stack) {
       if (stack.is(Items.NETHERITE_PICKAXE)) {
          return Items.DIAMOND_PICKAXE;
       } else if (stack.is(Items.NETHERITE_AXE)) {
@@ -248,7 +248,7 @@ public final class BedEspOverlayRenderer {
       }
    }
 
-   private static float[] init(Matrix4f matrix, Vec3 camera, Vec3 pos) {
+   private static float[] project(Matrix4f matrix, Vec3 camera, Vec3 pos) {
       Vector4f clip = new Vector4f((float)(pos.x - camera.x), (float)(pos.y - camera.y), (float)(pos.z - camera.z), 1.0F);
       matrix.transform(clip);
       if (clip.w <= 0.01F) {

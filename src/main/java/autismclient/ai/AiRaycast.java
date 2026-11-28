@@ -68,7 +68,7 @@ final class AiRaycast {
          }
 
          if (entityHit != null) {
-            return init(
+            return entityHit(
                entityHitPos.x,
                entityHitPos.y,
                entityHitPos.z,
@@ -79,26 +79,26 @@ final class AiRaycast {
          } else if (block.getType() == Type.BLOCK) {
             BlockPos pos = block.getBlockPos();
             BlockState state = mc.level.getBlockState(pos);
-            return init(
+            return blockHit(
                block.getLocation().x,
                block.getLocation().y,
                block.getLocation().z,
                Math.sqrt(blockDistanceSqr),
                BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(),
-               init(state),
+               propertiesOf(state),
                mc.level.getBrightness(LightLayer.SKY, pos),
                mc.level.getBrightness(LightLayer.BLOCK, pos)
             );
          } else {
-            return init(end.x, end.y, end.z, maxDistance);
+            return miss(end.x, end.y, end.z, maxDistance);
          }
       } else {
          throw new IllegalArgumentException("Raycast requires a connected living player");
       }
    }
 
-   static JsonObject init(double x, double y, double z, double distance, String blockId, Map<String, String> properties, int skyLight, int blockLight) {
-      JsonObject out = init("block", x, y, z, distance);
+   static JsonObject blockHit(double x, double y, double z, double distance, String blockId, Map<String, String> properties, int skyLight, int blockLight) {
+      JsonObject out = hitJson("block", x, y, z, distance);
       JsonObject block = new JsonObject();
       block.addProperty("id", blockId);
       JsonObject props = new JsonObject();
@@ -110,25 +110,25 @@ final class AiRaycast {
       return out;
    }
 
-   static JsonObject init(double x, double y, double z, double distance, int id, String typeId) {
-      JsonObject out = init("entity", x, y, z, distance);
+   static JsonObject entityHit(double x, double y, double z, double distance, int id, String typeId) {
+      JsonObject out = hitJson("entity", x, y, z, distance);
       out.add("entity", AiJson.objectOf("id", id, "type", typeId));
       return out;
    }
 
-   static JsonObject init(double x, double y, double z, double distance) {
-      return init("miss", x, y, z, distance);
+   static JsonObject miss(double x, double y, double z, double distance) {
+      return hitJson("miss", x, y, z, distance);
    }
 
-   private static JsonObject init(String hit, double x, double y, double z, double distance) {
+   private static JsonObject hitJson(String hit, double x, double y, double z, double distance) {
       JsonObject out = new JsonObject();
       out.addProperty("hit", hit);
-      out.add("pos", AiJson.objectOf("x", init(x), "y", init(y), "z", init(z)));
-      out.addProperty("distance", init(distance));
+      out.add("pos", AiJson.objectOf("x", round2(x), "y", round2(y), "z", round2(z)));
+      out.addProperty("distance", round2(distance));
       return out;
    }
 
-   private static Map<String, String> init(BlockState state) {
+   private static Map<String, String> propertiesOf(BlockState state) {
       Map<String, String> out = new LinkedHashMap<>();
       state.getValues().forEach(raw -> {
          Value<? extends Comparable<?>> value = (Value<? extends Comparable<?>>)raw;
@@ -137,7 +137,7 @@ final class AiRaycast {
       return out;
    }
 
-   private static double init(double value) {
+   private static double round2(double value) {
       return Math.round(value * 100.0) / 100.0;
    }
 }

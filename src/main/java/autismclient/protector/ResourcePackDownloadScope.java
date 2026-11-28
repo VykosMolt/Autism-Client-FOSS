@@ -39,7 +39,7 @@ public final class ResourcePackDownloadScope {
    private static final Map<ConnectionPrivacyRegistry.ConnectionSession, UUID> connectionIds = new WeakHashMap<>();
    private static final ReentrantLock[] STRIPED_LOCKS = new ReentrantLock[256];
    private static boolean multiLoopbackFixtureEnabled;
-   private static final ThreadLocal<ResourcePackDownloadScope.Inner_ConfigStore> read;
+   private static final ThreadLocal<ResourcePackDownloadScope.Inner_ConfigStore> PROXY_AUTH;
 
    private ResourcePackDownloadScope() {
    }
@@ -64,7 +64,7 @@ public final class ResourcePackDownloadScope {
             throw new IOException("Resource-pack download has no original remote endpoint");
          }
 
-         String origin = init(context, integrated);
+         String origin = originKey(context, integrated);
          boolean multiLoopbackFixture = context.isMultiConnection() && multiLoopbackFixtureEnabled;
          UUID connectionIdentity;
          synchronized (LOCK) {
@@ -81,7 +81,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   static String init(ConnectionPrivacyRegistry.ConnectionSession context, boolean integrated) throws IOException {
+   static String originKey(ConnectionPrivacyRegistry.ConnectionSession context, boolean integrated) throws IOException {
       return integrated && context.isLocalOrMemory() ? "integrated:" + context.lifecycleId() : PackUrlValidator.endpointKey(context.serverEndpoint());
    }
 
@@ -90,7 +90,7 @@ public final class ResourcePackDownloadScope {
       snapshot.ensureCurrent();
       ResourcePackDownloadScope.Inner_BufferHelper previous = CURRENT.get();
       CURRENT.set(snapshot);
-      return () -> init(CURRENT, previous);
+      return () -> restore(CURRENT, previous);
    }
 
    public static ResourcePackDownloadScope.Inner_CachePool load(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
@@ -102,28 +102,28 @@ public final class ResourcePackDownloadScope {
       }
 
       load_ThreadLocal.set(snapshot);
-      return () -> init(load_ThreadLocal, previous);
+      return () -> restore(load_ThreadLocal, previous);
    }
 
-   public static ResourcePackDownloadScope.Inner_CachePool init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, String username, String password) throws IOException {
+   public static ResourcePackDownloadScope.Inner_CachePool enterProxyAuth(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, String username, String password) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
-      PackUrlValidator.ParsedTarget target = init(host, port);
-      byte[] usernameBytes = init(username);
+      PackUrlValidator.ParsedTarget target = parseProxyEndpoint(host, port);
+      byte[] usernameBytes = encodeSocksCredential(username);
 
       byte[] passwordBytes;
       try {
-         passwordBytes = init(password);
+         passwordBytes = encodeSocksCredential(password);
       } catch (IOException | RuntimeException e) {
          Arrays.fill(usernameBytes, (byte)0);
          throw e;
       }
 
       ResourcePackDownloadScope.Inner_ConfigStore authentication = new ResourcePackDownloadScope.Inner_ConfigStore(snapshot, target.load(), target.port(), usernameBytes, passwordBytes);
-      ResourcePackDownloadScope.Inner_ConfigStore previous = read.get();
+      ResourcePackDownloadScope.Inner_ConfigStore previous = PROXY_AUTH.get();
 
       try {
-         read.set(authentication);
+         PROXY_AUTH.set(authentication);
       } catch (RuntimeException e) {
          authentication.wipe();
          throw e;
@@ -131,14 +131,14 @@ public final class ResourcePackDownloadScope {
 
       return () -> {
          if (authentication.wipe()) {
-            init(read, previous);
+            restore(PROXY_AUTH, previous);
          }
       };
    }
 
    static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.PackRoute route) {
       if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.init_Z()) {
-         ResourcePackDownloadScope.Inner_ConfigStore authentication = read.get();
+         ResourcePackDownloadScope.Inner_ConfigStore authentication = PROXY_AUTH.get();
          return authentication != null
                && authentication.active
                && authentication.snapshot == snapshot
@@ -151,7 +151,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   private static PackUrlValidator.ParsedTarget init(String host, int port) throws IOException {
+   private static PackUrlValidator.ParsedTarget parseProxyEndpoint(String host, int port) throws IOException {
       if (host != null && !host.isBlank() && port >= 1 && port <= 65535) {
          String literal = host.indexOf(58) >= 0 && !host.startsWith("[") ? "[" + host + "]" : host;
 
@@ -165,7 +165,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   private static byte[] init(String value) throws IOException {
+   private static byte[] encodeSocksCredential(String value) throws IOException {
       if (value != null && !value.isEmpty() && StandardCharsets.ISO_8859_1.newEncoder().canEncode(value)) {
          byte[] encoded = value.getBytes(StandardCharsets.ISO_8859_1);
          if (encoded.length > 255) {
@@ -179,7 +179,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   private static <T> void init(ThreadLocal<T> slot, T previous) {
+   private static <T> void restore(ThreadLocal<T> slot, T previous) {
       if (previous == null) {
          slot.remove();
       } else {
@@ -202,7 +202,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper read() throws IOException {
+   public static ResourcePackDownloadScope.Inner_BufferHelper requireBatchScope() throws IOException {
       ResourcePackDownloadScope.Inner_BufferHelper snapshot = CURRENT.get();
       if (snapshot == null) {
          throw new IOException("Unscoped resource-pack batch creation is refused");
@@ -212,7 +212,7 @@ public final class ResourcePackDownloadScope {
       return snapshot;
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper write() throws IOException {
+   public static ResourcePackDownloadScope.Inner_BufferHelper requireNetworkScope() throws IOException {
       ResourcePackDownloadScope.Inner_BufferHelper snapshot = load_ThreadLocal.get();
       if (snapshot == null) {
          throw new IOException("Unscoped resource-pack network access is refused");
@@ -222,7 +222,7 @@ public final class ResourcePackDownloadScope {
       return snapshot;
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper load(BatchConfig config) throws IOException {
+   public static ResourcePackDownloadScope.Inner_BufferHelper requireBatchSnapshot(BatchConfig config) throws IOException {
       synchronized (LOCK) {
          ResourcePackDownloadScope.Inner_StreamUtil token = tokensByConfig.get(config);
          if (token != null && token.active) {
@@ -293,11 +293,11 @@ public final class ResourcePackDownloadScope {
    }
 
    public static void init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Socket socket) throws IOException {
-      snapshot.init(socket);
+      snapshot.trackSocket(socket);
    }
 
    public static void load(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Socket socket) {
-      snapshot.load(socket);
+      snapshot.untrackSocket(socket);
    }
 
    public static Path cachePath(Path cacheDir, ResourcePackDownloadScope.Inner_BufferHelper snapshot, UUID packId, HashFunction hashFunction) throws IOException {
@@ -306,7 +306,7 @@ public final class ResourcePackDownloadScope {
       Objects.requireNonNull(packId, "packId");
       Objects.requireNonNull(hashFunction, "hashFunction");
       snapshot.ensureCurrent();
-      String scopeHash = init(snapshot.origin(), snapshot.canonicalPeer());
+      String scopeHash = scopeHash(snapshot.origin(), snapshot.canonicalPeer());
       String mode = snapshot.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA ? "vanilla-neutral-v1" : "modded-full-v1";
       ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionFor(snapshot.context());
       ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
@@ -318,7 +318,7 @@ public final class ResourcePackDownloadScope {
          .resolve(snapshot.connectionId.toString())
          .resolve(mode)
          .resolve(protection)
-         .resolve(init(hashFunction))
+         .resolve(hashName(hashFunction))
          .resolve(packId.toString())
          .normalize();
       if (result.startsWith(base) && !result.equals(base)) {
@@ -344,7 +344,7 @@ public final class ResourcePackDownloadScope {
       return STRIPED_LOCKS[stripe];
    }
 
-   private static String init(String origin, String peer) {
+   private static String scopeHash(String origin, String peer) {
       byte[] originBytes = origin.getBytes(StandardCharsets.UTF_8);
       byte[] peerBytes = peer.getBytes(StandardCharsets.UTF_8);
       ByteBuffer input = ByteBuffer.allocate(8 + originBytes.length + peerBytes.length);
@@ -352,7 +352,7 @@ public final class ResourcePackDownloadScope {
       return Hashing.sha256().hashBytes(input.array()).toString();
    }
 
-   private static String init(HashFunction hashFunction) {
+   private static String hashName(HashFunction hashFunction) {
       String var10000;
       switch (hashFunction.bits()) {
          case 160:
@@ -371,7 +371,7 @@ public final class ResourcePackDownloadScope {
       return var10000;
    }
 
-   static void init(boolean enabled) {
+   static void setMultiLoopbackFixture(boolean enabled) {
       multiLoopbackFixtureEnabled = enabled;
    }
 
@@ -379,12 +379,12 @@ public final class ResourcePackDownloadScope {
       multiLoopbackFixtureEnabled = false;
       CURRENT.remove();
       load_ThreadLocal.remove();
-      ResourcePackDownloadScope.Inner_ConfigStore authentication = read.get();
+      ResourcePackDownloadScope.Inner_ConfigStore authentication = PROXY_AUTH.get();
       if (authentication != null) {
          authentication.wipe();
       }
 
-      read.remove();
+      PROXY_AUTH.remove();
       synchronized (LOCK) {
          tokensByConfig.clear();
          connectionIds.clear();
@@ -396,7 +396,7 @@ public final class ResourcePackDownloadScope {
          STRIPED_LOCKS[i] = new ReentrantLock();
       }
 
-      read = new ThreadLocal<>();
+      PROXY_AUTH = new ThreadLocal<>();
    }
 
    public static final class Inner_BufferHelper {
@@ -416,7 +416,7 @@ public final class ResourcePackDownloadScope {
       private final boolean multiLoopbackFixture;
       private final ConnectionPrivacyRegistry.ProxyEndpoint proxyEndpoint;
       private final Set<Socket> sockets = Collections.newSetFromMap(new IdentityHashMap<>());
-      private volatile boolean read;
+      private volatile boolean retired;
 
       private Inner_BufferHelper(
          ConnectionPrivacyRegistry.ConnectionSession context,
@@ -498,7 +498,7 @@ public final class ResourcePackDownloadScope {
       }
 
       public boolean isCurrent() {
-         if (this.read || !ConnectionPrivacyRegistry.isCurrentDownload(this.context, this.lifecycleId, this.manager, this.packetListener, this.downloadGeneration)) {
+         if (this.retired || !ConnectionPrivacyRegistry.isCurrentDownload(this.context, this.lifecycleId, this.manager, this.packetListener, this.downloadGeneration)) {
             return false;
          }
 
@@ -519,13 +519,13 @@ public final class ResourcePackDownloadScope {
          }
       }
 
-      private void init(Socket socket) throws IOException {
+      private void trackSocket(Socket socket) throws IOException {
          Objects.requireNonNull(socket, "socket");
          boolean close = false;
          synchronized (this.sockets) {
-            if (!this.read && this.isCurrent()) {
+            if (!this.retired && this.isCurrent()) {
                ConnectionPrivacyRegistry.trackDownloadSocket(this.context, this.downloadGeneration, socket);
-               if (!this.read && this.isCurrent()) {
+               if (!this.retired && this.isCurrent()) {
                   this.sockets.add(socket);
                } else {
                   ConnectionPrivacyRegistry.untrackDownloadSocket(this.context, socket);
@@ -545,7 +545,7 @@ public final class ResourcePackDownloadScope {
          }
       }
 
-      private void load(Socket socket) {
+      private void untrackSocket(Socket socket) {
          if (socket != null) {
             synchronized (this.sockets) {
                this.sockets.remove(socket);
@@ -558,11 +558,11 @@ public final class ResourcePackDownloadScope {
       private void retireSockets() {
          List<Socket> retired;
          synchronized (this.sockets) {
-            if (this.read) {
+            if (this.retired) {
                return;
             }
 
-            this.read = true;
+            this.retired = true;
             retired = new ArrayList<>(this.sockets);
             this.sockets.clear();
          }
@@ -588,7 +588,7 @@ public final class ResourcePackDownloadScope {
       private final String host;
       private final int port;
       private final byte[] username;
-      private final byte[] load;
+      private final byte[] password;
       private volatile boolean active = true;
 
       private Inner_ConfigStore(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, byte[] username, byte[] password) {
@@ -596,7 +596,7 @@ public final class ResourcePackDownloadScope {
          this.host = host;
          this.port = port;
          this.username = username;
-         this.load = password;
+         this.password = password;
       }
 
       byte[] usernameBytes() {
@@ -604,7 +604,7 @@ public final class ResourcePackDownloadScope {
       }
 
       byte[] password() {
-         return Arrays.copyOf(this.load, this.load.length);
+         return Arrays.copyOf(this.password, this.password.length);
       }
 
       private synchronized boolean wipe() {
@@ -614,24 +614,24 @@ public final class ResourcePackDownloadScope {
 
          this.active = false;
          Arrays.fill(this.username, (byte)0);
-         Arrays.fill(this.load, (byte)0);
+         Arrays.fill(this.password, (byte)0);
          return true;
       }
    }
 
    public static final class Inner_DataUtil implements AutoCloseable {
-      private ResourcePackDownloadScope.Inner_StreamUtil init;
+      private ResourcePackDownloadScope.Inner_StreamUtil token;
 
       private Inner_DataUtil(ResourcePackDownloadScope.Inner_StreamUtil token) {
-         this.init = token;
+         this.token = token;
       }
 
       @Override
       public void close() {
          ResourcePackDownloadScope.Inner_StreamUtil closing;
          synchronized (this) {
-            closing = this.init;
-            this.init = null;
+            closing = this.token;
+            this.token = null;
          }
 
          if (closing != null) {

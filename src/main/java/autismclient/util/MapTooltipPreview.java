@@ -21,7 +21,7 @@ public final class MapTooltipPreview {
    private static final MapNonEmptyCache nonEmptyCache = new MapNonEmptyCache();
    private static final MapRenderState RENDER_STATE = new MapRenderState();
    private static MapId cachedId;
-   private static int read = -2147483648;
+   private static int lastLoadTick = -2147483648;
    private static MapItemSavedData cachedData;
    private static Object cachedLevel;
    private static MapTooltipPreview.Inner_StreamUtil cachedTooltip;
@@ -43,7 +43,7 @@ public final class MapTooltipPreview {
             return cachedComponent;
          }
       });
-      ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> load());
+      ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clearCache());
    }
 
    public static Optional<TooltipComponent> tooltip(ItemStack stack, Optional<TooltipComponent> original) {
@@ -83,19 +83,19 @@ public final class MapTooltipPreview {
       }
    }
 
-   private static void load() {
+   private static void clearCache() {
       nonEmptyCache.clear();
       cachedId = null;
       cachedData = null;
       cachedLevel = null;
-      read = -2147483648;
+      lastLoadTick = -2147483648;
       RENDER_STATE.texture = null;
       RENDER_STATE.decorations.clear();
       cachedTooltip = null;
       cachedComponent = null;
    }
 
-   private static MapItemSavedData load(MapId id) {
+   private static MapItemSavedData loadData(MapId id) {
       Minecraft mc = Minecraft.getInstance();
       MapItemSavedData data = mapData(id);
       if (data == null) {
@@ -103,39 +103,39 @@ public final class MapTooltipPreview {
       }
 
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (id.equals(cachedId) && tick == read && cachedLevel == mc.level && cachedData == data) {
+      if (id.equals(cachedId) && tick == lastLoadTick && cachedLevel == mc.level && cachedData == data) {
          return data;
       }
 
       mc.getMapRenderer().extractRenderState(id, data, RENDER_STATE);
       cachedLevel = mc.level;
       cachedId = id;
-      read = tick;
+      lastLoadTick = tick;
       cachedData = data;
       return data;
    }
 
    static final class Inner_DataUtil implements ClientTooltipComponent {
-      private final MapId init;
+      private final MapId mapId;
 
       Inner_DataUtil(MapId id) {
-         this.init = id;
+         this.mapId = id;
       }
 
       @Override
       public int getHeight(Font font) {
-         return MapTooltipPreview.mapData(this.init) == null ? 0 : MapTooltipPreview.previewSize() + 4;
+         return MapTooltipPreview.mapData(this.mapId) == null ? 0 : MapTooltipPreview.previewSize() + 4;
       }
 
       @Override
       public int getWidth(Font font) {
-         return MapTooltipPreview.mapData(this.init) == null ? 0 : MapTooltipPreview.previewSize();
+         return MapTooltipPreview.mapData(this.mapId) == null ? 0 : MapTooltipPreview.previewSize();
       }
 
       @Override
       public void extractImage(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics) {
          try {
-            if (MapTooltipPreview.load(this.init) == null) {
+            if (MapTooltipPreview.loadData(this.mapId) == null) {
                return;
             }
 

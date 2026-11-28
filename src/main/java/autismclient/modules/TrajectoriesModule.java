@@ -36,14 +36,14 @@ public final class TrajectoriesModule extends Module {
    private ItemStack lastStack = ItemStack.EMPTY;
    private List<TrajectoriesModule.Inner_ConfigStore> flights = List.of();
    private int color;
-   private List<TrajectoriesModule.Inner_CachePool> load = List.of();
+   private List<TrajectoriesModule.Inner_CachePool> trajectories = List.of();
 
    public TrajectoriesModule() {
       super("trajectories", "Trajectories", ae.update, "Preview flight paths and precise impact points.");
 
       for (TrajectoriesModule.Inner_StreamUtil item : TrajectoriesModule.Inner_StreamUtil.values()) {
          this.add(
-            new BoolSetting(item.init(), item.load_Str, true)
+            new BoolSetting(item.settingKey(), item.load_Str, true)
                .description(
                   item == TrajectoriesModule.Inner_StreamUtil.FIRE
                      ? "Preview fireballs and the blocks their explosion can destroy."
@@ -67,14 +67,14 @@ public final class TrajectoriesModule extends Module {
    }
 
    public List<TrajectoriesModule.Inner_CachePool> paths() {
-      return this.load;
+      return this.trajectories;
    }
 
    private void clearFrame() {
       this.lastFrame = null;
       this.lastStack = ItemStack.EMPTY;
       this.flights = List.of();
-      this.load = List.of();
+      this.trajectories = List.of();
    }
 
    @Override
@@ -104,12 +104,12 @@ public final class TrajectoriesModule extends Module {
 
    public static void computePaths(float partialTick) {
       if (al.init_Module_Str("trajectories") instanceof TrajectoriesModule trajectories && trajectories.isEnabled()) {
-         trajectories.load = trajectories.computeTrajectories(partialTick);
+         trajectories.trajectories = trajectories.computeTrajectories(partialTick);
          if (!AutismLiteVariant.enabled()) {
-            TrajectoryStateCache.init(MC, trajectories.load);
+            TrajectoryStateCache.init(MC, trajectories.trajectories);
          }
 
-         ar.init_V_List(trajectories.load);
+         ar.init_V_List(trajectories.trajectories);
       } else {
          ar.init_V_List(List.of());
       }
@@ -121,7 +121,7 @@ public final class TrajectoriesModule extends Module {
          InteractionHand hand = projectileHand(player);
          ItemStack stack = player.getItemInHand(hand);
          TrajectoriesModule.Inner_StreamUtil item = projectileKind(stack);
-         if (item != null && this.bool(item.init())) {
+         if (item != null && this.bool(item.settingKey())) {
             float yaw = player.getYRot();
             float pitch = player.getXRot();
             RotationMath.Rotation rotation = SilentMovementCoordinator.getHeadRenderRotation(MC.player);
@@ -138,7 +138,7 @@ public final class TrajectoriesModule extends Module {
             int mask = 0;
 
             for (TrajectoriesModule.Inner_StreamUtil value : TrajectoriesModule.Inner_StreamUtil.values()) {
-               if (this.bool(value.init())) {
+               if (this.bool(value.settingKey())) {
                   mask |= 1 << value.ordinal();
                }
             }
@@ -166,14 +166,14 @@ public final class TrajectoriesModule extends Module {
                   if (result.points().size() > 1) {
                      flights.add(
                         new TrajectoriesModule.Inner_ConfigStore(
-                           result, shot.info().kind() == ProjectileBallistics.ProjectileKind.ROCKET, init(result.hit(), item, stack)
+                           result, shot.info().kind() == ProjectileBallistics.ProjectileKind.ROCKET, impactFor(result.hit(), item, stack)
                         )
                      );
                   }
                }
 
                this.flights = List.copyOf(flights);
-               this.color = init(item, stack);
+               this.color = colorFor(item, stack);
                this.lastFrame = frame;
                this.lastStack = stack.copy();
             }
@@ -219,7 +219,7 @@ public final class TrajectoriesModule extends Module {
       return flight.hit() != null && flight.points().size() >= 2 ? flight.points().get(flight.points().size() - 2) : null;
    }
 
-   private static TrajectoriesModule.Inner_BufferHelper init(HitResult hit, TrajectoriesModule.Inner_StreamUtil item, ItemStack stack) {
+   private static TrajectoriesModule.Inner_BufferHelper impactFor(HitResult hit, TrajectoriesModule.Inner_StreamUtil item, ItemStack stack) {
       if (hit == null) {
          return null;
       } else {
@@ -267,7 +267,7 @@ public final class TrajectoriesModule extends Module {
       }
    }
 
-   private static int init(TrajectoriesModule.Inner_StreamUtil item, ItemStack stack) {
+   private static int colorFor(TrajectoriesModule.Inner_StreamUtil item, ItemStack stack) {
       if (item != TrajectoriesModule.Inner_StreamUtil.SPLASH && item != TrajectoriesModule.Inner_StreamUtil.LINGERING) {
          int var10000;
          switch (item) {
@@ -427,7 +427,7 @@ public final class TrajectoriesModule extends Module {
          this.load_Str = label;
       }
 
-      public String init() {
+      public String settingKey() {
          return "item-" + this.init_Str;
       }
    }

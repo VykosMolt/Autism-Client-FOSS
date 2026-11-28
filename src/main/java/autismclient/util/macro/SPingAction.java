@@ -14,7 +14,7 @@ public class SPingAction implements MacroAction {
    public int durationMs = 1000;
    public int durationTicks = 20;
    public boolean continueNextActions = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public SPingAction() {
    }
@@ -25,7 +25,7 @@ public class SPingAction implements MacroAction {
    }
 
    public SPingAction.Inner_DataUtil getEndMode() {
-      return SPingAction.Inner_DataUtil.init(this.endMode);
+      return SPingAction.Inner_DataUtil.parse(this.endMode);
    }
 
    public int getStepCount() {
@@ -55,7 +55,7 @@ public class SPingAction implements MacroAction {
       tag.putInt("durationMs", this.durationMs);
       tag.putInt("durationTicks", this.durationTicks);
       tag.putBoolean("continueNextActions", this.continueNextActions);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -74,7 +74,7 @@ public class SPingAction implements MacroAction {
       }
 
       if (tag.contains("endMode")) {
-         this.endMode = SPingAction.Inner_DataUtil.init(tag.getStringOr("endMode", SPingAction.Inner_DataUtil.TIMEOUT.name())).name();
+         this.endMode = SPingAction.Inner_DataUtil.parse(tag.getStringOr("endMode", SPingAction.Inner_DataUtil.TIMEOUT.name())).name();
       }
 
       if (tag.contains("stepCount")) {
@@ -98,7 +98,7 @@ public class SPingAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -137,12 +137,12 @@ public class SPingAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {
@@ -150,7 +150,7 @@ public class SPingAction implements MacroAction {
       STEPS,
       END;
 
-      public static SPingAction.Inner_DataUtil init(String raw) {
+      public static SPingAction.Inner_DataUtil parse(String raw) {
          if (raw == null) {
             return TIMEOUT;
          }

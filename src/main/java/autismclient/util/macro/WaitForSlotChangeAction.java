@@ -11,7 +11,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
    public List<WaitForSlotChangeAction.Inner_DataUtil> entries = new ArrayList<>();
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    public WaitForSlotChangeAction() {
    }
@@ -42,7 +42,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       tag.put("entries", list);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -119,7 +119,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -142,7 +142,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       this.entries.add(new WaitForSlotChangeAction.Inner_DataUtil(target, WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY, 1));
-      this.init = true;
+      this.enabled = true;
    }
 
    @Override
@@ -180,12 +180,12 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -245,12 +245,12 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
          return var10000;
       }
 
-      public void init_V() {
+      public void nextMode() {
          WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
          this.mode = modes[(this.mode.ordinal() + 1) % modes.length];
       }
 
-      public void load() {
+      public void previousMode() {
          WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
          this.mode = modes[(this.mode.ordinal() - 1 + modes.length) % modes.length];
       }

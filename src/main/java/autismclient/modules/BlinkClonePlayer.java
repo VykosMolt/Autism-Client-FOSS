@@ -10,7 +10,7 @@ import net.minecraft.world.entity.Entity;
 
 public final class BlinkClonePlayer extends RemotePlayer {
    private static final int init_I = -4344907;
-   private final PlayerInfo init_PlayerInfo;
+   private final PlayerInfo clonedInfo;
 
    public BlinkClonePlayer(ClientLevel level, LocalPlayer source) {
       super(level, source.getGameProfile());
@@ -33,7 +33,7 @@ public final class BlinkClonePlayer extends RemotePlayer {
       } catch (Throwable var5) {
       }
 
-      this.init_PlayerInfo = resolved;
+      this.clonedInfo = resolved;
    }
 
    public void setRotations(float headYaw, float bodyYaw) {
@@ -45,7 +45,7 @@ public final class BlinkClonePlayer extends RemotePlayer {
 
    @Override
    protected PlayerInfo getPlayerInfo() {
-      return this.init_PlayerInfo != null ? this.init_PlayerInfo : super.getPlayerInfo();
+      return this.clonedInfo != null ? this.clonedInfo : super.getPlayerInfo();
    }
 
    @Override

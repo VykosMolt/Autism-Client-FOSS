@@ -8,37 +8,37 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 public final class SdfRenderPipelines {
-   private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/text_msdf");
-   private static final Identifier load = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shape");
+   private static final Identifier TEXT_FRAGMENT = Identifier.fromNamespaceAndPath("autismclient", "ui/text_msdf");
+   private static final Identifier SHAPE_FRAGMENT = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shape");
    private static RenderPipeline init_RenderPipeline;
    private static RenderPipeline load_RenderPipeline;
-   private static boolean init_Z;
+   private static boolean initialized;
 
    private SdfRenderPipelines() {
    }
 
    public static boolean isAvailable() {
-      init_V();
+      ensurePipelines();
       return init_RenderPipeline != null && load_RenderPipeline != null;
    }
 
    public static RenderPipeline init_RenderPipeline() {
-      init_V();
+      ensurePipelines();
       return init_RenderPipeline != null ? init_RenderPipeline : RenderPipelines.GUI_TEXTURED;
    }
 
    public static RenderPipeline pipeline() {
-      init_V();
+      ensurePipelines();
       return load_RenderPipeline != null ? load_RenderPipeline : RenderPipelines.GUI_TEXTURED;
    }
 
-   private static void init_V() {
-      if (!init_Z) {
-         init_Z = true;
+   private static void ensurePipelines() {
+      if (!initialized) {
+         initialized = true;
 
          try {
-            init_RenderPipeline = init("ui_text_msdf", init_Identifier);
-            load_RenderPipeline = init("ui_sdf_shape", load);
+            init_RenderPipeline = createPipeline("ui_text_msdf", TEXT_FRAGMENT);
+            load_RenderPipeline = createPipeline("ui_sdf_shape", SHAPE_FRAGMENT);
          } catch (Throwable t) {
             init_RenderPipeline = null;
             load_RenderPipeline = null;
@@ -46,7 +46,7 @@ public final class SdfRenderPipelines {
       }
    }
 
-   private static RenderPipeline init(String name, Identifier fragment) {
+   private static RenderPipeline createPipeline(String name, Identifier fragment) {
       RenderPipeline base = RenderPipelines.GUI_TEXTURED;
       return Compat263.createRenderPipeline(
          Identifier.fromNamespaceAndPath("autismclient", "pipeline/" + name),

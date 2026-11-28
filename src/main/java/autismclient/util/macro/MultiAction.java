@@ -31,7 +31,7 @@ public class MultiAction implements MacroAction {
       tag.putInt("stepCount", Math.max(0, this.stepCount));
       tag.putBoolean("connectIfDown", this.connectIfDown);
       tag.putBoolean("disconnectAfter", this.disconnectAfter);
-      tag.putString("waitMode", init(this.waitMode));
+      tag.putString("waitMode", normalizeWaitMode(this.waitMode));
       tag.putInt("waitMs", Math.max(0, this.waitMs));
       return tag;
    }
@@ -49,7 +49,7 @@ public class MultiAction implements MacroAction {
       this.stepCount = Math.max(0, tag.getIntOr("stepCount", 1));
       this.connectIfDown = tag.getBooleanOr("connectIfDown", true);
       this.disconnectAfter = tag.getBooleanOr("disconnectAfter", false);
-      this.waitMode = init(tag.getStringOr("waitMode", "Until ready"));
+      this.waitMode = normalizeWaitMode(tag.getStringOr("waitMode", "Until ready"));
       this.waitMs = Math.max(0, tag.getIntOr("waitMs", 30000));
    }
 
@@ -81,15 +81,15 @@ public class MultiAction implements MacroAction {
       return new LinkedHashSet<>(this.init_List_12());
    }
 
-   public static String init(String raw) {
+   public static String normalizeWaitMode(String raw) {
       return !"Fixed delay".equals(raw) && !"No wait".equals(raw) ? "Until ready" : raw;
    }
 
-   public static String init(int index) {
+   public static String emptySlotLabel(int index) {
       return "empty " + (index + 1);
    }
 
-   public static String load(int index) {
+   public static String emptySlotKey(int index) {
       return "empty" + (index + 1);
    }
 
@@ -98,7 +98,7 @@ public class MultiAction implements MacroAction {
       ArrayList<String> sanitized = new ArrayList<>();
 
       for (int i = 0; i < this.init_List_12().size(); i++) {
-         sanitized.add(load(i));
+         sanitized.add(emptySlotKey(i));
       }
 
       this.accounts = sanitized;

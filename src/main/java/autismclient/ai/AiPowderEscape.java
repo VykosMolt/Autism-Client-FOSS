@@ -63,15 +63,15 @@ final class AiPowderEscape {
          @Override
          public AiOperation.Result tick() {
             if (mc.player == null || mc.level == null) {
-               return this.init(AiOperation.Status.CANCELLED, "Left the world");
+               return this.finish(AiOperation.Status.CANCELLED, "Left the world");
             }
 
             if (!AiPowderEscape.isInPowderSnow(mc) && mc.player.onGround()) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Out of the powder snow");
+               return this.finish(AiOperation.Status.SUCCEEDED, "Out of the powder snow");
             }
 
             if (System.nanoTime() > this.deadline) {
-               return this.init(AiOperation.Status.FAILED, "Still in powder snow");
+               return this.finish(AiOperation.Status.FAILED, "Still in powder snow");
             }
 
             if (--this.retargetTicks <= 0) {
@@ -94,12 +94,12 @@ final class AiPowderEscape {
             );
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            this.init();
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            this.releaseKeys();
             return AiGameOperations.result(status, message, new JsonObject());
          }
 
-         void init() {
+         void releaseKeys() {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
             this.aim.clear();
@@ -107,7 +107,7 @@ final class AiPowderEscape {
 
          @Override
          public void cancel() {
-            this.init();
+            this.releaseKeys();
          }
       };
    }

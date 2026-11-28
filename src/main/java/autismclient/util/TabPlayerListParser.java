@@ -34,18 +34,18 @@ public final class TabPlayerListParser {
       if (connection != null) {
          for (PlayerInfo info : connection.getOnlinePlayers()) {
             if (info != null) {
-               TabPlayerListParser.RawEntry parsed = init_bO_DataUtil(info.getTabListDisplayName());
-               if (parsed != null && isOtherPlayerName(parsed.init_Str(), self)) {
-                  init(byName, parsed.init_Str(), parsed.load(), parsed.prefixComponent());
+               TabPlayerListParser.RawEntry parsed = parseRankEntry(info.getTabListDisplayName());
+               if (parsed != null && isOtherPlayerName(parsed.name(), self)) {
+                  putPlayer(byName, parsed.name(), parsed.load(), parsed.prefixComponent());
                }
             }
          }
 
          for (PlayerInfo info : connection.getOnlinePlayers()) {
-            if (info != null && init(info.getProfile())) {
+            if (info != null && isRealProfile(info.getProfile())) {
                String name = info.getProfile().name();
                if (isOtherPlayerName(name, self)) {
-                  init(byName, name, init(scoreboard, name, info), null);
+                  putPlayer(byName, name, prefixFor(scoreboard, name, info), null);
                }
             }
          }
@@ -53,23 +53,23 @@ public final class TabPlayerListParser {
 
       if (mc.level != null) {
          for (AbstractClientPlayer player : mc.level.players()) {
-            if (player != null && init(player.getGameProfile())) {
+            if (player != null && isRealProfile(player.getGameProfile())) {
                String name = player.getGameProfile().name();
                if (isOtherPlayerName(name, self)) {
                   PlayerInfo info = connection == null ? null : connection.getPlayerInfoIgnoreCase(name);
-                  init(byName, name, init(scoreboard, name, info), null);
+                  putPlayer(byName, name, prefixFor(scoreboard, name, info), null);
                }
             }
          }
       }
 
-      init(byName);
+      fillPrefixesFromChat(byName);
       List<TabPlayerListParser.ParsedPlayer> result = new ArrayList<>(byName.values());
       result.sort((a, b) -> a.name().compareToIgnoreCase(b.name()));
       return result;
    }
 
-   private static void init(Map<String, TabPlayerListParser.ParsedPlayer> byName) {
+   private static void fillPrefixesFromChat(Map<String, TabPlayerListParser.ParsedPlayer> byName) {
       if (!byName.isEmpty() && !byName.values().stream().allMatch(TabPlayerListParser.ParsedPlayer::hasPrefix)) {
          List<String> keys = new ArrayList<>(byName.keySet());
          keys.sort((a, b) -> Integer.compare(b.length(), a.length()));
@@ -87,7 +87,7 @@ public final class TabPlayerListParser {
                      if (player != null && !player.hasPrefix()) {
                         int nameIdx = lowerHeader.indexOf(key);
                         if (nameIdx > 0) {
-                           String rank = read_Str(header.substring(0, nameIdx));
+                           String rank = rankGlyphs(header.substring(0, nameIdx));
                            if (!rank.isBlank()) {
                               byName.put(key, new TabPlayerListParser.ParsedPlayer(player.name(), rank, null));
                               break;
@@ -106,12 +106,12 @@ public final class TabPlayerListParser {
       return name != null && !name.isBlank() && (self == null || !name.equalsIgnoreCase(self));
    }
 
-   private static boolean init(GameProfile profile) {
+   private static boolean isRealProfile(GameProfile profile) {
       return profile != null && isRealPlayerName(profile.name());
    }
 
    public static boolean isRealPlayerName(String name) {
-      return isPlausibleName(name) && !read_Z(name);
+      return isPlausibleName(name) && !isPlaceholderName(name);
    }
 
    public static boolean isPlausibleName(String name) {
@@ -139,12 +139,12 @@ public final class TabPlayerListParser {
       }
    }
 
-   private static boolean read_Z(String name) {
+   private static boolean isPlaceholderName(String name) {
       String lower = name.toLowerCase(Locale.ROOT).trim();
       return lower.matches("(slot|npc|line|spacer|empty|blank|grid|hud|tab|frame|fill)_?-?\\d+") || lower.matches("[#.\\-_ ]*\\d{1,4}[#.\\-_ ]*");
    }
 
-   private static void init(Map<String, TabPlayerListParser.ParsedPlayer> byName, String name, String prefix, Component prefixComponent) {
+   private static void putPlayer(Map<String, TabPlayerListParser.ParsedPlayer> byName, String name, String prefix, Component prefixComponent) {
       String key = name.toLowerCase(Locale.ROOT);
       TabPlayerListParser.ParsedPlayer existing = byName.get(key);
       if (existing == null) {
@@ -154,7 +154,7 @@ public final class TabPlayerListParser {
       }
    }
 
-   private static TabPlayerListParser.RawEntry init_bO_DataUtil(Component display) {
+   private static TabPlayerListParser.RawEntry parseRankEntry(Component display) {
       if (display == null) {
          return null;
       }
@@ -164,16 +164,16 @@ public final class TabPlayerListParser {
          return null;
       }
 
-      String rank = read_Str(text);
+      String rank = rankGlyphs(text);
       if (rank.isBlank()) {
          return null;
       }
 
-      String name = load_Str(text);
-      return !name.isBlank() && isPlausibleName(name) && !read_Z(name) ? new TabPlayerListParser.RawEntry(name, rank, init_MutableComponent(display)) : null;
+      String name = nameAfterRankGlyphs(text);
+      return !name.isBlank() && isPlausibleName(name) && !isPlaceholderName(name) ? new TabPlayerListParser.RawEntry(name, rank, rankGlyphComponent(display)) : null;
    }
 
-   private static MutableComponent init_MutableComponent(Component display) {
+   private static MutableComponent rankGlyphComponent(Component display) {
       if (display == null) {
          return null;
       }
@@ -204,7 +204,7 @@ public final class TabPlayerListParser {
       return any[0] ? out : null;
    }
 
-   private static String load_Str(String text) {
+   private static String nameAfterRankGlyphs(String text) {
       int last = -1;
 
       for (int i = 0; i < text.length(); i++) {
@@ -215,10 +215,10 @@ public final class TabPlayerListParser {
       }
 
       String tail = last < 0 ? text : text.substring(last + 1);
-      return write(tail).trim();
+      return stripRankIndex(tail).trim();
    }
 
-   private static String init(Scoreboard scoreboard, String name, PlayerInfo info) {
+   private static String prefixFor(Scoreboard scoreboard, String name, PlayerInfo info) {
       try {
          Component display = info != null ? info.getTabListDisplayName() : null;
          String fromDisplay = init_Str(init_Str(display), name);
@@ -252,12 +252,12 @@ public final class TabPlayerListParser {
 
    private static String init_Str(String text, String name) {
       if (text != null && !text.isBlank()) {
-         String glyphs = read_Str(text);
+         String glyphs = rankGlyphs(text);
          if (!glyphs.isBlank()) {
             return glyphs;
          }
 
-         String ascii = write(text);
+         String ascii = stripRankIndex(text);
          int idx = indexOfName(ascii, name);
          if (idx > 0) {
             String prefix = ascii.substring(0, idx).trim();
@@ -286,7 +286,7 @@ public final class TabPlayerListParser {
       }
    }
 
-   private static String read_Str(String text) {
+   private static String rankGlyphs(String text) {
       StringBuilder sb = new StringBuilder();
 
       for (int i = 0; i < text.length(); i++) {
@@ -299,15 +299,15 @@ public final class TabPlayerListParser {
       return sb.toString().trim();
    }
 
-   private static String write(String text) {
+   private static String stripRankIndex(String text) {
       return text == null ? "" : text.replaceFirst("^\\s*\\[\\s*\\d+\\s*\\]\\s*", "").trim();
    }
 
    private static String init_Str(Component component) {
-      return component == null ? "" : init_Str(component.getString());
+      return component == null ? "" : stripColorCodes(component.getString());
    }
 
-   public static String init_Str(String text) {
+   public static String stripColorCodes(String text) {
       if (text == null) {
          return "";
       }
@@ -330,7 +330,7 @@ public final class TabPlayerListParser {
       return out.toString().trim();
    }
 
-   private record RawEntry(String init_Str, String load, Component prefixComponent) {
+   private record RawEntry(String name, String load, Component prefixComponent) {
    }
 
    public record ParsedPlayer(String name, String load, Component prefixComponent) {

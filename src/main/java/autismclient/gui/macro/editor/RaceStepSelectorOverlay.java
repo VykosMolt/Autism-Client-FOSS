@@ -63,10 +63,10 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private float dragOffsetY;
    private float pressX;
    private float pressY;
-   private int add;
-   private int clear;
-   private int reset = 160;
-   private int start;
+   private int panelX;
+   private int panelY;
+   private int panelWidth = 160;
+   private int panelHeight;
    private final autismclient.gui.ui.VisibilityTransition visibility = new autismclient.gui.ui.VisibilityTransition(false);
 
    public RaceStepSelectorOverlay(Font textRenderer) {
@@ -92,23 +92,23 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.filteredOptions = this.search.filtered();
       String shownTitle = title != null && !title.isBlank() ? title : "Race Selector";
       this.windowNode.setTitle(shownTitle);
-      this.reset = this.preferredWidth(shownTitle);
+      this.panelWidth = this.preferredWidth(shownTitle);
       this.searchInput.setValue("");
       this.searchInput.setFocused(true);
       this.rebuildLayout();
       LayoutContext metrics = this.layoutHost.createMeasureContext();
       if (metrics != null) {
-         this.start = Math.round(this.windowNode.measureHeight(metrics, this.reset));
+         this.panelHeight = Math.round(this.windowNode.measureHeight(metrics, this.panelWidth));
       }
 
       LayoutViewport viewport = this.layoutHost.createViewport();
-      this.add = Math.max(8, Math.round((viewport.width() - this.reset) / 2.0F));
-      this.clear = Math.max(8, Math.round((viewport.height() - this.start) / 2.0F));
-      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.visible, this.update_Z));
-      this.add = clamped.x;
-      this.clear = clamped.y;
-      this.reset = clamped.width;
-      this.start = clamped.height;
+      this.panelX = Math.max(8, Math.round((viewport.width() - this.panelWidth) / 2.0F));
+      this.panelY = Math.max(8, Math.round((viewport.height() - this.panelHeight) / 2.0F));
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.visible, this.update_Z));
+      this.panelX = clamped.x;
+      this.panelY = clamped.y;
+      this.panelWidth = clamped.width;
+      this.panelHeight = clamped.height;
       this.windowNode.setShowBody(true);
       OverlayManager.getInstance().bringOwnerToFront(this);
    }
@@ -147,13 +147,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private void rebuildLayout() {
       this.windowNode.body().clearChildren();
       this.windowNode.body().addChild(this.searchInput);
-      this.listSpacer.withHeight(this.init(this.filteredOptions.size()));
+      this.listSpacer.withHeight(this.listHeightFor(this.filteredOptions.size()));
       this.windowNode.body().addChild(this.listSpacer);
       this.countLabel.text(this.filteredOptions.size() + " choices");
       this.windowNode.body().addChild(this.countLabel);
    }
 
-   private int init(int count) {
+   private int listHeightFor(int count) {
       int rows = Math.max(3, Math.min(this.maxVisibleRows(), count));
       return rows * 14 + 2;
    }
@@ -197,14 +197,14 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.visibility
             .render(
                context,
-               NetHelper.init(this.add, this.clear, this.reset, Math.max(this.styleTheme.load(), this.start)),
+               NetHelper.init(this.panelX, this.panelY, this.panelWidth, Math.max(this.styleTheme.load(), this.panelHeight)),
                true,
-               () -> this.load(context, closing ? -10000 : mouseX, closing ? -10000 : mouseY, delta)
+               () -> this.renderWindowContents(context, closing ? -10000 : mouseX, closing ? -10000 : mouseY, delta)
             );
       }
    }
 
-   private void load(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+   private void renderWindowContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       context.nextStratum();
       LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
@@ -213,13 +213,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.setExpanded(!this.update_Z);
       this.windowNode.setActive(true);
       this.windowNode.setHeaderHovered(this.isOverTitleBar(uiMouseX, uiMouseY));
-      this.start = Math.max(this.styleTheme.load(), Math.round(this.windowNode.measureHeight(metrics, this.reset)));
-      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.visible, this.update_Z));
-      this.add = clamped.x;
-      this.clear = clamped.y;
-      this.reset = clamped.width;
-      this.start = clamped.height;
-      this.windowNode.setBounds(this.add, this.clear, this.reset, this.start);
+      this.panelHeight = Math.max(this.styleTheme.load(), Math.round(this.windowNode.measureHeight(metrics, this.panelWidth)));
+      OverlayBounds clamped = this.clampBounds(new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.visible, this.update_Z));
+      this.panelX = clamped.x;
+      this.panelY = clamped.y;
+      this.panelWidth = clamped.width;
+      this.panelHeight = clamped.height;
+      this.windowNode.setBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight);
       this.layoutHost.render(context, mouseX, mouseY, delta);
       context.nextStratum();
       if (this.windowNode.pushBodyClip(context)) {
@@ -258,7 +258,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
                   .forEachVisibleRow(
                      context,
                      this.filteredOptions.size(),
-                     (idx, bnd) -> this.init(context, this.filteredOptions.get(idx), bnd.x, bnd.y, bnd.width, idx, uiMouseX, uiMouseY)
+                     (idx, bnd) -> this.renderOption(context, this.filteredOptions.get(idx), bnd.x, bnd.y, bnd.width, idx, uiMouseX, uiMouseY)
                   );
             } finally {
                this.listView.endFrame(context);
@@ -269,7 +269,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init(
+   private void renderOption(
       GuiGraphicsExtractor context, RaceStepSelectorOverlay.Inner_DataUtil option, int x, int y, int width, int index, float mouseX, float mouseY
    ) {
       boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 14;
@@ -303,8 +303,8 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       if (button == 0 && this.isOverTitleBar(uiMouseX, uiMouseY)) {
          this.sync_Z = true;
          this.flush_Z = false;
-         this.dragOffsetX = uiMouseX - this.add;
-         this.dragOffsetY = uiMouseY - this.clear;
+         this.dragOffsetX = uiMouseX - this.panelX;
+         this.dragOffsetY = uiMouseY - this.panelY;
          this.pressX = uiMouseX;
          this.pressY = uiMouseY;
          return true;
@@ -316,7 +316,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
       if (!this.update_Z
          && button == 0
-         && this.init(
+         && this.isInside(
             this.listSpacer.x(),
             this.listSpacer.y(),
             this.listSpacer.width(),
@@ -340,7 +340,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      if (!this.init(this.add, this.clear, this.reset, this.start, uiMouseX, uiMouseY)) {
+      if (!this.isInside(this.panelX, this.panelY, this.panelWidth, this.panelHeight, uiMouseX, uiMouseY)) {
          this.layoutHost.clearFocus();
          return true;
       } else {
@@ -391,13 +391,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          this.flush_Z = true;
          int nextX = Math.round(uiMouseX - this.dragOffsetX);
          int nextY = Math.round(uiMouseY - this.dragOffsetY);
-         if (nextX != this.add || nextY != this.clear) {
+         if (nextX != this.panelX || nextY != this.panelY) {
             this.flush_Z = true;
          }
 
-         OverlayBounds clamped = this.clampBounds(new OverlayBounds(nextX, nextY, this.reset, this.start, this.visible, this.update_Z));
-         this.add = clamped.x;
-         this.clear = clamped.y;
+         OverlayBounds clamped = this.clampBounds(new OverlayBounds(nextX, nextY, this.panelWidth, this.panelHeight, this.visible, this.update_Z));
+         this.panelX = clamped.x;
+         this.panelY = clamped.y;
          return true;
       } else if (!this.update_Z && this.listView != null && this.listView.isDraggingScrollbar()) {
          this.listView.mouseDragged(uiMouseX, uiMouseY);
@@ -413,7 +413,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          LayoutViewport viewport = this.layoutHost.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
          float uiMouseY = viewport.toUiY(mouseY);
-         if (this.init(
+         if (this.isInside(
             this.listSpacer.x(),
             this.listSpacer.y(),
             this.listSpacer.width(),
@@ -457,8 +457,8 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mouseX);
       float uiMouseY = viewport.toUiY(mouseY);
-      int renderedHeight = this.update_Z ? this.styleTheme.load() : this.start;
-      return this.init(this.add, this.clear, this.reset, renderedHeight, uiMouseX, uiMouseY);
+      int renderedHeight = this.update_Z ? this.styleTheme.load() : this.panelHeight;
+      return this.isInside(this.panelX, this.panelY, this.panelWidth, renderedHeight, uiMouseX, uiMouseY);
    }
 
    @Override
@@ -495,17 +495,17 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.add, this.clear, this.reset, this.start, this.visible, this.update_Z);
+      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.visible, this.update_Z);
    }
 
    @Override
    public void setBounds(OverlayBounds bounds) {
       if (bounds != null) {
          OverlayBounds clamped = this.clampBounds(bounds);
-         this.add = clamped.x;
-         this.clear = clamped.y;
-         this.reset = clamped.width;
-         this.start = clamped.height;
+         this.panelX = clamped.x;
+         this.panelY = clamped.y;
+         this.panelWidth = clamped.width;
+         this.panelHeight = clamped.height;
          this.visible = clamped.visible;
          this.update_Z = clamped.collapsed;
          this.windowNode.setShowBody(!this.update_Z);
@@ -528,16 +528,16 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isOverTitleBar(float x, float y) {
-      return x >= this.add && x < this.add + this.reset && y >= this.clear && y < this.clear + this.styleTheme.load();
+      return x >= this.panelX && x < this.panelX + this.panelWidth && y >= this.panelY && y < this.panelY + this.styleTheme.load();
    }
 
    private boolean load_Z_F_F(float x, float y) {
       return WindowHeaderHelper.overClose(
-         NetHelper.init(this.add, this.clear, this.reset, Math.max(this.styleTheme.load(), this.start)), this.styleTheme.load(), x, y
+         NetHelper.init(this.panelX, this.panelY, this.panelWidth, Math.max(this.styleTheme.load(), this.panelHeight)), this.styleTheme.load(), x, y
       );
    }
 
-   private boolean init(float x, float y, float w, float h, float mx, float my) {
+   private boolean isInside(float x, float y, float w, float h, float mx, float my) {
       return mx >= x && mx < x + w && my >= y && my < y + h;
    }
 

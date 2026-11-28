@@ -9,8 +9,8 @@ public final class BacktrackPacketQueue<T> {
    private final int capacity;
    private Object init_Obj;
    private Object load_Obj;
-   private Object read;
-   private Object write;
+   private Object listener;
+   private Object target;
    private long load_J;
 
    public BacktrackPacketQueue(int capacity) {
@@ -22,17 +22,17 @@ public final class BacktrackPacketQueue<T> {
          this.clear();
          this.init_Obj = world;
          this.load_Obj = player;
-         this.read = listener;
-         this.write = target;
+         this.listener = listener;
+         this.target = target;
       }
    }
 
    public boolean isBoundTo(Object world, Object player, Object listener, Object target) {
-      return this.init_Obj == world && this.load_Obj == player && this.read == listener && this.write == target;
+      return this.init_Obj == world && this.load_Obj == player && this.listener == listener && this.target == target;
    }
 
    public boolean offer(T value, long now, long delay) {
-      if (this.init_Obj != null && this.load_Obj != null && this.read != null && this.write != null && delay > 0L && this.queue.size() < this.capacity) {
+      if (this.init_Obj != null && this.load_Obj != null && this.listener != null && this.target != null && delay > 0L && this.queue.size() < this.capacity) {
          this.queue.addLast(new BacktrackPacketQueue.Inner_DataUtil<>(value, now, Math.min(300000000L, delay)));
          return true;
       } else {
@@ -74,7 +74,7 @@ public final class BacktrackPacketQueue<T> {
    public void clear() {
       this.queue.clear();
       this.load_J++;
-      this.init_Obj = this.load_Obj = this.read = this.write = null;
+      this.init_Obj = this.load_Obj = this.listener = this.target = null;
    }
 
    private record Inner_DataUtil<T>(T packet, long receivedAt, long load) {

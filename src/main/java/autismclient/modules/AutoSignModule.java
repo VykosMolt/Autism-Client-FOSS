@@ -14,15 +14,15 @@ public final class AutoSignModule extends Module {
       this.add(new BoolSetting("auto-done", "Auto Done", true).description("Close editor after filling text.").build());
    }
 
-   public String[] init_StrArr() {
+   public String[] lines() {
       return new String[]{this.text("line-1"), this.text("line-2"), this.text("line-3"), this.text("line-4")};
    }
 
-   public boolean init_Z_22() {
+   public boolean editExisting() {
       return this.bool("edit-existing");
    }
 
-   public boolean load() {
+   public boolean autoDone() {
       return this.bool("auto-done");
    }
 }

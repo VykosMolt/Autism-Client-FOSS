@@ -87,7 +87,7 @@ public final class ThemeApplyProgressOverlay extends Overlay {
             mc.gui.setOverlay(null);
          }
 
-         init();
+         runFinishAction();
       } else {
          long now = Util.getMillis();
          if (this.shownAt < 0L) {
@@ -106,19 +106,19 @@ public final class ThemeApplyProgressOverlay extends Overlay {
 
          try {
             float scale = cA.init_F();
-            this.init(graphics, mc, now, Math.round(mouseX / scale), Math.round(mouseY / scale));
+            this.renderOverlay(graphics, mc, now, Math.round(mouseX / scale), Math.round(mouseY / scale));
          } finally {
             cA.load_V_GuiGraphicsExtract(graphics);
          }
 
          this.read_I++;
          if (this.read_I >= 2) {
-            init();
+            runFinishAction();
          }
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, Minecraft mc, long now, int mouseX, int mouseY) {
+   private void renderOverlay(GuiGraphicsExtractor graphics, Minecraft mc, long now, int mouseX, int mouseY) {
       int width = cA.init_I();
       int height = cA.load_I();
       graphics.nextStratum();
@@ -168,7 +168,7 @@ public final class ThemeApplyProgressOverlay extends Overlay {
       }
    }
 
-   private static void init() {
+   private static void runFinishAction() {
       Runnable action;
       synchronized (LOCK) {
          action = finishAction;

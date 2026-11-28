@@ -28,15 +28,15 @@ public class SendCommand extends Command {
       });
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.arguments.PacketNameArgumentType.packetName())
-               .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), "")))
+               .executes(ctx -> this.sendPacket(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
                Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"));
                return PacketCommandBuilder.suggest(cls, builder);
-            }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
+            }).executes(ctx -> this.sendPacket(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
 
-   private int init_I_Str_Str_3(String name, String args) {
+   private int sendPacket(String name, String args) {
       Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(name);
       if (cls == null) {
          AutismClientMessaging.sendPrefixed("§cUnknown packet: §f" + name);
@@ -58,10 +58,10 @@ public class SendCommand extends Command {
 
       PacketCommandBuilder.BuildResult result = PacketCommandBuilder.build(cls, prepared.args());
       if (result.infoOnly()) {
-         init_V_Str_Str("§e", result.message());
+         sendLines("§e", result.message());
          return 1;
       } else if (!result.success()) {
-         init_V_Str_Str("§c", "Failed to build §f" + name + "§c: " + result.message());
+         sendLines("§c", "Failed to build §f" + name + "§c: " + result.message());
          return 1;
       } else if (prepared.dryRun()) {
          AutismClientMessaging.sendPrefixed("§eBuilt §f" + name + "§7 (" + result.source() + ") §e- dry run, not sent.");
@@ -79,7 +79,7 @@ public class SendCommand extends Command {
       }
    }
 
-   private static void init_V_Str_Str(String color, String message) {
+   private static void sendLines(String color, String message) {
       if (message != null && !message.isBlank()) {
          for (String line : message.split("\\R")) {
             if (!line.isBlank()) {

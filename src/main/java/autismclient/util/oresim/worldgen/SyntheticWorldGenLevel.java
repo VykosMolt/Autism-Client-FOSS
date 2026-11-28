@@ -69,9 +69,9 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    private long init_J;
    private int init_I;
    private int load_I;
-   private int read;
-   private final WorldGenTickAccess<Block> blockTicks = new WorldGenTickAccess<>(pos -> this.init(pos).getBlockTicks());
-   private final WorldGenTickAccess<Fluid> fluidTicks = new WorldGenTickAccess<>(pos -> this.init(pos).getFluidTicks());
+   private int writeRadius;
+   private final WorldGenTickAccess<Block> blockTicks = new WorldGenTickAccess<>(pos -> this.chunkContaining(pos).getBlockTicks());
+   private final WorldGenTickAccess<Fluid> fluidTicks = new WorldGenTickAccess<>(pos -> this.chunkContaining(pos).getFluidTicks());
 
    public SyntheticWorldGenLevel(VanillaWorldGenBootstrap context, Map<Long, ChunkAccess> chunks) {
       this.bootstrap = context;
@@ -80,7 +80,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
       this.lightEngine = new LevelLightEngine(new LightChunkGetter() {
          @Override
          public LightChunk getChunkForLighting(int chunkX, int chunkZ) {
-            return SyntheticWorldGenLevel.this.init(chunkX, chunkZ);
+            return SyntheticWorldGenLevel.this.chunkAt(chunkX, chunkZ);
          }
 
          @Override
@@ -99,15 +99,15 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
       this.init_J = 0L;
       this.init_I = center.x();
       this.load_I = center.z();
-      this.read = Math.max(0, writeRadius);
+      this.writeRadius = Math.max(0, writeRadius);
    }
 
-   private ChunkAccess init(int chunkX, int chunkZ) {
+   private ChunkAccess chunkAt(int chunkX, int chunkZ) {
       return this.chunks.get(ChunkPos.pack(chunkX, chunkZ));
    }
 
-   private ChunkAccess init(BlockPos pos) {
-      ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
+   private ChunkAccess chunkContaining(BlockPos pos) {
+      ChunkAccess chunk = this.chunkAt(pos.getX() >> 4, pos.getZ() >> 4);
       if (chunk == null) {
          throw new IllegalStateException("Generation touched unprepared chunk at " + pos);
       } else {
@@ -140,7 +140,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public ChunkAccess getChunk(int chunkX, int chunkZ, ChunkStatus status, boolean require) {
-      ChunkAccess chunk = this.init(chunkX, chunkZ);
+      ChunkAccess chunk = this.chunkAt(chunkX, chunkZ);
       if (chunk == null && require) {
          throw new IllegalStateException("Generation asked for unprepared chunk " + chunkX + ", " + chunkZ);
       } else {
@@ -150,7 +150,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public boolean hasChunk(int chunkX, int chunkZ) {
-      return this.init(chunkX, chunkZ) != null;
+      return this.chunkAt(chunkX, chunkZ) != null;
    }
 
    @Override
@@ -159,7 +159,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
          return AIR;
       }
 
-      ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
+      ChunkAccess chunk = this.chunkAt(pos.getX() >> 4, pos.getZ() >> 4);
       return chunk == null ? AIR : chunk.getBlockState(pos);
    }
 
@@ -169,14 +169,14 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
          return EMPTY_FLUID;
       }
 
-      ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
+      ChunkAccess chunk = this.chunkAt(pos.getX() >> 4, pos.getZ() >> 4);
       return chunk == null ? EMPTY_FLUID : chunk.getFluidState(pos);
    }
 
    @Override
    public boolean setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft) {
       if (!this.isOutsideBuildHeight(pos) && this.ensureCanWrite(pos)) {
-         ChunkAccess chunk = this.init(pos.getX() >> 4, pos.getZ() >> 4);
+         ChunkAccess chunk = this.chunkAt(pos.getX() >> 4, pos.getZ() >> 4);
          if (chunk == null) {
             return false;
          }
@@ -205,7 +205,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
          if ((flags & 16) == 0) {
             BlockPos postProcess = state.getPostProcessPos(this, pos);
             if (postProcess != null) {
-               this.init(postProcess).markPosForPostProcessing(postProcess);
+               this.chunkContaining(postProcess).markPosForPostProcessing(postProcess);
             }
          }
 
@@ -219,12 +219,12 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
    public boolean ensureCanWrite(BlockPos pos) {
       int chunkX = SectionPos.blockToSectionCoord(pos.getX());
       int chunkZ = SectionPos.blockToSectionCoord(pos.getZ());
-      return Math.abs(this.init_I - chunkX) <= this.read && Math.abs(this.load_I - chunkZ) <= this.read;
+      return Math.abs(this.init_I - chunkX) <= this.writeRadius && Math.abs(this.load_I - chunkZ) <= this.writeRadius;
    }
 
    @Override
    public int getHeight(Types type, int x, int z) {
-      ChunkAccess chunk = this.init(x >> 4, z >> 4);
+      ChunkAccess chunk = this.chunkAt(x >> 4, z >> 4);
       return chunk == null ? this.getMinY() : chunk.getHeight(type, x & 15, z & 15) + 1;
    }
 
@@ -330,7 +330,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public BlockGetter getChunkForCollisions(int chunkX, int chunkZ) {
-      return this.init(chunkX, chunkZ);
+      return this.chunkAt(chunkX, chunkZ);
    }
 
    @Override
@@ -355,7 +355,7 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
 
    @Override
    public BlockEntity getBlockEntity(BlockPos pos) {
-      ChunkAccess chunk = this.init(pos);
+      ChunkAccess chunk = this.chunkContaining(pos);
       BlockEntity blockEntity = chunk.getBlockEntity(pos);
       if (blockEntity != null) {
          return blockEntity;

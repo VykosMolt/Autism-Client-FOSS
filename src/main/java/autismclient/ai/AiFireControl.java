@@ -20,15 +20,15 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 final class AiFireControl {
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-   private BlockPos init_BlockPos;
-   private long init_J;
-   private int init_I;
-   private int load;
-   private AiOperation init_AiOperation;
+   private final Minecraft mc = Minecraft.getInstance();
+   private final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+   private BlockPos fireTarget;
+   private long revisionBefore;
+   private int waitTicks;
+   private int extinguished;
+   private AiOperation approach;
    private final boolean bodyOnly;
-   private String init_Str = "";
+   private String status = "";
 
    AiFireControl() {
       this(false);
@@ -36,76 +36,76 @@ final class AiFireControl {
 
    AiFireControl(boolean bodyOnly) {
       this.bodyOnly = bodyOnly;
-      this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
+      this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
    }
 
    int firesExtinguished() {
-      return this.load;
+      return this.extinguished;
    }
 
    String status() {
-      return this.init_Str;
+      return this.status;
    }
 
    boolean hasPendingFire() {
-      return this.init_BlockPos != null;
+      return this.fireTarget != null;
    }
 
    boolean canInterrupt() {
-      return this.init_BlockPos == null && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+      return this.fireTarget == null && (this.approach == null || this.approach.canInterruptNow());
    }
 
    boolean isBusy() {
-      return this.init_BlockPos != null || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+      return this.fireTarget != null || this.approach != null && this.approach.requiresReconciliationAfterEmergency();
    }
 
    boolean init(boolean protectDrops, Vec3 killAt) {
-      if (this.init_Minecraft.player != null && this.init_Minecraft.level != null && this.init_Minecraft.gameMode != null) {
-         if (this.init_BlockPos != null) {
-            if (!(this.init_Minecraft.level.getBlockState(this.init_BlockPos).getBlock() instanceof BaseFireBlock)
-               && AiServerEvidence.blockRevision(this.init_BlockPos) > this.init_J) {
-               this.load++;
-               this.init_BlockPos = null;
-               this.init_DataUtil.clear();
+      if (this.mc.player != null && this.mc.level != null && this.mc.gameMode != null) {
+         if (this.fireTarget != null) {
+            if (!(this.mc.level.getBlockState(this.fireTarget).getBlock() instanceof BaseFireBlock)
+               && AiServerEvidence.blockRevision(this.fireTarget) > this.revisionBefore) {
+               this.extinguished++;
+               this.fireTarget = null;
+               this.aim.clear();
             } else {
-               if (++this.init_I < 20) {
-                  this.load_V();
-                  this.init_Str = "Confirming extinguished fire before fighting or picking up rods";
+               if (++this.waitTicks < 20) {
+                  this.releaseKeys();
+                  this.status = "Confirming extinguished fire before fighting or picking up rods";
                   return true;
                }
 
-               this.init_BlockPos = null;
-               this.init_DataUtil.clear();
+               this.fireTarget = null;
+               this.aim.clear();
             }
          }
 
-         if (this.init_AiOperation != null && !this.init_AiOperation.canInterruptNow()) {
-            AiOperation.Result r = this.init_AiOperation.tick();
+         if (this.approach != null && !this.approach.canInterruptNow()) {
+            AiOperation.Result r = this.approach.tick();
             if (r.terminal()) {
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+               this.approach.cancel();
+               this.approach = null;
             }
 
-            this.init_Str = "Finish the committed approach before extinguishing fire";
+            this.status = "Finish the committed approach before extinguishing fire";
             return true;
          } else {
-            BlockPos feet = this.init_Minecraft.player.blockPosition();
+            BlockPos feet = this.mc.player.blockPosition();
             BlockPos best = null;
             double score = 1.7976931348623157E308;
 
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-6, -1, -6), feet.offset(6, 2, 6))) {
-               if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() instanceof BaseFireBlock) {
-                  boolean body = new AABB(p).inflate(0.2).intersects(this.init_Minecraft.player.getBoundingBox());
+               if (AiTerrain.isLoaded(this.mc.level, p) && this.mc.level.getBlockState(p).getBlock() instanceof BaseFireBlock) {
+                  boolean body = new AABB(p).inflate(0.2).intersects(this.mc.player.getBoundingBox());
                   if (!this.bodyOnly || body) {
                      boolean loot = protectDrops
-                        && !this.init_Minecraft
+                        && !this.mc
                            .level
                            .getEntitiesOfClass(ItemEntity.class, new AABB(p).inflate(1.0), e -> e.getItem().is(Items.BLAZE_ROD))
                            .isEmpty();
                      boolean killFloor = killAt != null && p.getY() <= killAt.y + 1.0 && p.distToCenterSqr(killAt) < 9.0;
-                     boolean nearby = p.distToCenterSqr(this.init_Minecraft.player.position()) < 7.0;
+                     boolean nearby = p.distToCenterSqr(this.mc.player.position()) < 7.0;
                      if (body || loot || killFloor || nearby) {
-                        double cost = p.distToCenterSqr(this.init_Minecraft.player.getEyePosition()) + (body ? -1000 : (loot ? -500 : 0));
+                        double cost = p.distToCenterSqr(this.mc.player.getEyePosition()) + (body ? -1000 : (loot ? -500 : 0));
                         if (cost < score) {
                            score = cost;
                            best = p.immutable();
@@ -116,25 +116,25 @@ final class AiFireControl {
             }
 
             if (best == null) {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               if (this.approach != null) {
+                  this.approach.cancel();
+                  this.approach = null;
                }
 
                return false;
             } else {
                Vec3 point = Vec3.atCenterOf(best);
-               Vec3 eye = this.init_Minecraft.player.getEyePosition();
-               BlockHitResult ray = this.init_Minecraft.level.clip(new ClipContext(eye, point, Block.COLLIDER, Fluid.NONE, this.init_Minecraft.player));
-               boolean reachable = eye.distanceTo(point) < this.init_Minecraft.player.blockInteractionRange() - 0.1
+               Vec3 eye = this.mc.player.getEyePosition();
+               BlockHitResult ray = this.mc.level.clip(new ClipContext(eye, point, Block.COLLIDER, Fluid.NONE, this.mc.player));
+               boolean reachable = eye.distanceTo(point) < this.mc.player.blockInteractionRange() - 0.1
                   && (ray.getType() == Type.MISS || ray.getBlockPos().equals(best));
                if (!reachable) {
                   if (!protectDrops) {
                      return false;
                   }
 
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.travelToCompat(
+                  if (this.approach == null) {
+                     this.approach = AiGoto.travelToCompat(
                         best,
                         3.0,
                         false,
@@ -149,48 +149,48 @@ final class AiFireControl {
                      );
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
-                  this.init_Str = "Reach the burning rod's fire from safe existing floor";
+                  AiOperation.Result r = this.approach.tick();
+                  this.status = "Reach the burning rod's fire from safe existing floor";
                   if (r.terminal()) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                     this.approach.cancel();
+                     this.approach = null;
                      return false;
                   } else {
                      return true;
                   }
                } else {
-                  if (!this.init_Minecraft.player.onGround() && !this.init_Minecraft.player.isInWater() && !this.init_Minecraft.player.onClimbable()) {
+                  if (!this.mc.player.onGround() && !this.mc.player.isInWater() && !this.mc.player.onClimbable()) {
                      return false;
                   }
 
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                  if (this.approach != null) {
+                     this.approach.cancel();
+                     this.approach = null;
                   }
 
-                  this.load_V();
-                  if (this.init_Minecraft.player.isUsingItem()) {
-                     this.init_Minecraft.gameMode.releaseUsingItem(this.init_Minecraft.player);
+                  this.releaseKeys();
+                  if (this.mc.player.isUsingItem()) {
+                     this.mc.gameMode.releaseUsingItem(this.mc.player);
                   }
 
-                  this.init_Minecraft.options.keyUse.setDown(false);
-                  this.init_DataUtil.aimAt(point);
-                  this.init_DataUtil.tick();
-                  this.init_Str = "Extinguish fire before combat and rod collection";
+                  this.mc.options.keyUse.setDown(false);
+                  this.aim.aimAt(point);
+                  this.aim.tick();
+                  this.status = "Extinguish fire before combat and rod collection";
                   Vec3 look = eye.add(
-                     Vec3.directionFromRotation(this.init_Minecraft.player.getXRot(), this.init_Minecraft.player.getYRot())
-                        .scale(this.init_Minecraft.player.blockInteractionRange() - 0.1)
+                     Vec3.directionFromRotation(this.mc.player.getXRot(), this.mc.player.getYRot())
+                        .scale(this.mc.player.blockInteractionRange() - 0.1)
                   );
                   if (new AABB(best).clip(eye, look).isEmpty()) {
                      return true;
                   }
 
-                  this.init_J = AiServerEvidence.blockRevision(best);
-                  this.init_BlockPos = best;
-                  this.init_I = 0;
-                  this.init_Minecraft.gameMode.startDestroyBlock(best, Direction.UP);
-                  Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
-                  this.init_Minecraft.player.resetAttackStrengthTicker();
+                  this.revisionBefore = AiServerEvidence.blockRevision(best);
+                  this.fireTarget = best;
+                  this.waitTicks = 0;
+                  this.mc.gameMode.startDestroyBlock(best, Direction.UP);
+                  Compat263.swing(this.mc.player, InteractionHand.MAIN_HAND);
+                  this.mc.player.resetAttackStrengthTicker();
                   AiRunTrace.emitServiceEvent("blaze_fire_extinguish", AiJson.objectOf("at", best.toShortString(), "priority", "before-combat-and-loot"));
                   return true;
                }
@@ -201,26 +201,26 @@ final class AiFireControl {
       }
    }
 
-   private void load_V() {
+   private void releaseKeys() {
       for (KeyMapping k : new KeyMapping[]{
-         this.init_Minecraft.options.keyUp,
-         this.init_Minecraft.options.keyDown,
-         this.init_Minecraft.options.keyLeft,
-         this.init_Minecraft.options.keyRight,
-         this.init_Minecraft.options.keyJump,
-         this.init_Minecraft.options.keySprint
+         this.mc.options.keyUp,
+         this.mc.options.keyDown,
+         this.mc.options.keyLeft,
+         this.mc.options.keyRight,
+         this.mc.options.keyJump,
+         this.mc.options.keySprint
       }) {
          k.setDown(false);
       }
    }
 
    void reset() {
-      this.init_DataUtil.clear();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
+      this.aim.clear();
+      if (this.approach != null) {
+         this.approach.cancel();
       }
 
-      this.init_AiOperation = null;
-      this.init_BlockPos = null;
+      this.approach = null;
+      this.fireTarget = null;
    }
 }

@@ -12,9 +12,9 @@ import net.minecraft.world.entity.player.Player;
 public final class RecentCombatTracker {
    private static final long init_J = 5000000000L;
    private static final int init_I = 256;
-   private static final Map<UUID, Long> init_Map = new LinkedHashMap<>();
-   private static WeakReference<Object> init_WeakReference = new WeakReference<>(null);
-   private static long load = -9223372036854775808L;
+   private static final Map<UUID, Long> lastHitNanos = new LinkedHashMap<>();
+   private static WeakReference<Object> trackedLevel = new WeakReference<>(null);
+   private static long lastCombatNanos = -9223372036854775808L;
 
    private RecentCombatTracker() {
    }
@@ -24,15 +24,15 @@ public final class RecentCombatTracker {
    }
 
    public static boolean isFreshTarget(Entity target, long now) {
-      load();
+      resetOnLevelChange();
       if (target == null) {
          return true;
       } else {
-         Long last = init_Map.get(target.getUUID());
+         Long last = lastHitNanos.get(target.getUUID());
          if (last == null) {
             return true;
          } else if (now - last >= 5000000000L) {
-            init_Map.remove(target.getUUID());
+            lastHitNanos.remove(target.getUUID());
             return true;
          } else {
             return false;
@@ -43,32 +43,32 @@ public final class RecentCombatTracker {
    public static void onAttack(Player attacker, Entity target) {
       Minecraft mc = Minecraft.getInstance();
       if (attacker != null && attacker == mc.player && !attacker.isSpectator() && target instanceof LivingEntity) {
-         load();
+         resetOnLevelChange();
          long now = System.nanoTime();
-         init_Map.entrySet().removeIf(entry -> now - entry.getValue() >= 5000000000L);
-         init_Map.remove(target.getUUID());
-         if (init_Map.size() >= 256) {
-            init_Map.remove(init_Map.keySet().iterator().next());
+         lastHitNanos.entrySet().removeIf(entry -> now - entry.getValue() >= 5000000000L);
+         lastHitNanos.remove(target.getUUID());
+         if (lastHitNanos.size() >= 256) {
+            lastHitNanos.remove(lastHitNanos.keySet().iterator().next());
          }
 
-         init_Map.put(target.getUUID(), now);
-         load = now;
+         lastHitNanos.put(target.getUUID(), now);
+         lastCombatNanos = now;
       }
    }
 
    public static void markCombat() {
-      load = System.nanoTime();
+      lastCombatNanos = System.nanoTime();
    }
 
    public static boolean inCombatWithin(long nanos) {
-      return load != -9223372036854775808L && System.nanoTime() - load <= nanos;
+      return lastCombatNanos != -9223372036854775808L && System.nanoTime() - lastCombatNanos <= nanos;
    }
 
-   private static void load() {
+   private static void resetOnLevelChange() {
       Object current = Minecraft.getInstance().level;
-      if (init_WeakReference.get() != current) {
-         init_Map.clear();
-         init_WeakReference = new WeakReference<>(current);
+      if (trackedLevel.get() != current) {
+         lastHitNanos.clear();
+         trackedLevel = new WeakReference<>(current);
       }
    }
 }

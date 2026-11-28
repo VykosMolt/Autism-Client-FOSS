@@ -17,10 +17,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.PngInfo;
 
 final class ProfileServerIconCache {
-   private static int init_I;
-   private ServerList init_ServerList;
-   private final Map<String, Optional<ServerData>> init_Map = new HashMap<>();
-   private final Map<ServerData, ProfileServerIconCache.Inner_DataUtil> load = new HashMap<>();
+   private static int nextTextureId;
+   private ServerList serverList;
+   private final Map<String, Optional<ServerData>> serversByPattern = new HashMap<>();
+   private final Map<ServerData, ProfileServerIconCache.Inner_DataUtil> iconCache = new HashMap<>();
 
    ServerData serverFor(String pattern) {
       if (pattern != null && !pattern.isBlank() && !pattern.equals("*")) {
@@ -28,25 +28,25 @@ final class ProfileServerIconCache {
          boolean currentMatches = current != null && AutismProfileManager.matchesAddress(current.ip, pattern);
          return currentMatches && this.hasIcon(current)
             ? current
-            : this.init_Map.computeIfAbsent(pattern, key -> Optional.ofNullable(this.load(key))).orElse(currentMatches ? current : null);
+            : this.serversByPattern.computeIfAbsent(pattern, key -> Optional.ofNullable(this.findServer(key))).orElse(currentMatches ? current : null);
       } else {
          return null;
       }
    }
 
-   private ServerData load(String pattern) {
-      if (this.init_ServerList == null) {
-         this.init_ServerList = new ServerList(Minecraft.getInstance());
-         this.init_ServerList.load();
+   private ServerData findServer(String pattern) {
+      if (this.serverList == null) {
+         this.serverList = new ServerList(Minecraft.getInstance());
+         this.serverList.load();
       }
 
-      ServerData firstMatch = this.init_ServerList.get(pattern);
+      ServerData firstMatch = this.serverList.get(pattern);
       if (this.hasIcon(firstMatch)) {
          return firstMatch;
       }
 
-      for (int i = 0; i < this.init_ServerList.size(); i++) {
-         ServerData server = this.init_ServerList.get(i);
+      for (int i = 0; i < this.serverList.size(); i++) {
+         ServerData server = this.serverList.get(i);
          if (AutismProfileManager.matchesAddress(server.ip, pattern)) {
             if (this.hasIcon(server)) {
                return server;
@@ -62,11 +62,11 @@ final class ProfileServerIconCache {
    }
 
    boolean hasIcon(ServerData server) {
-      return this.init_Identifier_ServerData(server) != null;
+      return this.iconFor(server) != null;
    }
 
    void draw(SyncManager context, ServerData server, Identifier fallback, int x, int y, int size) {
-      Identifier texture = this.init_Identifier_ServerData(server);
+      Identifier texture = this.iconFor(server);
       if (texture != null) {
          context.init_GuiGraphicsExtract().blit(texture, x, y, x + size, y + size, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
@@ -74,14 +74,14 @@ final class ProfileServerIconCache {
       }
    }
 
-   private Identifier init_Identifier_ServerData(ServerData server) {
+   private Identifier iconFor(ServerData server) {
       if (server == null) {
          return null;
       }
 
       byte[] bytes = server.getIconBytes();
-      ProfileServerIconCache.Inner_DataUtil cached = this.load.get(server);
-      if (cached != null && cached.init_BArr() == bytes) {
+      ProfileServerIconCache.Inner_DataUtil cached = this.iconCache.get(server);
+      if (cached != null && cached.bytes() == bytes) {
          return cached.texture();
       }
 
@@ -89,19 +89,19 @@ final class ProfileServerIconCache {
          Minecraft.getInstance().getTextureManager().release(cached.texture());
       }
 
-      Identifier texture = bytes == null ? null : init_Identifier_BArr(bytes);
-      this.load.put(server, new ProfileServerIconCache.Inner_DataUtil(bytes, texture));
+      Identifier texture = bytes == null ? null : registerIcon(bytes);
+      this.iconCache.put(server, new ProfileServerIconCache.Inner_DataUtil(bytes, texture));
       return texture;
    }
 
-   private static Identifier init_Identifier_BArr(byte[] png) {
+   private static Identifier registerIcon(byte[] png) {
       try {
          PngInfo info = PngInfo.fromBytes(png);
          if (info.width() == 64 && info.height() == 64) {
             NativeImage pixels = NativeImage.read(png);
             try {
                DynamicTexture texture = new DynamicTexture(() -> "Profile server icon", pixels);
-               Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/profile_server/" + init_I++);
+               Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/profile_server/" + nextTextureId++);
                Minecraft.getInstance().getTextureManager().register(id, texture);
                return id;
             } catch (Throwable t) {
@@ -119,17 +119,17 @@ final class ProfileServerIconCache {
    void release() {
       TextureManager manager = Minecraft.getInstance().getTextureManager();
 
-      for (ProfileServerIconCache.Inner_DataUtil cached : this.load.values()) {
+      for (ProfileServerIconCache.Inner_DataUtil cached : this.iconCache.values()) {
          if (cached.texture() != null) {
             manager.release(cached.texture());
          }
       }
 
-      this.load.clear();
-      this.init_Map.clear();
-      this.init_ServerList = null;
+      this.iconCache.clear();
+      this.serversByPattern.clear();
+      this.serverList = null;
    }
 
-   private record Inner_DataUtil(byte[] init_BArr, Identifier texture) {
+   private record Inner_DataUtil(byte[] bytes, Identifier texture) {
    }
 }

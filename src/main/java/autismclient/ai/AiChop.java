@@ -18,16 +18,16 @@ import net.minecraft.core.Vec3i;
 final class AiChop {
    static final int init_I = 64;
    private static final int[][] COLUMN_OFFSETS = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {0, 0}};
-   private static final int[][] load = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+   private static final int[][] HORIZONTAL_STEPS = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
    private AiChop() {
    }
 
-   static boolean init(String arg, String blockId) {
+   static boolean matchesTarget(String arg, String blockId) {
       return autismclient.ai.engine.AiMine.matchesBlock(arg, blockId);
    }
 
-   static List<BlockPos> init(Predicate<BlockPos> matches, BlockPos start, int cap) {
+   static List<BlockPos> floodVein(Predicate<BlockPos> matches, BlockPos start, int cap) {
       if (cap >= 1 && matches.test(start)) {
          List<BlockPos> result = new ArrayList<>();
          Set<Long> visited = new HashSet<>();
@@ -59,7 +59,7 @@ final class AiChop {
       }
    }
 
-   static List<BlockPos> init(Collection<BlockPos> veinBlocks, BlockPos reference) {
+   static List<BlockPos> orderBottomUp(Collection<BlockPos> veinBlocks, BlockPos reference) {
       List<BlockPos> ordered = new ArrayList<>(veinBlocks);
       ordered.sort(Comparator.comparingInt(Vec3i::getY).thenComparingLong(p -> {
          long dx = p.getX() - reference.getX();
@@ -69,7 +69,7 @@ final class AiChop {
       return ordered;
    }
 
-   static BlockPos init(List<BlockPos> remainingBottomUp, Predicate<BlockPos> directlyBreakable) {
+   static BlockPos firstBreakable(List<BlockPos> remainingBottomUp, Predicate<BlockPos> directlyBreakable) {
       for (BlockPos pos : remainingBottomUp) {
          if (directlyBreakable.test(pos)) {
             return pos;
@@ -79,19 +79,19 @@ final class AiChop {
       return null;
    }
 
-   static List<BlockPos> init(BlockPos target, List<BlockPos> veinBottomUp, Predicate<BlockPos> support, Predicate<BlockPos> clear, BlockPos reference) {
+   static List<BlockPos> standCandidates(BlockPos target, List<BlockPos> veinBottomUp, Predicate<BlockPos> support, Predicate<BlockPos> clear, BlockPos reference) {
       List<BlockPos> candidates = new ArrayList<>();
       Set<Long> seen = new HashSet<>();
 
       for (int[] column : COLUMN_OFFSETS) {
-         init(candidates, seen, new BlockPos(target.getX() + column[0], target.getY() - 1, target.getZ() + column[1]));
+         addUnseen(candidates, seen, new BlockPos(target.getX() + column[0], target.getY() - 1, target.getZ() + column[1]));
       }
 
       for (BlockPos v : veinBottomUp) {
-         init(candidates, seen, v, support, clear);
+         addStandIfValid(candidates, seen, v, support, clear);
 
-         for (int[] d : load) {
-            init(candidates, seen, v.offset(d[0], 0, d[1]), support, clear);
+         for (int[] d : HORIZONTAL_STEPS) {
+            addStandIfValid(candidates, seen, v.offset(d[0], 0, d[1]), support, clear);
          }
       }
 
@@ -99,19 +99,19 @@ final class AiChop {
       return candidates;
    }
 
-   private static void init(List<BlockPos> candidates, Set<Long> seen, BlockPos pos) {
+   private static void addUnseen(List<BlockPos> candidates, Set<Long> seen, BlockPos pos) {
       if (seen.add(pos.asLong())) {
          candidates.add(pos);
       }
    }
 
-   private static void init(List<BlockPos> candidates, Set<Long> seen, BlockPos floor, Predicate<BlockPos> support, Predicate<BlockPos> clear) {
+   private static void addStandIfValid(List<BlockPos> candidates, Set<Long> seen, BlockPos floor, Predicate<BlockPos> support, Predicate<BlockPos> clear) {
       if (support.test(floor) && clear.test(floor.above()) && clear.test(floor.above(2))) {
-         init(candidates, seen, floor.above());
+         addUnseen(candidates, seen, floor.above());
       }
    }
 
-   static List<AiChop.Inner_DataUtil.Inner_StreamUtil> init(List<AiChop.Inner_DataUtil.Inner_StreamUtil> drops) {
+   static List<AiChop.Inner_DataUtil.Inner_StreamUtil> orderDrops(List<AiChop.Inner_DataUtil.Inner_StreamUtil> drops) {
       List<AiChop.Inner_DataUtil.Inner_StreamUtil> ordered = new ArrayList<>(drops);
       ordered.sort(
          Comparator.comparingDouble(AiChop.Inner_DataUtil.Inner_StreamUtil::distanceSqr).thenComparingInt(AiChop.Inner_DataUtil.Inner_StreamUtil::entityId)
@@ -119,7 +119,7 @@ final class AiChop {
       return ordered;
    }
 
-   static AiOperation.Status init(boolean countReached, boolean queueEmpty, int chopped, int skipped) {
+   static AiOperation.Status finalStatus(boolean countReached, boolean queueEmpty, int chopped, int skipped) {
       if (countReached) {
          return AiOperation.Status.SUCCEEDED;
       } else if (!queueEmpty) {
@@ -166,13 +166,13 @@ final class AiChop {
       static final int init_I = 3;
       private final LinkedList<AiChop.Inner_DataUtil.Inner_CachePool> queue = new LinkedList<>();
 
-      void init(List<BlockPos> ordered) {
+      void enqueueBlocks(List<BlockPos> ordered) {
          for (BlockPos pos : ordered) {
             this.queue.addLast(new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, 0));
          }
       }
 
-      void load(List<AiChop.Inner_DataUtil.Inner_StreamUtil> nearestFirst) {
+      void pushDropsFirst(List<AiChop.Inner_DataUtil.Inner_StreamUtil> nearestFirst) {
          for (int i = nearestFirst.size() - 1; i >= 0; i--) {
             this.queue.addFirst(nearestFirst.get(i));
          }
@@ -233,7 +233,7 @@ final class AiChop {
          return -1;
       }
 
-      int load(BlockPos pos) {
+      int failuresAt(BlockPos pos) {
          for (AiChop.Inner_DataUtil.Inner_CachePool target : this.queue) {
             if (target instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
                return b.failures();

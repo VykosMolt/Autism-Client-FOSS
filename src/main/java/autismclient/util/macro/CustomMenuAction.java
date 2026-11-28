@@ -15,12 +15,12 @@ import net.minecraft.network.protocol.Packet;
 
 public final class CustomMenuAction implements MacroAction {
    private static final long init_J = 15000L;
-   private static String init_Str = "";
-   private static long load;
+   private static String lastError = "";
+   private static long lastErrorAt;
    public final ArrayList<String> fieldValues = new ArrayList<>();
    public String clickButton = "";
    public int timeoutMs = 30000;
-   private boolean init_Z = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -64,20 +64,20 @@ public final class CustomMenuAction implements MacroAction {
                   continue;
                }
 
-               this.init(prepared.error());
+               this.reportFailure(prepared.error());
                return;
             }
 
             Screen answered = autismclient.util.custommenu.DialogScreenBridge.currentScreen(mc);
             CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, prepared.submission());
             if (!result.success()) {
-               this.init(result.error());
+               this.reportFailure(result.error());
                return;
             }
 
             for (Packet<?> packet : result.packets()) {
                if (!autismclient.util.JoinMacroController.init(packet)) {
-                  this.init("Connection closed before custom-menu submission");
+                  this.reportFailure("Connection closed before custom-menu submission");
                   return;
                }
             }
@@ -88,22 +88,22 @@ public final class CustomMenuAction implements MacroAction {
          }
       }
 
-      this.init(lastError.isBlank() ? "Custom screen never appeared (timed out)" : lastError + " (timed out)");
+      this.reportFailure(lastError.isBlank() ? "Custom screen never appeared (timed out)" : lastError + " (timed out)");
    }
 
-   private void init(String reason) {
-      load(reason != null && !reason.isBlank() ? reason : "Custom screen action failed");
+   private void reportFailure(String reason) {
+      showThrottled(reason != null && !reason.isBlank() ? reason : "Custom screen action failed");
    }
 
-   private static void load(String message) {
+   private static void showThrottled(String message) {
       long now = System.currentTimeMillis();
       synchronized (CustomMenuAction.class) {
-         if (message.equals(init_Str) && now - load < 15000L) {
+         if (message.equals(lastError) && now - lastErrorAt < 15000L) {
             return;
          }
 
-         init_Str = message;
-         load = now;
+         lastError = message;
+         lastErrorAt = now;
       }
 
       bi.read(message);
@@ -125,7 +125,7 @@ public final class CustomMenuAction implements MacroAction {
       tag.put("fieldValues", MacroNbtCodecHelper.toStringListTag(this.fieldValues));
       tag.putString("clickButton", this.clickButton);
       tag.putInt("timeoutMs", this.timeout());
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -164,7 +164,7 @@ public final class CustomMenuAction implements MacroAction {
       }
 
       this.timeoutMs = Math.max(100, Math.min(120000, tag.getIntOr("timeoutMs", 30000)));
-      this.init_Z = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    @Override
@@ -180,11 +180,11 @@ public final class CustomMenuAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init_Z = enabled;
+      this.enabled = enabled;
    }
 }

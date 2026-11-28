@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.network.protocol.Packet;
 
 public class PacketNameArgumentType implements ArgumentType<String> {
-   private static volatile List<PacketNameArgumentType.Inner_DataUtil> init;
+   private static volatile List<PacketNameArgumentType.Inner_DataUtil> cachedHits;
 
    public static PacketNameArgumentType packetName() {
       return new PacketNameArgumentType();
@@ -26,10 +26,10 @@ public class PacketNameArgumentType implements ArgumentType<String> {
    }
 
    public String parse(StringReader reader) throws CommandSyntaxException {
-      return this.init(reader);
+      return this.readName(reader);
    }
 
-   public String init(StringReader reader) {
+   public String readName(StringReader reader) {
       return reader.readUnquotedString();
    }
 
@@ -37,7 +37,7 @@ public class PacketNameArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (PacketNameArgumentType.Inner_DataUtil candidate : init_List()) {
+      for (PacketNameArgumentType.Inner_DataUtil candidate : namesForSuggestions()) {
          if (candidate.load().contains(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -46,8 +46,8 @@ public class PacketNameArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<PacketNameArgumentType.Inner_DataUtil> init_List() {
-      List<PacketNameArgumentType.Inner_DataUtil> hit = init;
+   private static List<PacketNameArgumentType.Inner_DataUtil> namesForSuggestions() {
+      List<PacketNameArgumentType.Inner_DataUtil> hit = cachedHits;
       if (hit != null) {
          return hit;
       }
@@ -62,7 +62,7 @@ public class PacketNameArgumentType implements ArgumentType<String> {
       }
 
       hit = List.copyOf(rebuilt);
-      init = hit;
+      cachedHits = hit;
       return hit;
    }
 

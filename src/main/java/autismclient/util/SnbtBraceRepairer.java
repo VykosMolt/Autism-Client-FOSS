@@ -34,7 +34,7 @@ public final class SnbtBraceRepairer {
       for (SnbtBraceRepairer.Inner_StreamUtil t : in) {
          if (deficit > 0 && t.kind != SnbtBraceRepairer.Inner_DataUtil.CLOSE && prev != null && t.init_I > prev.init_I) {
             while (deficit > 0 && !open.isEmpty() && open.peek().init_I < t.init_I && t.load <= open.peek().load) {
-               init(out, open.pop());
+               closeOpener(out, open.pop());
                deficit--;
             }
 
@@ -43,7 +43,7 @@ public final class SnbtBraceRepairer {
 
          switch (t.kind) {
             case OPEN:
-               init(out, prev, t);
+               appendWithSeparator(out, prev, t);
                open.push(t);
                out.add(t);
                break;
@@ -69,7 +69,7 @@ public final class SnbtBraceRepairer {
                out.add(t);
                break;
             default:
-               init(out, prev, t);
+               appendWithSeparator(out, prev, t);
                out.add(t);
          }
 
@@ -80,7 +80,7 @@ public final class SnbtBraceRepairer {
 
       while (!open.isEmpty()) {
          init_V(out);
-         init(out, open.pop());
+         closeOpener(out, open.pop());
       }
 
       StringBuilder sb = new StringBuilder();
@@ -92,7 +92,7 @@ public final class SnbtBraceRepairer {
       return sb.isEmpty() ? "{}" : sb.toString();
    }
 
-   private static void init(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil prev, SnbtBraceRepairer.Inner_StreamUtil t) {
+   private static void appendWithSeparator(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil prev, SnbtBraceRepairer.Inner_StreamUtil t) {
       if (prev != null) {
          boolean prevEnds = prev.kind == SnbtBraceRepairer.Inner_DataUtil.ATOM
             || prev.kind == SnbtBraceRepairer.Inner_DataUtil.STRING
@@ -106,7 +106,7 @@ public final class SnbtBraceRepairer {
       }
    }
 
-   private static void init(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil opener) {
+   private static void closeOpener(List<SnbtBraceRepairer.Inner_StreamUtil> out, SnbtBraceRepairer.Inner_StreamUtil opener) {
       SnbtBraceRepairer.Inner_StreamUtil trailing = null;
       if (!out.isEmpty() && out.get(out.size() - 1).kind == SnbtBraceRepairer.Inner_DataUtil.COMMA) {
          trailing = out.remove(out.size() - 1);

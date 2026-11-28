@@ -84,30 +84,30 @@ public final class ToolsCommand extends Command {
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("schema")
-               .executes(ctx -> this.sync("Missing capability id\nUsage: " + prefix() + "tools schema <id>")))
+               .executes(ctx -> this.reply("Missing capability id\nUsage: " + prefix() + "tools schema <id>")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("id", StringArgumentType.greedyString())
                   .suggests(ToolsCommand::init_CompletableFuture_CommandContext_SuggestionsBuilder)
-                  .executes(ctx -> this.load(StringArgumentType.getString(ctx, "id")))
+                  .executes(ctx -> this.describeTool(StringArgumentType.getString(ctx, "id")))
             )
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("call")
-               .executes(ctx -> this.sync("Missing capability id\nUsage: " + prefix() + "tools call <id> [k=v ...]")))
+               .executes(ctx -> this.reply("Missing capability id\nUsage: " + prefix() + "tools call <id> [k=v ...]")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("invocation", StringArgumentType.greedyString())
                   .suggests((ctx, builder) -> AiToolsSuggest.suggestTools(builder))
-                  .executes(ctx -> this.read(StringArgumentType.getString(ctx, "invocation")))
+                  .executes(ctx -> this.runInvocation(StringArgumentType.getString(ctx, "invocation")))
             )
       );
 
       for (String sub : SUBCOMMANDS) {
          LiteralArgumentBuilder<AutismCommandSource> shorthand = (LiteralArgumentBuilder<AutismCommandSource>)LiteralArgumentBuilder.<AutismCommandSource>literal(sub)
-            .executes(ctx -> this.load(sub, ""));
+            .executes(ctx -> this.runSubcommand(sub, ""));
          shorthand.then(
             RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString())
                .suggests((ctx, builder) -> AiToolsSuggest.suggestArgs(sub, builder))
-               .executes(ctx -> this.load(sub, StringArgumentType.getString(ctx, "args")))
+               .executes(ctx -> this.runSubcommand(sub, StringArgumentType.getString(ctx, "args")))
          );
          root.then(shorthand);
       }
@@ -125,7 +125,7 @@ public final class ToolsCommand extends Command {
          AiDirectOps.resume();
          return 1;
       }));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("settings").executes(ctx -> this.read()));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("settings").executes(ctx -> this.openToolsScreen()));
    }
 
    private int printHelp() {
@@ -205,7 +205,7 @@ public final class ToolsCommand extends Command {
          }
 
          if (family == null) {
-            this.sync("Unknown category '" + category + "'\nCategories: " + String.join(", ", grouped.keySet()));
+            this.reply("Unknown category '" + category + "'\nCategories: " + String.join(", ", grouped.keySet()));
             return 1;
          }
 
@@ -229,15 +229,15 @@ public final class ToolsCommand extends Command {
       }
    }
 
-   private int load(String rawId) {
+   private int describeTool(String rawId) {
       String id = resolveToolId(rawId);
       if (id == null) {
-         return this.update(rawId);
+         return this.unknownTool(rawId);
       }
 
       AiCatalog.Entry entry = AiDirectOps.catalogEntry(id);
       if (entry == null) {
-         return this.update(rawId);
+         return this.unknownTool(rawId);
       }
 
       send("§f" + id + " §8[" + entry.contract().family() + "]");
@@ -271,7 +271,7 @@ public final class ToolsCommand extends Command {
       }
    }
 
-   private int read(String invocation) {
+   private int runInvocation(String invocation) {
       String trimmed = invocation.trim();
       int space = -1;
 
@@ -290,20 +290,20 @@ public final class ToolsCommand extends Command {
    private int init_I_Str_Str(String rawId, String argsString) {
       String id = resolveToolId(rawId);
       if (id == null) {
-         return this.update(rawId);
+         return this.unknownTool(rawId);
       }
 
       JsonObject args;
       try {
          args = AiToolCallParser.parse(argsString);
       } catch (IllegalArgumentException e) {
-         return this.sync(e.getMessage());
+         return this.reply(e.getMessage());
       }
 
       try {
          args = init_JsonObject_Str_JsonObject(id, args);
       } catch (IllegalArgumentException e) {
-         return this.sync(e.getMessage());
+         return this.reply(e.getMessage());
       }
 
       return this.init_I_Str_JsonObject(id, args);
@@ -334,16 +334,16 @@ public final class ToolsCommand extends Command {
       return out;
    }
 
-   private int load(String sub, String argsString) {
+   private int runSubcommand(String sub, String argsString) {
       if (sub.equals("build")) {
-         return this.write(argsString.trim());
+         return this.buildFromArgs(argsString.trim());
       }
 
       List<String> args;
       try {
          args = AiToolCallParser.tokenize(argsString);
       } catch (IllegalArgumentException e) {
-         return this.sync(e.getMessage());
+         return this.reply(e.getMessage());
       }
 
       boolean parkour = sub.equals("parkour");
@@ -353,11 +353,11 @@ public final class ToolsCommand extends Command {
          try {
             parkourOptions = parkour ? AiToolCallParser.parseParkourFlags(args) : new AiToolCallParser.ParkourFlags(false, -1);
          } catch (IllegalArgumentException e) {
-            return this.sync(e.getMessage());
+            return this.reply(e.getMessage());
          }
 
          return !aP.init_Z_Z_cy_CachePool(parkour, parkourOptions)
-            ? this.sync("Join a world and stop any running movement task before choosing a destination")
+            ? this.reply("Join a world and stop any running movement task before choosing a destination")
             : 1;
       }
 
@@ -370,15 +370,15 @@ public final class ToolsCommand extends Command {
       try {
          invocation = AiToolCallParser.parse(sub, args, px, py, pz);
       } catch (IllegalArgumentException e) {
-         return this.sync(e.getMessage());
+         return this.reply(e.getMessage());
       }
 
       return this.init_I_Str_JsonObject(invocation.id(), invocation.arguments());
    }
 
-   private int write(String name) {
+   private int buildFromArgs(String name) {
       if (name.isEmpty()) {
-         this.sync(
+         this.reply(
             "Usage: "
                + prefix()
                + "tools build <schematic name|blueprint file|{inline json}>"
@@ -391,7 +391,7 @@ public final class ToolsCommand extends Command {
       if (!name.startsWith("{")) {
          String clean = name.endsWith(".json") ? name.substring(0, name.length() - 5) : name;
          if (clean.contains("..")) {
-            return this.sync("Blueprint names are plain file names (no paths)");
+            return this.reply("Blueprint names are plain file names (no paths)");
          }
 
          Path file = AiDirectOps.blueprintsDir().resolve(clean + ".json");
@@ -399,21 +399,21 @@ public final class ToolsCommand extends Command {
             String content;
             try {
                if (Files.size(file) > 8_000_000L) {
-                  return this.sync("Blueprint file exceeds the 2,000,000 character limit");
+                  return this.reply("Blueprint file exceeds the 2,000,000 character limit");
                }
                content = Files.readString(file);
             } catch (Exception e) {
-               return this.sync("Could not read blueprint: " + e.getMessage());
+               return this.reply("Could not read blueprint: " + e.getMessage());
             }
 
             if (content.length() > 2000000) {
-               return this.sync("Blueprint exceeds the 2,000,000 character limit");
+               return this.reply("Blueprint exceeds the 2,000,000 character limit");
             }
 
             try {
                AiJson.parseObject(content);
             } catch (Exception e) {
-               return this.sync("Blueprint is not a JSON object: " + e.getMessage());
+               return this.reply("Blueprint is not a JSON object: " + e.getMessage());
             }
 
             return this.init_I_Str_JsonObject("game:build", AiJson.objectOf("blueprint", content));
@@ -423,13 +423,13 @@ public final class ToolsCommand extends Command {
       } else {
          String content = name;
          if (content.length() > 2000000) {
-            return this.sync("Blueprint exceeds the 2,000,000 character limit");
+            return this.reply("Blueprint exceeds the 2,000,000 character limit");
          }
 
          try {
             AiJson.parseObject(content);
          } catch (Exception e) {
-            return this.sync("Blueprint is not a JSON object: " + e.getMessage());
+            return this.reply("Blueprint is not a JSON object: " + e.getMessage());
          }
 
          return this.init_I_Str_JsonObject("game:build", AiJson.objectOf("blueprint", content));
@@ -444,7 +444,7 @@ public final class ToolsCommand extends Command {
       return 1;
    }
 
-   private int read() {
+   private int openToolsScreen() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.gui != null) {
          mc.execute(() -> mc.gui.setScreen(new autismclient.gui.screens.AiToolsScreen(mc.gui.screen())));
@@ -459,9 +459,9 @@ public final class ToolsCommand extends Command {
          AiDirectOps.run(id, args);
          return 1;
       } catch (IllegalArgumentException | IllegalStateException e) {
-         return this.sync(e.getMessage());
+         return this.reply(e.getMessage());
       } catch (Throwable t) {
-         return this.sync(id + " could not start: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
+         return this.reply(id + " could not start: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
       }
    }
 
@@ -469,8 +469,8 @@ public final class ToolsCommand extends Command {
       return AiDirectOps.resolveToolId(raw);
    }
 
-   private int update(String raw) {
-      this.sync("Unknown capability: §f" + raw);
+   private int unknownTool(String raw) {
+      this.reply("Unknown capability: §f" + raw);
       List<String> ids = new ArrayList<>();
 
       for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
@@ -559,7 +559,7 @@ public final class ToolsCommand extends Command {
       return out.toString();
    }
 
-   private int sync(String message) {
+   private int reply(String message) {
       for (String line : (message == null ? "error" : message).split("\n")) {
          AutismClientMessaging.sendPrefixed((line.startsWith("Usage:") ? "§e" : "§c") + line.replace(".tools", prefix() + "tools"));
       }

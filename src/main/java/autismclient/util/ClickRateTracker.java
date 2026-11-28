@@ -8,7 +8,7 @@ public final class ClickRateTracker {
    private static final long[] init_JArr = new long[48];
    private static final long[] load_JArr = new long[48];
    private static int load_I;
-   private static int read;
+   private static int rightIndex;
 
    private ClickRateTracker() {
    }
@@ -19,31 +19,31 @@ public final class ClickRateTracker {
    }
 
    public static void recordRightClick() {
-      load_JArr[read] = System.nanoTime();
-      read = (read + 1) % 48;
+      load_JArr[rightIndex] = System.nanoTime();
+      rightIndex = (rightIndex + 1) % 48;
    }
 
    public static int leftCps() {
-      return init(init_JArr);
+      return countLastSecond(init_JArr);
    }
 
    public static int rightCps() {
-      return init(load_JArr);
+      return countLastSecond(load_JArr);
    }
 
-   public static int read() {
+   public static int totalCps() {
       return leftCps() + rightCps();
    }
 
    public static boolean init(long ms) {
-      return init(init_JArr, load_I, ms);
+      return clickedWithin(init_JArr, load_I, ms);
    }
 
    public static boolean recentUse(long ms) {
-      return init(load_JArr, read, ms);
+      return clickedWithin(load_JArr, rightIndex, ms);
    }
 
-   public static void init(long after, LongConsumer sink) {
+   public static void forEachClickAfter(long after, LongConsumer sink) {
       for (int i = 0; i < 48; i++) {
          long at = init_JArr[(load_I + i) % 48];
          if (at > after) {
@@ -52,12 +52,12 @@ public final class ClickRateTracker {
       }
    }
 
-   private static boolean init(long[] ring, int idx, long ms) {
+   private static boolean clickedWithin(long[] ring, int idx, long ms) {
       long newest = ring[(idx + 48 - 1) % 48];
       return newest != 0L && newest > System.nanoTime() - ms * 1000000L;
    }
 
-   private static int init(long[] ring) {
+   private static int countLastSecond(long[] ring) {
       long cutoff = System.nanoTime() - 1000000000L;
       int c = 0;
 

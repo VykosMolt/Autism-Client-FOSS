@@ -10,12 +10,12 @@ public final class AiStrafe {
    private AiStrafe() {
    }
 
-   static double init(float yawDeg, double vx, double vz) {
+   static double lateral(float yawDeg, double vx, double vz) {
       double r = Math.toRadians(yawDeg);
       return vx * Math.cos(r) + vz * Math.sin(r);
    }
 
-   static double init(float yawDeg, double bodyX, double bodyZ, double centreX, double centreZ, double dirX, double dirZ) {
+   static double lateralOffset(float yawDeg, double bodyX, double bodyZ, double centreX, double centreZ, double dirX, double dirZ) {
       double vx = centreX - bodyX;
       double vz = centreZ - bodyZ;
       double len = Math.hypot(dirX, dirZ);
@@ -27,10 +27,10 @@ public final class AiStrafe {
          vz -= along * uz;
       }
 
-      return init(yawDeg, vx, vz);
+      return lateral(yawDeg, vx, vz);
    }
 
-   static int init(double offset, boolean narrow, boolean blocked, double currentLeft, int blockedTicks) {
+   static int strafeDirection(double offset, boolean narrow, boolean blocked, double currentLeft, int blockedTicks) {
       double tolerance = narrow ? 0.12 : (blocked ? 0.08 : 1.0 / 0.0);
       if (Math.abs(offset) > tolerance) {
          return offset > 0.0 ? 1 : -1;
@@ -44,7 +44,7 @@ public final class AiStrafe {
       }
    }
 
-   static boolean init(boolean horizontalCollision, double speedX, double speedZ) {
+   static boolean isStuck(boolean horizontalCollision, double speedX, double speedZ) {
       return horizontalCollision && Math.hypot(speedX, speedZ) < 0.06;
    }
 }

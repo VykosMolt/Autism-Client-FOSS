@@ -33,13 +33,13 @@ final class AiObsidian {
       return init(1, seconds);
    }
 
-   static AiObsidian.Inner_StreamUtil init(int want, int water, int empty) {
+   static AiObsidian.Inner_StreamUtil bucketPlan(int want, int water, int empty) {
       int target = Math.max(0, want - Math.max(0, water));
       int craft = Math.max(0, target - Math.max(0, empty));
       return new AiObsidian.Inner_StreamUtil(target, craft, craft * 3);
    }
 
-   static boolean init(int want, int water, boolean childActive) {
+   static boolean hasEnoughWater(int want, int water, boolean childActive) {
       return !childActive && water >= want;
    }
 
@@ -57,7 +57,7 @@ final class AiObsidian {
          boolean init_Z;
          boolean load_Z;
          boolean read_Z;
-         boolean write;
+         boolean tableCraftTried;
          final AiPreparationReceipt receipt = new AiPreparationReceipt();
          final Set<BlockPos> init_Set = new HashSet<>();
 
@@ -75,15 +75,15 @@ final class AiObsidian {
          public AiOperation.Result tick() {
             if (!this.init_Z && this.mc.player != null && this.mc.level != null) {
                if (this.mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-                  return this.init(AiOperation.Status.FAILED, "Water cannot be prepared in a dimension where it evaporates");
+                  return this.finish(AiOperation.Status.FAILED, "Water cannot be prepared in a dimension where it evaporates");
                }
 
-               if (AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), this.init_AiOperation != null)) {
-                  return this.init(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
+               if (AiObsidian.hasEnoughWater(want, AiCraft.countItem("minecraft:water_bucket"), this.init_AiOperation != null)) {
+                  return this.finish(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
                }
 
                if (System.nanoTime() > this.deadlineNanos) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Water preparation deadline");
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Water preparation deadline");
                }
 
                if (this.init_AiOperation != null) {
@@ -95,12 +95,12 @@ final class AiObsidian {
                   this.receipt.cancelChild(this.init_AiOperation);
                   this.init_AiOperation = null;
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
-                     return this.init(AiOperation.Status.UNCERTAIN, result.message());
+                     return this.finish(AiOperation.Status.UNCERTAIN, result.message());
                   }
 
                   if (result.status() != AiOperation.Status.SUCCEEDED) {
                      if (this.init_Str.equals("carry")) {
-                        return this.init(result.status(), "Crafting table recovery: " + result.message());
+                        return this.finish(result.status(), "Crafting table recovery: " + result.message());
                      }
 
                      if (this.init_BlockPos != null && this.init_Set.size() < 4) {
@@ -110,7 +110,7 @@ final class AiObsidian {
                         return AiObsidian.running("Trying another reachable water source");
                      }
 
-                     return this.init(result.status(), result.message());
+                     return this.finish(result.status(), result.message());
                   }
 
                   if (this.init_Str.equals("fill")) {
@@ -118,7 +118,7 @@ final class AiObsidian {
                   }
 
                   if (this.init_Str.equals("approach")) {
-                     this.init_BlockPos = AiObsidian.init(result, this.init_BlockPos);
+                     this.init_BlockPos = AiObsidian.fluidSourceOf(result, this.init_BlockPos);
                   }
 
                   if (!this.init_Str.equals("carry")) {
@@ -139,14 +139,14 @@ final class AiObsidian {
                   }
                }
 
-               if (AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), false)) {
-                  return this.init(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
+               if (AiObsidian.hasEnoughWater(want, AiCraft.countItem("minecraft:water_bucket"), false)) {
+                  return this.finish(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
                }
 
-               AiObsidian.Inner_StreamUtil stock = AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), AiCraft.countItem("minecraft:bucket"));
+               AiObsidian.Inner_StreamUtil stock = AiObsidian.bucketPlan(want, AiCraft.countItem("minecraft:water_bucket"), AiCraft.countItem("minecraft:bucket"));
                if (stock.craft() > 0) {
                   if (AiCraft.countItem("minecraft:water_bucket") > 0 && AiCraft.countItem("minecraft:iron_ingot") < stock.iron()) {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.FAILED,
                         "Need "
                            + want
@@ -177,8 +177,8 @@ final class AiObsidian {
                   );
                   return AiObsidian.running("Preparing all empty water buckets before travelling");
                } else {
-                  if (AiRunResources.isCampaignActive() && !this.write && AiCraft.countItem("minecraft:crafting_table") == 0) {
-                     this.write = true;
+                  if (AiRunResources.isCampaignActive() && !this.tableCraftTried && AiCraft.countItem("minecraft:crafting_table") == 0) {
+                     this.tableCraftTried = true;
                      AiOperation carry = AiProgression.reclaimTable(Math.min(90, AiObsidian.secondsLeft(this.deadlineNanos)));
                      if (carry != null) {
                         this.init_AiOperation = carry;
@@ -204,7 +204,7 @@ final class AiObsidian {
                      }
 
                      if (this.init_BlockPos == null) {
-                        return this.init(AiOperation.Status.FAILED, "No exposed water source in loaded terrain for the bucket");
+                        return this.finish(AiOperation.Status.FAILED, "No exposed water source in loaded terrain for the bucket");
                      }
                   }
 
@@ -234,11 +234,11 @@ final class AiObsidian {
                   return AiObsidian.running(this.init_I == 0 ? "Approaching the water source" : "Filling the water bucket");
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Water preparation cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Water preparation cancelled");
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             JsonObject data = AiJson.objectOf(
                "wantedWaterBuckets",
                want,
@@ -269,7 +269,7 @@ final class AiObsidian {
       };
    }
 
-   private static BlockPos init(AiOperation.Result result, BlockPos fallback) {
+   private static BlockPos fluidSourceOf(AiOperation.Result result, BlockPos fallback) {
       JsonObject data = AiJson.parseObject(result.dataJson());
       return data.has("fluidSourceX") && data.has("fluidSourceY") && data.has("fluidSourceZ")
          ? new BlockPos(data.get("fluidSourceX").getAsInt(), data.get("fluidSourceY").getAsInt(), data.get("fluidSourceZ").getAsInt())
@@ -277,7 +277,7 @@ final class AiObsidian {
    }
 
    static AiOperation load(final int held, int seconds) {
-      final AiOperation acquisition = read(held, seconds);
+      final AiOperation acquisition = acquireObsidian(held, seconds);
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
@@ -315,10 +315,10 @@ final class AiObsidian {
       };
    }
 
-   private static AiOperation read(final int held, final int seconds) {
+   private static AiOperation acquireObsidian(final int held, final int seconds) {
       Minecraft mc = Minecraft.getInstance();
       if (AiCraft.countItem("minecraft:lava_bucket") > 0) {
-         return write(held, seconds);
+         return castObsidian(held, seconds);
       } else {
          return AiTerrain.nearestBlockDistSqr(mc, List.of(Blocks.OBSIDIAN), 48, pos -> {
                for (Direction d : Direction.values()) {
@@ -342,7 +342,7 @@ final class AiObsidian {
                   if (result.terminal() && result.status() != AiOperation.Status.SUCCEEDED && result.status() != AiOperation.Status.CANCELLED && !this.init_Z) {
                      this.mine.cancel();
                      this.init_Z = true;
-                     this.mine = AiObsidian.write(held, AiObsidian.secondsLeft(this.deadlineNanos));
+                     this.mine = AiObsidian.castObsidian(held, AiObsidian.secondsLeft(this.deadlineNanos));
                      return AiObsidian.running("Casting obsidian after the existing sources proved inaccessible");
                   } else {
                      return result;
@@ -364,11 +364,11 @@ final class AiObsidian {
                   this.mine.cancel();
                }
             }
-            : write(held, seconds);
+            : castObsidian(held, seconds);
       }
    }
 
-   private static AiOperation write(final int held, final int seconds) {
+   private static AiOperation castObsidian(final int held, final int seconds) {
       return new AiOperation() {
          final Minecraft mc = Minecraft.getInstance();
          final long deadlineNanos = System.nanoTime() + Math.max(10, seconds) * 1000000000L;
@@ -386,7 +386,7 @@ final class AiObsidian {
          int read_I;
          int write_I;
          final int startObsidian = AiCraft.countItem("minecraft:obsidian");
-         int sync;
+         int excavateIndex;
          boolean init_Z;
          boolean load_Z;
          boolean keysHeld;
@@ -409,11 +409,11 @@ final class AiObsidian {
          public AiOperation.Result tick() {
             if (!this.init_Z && this.mc.player != null && this.mc.level != null) {
                if (System.nanoTime() > this.deadlineNanos) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Obsidian casting deadline");
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Obsidian casting deadline");
                }
 
                if (this.mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-                  return this.init(AiOperation.Status.FAILED, "Water evaporates in this dimension; refusing to cast obsidian");
+                  return this.finish(AiOperation.Status.FAILED, "Water evaporates in this dimension; refusing to cast obsidian");
                }
 
                if (this.init_AiOperation != null) {
@@ -436,11 +436,11 @@ final class AiObsidian {
                         }
                      }
 
-                     return this.init(result.status(), result.message());
+                     return this.finish(result.status(), result.message());
                   }
 
                   if (this.stage == AiObsidian.Inner_DataUtil.GO_SOURCE || this.stage == AiObsidian.Inner_DataUtil.REFILL) {
-                     this.init_BlockPos = AiObsidian.init(result, this.init_BlockPos);
+                     this.init_BlockPos = AiObsidian.fluidSourceOf(result, this.init_BlockPos);
                   }
 
                   AiObsidian.Inner_DataUtil var10001;
@@ -526,7 +526,7 @@ final class AiObsidian {
                      this.init_BlockPos = this.read_BlockPos == null
                         ? null
                         : exposed.stream()
-                           .filter(this::read)
+                           .filter(this::inReach)
                            .min(Comparator.comparingDouble(p -> this.standEye().distanceToSqr(Vec3.atCenterOf(p))))
                            .orElse(null);
                      if (this.init_BlockPos == null) {
@@ -534,7 +534,7 @@ final class AiObsidian {
                      }
 
                      if (this.init_BlockPos == null) {
-                        return this.init(AiOperation.Status.FAILED, "No exposed lava source in loaded terrain for contained obsidian casting");
+                        return this.finish(AiOperation.Status.FAILED, "No exposed lava source in loaded terrain for contained obsidian casting");
                      }
 
                      this.stage = AiObsidian.Inner_DataUtil.GO_SOURCE;
@@ -553,7 +553,7 @@ final class AiObsidian {
                      );
                      break;
                   case FILL_LAVA:
-                     this.init_AiOperation = this.init("fill", "lava", this.init_BlockPos);
+                     this.init_AiOperation = this.bucketOp("fill", "lava", this.init_BlockPos);
                      break;
                   case RETURN:
                      this.init_AiOperation = AiGoto.approachWithinRadiusCompat(this.read_BlockPos, 0.25, 30, this.protectedWall(), this.protectedPocket());
@@ -561,7 +561,7 @@ final class AiObsidian {
                   case SITE:
                      if (!this.mc.player.onGround()) {
                         if (++this.load_I > 40) {
-                           return this.init(AiOperation.Status.FAILED, "Lava-shore stance did not settle");
+                           return this.finish(AiOperation.Status.FAILED, "Lava-shore stance did not settle");
                         }
                      } else {
                         BlockPos standing = this.mc.player.blockPosition();
@@ -569,7 +569,7 @@ final class AiObsidian {
 
                         for (BlockPos candidate : BlockPos.betweenClosed(standing.offset(-4, -1, -4), standing.offset(4, 0, 4))) {
                            double distance = this.mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(candidate));
-                           if (distance < nearest && this.init(candidate, false)) {
+                           if (distance < nearest && this.isUsableSite(candidate, false)) {
                               this.load_BlockPos = candidate.immutable();
                               nearest = distance;
                            }
@@ -578,7 +578,7 @@ final class AiObsidian {
                         if (this.load_BlockPos == null) {
                            for (BlockPos candidate : BlockPos.betweenClosed(standing.offset(-4, -1, -4), standing.offset(4, -1, 4))) {
                               double distance = this.mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(candidate));
-                              if (distance < nearest && this.init(candidate, true)) {
+                              if (distance < nearest && this.isUsableSite(candidate, true)) {
                                  this.load_BlockPos = candidate.immutable();
                                  nearest = distance;
                               }
@@ -587,7 +587,7 @@ final class AiObsidian {
                            if (this.load_BlockPos == null) {
                               this.init_Set.add(this.init_BlockPos);
                               if (this.init_Set.size() >= 6) {
-                                 return this.init(AiOperation.Status.FAILED, "No solid-bottomed casting pocket reachable from the checked lava shores");
+                                 return this.finish(AiOperation.Status.FAILED, "No solid-bottomed casting pocket reachable from the checked lava shores");
                               }
 
                               this.stage = AiObsidian.Inner_DataUtil.SOURCE;
@@ -603,16 +603,16 @@ final class AiObsidian {
                      }
                      break;
                   case EXCAVATE:
-                     List<BlockPos> cells = AiObsidian.load(this.load_BlockPos);
-                     if (this.sync == cells.size()) {
+                     List<BlockPos> cells = AiObsidian.excavationCells(this.load_BlockPos);
+                     if (this.excavateIndex == cells.size()) {
                         this.stage = AiObsidian.Inner_DataUtil.WALLS;
                      } else {
-                        BlockPos cell = cells.get(this.sync);
+                        BlockPos cell = cells.get(this.excavateIndex);
                         if (this.mc.level.getBlockState(cell).isAir()) {
-                           this.sync++;
+                           this.excavateIndex++;
                         } else {
-                           if (!this.load(cell) || !this.init(this.load_BlockPos.below()) || !this.init(this.load_BlockPos.north().below())) {
-                              return this.init(AiOperation.Status.FAILED, "Casting pocket terrain changed before excavation");
+                           if (!this.isLavaFree(cell) || !this.isSolidSupport(this.load_BlockPos.below()) || !this.isSolidSupport(this.load_BlockPos.north().below())) {
+                              return this.finish(AiOperation.Status.FAILED, "Casting pocket terrain changed before excavation");
                            }
 
                            HashSet<Long> protect = new HashSet<>();
@@ -639,7 +639,7 @@ final class AiObsidian {
                            this.stage = AiObsidian.Inner_DataUtil.WORK;
                         } else {
                            BlockPos cell = pollCells.get(this.init_I);
-                           if (!this.load_Z && this.init(cell)) {
+                           if (!this.load_Z && this.isSolidSupport(cell)) {
                               this.init_I++;
                            } else {
                               if (!this.load_Z) {
@@ -669,12 +669,12 @@ final class AiObsidian {
                                        this.read_BlockPos = null;
                                        this.init_I = 0;
                                        this.write_Z = false;
-                                       this.sync = 0;
+                                       this.excavateIndex = 0;
                                        this.stage = AiObsidian.Inner_DataUtil.SOURCE;
                                        return AiObsidian.running("Mold wall would not seal (" + why + "); another lava shore");
                                     }
 
-                                    return this.init(AiOperation.Status.FAILED, "Could not seal the casting mold: " + why);
+                                    return this.finish(AiOperation.Status.FAILED, "Could not seal the casting mold: " + why);
                                  case PLACED:
                                     this.init_List.add(cell);
                                     this.init_I++;
@@ -689,21 +689,21 @@ final class AiObsidian {
                      this.init_AiOperation = AiGoto.approachWithinRadiusCompat(this.read_BlockPos, 0.25, 30, this.protectedWall(), this.protectedPocket());
                      break;
                   case POUR_WATER:
-                     if (!this.write()) {
-                        return this.init(AiOperation.Status.FAILED, "Casting walls or floor changed at " + this.load_BlockPos.toShortString());
+                     if (!this.wallsBuilt()) {
+                        return this.finish(AiOperation.Status.FAILED, "Casting walls or floor changed at " + this.load_BlockPos.toShortString());
                      }
 
-                     if (!this.read()) {
+                     if (!this.settleOnStand()) {
                         if (++this.load_I > 40) {
-                           return this.init(AiOperation.Status.FAILED, "Could not center safely on the casting wall at " + this.read_BlockPos.toShortString());
+                           return this.finish(AiOperation.Status.FAILED, "Could not center safely on the casting wall at " + this.read_BlockPos.toShortString());
                         }
                      } else {
-                        this.init_AiOperation = this.init("empty", "water", this.load_BlockPos.north());
+                        this.init_AiOperation = this.bucketOp("empty", "water", this.load_BlockPos.north());
                      }
                      break;
                   case POUR_LAVA:
-                     if (!this.write()) {
-                        return this.init(AiOperation.Status.FAILED, "Refusing a lava pour without a sealed mold at " + this.load_BlockPos.toShortString());
+                     if (!this.wallsBuilt()) {
+                        return this.finish(AiOperation.Status.FAILED, "Refusing a lava pour without a sealed mold at " + this.load_BlockPos.toShortString());
                      }
 
                      if (!this.isPocketFlooded()) {
@@ -715,15 +715,15 @@ final class AiObsidian {
                            return AiObsidian.running("Waiting for the placed water to reach the sealed lava cell");
                         }
 
-                        return this.init(AiOperation.Status.FAILED, "Refusing a lava pour without active water at " + this.load_BlockPos.toShortString());
+                        return this.finish(AiOperation.Status.FAILED, "Refusing a lava pour without active water at " + this.load_BlockPos.toShortString());
                      }
 
-                     if (!this.read()) {
+                     if (!this.settleOnStand()) {
                         if (++this.load_I > 40) {
-                           return this.init(AiOperation.Status.FAILED, "Working stance did not settle for a safe lava pour");
+                           return this.finish(AiOperation.Status.FAILED, "Working stance did not settle for a safe lava pour");
                         }
                      } else {
-                        this.init_AiOperation = this.init("empty", "lava", this.load_BlockPos);
+                        this.init_AiOperation = this.bucketOp("empty", "lava", this.load_BlockPos);
                      }
                      break;
                   case VERIFY:
@@ -731,11 +731,11 @@ final class AiObsidian {
                         this.read_I++;
                         this.stage = AiObsidian.Inner_DataUtil.BREAK;
                      } else if (++this.load_I > 80) {
-                        return this.init(AiOperation.Status.FAILED, "The contained lava did not become obsidian");
+                        return this.finish(AiOperation.Status.FAILED, "The contained lava did not become obsidian");
                      }
                      break;
                   case SCOOP:
-                     this.init_AiOperation = this.init("fill", "water", this.load_BlockPos.north());
+                     this.init_AiOperation = this.bucketOp("fill", "water", this.load_BlockPos.north());
                      break;
                   case BREAK:
                      this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
@@ -763,7 +763,7 @@ final class AiObsidian {
                      break;
                   case CLEAN:
                      if (this.init_List.isEmpty()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + AiCraft.countItem("minecraft:obsidian") + " obsidian safely");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Obtained " + AiCraft.countItem("minecraft:obsidian") + " obsidian safely");
                      }
 
                      if (this.load_BlockPos != null
@@ -794,11 +794,11 @@ final class AiObsidian {
                   return AiObsidian.running("Obsidian casting: " + this.stage.name().toLowerCase(Locale.ROOT));
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Obsidian casting cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Obsidian casting cancelled");
             }
          }
 
-         boolean init(BlockPos pos) {
+         boolean isSolidSupport(BlockPos pos) {
             if (!AiTerrain.isLoaded(this.mc.level, pos)) {
                return false;
             }
@@ -820,34 +820,34 @@ final class AiObsidian {
                );
          }
 
-         boolean init(BlockPos candidate, boolean excavate) {
+         boolean isUsableSite(BlockPos candidate, boolean excavate) {
             for (BlockPos cell : List.of(candidate, candidate.north())) {
                if (!AiTerrain.isLoaded(this.mc.level, cell)
-                  || !this.init(cell.below())
-                  || !this.mc.level.getBlockState(cell).isAir() && (!excavate || !this.init(cell))
-                  || !this.mc.level.getBlockState(cell.above()).isAir() && (!excavate || !this.init(cell.above()))
+                  || !this.isSolidSupport(cell.below())
+                  || !this.mc.level.getBlockState(cell).isAir() && (!excavate || !this.isSolidSupport(cell))
+                  || !this.mc.level.getBlockState(cell.above()).isAir() && (!excavate || !this.isSolidSupport(cell.above()))
                   || this.mc.player.getBoundingBox().inflate(0.35).intersects(new AABB(cell))) {
                   return false;
                }
             }
 
             for (BlockPos wall : AiObsidian.wallCells(candidate)) {
-               if (!this.init(wall) && (!this.init(wall.below()) || !this.mc.level.getBlockState(wall).isAir())) {
+               if (!this.isSolidSupport(wall) && (!this.isSolidSupport(wall.below()) || !this.mc.level.getBlockState(wall).isAir())) {
                   return false;
                }
             }
 
-            for (BlockPos cell : AiObsidian.load(candidate)) {
-               if (!this.load(cell) || !excavate && !this.mc.level.getBlockState(cell).isAir()) {
+            for (BlockPos cell : AiObsidian.excavationCells(candidate)) {
+               if (!this.isLavaFree(cell) || !excavate && !this.mc.level.getBlockState(cell).isAir()) {
                   return false;
                }
             }
 
-            return (this.mc.level.getBlockState(candidate.south().above()).isAir() || excavate && this.init(candidate.south().above()))
-               && (this.mc.level.getBlockState(candidate.south().above(2)).isAir() || excavate && this.init(candidate.south().above(2)));
+            return (this.mc.level.getBlockState(candidate.south().above()).isAir() || excavate && this.isSolidSupport(candidate.south().above()))
+               && (this.mc.level.getBlockState(candidate.south().above(2)).isAir() || excavate && this.isSolidSupport(candidate.south().above(2)));
          }
 
-         boolean load(BlockPos cell) {
+         boolean isLavaFree(BlockPos cell) {
             if (!AiTerrain.isLoaded(this.mc.level, cell)) {
                return false;
             }
@@ -858,7 +858,7 @@ final class AiObsidian {
                }
             }
 
-            return this.mc.level.getBlockState(cell).isAir() || this.init(cell);
+            return this.mc.level.getBlockState(cell).isAir() || this.isSolidSupport(cell);
          }
 
          Set<Long> protectedWall() {
@@ -907,7 +907,7 @@ final class AiObsidian {
             return Vec3.atBottomCenterOf(this.read_BlockPos).add(0.0, this.mc.player.getEyeHeight(), 0.0);
          }
 
-         boolean read(BlockPos p) {
+         boolean inReach(BlockPos p) {
             double reach = this.mc.player.blockInteractionRange() - 0.35;
             return this.standEye().distanceToSqr(Vec3.atCenterOf(p).add(0.0, 0.4, 0.0)) <= reach * reach;
          }
@@ -917,7 +917,7 @@ final class AiObsidian {
             return supply.is(FluidTags.WATER) && supply.isSource() && this.mc.level.getFluidState(this.load_BlockPos).is(FluidTags.WATER);
          }
 
-         boolean read() {
+         boolean settleOnStand() {
             this.keysHeld = true;
             this.mc.options.keyShift.setDown(false);
             this.mc.options.keyJump.setDown(false);
@@ -985,10 +985,10 @@ final class AiObsidian {
             }
          }
 
-         boolean write() {
-            if (this.init(this.load_BlockPos.below()) && this.init(this.load_BlockPos.north().below())) {
+         boolean wallsBuilt() {
+            if (this.isSolidSupport(this.load_BlockPos.below()) && this.isSolidSupport(this.load_BlockPos.north().below())) {
                for (BlockPos cell : AiObsidian.wallCells(this.load_BlockPos)) {
-                  if (!this.init(cell)) {
+                  if (!this.isSolidSupport(cell)) {
                      return false;
                   }
                }
@@ -999,13 +999,13 @@ final class AiObsidian {
             }
          }
 
-         AiOperation init(String action, String fluid, BlockPos pos) {
+         AiOperation bucketOp(String action, String fluid, BlockPos pos) {
             return AiBucket.create(
                AiJson.objectOf("action", action, "fluid", fluid, "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 8)
             );
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             this.cancel();
             return AiGameOperations.result(
                status,
@@ -1061,7 +1061,7 @@ final class AiObsidian {
       return List.of(site.south(), site.north(2), site.north().east(), site.north().west(), site.east(), site.west());
    }
 
-   static List<BlockPos> load(BlockPos site) {
+   static List<BlockPos> excavationCells(BlockPos site) {
       BlockPos work = site.south().above();
       return List.of(
          site.north().above(3),

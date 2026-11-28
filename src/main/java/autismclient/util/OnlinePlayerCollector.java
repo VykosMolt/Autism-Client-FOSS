@@ -18,7 +18,7 @@ public final class OnlinePlayerCollector {
    }
 
    public static List<String> collect(Minecraft mc, boolean probeHidden, final BooleanSupplier cancelled) {
-      String self = init(mc);
+      String self = selfName(mc);
       LinkedHashMap<String, String> names = CommandTabNameProber.probe(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
@@ -50,7 +50,7 @@ public final class OnlinePlayerCollector {
       return new ArrayList<>(names.values());
    }
 
-   private static String init(Minecraft mc) {
+   private static String selfName(Minecraft mc) {
       return mc != null && mc.player != null ? mc.player.getName().getString() : "";
    }
 }

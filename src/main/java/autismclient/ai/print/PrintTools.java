@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class PrintTools {
-   private static final List<Item> init = List.of(
+   private static final List<Item> CHEAP_BLOCKS = List.of(
       Items.DIRT,
       Items.COBBLESTONE,
       Items.NETHERRACK,
@@ -93,7 +93,7 @@ final class PrintTools {
          }
 
          if (!(block instanceof LeavesBlock)) {
-            Item infested = init(block);
+            Item infested = plainItemFor(block);
             if (infested != null) {
                return env.isInstantBreakTool(stack) ? infested : Items.AIR;
             }
@@ -142,7 +142,7 @@ final class PrintTools {
                return Items.BOOK;
             }
 
-            Item ore = load(block);
+            Item ore = oreDrop(block);
             if (ore != null) {
                return ore;
             }
@@ -157,7 +157,7 @@ final class PrintTools {
       }
    }
 
-   private static Item init(Block block) {
+   private static Item plainItemFor(Block block) {
       if (block == Blocks.INFESTED_STONE) {
          return Items.STONE;
       } else if (block == Blocks.INFESTED_COBBLESTONE) {
@@ -175,7 +175,7 @@ final class PrintTools {
       }
    }
 
-   private static Item load(Block block) {
+   private static Item oreDrop(Block block) {
       if (block == Blocks.COAL_ORE || block == Blocks.DEEPSLATE_COAL_ORE) {
          return Items.COAL;
       } else if (block == Blocks.IRON_ORE || block == Blocks.DEEPSLATE_IRON_ORE) {
@@ -221,12 +221,12 @@ final class PrintTools {
                if (!avoid.contains(item) && stock.applyAsInt(item) > 0 && seen.add(item) && item instanceof BlockItem blockItem) {
                   BlockState state = blockItem.getBlock().defaultBlockState();
                   if (AiPrinterSupportPolicy.isPlainBlock(state)) {
-                     boolean cheap = init.contains(item);
+                     boolean cheap = CHEAP_BLOCKS.contains(item);
                      if (cheap || schematicItems.contains(item)) {
                         int needed = open.applyAsInt(item);
                         PrintTools.Inner_StreamUtil recovery = bestTool(env, state, item);
                         boolean sameItem = recovery != null;
-                        if (!init(item, state, sameItem)) {
+                        if (!isScarce(item, state, sameItem)) {
                            int held = stock.applyAsInt(item);
                            if (needed <= 0 || sameItem || held > needed) {
                               PrintTools.Inner_StreamUtil fastest = bestTool(env, state, null);
@@ -236,7 +236,7 @@ final class PrintTools {
                                  boolean correct = !state.requiresCorrectToolForDrops() || fastest != null && fastest.stack().isCorrectToolForDrops(state);
                                  float progress = hardness == 0.0F ? 1.0F : speed / hardness / (correct ? 30.0F : 100.0F);
                                  if (env.isCreativeMode() || !(progress < 0.005F)) {
-                                    int rank = init(item, needed, sameItem, state, speed);
+                                    int rank = materialRank(item, needed, sameItem, state, speed);
                                     if (best == null || rank < bestRank) {
                                        best = new PrintTools.Inner_DataUtil(
                                           item, state, recovery == null ? ItemStack.EMPTY : recovery.stack(), speed, sameItem, needed > 0
@@ -257,8 +257,8 @@ final class PrintTools {
       return best;
    }
 
-   private static int init(Item item, int needed, boolean sameItem, BlockState state, float speed) {
-      int cheap = init.indexOf(item);
+   private static int materialRank(Item item, int needed, boolean sameItem, BlockState state, float speed) {
+      int cheap = CHEAP_BLOCKS.indexOf(item);
       int rank = cheap >= 0 ? cheap * 20 : 1000;
       if (needed > 0) {
          rank += sameItem ? 2000 : 5000;
@@ -274,7 +274,7 @@ final class PrintTools {
       return rank - Math.min(100, (int)(speed * 4.0F));
    }
 
-   private static boolean init(Item item, BlockState state, boolean sameItem) {
+   private static boolean isScarce(Item item, BlockState state, boolean sameItem) {
       String path = BuiltInRegistries.ITEM.getKey(item).getPath();
       boolean scarce = path.endsWith("_ore")
          || path.equals("ancient_debris")

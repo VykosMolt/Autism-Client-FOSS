@@ -1,43 +1,43 @@
 package autismclient.util.gif;
 
 public final class GifRenderContext {
-   private static int init_I;
-   private static String init_Str;
-   private static int load;
+   private static int entityDepth;
+   private static String entityName;
+   private static int shieldDepth;
 
    private GifRenderContext() {
    }
 
    public static void enter(String name) {
-      init_I++;
-      init_Str = name;
+      entityDepth++;
+      entityName = name;
    }
 
    public static void popEntity() {
-      if (init_I > 0) {
-         init_I--;
+      if (entityDepth > 0) {
+         entityDepth--;
       }
 
-      if (init_I == 0) {
-         init_Str = null;
+      if (entityDepth == 0) {
+         entityName = null;
       }
    }
 
    public static String currentName() {
-      return init_I > 0 ? init_Str : null;
+      return entityDepth > 0 ? entityName : null;
    }
 
-   public static void load() {
-      load++;
+   public static void pushShield() {
+      shieldDepth++;
    }
 
-   public static void read() {
-      if (load > 0) {
-         load--;
+   public static void popShield() {
+      if (shieldDepth > 0) {
+         shieldDepth--;
       }
    }
 
    public static boolean isShieldRendering() {
-      return load > 0;
+      return shieldDepth > 0;
    }
 }

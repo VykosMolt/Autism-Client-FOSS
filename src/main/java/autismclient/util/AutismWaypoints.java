@@ -60,7 +60,7 @@ public final class AutismWaypoints {
       if (local == null) {
          synchronized (AutismWaypoints.class) {
             if (init_AutismWaypoints == null) {
-               init_AutismWaypoints = load_AutismWaypoints();
+               init_AutismWaypoints = loadFromDisk();
             }
 
             local = init_AutismWaypoints;
@@ -126,7 +126,7 @@ public final class AutismWaypoints {
 
    public List<AutismWaypoints.Waypoint> list(String scope) {
       synchronized (this.init_Map) {
-         List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+         List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
          return list == null ? List.of() : List.copyOf(list);
       }
    }
@@ -135,7 +135,7 @@ public final class AutismWaypoints {
       if (waypoint != null && waypoint.name() != null && !waypoint.name().isBlank()) {
          boolean changed = false;
          synchronized (this.init_Map) {
-            List<AutismWaypoints.Waypoint> list = this.init_Map.computeIfAbsent(init_Str_Str(scope), key -> new ArrayList<>());
+            List<AutismWaypoints.Waypoint> list = this.init_Map.computeIfAbsent(normalizeScope(scope), key -> new ArrayList<>());
 
             for (int i = 0; i < list.size(); i++) {
                if (list.get(i).name().equalsIgnoreCase(waypoint.name())) {
@@ -156,7 +156,7 @@ public final class AutismWaypoints {
          }
 
          if (changed) {
-            this.init_V();
+            this.markDirty();
          }
       }
    }
@@ -165,17 +165,17 @@ public final class AutismWaypoints {
       if (name != null && !name.isBlank()) {
          boolean removed = false;
          synchronized (this.init_Map) {
-            List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+            List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
             if (list != null) {
                removed = list.removeIf(waypoint -> waypoint.name().equalsIgnoreCase(name.trim()));
                if (list.isEmpty()) {
-                  this.init_Map.remove(init_Str_Str(scope));
+                  this.init_Map.remove(normalizeScope(scope));
                }
             }
          }
 
          if (removed) {
-            this.init_V();
+            this.markDirty();
          }
 
          return removed;
@@ -187,11 +187,11 @@ public final class AutismWaypoints {
    public void clearScope(String scope) {
       boolean removed;
       synchronized (this.init_Map) {
-         removed = this.init_Map.remove(init_Str_Str(scope)) != null;
+         removed = this.init_Map.remove(normalizeScope(scope)) != null;
       }
 
       if (removed) {
-         this.init_V();
+         this.markDirty();
       }
    }
 
@@ -201,7 +201,7 @@ public final class AutismWaypoints {
       }
 
       synchronized (this.init_Map) {
-         List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+         List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
          if (list == null) {
             return null;
          }
@@ -224,7 +224,7 @@ public final class AutismWaypoints {
    public boolean setColor(String scope, String name, int color) {
       AutismWaypoints.Waypoint updated = null;
       synchronized (this.init_Map) {
-         List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+         List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
          if (list != null) {
             for (int i = 0; i < list.size(); i++) {
                AutismWaypoints.Waypoint waypoint = list.get(i);
@@ -243,7 +243,7 @@ public final class AutismWaypoints {
          return false;
       }
 
-      this.init_V();
+      this.markDirty();
       return true;
    }
 
@@ -256,7 +256,7 @@ public final class AutismWaypoints {
 
          String old = oldName.trim();
          synchronized (this.init_Map) {
-            List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+            List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
             if (list == null) {
                return false;
             }
@@ -286,7 +286,7 @@ public final class AutismWaypoints {
             list.set(index, new AutismWaypoints.Waypoint(trimmed, current.x(), current.y(), current.z(), current.color(), current.createdMs(), current.death()));
          }
 
-         this.init_V();
+         this.markDirty();
          return true;
       } else {
          return false;
@@ -299,10 +299,10 @@ public final class AutismWaypoints {
 
    public AutismWaypoints.Waypoint init(String var1, int var2, int var3, int var4, int var5, long var6, int var8) {
       AutismWaypoints.Waypoint var10000 = AuditDeathWaypoints.kw_record_AutismWaypoints_Wa(
-         this.init_Map, init_Str_Str(var1), var2, var3, var4, var5, var6, var8
+         this.init_Map, normalizeScope(var1), var2, var3, var4, var5, var6, var8
       );
       if (var10000 != null) {
-         this.init_V();
+         this.markDirty();
       }
 
       return var10000;
@@ -312,7 +312,7 @@ public final class AutismWaypoints {
       if (maxDeaths >= 1) {
          boolean changed = false;
          synchronized (this.init_Map) {
-            List<AutismWaypoints.Waypoint> list = this.init_Map.get(init_Str_Str(scope));
+            List<AutismWaypoints.Waypoint> list = this.init_Map.get(normalizeScope(scope));
             if (list == null) {
                return;
             }
@@ -337,21 +337,21 @@ public final class AutismWaypoints {
          }
 
          if (changed) {
-            this.init_V();
+            this.markDirty();
          }
       }
    }
 
-   private static String init_Str_Str(String scope) {
+   private static String normalizeScope(String scope) {
       return scope != null && !scope.isBlank() ? scope.trim() : "unknown";
    }
 
-   private void init_V() {
+   private void markDirty() {
       this.init_AtomicLong.incrementAndGet();
-      this.load_V();
+      this.scheduleSave();
    }
 
-   private static AutismWaypoints load_AutismWaypoints() {
+   private static AutismWaypoints loadFromDisk() {
       AutismWaypoints waypoints = new AutismWaypoints();
       boolean loaded = false;
       if (init_File.exists()) {
@@ -374,14 +374,14 @@ public final class AutismWaypoints {
          if (auditLoad(waypoints, auditBackupFile)) {
             AutismClientAddon.LOG.warn("Restored waypoints from {}", auditBackupFile.getName());
             if (auditBackupPrimary) {
-               waypoints.load_V();
+               waypoints.scheduleSave();
             }
          } else {
             waypoints.init_Map.clear();
          }
       }
 
-      Runtime.getRuntime().addShutdownHook(new Thread(waypoints::read, "waypoints-flush"));
+      Runtime.getRuntime().addShutdownHook(new Thread(waypoints::saveIfDirty, "waypoints-flush"));
       return waypoints;
    }
 
@@ -417,28 +417,28 @@ public final class AutismWaypoints {
       }
    }
 
-   private void load_V() {
+   private void scheduleSave() {
       this.init_AtomicBoolean.set(true);
       if (this.load_AtomicBoolean.compareAndSet(false, true)) {
          try {
             init_ScheduledExecutorS.schedule(() -> {
                this.load_AtomicBoolean.set(false);
-               this.read();
+               this.saveIfDirty();
             }, 400L, TimeUnit.MILLISECONDS);
          } catch (Throwable t) {
             this.load_AtomicBoolean.set(false);
-            this.read();
+            this.saveIfDirty();
          }
       }
    }
 
-   private void read() {
+   private void saveIfDirty() {
       if (this.init_AtomicBoolean.compareAndSet(true, false)) {
-         this.write();
+         this.writeToDisk();
       }
    }
 
-   private synchronized void write() {
+   private synchronized void writeToDisk() {
       try {
          File dir = init_File.getParentFile();
          if (dir != null) {
@@ -498,7 +498,7 @@ public final class AutismWaypoints {
                      this.auditRetryPending = false;
                   }
 
-                  this.read();
+                  this.saveIfDirty();
                }, retryMs, TimeUnit.MILLISECONDS);
             } catch (Throwable rejected) {
                this.auditRetryPending = false;

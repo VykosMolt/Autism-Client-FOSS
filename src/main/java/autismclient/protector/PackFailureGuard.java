@@ -1,20 +1,20 @@
 package autismclient.protector;
 
 public final class PackFailureGuard {
-   private static volatile long init;
+   private static volatile long suppressUntilMs;
 
    private PackFailureGuard() {
    }
 
-   public static void init_V() {
-      init = Math.max(init, System.currentTimeMillis() + 15000L);
+   public static void suppressBriefly() {
+      suppressUntilMs = Math.max(suppressUntilMs, System.currentTimeMillis() + 15000L);
    }
 
    public static boolean isBlocked() {
-      return System.currentTimeMillis() < init;
+      return System.currentTimeMillis() < suppressUntilMs;
    }
 
    public static void reset() {
-      init = 0L;
+      suppressUntilMs = 0L;
    }
 }

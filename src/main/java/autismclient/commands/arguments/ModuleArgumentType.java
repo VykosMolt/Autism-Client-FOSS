@@ -26,10 +26,10 @@ public class ModuleArgumentType implements ArgumentType<String> {
    }
 
    public String parse(StringReader reader) throws CommandSyntaxException {
-      return this.init(reader);
+      return this.readName(reader);
    }
 
-   public String init(StringReader reader) {
+   public String readName(StringReader reader) {
       return reader.readUnquotedString();
    }
 

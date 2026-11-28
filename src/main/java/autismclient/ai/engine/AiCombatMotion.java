@@ -42,11 +42,11 @@ public final class AiCombatMotion {
    }
 
    public static AABB predictEndBox(Minecraft mc, double forward, double strafe, int ticks) {
-      List<AABB> trace = init(mc, mc.player == null ? 0.0F : mc.player.getYRot(), forward, strafe, ticks);
+      List<AABB> trace = predictBoxes(mc, mc.player == null ? 0.0F : mc.player.getYRot(), forward, strafe, ticks);
       return trace == null ? null : (trace.isEmpty() ? mc.player.getBoundingBox() : trace.getLast());
    }
 
-   public static List<AABB> init(Minecraft mc, float yaw, double forward, double strafe, int ticks) {
+   public static List<AABB> predictBoxes(Minecraft mc, float yaw, double forward, double strafe, int ticks) {
       return predictTrace(mc, yaw, forward, strafe, ticks, 0);
    }
 

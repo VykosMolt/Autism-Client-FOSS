@@ -4,24 +4,24 @@ import autismclient.gui.ui.widgets.ConnectedButtonRenderer;
 import autismclient.util.ThemePaletteManager;
 
 public class RowLayout extends LayoutContainer {
-   private EdgeInsets init_IoWorker;
-   private int init_I;
+   private EdgeInsets padding;
+   private int gap;
    private boolean underlineOnHover;
    private int underlineColor;
-   private float sync;
+   private float contentWidth;
 
    public RowLayout() {
-      this.init_IoWorker = EdgeInsets.ZERO;
-      this.init_I = 0;
+      this.padding = EdgeInsets.ZERO;
+      this.gap = 0;
       this.underlineOnHover = false;
       this.underlineColor = -50373;
-      this.sync = 0.0F;
+      this.contentWidth = 0.0F;
    }
 
    public RowLayout padding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
-      if (!this.init_IoWorker.equals(next)) {
-         this.init_IoWorker = next;
+      if (!this.padding.equals(next)) {
+         this.padding = next;
          this.markLayoutDirty();
       }
 
@@ -30,8 +30,8 @@ public class RowLayout extends LayoutContainer {
 
    public RowLayout gap(int gap) {
       int next = Math.max(0, gap);
-      if (this.init_I != next) {
-         this.init_I = next;
+      if (this.gap != next) {
+         this.gap = next;
          this.markLayoutDirty();
       }
 
@@ -43,15 +43,15 @@ public class RowLayout extends LayoutContainer {
       return this;
    }
 
-   public RowLayout load(int underlineColor) {
+   public RowLayout withUnderlineColor(int underlineColor) {
       this.underlineColor = underlineColor;
       return this;
    }
 
    @Override
    public float measurePreferredWidth(LayoutContext context) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.theme().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
+      int scaledGap = context.theme().load(this.gap);
       float total = scaledPadding.init_I();
       int visibleCount = 0;
 
@@ -71,7 +71,7 @@ public class RowLayout extends LayoutContainer {
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
       float tallest = 0.0F;
 
       for (LayoutNode child : this.children) {
@@ -85,8 +85,8 @@ public class RowLayout extends LayoutContainer {
 
    @Override
    protected void layoutChildren(LayoutContext context) {
-      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
-      int scaledGap = context.theme().load(this.init_I);
+      EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
+      int scaledGap = context.theme().load(this.gap);
       float innerX = this.nodeX + scaledPadding.read();
       float innerY = this.nodeY + scaledPadding.write();
       float innerWidth = Math.max(0.0F, this.nodeWidth - scaledPadding.init_I());
@@ -110,7 +110,7 @@ public class RowLayout extends LayoutContainer {
       float freeWidth = Math.max(0.0F, innerWidth - fixedWidth - totalGap);
       float growWidth = growCount > 0 ? freeWidth / growCount : 0.0F;
       float cursorX = innerX;
-      this.sync = 0.0F;
+      this.contentWidth = 0.0F;
 
       for (LayoutNode child : this.children) {
          if (child != null && child.isVisible()) {
@@ -122,24 +122,24 @@ public class RowLayout extends LayoutContainer {
          }
       }
 
-      this.sync = Math.max(0.0F, cursorX - innerX - (visibleCount > 0 ? scaledGap : 0));
+      this.contentWidth = Math.max(0.0F, cursorX - innerX - (visibleCount > 0 ? scaledGap : 0));
    }
 
    @Override
    public void render(LayoutContext context) {
       if (this.nodeVisible) {
          super.render(context);
-         this.write(context);
+         this.drawUnderlines(context);
          if (this.underlineOnHover) {
             float hover = this.stepHover(this.containsPoint(context.mouseX(), context.mouseY()), context.delta());
             if (hover <= 0.0F || context.graphics() == null) {
                return;
             }
 
-            EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.init_IoWorker);
+            EdgeInsets scaledPadding = context.theme().init_IoWorker_IoWorker(this.padding);
             int drawX = Math.round(this.nodeX + scaledPadding.read());
             int drawY = Math.round(this.nodeY + this.nodeHeight - context.theme().load(1));
-            float underlineAreaWidth = Math.max(this.sync, this.nodeWidth - scaledPadding.init_I());
+            float underlineAreaWidth = Math.max(this.contentWidth, this.nodeWidth - scaledPadding.init_I());
             int underlineWidth = Math.max(1, Math.round(underlineAreaWidth * hover));
             int underlineX = drawX + Math.max(0, Math.round((underlineAreaWidth - underlineWidth) / 2.0F));
             context.graphics()
@@ -154,7 +154,7 @@ public class RowLayout extends LayoutContainer {
       }
    }
 
-   private void write(LayoutContext context) {
+   private void drawUnderlines(LayoutContext context) {
       if (context.graphics() != null) {
          autismclient.gui.f.SyncManager ui = null;
          LayoutNode previous = null;

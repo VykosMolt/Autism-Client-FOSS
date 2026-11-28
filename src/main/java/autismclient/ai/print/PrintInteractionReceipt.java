@@ -6,7 +6,7 @@ final class PrintInteractionReceipt {
    private Object player;
    private int after = -1;
    private long load_J;
-   private boolean init_Z;
+   private boolean completed;
 
    int afterSequence() {
       return this.after;
@@ -20,13 +20,13 @@ final class PrintInteractionReceipt {
             this.after = after;
             this.load_J = now;
          } else {
-            this.init_Z = true;
+            this.completed = true;
          }
       }
    }
 
    PrintEnv.ReceiptState receiptState(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
-      if (this.init_Z) {
+      if (this.completed) {
          return PrintEnv.ReceiptState.UNCERTAIN;
       } else if (this.after < 0) {
          return PrintEnv.ReceiptState.NONE;

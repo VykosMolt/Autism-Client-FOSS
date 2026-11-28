@@ -19,12 +19,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
 public final class SlotArgumentType implements ArgumentType<Integer> {
-   private static final SimpleCommandExceptionType init_SimpleCommandExcep = new SimpleCommandExceptionType(
+   private static final SimpleCommandExceptionType UNKNOWN_SLOT = new SimpleCommandExceptionType(
       Component.literal("Unknown slot. Use gui1, hotbar1, inventory1, helmet, chestplate, leggings, boots, offhand, or a visible numeric slot id.")
    );
-   private static AbstractContainerMenu init_AbstractContainerM;
-   private static int init_I = -1;
-   private static List<String> init_List = List.of();
+   private static AbstractContainerMenu cachedMenu;
+   private static int cachedSlotCount = -1;
+   private static List<String> cachedSuggestions = List.of();
 
    private SlotArgumentType() {
    }
@@ -38,16 +38,16 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
    }
 
    public Integer parse(StringReader reader) throws CommandSyntaxException {
-      return this.init_Integer_StringReader(reader);
+      return this.parseToken(reader);
    }
 
-   public Integer init_Integer_StringReader(StringReader reader) throws CommandSyntaxException {
+   public Integer parseToken(StringReader reader) throws CommandSyntaxException {
       String token = reader.readUnquotedString().trim().toLowerCase(Locale.ROOT);
       if (token.isEmpty()) {
-         throw init_SimpleCommandExcep.create();
+         throw UNKNOWN_SLOT.create();
       }
 
-      Integer named = init_Integer_Str(token);
+      Integer named = armorSlot(token);
       if (named != null) {
          return named;
       }
@@ -60,7 +60,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       } catch (NumberFormatException var5) {
       }
 
-      throw init_SimpleCommandExcep.create();
+      throw UNKNOWN_SLOT.create();
    }
 
    @Override
@@ -68,7 +68,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
       Minecraft mc = Minecraft.getInstance();
 
-      for (String value : init_List_Minecraft(mc)) {
+      for (String value : suggestionsFor(mc)) {
          if (value.toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(value);
          }
@@ -77,11 +77,11 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       return builder.buildFuture();
    }
 
-   private static List<String> init_List_Minecraft(Minecraft mc) {
+   private static List<String> suggestionsFor(Minecraft mc) {
       AbstractContainerMenu menu = mc.player == null ? null : mc.player.containerMenu;
       int slotCount = menu == null ? 0 : menu.slots.size();
-      if (menu == init_AbstractContainerM && slotCount == init_I) {
-         return init_List;
+      if (menu == cachedMenu && slotCount == cachedSlotCount) {
+         return cachedSuggestions;
       }
 
       Set<String> values = new LinkedHashSet<>();
@@ -97,10 +97,10 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
          }
       }
 
-      init_AbstractContainerM = menu;
-      init_I = slotCount;
-      init_List = List.copyOf(values);
-      return init_List;
+      cachedMenu = menu;
+      cachedSlotCount = slotCount;
+      cachedSuggestions = List.copyOf(values);
+      return cachedSuggestions;
    }
 
    public static String slotName(int visibleSlot) {
@@ -140,7 +140,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       return var10000;
    }
 
-   private static Integer init_Integer_Str(String token) {
+   private static Integer armorSlot(String token) {
       Integer var10000;
       switch (token) {
          case "boots":
@@ -159,19 +159,19 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
             var10000 = 40;
             break;
          default:
-            Integer gui = init(token, "gui", 100, 2147483647);
+            Integer gui = indexedSlot(token, "gui", 100, 2147483647);
             if (gui != null) {
                var10000 = gui;
             } else {
-               Integer hotbar = init(token, "hotbar", 0, 9);
-               var10000 = hotbar != null ? hotbar : init(token, "inventory", 9, 27);
+               Integer hotbar = indexedSlot(token, "hotbar", 0, 9);
+               var10000 = hotbar != null ? hotbar : indexedSlot(token, "inventory", 9, 27);
             }
       }
 
       return var10000;
    }
 
-   private static Integer init(String token, String prefix, int offset, int maxIndex) {
+   private static Integer indexedSlot(String token, String prefix, int offset, int maxIndex) {
       if (!token.startsWith(prefix)) {
          return null;
       }

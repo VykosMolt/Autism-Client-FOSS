@@ -23,10 +23,10 @@ import net.minecraft.world.phys.HitResult.Type;
 
 public final class AirPlaceModule extends Module {
    static final String DESCRIPTION = "Places blocks in air.";
-   static final String load = "Set placement reach";
-   static final String read = "Show placement guide";
-   static final String write = "Fill placement guide";
-   static final String update = "Set guide color";
+   static final String REACH_LABEL = "Set placement reach";
+   static final String GUIDE_LABEL = "Show placement guide";
+   static final String GUIDE_FILL_LABEL = "Fill placement guide";
+   static final String GUIDE_COLOR_LABEL = "Set guide color";
    private volatile BlockPos init_BlockPos;
 
    AirPlaceModule() {
@@ -47,7 +47,7 @@ public final class AirPlaceModule extends Module {
       this.init_BlockPos = null;
       if (MC != null && MC.level != null) {
          Player player = MC.player;
-         AirPlaceModule.Inner_DataUtil placement = init(player, MC.hitResult, this.decimal("range"));
+         AirPlaceModule.Inner_DataUtil placement = targetWithin(player, MC.hitResult, this.decimal("range"));
          if (placement != null && !al.init_Z_HitResult(placement.hit(), placement.hand(), this.id())) {
             if (this.bool("guide")) {
                this.init_BlockPos = placement.hit().getBlockPos().immutable();
@@ -64,7 +64,7 @@ public final class AirPlaceModule extends Module {
          && MC.level != null
          && MC.player != null
          && MC.gameMode != null) {
-         AirPlaceModule.Inner_DataUtil placement = init(MC.player, hitResult, this.decimal("range"));
+         AirPlaceModule.Inner_DataUtil placement = targetWithin(MC.player, hitResult, this.decimal("range"));
          if (placement == null) {
             return false;
          } else if (MC.player.isHandsBusy()) {
@@ -156,20 +156,20 @@ public final class AirPlaceModule extends Module {
       }
    }
 
-   public static AirPlaceModule.Inner_DataUtil init(Player player, HitResult currentHit) {
+   public static AirPlaceModule.Inner_DataUtil targetFor(Player player, HitResult currentHit) {
       return al.init_Module_Str("air-place") instanceof AirPlaceModule airPlace && airPlace.isEnabled()
-         ? init(player, currentHit, airPlace.decimal("range"))
+         ? targetWithin(player, currentHit, airPlace.decimal("range"))
          : null;
    }
 
-   static AirPlaceModule.Inner_DataUtil init(Player player, HitResult currentHit, double range) {
+   static AirPlaceModule.Inner_DataUtil targetWithin(Player player, HitResult currentHit, double range) {
       if (player != null && player.level() != null && currentHit != null && currentHit.getType() == Type.MISS && !isHandsBusy(player)) {
          InteractionHand hand = init_InteractionHand_Player(player);
          if (hand == null) {
             return null;
          } else {
             HitResult picked = player.pick(Math.max(1.0, Math.min(6.0, range)), 0.0F, false);
-            if (init(currentHit, picked) && picked instanceof BlockHitResult blockHit) {
+            if (bothMissed(currentHit, picked) && picked instanceof BlockHitResult blockHit) {
                BlockPos pos = blockHit.getBlockPos();
                return !player.level().isOutsideBuildHeight(pos) && player.level().getBlockState(pos).canBeReplaced()
                   ? new AirPlaceModule.Inner_DataUtil(blockHit, hand)
@@ -188,21 +188,21 @@ public final class AirPlaceModule extends Module {
          return null;
       } else {
          ItemStack main = player.getMainHandItem();
-         if (init(main, player)) {
+         if (isPlaceable(main, player)) {
             return InteractionHand.MAIN_HAND;
          } else if (!main.isEmpty()) {
             return null;
          } else {
-            return init(player.getOffhandItem(), player) ? InteractionHand.OFF_HAND : null;
+            return isPlaceable(player.getOffhandItem(), player) ? InteractionHand.OFF_HAND : null;
          }
       }
    }
 
-   static boolean init(HitResult currentHit, HitResult pickedHit) {
+   static boolean bothMissed(HitResult currentHit, HitResult pickedHit) {
       return currentHit != null && pickedHit instanceof BlockHitResult && currentHit.getType() == Type.MISS && pickedHit.getType() == Type.MISS;
    }
 
-   private static boolean init(ItemStack stack, Player player) {
+   private static boolean isPlaceable(ItemStack stack, Player player) {
       return stack != null && !stack.isEmpty() && stack.getItem() instanceof BlockItem && stack.isItemEnabled(player.level().enabledFeatures());
    }
 

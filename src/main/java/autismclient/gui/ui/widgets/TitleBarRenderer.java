@@ -18,13 +18,13 @@ public final class TitleBarRenderer {
       return autismclient.gui.f.NetHelper.init(bounds.init() - size - 2, bounds.write() + Math.max(1, (bounds.sync() - size) / 2), size, size);
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title, boolean collapsed, boolean close, boolean hovered
    ) {
-      init(context, bounds, title, collapsed, true, close, hovered);
+      draw(context, bounds, title, collapsed, true, close, hovered);
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String title,
@@ -33,10 +33,10 @@ public final class TitleBarRenderer {
       boolean close,
       boolean hovered
    ) {
-      init(context, bounds, title, collapsed, collapse, close, hovered, 4, 4);
+      draw(context, bounds, title, collapsed, collapse, close, hovered, 4, 4);
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String title,
@@ -90,7 +90,7 @@ public final class TitleBarRenderer {
             );
          }
 
-         GuiIconAtlas.draw(graphics, GuiIconAtlas.CLOSE, ix, iy, icon, icon, init(colors.textSecondary, colors.textPrimary, closeT));
+         GuiIconAtlas.draw(graphics, GuiIconAtlas.CLOSE, ix, iy, icon, icon, lerpColor(colors.textSecondary, colors.textPrimary, closeT));
       }
    }
 
@@ -99,7 +99,7 @@ public final class TitleBarRenderer {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int radius = 7;
       float headerT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
-      int headerFill = init(colors.headerSurface, colors.headerSurfaceActive, headerT);
+      int headerFill = lerpColor(colors.headerSurface, colors.headerSurfaceActive, headerT);
       if (shapeCollapsed) {
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, headerFill);
       } else {
@@ -125,7 +125,7 @@ public final class TitleBarRenderer {
       }
    }
 
-   private static int init(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
       int ab = from & 0xFF;

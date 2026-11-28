@@ -175,7 +175,7 @@ final class AiPlanRunner {
       }
    }
 
-   static Set<String> init_Set(List<AiPlanRunner.Inner_StreamUtil> plan) {
+   static Set<String> pendingIds(List<AiPlanRunner.Inner_StreamUtil> plan) {
       Set<String> ids = new LinkedHashSet<>();
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
@@ -187,7 +187,7 @@ final class AiPlanRunner {
       return ids;
    }
 
-   static Set<String> load(List<AiPlanRunner.Inner_StreamUtil> plan) {
+   static Set<String> doneIds(List<AiPlanRunner.Inner_StreamUtil> plan) {
       Set<String> ids = new HashSet<>();
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {

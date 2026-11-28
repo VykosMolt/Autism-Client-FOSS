@@ -16,30 +16,30 @@ public final class ResizeGripRenderer {
    }
 
    public static boolean hovered(OverlayBounds b, double mx, double my) {
-      return b != null && init(b.x, b.y, b.width, b.height, mx, my);
+      return b != null && isOverGrip(b.x, b.y, b.width, b.height, mx, my);
    }
 
-   public static boolean init(autismclient.gui.f.NetHelper b, double mx, double my) {
-      return b != null && init(b.read(), b.write(), b.update(), b.sync(), mx, my);
+   public static boolean isOverGrip(autismclient.gui.f.NetHelper b, double mx, double my) {
+      return b != null && isOverGrip(b.read(), b.write(), b.update(), b.sync(), mx, my);
    }
 
-   private static boolean init(int x, int y, int w, int h, double mx, double my) {
+   private static boolean isOverGrip(int x, int y, int w, int h, double mx, double my) {
       return w > 0 && h > 0 ? mx >= x + w - 10 && mx < x + w && my >= y + h - 10 && my < y + h : false;
    }
 
    public static void render(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, OverlayBounds b, boolean hover, boolean active) {
       if (b != null) {
-         init(graphics, colors, b.x, b.y, b.width, b.height, hover, active);
+         draw(graphics, colors, b.x, b.y, b.width, b.height, hover, active);
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, autismclient.gui.f.NetHelper b, boolean hover, boolean active) {
+   public static void draw(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, autismclient.gui.f.NetHelper b, boolean hover, boolean active) {
       if (b != null) {
-         init(graphics, colors, b.read(), b.write(), b.update(), b.sync(), hover, active);
+         draw(graphics, colors, b.read(), b.write(), b.update(), b.sync(), hover, active);
       }
    }
 
-   private static void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, int x, int y, int w, int h, boolean hover, boolean active) {
+   private static void draw(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, int x, int y, int w, int h, boolean hover, boolean active) {
       if (graphics != null && w > 20 && h > 20) {
          int color = active ? colors.accent : (hover ? colors.textPrimary : colors.textSecondary & 16777215 | -1946157056);
          float cx = x + w - 4.5F;
@@ -55,11 +55,11 @@ public final class ResizeGripRenderer {
 
    public static void requestCursor(GuiGraphicsExtractor graphics) {
       if (graphics != null) {
-         graphics.requestCursor(init());
+         graphics.requestCursor(nwseCursor());
       }
    }
 
-   private static CursorType init() {
+   private static CursorType nwseCursor() {
       if (resizeCursor == null) {
          try {
             resizeCursor = CursorType.createStandardCursor(221191, "resize_nwse", CursorTypes.RESIZE_ALL);

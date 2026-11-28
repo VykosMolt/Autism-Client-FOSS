@@ -20,7 +20,7 @@ final class AiEnchant {
    private AiEnchant() {
    }
 
-   static JsonObject init(
+   static JsonObject optionJson(
       int button, int requiredLevel, int clueId, int clueLevel, String clueEnchantment, int lapisAvailable, int xpLevel, boolean inputPresent
    ) {
       int lapisCost = button + 1;
@@ -56,7 +56,7 @@ final class AiEnchant {
       return option;
    }
 
-   static String init(int button, int requiredLevel, int lapisAvailable, int xpLevel, boolean inputPresent) {
+   static String unavailableReason(int button, int requiredLevel, int lapisAvailable, int xpLevel, boolean inputPresent) {
       if (!inputPresent) {
          return "Enchanting input slot is empty; place the item into the table via game:inventory_click first";
       }
@@ -84,7 +84,7 @@ final class AiEnchant {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          if (mc.player.containerMenu instanceof EnchantmentMenu menu) {
-            return init(mc, menu);
+            return describeMenu(mc, menu);
          } else {
             throw new IllegalArgumentException(
                "Open an enchanting table first; the currently open menu is " + mc.player.containerMenu.getClass().getSimpleName()
@@ -95,8 +95,8 @@ final class AiEnchant {
       }
    }
 
-   private static JsonObject init(Minecraft mc, EnchantmentMenu menu) {
-      int lapisInSlot = init(menu.getSlot(1).getItem());
+   private static JsonObject describeMenu(Minecraft mc, EnchantmentMenu menu) {
+      int lapisInSlot = lapisCount(menu.getSlot(1).getItem());
       int xpLevel = mc.player.experienceLevel;
       ItemStack input = menu.getSlot(0).getItem();
       IntFunction<String> resolver = enchantmentResolver(mc);
@@ -104,7 +104,7 @@ final class AiEnchant {
 
       for (int i = 0; i < 3; i++) {
          options.add(
-            init(i, menu.costs[i], menu.enchantClue[i], menu.levelClue[i], resolver.apply(menu.enchantClue[i]), lapisInSlot, xpLevel, !input.isEmpty())
+            optionJson(i, menu.costs[i], menu.enchantClue[i], menu.levelClue[i], resolver.apply(menu.enchantClue[i]), lapisInSlot, xpLevel, !input.isEmpty())
          );
       }
 
@@ -134,7 +134,7 @@ final class AiEnchant {
          "lapisInTable",
          lapisInSlot,
          "lapisInInventory",
-         init_I(mc),
+         inventoryLapis(mc),
          "experienceLevel",
          xpLevel,
          "options",
@@ -154,14 +154,14 @@ final class AiEnchant {
             final Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null && mc.level != null && mc.gameMode != null) {
                if (mc.player.containerMenu instanceof EnchantmentMenu menu) {
-                  String deficit = init(
-                     button, menu.costs[button], init(menu.getSlot(1).getItem()), mc.player.experienceLevel, !menu.getSlot(0).getItem().isEmpty()
+                  String deficit = unavailableReason(
+                     button, menu.costs[button], lapisCount(menu.getSlot(1).getItem()), mc.player.experienceLevel, !menu.getSlot(0).getItem().isEmpty()
                   );
                   if (deficit != null) {
                      return AiGameOperations.immediate(
                         AiOperation.Status.FAILED,
                         deficit,
-                        AiJson.objectOf("button", button, "option", init(mc, menu).getAsJsonArray("options").get(button))
+                        AiJson.objectOf("button", button, "option", describeMenu(mc, menu).getAsJsonArray("options").get(button))
                      );
                   }
 
@@ -169,57 +169,57 @@ final class AiEnchant {
                   final ItemStack before = menu.getSlot(0).getItem().copy();
                   final long deadline = System.nanoTime() + timeout * 1000000000L;
                   return new AiOperation() {
-                     long init_J;
-                     int init_I;
-                     boolean init_Z;
-                     boolean load;
+                     long revisionBefore;
+                     int stableTicks;
+                     boolean clicked;
+                     boolean done;
 
                      @Override
                      public AiOperation.Result tick() {
-                        if (this.load) {
-                           return this.init(AiOperation.Status.CANCELLED, "Enchant operation cancelled", new JsonObject());
+                        if (this.done) {
+                           return this.finish(AiOperation.Status.CANCELLED, "Enchant operation cancelled", new JsonObject());
                         }
 
                         if (mc.player == null || !(mc.player.containerMenu instanceof EnchantmentMenu current && current.containerId == containerId)) {
-                           return this.init(AiOperation.Status.CANCELLED, "Enchanting table closed before the server confirmed the click", new JsonObject());
+                           return this.finish(AiOperation.Status.CANCELLED, "Enchanting table closed before the server confirmed the click", new JsonObject());
                         }
 
-                        if (!this.init_Z) {
-                           String again = AiEnchant.init(
+                        if (!this.clicked) {
+                           String again = AiEnchant.unavailableReason(
                               button,
                               current.costs[button],
-                              AiEnchant.init(current.getSlot(1).getItem()),
+                              AiEnchant.lapisCount(current.getSlot(1).getItem()),
                               mc.player.experienceLevel,
                               !current.getSlot(0).getItem().isEmpty()
                            );
                            if (again != null) {
-                              return this.init(AiOperation.Status.FAILED, again, AiJson.objectOf("button", button));
+                              return this.finish(AiOperation.Status.FAILED, again, AiJson.objectOf("button", button));
                            }
 
-                           this.init_J = AiServerEvidence.containerRevision(containerId);
+                           this.revisionBefore = AiServerEvidence.containerRevision(containerId);
                            mc.gameMode.handleInventoryButtonClick(containerId, button);
-                           this.init_Z = true;
-                           return this.init("Enchant option clicked once; waiting for the server-applied result");
+                           this.clicked = true;
+                           return this.running("Enchant option clicked once; waiting for the server-applied result");
                         } else {
                            ItemStack now = current.getSlot(0).getItem();
                            boolean changed = !ItemStack.matches(before, now);
-                           boolean confirmed = AiServerEvidence.containerRevision(containerId) > this.init_J;
+                           boolean confirmed = AiServerEvidence.containerRevision(containerId) > this.revisionBefore;
                            if (!changed || !confirmed) {
                               return System.nanoTime() > deadline
-                                 ? this.init(
+                                 ? this.finish(
                                     AiOperation.Status.UNCERTAIN,
                                     "Enchant click not confirmed; inspect the table before retrying",
                                     AiJson.objectOf("button", button, "containerId", containerId, "changed", changed)
                                  )
-                                 : this.init(
+                                 : this.running(
                                     changed
                                        ? "Slot changed locally; waiting for the applied server container snapshot"
                                        : "Waiting for the server to apply the enchantment"
                                  );
                            }
 
-                           if (++this.init_I < 3) {
-                              return this.init("Enchant result applied; verifying it is stable");
+                           if (++this.stableTicks < 3) {
+                              return this.running("Enchant result applied; verifying it is stable");
                            }
 
                            JsonObject data = AiJson.objectOf(
@@ -240,29 +240,29 @@ final class AiEnchant {
                               "resultNote",
                               "These are the enchantments the server actually applied; use game:inspect_item for the full component dump."
                            );
-                           return this.init(AiOperation.Status.SUCCEEDED, "Server applied the enchantment; result reported from the applied slot", data);
+                           return this.finish(AiOperation.Status.SUCCEEDED, "Server applied the enchantment; result reported from the applied slot", data);
                         }
                      }
 
-                     AiOperation.Result init(String message) {
+                     AiOperation.Result running(String message) {
                         return AiGameOperations.result(AiOperation.Status.RUNNING, message, AiJson.objectOf("button", button));
                      }
 
-                     AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
-                        this.load = true;
+                     AiOperation.Result finish(AiOperation.Status status, String message, JsonObject data) {
+                        this.done = true;
                         return AiGameOperations.result(status, message, data);
                      }
 
                      @Override
                      public void cancel() {
-                        this.load = true;
+                        this.done = true;
                      }
                   };
                } else {
-                  return init("Open an enchanting table first; the currently open menu is " + mc.player.containerMenu.getClass().getSimpleName());
+                  return failed("Open an enchanting table first; the currently open menu is " + mc.player.containerMenu.getClass().getSimpleName());
                }
             } else {
-               return init("Enchanting requires a connected living player");
+               return failed("Enchanting requires a connected living player");
             }
          } else {
             throw new IllegalArgumentException("button must be 0..2");
@@ -272,7 +272,7 @@ final class AiEnchant {
       }
    }
 
-   private static AiOperation init(String message) {
+   private static AiOperation failed(String message) {
       return AiGameOperations.immediate(AiOperation.Status.FAILED, message, new JsonObject());
    }
 
@@ -295,16 +295,16 @@ final class AiEnchant {
       };
    }
 
-   private static int init(ItemStack stack) {
+   private static int lapisCount(ItemStack stack) {
       return stack.is(Items.LAPIS_LAZULI) ? stack.getCount() : 0;
    }
 
-   private static int init_I(Minecraft mc) {
+   private static int inventoryLapis(Minecraft mc) {
       int count = 0;
       Inventory inventory = mc.player.getInventory();
 
       for (int i = 0; i < inventory.getContainerSize(); i++) {
-         count += init(inventory.getItem(i));
+         count += lapisCount(inventory.getItem(i));
       }
 
       return count;

@@ -15,8 +15,8 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class MacroNameArgumentType implements ArgumentType<String> {
-   private static volatile long init_J = -9223372036854775808L;
-   private static volatile List<MacroNameArgumentType.Inner_DataUtil> init_List = List.of();
+   private static volatile long cachedRevision = -9223372036854775808L;
+   private static volatile List<MacroNameArgumentType.Inner_DataUtil> cachedNames = List.of();
 
    public static MacroNameArgumentType macroName() {
       return new MacroNameArgumentType();
@@ -27,10 +27,10 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    }
 
    public String parse(StringReader reader) throws CommandSyntaxException {
-      return this.init(reader);
+      return this.readName(reader);
    }
 
-   public String init(StringReader reader) throws CommandSyntaxException {
+   public String readName(StringReader reader) throws CommandSyntaxException {
       return reader.canRead() && reader.peek() == '"' ? reader.readQuotedString() : reader.readUnquotedString();
    }
 
@@ -38,7 +38,7 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (MacroNameArgumentType.Inner_DataUtil candidate : init_List()) {
+      for (MacroNameArgumentType.Inner_DataUtil candidate : namesForSuggestions()) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -47,11 +47,11 @@ public class MacroNameArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<MacroNameArgumentType.Inner_DataUtil> init_List() {
+   private static List<MacroNameArgumentType.Inner_DataUtil> namesForSuggestions() {
       MacroLibraryManager manager = MacroLibraryManager.getInstance();
       long revision = manager.getRevision();
-      List<MacroNameArgumentType.Inner_DataUtil> hit = init_List;
-      if (init_J == revision) {
+      List<MacroNameArgumentType.Inner_DataUtil> hit = cachedNames;
+      if (cachedRevision == revision) {
          return hit;
       }
 
@@ -66,8 +66,8 @@ public class MacroNameArgumentType implements ArgumentType<String> {
       }
 
       hit = List.copyOf(rebuilt);
-      init_List = hit;
-      init_J = revision;
+      cachedNames = hit;
+      cachedRevision = revision;
       return hit;
    }
 

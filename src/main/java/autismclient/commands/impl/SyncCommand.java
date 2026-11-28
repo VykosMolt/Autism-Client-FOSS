@@ -17,7 +17,7 @@ public final class SyncCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(context -> init());
+      root.executes(context -> showUsage());
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("send").executes(context -> {
                AutismClientMessaging.sendPrefixed("§eUsage: §f" + autismclient.commands.CommandManager.getPrefix() + "sync send <message or /command>");
@@ -25,7 +25,7 @@ public final class SyncCommand extends Command {
             }))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("message", StringArgumentType.greedyString())
-                  .executes(context -> init(StringArgumentType.getString(context, "message")))
+                  .executes(context -> sendMessage(StringArgumentType.getString(context, "message")))
             )
       );
       root.then(
@@ -40,14 +40,14 @@ public final class SyncCommand extends Command {
       );
    }
 
-   private static int init() {
+   private static int showUsage() {
       String prefix = autismclient.commands.CommandManager.getPrefix();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync send <message or /command>");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "sync macro <name>");
       return 1;
    }
 
-   private static int init(String message) {
+   private static int sendMessage(String message) {
       LanSyncManager sync = LanSyncManager.getInstance();
       if (!sync.isInSession()) {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");

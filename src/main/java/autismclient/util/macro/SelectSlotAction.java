@@ -20,7 +20,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       if (mc.player != null) {
          List<MacroItemTarget> targets = new ArrayList<>();
 
-         for (MacroItemTarget candidate : this.init_List_7()) {
+         for (MacroItemTarget candidate : this.parsedTargets()) {
             MacroItemTarget resolved = candidate.resolveTemplates(mc);
             if (resolved != null) {
                targets.add(resolved);
@@ -28,7 +28,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          }
 
          if (this.strategy == SelectSlotAction.Inner_DataUtil.EMPTY_SLOT) {
-            int empty = this.init_I_Minecraft(mc);
+            int empty = this.firstEmptyHotbar(mc);
             if (empty >= 0) {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, empty);
                MacroVariableContext.set(this.outputVariable, empty);
@@ -38,7 +38,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
 
          if (!targets.isEmpty()) {
             if (this.strategy != SelectSlotAction.Inner_DataUtil.FIRST_MATCH) {
-               int best = this.init_I_Minecraft_List(mc, targets);
+               int best = this.bestHotbarSlot(mc, targets);
                if (best >= 0) {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, best);
                   MacroVariableContext.set(this.outputVariable, best);
@@ -78,7 +78,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       tag.putInt("slot", this.slot);
       tag.putString("strategy", this.strategy.name());
       tag.putString("outputVariable", this.outputVariable);
-      MacroItemTarget target = this.init_ArrayUtil_2();
+      MacroItemTarget target = this.effectiveTarget();
       if (target.hasSlot() || target.hasItemFilter()) {
          tag.put("itemName", target.toTag());
       }
@@ -101,7 +101,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
 
    @Override
    public String getDisplayName() {
-      MacroItemTarget target = this.init_ArrayUtil_2();
+      MacroItemTarget target = this.effectiveTarget();
       return !target.hasSlot() && !target.hasItemFilter() ? "Select Slot " + (this.slot + 1) : "Select " + this.strategy + " \"" + target.formatSummary() + "\"";
    }
 
@@ -110,16 +110,16 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       return "S";
    }
 
-   private MacroItemTarget init_ArrayUtil_2() {
+   private MacroItemTarget effectiveTarget() {
       if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = MacroItemTarget.parse(this.init_Str_Str_6(this.itemName));
+      this.itemTarget = MacroItemTarget.parse(this.normalizeItemName(this.itemName));
       return this.itemTarget;
    }
 
-   private String init_Str_Str_6(String raw) {
+   private String normalizeItemName(String raw) {
       String key = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
       String var10000;
       switch (key) {
@@ -147,7 +147,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       return var10000;
    }
 
-   private int init_I_Minecraft(Minecraft mc) {
+   private int firstEmptyHotbar(Minecraft mc) {
       for (int i = 0; i < 9; i++) {
          if (mc.player.getInventory().getItem(i).isEmpty()) {
             return i;
@@ -157,11 +157,11 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       return -1;
    }
 
-   private List<MacroItemTarget> init_List_7() {
-      String raw = this.init_Str_Str_6(this.itemName);
+   private List<MacroItemTarget> parsedTargets() {
+      String raw = this.normalizeItemName(this.itemName);
       if (raw != null && !raw.isBlank()) {
          if (!raw.contains("|")) {
-            MacroItemTarget target = this.init_ArrayUtil_2();
+            MacroItemTarget target = this.effectiveTarget();
             return !target.hasSlot() && !target.hasItemFilter() ? List.of() : List.of(target);
          }
 
@@ -176,12 +176,12 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
 
          return out;
       } else {
-         MacroItemTarget target = this.init_ArrayUtil_2();
+         MacroItemTarget target = this.effectiveTarget();
          return !target.hasSlot() && !target.hasItemFilter() ? List.of() : List.of(target);
       }
    }
 
-   private int init_I_Minecraft_List(Minecraft mc, List<MacroItemTarget> targets) {
+   private int bestHotbarSlot(Minecraft mc, List<MacroItemTarget> targets) {
       int bestSlot = -1;
       int bestMetric = this.strategy == SelectSlotAction.Inner_DataUtil.WORST_DURABILITY ? 2147483647 : -2147483648;
 

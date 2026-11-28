@@ -14,7 +14,7 @@ public final class PillBadgeRenderer {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       int border = selected ? accentColor : colors.borderControl;
-      int fill = selected ? init(accentColor, 0.12F) : init(colors.cardSurface, colors.cardSurfaceElevated, hoverT);
+      int fill = selected ? withAlpha(accentColor, 0.12F) : lerpColor(colors.cardSurface, colors.cardSurfaceElevated, hoverT);
       int radius = bounds.sync() / 2;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, border);
       int text = !selected && !hovered ? colors.textSecondary : colors.textPrimary;
@@ -26,12 +26,12 @@ public final class PillBadgeRenderer {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, bounds.sync() / 2, 1711276032);
    }
 
-   private static int init(int color, float alpha) {
+   private static int withAlpha(int color, float alpha) {
       int a = Math.round(255.0F * alpha);
       return a << 24 | color & 16777215;
    }
 
-   private static int init(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
       int ab = from & 0xFF;

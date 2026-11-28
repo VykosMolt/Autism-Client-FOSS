@@ -9,7 +9,7 @@ public class WaitFreeSlotsAction implements MacroAction {
    public int slots = 0;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -35,13 +35,13 @@ public class WaitFreeSlotsAction implements MacroAction {
          }
 
          int actual = this.countMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? filled : free;
-         return this.init(actual, Math.max(0, Math.min(36, this.slots)));
+         return this.meetsTarget(actual, Math.max(0, Math.min(36, this.slots)));
       } else {
          return false;
       }
    }
 
-   private boolean init(int actual, int target) {
+   private boolean meetsTarget(int actual, int target) {
       boolean var10000;
       switch (this.comparison) {
          case BELOW:
@@ -74,7 +74,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       tag.putString("comparison", this.comparison.name());
       tag.putInt("slots", Math.max(0, Math.min(36, this.slots)));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -86,7 +86,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       this.slots = Math.max(0, Math.min(36, tag.getIntOr("slots", 0)));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -94,10 +94,10 @@ public class WaitFreeSlotsAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait " + (this.countMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? "Filled" : "Free") + " Slots " + this.init() + " " + Math.max(0, Math.min(36, this.slots));
+      return "Wait " + (this.countMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? "Filled" : "Free") + " Slots " + this.comparisonSymbol() + " " + Math.max(0, Math.min(36, this.slots));
    }
 
-   private String init() {
+   private String comparisonSymbol() {
       String var10000;
       switch (this.comparison) {
          case BELOW:
@@ -129,12 +129,12 @@ public class WaitFreeSlotsAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {

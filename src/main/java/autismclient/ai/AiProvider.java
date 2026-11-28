@@ -99,7 +99,7 @@ public final class AiProvider implements AutoCloseable {
       this.settings.effort = AiSettings.normalizeEffort(level);
    }
 
-   public synchronized String load() {
+   public synchronized String effectiveEffort() {
       return AiSettings.nearestEffort(AiSettings.effortLevels(this.settings.provider, this.settings.model), this.settings.effort);
    }
 
@@ -231,7 +231,7 @@ public final class AiProvider implements AutoCloseable {
    }
 
    public synchronized JsonObject buildRequest(AiContext.PromptParts prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
-      String effort = this.load();
+      String effort = this.effectiveEffort();
       JsonObject body = AiJson.objectOf("model", this.settings.model, "stream", true);
       JsonArray wireTools = new JsonArray();
       if (this.settings.provider == AiSettings.Provider.GEMINI) {
@@ -298,7 +298,7 @@ public final class AiProvider implements AutoCloseable {
          }
 
          if (thinking != null) {
-            if (load(this.settings)) {
+            if (isOfficialAnthropic(this.settings)) {
                thinking.add("block_binding", AiJson.objectOf("prefix_mismatch_behavior", "drop_block"));
             }
 
@@ -479,7 +479,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   static boolean load(AiSettings s) {
+   static boolean isOfficialAnthropic(AiSettings s) {
       if (s.provider != AiSettings.Provider.ANTHROPIC) {
          return false;
       }
@@ -492,7 +492,7 @@ public final class AiProvider implements AutoCloseable {
    }
 
    static String init_Str_AiSettings_JsonObject(AiSettings s, JsonObject body) {
-      if (load(s) && body.has("thinking") && body.get("thinking").isJsonObject()) {
+      if (isOfficialAnthropic(s) && body.has("thinking") && body.get("thinking").isJsonObject()) {
          return body.getAsJsonObject("thinking").has("block_binding") ? "thinking-binding-controls-2026-08-01" : null;
       } else {
          return null;
@@ -856,7 +856,7 @@ public final class AiProvider implements AutoCloseable {
                   if (provider == AiSettings.Provider.GEMINI) {
                      if (event.has("usageMetadata") && event.get("usageMetadata").isJsonObject()) {
                         content.set(true);
-                        write(event.getAsJsonObject("usageMetadata"), meter);
+                        readGeminiUsage(event.getAsJsonObject("usageMetadata"), meter);
                      }
 
                      JsonArray candidates = event.has("candidates") && event.get("candidates").isJsonArray() ? event.getAsJsonArray("candidates") : null;
@@ -955,7 +955,7 @@ public final class AiProvider implements AutoCloseable {
                         } else if (type.equals("message_delta")) {
                            finish = AiJson.getString(event.getAsJsonObject("delta"), "stop_reason", "");
                            if (event.has("usage") && event.get("usage").isJsonObject()) {
-                              load(event.getAsJsonObject("usage"), meter);
+                              readAnthropicUsage(event.getAsJsonObject("usage"), meter);
                            }
                         }
                         continue;
@@ -964,14 +964,14 @@ public final class AiProvider implements AutoCloseable {
                      content.set(true);
                      JsonObject message = event.has("message") && event.get("message").isJsonObject() ? event.getAsJsonObject("message") : null;
                      if (message != null && message.has("usage") && message.get("usage").isJsonObject()) {
-                        load(message.getAsJsonObject("usage"), meter);
+                        readAnthropicUsage(message.getAsJsonObject("usage"), meter);
                      }
                      continue;
                   }
 
                   if (event.has("usage") && event.get("usage").isJsonObject()) {
                      content.set(true);
-                     read(event.getAsJsonObject("usage"), meter);
+                     readOpenAiUsage(event.getAsJsonObject("usage"), meter);
                   }
 
                   JsonArray choices = event.has("choices") && event.get("choices").isJsonArray() ? event.getAsJsonArray("choices") : null;
@@ -985,7 +985,7 @@ public final class AiProvider implements AutoCloseable {
                   }
                   if (choice.has("usage") && choice.get("usage").isJsonObject()) {
                      content.set(true);
-                     read(choice.getAsJsonObject("usage"), meter);
+                     readOpenAiUsage(choice.getAsJsonObject("usage"), meter);
                   }
 
                   boolean finishMarker = choice.has("finish_reason") && choice.get("finish_reason").isJsonPrimitive();
@@ -1044,7 +1044,7 @@ public final class AiProvider implements AutoCloseable {
 
                      for (int open : blocks.keySet()) {
                         if (!touched.contains(open)) {
-                           load(blocks, ready, open, onCallReady);
+                           emitToolCall(blocks, ready, open, onCallReady);
                         }
                      }
                   }
@@ -1327,7 +1327,7 @@ public final class AiProvider implements AutoCloseable {
       return hasPrimitive(o, key) ? o.get(key).getAsLong() : 0L;
    }
 
-   static void load(JsonObject u, long[] m) {
+   static void readAnthropicUsage(JsonObject u, long[] m) {
       if (hasPrimitive(u, "input_tokens")) {
          m[0] = longOrZero(u, "input_tokens");
       }
@@ -1345,7 +1345,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   static void read(JsonObject u, long[] m) {
+   static void readOpenAiUsage(JsonObject u, long[] m) {
       long prompt = longOrZero(u, "prompt_tokens");
       if (!hasPrimitive(u, "prompt_cache_hit_tokens") && !hasPrimitive(u, "prompt_cache_miss_tokens")) {
          JsonObject details = u.has("prompt_tokens_details") && u.get("prompt_tokens_details").isJsonObject()
@@ -1368,7 +1368,7 @@ public final class AiProvider implements AutoCloseable {
       m[4] = longOrZero(u, "total_tokens");
    }
 
-   static void write(JsonObject u, long[] m) {
+   static void readGeminiUsage(JsonObject u, long[] m) {
       long prompt = longOrZero(u, "promptTokenCount") + longOrZero(u, "toolUsePromptTokenCount");
       long cached = longOrZero(u, "cachedContentTokenCount");
       m[0] = Math.max(0L, prompt - cached);
@@ -1417,7 +1417,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static void load(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void emitToolCall(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
       if (!ready.containsKey(index)) {
          JsonObject b = blocks.get(index);
          if (b != null) {
@@ -1516,11 +1516,11 @@ public final class AiProvider implements AutoCloseable {
    }
 
    private static final class Inner_StreamUtil extends FilterInputStream {
-      private final AtomicLong init;
+      private final AtomicLong lastActivity;
 
       Inner_StreamUtil(InputStream in, AtomicLong activity) {
          super(in);
-         this.init = activity;
+         this.lastActivity = activity;
       }
 
       @Override
@@ -1528,7 +1528,7 @@ public final class AiProvider implements AutoCloseable {
          try {
             int r = super.read();
             if (r >= 0) {
-               this.init.set(System.nanoTime());
+               this.lastActivity.set(System.nanoTime());
             }
 
             return r;
@@ -1542,7 +1542,7 @@ public final class AiProvider implements AutoCloseable {
          try {
             int n = super.read(b, off, len);
             if (n > 0) {
-               this.init.set(System.nanoTime());
+               this.lastActivity.set(System.nanoTime());
             }
 
             return n;

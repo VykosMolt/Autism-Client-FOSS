@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 final class AiLocalRequest {
-   private static final Set<String> init = Set.of(
+   private static final Set<String> LOCAL_TOOLS = Set.of(
       "game:obtain",
       "game:mine",
       "game:chop",
@@ -51,7 +51,7 @@ final class AiLocalRequest {
    }
 
    static JsonObject localRequest(String label, String capability, JsonObject arguments) {
-      if (label != null && !label.isBlank() && label.length() <= 16000 && capability != null && init.contains(capability) && arguments != null) {
+      if (label != null && !label.isBlank() && label.length() <= 16000 && capability != null && LOCAL_TOOLS.contains(capability) && arguments != null) {
          return AiJson.objectOf("label", label, "capability", capability, "arguments", arguments.deepCopy());
       } else {
          throw new IllegalArgumentException("Invalid local action");

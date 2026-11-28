@@ -43,7 +43,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       autismclient.util.ContainerClickType.DROP_ITEM.ordinal(),
       autismclient.util.ContainerClickType.DROP_STACK.ordinal()
    };
-   private static final int[] load = new int[]{
+   private static final int[] ALLOWED_CLICK_TYPES = new int[]{
       autismclient.util.ContainerClickType.PICKUP.ordinal(),
       autismclient.util.ContainerClickType.PICKUP_ALL.ordinal(),
       autismclient.util.ContainerClickType.QUICK_MOVE.ordinal(),
@@ -59,7 +59,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
    public int getItemActionIndex(int index) {
       int stored = index < this.itemActionIdx.size() ? this.itemActionIdx.get(index) : this.actionIndex;
-      return sync(stored);
+      return sanitizeClickType(stored);
    }
 
    public int getItemButton(int index) {
@@ -176,7 +176,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                this.itemActionIdx.add(this.actionIndex);
             }
 
-            this.itemActionIdx.set(index, sync(opts.get(optionIndex).ordinal()));
+            this.itemActionIdx.set(index, sanitizeClickType(opts.get(optionIndex).ordinal()));
             this.normalizeItemButton(index);
          }
       }
@@ -245,7 +245,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
    public ItemAction.Inner_DataUtil getItemSearchScope(int index) {
       if (index >= 0 && index < this.itemSearchScopes.size()) {
-         return ItemAction.Inner_DataUtil.values()[close(this.itemSearchScopes.get(index))];
+         return ItemAction.Inner_DataUtil.values()[sanitizeSearchScope(this.itemSearchScopes.get(index))];
       } else {
          return index >= 0 && index < this.preferPlayerInventory.size() && Boolean.TRUE.equals(this.preferPlayerInventory.get(index))
             ? ItemAction.Inner_DataUtil.PLAYER_INVENTORY
@@ -253,7 +253,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   public void read(int index, int direction) {
+   public void cycleSearchScope(int index, int direction) {
       if (index >= 0) {
          int next = Math.floorMod(this.getItemSearchScope(index).ordinal() + direction, ItemAction.Inner_DataUtil.values().length);
          this.setItemSearchScope(index, ItemAction.Inner_DataUtil.values()[next]);
@@ -282,16 +282,16 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       int raw = index >= 0 && index < this.stackAmountModes.size()
          ? this.stackAmountModes.get(index)
          : ItemAction.Inner_CachePool.DEFAULT.ordinal();
-      return ItemAction.Inner_CachePool.values()[flush(raw)];
+      return ItemAction.Inner_CachePool.values()[sanitizeAmountMode(raw)];
    }
 
-   public void write(int index, int direction) {
+   public void cycleStackAmountMode(int index, int direction) {
       if (index >= 0) {
          while (this.stackAmountModes.size() <= index) {
             this.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
          }
 
-         int current = flush(this.stackAmountModes.get(index));
+         int current = sanitizeAmountMode(this.stackAmountModes.get(index));
          int next = (current + direction) % ItemAction.Inner_CachePool.values().length;
          if (next < 0) {
             next += ItemAction.Inner_CachePool.values().length;
@@ -326,7 +326,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                         continue;
                      }
 
-                     slotToUse = this.init(handler, entryTarget, resolvedSlot);
+                     slotToUse = this.findSlot(handler, entryTarget, resolvedSlot);
                   } else if (configuredEntrySlot >= 0) {
                      slotToUse = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, configuredEntrySlot);
                   } else if (this.useSlot && this.targetSlot >= 0) {
@@ -335,9 +335,9 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                         continue;
                      }
 
-                     slotToUse = this.init(handler, entryTarget, configuredSlot);
+                     slotToUse = this.findSlot(handler, entryTarget, configuredSlot);
                   } else {
-                     slotToUse = this.init(handler, entryTarget, this.getItemSearchScope(ei), this.getItemStackAmountMode(ei));
+                     slotToUse = this.findSlotInScope(handler, entryTarget, this.getItemSearchScope(ei), this.getItemStackAmountMode(ei));
                   }
 
                   if (slotToUse >= 0) {
@@ -443,10 +443,10 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private int findSlotForTarget(AbstractContainerMenu handler, MacroItemTarget target) {
-      return this.init(handler, target, ItemAction.Inner_DataUtil.BOTH, ItemAction.Inner_CachePool.DEFAULT);
+      return this.findSlotInScope(handler, target, ItemAction.Inner_DataUtil.BOTH, ItemAction.Inner_CachePool.DEFAULT);
    }
 
-   private int init(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
+   private int findSlotInScope(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
       if (!target.hasItemFilter()) {
          return -1;
       }
@@ -456,13 +456,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       int var10000;
       switch (scope) {
          case BOTH:
-            var10000 = this.init(handler, target, mode, null);
+            var10000 = this.findBestSlot(handler, target, mode, null);
             break;
          case GUI:
-            var10000 = this.init(handler, target, mode, false);
+            var10000 = this.findBestSlot(handler, target, mode, false);
             break;
          case PLAYER_INVENTORY:
-            var10000 = this.init(handler, target, mode, true);
+            var10000 = this.findBestSlot(handler, target, mode, true);
             break;
          default:
             throw new MatchException(null, null);
@@ -471,7 +471,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return var10000;
    }
 
-   private int init(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_CachePool mode, Boolean playerInventoryOnly) {
+   private int findBestSlot(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_CachePool mode, Boolean playerInventoryOnly) {
       int bestSlot = -1;
       int bestScore = -1;
       int bestCount = mode == ItemAction.Inner_CachePool.LEAST ? 2147483647 : -1;
@@ -489,7 +489,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             int score = target.matchScore(slot.getItem(), visibleSlot);
             if (score >= 0) {
                int count = slot.getItem().getCount();
-               if (this.init(mode, score, count, bestScore, bestCount)) {
+               if (this.isBetterMatch(mode, score, count, bestScore, bestCount)) {
                   bestScore = score;
                   bestCount = count;
                   bestSlot = slot.index;
@@ -501,7 +501,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return bestScore >= 0 ? bestSlot : -1;
    }
 
-   private boolean init(ItemAction.Inner_CachePool mode, int score, int count, int bestScore, int bestCount) {
+   private boolean isBetterMatch(ItemAction.Inner_CachePool mode, int score, int count, int bestScore, int bestCount) {
       if (bestScore < 0) {
          return true;
       } else if (mode == ItemAction.Inner_CachePool.LEAST) {
@@ -513,11 +513,11 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   private int init(AbstractContainerMenu handler, String name, int requiredSlot) {
-      return this.init(handler, MacroItemTarget.parse(name), requiredSlot);
+   private int findSlotByName(AbstractContainerMenu handler, String name, int requiredSlot) {
+      return this.findSlot(handler, MacroItemTarget.parse(name), requiredSlot);
    }
 
-   private int init(AbstractContainerMenu handler, MacroItemTarget target, int requiredSlot) {
+   private int findSlot(AbstractContainerMenu handler, MacroItemTarget target, int requiredSlot) {
       if (requiredSlot >= 0 && requiredSlot < handler.slots.size()) {
          Slot slot = handler.slots.get(requiredSlot);
          if (slot == null || slot.getItem().isEmpty()) {
@@ -679,7 +679,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       for (int i = 0; i < this.itemActionIdx.size(); i++) {
-         this.itemActionIdx.set(i, sync(this.itemActionIdx.get(i)));
+         this.itemActionIdx.set(i, sanitizeClickType(this.itemActionIdx.get(i)));
       }
 
       this.itemButtons.clear();
@@ -720,7 +720,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       if (tag.contains("itemSearchScopes")) {
          for (Tag el : tag.getList("itemSearchScopes").orElse(new ListTag())) {
             try {
-               this.itemSearchScopes.add(close(Integer.parseInt(el.asString().orElse("0"))));
+               this.itemSearchScopes.add(sanitizeSearchScope(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
                this.itemSearchScopes.add(ItemAction.Inner_DataUtil.BOTH.ordinal());
             }
@@ -745,14 +745,14 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       for (int i = 0; i < this.itemSearchScopes.size(); i++) {
-         this.setItemSearchScope(i, ItemAction.Inner_DataUtil.values()[close(this.itemSearchScopes.get(i))]);
+         this.setItemSearchScope(i, ItemAction.Inner_DataUtil.values()[sanitizeSearchScope(this.itemSearchScopes.get(i))]);
       }
 
       this.stackAmountModes.clear();
       if (tag.contains("stackAmountModes")) {
          for (Tag el : tag.getList("stackAmountModes").orElse(new ListTag())) {
             try {
-               this.stackAmountModes.add(flush(Integer.parseInt(el.asString().orElse("0"))));
+               this.stackAmountModes.add(sanitizeAmountMode(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
                this.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
             }
@@ -769,7 +769,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
       this.targetSlot = tag.getIntOr("targetSlot", -1);
       this.useSlot = tag.getBooleanOr("useSlot", false);
-      this.actionIndex = sync(tag.getIntOr("actionIndex", 0));
+      this.actionIndex = sanitizeClickType(tag.getIntOr("actionIndex", 0));
       this.button = clampButton(this.currentClickType(), tag.getIntOr("button", 0));
       this.times = tag.getIntOr("times", 1);
       this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
@@ -825,7 +825,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    public autismclient.util.ContainerClickType currentClickType() {
-      return CLICK_TYPES[sync(this.actionIndex)];
+      return CLICK_TYPES[sanitizeClickType(this.actionIndex)];
    }
 
    public void nextClickAction() {
@@ -937,8 +937,8 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return normalized < 0 ? normalized + limit : normalized;
    }
 
-   private static int sync(int rawIndex) {
-      for (int allowed : load) {
+   private static int sanitizeClickType(int rawIndex) {
+      for (int allowed : ALLOWED_CLICK_TYPES) {
          if (rawIndex == allowed) {
             return rawIndex;
          }
@@ -947,11 +947,11 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return autismclient.util.ContainerClickType.PICKUP.ordinal();
    }
 
-   private static int flush(int rawMode) {
+   private static int sanitizeAmountMode(int rawMode) {
       return rawMode >= 0 && rawMode < ItemAction.Inner_CachePool.values().length ? rawMode : ItemAction.Inner_CachePool.DEFAULT.ordinal();
    }
 
-   private static int close(int rawScope) {
+   private static int sanitizeSearchScope(int rawScope) {
       return rawScope >= 0 && rawScope < ItemAction.Inner_DataUtil.values().length ? rawScope : ItemAction.Inner_DataUtil.BOTH.ordinal();
    }
 

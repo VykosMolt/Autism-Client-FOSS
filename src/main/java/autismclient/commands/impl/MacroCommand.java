@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 
 public class MacroCommand extends Command {
-   private static final ConcurrentHashMap<String, AtomicBoolean> init = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<String, AtomicBoolean> RUNNING = new ConcurrentHashMap<>();
 
    public MacroCommand() {
       super("macro", "Run a macro, optionally N times with a delay between starts.");
@@ -33,7 +33,7 @@ public class MacroCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("stop")
                .executes(
                   ctx -> {
-                     init();
+                     stopAll();
                      MacroLibraryManager.getInstance().stopRunningMacro();
                      AutismClientMessaging.sendPrefixed("§eStopped all macros.");
                      return 1;
@@ -44,7 +44,7 @@ public class MacroCommand extends Command {
                   .executes(
                      ctx -> {
                         String name = autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name");
-                        AtomicBoolean flag = init.remove(name.toLowerCase());
+                        AtomicBoolean flag = RUNNING.remove(name.toLowerCase());
                         if (flag != null) {
                            flag.set(false);
                         }
@@ -57,22 +57,22 @@ public class MacroCommand extends Command {
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("clear").executes(ctx -> {
-         init();
+         stopAll();
          AutismClientMessaging.sendPrefixed("§eCleared macro loops.");
          return 1;
       }));
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
-               .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), 1, 0)))
+               .executes(ctx -> runMacro(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), 1, 0)))
             .then(
                ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
                      .suggests(autismclient.commands.CommandSuggestions::suggestTimes)
-                     .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
+                     .executes(ctx -> runMacro(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("delayTicks", IntegerArgumentType.integer(0, 72000))
                         .suggests(autismclient.commands.CommandSuggestions::suggestDelayTicks)
                         .executes(
-                           ctx -> init(
+                           ctx -> runMacro(
                               autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"),
                               IntegerArgumentType.getInteger(ctx, "times"),
                               IntegerArgumentType.getInteger(ctx, "delayTicks")
@@ -83,7 +83,7 @@ public class MacroCommand extends Command {
       );
    }
 
-   private static int init(String name, int times, int delayTicks) {
+   private static int runMacro(String name, int times, int delayTicks) {
       AutismMacro macro = MacroLibraryManager.getInstance().findByName(name);
       if (macro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
@@ -99,7 +99,7 @@ public class MacroCommand extends Command {
             }
 
             AtomicBoolean flag = new AtomicBoolean(true);
-            AtomicBoolean previous = init.put(name.toLowerCase(), flag);
+            AtomicBoolean previous = RUNNING.put(name.toLowerCase(), flag);
             if (previous != null) {
                previous.set(false);
             }
@@ -128,7 +128,7 @@ public class MacroCommand extends Command {
                } catch (InterruptedException ignored) {
                   Thread.currentThread().interrupt();
                } finally {
-                  init.remove(name.toLowerCase(), flag);
+                  RUNNING.remove(name.toLowerCase(), flag);
                }
             }, "MacroLoop-" + name);
             t.setDaemon(true);
@@ -138,11 +138,11 @@ public class MacroCommand extends Command {
       }
    }
 
-   private static void init() {
-      for (AtomicBoolean flag : init.values()) {
+   private static void stopAll() {
+      for (AtomicBoolean flag : RUNNING.values()) {
          flag.set(false);
       }
 
-      init.clear();
+      RUNNING.clear();
    }
 }

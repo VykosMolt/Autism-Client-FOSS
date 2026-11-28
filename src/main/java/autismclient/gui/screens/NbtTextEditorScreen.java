@@ -39,10 +39,10 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    private autismclient.gui.f.NetHelper saveButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    private autismclient.gui.f.NetHelper cancelButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private autismclient.gui.f.NetHelper write = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private autismclient.gui.f.NetHelper update = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private autismclient.gui.f.NetHelper sync = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private autismclient.gui.f.NetHelper flush = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private autismclient.gui.f.NetHelper formatButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private autismclient.gui.f.NetHelper validateButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private autismclient.gui.f.NetHelper copyButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+   private autismclient.gui.f.NetHelper pasteButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    private String errorText = "";
    private boolean init_Z;
 
@@ -120,16 +120,16 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
             int toolbarX = x + pad;
             int toolbarW = Math.max(1, w - pad * 2);
             int cellW = Math.max(1, (toolbarW - 6) / 4);
-            this.write = autismclient.gui.f.NetHelper.init(toolbarX, buttonY, cellW, ctrlH);
-            this.update = autismclient.gui.f.NetHelper.init(this.write.init() + 2, buttonY, cellW, ctrlH);
-            this.sync = autismclient.gui.f.NetHelper.init(this.update.init() + 2, buttonY, cellW, ctrlH);
-            this.flush = autismclient.gui.f.NetHelper.init(this.sync.init() + 2, buttonY, Math.max(1, x + w - pad - this.sync.init() - 2), ctrlH);
-            autismclient.gui.f.b.CachePool.init(ui, this.write, "Format", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.write.init_Z(mx, my), false);
+            this.formatButton = autismclient.gui.f.NetHelper.init(toolbarX, buttonY, cellW, ctrlH);
+            this.validateButton = autismclient.gui.f.NetHelper.init(this.formatButton.init() + 2, buttonY, cellW, ctrlH);
+            this.copyButton = autismclient.gui.f.NetHelper.init(this.validateButton.init() + 2, buttonY, cellW, ctrlH);
+            this.pasteButton = autismclient.gui.f.NetHelper.init(this.copyButton.init() + 2, buttonY, Math.max(1, x + w - pad - this.copyButton.init() - 2), ctrlH);
+            autismclient.gui.f.b.CachePool.init(ui, this.formatButton, "Format", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.formatButton.init_Z(mx, my), false);
             autismclient.gui.f.b.CachePool.init(
-               ui, this.update, "Validate", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.update.init_Z(mx, my), false
+               ui, this.validateButton, "Validate", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.validateButton.init_Z(mx, my), false
             );
-            autismclient.gui.f.b.CachePool.init(ui, this.sync, "Copy", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.sync.init_Z(mx, my), false);
-            autismclient.gui.f.b.CachePool.init(ui, this.flush, "Paste", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.flush.init_Z(mx, my), false);
+            autismclient.gui.f.b.CachePool.init(ui, this.copyButton, "Copy", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.copyButton.init_Z(mx, my), false);
+            autismclient.gui.f.b.CachePool.init(ui, this.pasteButton, "Paste", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.pasteButton.init_Z(mx, my), false);
             buttonY += ctrlH + 2;
             String status = this.errorText.isBlank()
                ? this.editor.getValue().length() + " / 1,048,576 chars  •  Ctrl+S save  •  Ctrl+Shift+F format"
@@ -146,10 +146,10 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
                      : (this.init_Z ? ui.init_TableIndex().colors().success : ui.init_TableIndex().colors().danger)
                );
          } else {
-            this.write = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-            this.update = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-            this.sync = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-            this.flush = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+            this.formatButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+            this.validateButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+            this.copyButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
+            this.pasteButton = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
          }
 
          this.saveButton = autismclient.gui.f.NetHelper.init(saveX, buttonY, saveW, ctrlH);
@@ -178,17 +178,17 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.cancelButton.init_Z(mx, my)) {
          this.onClose();
          return true;
-      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.write.init_Z(mx, my)) {
-         this.read();
+      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.formatButton.init_Z(mx, my)) {
+         this.formatEditor();
          return true;
-      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.update.init_Z(mx, my)) {
+      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.validateButton.init_Z(mx, my)) {
          this.validateForMode();
          return true;
-      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.sync.init_Z(mx, my)) {
-         this.write();
+      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.copyButton.init_Z(mx, my)) {
+         this.copyToClipboard();
          return true;
-      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.flush.init_Z(mx, my)) {
-         this.update();
+      } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.pasteButton.init_Z(mx, my)) {
+         this.pasteFromClipboard();
          return true;
       } else {
          return this.layoutContext == null
@@ -228,7 +228,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       }
 
       if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && ctrl && shift && Compat263.keyEventGlfwKey(input) == 70) {
-         this.read();
+         this.formatEditor();
          return true;
       }
 
@@ -266,7 +266,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
 
    private void load_V_3() {
       if (this.module != null && this.setting != null) {
-         String value = this.read(this.editor.getValue());
+         String value = this.encodeForMode(this.editor.getValue());
          if ("nbt-item-components".equals(this.setting.id()) && this.module instanceof f.Inner_DataUtil adminTools) {
             adminTools.load_V_2(value);
          } else if ("nbt-item-stack".equals(this.setting.id()) && this.module instanceof f.Inner_DataUtil adminTools) {
@@ -314,7 +314,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       return this.init_Z;
    }
 
-   private void read() {
+   private void formatEditor() {
       if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
          String repaired = SnbtBraceRepairer.repair(this.editor.getValue());
          ItemStack stack = ItemSnbtCodec.parseStack(repaired);
@@ -331,7 +331,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void write() {
+   private void copyToClipboard() {
       if (this.minecraft != null && this.minecraft.keyboardHandler != null) {
          String selected = this.editor.getSelectedText();
          this.minecraft.keyboardHandler.setClipboard(selected.isEmpty() ? this.editor.getValue() : selected);
@@ -339,7 +339,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void update() {
+   private void pasteFromClipboard() {
       if (this.minecraft != null && this.minecraft.keyboardHandler != null) {
          this.editor.insertText(this.minecraft.keyboardHandler.getClipboard());
       }
@@ -355,7 +355,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       char quote = 0;
       boolean escaped = false;
       int runStart = 0;
-      int runColor = this.init(safe, 0, quote);
+      int runColor = this.syntaxColorAt(safe, 0, quote);
 
       for (int i = 0; i < safe.length(); i++) {
          char ch = safe.charAt(i);
@@ -370,7 +370,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
                quote = 0;
             }
          } else if (ch != '"' && ch != '\'') {
-            color = this.init(safe, i, quote);
+            color = this.syntaxColorAt(safe, i, quote);
          } else {
             quote = ch;
             color = 15129460;
@@ -379,20 +379,20 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          if (i == 0) {
             runColor = color;
          } else if (color != runColor) {
-            this.init(out, safe.substring(runStart, i), runColor);
+            this.appendColored(out, safe.substring(runStart, i), runColor);
             runStart = i;
             runColor = color;
          }
       }
 
       if (runStart < safe.length()) {
-         this.init(out, safe.substring(runStart), runColor);
+         this.appendColored(out, safe.substring(runStart), runColor);
       }
 
       return out;
    }
 
-   private int init(String source, int index, char quote) {
+   private int syntaxColorAt(String source, int index, char quote) {
       if (source != null && index >= 0 && index < source.length()) {
          char ch = source.charAt(index);
          if (Character.isWhitespace(ch)) {
@@ -409,7 +409,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(MutableComponent out, String text, int color) {
+   private void appendColored(MutableComponent out, String text, int color) {
       if (text != null && !text.isEmpty()) {
          out.append(Component.literal(text).withStyle(style -> style.withColor(color)));
       }
@@ -436,7 +436,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       return var10000;
    }
 
-   private String read(String displayed) {
+   private String encodeForMode(String displayed) {
       String value = displayed == null ? "" : displayed;
       String var10000;
       switch (this.mode) {

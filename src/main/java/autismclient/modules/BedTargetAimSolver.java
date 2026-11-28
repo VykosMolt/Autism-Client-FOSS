@@ -27,7 +27,7 @@ final class BedTargetAimSolver {
 
    static Vec3 visibleAimPoint(List<AABB> boxes, List<AABB> blockers, Vec3 eye, double reach, Vec3 preferred) {
       for (AABB box : boxes) {
-         if (init_Z(boxes, blockers, eye, reach, box.getCenter())) {
+         if (isVisibleThrough(boxes, blockers, eye, reach, box.getCenter())) {
             return box.getCenter();
          }
       }
@@ -48,21 +48,21 @@ final class BedTargetAimSolver {
          }
       }
 
-      return points.stream().filter(p -> init_Z(boxes, blockers, eye, reach, p)).min(Comparator.comparingDouble(p -> p.distanceToSqr(preferred))).orElse(null);
+      return points.stream().filter(p -> isVisibleThrough(boxes, blockers, eye, reach, p)).min(Comparator.comparingDouble(p -> p.distanceToSqr(preferred))).orElse(null);
    }
 
-   private static boolean init_Z(List<AABB> boxes, List<AABB> blockers, Vec3 eye, double reach, Vec3 point) {
+   private static boolean isVisibleThrough(List<AABB> boxes, List<AABB> blockers, Vec3 eye, double reach, Vec3 point) {
       Vec3 delta = point.subtract(eye);
       if (delta.lengthSqr() < 1.0E-12) {
          return boxes.stream().anyMatch(b -> b.contains(eye));
       }
 
       Vec3 end = eye.add(delta.normalize().scale(reach));
-      double target = init(boxes, eye, end);
-      return Double.isFinite(target) && init(blockers, eye, end) > target + 1.0E-9;
+      double target = nearestHit(boxes, eye, end);
+      return Double.isFinite(target) && nearestHit(blockers, eye, end) > target + 1.0E-9;
    }
 
-   private static double init(List<AABB> boxes, Vec3 eye, Vec3 end) {
+   private static double nearestHit(List<AABB> boxes, Vec3 eye, Vec3 end) {
       double closest = 1.0 / 0.0;
 
       for (AABB box : boxes) {

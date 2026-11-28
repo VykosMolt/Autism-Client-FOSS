@@ -16,10 +16,10 @@ public final class ServerVerifiedBlockState {
       BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)level).autism$getBlockPredictionHandler();
       Object pending = ((AutismBlockStatePredictionAccessor)prediction).autism$getServerVerifiedStates().get(pos.asLong());
       BlockState received = pending == null ? null : ((AutismServerVerifiedBlockStateAccessor)pending).autism$getBlockState();
-      return init(level.getBlockState(pos), received);
+      return preferReceived(level.getBlockState(pos), received);
    }
 
-   static <T> T init(T displayed, T received) {
+   static <T> T preferReceived(T displayed, T received) {
       return received == null ? displayed : received;
    }
 }

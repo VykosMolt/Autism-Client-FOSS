@@ -46,14 +46,14 @@ public final class ContainerClickSnapshot {
    }
 
    public record Inner_StreamUtil(
-      int containerId, int load_I, int read_I, int write, String init_Str, String load_Str, String read_Str, ContainerClickSnapshot.Inner_DataUtil mode, long init_J
+      int containerId, int stateId, int handlerSlot, int write, String init_Str, String load_Str, String read_Str, ContainerClickSnapshot.Inner_DataUtil mode, long capturedAtMs
    ) {
       public ServerboundContainerClickPacket toPacket() {
          ContainerClickSnapshot.Inner_DataUtil effectiveMode = this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode;
          return new ServerboundContainerClickPacket(
             this.containerId,
-            this.load_I,
-            (short)this.read_I,
+            this.stateId,
+            (short)this.handlerSlot,
             (byte)effectiveMode.init_I,
             effectiveMode.init_ContainerInput,
             new Int2ObjectArrayMap<>(),
@@ -64,34 +64,34 @@ public final class ContainerClickSnapshot {
       public ContainerClickSnapshot.Inner_StreamUtil withMode(ContainerClickSnapshot.Inner_DataUtil newMode) {
          return new ContainerClickSnapshot.Inner_StreamUtil(
             this.containerId,
-            this.load_I,
-            this.read_I,
+            this.stateId,
+            this.handlerSlot,
             this.write,
             this.init_Str,
             this.load_Str,
             this.read_Str,
             newMode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : newMode,
-            this.init_J
+            this.capturedAtMs
          );
       }
 
       public String init_Str() {
          String modeName = (this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode).init_Str;
          String item = this.read_Str != null && !this.read_Str.isBlank() ? this.read_Str : "empty";
-         return modeName + " slot " + this.write + " [" + item + "] menu " + this.containerId + ":" + this.load_I;
+         return modeName + " slot " + this.write + " [" + item + "] menu " + this.containerId + ":" + this.stateId;
       }
 
       public CompoundTag toTag() {
          CompoundTag tag = new CompoundTag();
          tag.putInt("containerId", this.containerId);
-         tag.putInt("stateId", this.load_I);
-         tag.putInt("handlerSlot", this.read_I);
+         tag.putInt("stateId", this.stateId);
+         tag.putInt("handlerSlot", this.handlerSlot);
          tag.putInt("visibleSlot", this.write);
          tag.putString("screenTitle", this.init_Str == null ? "" : this.init_Str);
          tag.putString("menuClass", this.load_Str == null ? "" : this.load_Str);
          tag.putString("itemSummary", this.read_Str == null ? "" : this.read_Str);
          tag.putString("mode", (this.mode == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.mode).name());
-         tag.putLong("capturedAtMs", this.init_J);
+         tag.putLong("capturedAtMs", this.capturedAtMs);
          return tag;
       }
 
@@ -119,7 +119,7 @@ public final class ContainerClickSnapshot {
             : null;
       }
 
-      public int write_I() {
+      public int visibleSlot() {
          return this.write;
       }
 
@@ -131,7 +131,7 @@ public final class ContainerClickSnapshot {
          return this.load_Str;
       }
 
-      public String write_Str() {
+      public String itemLabel() {
          return this.read_Str;
       }
    }

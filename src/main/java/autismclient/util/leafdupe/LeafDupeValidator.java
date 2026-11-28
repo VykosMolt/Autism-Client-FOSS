@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 public final class LeafDupeValidator {
    public static final double init_D = 0.05;
    public static final double load = 0.2;
-   private static final Set<Block> init_Set = Set.of(
+   private static final Set<Block> INTERACTIVE_BLOCKS = Set.of(
       Blocks.LEVER,
       Blocks.NOTE_BLOCK,
       Blocks.REPEATER,
@@ -127,7 +127,7 @@ public final class LeafDupeValidator {
                && !state.is(BlockTags.CANDLES)
                && !state.is(BlockTags.CANDLE_CAKES)
                && !state.is(BlockTags.FLOWER_POTS)
-               && !init_Set.contains(state.getBlock())
+               && !INTERACTIVE_BLOCKS.contains(state.getBlock())
             ? null
             : "it is interactive, use a plain block instead.";
       }
@@ -242,13 +242,13 @@ public final class LeafDupeValidator {
       return best == null ? preferred : best;
    }
 
-   public static Vec3 init_Vec3_BlockPos(BlockPos pos, Direction face, double height) {
+   public static Vec3 faceCenter(BlockPos pos, Direction face, double height) {
       return face == Direction.UP
          ? new Vec3(pos.getX() + 0.5, pos.getY() + height, pos.getZ() + 0.5)
          : Vec3.atCenterOf(pos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
    }
 
-   public static double init(Vec3 eye, AABB box) {
+   public static double distanceToBox(Vec3 eye, AABB box) {
       double dx = Math.max(box.minX - eye.x, Math.max(0.0, eye.x - box.maxX));
       double dy = Math.max(box.minY - eye.y, Math.max(0.0, eye.y - box.maxY));
       double dz = Math.max(box.minZ - eye.z, Math.max(0.0, eye.z - box.maxZ));
@@ -260,7 +260,7 @@ public final class LeafDupeValidator {
    ) {
       for (BlockPos pos : positions) {
          AABB box = bounds.apply(pos);
-         if (!(init(serverEye, box) > reach) && !(init(liveEye, box) > reach)) {
+         if (!(distanceToBox(serverEye, box) > reach) && !(distanceToBox(liveEye, box) > reach)) {
             if (visible.test(pos, serverEye) && (!(liveEye.distanceToSqr(serverEye) > 1.0E-8) || visible.test(pos, liveEye))) {
                continue;
             }

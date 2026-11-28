@@ -54,16 +54,16 @@ public final class OreSimRegionGenerator {
       } else if (cancelled == null) {
          throw new IllegalArgumentException("Cancellation supplier must not be null");
       } else {
-         return WorldGenThreadScope.run(() -> this.load(minChunkX, minChunkZ, size, cancelled));
+         return WorldGenThreadScope.run(() -> this.generateChunks(minChunkX, minChunkZ, size, cancelled));
       }
    }
 
-   private Map<Long, ChunkAccess> load(int minChunkX, int minChunkZ, int size, BooleanSupplier cancelled) {
+   private Map<Long, ChunkAccess> generateChunks(int minChunkX, int minChunkZ, int size, BooleanSupplier cancelled) {
       Map<Long, ChunkAccess> chunks = new HashMap<>();
 
       for (int dx = -8; dx < size + 8; dx++) {
          for (int dz = -8; dz < size + 8; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkPos pos = new ChunkPos(minChunkX + dx, minChunkZ + dz);
             chunks.put(pos.pack(), new ProtoChunk(pos, UpgradeData.EMPTY, this.context.heightAccessor(), this.paletteFactory, null));
          }
@@ -74,7 +74,7 @@ public final class OreSimRegionGenerator {
 
       for (int dx = -8; dx < size + 8; dx++) {
          for (int dz = -8; dz < size + 8; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
             this.context
@@ -87,67 +87,67 @@ public final class OreSimRegionGenerator {
                   this.context.structureTemplates(),
                   this.context.dimension()
                );
-            init(chunk, ChunkStatus.STRUCTURE_STARTS);
+            markStatus(chunk, ChunkStatus.STRUCTURE_STARTS);
          }
       }
 
       for (int dx = 0; dx < size; dx++) {
          for (int dz = 0; dz < size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
             this.context.chunkGenerator().createReferences(level, structures, chunk);
-            init(chunk, ChunkStatus.STRUCTURE_REFERENCES);
+            markStatus(chunk, ChunkStatus.STRUCTURE_REFERENCES);
          }
       }
 
       for (int dx = -1; dx <= size; dx++) {
          for (int dz = -1; dz <= size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
             this.context.chunkGenerator().createBiomes(this.context.randomState(), Blender.empty(), structures, chunk).join();
-            init(chunk, ChunkStatus.BIOMES);
+            markStatus(chunk, ChunkStatus.BIOMES);
          }
       }
 
       for (int dx = 0; dx < size; dx++) {
          for (int dz = 0; dz < size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
-            init(chunk, ChunkStatus.TERRAIN);
+            markStatus(chunk, ChunkStatus.TERRAIN);
          }
       }
 
       for (int dx = 0; dx < size; dx++) {
          for (int dz = 0; dz < size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
             this.init_V_WorldGenLevel(level, chunks, structures, chunk);
-            init(chunk, ChunkStatus.TERRAIN);
+            markStatus(chunk, ChunkStatus.TERRAIN);
          }
       }
 
       for (int dx = 0; dx < size; dx++) {
          for (int dz = 0; dz < size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             level.recenter(chunk.getPos(), 0);
-            this.init(level, chunks, structures, chunk, cancelled);
-            init(chunk, ChunkStatus.TERRAIN);
+            this.placeFeatures(level, chunks, structures, chunk, cancelled);
+            markStatus(chunk, ChunkStatus.TERRAIN);
          }
       }
 
       for (int dx = 1; dx < size - 1; dx++) {
          for (int dz = 1; dz < size - 1; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             Heightmap.primeHeightmaps(chunk, PRIMED_HEIGHTMAPS);
             level.recenter(chunk.getPos(), 1);
             this.context.chunkGenerator().applyBiomeDecoration(level, chunk, structures);
-            init(chunk, ChunkStatus.FEATURES);
+            markStatus(chunk, ChunkStatus.FEATURES);
          }
       }
 
@@ -155,7 +155,7 @@ public final class OreSimRegionGenerator {
 
       for (int dx = 0; dx < size; dx++) {
          for (int dz = 0; dz < size; dz++) {
-            init(cancelled);
+            checkCancelled(cancelled);
             long key = ChunkPos.pack(minChunkX + dx, minChunkZ + dz);
             result.put(key, chunks.get(key));
          }
@@ -164,13 +164,13 @@ public final class OreSimRegionGenerator {
       return result;
    }
 
-   private static void init(BooleanSupplier cancelled) {
+   private static void checkCancelled(BooleanSupplier cancelled) {
       if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted()) {
          throw new CancellationException("OreSim region generation superseded");
       }
    }
 
-   private static void init(ChunkAccess chunk, ChunkStatus status) {
+   private static void markStatus(ChunkAccess chunk, ChunkStatus status) {
       if (chunk instanceof ProtoChunk proto) {
          proto.setPersistedStatus(status);
       }
@@ -195,7 +195,7 @@ public final class OreSimRegionGenerator {
       }
    }
 
-   private void init(SyntheticWorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk, BooleanSupplier cancelled) {
+   private void placeFeatures(SyntheticWorldGenLevel level, Map<Long, ChunkAccess> chunks, StructureManager structures, ChunkAccess chunk, BooleanSupplier cancelled) {
       NoiseBasedChunkGenerator generator = this.context.noiseGenerator();
       BiomeManager biomeManager = level.getBiomeManager()
          .withDifferentSource(
@@ -222,13 +222,13 @@ public final class OreSimRegionGenerator {
       int minZ = chunk.getPos().getMinBlockZ();
 
       for (int index = 0; index < sections.length; index++) {
-         init(cancelled);
+         checkCancelled(cancelled);
          LevelChunkSection section = sections[index];
          if (section != null && !section.hasOnlyAir() && section.maybeHas(wanted)) {
             int baseY = chunk.getSectionYFromSectionIndex(index) << 4;
 
             for (int y = 0; y < 16; y++) {
-               init(cancelled);
+               checkCancelled(cancelled);
 
                for (int x = 0; x < 16; x++) {
                   for (int z = 0; z < 16; z++) {

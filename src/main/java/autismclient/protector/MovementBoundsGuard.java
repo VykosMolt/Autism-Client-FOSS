@@ -18,12 +18,12 @@ public final class MovementBoundsGuard {
       return vec == null || isBadCoord(vec.x) || isBadCoord(vec.y) || isBadCoord(vec.z);
    }
 
-   public static boolean load(double value) {
+   public static boolean isOutOfBounds(double value) {
       return Double.isNaN(value) || Double.isInfinite(value) || Math.abs(value) > 10000.0;
    }
 
    public static boolean isBadMotion(Vec3 vec) {
-      return vec == null || load(vec.x) || load(vec.y) || load(vec.z);
+      return vec == null || isOutOfBounds(vec.x) || isOutOfBounds(vec.y) || isOutOfBounds(vec.z);
    }
 
    public static boolean isBadChange(PositionMoveRotation change) {

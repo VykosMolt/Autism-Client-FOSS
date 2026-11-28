@@ -23,7 +23,7 @@ public class PayAction implements MacroAction {
    public boolean probeHidden = true;
    public String confirmMacro = "";
    public List<String> players = new ArrayList<>();
-   private boolean init = true;
+   private boolean enabled = true;
    public static final int CONFIRM_TIMEOUT_MS = 15000;
 
    @Override
@@ -50,7 +50,7 @@ public class PayAction implements MacroAction {
       }
 
       tag.put("players", list);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -92,7 +92,7 @@ public class PayAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -115,20 +115,20 @@ public class PayAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 
-   public long init() {
+   public long amountEach() {
       return parseAmount(this.amountInput);
    }
 
-   public long load() {
-      return this.init() * Math.max(0, this.players.size());
+   public long totalAmount() {
+      return this.amountEach() * Math.max(0, this.players.size());
    }
 
    public static long[] split(long total, int count) {

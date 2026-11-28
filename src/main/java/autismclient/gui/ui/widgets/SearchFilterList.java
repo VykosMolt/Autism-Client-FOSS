@@ -7,63 +7,63 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public final class SearchFilterList<T> {
-   private final Function<T, String> init_Function;
-   private List<T> init_List = List.of();
-   private List<T> load = List.of();
-   private String init_Str = "";
-   private boolean init_Z = true;
+   private final Function<T, String> searchText;
+   private List<T> items = List.of();
+   private List<T> filteredCache = List.of();
+   private String query = "";
+   private boolean dirty = true;
 
    public SearchFilterList(Function<T, String> searchText) {
-      this.init_Function = Objects.requireNonNull(searchText);
+      this.searchText = Objects.requireNonNull(searchText);
    }
 
    public void setItems(List<T> items) {
       List<T> next = items != null && !items.isEmpty() ? List.copyOf(items) : List.of();
-      if (!this.init_List.equals(next)) {
-         this.init_List = next;
-         this.init_Z = true;
+      if (!this.items.equals(next)) {
+         this.items = next;
+         this.dirty = true;
       }
    }
 
    public void setQuery(String query) {
-      String next = init_Str_Str(query);
-      if (!this.init_Str.equals(next)) {
-         this.init_Str = next;
-         this.init_Z = true;
+      String next = normalize(query);
+      if (!this.query.equals(next)) {
+         this.query = next;
+         this.dirty = true;
       }
    }
 
    public List<T> filtered() {
-      this.init_V();
-      return this.load;
+      this.refilter();
+      return this.filteredCache;
    }
 
-   public int init_I() {
+   public int filteredCount() {
       return this.filtered().size();
    }
 
-   private void init_V() {
-      if (this.init_Z) {
-         if (this.init_Str.isEmpty()) {
-            this.load = this.init_List;
+   private void refilter() {
+      if (this.dirty) {
+         if (this.query.isEmpty()) {
+            this.filteredCache = this.items;
          } else {
             ArrayList<T> next = new ArrayList<>();
 
-            for (T item : this.init_List) {
-               String haystack = init_Str_Str(this.init_Function.apply(item));
-               if (haystack.contains(this.init_Str)) {
+            for (T item : this.items) {
+               String haystack = normalize(this.searchText.apply(item));
+               if (haystack.contains(this.query)) {
                   next.add(item);
                }
             }
 
-            this.load = List.copyOf(next);
+            this.filteredCache = List.copyOf(next);
          }
 
-         this.init_Z = false;
+         this.dirty = false;
       }
    }
 
-   private static String init_Str_Str(String value) {
+   private static String normalize(String value) {
       return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
    }
 }

@@ -23,12 +23,12 @@ public final class FriendCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(ctx -> init());
+      root.executes(ctx -> listFriends());
       root.then(
          LiteralArgumentBuilder.<AutismCommandSource>literal("add")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.word())
-                  .suggests(FriendCommand::init)
+                  .suggests(FriendCommand::suggestAdd)
                   .executes(ctx -> TeamsModule.addFriend(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
             )
       );
@@ -36,14 +36,14 @@ public final class FriendCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("remove")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.word())
-                  .suggests(FriendCommand::load)
+                  .suggests(FriendCommand::suggestRemove)
                   .executes(ctx -> TeamsModule.removeFriend(StringArgumentType.getString(ctx, "name")) ? 1 : 0)
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("clear").executes(ctx -> TeamsModule.clearFriends() ? 1 : 0));
    }
 
-   private static int init() {
+   private static int listFriends() {
       List<String> friends = TeamsModule.friends();
       if (friends.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§7Friend list is empty.");
@@ -54,7 +54,7 @@ public final class FriendCommand extends Command {
       }
    }
 
-   private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
+   private static CompletableFuture<Suggestions> suggestAdd(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.parse(Minecraft.getInstance())) {
@@ -67,7 +67,7 @@ public final class FriendCommand extends Command {
       return builder.buildFuture();
    }
 
-   private static CompletableFuture<Suggestions> load(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
+   private static CompletableFuture<Suggestions> suggestRemove(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (String name : TeamsModule.friends()) {

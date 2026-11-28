@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class AiKeyResolver {
-   private static final List<AiSettings.Provider> init = List.of(
+   private static final List<AiSettings.Provider> RACE_PROVIDERS = List.of(
       AiSettings.Provider.OPENAI, AiSettings.Provider.DASHSCOPE, AiSettings.Provider.MOONSHOT, AiSettings.Provider.DEEPSEEK
    );
 
@@ -22,7 +22,7 @@ final class AiKeyResolver {
       } else if (!k.startsWith("sk-sp-") && !k.startsWith("sk-ws")) {
          return k.matches("sk-[0-9a-f]{32}")
             ? List.of(AiSettings.Provider.DEEPSEEK, AiSettings.Provider.DASHSCOPE, AiSettings.Provider.MOONSHOT, AiSettings.Provider.OPENAI)
-            : init;
+            : RACE_PROVIDERS;
       } else {
          return List.of(AiSettings.Provider.DASHSCOPE);
       }
@@ -33,14 +33,14 @@ final class AiKeyResolver {
    }
 
    static AiKeyResolver.Inner_DataUtil resolve(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
-      return init(key, chosen, endpoint, raceOthers, null, checkpoint);
+      return resolveWith(key, chosen, endpoint, raceOthers, null, checkpoint);
    }
 
-   static AiKeyResolver.Inner_DataUtil init(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.Inner_DataUtil fetch) {
-      return init(key, chosen, endpoint, raceOthers, fetch, () -> {});
+   static AiKeyResolver.Inner_DataUtil resolveWith(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.Inner_DataUtil fetch) {
+      return resolveWith(key, chosen, endpoint, raceOthers, fetch, () -> {});
    }
 
-   private static AiKeyResolver.Inner_DataUtil init(
+   private static AiKeyResolver.Inner_DataUtil resolveWith(
       String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.Inner_DataUtil fetch, Runnable checkpoint
    ) {
       String k = key == null ? "" : key.trim();
@@ -51,20 +51,20 @@ final class AiKeyResolver {
       boolean custom = !AiSettings.shouldAutofillEndpoint(endpoint);
       // A key is never sent to several vendors: only one that matches a single vendor overrides the choice.
       AiSettings.Provider only = chosen == null || !custom && raceOthers && isUnambiguous(k) ? providersFor(k).getFirst() : chosen;
-      AiModels.Inner_CachePool result = init(only, custom ? endpoint : only.endpoint, k, fetch, checkpoint);
-      return result.ok() ? init(only, result) : AiKeyResolver.Inner_DataUtil.failed(result.error());
+      AiModels.Inner_CachePool result = probe(only, custom ? endpoint : only.endpoint, k, fetch, checkpoint);
+      return result.ok() ? toResolution(only, result) : AiKeyResolver.Inner_DataUtil.failed(result.error());
    }
 
-   private static AiModels.Inner_CachePool init(AiSettings.Provider p, String endpoint, String key, AiModels.Inner_DataUtil fetch, Runnable checkpoint) {
+   private static AiModels.Inner_CachePool probe(AiSettings.Provider p, String endpoint, String key, AiModels.Inner_DataUtil fetch, Runnable checkpoint) {
       return fetch == null ? AiModels.fetchModels(p, endpoint, key, checkpoint) : AiModels.fetchModelsWith(p, endpoint, key, (url, provider, credential) -> {
          checkpoint.run();
          return fetch.get(url, provider, credential);
       });
    }
 
-   private static AiKeyResolver.Inner_DataUtil init(AiSettings.Provider p, AiModels.Inner_CachePool result) {
+   private static AiKeyResolver.Inner_DataUtil toResolution(AiSettings.Provider p, AiModels.Inner_CachePool result) {
       String endpoint = result.endpoint() != null && !result.endpoint().isBlank() ? result.endpoint() : p.endpoint;
-      return new AiKeyResolver.Inner_DataUtil(p, endpoint, result.models(), init(p, result.models()), "");
+      return new AiKeyResolver.Inner_DataUtil(p, endpoint, result.models(), pickModel(p, result.models()), "");
    }
 
    static String displayName(AiSettings.Provider p) {
@@ -95,7 +95,7 @@ final class AiKeyResolver {
       return var10000;
    }
 
-   static String init(AiSettings.Provider p, List<String> models) {
+   static String pickModel(AiSettings.Provider p, List<String> models) {
       if (models != null && !models.isEmpty()) {
          String stock = AiSettings.defaultModel(p);
          if (models.contains(stock)) {

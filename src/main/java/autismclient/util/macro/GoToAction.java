@@ -9,7 +9,7 @@ public class GoToAction implements MacroAction {
    public double f_x_D = 0.0;
    public double f_y_D = 0.0;
    public double f_z_D = 0.0;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean waitForArrival = true;
    public double arrivalRadius = 2.0;
    public int timeoutMs = 60000;
@@ -60,7 +60,7 @@ public class GoToAction implements MacroAction {
       tag.putBoolean("waitForArrival", this.waitForArrival);
       tag.putDouble("arrivalRadius", this.arrivalRadius);
       tag.putInt("timeoutMs", this.timeoutMs);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -91,7 +91,7 @@ public class GoToAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -112,11 +112,11 @@ public class GoToAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

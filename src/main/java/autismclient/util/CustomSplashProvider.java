@@ -34,7 +34,7 @@ public final class CustomSplashProvider {
    }
 
    public static SplashRenderer splashRenderer(Minecraft client) {
-      List<String> lines = load(client);
+      List<String> lines = loadSplashes(client);
       if (lines.isEmpty()) {
          return null;
       }
@@ -44,7 +44,7 @@ public final class CustomSplashProvider {
    }
 
    public static List<Component> splashLines(Minecraft client) {
-      return load(client).stream().map(text -> (Component)Component.literal(text).setStyle(Style.EMPTY.withColor(-256))).toList();
+      return loadSplashes(client).stream().map(text -> (Component)Component.literal(text).setStyle(Style.EMPTY.withColor(-256))).toList();
    }
 
    public static void render(Minecraft client, GuiGraphicsExtractor graphics, int screenWidth, Font font, float alpha) {
@@ -68,7 +68,7 @@ public final class CustomSplashProvider {
          return cachedSplash;
       }
 
-      List<String> lines = load(client);
+      List<String> lines = loadSplashes(client);
       if (lines.isEmpty()) {
          return null;
       }
@@ -78,7 +78,7 @@ public final class CustomSplashProvider {
       return cachedSplash;
    }
 
-   private static List<String> load(Minecraft client) {
+   private static List<String> loadSplashes(Minecraft client) {
       if (cachedLines != null) {
          return cachedLines;
       }

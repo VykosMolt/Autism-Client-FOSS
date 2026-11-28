@@ -14,14 +14,14 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnder
 import net.minecraft.world.phys.Vec3;
 
 final class ThrownPearlTracker {
-   private Object init_Obj;
-   private Object load;
-   private long init_J = -9223372036854775808L;
+   private Object trackedLevel;
+   private Object trackedPlayer;
+   private long lastGameTime = -9223372036854775808L;
    private ThrownPearlTracker.Inner_DataUtil remembered;
-   private double init_D;
-   private final List<ThrownEnderpearl> init_List = new ArrayList<>();
-   private final Map<UUID, ThrownPearlTracker.Inner_DataUtil> init_Map = new HashMap<>();
-   private final Set<UUID> init_Set = new HashSet<>();
+   private double scanMillis;
+   private final List<ThrownEnderpearl> ownPearls = new ArrayList<>();
+   private final Map<UUID, ThrownPearlTracker.Inner_DataUtil> forecasts = new HashMap<>();
+   private final Set<UUID> liveIds = new HashSet<>();
    private static final int init_I = 32;
 
    ThrownPearlTracker.Inner_DataUtil remembered() {
@@ -29,79 +29,79 @@ final class ThrownPearlTracker {
    }
 
    double init_D() {
-      return this.init_D;
+      return this.scanMillis;
    }
 
    void reset() {
-      this.init_Obj = this.load = null;
-      this.init_J = -9223372036854775808L;
+      this.trackedLevel = this.trackedPlayer = null;
+      this.lastGameTime = -9223372036854775808L;
       this.remembered = null;
-      this.init_D = 0.0;
-      this.init_List.clear();
-      this.init_Map.clear();
-      this.init_Set.clear();
+      this.scanMillis = 0.0;
+      this.ownPearls.clear();
+      this.forecasts.clear();
+      this.liveIds.clear();
    }
 
    void tick(Minecraft mc, boolean enabled) {
       if (enabled && mc != null && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
-         if (this.init_Obj != mc.level || this.load != mc.player) {
+         if (this.trackedLevel != mc.level || this.trackedPlayer != mc.player) {
             this.reset();
          }
 
-         this.init_Obj = mc.level;
-         this.load = mc.player;
+         this.trackedLevel = mc.level;
+         this.trackedPlayer = mc.player;
          long now = mc.level.getGameTime();
-         if (now != this.init_J) {
+         if (now != this.lastGameTime) {
             long started = System.nanoTime();
-            this.init_J = now;
-            this.init_List.clear();
-            this.init_Set.clear();
+            this.lastGameTime = now;
+            this.ownPearls.clear();
+            this.liveIds.clear();
 
             for (Entity entity : mc.level.entitiesForRendering()) {
                if (entity instanceof ThrownEnderpearl pearl && !pearl.isRemoved() && pearl.isAlive() && pearl.getOwner() == mc.player) {
-                  this.init_List.add(pearl);
-                  this.init_Set.add(pearl.getUUID());
+                  this.ownPearls.add(pearl);
+                  this.liveIds.add(pearl.getUUID());
                }
             }
 
-            this.init_Map.keySet().retainAll(this.init_Set);
-            this.init_List.sort(Comparator.comparingInt(Entity::getId).reversed());
+            this.forecasts.keySet().retainAll(this.liveIds);
+            this.ownPearls.sort(Comparator.comparingInt(Entity::getId).reversed());
 
-            for (int i = 0; i < Math.min(32, this.init_List.size()); i++) {
-               ThrownEnderpearl pearl = this.init_List.get(i);
+            for (int i = 0; i < Math.min(32, this.ownPearls.size()); i++) {
+               ThrownEnderpearl pearl = this.ownPearls.get(i);
                IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(mc.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
                if (flight.load() != null) {
-                  this.init_Map.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.init_D()));
+                  this.forecasts.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.init_D()));
                }
             }
 
             ThrownPearlTracker.Inner_DataUtil latest = null;
 
-            for (ThrownPearlTracker.Inner_DataUtil forecast : this.init_Map.values()) {
-               latest = init_aV_DataUtil_aV_DataUtil_aV_DataUtil(latest, forecast);
+            for (ThrownPearlTracker.Inner_DataUtil forecast : this.forecasts.values()) {
+               latest = laterForecast(latest, forecast);
             }
 
             this.remembered = latest;
-            this.init_D = (System.nanoTime() - started) / 1000000.0;
+            this.scanMillis = (System.nanoTime() - started) / 1000000.0;
          }
       } else {
          this.reset();
       }
    }
 
-   static ThrownPearlTracker.Inner_DataUtil init_aV_DataUtil_aV_DataUtil_aV_DataUtil(ThrownPearlTracker.Inner_DataUtil a, ThrownPearlTracker.Inner_DataUtil b) {
+   static ThrownPearlTracker.Inner_DataUtil laterForecast(ThrownPearlTracker.Inner_DataUtil a, ThrownPearlTracker.Inner_DataUtil b) {
       if (b != null
          && b.position() != null
-         && Double.isFinite(b.init_D())
+         && Double.isFinite(b.landingTime())
          && Double.isFinite(b.position().x)
          && Double.isFinite(b.position().y)
          && Double.isFinite(b.position().z)) {
-         return a == null || b.init_D() > a.init_D() || b.init_D() == a.init_D() && b.init_I() > a.init_I() ? b : a;
+         return a == null || b.landingTime() > a.landingTime() || b.landingTime() == a.landingTime() && b.init_I() > a.init_I() ? b : a;
       } else {
          return a;
       }
    }
 
-   record Inner_DataUtil(UUID init_UUID, int init_I, Vec3 position, double init_D) {
+   record Inner_DataUtil(UUID pearlId, int init_I, Vec3 position, double landingTime) {
    }
 }

@@ -13,7 +13,7 @@ public final class PingSpoofModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init();
+      this.applySettings();
    }
 
    @Override
@@ -24,11 +24,11 @@ public final class PingSpoofModule extends Module {
    @Override
    protected void onOptionValueChanged(String optionId) {
       if (this.isEnabled()) {
-         this.init();
+         this.applySettings();
       }
    }
 
-   private void init() {
+   private void applySettings() {
       autismclient.util.macro.PingSpoofScheduler.setGlobal(this.integer("delay"), this.bool("real-incoming"), this.bool("real-outgoing"));
    }
 }

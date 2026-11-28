@@ -12,12 +12,12 @@ import net.minecraft.network.chat.FontDescription.Resource;
 import net.minecraft.resources.Identifier;
 
 public final class ThemedTextHelper {
-   private static final Map<Identifier, FontDescription> init = new ConcurrentHashMap<>();
+   private static final Map<Identifier, FontDescription> FONTS = new ConcurrentHashMap<>();
 
    private ThemedTextHelper() {
    }
 
-   public static int init_I(ThemedTextHelper.TextTone tone) {
+   public static int colorFor(ThemedTextHelper.TextTone tone) {
       int var10000;
       switch (tone) {
          case TITLE:
@@ -38,13 +38,13 @@ public final class ThemedTextHelper {
       return var10000;
    }
 
-   public static MutableComponent init(String value, ThemedTextHelper.TextTone tone) {
-      return Component.literal(value == null ? "" : value).setStyle(init_Style(tone));
+   public static MutableComponent styled(String value, ThemedTextHelper.TextTone tone) {
+      return Component.literal(value == null ? "" : value).setStyle(styleFor(tone));
    }
 
-   public static MutableComponent init(String value, int color) {
-      Identifier fontId = init_Identifier(ThemedTextHelper.TextTone.BODY);
-      return Component.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(init(fontId)).withColor(color));
+   public static MutableComponent colored(String value, int color) {
+      Identifier fontId = fontIdFor(ThemedTextHelper.TextTone.BODY);
+      return Component.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(fontFor(fontId)).withColor(color));
    }
 
    public static String init(String value) {
@@ -73,28 +73,28 @@ public final class ThemedTextHelper {
          : "";
    }
 
-   public static Style init_Style(ThemedTextHelper.TextTone tone) {
-      int color = init_I(tone);
-      return Style.EMPTY.withFont(init(init_Identifier(tone))).withColor(color);
+   public static Style styleFor(ThemedTextHelper.TextTone tone) {
+      int color = colorFor(tone);
+      return Style.EMPTY.withFont(fontFor(fontIdFor(tone))).withColor(color);
    }
 
    public static int width(Font renderer, String value, ThemedTextHelper.TextTone tone) {
-      return autismclient.gui.f.b.k.init(renderer, value, init_Identifier(tone), init_I(tone));
+      return autismclient.gui.f.b.k.init(renderer, value, fontIdFor(tone), colorFor(tone));
    }
 
    public static String ellipsize(Font renderer, String value, int maxWidth, ThemedTextHelper.TextTone tone) {
-      return autismclient.gui.f.b.k.init(renderer, value, maxWidth, init_Identifier(tone), init_I(tone));
+      return autismclient.gui.f.b.k.init(renderer, value, maxWidth, fontIdFor(tone), colorFor(tone));
    }
 
    public static void drawTone(GuiGraphicsExtractor context, Font renderer, String value, ThemedTextHelper.TextTone tone, int x, int y, boolean shadow) {
-      autismclient.gui.f.b.k.init(context, renderer, value, init_Identifier(tone), init_I(tone), x, y, shadow);
+      autismclient.gui.f.b.k.init(context, renderer, value, fontIdFor(tone), colorFor(tone), x, y, shadow);
    }
 
    public static void drawColor(GuiGraphicsExtractor context, Font renderer, String value, int color, int x, int y, boolean shadow) {
       autismclient.gui.f.b.k.init(context, renderer, value, autismclient.gui.f.a.DataUtil.init, color, x, y, shadow);
    }
 
-   private static Identifier init_Identifier(ThemedTextHelper.TextTone tone) {
+   private static Identifier fontIdFor(ThemedTextHelper.TextTone tone) {
       Identifier var10000;
       switch (tone) {
          case TITLE:
@@ -115,8 +115,8 @@ public final class ThemedTextHelper {
       return var10000;
    }
 
-   private static FontDescription init(Identifier fontId) {
-      return init.computeIfAbsent(fontId, Resource::new);
+   private static FontDescription fontFor(Identifier fontId) {
+      return FONTS.computeIfAbsent(fontId, Resource::new);
    }
 
    public enum TextTone {

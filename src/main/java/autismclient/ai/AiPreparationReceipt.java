@@ -53,25 +53,25 @@ final class AiPreparationReceipt {
       return new AiOperation() {
          final AiPreparationReceipt receipt = new AiPreparationReceipt();
          AiOperation.Result init_AiOperation_Result;
-         AiOperation.Result load;
+         AiOperation.Result receivedResult;
          boolean init_Z;
 
          @Override
          public AiOperation.Result tick() {
-            if (this.load != null) {
-               return this.load;
+            if (this.receivedResult != null) {
+               return this.receivedResult;
             }
 
             if (this.init_Z) {
-               return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Station recovery cancelled", "{}", List.of()));
+               return this.confirmWith(new AiOperation.Result(AiOperation.Status.CANCELLED, "Station recovery cancelled", "{}", List.of()));
             }
 
             if (!valid.getAsBoolean()) {
-               return this.init(AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "Station recovery context changed before supported handoff", "{}"));
+               return this.confirmWith(AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "Station recovery context changed before supported handoff", "{}"));
             }
 
             if (now.getAsLong() > deadline) {
-               return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Station pickup did not reach a supported handoff before the deadline", "{}"));
+               return this.confirmWith(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Station pickup did not reach a supported handoff before the deadline", "{}"));
             }
 
             if (this.init_AiOperation_Result == null) {
@@ -82,14 +82,14 @@ final class AiPreparationReceipt {
 
                this.receipt.cancelChild(child);
                if (result.status() != AiOperation.Status.SUCCEEDED) {
-                  return this.init(result);
+                  return this.confirmWith(result);
                }
 
                this.init_AiOperation_Result = result;
             }
 
             return supported.getAsBoolean() && !this.receipt.requiresReconciliation(child)
-               ? this.init(this.init_AiOperation_Result)
+               ? this.confirmWith(this.init_AiOperation_Result)
                : new AiOperation.Result(
                   AiOperation.Status.RUNNING,
                   "Waiting for a supported stance after the station pickup",
@@ -98,16 +98,16 @@ final class AiPreparationReceipt {
                );
          }
 
-         AiOperation.Result init(AiOperation.Result result) {
-            this.load = this.receipt.finalizeResult(result, this.receipt.requiresReconciliation(child));
+         AiOperation.Result confirmWith(AiOperation.Result result) {
+            this.receivedResult = this.receipt.finalizeResult(result, this.receipt.requiresReconciliation(child));
             this.receipt.cancelChild(child);
-            return this.load;
+            return this.receivedResult;
          }
 
          @Override
          public boolean canInterruptNow() {
             return !this.receipt.requiresReconciliation(child)
-               && (this.load != null || (this.init_AiOperation_Result == null ? child.canInterruptNow() : supported.getAsBoolean()));
+               && (this.receivedResult != null || (this.init_AiOperation_Result == null ? child.canInterruptNow() : supported.getAsBoolean()));
          }
 
          @Override

@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class FarmCropCatalog {
    private static final Set<Block> STACKING_CROPS = identitySet(Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
-   private static final Set<Block> load = identitySet(Blocks.PUMPKIN, Blocks.MELON, Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
+   private static final Set<Block> STACKED_CROPS = identitySet(Blocks.PUMPKIN, Blocks.MELON, Blocks.SUGAR_CANE, Blocks.CACTUS, Blocks.BAMBOO);
    private static final Map<Block, Item> SEEDS = Map.ofEntries(
       Map.entry(Blocks.WHEAT, Items.WHEAT_SEEDS),
       Map.entry(Blocks.CARROTS, Items.CARROT),
@@ -23,7 +23,7 @@ public final class FarmCropCatalog {
       Map.entry(Blocks.COCOA, Items.COCOA_BEANS),
       Map.entry(Blocks.SWEET_BERRY_BUSH, Items.SWEET_BERRIES)
    );
-   private static final Set<Block> read = identitySet(
+   private static final Set<Block> AGE_CROPS = identitySet(
       Blocks.WHEAT,
       Blocks.CARROTS,
       Blocks.POTATOES,
@@ -42,7 +42,7 @@ public final class FarmCropCatalog {
    }
 
    public static boolean isCrop(Block block) {
-      return block != null && read.contains(block);
+      return block != null && AGE_CROPS.contains(block);
    }
 
    public static boolean isStacking(Block block) {
@@ -50,11 +50,11 @@ public final class FarmCropCatalog {
    }
 
    public static boolean read(Block block) {
-      return block != null && load.contains(block);
+      return block != null && STACKED_CROPS.contains(block);
    }
 
    public static Set<Block> allCrops() {
-      return read;
+      return AGE_CROPS;
    }
 
    public static boolean canGrowOn(Block crop, BlockState below) {

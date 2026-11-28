@@ -10,7 +10,7 @@ public final class StatusToastCardRenderer {
    private StatusToastCardRenderer() {
    }
 
-   public static int init(autismclient.gui.f.SyncManager context, boolean hasDetail) {
+   public static int heightFor(autismclient.gui.f.SyncManager context, boolean hasDetail) {
       int headerHeight = 14;
       int lineHeight = 9;
       return headerHeight + 3 + lineHeight + (hasDetail ? 3 + lineHeight : 0) + 4;
@@ -29,10 +29,10 @@ public final class StatusToastCardRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper requestedBounds, String title, String message, String detail) {
-      init(context, requestedBounds, title, message, detail, context.init_TableIndex().colors().textPrimary);
+      draw(context, requestedBounds, title, message, detail, context.init_TableIndex().colors().textPrimary);
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper requestedBounds, String title, String message, String detail, int titleColor
    ) {
       render(context, requestedBounds, title, message, detail, titleColor, -1);

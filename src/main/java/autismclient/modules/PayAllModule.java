@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public final class PayAllModule extends Module {
-   private volatile int init;
+   private volatile int generation;
 
    public PayAllModule() {
       super("pay-all", "PayAll", ae.write, "Pay every listed player.");
@@ -27,13 +27,13 @@ public final class PayAllModule extends Module {
 
    @Override
    public void onEnable() {
-      int generation = ++this.init;
-      autismclient.util.BackgroundTaskExecutor.submit("pay-all", () -> this.init_V(generation));
+      int generation = ++this.generation;
+      autismclient.util.BackgroundTaskExecutor.submit("pay-all", () -> this.runPayments(generation));
    }
 
    @Override
    public void onDisable() {
-      this.init++;
+      this.generation++;
    }
 
    @Override
@@ -43,7 +43,7 @@ public final class PayAllModule extends Module {
       }
    }
 
-   private void init_V(int generation) {
+   private void runPayments(int generation) {
       try {
          List<String> targets = new ArrayList<>();
 
@@ -60,12 +60,12 @@ public final class PayAllModule extends Module {
             boolean everyone = targets.isEmpty();
             if (everyone) {
                if (this.bool("probe")) {
-                  this.init("§7Pay All: scanning players...");
+                  this.say("§7Pay All: scanning players...");
                }
 
-               targets.addAll(OnlinePlayerCollector.collect(MC, this.bool("probe"), () -> this.init_Z(generation)));
+               targets.addAll(OnlinePlayerCollector.collect(MC, this.bool("probe"), () -> this.isStale(generation)));
                if (targets.isEmpty()) {
-                  this.init("§cPay All: no players listed or visible.");
+                  this.say("§cPay All: no players listed or visible.");
                   return;
                }
             }
@@ -75,7 +75,7 @@ public final class PayAllModule extends Module {
             int sent = 0;
 
             for (int i = 0; i < targets.size(); i++) {
-               if (this.init_Z(generation)) {
+               if (this.isStale(generation)) {
                   return;
                }
 
@@ -86,11 +86,11 @@ public final class PayAllModule extends Module {
                      Thread.sleep(this.integer("delay"));
                   }
 
-                  if (this.init_Z(generation)) {
+                  if (this.isStale(generation)) {
                      return;
                   }
 
-                  String command = this.init(player, perAmount);
+                  String command = this.commandFor(player, perAmount);
                   if (!command.isEmpty()) {
                      int index = ++sent;
                      int total = targets.size();
@@ -99,35 +99,35 @@ public final class PayAllModule extends Module {
                      CountDownLatch sendLatch = new CountDownLatch(1);
                      MC.execute(() -> {
                         try {
-                           this.init(targetName, command, label, index, total);
+                           this.sendPayment(targetName, command, label, index, total);
                         } finally {
                            sendLatch.countDown();
                         }
                      });
                      sendLatch.await(2000L, TimeUnit.MILLISECONDS);
-                     if (this.init_Z(generation)) {
+                     if (this.isStale(generation)) {
                         return;
                      }
 
                      String confirm = this.text("confirm-macro");
                      if (confirm != null && !confirm.isBlank()) {
-                        autismclient.util.macro.PayAction.init(confirm, () -> this.init_Z(generation));
+                        autismclient.util.macro.PayAction.init(confirm, () -> this.isStale(generation));
                      }
                   }
                }
             }
 
             int finalSent = sent;
-            MC.execute(() -> this.init("§aPay All done: §f" + finalSent + " payment" + (finalSent == 1 ? "" : "s") + (everyone ? " §7(everyone)" : "") + "."));
+            MC.execute(() -> this.say("§aPay All done: §f" + finalSent + " payment" + (finalSent == 1 ? "" : "s") + (everyone ? " §7(everyone)" : "") + "."));
          }
       } catch (InterruptedException interrupted) {
          Thread.currentThread().interrupt();
       } finally {
-         this.load(generation);
+         this.finishRun(generation);
       }
    }
 
-   private void init(String player, String command, String label, int index, int total) {
+   private void sendPayment(String player, String command, String label, int index, int total) {
       try {
          if (aD.read_Z() || MC == null || MC.getConnection() == null) {
             return;
@@ -139,13 +139,13 @@ public final class PayAllModule extends Module {
             MC.getConnection().sendChat(command);
          }
 
-         this.init("§aPaid §f" + player + " §e" + label + " §7(" + index + "/" + total + ")");
+         this.say("§aPaid §f" + player + " §e" + label + " §7(" + index + "/" + total + ")");
       } catch (Exception e) {
-         this.init("§cPay failed: " + e.getMessage());
+         this.say("§cPay failed: " + e.getMessage());
       }
    }
 
-   private String init(String player, long amount) {
+   private String commandFor(String player, long amount) {
       String template = this.text("command");
       if (template == null || template.isBlank()) {
          template = "/pay <player> <amount>";
@@ -155,25 +155,25 @@ public final class PayAllModule extends Module {
       return template.replace("<player>", player).replace("{player}", player).replace("<amount>", value).replace("{amount}", value).trim();
    }
 
-   private boolean init_Z(int generation) {
-      return generation != this.init || !this.isEnabled();
+   private boolean isStale(int generation) {
+      return generation != this.generation || !this.isEnabled();
    }
 
-   private void load(int generation) {
+   private void finishRun(int generation) {
       if (MC == null) {
-         if (generation == this.init) {
+         if (generation == this.generation) {
             this.setEnabled(false);
          }
       } else {
          MC.execute(() -> {
-            if (generation == this.init && this.isEnabled()) {
+            if (generation == this.generation && this.isEnabled()) {
                this.setEnabled(false);
             }
          });
       }
    }
 
-   private void init(String message) {
+   private void say(String message) {
       AutismClientMessaging.sendPrefixed(message);
    }
 }

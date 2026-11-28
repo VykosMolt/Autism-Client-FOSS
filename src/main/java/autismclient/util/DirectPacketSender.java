@@ -14,7 +14,7 @@ public class DirectPacketSender {
       }
    }
 
-   public static void load(Packet<?> packet) {
+   public static void sendAlias(Packet<?> packet) {
       if (!autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.getConnection() != null) {

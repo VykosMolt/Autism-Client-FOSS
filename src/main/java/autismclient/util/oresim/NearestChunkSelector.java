@@ -15,8 +15,8 @@ final class NearestChunkSelector {
       for (int chunkX = centerChunkX - radius; chunkX <= centerChunkX + radius; chunkX++) {
          for (int chunkZ = centerChunkZ - radius; chunkZ <= centerChunkZ + radius; chunkZ++) {
             if (!completed.test(ChunkPos.pack(chunkX, chunkZ))) {
-               double distance = init(playerX, playerZ, chunkX, chunkZ);
-               if (nearest == null || init_I_D(distance, chunkX, chunkZ, nearest.init_D(), nearest.init_I(), nearest.load()) < 0) {
+               double distance = distanceToChunk(playerX, playerZ, chunkX, chunkZ);
+               if (nearest == null || compareCandidates(distance, chunkX, chunkZ, nearest.distance(), nearest.chunkX(), nearest.load()) < 0) {
                   nearest = new NearestChunkSelector.Inner_DataUtil(chunkX, chunkZ, distance);
                }
             }
@@ -29,10 +29,10 @@ final class NearestChunkSelector {
    static boolean isCloser(double playerX, double playerZ, int chunkX, int chunkZ, NearestChunkSelector.Inner_DataUtil nearestMissing) {
       return nearestMissing == null
          ? true
-         : init_I_D(init(playerX, playerZ, chunkX, chunkZ), chunkX, chunkZ, nearestMissing.init_D(), nearestMissing.init_I(), nearestMissing.load()) <= 0;
+         : compareCandidates(distanceToChunk(playerX, playerZ, chunkX, chunkZ), chunkX, chunkZ, nearestMissing.distance(), nearestMissing.chunkX(), nearestMissing.load()) <= 0;
    }
 
-   static double init(double x, double z, int chunkX, int chunkZ) {
+   static double distanceToChunk(double x, double z, int chunkX, int chunkZ) {
       double minX = chunkX * 16.0 + 0.5;
       double minZ = chunkZ * 16.0 + 0.5;
       double maxX = (chunkX + 1) * 16.0 - 0.5;
@@ -42,7 +42,7 @@ final class NearestChunkSelector {
       return dx * dx + dz * dz;
    }
 
-   static int init_I_D(double leftDistance, int leftX, int leftZ, double rightDistance, int rightX, int rightZ) {
+   static int compareCandidates(double leftDistance, int leftX, int leftZ, double rightDistance, int rightX, int rightZ) {
       int distanceOrder = Double.compare(leftDistance, rightDistance);
       if (distanceOrder != 0) {
          return distanceOrder;
@@ -52,6 +52,6 @@ final class NearestChunkSelector {
       return xOrder != 0 ? xOrder : Integer.compare(leftZ, rightZ);
    }
 
-   record Inner_DataUtil(int init_I, int load, double init_D) {
+   record Inner_DataUtil(int chunkX, int load, double distance) {
    }
 }

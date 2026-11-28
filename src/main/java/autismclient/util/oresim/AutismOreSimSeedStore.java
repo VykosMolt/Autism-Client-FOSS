@@ -55,8 +55,8 @@ public final class AutismOreSimSeedStore {
       if (local == null) {
          synchronized (AutismOreSimSeedStore.class) {
             if (init_AutismOreSimSeedSt == null) {
-               init_AutismOreSimSeedSt = load(new File(AutismClientAddon.FOLDER, "ore-sim-seeds.json"));
-               Runtime.getRuntime().addShutdownHook(new Thread(init_AutismOreSimSeedSt::read, "ore-sim-seeds-flush"));
+               init_AutismOreSimSeedSt = loadFrom(new File(AutismClientAddon.FOLDER, "ore-sim-seeds.json"));
+               Runtime.getRuntime().addShutdownHook(new Thread(init_AutismOreSimSeedSt::saveIfDirty, "ore-sim-seeds-flush"));
             }
 
             local = init_AutismOreSimSeedSt;
@@ -88,7 +88,7 @@ public final class AutismOreSimSeedStore {
       }
 
       if (changed) {
-         this.load();
+         this.scheduleSave();
       }
 
       return result;
@@ -110,7 +110,7 @@ public final class AutismOreSimSeedStore {
          }
 
          if (changed) {
-            this.load();
+            this.scheduleSave();
          }
       }
    }
@@ -124,28 +124,28 @@ public final class AutismOreSimSeedStore {
       }
    }
 
-   private void load() {
+   private void scheduleSave() {
       this.init_AtomicBoolean.set(true);
       if (this.load_AtomicBoolean.compareAndSet(false, true)) {
          try {
             init_ScheduledExecutorS.schedule(() -> {
                this.load_AtomicBoolean.set(false);
-               this.read();
+               this.saveIfDirty();
             }, 400L, TimeUnit.MILLISECONDS);
          } catch (Throwable unavailable) {
             this.load_AtomicBoolean.set(false);
-            this.read();
+            this.saveIfDirty();
          }
       }
    }
 
-   private void read() {
+   private void saveIfDirty() {
       if (this.init_AtomicBoolean.compareAndSet(true, false)) {
-         this.write();
+         this.writeToDisk();
       }
    }
 
-   private synchronized void write() {
+   private synchronized void writeToDisk() {
       try {
          File directory = this.init_File.getParentFile();
          if (directory != null) {
@@ -181,13 +181,13 @@ public final class AutismOreSimSeedStore {
                   this.auditRetryPending = false;
                }
 
-               this.read();
+               this.saveIfDirty();
             }, retryMs, TimeUnit.MILLISECONDS);
          }
       }
    }
 
-   private static AutismOreSimSeedStore load(File file) {
+   private static AutismOreSimSeedStore loadFrom(File file) {
       AutismOreSimSeedStore store = new AutismOreSimSeedStore(file);
       if (!file.exists()) {
          return store;
@@ -229,11 +229,11 @@ public final class AutismOreSimSeedStore {
    }
 
    static AutismOreSimSeedStore init_AutismOreSimSeedSt_File(File file) {
-      return load(file);
+      return loadFrom(file);
    }
 
    void init_V() {
-      this.read();
+      this.saveIfDirty();
    }
 
    private static final class Persisted {

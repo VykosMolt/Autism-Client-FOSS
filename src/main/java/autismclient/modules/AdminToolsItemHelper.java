@@ -8,12 +8,12 @@ public final class AdminToolsItemHelper {
    private AdminToolsItemHelper() {
    }
 
-   public static boolean init(ItemStack stack) {
+   public static boolean isAdminTool(ItemStack stack) {
       return al.init_Module_Str("admin-tools") instanceof f.Inner_DataUtil adminTools ? adminTools.init(stack, false) : false;
    }
 
    public static boolean load(ItemStack stack) {
-      if (!init(stack)) {
+      if (!isAdminTool(stack)) {
          return false;
       }
 

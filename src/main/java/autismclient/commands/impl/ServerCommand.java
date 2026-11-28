@@ -17,11 +17,11 @@ public class ServerCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         init();
+         openInfo();
          return 1;
       });
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("info").executes(ctx -> {
-         init();
+         openInfo();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("plugins").executes(ctx -> {
@@ -29,20 +29,20 @@ public class ServerCommand extends Command {
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("tps").executes(ctx -> {
-         read();
+         showTps();
          return 1;
       }));
    }
 
-   static void init() {
-      init(false);
+   static void openInfo() {
+      openInfo(false);
    }
 
    static void load() {
-      init(true);
+      openInfo(true);
    }
 
-   private static void init(boolean pluginsTab) {
+   private static void openInfo(boolean pluginsTab) {
       AutismServerInfoOverlay overlay = autismclient.modules.ModuleRuntimeManager.getInstance().getOrCreateServerInfoOverlay();
       if (overlay == null) {
          AutismClientMessaging.sendPrefixed("§cServer overlay unavailable.");
@@ -65,7 +65,7 @@ public class ServerCommand extends Command {
       }
    }
 
-   private static void read() {
+   private static void showTps() {
       double tps = ServerTickPhaseTracker.getTps();
       AutismClientMessaging.sendPrefixed(String.format("§eTPS: §f%.2f §7(estimated)", tps));
    }

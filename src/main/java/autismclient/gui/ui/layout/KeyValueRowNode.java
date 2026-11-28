@@ -8,7 +8,7 @@ import autismclient.util.ThemePaletteManager;
 public class KeyValueRowNode extends LayoutNode {
    private String labelText;
    private String valueText;
-   private float sync = 76.0F;
+   private float labelWidth = 76.0F;
    private l labelTone = l.write;
    private l valueTone = l.read;
    private Integer valueColorOverride;
@@ -26,13 +26,13 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode load(String value) {
+   public KeyValueRowNode value(String value) {
       this.valueText = value == null ? "--" : value;
       return this;
    }
 
    public KeyValueRowNode setLabelWidth(float labelWidth) {
-      this.sync = Math.max(24.0F, labelWidth);
+      this.labelWidth = Math.max(24.0F, labelWidth);
       return this;
    }
 
@@ -41,7 +41,7 @@ public class KeyValueRowNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueRowNode load(l valueTone) {
+   public KeyValueRowNode valueTone(l valueTone) {
       this.valueTone = valueTone == null ? l.read : valueTone;
       return this;
    }
@@ -81,7 +81,7 @@ public class KeyValueRowNode extends LayoutNode {
          int drawW = Math.round(this.nodeWidth);
          int drawH = Math.round(this.nodeHeight);
          int minSegment = context.theme().load(24);
-         int labelW = Math.round(Math.min(this.sync, Math.max(minSegment, drawW - minSegment)));
+         int labelW = Math.round(Math.min(this.labelWidth, Math.max(minSegment, drawW - minSegment)));
          int valueX = drawX + labelW;
          int valueW = Math.max(1, drawW - labelW);
          boolean clickable = this.isPressable();

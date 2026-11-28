@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.properties.RailShape;
 
 final class PrintRailOrder {
-   static Direction[] init(PrintTarget target) {
+   static Direction[] railNeighbors(PrintTarget target) {
       if (target.wanted().getBlock() instanceof BaseRailBlock rail) {
          Direction[] var10000;
          switch ((RailShape)target.wanted().getValue(rail.getShapeProperty())) {
@@ -41,8 +41,8 @@ final class PrintRailOrder {
          return true;
       }
 
-      Direction[] wanted = init(target);
-      if (wanted != null && init(target, targets, index)) {
+      Direction[] wanted = railNeighbors(target);
+      if (wanted != null && hasRailNeighbors(target, targets, index)) {
          for (Direction side : wanted) {
             int neighbor = index.applyAsInt(target.pos().relative(side));
             if (neighbor >= 0 && targets[neighbor].wanted().getBlock() instanceof BaseRailBlock && !placed.test(neighbor)) {
@@ -55,8 +55,8 @@ final class PrintRailOrder {
          int neighbor = index.applyAsInt(target.pos().relative(side));
          if (neighbor >= 0 && !placed.test(neighbor)) {
             PrintTarget center = targets[neighbor];
-            Direction[] connections = init(center);
-            if (connections != null && init(center, targets, index)) {
+            Direction[] connections = railNeighbors(center);
+            if (connections != null && hasRailNeighbors(center, targets, index)) {
                Direction toward = side.getOpposite();
                if (connections[0] != toward && connections[1] != toward) {
                   return false;
@@ -68,7 +68,7 @@ final class PrintRailOrder {
       return true;
    }
 
-   private static boolean init(PrintTarget center, PrintTarget[] targets, ToIntFunction<BlockPos> index) {
+   private static boolean hasRailNeighbors(PrintTarget center, PrintTarget[] targets, ToIntFunction<BlockPos> index) {
       int neighbors = 0;
 
       for (Direction side : Plane.HORIZONTAL) {

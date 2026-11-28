@@ -45,11 +45,11 @@ public final class WeaponDamageCalculator {
             candidate.addTransientModifier(modifier);
          }
       });
-      init(candidate, player.getActiveEffects());
+      applyStrengthWeakness(candidate, player.getActiveEffects());
       return candidate.getValue();
    }
 
-   static void init(AttributeInstance candidate, Iterable<MobEffectInstance> effects) {
+   static void applyStrengthWeakness(AttributeInstance candidate, Iterable<MobEffectInstance> effects) {
       for (Holder<MobEffect> effect : List.of(MobEffects.STRENGTH, MobEffects.WEAKNESS)) {
          effect.value().createModifiers(0, (attribute, modifier) -> {
             if (attribute.equals(Attributes.ATTACK_DAMAGE)) {
@@ -104,7 +104,7 @@ public final class WeaponDamageCalculator {
             && autismclient.modules.TeamsModule.isFriend(friend)
             && !(friend.distanceToSqr(source) > 4.0F * power * power)) {
             double damage = ExplosionDamageCalculator.calculateDamageCached(friend, source, power, options);
-            if (!init_Z_D(damage, maximum, ExplosionDamageCalculator.effectiveHealth(friend))) {
+            if (!leavesAlive(damage, maximum, ExplosionDamageCalculator.effectiveHealth(friend))) {
                return false;
             }
          }
@@ -113,7 +113,7 @@ public final class WeaponDamageCalculator {
       return true;
    }
 
-   static boolean init_Z_D(double damage, double maximum, double health) {
+   static boolean leavesAlive(double damage, double maximum, double health) {
       return Double.isFinite(damage) && damage <= maximum && (damage == 0.0 || damage < health);
    }
 

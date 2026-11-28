@@ -47,7 +47,7 @@ public final class PrintGeometry {
       return Mth.wrapDegrees(to - from);
    }
 
-   public static double[] init(float cameraYaw, double dx, double dz) {
+   public static double[] toForwardLeft(float cameraYaw, double dx, double dz) {
       double rad = Math.toRadians(cameraYaw);
       double fx = -Math.sin(rad);
       double fz = Math.cos(rad);

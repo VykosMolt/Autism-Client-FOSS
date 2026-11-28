@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class PacketSchemaRegistry {
-   private static volatile Map<String, PacketSchemaRegistry.Inner_StreamUtil> init;
+   private static volatile Map<String, PacketSchemaRegistry.Inner_StreamUtil> schemas;
 
    private PacketSchemaRegistry() {
    }
@@ -37,7 +37,7 @@ public final class PacketSchemaRegistry {
       for (Class<?> parent = packetClass.getSuperclass(); parent != null && parent != Object.class; parent = parent.getSuperclass()) {
          exact = map.get(parent.getName());
          if (exact != null) {
-            return exact.init(packetClass);
+            return exact.forClass(packetClass);
          }
       }
 
@@ -49,13 +49,13 @@ public final class PacketSchemaRegistry {
    }
 
    private static Map<String, PacketSchemaRegistry.Inner_StreamUtil> init_Map() {
-      Map<String, PacketSchemaRegistry.Inner_StreamUtil> current = init;
+      Map<String, PacketSchemaRegistry.Inner_StreamUtil> current = schemas;
       if (current != null) {
          return current;
       }
 
       synchronized (PacketSchemaRegistry.class) {
-         current = init;
+         current = schemas;
          if (current != null) {
             return current;
          }
@@ -68,7 +68,7 @@ public final class PacketSchemaRegistry {
                try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                   while ((line = reader.readLine()) != null) {
                      if (!line.isBlank() && !line.startsWith("#")) {
-                        PacketSchemaRegistry.Inner_StreamUtil schema = init(line);
+                        PacketSchemaRegistry.Inner_StreamUtil schema = parseLine(line);
                         if (schema != null) {
                            loaded.put(schema.load_Str(), schema);
                            loaded.put(schema.init_Str(), schema);
@@ -81,12 +81,12 @@ public final class PacketSchemaRegistry {
             loaded.clear();
          }
 
-         init = Collections.unmodifiableMap(loaded);
-         return init;
+         schemas = Collections.unmodifiableMap(loaded);
+         return schemas;
       }
    }
 
-   private static PacketSchemaRegistry.Inner_StreamUtil init(String line) {
+   private static PacketSchemaRegistry.Inner_StreamUtil parseLine(String line) {
       String[] parts = line.split("\t", -1);
       if (parts.length < 8) {
          return null;
@@ -105,15 +105,15 @@ public final class PacketSchemaRegistry {
       return new PacketSchemaRegistry.Inner_StreamUtil(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], Boolean.parseBoolean(parts[6]), fields, false);
    }
 
-   private static String init(String value, String fallback) {
+   private static String orDefault(String value, String fallback) {
       return value != null && !value.isBlank() ? value : fallback;
    }
 
    public record Inner_DataUtil(String name, String load, String read, boolean editableCandidate) {
       public Inner_DataUtil {
-         name = PacketSchemaRegistry.init(name, "field");
-         load = PacketSchemaRegistry.init(load, "Object");
-         read = PacketSchemaRegistry.init(read, "object");
+         name = PacketSchemaRegistry.orDefault(name, "field");
+         load = PacketSchemaRegistry.orDefault(load, "Object");
+         read = PacketSchemaRegistry.orDefault(read, "object");
       }
    }
 
@@ -129,11 +129,11 @@ public final class PacketSchemaRegistry {
       boolean inherited
    ) {
       public Inner_StreamUtil {
-         load_Str = PacketSchemaRegistry.init(load_Str, "unknown");
-         read = PacketSchemaRegistry.init(read, "ANY");
-         write = PacketSchemaRegistry.init(write, "unknown");
+         load_Str = PacketSchemaRegistry.orDefault(load_Str, "unknown");
+         read = PacketSchemaRegistry.orDefault(read, "ANY");
+         write = PacketSchemaRegistry.orDefault(write, "unknown");
          update = update == null ? "" : update;
-         sync = PacketSchemaRegistry.init(sync, "fallback");
+         sync = PacketSchemaRegistry.orDefault(sync, "fallback");
          fields = fields == null ? List.of() : List.copyOf(fields);
       }
 
@@ -142,7 +142,7 @@ public final class PacketSchemaRegistry {
          return name.replace('$', '.');
       }
 
-      public PacketSchemaRegistry.Inner_StreamUtil init(Class<?> concreteClass) {
+      public PacketSchemaRegistry.Inner_StreamUtil forClass(Class<?> concreteClass) {
          return concreteClass == null
             ? this
             : new PacketSchemaRegistry.Inner_StreamUtil(concreteClass.getName(), this.load_Str, this.read, this.write, this.update, this.sync, this.complete, this.fields, true);

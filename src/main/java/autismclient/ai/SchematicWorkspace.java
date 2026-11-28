@@ -63,17 +63,17 @@ public final class SchematicWorkspace {
    private Future<?> loadTask;
    private boolean renaming;
    private long loadGeneration;
-   private String sync = "";
+   private String loadingPlacementId = "";
    private volatile int previewProgress;
-   private String flush = "";
-   private String close = "";
+   private String noticeText = "";
+   private String errorText = "";
    private long load_J;
    private boolean write_Z;
    private boolean update_Z;
    private SchematicCapture capture;
    private SchematicRecording activeRecording;
    private SchematicPaste paste;
-   private String open;
+   private String activePlacementId;
    private SchematicWorkspace.Inner_DataUtil buildJob;
    private final Object pasteVisualOwner = new Object();
    private final Object recordingVisOwner = new Object();
@@ -201,7 +201,7 @@ public final class SchematicWorkspace {
             result.placements().forEach(p -> this.placementsById.put(p.id(), p));
             this.libraryReady = true;
             if (!failure.isEmpty()) {
-               this.close = "Could not read saved placements: " + failure;
+               this.errorText = "Could not read saved placements: " + failure;
             }
 
             this.refresh();
@@ -312,11 +312,11 @@ public final class SchematicWorkspace {
       } else if (this.paste != null) {
          return this.paste.progress.phase();
       } else if (this.renaming || this.loadTask != null) {
-         return this.flush;
-      } else if (!this.close.isEmpty()) {
-         return this.close;
+         return this.noticeText;
+      } else if (!this.errorText.isEmpty()) {
+         return this.errorText;
       } else {
-         return !this.flush.isEmpty() ? this.flush : this.library.status;
+         return !this.noticeText.isEmpty() ? this.noticeText : this.library.status;
       }
    }
 
@@ -356,7 +356,7 @@ public final class SchematicWorkspace {
          return "Building";
       } else if (!p.paste().isEmpty()) {
          return "Paste paused";
-      } else if (p.id().equals(this.sync)) {
+      } else if (p.id().equals(this.loadingPlacementId)) {
          return "Loading";
       } else {
          SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
@@ -372,8 +372,8 @@ public final class SchematicWorkspace {
 
    void refresh() {
       if (this.libraryReady) {
-         this.close = "";
-         this.flush = "";
+         this.errorText = "";
+         this.noticeText = "";
          this.unavailable.clear();
          this.library.rescan(this.mc::execute);
       }
@@ -400,15 +400,15 @@ public final class SchematicWorkspace {
                this.mc.execute(() -> {
                   LinkedHashSet<Path> roots = new LinkedHashSet<>(this.library.roots);
                   if (roots.size() >= 32 && !roots.contains(folder)) {
-                     this.read("Up to 32 folders can be indexed");
+                     this.showError("Up to 32 folders can be indexed");
                   } else if (roots.add(folder)) {
                      this.library.roots = List.copyOf(roots);
-                     this.push();
+                     this.queueLibrarySave();
                      this.refresh();
                   }
                });
             } catch (Exception e) {
-               this.mc.execute(() -> this.read(SchematicLibrary.describeError(e)));
+               this.mc.execute(() -> this.showError(SchematicLibrary.describeError(e)));
             }
          });
       }
@@ -417,7 +417,7 @@ public final class SchematicWorkspace {
    void removeFolder(Path root) {
       if (this.libraryReady && !root.equals(this.library.defaultRoot)) {
          this.library.roots = this.library.roots.stream().filter(p -> !p.equals(root)).toList();
-         this.push();
+         this.queueLibrarySave();
          this.refresh();
       }
    }
@@ -430,7 +430,7 @@ public final class SchematicWorkspace {
       if (this.isInWorld() && !this.isBusy()) {
          SchematicSelection selector = new SchematicSelection(this.mc);
          if (!aP.init_Z_aR_Runnable(selector, () -> this.selectedArea = selector.getArea())) {
-            this.read("Stop the current AI task before selecting an area");
+            this.showError("Stop the current AI task before selecting an area");
          }
       }
    }
@@ -438,14 +438,14 @@ public final class SchematicWorkspace {
    void startCapture(boolean allLoaded, boolean entities) {
       if (this.isLibraryReady() && this.isInWorld() && !this.isBusy()) {
          if (!allLoaded && this.selectedArea == null) {
-            this.read("Select two corners first");
+            this.showError("Select two corners first");
          } else {
             try {
                this.capture = new SchematicCapture(this.mc, this.library.defaultRoot, this.captureName, allLoaded ? null : this.selectedArea, entities);
-               this.close = "";
-               this.flush = "";
+               this.errorText = "";
+               this.noticeText = "";
             } catch (Exception e) {
-               this.read(SchematicLibrary.describeError(e));
+               this.showError(SchematicLibrary.describeError(e));
             }
          }
       }
@@ -459,10 +459,10 @@ public final class SchematicWorkspace {
       if (this.isLibraryReady() && this.isInWorld() && !this.isBusy()) {
          try {
             this.activeRecording = new SchematicRecording(this.mc, this.library.defaultRoot, this.captureName, entities);
-            this.close = "";
-            this.flush = "";
+            this.errorText = "";
+            this.noticeText = "";
          } catch (Exception e) {
-            this.read(SchematicLibrary.describeError(e));
+            this.showError(SchematicLibrary.describeError(e));
          }
       }
    }
@@ -472,7 +472,7 @@ public final class SchematicWorkspace {
          try {
             this.activeRecording.putAt_V_Str(this.captureName);
          } catch (IllegalArgumentException e) {
-            this.read(SchematicLibrary.describeError(e));
+            this.showError(SchematicLibrary.describeError(e));
          }
       }
    }
@@ -487,8 +487,8 @@ public final class SchematicWorkspace {
    private void renameFile(SchematicLibrary.SchematicEntry file, String name) {
       if (this.isLibraryReady() && !this.isBusy() && this.libraryEntry(file.id()) != null) {
          this.renaming = true;
-         this.flush = "Renaming file";
-         this.close = "";
+         this.noticeText = "Renaming file";
+         this.errorText = "";
 
          try {
             SchematicLibrary.EXECUTOR.execute(() -> {
@@ -500,20 +500,20 @@ public final class SchematicWorkspace {
                      this.selectedFileId = updated.id();
                      this.unavailable.clear();
                      this.library.replaceEntry(file, updated, this.mc::execute);
-                     this.push();
-                     this.flush = "";
+                     this.queueLibrarySave();
+                     this.noticeText = "";
                      autismclient.util.bi.load("Renamed to " + updated.name());
                   });
                } catch (Exception e) {
                   this.mc.execute(() -> {
                      this.renaming = false;
-                     this.read(SchematicLibrary.describeError(e));
+                     this.showError(SchematicLibrary.describeError(e));
                   });
                }
             });
          } catch (RejectedExecutionException busy) {
             this.renaming = false;
-            this.read("Schematic files are busy. Try again");
+            this.showError("Schematic files are busy. Try again");
          }
       }
    }
@@ -524,7 +524,7 @@ public final class SchematicWorkspace {
             SchematicLibrary.Placement current = this.placementById(p.id());
             if (current != null && !this.isBusy()) {
                this.placementsById.put(current.id(), current.named(name));
-               this.push();
+               this.queueLibrarySave();
             }
          });
          autismclient.util.OverlayScreenController.openModalScreen(this.mc, screen);
@@ -534,7 +534,7 @@ public final class SchematicWorkspace {
    void placeFile(SchematicLibrary.SchematicEntry file) {
       if (this.isLibraryReady() && this.isInWorld() && !this.isBusy() && file != null) {
          if (this.placementsById.size() >= 256) {
-            this.read("Remove an existing placement first");
+            this.showError("Remove an existing placement first");
          } else {
             BlockPos at = this.aimTarget(true, 4.0);
             SchematicLibrary.Placement row = new SchematicLibrary.Placement(
@@ -564,10 +564,10 @@ public final class SchematicWorkspace {
          if (this.library.isInRoots(file)) {
             long generation = ++this.loadGeneration;
             ClientLevel capturedWorld = this.trackedLevel;
-            this.sync = p.id();
+            this.loadingPlacementId = p.id();
             this.previewProgress = 0;
-            this.flush = "Reading schematic";
-            this.close = "";
+            this.noticeText = "Reading schematic";
+            this.errorText = "";
             this.loadTask = SchematicLibrary.EXECUTOR.submit(() -> {
                try {
                   init_V_cR_StreamUtil_Path(p, file);
@@ -588,15 +588,15 @@ public final class SchematicWorkspace {
                   this.mc.execute(() -> {
                      if (generation == this.loadGeneration && capturedWorld == this.trackedLevel) {
                         this.loadTask = null;
-                        this.sync = "";
+                        this.loadingPlacementId = "";
                         if (add) {
                            this.placementsById.put(p.id(), p);
                            this.selectedPlacementId = p.id();
-                           this.push();
+                           this.queueLibrarySave();
                         }
 
                         this.loaded.put(p.id(), data);
-                        this.flush = data.previewError != null ? "Loaded · " + data.previewError : "Loaded " + displayName(p);
+                        this.noticeText = data.previewError != null ? "Loaded · " + data.previewError : "Loaded " + displayName(p);
                      }
                   });
                } catch (CancellationException var13) {
@@ -604,9 +604,9 @@ public final class SchematicWorkspace {
                   this.mc.execute(() -> {
                      if (this.loadGeneration == generation) {
                         this.loadTask = null;
-                        this.sync = "";
+                        this.loadingPlacementId = "";
                         this.unavailable.add(p.id());
-                        this.read(SchematicLibrary.describeError(e));
+                        this.showError(SchematicLibrary.describeError(e));
                      }
                   });
                }
@@ -614,7 +614,7 @@ public final class SchematicWorkspace {
          } else {
             this.unavailable.add(p.id());
             if (add || p.id().equals(this.selectedPlacementId)) {
-               this.read("Add this schematic's folder to the library");
+               this.showError("Add this schematic's folder to the library");
             }
          }
       }
@@ -635,7 +635,7 @@ public final class SchematicWorkspace {
             this.unavailable.remove(p.id());
          }
 
-         this.push();
+         this.queueLibrarySave();
       }
    }
 
@@ -648,7 +648,7 @@ public final class SchematicWorkspace {
 
          this.placementsById.remove(p.id());
          this.unloadPlacement(p.id());
-         this.push();
+         this.queueLibrarySave();
       }
    }
 
@@ -659,8 +659,8 @@ public final class SchematicWorkspace {
             data.mover = new SchematicWorkspace.Inner_CachePool(this, p.id());
          }
 
-         if (!aP.init_Z_aR_Runnable(data.mover, this::push)) {
-            this.read("Stop the current AI task before moving a hologram");
+         if (!aP.init_Z_aR_Runnable(data.mover, this::queueLibrarySave)) {
+            this.showError("Stop the current AI task before moving a hologram");
          }
       }
    }
@@ -692,20 +692,20 @@ public final class SchematicWorkspace {
                includeEntities,
                checkpoint
             );
-            this.open = p.id();
+            this.activePlacementId = p.id();
             SchematicWorkspace.Inner_StreamUtil preview = this.loaded.get(p.id());
             AiVisualization.clearOwner(preview.mover == null ? preview : preview.mover);
             this.placementsById.put(p.id(), p.checkpoint(this.paste.progress.checkpoint()));
-            this.push();
-            this.close = "";
-            this.flush = "";
+            this.queueLibrarySave();
+            this.errorText = "";
+            this.noticeText = "";
             if (this.libraryWindow != null) {
                this.libraryWindow.setVisible(false);
             }
 
             autismclient.util.OverlayScreenController.setScreenExplicit(this.mc, null);
          } catch (Exception e) {
-            this.read(SchematicLibrary.describeError(e));
+            this.showError(SchematicLibrary.describeError(e));
          }
       }
    }
@@ -715,9 +715,9 @@ public final class SchematicWorkspace {
       if (p != null && p.visible() && p.paste().isEmpty() && this.isInWorld() && this.isLoaded(p) && !this.isBusy() && !this.hasActiveBuild()) {
          SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
          if (data.preview == null) {
-            this.read("This schematic exceeds the AI builder's preview limit");
+            this.showError("This schematic exceeds the AI builder's preview limit");
          } else if (data.preview.blocks() > 2097152L) {
-            this.read("This schematic exceeds the AI builder's block limit");
+            this.showError("This schematic exceeds the AI builder's block limit");
          } else {
             SchematicLibrary.SchematicEntry entry = this.libraryEntry(SchematicLibrary.idOf(Path.of(p.file())));
             if (entry != null && entry.bytes() == p.bytes() && entry.modified() == p.modified()) {
@@ -741,10 +741,10 @@ public final class SchematicWorkspace {
                   this.buildJob = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.start("game:build", args));
                   autismclient.util.OverlayScreenController.setScreenExplicit(this.mc, null);
                } catch (Exception e) {
-                  this.read(SchematicLibrary.describeError(e));
+                  this.showError(SchematicLibrary.describeError(e));
                }
             } else {
-               this.read("Refresh the file list and load the current file");
+               this.showError("Refresh the file list and load the current file");
             }
          }
       }
@@ -775,27 +775,27 @@ public final class SchematicWorkspace {
       if (this.capture != null) {
          this.capture.cancel();
          this.capture = null;
-         this.flush = "Save cancelled";
+         this.noticeText = "Save cancelled";
       }
 
       if (this.activeRecording != null && !keepRecording) {
          this.activeRecording.cancel();
          this.activeRecording = null;
          AiVisualization.clearOwner(this.recordingVisOwner);
-         this.flush = "Recording cancelled";
+         this.noticeText = "Recording cancelled";
       }
 
       if (this.paste != null) {
          this.paste.init();
-         this.flush = "Pausing paste";
+         this.noticeText = "Pausing paste";
       }
 
       if (this.loadTask != null) {
          this.loadGeneration++;
          this.loadTask.cancel(true);
          this.loadTask = null;
-         this.sync = "";
-         this.flush = "Loading cancelled";
+         this.loadingPlacementId = "";
+         this.noticeText = "Loading cancelled";
       }
    }
 
@@ -807,14 +807,14 @@ public final class SchematicWorkspace {
          }
 
          this.close_V(true);
-         this.poll();
+         this.unloadAllPlacements();
          this.selectedArea = null;
          this.trackedLevel = this.mc.level;
          this.scope = this.trackedLevel == null ? "" : worldScope(this.mc);
          this.dimension = this.trackedLevel == null ? "" : AiWorldIdentity.currentDimensionId(this.mc);
          this.unavailable.clear();
-         this.close = "";
-         this.flush = "";
+         this.errorText = "";
+         this.noticeText = "";
       }
 
       if (this.buildJob != null && this.buildJob.job().future().isDone()) {
@@ -829,10 +829,10 @@ public final class SchematicWorkspace {
                this.capture = null;
                if (finished.savedPath != null) {
                   this.refresh();
-                  this.flush = "Saved " + finished.savedPath.getFileName();
-                  autismclient.util.bi.load(this.flush);
+                  this.noticeText = "Saved " + finished.savedPath.getFileName();
+                  autismclient.util.bi.load(this.noticeText);
                } else if (!finished.error.isEmpty()) {
-                  this.read(finished.error);
+                  this.showError(finished.error);
                }
             }
          }
@@ -854,16 +854,16 @@ public final class SchematicWorkspace {
                if (finished.putAt_Path != null) {
                   this.refresh();
                   if (finished.fill_Z()) {
-                     this.flush = "Recording limit reached · saved " + finished.putAt_Path.getFileName();
-                     autismclient.util.bi.read(this.flush);
+                     this.noticeText = "Recording limit reached · saved " + finished.putAt_Path.getFileName();
+                     autismclient.util.bi.read(this.noticeText);
                   } else {
-                     this.flush = "Saved " + finished.putAt_Path.getFileName();
-                     autismclient.util.bi.load(this.flush);
+                     this.noticeText = "Saved " + finished.putAt_Path.getFileName();
+                     autismclient.util.bi.load(this.noticeText);
                   }
                } else if (!finished.error.isEmpty()) {
-                  this.read(finished.error);
+                  this.showError(finished.error);
                } else {
-                  this.flush = "Recording cancelled";
+                  this.noticeText = "Recording cancelled";
                }
             }
          }
@@ -873,11 +873,11 @@ public final class SchematicWorkspace {
             SchematicPaste.PasteProgress progress = this.paste.progress;
             AiVisualization.showCount(this.pasteVisualOwner, "Schematic paste", progress.phase(), progress.percent(), 100);
             if (terminal || System.nanoTime() - this.load_J > 2000000000L) {
-               SchematicLibrary.Placement p = this.placementsById.get(this.open);
+               SchematicLibrary.Placement p = this.placementsById.get(this.activePlacementId);
                if (p != null) {
                   this.placementsById
                      .put(p.id(), p.checkpoint(progress.complete() ? new JsonObject() : progress.checkpoint()).shown(!progress.complete() && p.visible()));
-                  this.push();
+                  this.queueLibrarySave();
                }
 
                this.load_J = System.nanoTime();
@@ -885,18 +885,18 @@ public final class SchematicWorkspace {
 
             if (terminal) {
                if (progress.complete()) {
-                  this.unloadPlacement(this.open);
+                  this.unloadPlacement(this.activePlacementId);
                }
 
                this.paste = null;
-               this.open = null;
+               this.activePlacementId = null;
                AiVisualization.clearOwner(this.pasteVisualOwner);
                if (!progress.error().isEmpty()) {
-                  this.read(progress.error());
+                  this.showError(progress.error());
                } else {
-                  this.flush = progress.complete() ? "Paste complete" : "Paste paused";
+                  this.noticeText = progress.complete() ? "Paste complete" : "Paste paused";
                   if (progress.complete()) {
-                     autismclient.util.bi.load(this.flush);
+                     autismclient.util.bi.load(this.noticeText);
                   }
                }
             }
@@ -919,7 +919,7 @@ public final class SchematicWorkspace {
             for (Entry<String, SchematicWorkspace.Inner_StreamUtil> entry : this.loaded.entrySet()) {
                SchematicLibrary.Placement p = this.placementsById.get(entry.getKey());
                SchematicWorkspace.Inner_StreamUtil data = entry.getValue();
-               if (p != null && p.visible() && !p.id().equals(this.open) && data.preview != null && !data.preview.cells().isEmpty()) {
+               if (p != null && p.visible() && !p.id().equals(this.activePlacementId) && data.preview != null && !data.preview.cells().isEmpty()) {
                   AiVisualization.touch(data.mover == null ? data : data.mover, now);
                   if (oldest == null || data.lastUsedNanos < oldest.lastUsedNanos) {
                      oldest = data;
@@ -951,19 +951,19 @@ public final class SchematicWorkspace {
       }
    }
 
-   private void poll() {
+   private void unloadAllPlacements() {
       for (String id : List.copyOf(this.loaded.keySet())) {
          this.unloadPlacement(id);
       }
    }
 
-   private void read(String message) {
-      this.close = message;
-      this.flush = "";
+   private void showError(String message) {
+      this.errorText = message;
+      this.noticeText = "";
       autismclient.util.bi.write(message);
    }
 
-   private void push() {
+   private void queueLibrarySave() {
       if (this.libraryReady) {
          if (this.write_Z) {
             this.update_Z = true;
@@ -986,11 +986,11 @@ public final class SchematicWorkspace {
                this.mc.execute(() -> {
                   this.write_Z = false;
                   if (!failure.isEmpty()) {
-                     this.read("Could not save schematic settings: " + failure);
+                     this.showError("Could not save schematic settings: " + failure);
                   }
 
                   if (this.update_Z) {
-                     this.push();
+                     this.queueLibrarySave();
                   }
                });
             });
@@ -1081,7 +1081,7 @@ public final class SchematicWorkspace {
 
       @Override
       void moveToAim(boolean surface) {
-         this.init(this.workspace.aimTarget(surface, this.aimDepth));
+         this.moveTo(this.workspace.aimTarget(surface, this.aimDepth));
       }
 
       @Override
@@ -1096,22 +1096,22 @@ public final class SchematicWorkspace {
          ClientLevel level = this.workspace.trackedLevel;
          if (level.hasChunkAt(p)) {
             int y = level.getHeight(Types.MOTION_BLOCKING, p.getX(), p.getZ());
-            this.init(new BlockPos(p.getX(), y, p.getZ()));
+            this.moveTo(new BlockPos(p.getX(), y, p.getZ()));
          }
       }
 
       @Override
       void init(int x, int y, int z) {
-         this.init(this.getOrigin().offset(x, y, z));
+         this.moveTo(this.getOrigin().offset(x, y, z));
       }
 
-      private void init(BlockPos at) {
+      private void moveTo(BlockPos at) {
          this.workspace.movePlacement(this.placementId, at);
       }
 
       @Override
       void rotate(int steps) {
-         this.init(Math.floorMod(this.getRotation() + steps * 90, 360), this.getMirror());
+         this.applyTransform(Math.floorMod(this.getRotation() + steps * 90, 360), this.getMirror());
       }
 
       @Override
@@ -1129,14 +1129,14 @@ public final class SchematicWorkspace {
                var10002 = "none";
          }
 
-         this.init(var10001, var10002);
+         this.applyTransform(var10001, var10002);
       }
 
       @Override
       void init(BlockPos at, int r, String m) {
-         this.init(at);
+         this.moveTo(at);
          if (this.getRotation() != r || !this.getMirror().equals(m)) {
-            this.init(r, m);
+            this.applyTransform(r, m);
          }
       }
 
@@ -1144,11 +1144,11 @@ public final class SchematicWorkspace {
       void cancel() {
       }
 
-      private void init(int r, String m) {
+      private void applyTransform(int r, String m) {
          SchematicLibrary.Placement p = this.placement();
          SchematicWorkspace.Inner_StreamUtil data = this.workspace.loaded.get(this.placementId);
          if (r == p.rotation() && m.equals(p.mirror())) {
-            if (this.workspace.sync.equals(this.placementId)) {
+            if (this.workspace.loadingPlacementId.equals(this.placementId)) {
                this.workspace.cancelOperation();
             }
          } else {
@@ -1157,8 +1157,8 @@ public final class SchematicWorkspace {
             }
 
             long token = ++this.workspace.loadGeneration;
-            this.workspace.sync = this.placementId;
-            this.workspace.flush = "Rotating hologram";
+            this.workspace.loadingPlacementId = this.placementId;
+            this.workspace.noticeText = "Rotating hologram";
             this.workspace.previewProgress = 0;
             this.workspace.loadTask = SchematicLibrary.EXECUTOR.submit(() -> {
                try {
@@ -1169,8 +1169,8 @@ public final class SchematicWorkspace {
                         this.workspace.placementsById.put(this.placementId, latest.at(latest.x(), latest.y(), latest.z(), r, m));
                         data.preview = result;
                         this.workspace.loadTask = null;
-                        this.workspace.sync = "";
-                        this.workspace.flush = "";
+                        this.workspace.loadingPlacementId = "";
+                        this.workspace.noticeText = "";
                      }
                   });
                } catch (CancellationException var7) {
@@ -1178,8 +1178,8 @@ public final class SchematicWorkspace {
                   this.workspace.mc.execute(() -> {
                      if (this.workspace.loadGeneration == token) {
                         this.workspace.loadTask = null;
-                        this.workspace.sync = "";
-                        this.workspace.read(SchematicLibrary.describeError(e));
+                        this.workspace.loadingPlacementId = "";
+                        this.workspace.showError(SchematicLibrary.describeError(e));
                      }
                   });
                }

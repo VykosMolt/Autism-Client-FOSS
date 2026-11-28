@@ -10,8 +10,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 public final class BackgroundTaskExecutor {
-   private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
-   private static final ExecutorService init_ExecutorService = Executors.newCachedThreadPool(runnable -> {
+   private static final AtomicInteger THREAD_IDS = new AtomicInteger();
+   private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(runnable -> {
       Thread thread = new Thread(runnable);
       thread.setDaemon(true);
       return thread;
@@ -21,8 +21,8 @@ public final class BackgroundTaskExecutor {
    }
 
    public static Future<?> submit(String name, Runnable work) {
-      String label = name != null && !name.isBlank() ? name : "Autism-BG-" + init_AtomicInteger.incrementAndGet();
-      return init_ExecutorService.submit(() -> {
+      String label = name != null && !name.isBlank() ? name : "Autism-BG-" + THREAD_IDS.incrementAndGet();
+      return EXECUTOR.submit(() -> {
          Thread current = Thread.currentThread();
          String original = current.getName();
          current.setName(label);
@@ -37,7 +37,7 @@ public final class BackgroundTaskExecutor {
       });
    }
 
-   public static <T> CompletableFuture<T> init_CompletableFuture_Str_Supplier(String name, Supplier<T> work) {
+   public static <T> CompletableFuture<T> supplyAsync(String name, Supplier<T> work) {
       CompletableFuture<T> future = new CompletableFuture<>();
       submit(name, () -> {
          try {

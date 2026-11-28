@@ -32,7 +32,7 @@ final class AiModels {
    }
 
    static AiModels.Inner_CachePool fetchModels(AiSettings.Provider provider, String endpoint, String key, Runnable checkpoint) {
-      return fetchModelsWith(provider, endpoint, key, (url, p, k) -> init(url, p, k, checkpoint));
+      return fetchModelsWith(provider, endpoint, key, (url, p, k) -> getJson(url, p, k, checkpoint));
    }
 
    static AiModels.Inner_CachePool fetchModelsWith(AiSettings.Provider provider, String endpoint, String key, AiModels.Inner_DataUtil fetch) {
@@ -47,10 +47,10 @@ final class AiModels {
             Set<String> ids = new LinkedHashSet<>();
             switch (provider) {
                case GEMINI:
-                  init(base, key.trim(), ids, fetch);
+                  listTokenPagedModels(base, key.trim(), ids, fetch);
                   break;
                case ANTHROPIC:
-                  init(base, key.trim(), provider, ids, fetch, true);
+                  listPagedModels(base, key.trim(), provider, ids, fetch, true);
                   break;
                case DASHSCOPE:
                case MOONSHOT:
@@ -64,16 +64,16 @@ final class AiModels {
                      try {
                         ids.clear();
                         if (provider == AiSettings.Provider.DASHSCOPE) {
-                           load(ring.get(i), key.trim(), ids, fetch);
+                           listOpenRouterModels(ring.get(i), key.trim(), ids, fetch);
                         } else {
-                           init(ring.get(i), key.trim(), provider, ids, fetch, false);
+                           listPagedModels(ring.get(i), key.trim(), provider, ids, fetch, false);
                         }
 
                         base = ring.get(i);
                         last = null;
                         break;
                      } catch (AiModels.Inner_StreamUtil failure) {
-                        boolean rejection = failure.init == 401 || failure.init == 403;
+                        boolean rejection = failure.status == 401 || failure.status == 403;
                         if (!rejection && worth == null) {
                            worth = failure;
                         }
@@ -89,11 +89,11 @@ final class AiModels {
                   }
                   break;
                default:
-                  init(base, key.trim(), provider, ids, fetch, false);
+                  listPagedModels(base, key.trim(), provider, ids, fetch, false);
             }
 
             List<String> models = new ArrayList<>(ids);
-            models.sort(AiModels::init);
+            models.sort(AiModels::compareVersions);
             return new AiModels.Inner_CachePool(List.copyOf(models), "", base, provider);
          } catch (Exception e) {
             if (e instanceof InterruptedException) {
@@ -167,7 +167,7 @@ final class AiModels {
       return others.isEmpty() ? null : others.getFirst();
    }
 
-   private static void init(String base, String key, AiSettings.Provider provider, Set<String> out, AiModels.Inner_DataUtil fetch, boolean anthropic) throws Exception {
+   private static void listPagedModels(String base, String key, AiSettings.Provider provider, Set<String> out, AiModels.Inner_DataUtil fetch, boolean anthropic) throws Exception {
       String after = "";
       Set<String> seen = new HashSet<>();
 
@@ -211,7 +211,7 @@ final class AiModels {
       throw new IllegalStateException("Model list exceeded the pagination limit; narrow the endpoint catalog");
    }
 
-   private static void init(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
+   private static void listTokenPagedModels(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
       String token = "";
       Set<String> seen = new HashSet<>();
 
@@ -223,7 +223,7 @@ final class AiModels {
             if (entry.isJsonObject()) {
                JsonObject model = entry.getAsJsonObject();
                String id = stringField(model, "name").replaceFirst("^models/", "");
-               if (!id.isEmpty() && init(model, "supportedGenerationMethods", "generateContent") && load_Z(id)) {
+               if (!id.isEmpty() && fieldEquals(model, "supportedGenerationMethods", "generateContent") && load_Z(id)) {
                   out.add(id);
                }
             }
@@ -242,13 +242,13 @@ final class AiModels {
       throw new IllegalStateException("Model list exceeded the pagination limit");
    }
 
-   private static void load(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
+   private static void listOpenRouterModels(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
       if (!base.endsWith("/api/v1")) {
          try {
-            init(base, key, AiSettings.Provider.DASHSCOPE, out, fetch, false);
+            listPagedModels(base, key, AiSettings.Provider.DASHSCOPE, out, fetch, false);
             return;
          } catch (AiModels.Inner_StreamUtil failure) {
-            if (failure.init != 404 && failure.init != 405 || !base.endsWith("/compatible-mode/v1")) {
+            if (failure.status != 404 && failure.status != 405 || !base.endsWith("/compatible-mode/v1")) {
                throw failure;
             }
          }
@@ -285,7 +285,7 @@ final class AiModels {
                   boolean textOutput = metadata == null
                      || !metadata.isJsonObject()
                      || !metadata.getAsJsonObject().has("response_modality")
-                     || init(metadata.getAsJsonObject(), "response_modality", "Text");
+                     || fieldEquals(metadata.getAsJsonObject(), "response_modality", "Text");
                   if (!id.isEmpty() && textOutput && load_Z(id)) {
                      out.add(id);
                   }
@@ -316,7 +316,7 @@ final class AiModels {
       throw new IllegalStateException("Model list exceeded the pagination limit");
    }
 
-   private static JsonObject init(String url, AiSettings.Provider provider, String key, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
+   private static JsonObject getJson(String url, AiSettings.Provider provider, String key, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       Builder request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20L)).header("Accept", "application/json").GET();
       AiHttp.authHeaders(provider, key).forEach(request::header);
       HttpResponse<byte[]> response = AiHttp.send(request.build(), 2097152, checkpoint);
@@ -362,7 +362,7 @@ final class AiModels {
       return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && value.getAsBoolean();
    }
 
-   private static boolean init(JsonObject object, String field, String wanted) {
+   private static boolean fieldEquals(JsonObject object, String field, String wanted) {
       JsonElement value = object.get(field);
       if (value != null && value.isJsonArray()) {
          for (JsonElement item : value.getAsJsonArray()) {
@@ -433,7 +433,7 @@ final class AiModels {
       return true;
    }
 
-   private static int init(String a, String b) {
+   private static int compareVersions(String a, String b) {
       String[] pa = a.toLowerCase(Locale.ROOT).split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
       String[] pb = b.toLowerCase(Locale.ROOT).split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
       int n = Math.min(pa.length, pb.length);
@@ -484,11 +484,11 @@ final class AiModels {
    }
 
    static final class Inner_StreamUtil extends IllegalStateException {
-      final int init;
+      final int status;
 
       Inner_StreamUtil(int status, String message) {
          super(message);
-         this.init = status;
+         this.status = status;
       }
    }
 }

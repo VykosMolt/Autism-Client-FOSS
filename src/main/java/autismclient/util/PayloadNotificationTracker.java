@@ -18,18 +18,18 @@ public final class PayloadNotificationTracker {
 
    public static synchronized void notice(String channel, String direction, PayloadChannelFilterManager.MatchedRule match) {
       if ("S2C".equalsIgnoreCase(direction) && !autismclient.modules.aD.init_Z()) {
-         String normalized = init(channel);
+         String normalized = normalizeChannel(channel);
          if (!normalized.isBlank()) {
             long now = System.currentTimeMillis();
             PayloadNotificationTracker.Inner_DataUtil state = init_Map.computeIfAbsent(normalized, unused -> new PayloadNotificationTracker.Inner_DataUtil());
             init_Z = true;
             state.init_Str = normalized;
-            state.load_Str = init(normalized, match);
+            state.load_Str = labelFor(normalized, match);
             state.load_J = now;
             if (now >= state.init_J) {
                if (state.init_I > 0) {
                   state.init_I++;
-                  init(state);
+                  announce(state);
                } else {
                   bi.init("Payload: " + normalized, -14249);
                }
@@ -58,7 +58,7 @@ public final class PayloadNotificationTracker {
                while (it.hasNext()) {
                   PayloadNotificationTracker.Inner_DataUtil state = it.next().getValue();
                   if (state.init_I > 0 && now >= state.init_J) {
-                     init(state);
+                     announce(state);
                      state.init_I = 0;
                      state.init_J = now + 2000L;
                   }
@@ -79,12 +79,12 @@ public final class PayloadNotificationTracker {
       init_Z = false;
    }
 
-   private static void init(PayloadNotificationTracker.Inner_DataUtil state) {
+   private static void announce(PayloadNotificationTracker.Inner_DataUtil state) {
       String label = state.load_Str != null && !state.load_Str.isBlank() ? state.load_Str : state.init_Str;
       bi.init("Payload: " + label + " +" + state.init_I, -14249);
    }
 
-   private static String init(String channel, PayloadChannelFilterManager.MatchedRule match) {
+   private static String labelFor(String channel, PayloadChannelFilterManager.MatchedRule match) {
       if (match != null && match.pattern() != null && !match.pattern().isBlank()) {
          String pattern = match.pattern().trim().toLowerCase(Locale.ROOT);
          return pattern.contains("*") ? pattern : channel;
@@ -93,7 +93,7 @@ public final class PayloadNotificationTracker {
       }
    }
 
-   private static String init(String channel) {
+   private static String normalizeChannel(String channel) {
       return channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
    }
 

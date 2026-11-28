@@ -57,7 +57,7 @@ public final class EntityControlModule extends Module {
    private int antiKickDelay;
    private double init_D = 1.7976931348623157E308;
    private boolean init_Z;
-   private boolean load;
+   private boolean sendingOwnPacket;
 
    public EntityControlModule() {
       super("entity-control", "EntityControl", ae.load_ae, "Controls selected rideable entities.");
@@ -149,7 +149,7 @@ public final class EntityControlModule extends Module {
       if (MC.player != null && MC.getConnection() != null) {
          if (this.init_Z) {
             Entity vehicle = MC.player.getVehicle();
-            if (this.load(vehicle)) {
+            if (this.isControlling(vehicle)) {
                this.init_V_ServerboundMoveVeh(
                   Compat263.newServerboundMoveVehiclePacket(
                      new Vec3(vehicle.getX(), this.init_D, vehicle.getZ()), vehicle.getYRot(), vehicle.getXRot(), vehicle.onGround()
@@ -168,13 +168,13 @@ public final class EntityControlModule extends Module {
 
    @Override
    public boolean onPacketSend(Packet<?> packet) {
-      if (this.load || !this.bool("fly") || !this.bool("anti-kick")) {
+      if (this.sendingOwnPacket || !this.bool("fly") || !this.bool("anti-kick")) {
          return false;
       }
 
       if (packet instanceof ServerboundMoveVehiclePacket movePacket) {
          Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
-         if (this.load(vehicle) && !vehicle.isFlyingVehicle() && write(vehicle)) {
+         if (this.isControlling(vehicle) && !vehicle.isFlyingVehicle() && isAirborne(vehicle)) {
             double currentY = Compat263.sbMoveVehiclePos(movePacket).y;
             if (this.antiKickDelay <= 0 && !this.init_Z && this.init_Z_D(currentY)) {
                double baseline = this.init_D == 1.7976931348623157E308 ? currentY : this.init_D;
@@ -209,7 +209,7 @@ public final class EntityControlModule extends Module {
 
    static Vec3 adjustMovement(Entity vehicle, MoverType type, Vec3 movement) {
       EntityControlModule module = INSTANCE;
-      if (isActiveFor(module) && type == MoverType.SELF && module.load(vehicle)) {
+      if (isActiveFor(module) && type == MoverType.SELF && module.isControlling(vehicle)) {
          double velocityX = movement.x;
          double velocityY = movement.y;
          double velocityZ = movement.z;
@@ -244,24 +244,24 @@ public final class EntityControlModule extends Module {
 
    public static boolean locksYaw() {
       EntityControlModule module = INSTANCE;
-      return isActiveFor(module) && module.bool("lock-yaw") && module.load(MC.player == null ? null : MC.player.getVehicle());
+      return isActiveFor(module) && module.bool("lock-yaw") && module.isControlling(MC.player == null ? null : MC.player.getVehicle());
    }
 
    public static boolean spoofsSaddle(Mob mob) {
       EntityControlModule module = INSTANCE;
-      return isActiveFor(module) && module.bool("spoof-saddle") && module.read(mob);
+      return isActiveFor(module) && module.bool("spoof-saddle") && module.matchesFilter(mob);
    }
 
    public static boolean load_Z_3() {
       EntityControlModule module = INSTANCE;
       Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
-      return isActiveFor(module) && module.bool("max-jump") && module.load(vehicle);
+      return isActiveFor(module) && module.bool("max-jump") && module.isControlling(vehicle);
    }
 
    public static boolean isFlying() {
       EntityControlModule module = INSTANCE;
       Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
-      return isActiveFor(module) && module.bool("fly") && vehicle instanceof PlayerRideableJumping && module.load(vehicle);
+      return isActiveFor(module) && module.bool("fly") && vehicle instanceof PlayerRideableJumping && module.isControlling(vehicle);
    }
 
    public static boolean controls(Entity entity) {
@@ -271,7 +271,7 @@ public final class EntityControlModule extends Module {
          && MC.player != null
          && MC.player.getVehicle() == entity
          && MC.player == entity.getFirstPassenger()
-         && module.read(entity);
+         && module.matchesFilter(entity);
    }
 
    private static String defaultEntitiesValue() {
@@ -295,11 +295,11 @@ public final class EntityControlModule extends Module {
       return module != null && module.isEnabled() && !aD.read_Z() && MC.player != null;
    }
 
-   private boolean load(Entity vehicle) {
-      return vehicle != null && MC.player != null && MC.player.getVehicle() == vehicle && vehicle.getControllingPassenger() == MC.player && this.read(vehicle);
+   private boolean isControlling(Entity vehicle) {
+      return vehicle != null && MC.player != null && MC.player.getVehicle() == vehicle && vehicle.getControllingPassenger() == MC.player && this.matchesFilter(vehicle);
    }
 
-   private boolean read(Entity entity) {
+   private boolean matchesFilter(Entity entity) {
       if (entity == null) {
          return false;
       }
@@ -322,17 +322,17 @@ public final class EntityControlModule extends Module {
       this.antiKickDelay = this.integer("anti-kick-delay");
       this.init_D = 1.7976931348623157E308;
       this.init_Z = false;
-      this.load = false;
+      this.sendingOwnPacket = false;
    }
 
    private void init_V_ServerboundMoveVeh(ServerboundMoveVehiclePacket packet) {
       if (MC.getConnection() != null) {
-         this.load = true;
+         this.sendingOwnPacket = true;
 
          try {
             MC.getConnection().send(packet);
          } finally {
-            this.load = false;
+            this.sendingOwnPacket = false;
          }
       }
    }
@@ -341,7 +341,7 @@ public final class EntityControlModule extends Module {
       return currentY >= this.init_D || this.init_D - currentY < 0.0313;
    }
 
-   private static boolean write(Entity entity) {
+   private static boolean isAirborne(Entity entity) {
       return entity.level().getBlockStates(entity.getBoundingBox().inflate(0.0625).expandTowards(0.0, -0.55, 0.0)).allMatch(BlockStateBase::isAir);
    }
 

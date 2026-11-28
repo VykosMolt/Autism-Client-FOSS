@@ -3,26 +3,26 @@ package autismclient.util.oresim;
 import java.util.Objects;
 
 public final class OreSimSeedParser {
-   private static final OreSimSeedParser.Inner_DataUtil init = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.EMPTY, null);
-   private static final OreSimSeedParser.Inner_DataUtil load = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.INVALID, null);
+   private static final OreSimSeedParser.Inner_DataUtil EMPTY = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.EMPTY, null);
+   private static final OreSimSeedParser.Inner_DataUtil INVALID = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.INVALID, null);
 
    private OreSimSeedParser() {
    }
 
    public static OreSimSeedParser.Inner_DataUtil parse(String raw) {
       if (raw == null) {
-         return init;
+         return EMPTY;
       }
 
       String input = raw.strip();
       if (input.isEmpty()) {
-         return init;
+         return EMPTY;
       }
 
       try {
          return new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.VALID, Long.parseLong(input));
       } catch (NumberFormatException ignored) {
-         return load;
+         return INVALID;
       }
    }
 

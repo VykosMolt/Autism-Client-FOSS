@@ -16,8 +16,8 @@ import java.util.Map.Entry;
 
 final class AiHistory {
    static final String INTERRUPTED_RESULT = "{\"status\":\"INTERRUPTED\",\"message\":\"The run stopped before this call's result was recorded; re-observe before assuming its effect\"}";
-   static final String load = "CONTEXT COMPACTED by the host";
-   static final String read = "EARLIER WORK (host digest): ";
+   static final String COMPACTED_MARKER = "CONTEXT COMPACTED by the host";
+   static final String DIGEST_PREFIX = "EARLIER WORK (host digest): ";
    static final int init_I = 3000;
 
    private AiHistory() {
@@ -36,22 +36,22 @@ final class AiHistory {
       return role(m).equals("user");
    }
 
-   private static JsonArray init(JsonObject m, String key) {
+   private static JsonArray arrayOrNull(JsonObject m, String key) {
       return m.has(key) && m.get(key).isJsonArray() ? m.getAsJsonArray(key) : null;
    }
 
-   private static String init(JsonElement block) {
+   private static String blockType(JsonElement block) {
       return block.isJsonObject() ? AiJson.getString(block.getAsJsonObject(), "type", "") : "";
    }
 
    static JsonObject init_JsonObject(JsonObject message) {
-      JsonArray content = init(message, "content");
+      JsonArray content = arrayOrNull(message, "content");
       if (role(message).equals("assistant") && content != null) {
          JsonArray kept = new JsonArray();
          boolean removed = false;
 
          for (JsonElement block : content) {
-            String t = init(block);
+            String t = blockType(block);
             if (!t.equals("thinking") && !t.equals("redacted_thinking")) {
                kept.add(block.deepCopy());
             } else {
@@ -100,34 +100,34 @@ final class AiHistory {
          out = init_List(out);
       }
 
-      return load(provider, out);
+      return repairToolPairs(provider, out);
    }
 
-   static List<AiHistory.Inner_DataUtil> init(AiSettings.Provider provider, JsonObject assistant) {
+   static List<AiHistory.Inner_DataUtil> toolCallsOf(AiSettings.Provider provider, JsonObject assistant) {
       List<AiHistory.Inner_DataUtil> out = new ArrayList<>();
       if (!isAssistant(assistant)) {
          return out;
       }
 
       if (provider == AiSettings.Provider.ANTHROPIC) {
-         JsonArray content = init(assistant, "content");
+         JsonArray content = arrayOrNull(assistant, "content");
          if (content != null) {
             for (JsonElement block : content) {
-               if (init(block).equals("tool_use")) {
+               if (blockType(block).equals("tool_use")) {
                   JsonObject b = block.getAsJsonObject();
                   String name = AiJson.getString(b, "name", "");
                   out.add(
                      new AiHistory.Inner_DataUtil(
                         AiJson.getString(b, "id", ""),
                         name,
-                        init(name, b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : null)
+                        callLabel(name, b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : null)
                      )
                   );
                }
             }
          }
       } else if (provider == AiSettings.Provider.GEMINI) {
-         JsonArray parts = init(assistant, "parts");
+         JsonArray parts = arrayOrNull(assistant, "parts");
          if (parts != null) {
             for (JsonElement part : parts) {
                if (part.isJsonObject() && part.getAsJsonObject().has("functionCall")) {
@@ -135,14 +135,14 @@ final class AiHistory {
                   String name = AiJson.getString(f, "name", "");
                   out.add(
                      new AiHistory.Inner_DataUtil(
-                        AiJson.getString(f, "id", ""), name, init(name, f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : null)
+                        AiJson.getString(f, "id", ""), name, callLabel(name, f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : null)
                      )
                   );
                }
             }
          }
       } else {
-         JsonArray calls = init(assistant, "tool_calls");
+         JsonArray calls = arrayOrNull(assistant, "tool_calls");
          if (calls != null) {
             for (JsonElement item : calls) {
                if (item.isJsonObject()) {
@@ -156,7 +156,7 @@ final class AiHistory {
                   } catch (RuntimeException var11) {
                   }
 
-                  out.add(new AiHistory.Inner_DataUtil(AiJson.getString(c, "id", ""), name, init(name, args)));
+                  out.add(new AiHistory.Inner_DataUtil(AiJson.getString(c, "id", ""), name, callLabel(name, args)));
                }
             }
          }
@@ -165,7 +165,7 @@ final class AiHistory {
       return out;
    }
 
-   private static String init(String name, JsonObject args) {
+   private static String callLabel(String name, JsonObject args) {
       if (name.equals("perform") && args != null && args.has("id") && args.get("id").isJsonPrimitive()) {
          return "perform " + args.get("id").getAsString();
       } else {
@@ -173,37 +173,37 @@ final class AiHistory {
       }
    }
 
-   static List<JsonObject> load(AiSettings.Provider provider, List<JsonObject> history) {
+   static List<JsonObject> repairToolPairs(AiSettings.Provider provider, List<JsonObject> history) {
       List var10000;
       switch (provider) {
          case ANTHROPIC:
-            var10000 = load(history);
+            var10000 = repairAnthropicPairs(history);
             break;
          case GEMINI:
-            var10000 = write(history);
+            var10000 = repairGeminiPairs(history);
             break;
          default:
-            var10000 = read(history);
+            var10000 = repairOpenAiPairs(history);
       }
 
       return var10000;
    }
 
-   private static List<JsonObject> load(List<JsonObject> history) {
+   private static List<JsonObject> repairAnthropicPairs(List<JsonObject> history) {
       List<JsonObject> out = new ArrayList<>();
 
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
          Set<String> expected = new LinkedHashSet<>();
          if (!out.isEmpty() && isAssistant(out.getLast())) {
-            for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.ANTHROPIC, out.getLast())) {
+            for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
                expected.add(c.id());
             }
          }
 
          if (!isUser(m)) {
             if (!expected.isEmpty()) {
-               out.add(init(expected));
+               out.add(interruptedToolResults(expected));
             }
 
             if (isAssistant(m)) {
@@ -212,14 +212,14 @@ final class AiHistory {
 
             out.add(m);
          } else {
-            JsonArray content = init(m, "content");
+            JsonArray content = arrayOrNull(m, "content");
             if (content != null) {
                JsonArray results = new JsonArray();
                JsonArray rest = new JsonArray();
                Set<String> answered = new HashSet<>();
 
                for (JsonElement block : content) {
-                  if (init(block).equals("tool_result")) {
+                  if (blockType(block).equals("tool_result")) {
                      String id = AiJson.getString(block.getAsJsonObject(), "tool_use_id", "");
                      if (expected.contains(id) && answered.add(id)) {
                         results.add(block);
@@ -283,19 +283,19 @@ final class AiHistory {
       if (!out.isEmpty() && isAssistant(out.getLast())) {
          Set<String> expected = new LinkedHashSet<>();
 
-         for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.ANTHROPIC, out.getLast())) {
+         for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
             expected.add(c.id());
          }
 
          if (!expected.isEmpty()) {
-            out.add(init(expected));
+            out.add(interruptedToolResults(expected));
          }
       }
 
       return out;
    }
 
-   private static JsonObject init(Set<String> ids) {
+   private static JsonObject interruptedToolResults(Set<String> ids) {
       JsonArray content = new JsonArray();
 
       for (String id : ids) {
@@ -315,12 +315,12 @@ final class AiHistory {
    }
 
    private static void init_V(JsonObject assistant) {
-      JsonArray content = init(assistant, "content");
+      JsonArray content = arrayOrNull(assistant, "content");
       if (content != null && content.size() >= 2) {
          JsonArray kept = new JsonArray();
 
          for (JsonElement block : content) {
-            if (!init(block).equals("text") || !AiJson.getString(block.getAsJsonObject(), "text", "").isEmpty()) {
+            if (!blockType(block).equals("text") || !AiJson.getString(block.getAsJsonObject(), "text", "").isEmpty()) {
                kept.add(block);
             }
          }
@@ -331,7 +331,7 @@ final class AiHistory {
       }
    }
 
-   private static List<JsonObject> read(List<JsonObject> history) {
+   private static List<JsonObject> repairOpenAiPairs(List<JsonObject> history) {
       List<JsonObject> out = new ArrayList<>();
       Set<String> open = new LinkedHashSet<>();
 
@@ -359,7 +359,7 @@ final class AiHistory {
             open.clear();
             out.add(m);
             if (isAssistant(m)) {
-               for (AiHistory.Inner_DataUtil c : init(AiSettings.Provider.OPENAI, m)) {
+               for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.OPENAI, m)) {
                   open.add(c.id());
                }
             }
@@ -382,12 +382,12 @@ final class AiHistory {
       return out;
    }
 
-   private static List<JsonObject> write(List<JsonObject> history) {
+   private static List<JsonObject> repairGeminiPairs(List<JsonObject> history) {
       List<JsonObject> out = new ArrayList<>();
 
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
-         List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && isAssistant(out.getLast()) ? init(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
+         List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && isAssistant(out.getLast()) ? toolCallsOf(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
          if (!isUser(m)) {
             if (!expected.isEmpty()) {
                out.add(init_JsonObject(expected));
@@ -395,7 +395,7 @@ final class AiHistory {
 
             out.add(m);
          } else {
-            JsonArray parts = init(m, "parts");
+            JsonArray parts = arrayOrNull(m, "parts");
             if (parts == null) {
                parts = new JsonArray();
                m.add("parts", parts);
@@ -416,7 +416,7 @@ final class AiHistory {
             }
 
             for (int k = responses.size(); k < expected.size(); k++) {
-               responses.add(init(expected.get(k)));
+               responses.add(interruptedFunctionResponse(expected.get(k)));
             }
 
             JsonArray merged = new JsonArray();
@@ -432,7 +432,7 @@ final class AiHistory {
       }
 
       if (!out.isEmpty() && isAssistant(out.getLast())) {
-         List<AiHistory.Inner_DataUtil> expected = init(AiSettings.Provider.GEMINI, out.getLast());
+         List<AiHistory.Inner_DataUtil> expected = toolCallsOf(AiSettings.Provider.GEMINI, out.getLast());
          if (!expected.isEmpty()) {
             out.add(init_JsonObject(expected));
          }
@@ -441,7 +441,7 @@ final class AiHistory {
       return out;
    }
 
-   private static JsonObject init(AiHistory.Inner_DataUtil call) {
+   private static JsonObject interruptedFunctionResponse(AiHistory.Inner_DataUtil call) {
       JsonObject response = AiJson.objectOf(
          "name",
          call.name(),
@@ -461,13 +461,13 @@ final class AiHistory {
       JsonArray parts = new JsonArray();
 
       for (AiHistory.Inner_DataUtil c : calls) {
-         parts.add(init(c));
+         parts.add(interruptedFunctionResponse(c));
       }
 
       return AiJson.objectOf("role", "user", "parts", parts);
    }
 
-   static AiHistory.Inner_StreamUtil init(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
+   static AiHistory.Inner_StreamUtil compact(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
       return compactionCut(provider, history, keepChars, hardChars, false);
    }
 
@@ -560,16 +560,16 @@ final class AiHistory {
          return m.get("content").getAsString();
       }
 
-      JsonArray blocks = init(m, "content");
+      JsonArray blocks = arrayOrNull(m, "content");
       if (blocks != null) {
          for (JsonElement b : blocks) {
-            if (init(b).equals("text")) {
+            if (blockType(b).equals("text")) {
                return AiJson.getString(b.getAsJsonObject(), "text", "");
             }
          }
       }
 
-      JsonArray parts = init(m, "parts");
+      JsonArray parts = arrayOrNull(m, "parts");
       if (parts != null) {
          for (JsonElement p : parts) {
             if (p.isJsonObject() && p.getAsJsonObject().has("text")) {
@@ -592,7 +592,7 @@ final class AiHistory {
       for (JsonObject m : dropped) {
          if (isAssistant(m)) {
             rounds++;
-            List<AiHistory.Inner_DataUtil> found = init(provider, m);
+            List<AiHistory.Inner_DataUtil> found = toolCallsOf(provider, m);
             calls += found.size();
 
             for (AiHistory.Inner_DataUtil c : found) {
@@ -604,35 +604,35 @@ final class AiHistory {
                geminiPending = new ArrayList<>(found);
             }
 
-            String text = read(m);
+            String text = textOf(m);
             if (!text.isBlank()) {
                lastText = text;
             }
          } else if (provider == AiSettings.Provider.ANTHROPIC) {
-            JsonArray content = init(m, "content");
+            JsonArray content = arrayOrNull(m, "content");
             if (content != null) {
                for (JsonElement block : content) {
-                  if (init(block).equals("tool_result")) {
+                  if (blockType(block).equals("tool_result")) {
                      JsonObject b = block.getAsJsonObject();
-                     init(byTool, labels.get(AiJson.getString(b, "tool_use_id", "")), load(b.get("content")));
+                     countOutcome(byTool, labels.get(AiJson.getString(b, "tool_use_id", "")), resultStatus(b.get("content")));
                   }
                }
             }
          } else if (provider == AiSettings.Provider.GEMINI) {
-            JsonArray parts = init(m, "parts");
+            JsonArray parts = arrayOrNull(m, "parts");
             int k = 0;
             if (parts != null) {
                for (JsonElement part : parts) {
                   if (part.isJsonObject() && part.getAsJsonObject().has("functionResponse")) {
                      JsonObject r = part.getAsJsonObject().getAsJsonObject("functionResponse");
                      String label = k < geminiPending.size() ? geminiPending.get(k).label() : AiJson.getString(r, "name", "");
-                     init(byTool, label, load(r.get("response")));
+                     countOutcome(byTool, label, resultStatus(r.get("response")));
                      k++;
                   }
                }
             }
          } else if (role(m).equals("tool")) {
-            init(byTool, labels.get(AiJson.getString(m, "tool_call_id", "")), load(m.get("content")));
+            countOutcome(byTool, labels.get(AiJson.getString(m, "tool_call_id", "")), resultStatus(m.get("content")));
          }
       }
 
@@ -666,11 +666,11 @@ final class AiHistory {
       return out.toString();
    }
 
-   private static void init(Map<String, Map<String, Integer>> byTool, String label, String status) {
+   private static void countOutcome(Map<String, Map<String, Integer>> byTool, String label, String status) {
       byTool.computeIfAbsent(label == null ? "(unknown call)" : label, k -> new TreeMap<>()).merge(status, 1, Integer::sum);
    }
 
-   private static String load(JsonElement result) {
+   private static String resultStatus(JsonElement result) {
       try {
          JsonObject o = result == null
             ? null
@@ -684,22 +684,22 @@ final class AiHistory {
       return "returned";
    }
 
-   private static String read(JsonObject m) {
+   private static String textOf(JsonObject m) {
       if (m.has("content") && m.get("content").isJsonPrimitive()) {
          return m.get("content").getAsString();
       }
 
       StringBuilder text = new StringBuilder();
-      JsonArray blocks = init(m, "content");
+      JsonArray blocks = arrayOrNull(m, "content");
       if (blocks != null) {
          for (JsonElement b : blocks) {
-            if (init(b).equals("text")) {
+            if (blockType(b).equals("text")) {
                text.append(AiJson.getString(b.getAsJsonObject(), "text", ""));
             }
          }
       }
 
-      JsonArray parts = init(m, "parts");
+      JsonArray parts = arrayOrNull(m, "parts");
       if (parts != null) {
          for (JsonElement p : parts) {
             if (p.isJsonObject() && p.getAsJsonObject().has("text") && !AiJson.getBoolean(p.getAsJsonObject(), "thought", false)) {

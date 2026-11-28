@@ -37,7 +37,7 @@ public final class AiSight {
    public static final long init_J = -9223372036854775808L;
    public static final double read = 2.0;
    public static final long load_J = 90000000000L;
-   private static final Map<Integer, Long> init_Map = new ConcurrentHashMap<>();
+   private static final Map<Integer, Long> shooterSeenNanos = new ConcurrentHashMap<>();
 
    private AiSight() {
    }
@@ -72,11 +72,11 @@ public final class AiSight {
       return !Boolean.TRUE.equals(blocked);
    }
 
-   public static Vec3 init(int x, int y, int z) {
+   public static Vec3 eyeAt(int x, int y, int z) {
       return new Vec3(x + 0.5, y + 1.62, z + 0.5);
    }
 
-   public static List<Vec3> init(Vec3 eye, Vec3 toward) {
+   public static List<Vec3> peekEyes(Vec3 eye, Vec3 toward) {
       double dx = toward.x - eye.x;
       double dz = toward.z - eye.z;
       double len = Math.hypot(dx, dz);
@@ -90,13 +90,13 @@ public final class AiSight {
    }
 
    public static boolean isVisibleFrom(BlockGetter level, List<Vec3> eyes, int x, int y, int z) {
-      Vec3 eye = init(x, y, z);
+      Vec3 eye = eyeAt(x, y, z);
       long feet = BlockPos.asLong(x, y, z);
       long head = BlockPos.asLong(x, y + 1, z);
 
       for (Vec3 shooter : eyes) {
          if (!(shooter.distanceToSqr(eye) > 289.0)) {
-            for (Vec3 point : init(shooter, eye)) {
+            for (Vec3 point : peekEyes(shooter, eye)) {
                if (hasLineOfSight(level, point, eye, feet, head)) {
                   return true;
                }
@@ -107,11 +107,11 @@ public final class AiSight {
       return false;
    }
 
-   public static List<BlockPos> init(BlockGetter level, BlockPos feet, List<Vec3> eyes, int horizontal, int up, int down, Set<Long> rejected, int max) {
-      return init(level, feet, eyes, List.of(), 0.0, false, horizontal, up, down, rejected, max);
+   public static List<BlockPos> findHiddenStances(BlockGetter level, BlockPos feet, List<Vec3> eyes, int horizontal, int up, int down, Set<Long> rejected, int max) {
+      return findHiddenStances(level, feet, eyes, List.of(), 0.0, false, horizontal, up, down, rejected, max);
    }
 
-   public static List<BlockPos> init(
+   public static List<BlockPos> findHiddenStances(
       BlockGetter level,
       BlockPos feet,
       List<Vec3> eyes,
@@ -150,10 +150,10 @@ public final class AiSight {
                int x = feet.getX() + dx;
                int y = feet.getY() + dy;
                int z = feet.getZ() + dz;
-               if (!rejected.contains(BlockPos.asLong(x, y, z)) && !init_Z_List(keepAway, distance, x, y, z)) {
-                  boolean water = allowSurfaceWater && read(level, cell, x, y, z);
-                  if ((water || load(level, cell, x, y, z))
-                     && (!openOnly || init_Z_BlockGetter_2(level, cell, x, y, z))
+               if (!rejected.contains(BlockPos.asLong(x, y, z)) && !isNearAny(keepAway, distance, x, y, z)) {
+                  boolean water = allowSurfaceWater && isSurfaceWaterStance(level, cell, x, y, z);
+                  if ((water || isSafeStance(level, cell, x, y, z))
+                     && (!openOnly || hasHeadroom(level, cell, x, y, z))
                      && !isVisibleFrom(level, eyes, x, y, z)
                      && (!water || !isVisibleFrom(level, eyes, x, y + 1, z))) {
                      found.add(new BlockPos(x, y, z));
@@ -163,11 +163,11 @@ public final class AiSight {
          }
       }
 
-      found.sort(Comparator.comparingDouble(p -> init(feet, p)));
+      found.sort(Comparator.comparingDouble(p -> stanceCost(feet, p)));
       return found.size() > max ? new ArrayList<>(found.subList(0, max)) : found;
    }
 
-   private static boolean read(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
+   private static boolean isSurfaceWaterStance(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
       BlockState feet = level.getBlockState(cell.set(x, y, z));
       if (feet.getFluidState().is(FluidTags.WATER) && feet.getCollisionShape(level, cell).isEmpty()) {
          BlockState head = level.getBlockState(cell.set(x, y + 1, z));
@@ -179,7 +179,7 @@ public final class AiSight {
       }
    }
 
-   static boolean init_Z_List(List<Vec3> points, double distance, int x, int y, int z) {
+   static boolean isNearAny(List<Vec3> points, double distance, int x, int y, int z) {
       for (Vec3 p : points) {
          double dx = x + 0.5 - p.x;
          double dy = y + 1 - p.y;
@@ -192,7 +192,7 @@ public final class AiSight {
       return false;
    }
 
-   public static double init(BlockPos feet, BlockPos stance) {
+   public static double stanceCost(BlockPos feet, BlockPos stance) {
       double dx = stance.getX() - feet.getX();
       double dz = stance.getZ() - feet.getZ();
       double dy = stance.getY() - feet.getY();
@@ -200,7 +200,7 @@ public final class AiSight {
    }
 
    public static double coverCost(BlockGetter level, BlockPos feet, BlockPos stance) {
-      double cost = init(feet, stance);
+      double cost = stanceCost(feet, stance);
       if (stance.getY() < feet.getY()) {
          return cost;
       }
@@ -218,16 +218,16 @@ public final class AiSight {
 
    public static void markShooter(int id) {
       long now = System.nanoTime();
-      init_Map.values().removeIf(t -> now - t > 90000000000L);
-      init_Map.put(id, now);
+      shooterSeenNanos.values().removeIf(t -> now - t > 90000000000L);
+      shooterSeenNanos.put(id, now);
    }
 
    public static boolean recentlyShot(Entity shooter) {
-      Long at = shooter == null ? null : init_Map.get(shooter.getId());
+      Long at = shooter == null ? null : shooterSeenNanos.get(shooter.getId());
       return at != null && System.nanoTime() - at <= 90000000000L;
    }
 
-   static boolean init_Z_BlockGetter_2(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
+   static boolean hasHeadroom(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
       for (int h = 0; h <= 1; h++) {
          if (!level.getBlockState(cell.set(x, y + h, z)).getCollisionShape(level, cell).isEmpty()) {
             return false;
@@ -237,7 +237,7 @@ public final class AiSight {
       return true;
    }
 
-   static boolean load(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
+   static boolean isSafeStance(BlockGetter level, MutableBlockPos cell, int x, int y, int z) {
       BlockState floor = level.getBlockState(cell.set(x, y - 1, z));
       if (floor.getFluidState().isEmpty() && !floor.getCollisionShape(level, cell).isEmpty()) {
          if (!(floor.getBlock() instanceof MagmaBlock) && !(floor.getBlock() instanceof CampfireBlock)) {
@@ -305,7 +305,7 @@ public final class AiSight {
       }
    }
 
-   public static AiPathfinder.ThreatField init(BlockGetter level, List<Vec3> shooterEyes) {
+   public static AiPathfinder.ThreatField threatField(BlockGetter level, List<Vec3> shooterEyes) {
       List<Double> charges = new ArrayList<>();
 
       for (int i = 0; i < shooterEyes.size(); i++) {
@@ -343,7 +343,7 @@ public final class AiSight {
 
          Double seen = memo.get(BlockPos.asLong(x, y, z));
          if (seen == null) {
-            Vec3 target = init(x, y, z);
+            Vec3 target = eyeAt(x, y, z);
             long feet = BlockPos.asLong(x, y, z);
             long head = BlockPos.asLong(x, y + 1, z);
             double charge = 0.0;

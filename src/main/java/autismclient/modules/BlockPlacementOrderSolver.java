@@ -12,7 +12,7 @@ final class BlockPlacementOrderSolver {
    private BlockPlacementOrderSolver() {
    }
 
-   static List<BlockPos> init(Vec3 eye, List<BlockPos> preferred, Map<BlockPos, List<Vec3>> rays) {
+   static List<BlockPos> orderPlacements(Vec3 eye, List<BlockPos> preferred, Map<BlockPos, List<Vec3>> rays) {
       return order(eye, preferred, rays, Map.of());
    }
 

@@ -3,25 +3,25 @@ package autismclient.ai.engine;
 import autismclient.util.SilentRotationManager;
 
 public final class AiSilentAim {
-   private static volatile boolean init;
+   private static volatile boolean aimEnabled;
 
    private AiSilentAim() {
    }
 
    public static boolean active(boolean windingDown, boolean moduleEnabled, boolean scaffoldOwnsRotation) {
-      return !scaffoldOwnsRotation && (windingDown || moduleEnabled && init);
+      return !scaffoldOwnsRotation && (windingDown || moduleEnabled && aimEnabled);
    }
 
    public static boolean init_Z() {
-      return init;
+      return aimEnabled;
    }
 
    public static void setEnabled(boolean value) {
-      init = value;
+      aimEnabled = value;
    }
 
    public static void release() {
-      init = false;
+      aimEnabled = false;
       SilentRotationManager.releaseOwner("ai-assistant");
    }
 }

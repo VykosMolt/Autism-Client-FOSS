@@ -12,10 +12,10 @@ final class ArmorFilterMatcher {
    static final int init_I = 0;
    static final int load_I = 1;
    static final int read_I = 2;
-   static final String init_Str = "Any";
+   static final String ANY_OPTION = "Any";
    static final List<String> BASE_OPTIONS = List.of("Any", "Empty", "Armor", "Leather", "Chain", "Copper", "Iron", "Gold", "Diamond", "Netherite");
-   static final List<String> HEAD_OPTIONS = init_List_List_StrArr(BASE_OPTIONS, "Turtle", "Pumpkin", "Skull");
-   static final List<String> CHEST_OPTIONS = init_List_List_StrArr(BASE_OPTIONS, "Elytra");
+   static final List<String> HEAD_OPTIONS = withOptions(BASE_OPTIONS, "Turtle", "Pumpkin", "Skull");
+   static final List<String> CHEST_OPTIONS = withOptions(BASE_OPTIONS, "Elytra");
 
    private ArmorFilterMatcher() {
    }
@@ -36,19 +36,19 @@ final class ArmorFilterMatcher {
       Map<String, List<ArmorFilterMatcher.Inner_DataUtil>> byName = new HashMap<>();
 
       for (ArmorFilterMatcher.Inner_DataUtil id : identities) {
-         if (id.init_Str() != null && id.init_UUID() != null) {
-            byName.computeIfAbsent(id.init_Str(), k -> new ArrayList<>()).add(id);
+         if (id.name() != null && id.uuid() != null) {
+            byName.computeIfAbsent(id.name(), k -> new ArrayList<>()).add(id);
          }
       }
 
       Map<Integer, Integer> out = new HashMap<>();
 
       for (List<ArmorFilterMatcher.Inner_DataUtil> group : byName.values()) {
-         if (group.size() >= 2 && init_I_List(group) >= 2) {
+         if (group.size() >= 2 && distinctUuidCount(group) >= 2) {
             List<ArmorFilterMatcher.Inner_DataUtil> open = new ArrayList<>();
 
             for (ArmorFilterMatcher.Inner_DataUtil id : group) {
-               if (!id.sync() && !id.load_Z()) {
+               if (!id.sync() && !id.isProven()) {
                   open.add(id);
                }
             }
@@ -56,26 +56,26 @@ final class ArmorFilterMatcher {
             boolean anyProven = false;
 
             for (ArmorFilterMatcher.Inner_DataUtil id : group) {
-               anyProven |= id.load_Z() && !id.sync();
+               anyProven |= id.isProven() && !id.sync();
             }
 
             if (anyProven) {
                for (ArmorFilterMatcher.Inner_DataUtil id : open) {
-                  if (id.init_Z_2()) {
-                     out.put(id.load_I(), 2);
+                  if (id.hasEntity()) {
+                     out.put(id.boundEntityId(), 2);
                   }
                }
             } else if (open.size() >= 2) {
                int best = -2147483648;
 
                for (ArmorFilterMatcher.Inner_DataUtil id : open) {
-                  best = Math.max(best, id.init_I_2());
+                  best = Math.max(best, id.evidenceScore());
                }
 
                List<ArmorFilterMatcher.Inner_DataUtil> top = new ArrayList<>();
 
                for (ArmorFilterMatcher.Inner_DataUtil id : open) {
-                  if (id.init_I_2() == best) {
+                  if (id.evidenceScore() == best) {
                      top.add(id);
                   }
                }
@@ -83,16 +83,16 @@ final class ArmorFilterMatcher {
                int topEntities = 0;
 
                for (ArmorFilterMatcher.Inner_DataUtil id : top) {
-                  if (id.init_Z_2()) {
+                  if (id.hasEntity()) {
                      topEntities++;
                   }
                }
 
                for (ArmorFilterMatcher.Inner_DataUtil id : open) {
-                  if (id.init_Z_2()) {
-                     boolean isTop = id.init_I_2() == best;
+                  if (id.hasEntity()) {
+                     boolean isTop = id.evidenceScore() == best;
                      if (!isTop || top.size() > 1 && topEntities > 1) {
-                        out.put(id.load_I(), 1);
+                        out.put(id.boundEntityId(), 1);
                      }
                   }
                }
@@ -103,17 +103,17 @@ final class ArmorFilterMatcher {
       return out;
    }
 
-   private static int init_I_List(List<ArmorFilterMatcher.Inner_DataUtil> group) {
+   private static int distinctUuidCount(List<ArmorFilterMatcher.Inner_DataUtil> group) {
       Set<UUID> seen = new HashSet<>();
 
       for (ArmorFilterMatcher.Inner_DataUtil id : group) {
-         seen.add(id.init_UUID());
+         seen.add(id.uuid());
       }
 
       return seen.size();
    }
 
-   private static List<String> init_List_List_StrArr(List<String> base, String... more) {
+   private static List<String> withOptions(List<String> base, String... more) {
       List<String> out = new ArrayList<>(base);
       out.addAll(List.of(more));
       return List.copyOf(out);
@@ -129,28 +129,28 @@ final class ArmorFilterMatcher {
                var10000 = empty;
                break;
             case "Armor":
-               var10000 = !empty && (init_Z_Str(id) || id.equals("elytra"));
+               var10000 = !empty && (isArmorPiece(id) || id.equals("elytra"));
                break;
             case "Leather":
-               var10000 = load(id, "leather_");
+               var10000 = isArmorOfTier(id, "leather_");
                break;
             case "Chain":
-               var10000 = load(id, "chainmail_");
+               var10000 = isArmorOfTier(id, "chainmail_");
                break;
             case "Copper":
-               var10000 = load(id, "copper_");
+               var10000 = isArmorOfTier(id, "copper_");
                break;
             case "Iron":
-               var10000 = load(id, "iron_");
+               var10000 = isArmorOfTier(id, "iron_");
                break;
             case "Gold":
-               var10000 = load(id, "golden_");
+               var10000 = isArmorOfTier(id, "golden_");
                break;
             case "Diamond":
-               var10000 = load(id, "diamond_");
+               var10000 = isArmorOfTier(id, "diamond_");
                break;
             case "Netherite":
-               var10000 = load(id, "netherite_");
+               var10000 = isArmorOfTier(id, "netherite_");
                break;
             case "Turtle":
                var10000 = id.equals("turtle_helmet");
@@ -174,28 +174,28 @@ final class ArmorFilterMatcher {
       }
    }
 
-   private static boolean init_Z_Str(String id) {
+   private static boolean isArmorPiece(String id) {
       return id.endsWith("_helmet") || id.endsWith("_chestplate") || id.endsWith("_leggings") || id.endsWith("_boots");
    }
 
-   private static boolean load(String id, String prefix) {
-      return id.startsWith(prefix) && init_Z_Str(id);
+   private static boolean isArmorOfTier(String id, String prefix) {
+      return id.startsWith(prefix) && isArmorPiece(id);
    }
 
-   record Inner_DataUtil(UUID init_UUID, String init_Str, int init_I, boolean init_Z, boolean load, boolean read, boolean write, boolean update) {
-      boolean init_Z_2() {
+   record Inner_DataUtil(UUID uuid, String name, int init_I, boolean init_Z, boolean load, boolean read, boolean write, boolean update) {
+      boolean hasEntity() {
          return this.init_I >= 0;
       }
 
-      int init_I_2() {
+      int evidenceScore() {
          return (this.load ? 2 : 0) + (this.read ? 1 : 0) + (this.write ? 1 : 0);
       }
 
-      public int load_I() {
+      public int boundEntityId() {
          return this.init_I;
       }
 
-      public boolean load_Z() {
+      public boolean isProven() {
          return this.init_Z;
       }
 

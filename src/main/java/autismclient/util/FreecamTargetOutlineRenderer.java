@@ -76,25 +76,25 @@ public final class FreecamTargetOutlineRenderer {
                         AABB box = target.getBoundingBox().inflate(0.04).move(-camera.x, -camera.y, -camera.z);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> load(pose, buffer, box, fillColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> drawFill(pose, buffer, box, fillColor)
                            );
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> init(pose, buffer, box, lineColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> drawOutline(pose, buffer, box, lineColor)
                            );
                      } else if (hasBlock) {
                         BlockPos pos = blockHit.getBlockPos();
                         boolean reachable = mc.player.isWithinBlockInteractionRange(pos, 1.0);
                         int lineColor = reachable ? -13248397 : -1946548;
                         int fillColor = reachable ? 775280755 : 786582604;
-                        AABB box = init(mc, pos).inflate(0.0025).move(-camera.x, -camera.y, -camera.z);
+                        AABB box = selectionBox(mc, pos).inflate(0.0025).move(-camera.x, -camera.y, -camera.z);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> load(pose, buffer, box, fillColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> drawFill(pose, buffer, box, fillColor)
                            );
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> init(pose, buffer, box, lineColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> drawOutline(pose, buffer, box, lineColor)
                            );
                      }
                   }
@@ -103,7 +103,7 @@ public final class FreecamTargetOutlineRenderer {
          );
    }
 
-   private static AABB init(Minecraft mc, BlockPos pos) {
+   private static AABB selectionBox(Minecraft mc, BlockPos pos) {
       try {
          VoxelShape shape = mc.level.getBlockState(pos).getShape(mc.level, pos);
          if (!shape.isEmpty()) {
@@ -115,41 +115,41 @@ public final class FreecamTargetOutlineRenderer {
       return new AABB(pos);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {
+   private static void drawOutline(Pose pose, VertexConsumer buffer, AABB box, int color) {
       double x1 = box.minX;
       double y1 = box.minY;
       double z1 = box.minZ;
       double x2 = box.maxX;
       double y2 = box.maxY;
       double z2 = box.maxZ;
-      init(pose, buffer, x1, y1, z1, x2, y1, z1, color);
-      init(pose, buffer, x2, y1, z1, x2, y1, z2, color);
-      init(pose, buffer, x2, y1, z2, x1, y1, z2, color);
-      init(pose, buffer, x1, y1, z2, x1, y1, z1, color);
-      init(pose, buffer, x1, y2, z1, x2, y2, z1, color);
-      init(pose, buffer, x2, y2, z1, x2, y2, z2, color);
-      init(pose, buffer, x2, y2, z2, x1, y2, z2, color);
-      init(pose, buffer, x1, y2, z2, x1, y2, z1, color);
-      init(pose, buffer, x1, y1, z1, x1, y2, z1, color);
-      init(pose, buffer, x2, y1, z1, x2, y2, z1, color);
-      init(pose, buffer, x2, y1, z2, x2, y2, z2, color);
-      init(pose, buffer, x1, y1, z2, x1, y2, z2, color);
+      drawLine(pose, buffer, x1, y1, z1, x2, y1, z1, color);
+      drawLine(pose, buffer, x2, y1, z1, x2, y1, z2, color);
+      drawLine(pose, buffer, x2, y1, z2, x1, y1, z2, color);
+      drawLine(pose, buffer, x1, y1, z2, x1, y1, z1, color);
+      drawLine(pose, buffer, x1, y2, z1, x2, y2, z1, color);
+      drawLine(pose, buffer, x2, y2, z1, x2, y2, z2, color);
+      drawLine(pose, buffer, x2, y2, z2, x1, y2, z2, color);
+      drawLine(pose, buffer, x1, y2, z2, x1, y2, z1, color);
+      drawLine(pose, buffer, x1, y1, z1, x1, y2, z1, color);
+      drawLine(pose, buffer, x2, y1, z1, x2, y2, z1, color);
+      drawLine(pose, buffer, x2, y1, z2, x2, y2, z2, color);
+      drawLine(pose, buffer, x1, y1, z2, x1, y2, z2, color);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color) {
+   private static void drawLine(Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color) {
       WorldLineRenderer.init(pose, buffer, x1, y1, z1, x2, y2, z2, color, 2.0F);
    }
 
-   private static void load(Pose pose, VertexConsumer buffer, AABB box, int color) {
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
-      init(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
+   private static void drawFill(Pose pose, VertexConsumer buffer, AABB box, int color) {
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
+      drawQuad(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,

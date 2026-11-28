@@ -93,11 +93,11 @@ final class AiContainer {
    static AiOperation create(JsonObject args, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiContainer.Inner_DataUtil action = init(AiJson.getString(args, "action", "inspect"));
+         final AiContainer.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
          final BlockPos pos = AiGameOperations.requireBlockPos(args);
          final boolean navigate = AiJson.getBoolean(args, "navigate", true);
          final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 120)));
-         final List<AiContainer.Inner_CachePool> requests = init(args, action);
+         final List<AiContainer.Inner_CachePool> requests = parseRequests(args, action);
          final List<AiItems.ItemSpec> keep = parseKeep(args);
          return new AiOperation() {
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -115,11 +115,11 @@ final class AiContainer {
             int containerId = -1;
             int containerSlots;
             int openAttempts;
-            int update = -1;
-            int sync;
+            int pendingSlot = -1;
+            int waitTicks;
             long revisionBefore;
             String pendingItem = "";
-            int flush = -1;
+            int pendingRequest = -1;
             ItemStack sourceBefore = ItemStack.EMPTY;
             final Set<Integer> stuckSlots = new HashSet<>();
             boolean opened;
@@ -136,7 +136,7 @@ final class AiContainer {
                if (!this.cancelled && mc.player != null && mc.level != null) {
                   if (mc.level == this.startLevel && mc.getConnection() == this.startConnection && mc.player == this.startPlayer && mc.player.isAlive()) {
                      if (System.nanoTime() > this.deadline) {
-                        return this.init(this.update >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Container deadline reached");
+                        return this.finish(this.pendingSlot >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Container deadline reached");
                      }
 
                      if (!this.opened) {
@@ -147,103 +147,103 @@ final class AiContainer {
                      }
 
                      if (mc.player.containerMenu.containerId != this.containerId) {
-                        return this.init(
-                           this.update >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "The container closed before the transfers finished"
+                        return this.finish(
+                           this.pendingSlot >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "The container closed before the transfers finished"
                         );
                      }
 
                      if (this.exactTransfer != null) {
                         AiOperation.Result exact = this.exactTransfer.tick();
                         if (!exact.terminal()) {
-                           return this.init(exact.message());
+                           return this.running(exact.message());
                         }
 
                         this.exactTransfer.cancel();
                         this.exactTransfer = null;
                         if (exact.status() != AiOperation.Status.SUCCEEDED) {
-                           return this.init(exact.status(), "Exact transfer stopped: " + exact.message());
+                           return this.finish(exact.status(), "Exact transfer stopped: " + exact.message());
                         }
 
-                        ItemStack now = mc.player.containerMenu.slots.get(this.update).getItem();
+                        ItemStack now = mc.player.containerMenu.slots.get(this.pendingSlot).getItem();
                         int delta = this.sourceBefore.getCount() - (ItemStack.isSameItemSameComponents(now, this.sourceBefore) ? now.getCount() : 0);
                         if (delta != this.exactCount) {
-                           return this.init(AiOperation.Status.UNCERTAIN, "Source changed during exact transfer; reconcile before retrying");
+                           return this.finish(AiOperation.Status.UNCERTAIN, "Source changed during exact transfer; reconcile before retrying");
                         }
 
                         this.movedByItem.merge(this.pendingItem, delta, Integer::sum);
-                        if (this.flush >= 0) {
-                           this.movedByRequest[this.flush] = this.movedByRequest[this.flush] + delta;
+                        if (this.pendingRequest >= 0) {
+                           this.movedByRequest[this.pendingRequest] = this.movedByRequest[this.pendingRequest] + delta;
                         }
 
-                        this.transfers.add(AiJson.objectOf("slot", this.update, "item", this.pendingItem, "count", delta, "confirmed", true));
-                        this.update = -1;
+                        this.transfers.add(AiJson.objectOf("slot", this.pendingSlot, "item", this.pendingItem, "count", delta, "confirmed", true));
+                        this.pendingSlot = -1;
                         this.sourceBefore = ItemStack.EMPTY;
-                        this.sync = 0;
-                        return this.init("Exact transfer confirmed");
+                        this.waitTicks = 0;
+                        return this.running("Exact transfer confirmed");
                      } else {
                         if (!mc.player.containerMenu.getCarried().isEmpty()) {
-                           return this.init(AiOperation.Status.FAILED, "Cursor is holding a stack; clear it before container transfers");
+                           return this.finish(AiOperation.Status.FAILED, "Cursor is holding a stack; clear it before container transfers");
                         }
 
-                        if (this.update >= 0) {
+                        if (this.pendingSlot >= 0) {
                            if (AiServerEvidence.containerRevision(this.containerId) > this.revisionBefore) {
-                              ItemStack now = mc.player.containerMenu.slots.get(this.update).getItem();
+                              ItemStack now = mc.player.containerMenu.slots.get(this.pendingSlot).getItem();
                               int delta = this.sourceBefore.getCount() - (ItemStack.isSameItemSameComponents(now, this.sourceBefore) ? now.getCount() : 0);
                               if (delta > 0) {
                                  this.movedByItem.merge(this.pendingItem, delta, Integer::sum);
-                                 if (this.flush >= 0) {
-                                    this.movedByRequest[this.flush] = this.movedByRequest[this.flush] + delta;
+                                 if (this.pendingRequest >= 0) {
+                                    this.movedByRequest[this.pendingRequest] = this.movedByRequest[this.pendingRequest] + delta;
                                  }
                               } else {
-                                 this.stuckSlots.add(this.update);
+                                 this.stuckSlots.add(this.pendingSlot);
                               }
 
                               this.transfers
                                  .add(
-                                    AiJson.objectOf("slot", this.update, "item", this.pendingItem, "count", Math.max(delta, 0), "confirmed", delta > 0)
+                                    AiJson.objectOf("slot", this.pendingSlot, "item", this.pendingItem, "count", Math.max(delta, 0), "confirmed", delta > 0)
                                  );
-                              this.update = -1;
+                              this.pendingSlot = -1;
                               this.sourceBefore = ItemStack.EMPTY;
-                              this.sync = 0;
-                              return this.init(delta > 0 ? "Transfer confirmed" : "Stack would not move; skipping it");
-                           } else if (++this.sync > 40) {
-                              this.transfers.add(AiJson.objectOf("slot", this.update, "item", this.pendingItem, "count", 0, "confirmed", false));
-                              this.update = -1;
+                              this.waitTicks = 0;
+                              return this.running(delta > 0 ? "Transfer confirmed" : "Stack would not move; skipping it");
+                           } else if (++this.waitTicks > 40) {
+                              this.transfers.add(AiJson.objectOf("slot", this.pendingSlot, "item", this.pendingItem, "count", 0, "confirmed", false));
+                              this.pendingSlot = -1;
                               this.sourceBefore = ItemStack.EMPTY;
-                              this.sync = 0;
-                              return this.init(AiOperation.Status.UNCERTAIN, "A transfer was not confirmed by the server; reobserve before repeating");
+                              this.waitTicks = 0;
+                              return this.finish(AiOperation.Status.UNCERTAIN, "A transfer was not confirmed by the server; reobserve before repeating");
                            } else {
-                              return this.init("Waiting for the server to apply the transfer");
+                              return this.running("Waiting for the server to apply the transfer");
                            }
                         } else {
                            if (action == AiContainer.Inner_DataUtil.INSPECT) {
-                              return this.init(AiOperation.Status.SUCCEEDED, "Container contents read");
+                              return this.finish(AiOperation.Status.SUCCEEDED, "Container contents read");
                            }
 
                            for (int issued = 0; issued < 1; issued++) {
                               AiContainer.Inner_StreamUtil next = this.nextTransfer();
                               if (next == null) {
                                  if (this.stuckSlots.isEmpty()) {
-                                    return this.init(AiOperation.Status.SUCCEEDED, this.summary());
+                                    return this.finish(AiOperation.Status.SUCCEEDED, this.summary());
                                  }
 
                                  if (this.movedByItem.isEmpty()) {
-                                    return this.init(
+                                    return this.finish(
                                        AiOperation.Status.FAILED,
                                        "Nothing could move: " + this.stuckSlots.size() + " matching stack(s) had no destination (full or incompatible)"
                                     );
                                  }
 
-                                 return this.init(
+                                 return this.finish(
                                     AiOperation.Status.FAILED,
                                     this.summary() + "; skipped " + this.stuckSlots.size() + " stuck stack(s) (no destination room)"
                                  );
                               }
 
                               this.revisionBefore = AiServerEvidence.containerRevision(this.containerId);
-                              this.update = next.slot();
+                              this.pendingSlot = next.slot();
                               this.pendingItem = next.item();
-                              this.flush = next.request();
+                              this.pendingRequest = next.request();
                               this.sourceBefore = mc.player.containerMenu.slots.get(next.slot()).getItem().copy();
                               if (next.count() < this.sourceBefore.getCount()) {
                                  this.exactCount = next.count();
@@ -259,14 +259,14 @@ final class AiContainer {
                               }
                            }
 
-                           return this.init("Moving items");
+                           return this.running("Moving items");
                         }
                      }
                   } else {
-                     return this.init(AiOperation.Status.UNCERTAIN, "Container player or world changed; pending transfers require reconciliation");
+                     return this.finish(AiOperation.Status.UNCERTAIN, "Container player or world changed; pending transfers require reconciliation");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Container operation cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Container operation cancelled");
                }
             }
 
@@ -275,7 +275,7 @@ final class AiContainer {
                   AiOperation.Result legResult = this.approach.tick();
                   this.approachResult = legResult;
                   if (!legResult.terminal()) {
-                     return this.init("Travelling to the container");
+                     return this.running("Travelling to the container");
                   }
 
                   this.needsReconciliation = this.needsReconciliation | this.approach.requiresReconciliationAfterEmergency();
@@ -292,51 +292,51 @@ final class AiContainer {
                   BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, pos);
                   if (interactionHit == null) {
                      if (!navigate) {
-                        return this.init(AiOperation.Status.FAILED, "Container is out of reach and navigate is disabled");
+                        return this.finish(AiOperation.Status.FAILED, "Container is out of reach and navigate is disabled");
                      }
 
                      this.approach = AiContainer.init(AiGoto.approachBlockToInteractCompat(pos, Math.min(120, timeoutSeconds), protectedCells, false));
-                     return this.init("Travelling to the container");
+                     return this.running("Travelling to the container");
                   } else {
                      if (!AiTerrain.isLoaded(mc.level, pos)) {
-                        return this.init(AiOperation.Status.FAILED, "Container is in unloaded terrain");
+                        return this.finish(AiOperation.Status.FAILED, "Container is in unloaded terrain");
                      }
 
                      this.aim.aimAt(interactionHit.getLocation());
                      this.aim.tick();
                      if (++this.openAttempts > 80) {
-                        return this.init(AiOperation.Status.FAILED, "Could not open the container at " + pos.toShortString());
+                        return this.finish(AiOperation.Status.FAILED, "Could not open the container at " + pos.toShortString());
                      }
 
                      if (!autismclient.ai.engine.AiAim.isLookingAtBlock(pos)) {
-                        return this.init("Turning toward the container");
+                        return this.running("Turning toward the container");
                      }
 
                      BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit == null) {
-                        return this.init("Turning toward the container");
+                        return this.running("Turning toward the container");
                      }
 
                      this.openClicked = true;
                      mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                      Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-                     return mc.player.containerMenu != mc.player.inventoryMenu ? this.load() : this.init("Opening the container");
+                     return mc.player.containerMenu != mc.player.inventoryMenu ? this.adoptOpenMenu() : this.running("Opening the container");
                   }
                } else {
                   if (this.openClicked) {
-                     return this.load();
+                     return this.adoptOpenMenu();
                   }
 
                   mc.player.closeContainer();
                   mc.gui.setScreen(null);
-                  return this.init("Closing the earlier container before opening the requested position");
+                  return this.running("Closing the earlier container before opening the requested position");
                }
             }
 
-            AiOperation.Result load() {
+            AiOperation.Result adoptOpenMenu() {
                AbstractContainerMenu menu = mc.player.containerMenu;
                if (!AiContainer.isStorageMenu(menu)) {
-                  return this.init(
+                  return this.finish(
                      AiOperation.Status.FAILED, "The open menu is not a storage container (chest, barrel, shulker box, hopper or dispenser); close it first"
                   );
                }
@@ -359,17 +359,17 @@ final class AiContainer {
                      AiContainer.Inner_CachePool request = this.requestFor(stack);
                      if (request != null || action != AiContainer.Inner_DataUtil.WITHDRAW && requests.isEmpty()) {
                         int requestIndex = request == null ? -1 : requests.indexOf(request);
-                        int count = request == null ? stack.getCount() : Math.min(stack.getCount(), this.init(requestIndex));
+                        int count = request == null ? stack.getCount() : Math.min(stack.getCount(), this.remainingFor(requestIndex));
                         if (depositing) {
-                           count = Math.min(count, Math.max(0, AiGameState.countMainInventoryItem(AiContainer.init(stack)) - AiRunResources.totalReservedCount(stack.getItem())));
+                           count = Math.min(count, Math.max(0, AiGameState.countMainInventoryItem(AiContainer.itemId(stack)) - AiRunResources.totalReservedCount(stack.getItem())));
                         }
 
                         if (count > 0) {
-                           if (!depositing && AiItems.countFreeSlots() == 0 && !this.init(menu, stack)) {
+                           if (!depositing && AiItems.countFreeSlots() == 0 && !this.inventoryCanStack(menu, stack)) {
                               return null;
                            }
 
-                           return new AiContainer.Inner_StreamUtil(index, AiContainer.init(stack), count, requestIndex);
+                           return new AiContainer.Inner_StreamUtil(index, AiContainer.itemId(stack), count, requestIndex);
                         }
                      }
                   }
@@ -378,7 +378,7 @@ final class AiContainer {
                return null;
             }
 
-            boolean init(AbstractContainerMenu menu, ItemStack stack) {
+            boolean inventoryCanStack(AbstractContainerMenu menu, ItemStack stack) {
                for (int index = this.containerSlots; index < menu.slots.size(); index++) {
                   ItemStack held = menu.slots.get(index).getItem();
                   if (!held.isEmpty() && ItemStack.isSameItemSameComponents(held, stack) && held.getCount() < held.getMaxStackSize()) {
@@ -409,7 +409,7 @@ final class AiContainer {
                return null;
             }
 
-            int init(int requestIndex) {
+            int remainingFor(int requestIndex) {
                if (requestIndex < 0) {
                   return 2147483647;
                }
@@ -463,17 +463,17 @@ final class AiContainer {
                }
 
                if (this.opened && mc.player != null && mc.player.containerMenu.containerId == this.containerId) {
-                  out.add("contents", AiContainer.init(mc.player.containerMenu, this.containerSlots));
+                  out.add("contents", AiContainer.slotsJson(mc.player.containerMenu, this.containerSlots));
                }
 
                return out;
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.reportJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                JsonObject data = this.reportJson();
                this.needsReconciliation = this.needsReconciliation | status == AiOperation.Status.UNCERTAIN;
                boolean pending = this.requiresReconciliationAfterEmergency();
@@ -504,7 +504,7 @@ final class AiContainer {
             @Override
             public boolean canInterruptNow() {
                return !this.needsReconciliation
-                  && this.update < 0
+                  && this.pendingSlot < 0
                   && (this.approach == null || this.approach.canInterruptNow())
                   && (this.exactTransfer == null || this.exactTransfer.canInterruptNow());
             }
@@ -512,7 +512,7 @@ final class AiContainer {
             @Override
             public boolean requiresReconciliationAfterEmergency() {
                return this.needsReconciliation
-                  || this.update >= 0
+                  || this.pendingSlot >= 0
                   || this.approach != null && this.approach.requiresReconciliationAfterEmergency()
                   || this.exactTransfer != null && this.exactTransfer.requiresReconciliationAfterEmergency();
             }
@@ -522,13 +522,13 @@ final class AiContainer {
       }
    }
 
-   static JsonArray init(AbstractContainerMenu menu, int containerSlots) {
+   static JsonArray slotsJson(AbstractContainerMenu menu, int containerSlots) {
       JsonArray out = new JsonArray();
 
       for (int index = 0; index < Math.min(containerSlots, menu.slots.size()); index++) {
          ItemStack stack = menu.slots.get(index).getItem();
          if (!stack.isEmpty()) {
-            out.add(AiJson.objectOf("slot", index, "item", init(stack), "count", stack.getCount(), "name", stack.getHoverName().getString()));
+            out.add(AiJson.objectOf("slot", index, "item", itemId(stack), "count", stack.getCount(), "name", stack.getHoverName().getString()));
          }
       }
 
@@ -547,11 +547,11 @@ final class AiContainer {
       return menu instanceof CrafterMenu ? 9 : Math.max(0, menu.slots.size() - 36);
    }
 
-   private static String init(ItemStack stack) {
+   private static String itemId(ItemStack stack) {
       return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static AiContainer.Inner_DataUtil init(String text) {
+   private static AiContainer.Inner_DataUtil parseAction(String text) {
       try {
          return AiContainer.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
@@ -559,7 +559,7 @@ final class AiContainer {
       }
    }
 
-   private static List<AiContainer.Inner_CachePool> init(JsonObject args, AiContainer.Inner_DataUtil action) {
+   private static List<AiContainer.Inner_CachePool> parseRequests(JsonObject args, AiContainer.Inner_DataUtil action) {
       List<AiContainer.Inner_CachePool> requests = new ArrayList<>();
       if (args.has("items") && args.get("items").isJsonArray()) {
          for (JsonElement element : args.getAsJsonArray("items")) {

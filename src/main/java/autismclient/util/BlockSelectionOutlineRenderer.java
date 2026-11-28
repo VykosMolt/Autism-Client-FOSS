@@ -20,36 +20,36 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public final class BlockSelectionOutlineRenderer {
    private static final double init_D = 0.0025;
    private static final double load_D = 0.25;
-   private static volatile boolean init_Z;
-   private static volatile int init_I = -1;
-   private static volatile int load_I;
-   private static volatile float init_F = 2.0F;
-   private static volatile boolean load_Z;
-   private static volatile boolean read;
-   private static volatile boolean write;
+   private static volatile boolean outlineOn;
+   private static volatile int outlineArgb = -1;
+   private static volatile int fillArgbColor;
+   private static volatile float outlineWidth = 2.0F;
+   private static volatile boolean cornerMode;
+   private static volatile boolean fillEnabled;
+   private static volatile boolean dynamicColor;
 
    private BlockSelectionOutlineRenderer() {
    }
 
    public static void configure(boolean enabled, int line, float width, boolean cornerStyle, boolean filled, int fillArgb) {
-      init_I = line;
-      init_F = Math.max(0.1F, width);
-      load_Z = cornerStyle;
-      read = filled;
-      load_I = fillArgb;
-      init_Z = enabled;
+      outlineArgb = line;
+      outlineWidth = Math.max(0.1F, width);
+      cornerMode = cornerStyle;
+      fillEnabled = filled;
+      fillArgbColor = fillArgb;
+      outlineOn = enabled;
    }
 
    public static void setDynamic(boolean dynamic) {
-      write = dynamic;
+      dynamicColor = dynamic;
    }
 
    public static void disable() {
-      init_Z = false;
+      outlineOn = false;
    }
 
    public static boolean isActive() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init() ? false : init_Z && !autismclient.modules.aD.read_Z();
+      return !AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init() ? false : outlineOn && !autismclient.modules.aD.read_Z();
    }
 
    public static void register() {
@@ -65,18 +65,18 @@ public final class BlockSelectionOutlineRenderer {
                      double range = Math.max(4.5, mc.player.blockInteractionRange());
                      BlockHitResult hit = mc.level.clip(new ClipContext(origin, origin.add(direction.scale(range)), Block.OUTLINE, Fluid.NONE, mc.player));
                      if (hit != null && hit.getType() == Type.BLOCK) {
-                        AABB box = init(mc, hit.getBlockPos()).inflate(0.0025).move(-origin.x, -origin.y, -origin.z);
+                        AABB box = selectionBox(mc, hit.getBlockPos()).inflate(0.0025).move(-origin.x, -origin.y, -origin.z);
                         PoseStack poseStack = context.poseStack();
-                        float progress = write && mc.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor
+                        float progress = dynamicColor && mc.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor
                            ? Math.max(0.0F, Math.min(1.0F, accessor.autism$getDestroyProgress()))
                            : 0.0F;
                         boolean dynamic = progress > 0.0F;
-                        int line = dynamic ? init(-13248397, -50373, progress) : init_I;
-                        if (read) {
-                           int fc = dynamic ? load_I & 0xFF000000 | init(-13248397, -50373, progress) & 16777215 : load_I;
+                        int line = dynamic ? lerpColor(-13248397, -50373, progress) : outlineArgb;
+                        if (fillEnabled) {
+                           int fc = dynamic ? fillArgbColor & 0xFF000000 | lerpColor(-13248397, -50373, progress) & 16777215 : fillArgbColor;
                            context.submitNodeCollector()
                               .submitCustomGeometry(
-                                 poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> init(pose, buffer, box, fc)
+                                 poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> drawFill(pose, buffer, box, fc)
                               );
                         }
 
@@ -84,7 +84,7 @@ public final class BlockSelectionOutlineRenderer {
                            .submitCustomGeometry(
                               poseStack,
                               autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
-                              (pose, buffer) -> init(pose, buffer, box, line, init_F, load_Z)
+                              (pose, buffer) -> drawOutline(pose, buffer, box, line, outlineWidth, cornerMode)
                            );
                      }
                   }
@@ -93,7 +93,7 @@ public final class BlockSelectionOutlineRenderer {
          );
    }
 
-   private static AABB init(Minecraft mc, BlockPos pos) {
+   private static AABB selectionBox(Minecraft mc, BlockPos pos) {
       try {
          VoxelShape shape = mc.level.getBlockState(pos).getShape(mc.level, pos);
          if (!shape.isEmpty()) {
@@ -105,28 +105,28 @@ public final class BlockSelectionOutlineRenderer {
       return new AABB(pos);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, AABB box, int color, float width, boolean corners) {
+   private static void drawOutline(Pose pose, VertexConsumer buffer, AABB box, int color, float width, boolean corners) {
       double x1 = box.minX;
       double y1 = box.minY;
       double z1 = box.minZ;
       double x2 = box.maxX;
       double y2 = box.maxY;
       double z2 = box.maxZ;
-      init(pose, buffer, x1, y1, z1, x2, y1, z1, color, width, corners);
-      init(pose, buffer, x2, y1, z1, x2, y1, z2, color, width, corners);
-      init(pose, buffer, x2, y1, z2, x1, y1, z2, color, width, corners);
-      init(pose, buffer, x1, y1, z2, x1, y1, z1, color, width, corners);
-      init(pose, buffer, x1, y2, z1, x2, y2, z1, color, width, corners);
-      init(pose, buffer, x2, y2, z1, x2, y2, z2, color, width, corners);
-      init(pose, buffer, x2, y2, z2, x1, y2, z2, color, width, corners);
-      init(pose, buffer, x1, y2, z2, x1, y2, z1, color, width, corners);
-      init(pose, buffer, x1, y1, z1, x1, y2, z1, color, width, corners);
-      init(pose, buffer, x2, y1, z1, x2, y2, z1, color, width, corners);
-      init(pose, buffer, x2, y1, z2, x2, y2, z2, color, width, corners);
-      init(pose, buffer, x1, y1, z2, x1, y2, z2, color, width, corners);
+      drawLine(pose, buffer, x1, y1, z1, x2, y1, z1, color, width, corners);
+      drawLine(pose, buffer, x2, y1, z1, x2, y1, z2, color, width, corners);
+      drawLine(pose, buffer, x2, y1, z2, x1, y1, z2, color, width, corners);
+      drawLine(pose, buffer, x1, y1, z2, x1, y1, z1, color, width, corners);
+      drawLine(pose, buffer, x1, y2, z1, x2, y2, z1, color, width, corners);
+      drawLine(pose, buffer, x2, y2, z1, x2, y2, z2, color, width, corners);
+      drawLine(pose, buffer, x2, y2, z2, x1, y2, z2, color, width, corners);
+      drawLine(pose, buffer, x1, y2, z2, x1, y2, z1, color, width, corners);
+      drawLine(pose, buffer, x1, y1, z1, x1, y2, z1, color, width, corners);
+      drawLine(pose, buffer, x2, y1, z1, x2, y2, z1, color, width, corners);
+      drawLine(pose, buffer, x2, y1, z2, x2, y2, z2, color, width, corners);
+      drawLine(pose, buffer, x1, y1, z2, x1, y2, z2, color, width, corners);
    }
 
-   private static void init(
+   private static void drawLine(
       Pose pose, VertexConsumer buffer, double ax, double ay, double az, double bx, double by, double bz, int color, float width, boolean corners
    ) {
       if (!corners) {
@@ -140,7 +140,7 @@ public final class BlockSelectionOutlineRenderer {
       }
    }
 
-   private static int init(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       float clamped = Math.max(0.0F, Math.min(1.0F, t));
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
@@ -157,16 +157,16 @@ public final class BlockSelectionOutlineRenderer {
       return a << 24 | r << 16 | g << 8 | b;
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
-      init(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
+   private static void drawFill(Pose pose, VertexConsumer buffer, AABB box, int color) {
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
+      drawQuad(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,

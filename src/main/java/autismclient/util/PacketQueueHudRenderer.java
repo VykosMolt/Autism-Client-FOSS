@@ -17,16 +17,16 @@ public final class PacketQueueHudRenderer {
    private static final Identifier init_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
    private static final Identifier load_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
    private static final Identifier read_Identifier = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
-   private static final int update = THEME.load(autismclient.gui.f.b.l.write);
-   private static final int sync = THEME.load(autismclient.gui.f.b.l.read);
+   private static final int EMPTY_TEXT_COLOR = THEME.load(autismclient.gui.f.b.l.write);
+   private static final int TITLE_COLOR = THEME.load(autismclient.gui.f.b.l.read);
    private static boolean init_Z;
    private static String init_Str = null;
-   private static int flush = -2147483648;
-   private static int close = -2147483648;
-   private static int open = -2147483648;
-   private static int poll = -2147483648;
+   private static int cachedMaxLines = -2147483648;
+   private static int cachedPanelWidth = -2147483648;
+   private static int cachedTotalCount = -2147483648;
+   private static int cachedRevision = -2147483648;
    private static String load_Str = "";
-   private static int push;
+   private static int cachedAccent;
    private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> init_List = List.of();
    private static long load_J;
 
@@ -55,7 +55,7 @@ public final class PacketQueueHudRenderer {
 
       init_V(textRenderer, panelWidth, maxLines);
       return autismclient.gui.ui.layout.InfoCardRenderer.render(
-         context, textRenderer, x, y, panelWidth, load_Str, init_List, push, 0, true, rightBorder, topBorder, bottomBorder
+         context, textRenderer, x, y, panelWidth, load_Str, init_List, cachedAccent, 0, true, rightBorder, topBorder, bottomBorder
       );
    }
 
@@ -66,22 +66,22 @@ public final class PacketQueueHudRenderer {
       int queueRevision = shared.getQueueRevision();
       long now = System.nanoTime();
       if (init_Z_Z(isSending, modeStr, maxLines, panelWidth, queueRevision, now)) {
-         init(textRenderer, shared.snapshotDelayQueue(isSending, maxLines), isSending, modeStr, maxLines, panelWidth, queueRevision, now);
+         rebuildCache(textRenderer, shared.snapshotDelayQueue(isSending, maxLines), isSending, modeStr, maxLines, panelWidth, queueRevision, now);
       }
    }
 
    private static boolean init_Z_Z(boolean isSending, String modeStr, int maxLines, int panelWidth, int queueRevision, long now) {
-      boolean layoutChanged = init_Z != isSending || !Objects.equals(init_Str, modeStr) || flush != maxLines || close != panelWidth;
+      boolean layoutChanged = init_Z != isSending || !Objects.equals(init_Str, modeStr) || cachedMaxLines != maxLines || cachedPanelWidth != panelWidth;
       if (layoutChanged) {
          return true;
       } else if (init_List.isEmpty()) {
          return true;
       } else {
-         return poll == queueRevision ? false : now - load_J >= 50000000L;
+         return cachedRevision == queueRevision ? false : now - load_J >= 50000000L;
       }
    }
 
-   private static void init(
+   private static void rebuildCache(
       Font textRenderer, AutismSessionState.DelayQueueSnapshot snapshot, boolean isSending, String modeStr, int maxLines, int panelWidth, int queueRevision, long now
    ) {
       List<AutismSessionState.DelayedPacket> packets = snapshot.visiblePackets();
@@ -105,7 +105,7 @@ public final class PacketQueueHudRenderer {
       if (packets.isEmpty()) {
          rows.add(
             new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
-               autismclient.gui.f.b.k.init(textRenderer, "Queue empty", contentWidth, init_Identifier, update), init_Identifier, update
+               autismclient.gui.f.b.k.init(textRenderer, "Queue empty", contentWidth, init_Identifier, EMPTY_TEXT_COLOR), init_Identifier, EMPTY_TEXT_COLOR
             )
          );
       } else {
@@ -125,12 +125,12 @@ public final class PacketQueueHudRenderer {
 
       init_Z = isSending;
       init_Str = modeStr;
-      flush = maxLines;
-      close = panelWidth;
-      open = totalCount;
-      poll = queueRevision;
-      load_Str = autismclient.gui.f.b.k.init(textRenderer, "PACKET QUEUE", contentWidth, read_Identifier, sync);
-      push = isSending ? -9184882 : THEME.run();
+      cachedMaxLines = maxLines;
+      cachedPanelWidth = panelWidth;
+      cachedTotalCount = totalCount;
+      cachedRevision = queueRevision;
+      load_Str = autismclient.gui.f.b.k.init(textRenderer, "PACKET QUEUE", contentWidth, read_Identifier, TITLE_COLOR);
+      cachedAccent = isSending ? -9184882 : THEME.run();
       init_List = rows;
       load_J = now;
    }

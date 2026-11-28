@@ -60,7 +60,7 @@ public final class CrosshairPresetGeometry {
             shapes = List.of(new CrosshairPresetGeometry.Inner_DataUtil(0.0, a, s0, a + t), new CrosshairPresetGeometry.Inner_DataUtil(a, 0.0, a + t, s0));
       }
 
-      return init_p_CachePool_List(shapes, s0, Math.max(0, outlinePx), Math.max(0, pad));
+      return rasterizeShapes(shapes, s0, Math.max(0, outlinePx), Math.max(0, pad));
    }
 
    public static CrosshairPresetGeometry.Inner_CachePool rasterize(CrosshairPixelArt art, double unit, int outlinePx, int pad) {
@@ -78,7 +78,7 @@ public final class CrosshairPresetGeometry {
          for (int x = 0; x < s0; x++) {
             int p = art.pixelAt((int)((x + 0.5) * unitPerPixel), (int)((y + 0.5) * unitPerPixel));
             if (p >>> 24 == 0 && s0 < n) {
-               p = init_I_m(art, x, y, unitPerPixel);
+               p = pixelCoverage(art, x, y, unitPerPixel);
             }
 
             int i = (y + pad) * size + x + pad;
@@ -90,7 +90,7 @@ public final class CrosshairPresetGeometry {
 
       float[] outline = new float[size * size];
       if (outlinePx > 0) {
-         boolean[] grown = init_ZArr_ZArr(solid, size, outlinePx);
+         boolean[] grown = dilate(solid, size, outlinePx);
 
          for (int i = 0; i < outline.length; i++) {
             if (grown[i] && !solid[i]) {
@@ -102,7 +102,7 @@ public final class CrosshairPresetGeometry {
       return new CrosshairPresetGeometry.Inner_CachePool(size, fill, color, outline);
    }
 
-   private static int init_I_m(CrosshairPixelArt art, int x, int y, double unit) {
+   private static int pixelCoverage(CrosshairPixelArt art, int x, int y, double unit) {
       int p = 0;
       int x1 = Math.min(art.size(), (int)Math.ceil((x + 1) * unit));
       int y1 = Math.min(art.size(), (int)Math.ceil((y + 1) * unit));
@@ -151,7 +151,7 @@ public final class CrosshairPresetGeometry {
       return new CrosshairPixelArt(n, pixels);
    }
 
-   private static CrosshairPresetGeometry.Inner_CachePool init_p_CachePool_List(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, int s0, int outlinePx, int pad) {
+   private static CrosshairPresetGeometry.Inner_CachePool rasterizeShapes(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, int s0, int outlinePx, int pad) {
       int size = s0 + 2 * pad;
       float[] fill = new float[size * size];
       float[] outline = new float[size * size];
@@ -159,7 +159,7 @@ public final class CrosshairPresetGeometry {
       for (int y = 0; y < size; y++) {
          for (int x = 0; x < size; x++) {
             int i = y * size + x;
-            double d = init_D_List(shapes, x + 0.5 - pad, y + 0.5 - pad);
+            double d = nearestDistance(shapes, x + 0.5 - pad, y + 0.5 - pad);
             if (d <= 1.0E-9) {
                fill[i] = 1.0F;
             } else if (outlinePx > 0 && d <= outlinePx + 1.0E-9) {
@@ -171,17 +171,17 @@ public final class CrosshairPresetGeometry {
       return new CrosshairPresetGeometry.Inner_CachePool(size, fill, null, outline);
    }
 
-   private static double init_D_List(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, double x, double y) {
+   private static double nearestDistance(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, double x, double y) {
       double best = 1.7976931348623157E308;
 
       for (CrosshairPresetGeometry.Inner_ConfigStore shape : shapes) {
-         best = Math.min(best, shape.init(x, y));
+         best = Math.min(best, shape.signedDistance(x, y));
       }
 
       return best;
    }
 
-   private static boolean[] init_ZArr_ZArr(boolean[] in, int grid, int radius) {
+   private static boolean[] dilate(boolean[] in, int grid, int radius) {
       if (radius <= 0) {
          return (boolean[])in.clone();
       }
@@ -218,7 +218,7 @@ public final class CrosshairPresetGeometry {
 
    private record Inner_BufferHelper(double init, double load, double read, double write) implements CrosshairPresetGeometry.Inner_ConfigStore {
       @Override
-      public double init(double x, double y) {
+      public double signedDistance(double x, double y) {
          return Math.abs(Math.hypot(x - this.init, y - this.load) - this.read) - this.write;
       }
    }
@@ -230,12 +230,12 @@ public final class CrosshairPresetGeometry {
    }
 
    private interface Inner_ConfigStore {
-      double init(double var1, double var3);
+      double signedDistance(double var1, double var3);
    }
 
    private record Inner_DataUtil(double init, double load, double read, double write) implements CrosshairPresetGeometry.Inner_ConfigStore {
       @Override
-      public double init(double x, double y) {
+      public double signedDistance(double x, double y) {
          double dx = Math.max(this.init - x, x - this.read);
          double dy = Math.max(this.load - y, y - this.write);
          return dx <= 0.0 && dy <= 0.0 ? Math.max(dx, dy) : Math.hypot(Math.max(dx, 0.0), Math.max(dy, 0.0));
@@ -290,14 +290,14 @@ public final class CrosshairPresetGeometry {
 
    private record Inner_StreamUtil(double init, double load, double read) implements CrosshairPresetGeometry.Inner_ConfigStore {
       @Override
-      public double init(double x, double y) {
+      public double signedDistance(double x, double y) {
          return Math.hypot(x - this.init, y - this.load) - this.read;
       }
    }
 
    private record Inner_TaskQueue(double init, double load, double read, double write, double update) implements CrosshairPresetGeometry.Inner_ConfigStore {
       @Override
-      public double init(double x, double y) {
+      public double signedDistance(double x, double y) {
          double vx = this.read - this.init;
          double vy = this.write - this.load;
          double t = Math.max(0.0, Math.min(1.0, ((x - this.init) * vx + (y - this.load) * vy) / (vx * vx + vy * vy)));

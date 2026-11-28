@@ -43,7 +43,7 @@ public final class CombatInteractionController {
    private static boolean update_Z;
    private static boolean sync_Z;
    private static boolean flush;
-   private static boolean close;
+   private static boolean targetChanged;
    private static HitResult capturedHit;
    private static BlockState capturedBlockState;
    private static Vec3 hitOffset;
@@ -52,7 +52,7 @@ public final class CombatInteractionController {
    private static long captureNanos;
    private static final CombatAimEngine.AimFrame aimState = new CombatAimEngine.AimFrame();
 
-   private static boolean close() {
+   private static boolean isLegitAura() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");
       return aura != null && "Legit".equals(aura.value("interactions"));
    }
@@ -64,7 +64,7 @@ public final class CombatInteractionController {
    private CombatInteractionController() {
    }
 
-   private static boolean open() {
+   private static boolean isAuraDriving() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");
       return aura != null && aura.isEnabled() && "kill-aura".equals(SilentRotationManager.getActiveOwnerId()) && SilentRotationManager.hasActiveRotation();
    }
@@ -114,7 +114,7 @@ public final class CombatInteractionController {
    public static boolean write() {
       Minecraft mc = Minecraft.getInstance();
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (open() && canInteract(mc) && !isBlockMode()) {
+      if (isAuraDriving() && canInteract(mc) && !isBlockMode()) {
          if (trackedPlayer != null && (trackedPlayer != mc.player || trackedConnection != mc.getConnection() || trackedLevel != mc.level)) {
             reset();
          }
@@ -165,7 +165,7 @@ public final class CombatInteractionController {
             }
 
             if (silentRotation == null || !isSameHeldState(mc) || flush && !trackedPlayer.isUsingItem()) {
-               if (close()) {
+               if (isLegitAura()) {
                   captureUseState(mc);
                } else {
                   aimRotation = init_ce_DataUtil(mc);
@@ -178,8 +178,8 @@ public final class CombatInteractionController {
                flush = false;
             }
 
-            if (close()) {
-               if (!flush && !update_Z(mc) || update_Z && init(tick) || !trackedPlayer.isUsingItem() && init(tick)) {
+            if (isLegitAura()) {
+               if (!flush && !update_Z(mc) || update_Z && captureExpired(tick) || !trackedPlayer.isUsingItem() && captureExpired(tick)) {
                   update_V(mc);
                   return false;
                }
@@ -208,10 +208,10 @@ public final class CombatInteractionController {
                }
 
                if (!ready) {
-                  close = false;
+                  targetChanged = false;
                }
             } else {
-               if (!update_Z && silentRotation != null && !load(mc, silentRotation)) {
+               if (!update_Z && silentRotation != null && !hitsSameAt(mc, silentRotation)) {
                   if (!pressed && !trackedPlayer.isUsingItem()) {
                      update_V(mc);
                      return false;
@@ -251,14 +251,14 @@ public final class CombatInteractionController {
          && trackedConnection == mc.getConnection()
          && trackedLevel == mc.level
          && write_I == AutismSessionState.getInstance().getClientTick()
-         && open();
+         && isAuraDriving();
    }
 
    public static boolean isActive() {
-      return open();
+      return isAuraDriving();
    }
 
-   private static boolean poll() {
+   private static boolean wireMatchesSilent() {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       return silentRotation != null
          && wire.initialized()
@@ -268,7 +268,7 @@ public final class CombatInteractionController {
    }
 
    public static void tick(Minecraft mc) {
-      if (mc.options != null && open() && canInteract(mc)) {
+      if (mc.options != null && isAuraDriving() && canInteract(mc)) {
          if (autismclient.modules.KillAuraModule.init_Z_31()) {
             sync_Z = false;
          } else {
@@ -282,7 +282,7 @@ public final class CombatInteractionController {
                sync_Z = false;
             }
 
-            if (close() && update() && !flush && !update_Z(mc)) {
+            if (isLegitAura() && update() && !flush && !update_Z(mc)) {
                update_V(mc);
             } else if (!update()) {
                if (!isBlockMode() && (key.autism$clickCount() > 0 || isUseKeyPhysicallyDown(mc))) {
@@ -306,7 +306,7 @@ public final class CombatInteractionController {
                   key.autism$setClickCount(0);
                }
 
-               if (poll() && isSameHeldState(mc) && (update_Z || init_Z(mc, silentRotation))) {
+               if (wireMatchesSilent() && isSameHeldState(mc) && (update_Z || init_Z(mc, silentRotation))) {
                   if (init_Z) {
                      key.autism$setClickCount(1);
                   }
@@ -330,7 +330,7 @@ public final class CombatInteractionController {
 
    public static boolean init_Z(Minecraft mc) {
       if (!read_Z
-         && open()
+         && isAuraDriving()
          && !ClientInteractionOverride.ownsUseInput()
          && !autismclient.modules.KillAuraModule.init_Z_31()
          && !autismclient.modules.ScaffoldModule.init_Z_26()
@@ -348,8 +348,8 @@ public final class CombatInteractionController {
    public static CombatInteractionController.Inner_DataUtil frame(Minecraft mc) {
       int tick = AutismSessionState.getInstance().getClientTick();
       if (!isBlockMode() && !sync_Z && canInteract(mc) && update_I != tick) {
-         if (!close() || update_Z(mc) && !init(tick)) {
-            if (update() && poll() && isSameHeldState(mc) && init_Z(mc, silentRotation)) {
+         if (!isLegitAura() || update_Z(mc) && !captureExpired(tick)) {
+            if (update() && wireMatchesSilent() && isSameHeldState(mc) && init_Z(mc, silentRotation)) {
                HitResult hit = raycastAt(mc, silentRotation);
                CombatInteractionController.Inner_DataUtil frame = new CombatInteractionController.Inner_DataUtil(
                   trackedPlayer, mc.hitResult, trackedPlayer.getYRot(), trackedPlayer.getXRot()
@@ -400,10 +400,10 @@ public final class CombatInteractionController {
       aimRotation = capturedRotation;
       captureTick = AutismSessionState.getInstance().getClientTick();
       captureNanos = System.nanoTime();
-      close = true;
+      targetChanged = true;
    }
 
-   private static boolean init(int tick) {
+   private static boolean captureExpired(int tick) {
       return captureNanos != 0L && (tick - captureTick > 20 || System.nanoTime() - captureNanos > 1250000000L);
    }
 
@@ -422,14 +422,14 @@ public final class CombatInteractionController {
             Vec3 eye = trackedPlayer.getEyePosition();
             Vec3 point = targetPoint();
             double reach = capturedHit.getType() == Type.BLOCK ? trackedPlayer.blockInteractionRange() : trackedPlayer.entityInteractionRange();
-            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? init(raycastAt(mc, RotationMath.lookAt(point, eye))) : false;
+            return point != null && !(eye.distanceToSqr(point) > (reach - 0.035) * (reach - 0.035)) ? matchesCaptured(raycastAt(mc, RotationMath.lookAt(point, eye))) : false;
          }
       } else {
          return true;
       }
    }
 
-   private static boolean init(HitResult hit) {
+   private static boolean matchesCaptured(HitResult hit) {
       if (capturedHit != null && hit != null && capturedHit.getType() == hit.getType()) {
          if (capturedHit instanceof EntityHitResult expected && hit instanceof EntityHitResult actual) {
             return expected.getEntity() == actual.getEntity();
@@ -444,11 +444,11 @@ public final class CombatInteractionController {
    }
 
    private static boolean init_Z(Minecraft mc, RotationMath.Rotation at) {
-      if (!close()) {
-         return load(mc, at);
+      if (!isLegitAura()) {
+         return hitsSameAt(mc, at);
       } else {
          return capturedHit != null && capturedHit.getType() != Type.MISS
-            ? init(raycastAt(mc, at))
+            ? matchesCaptured(raycastAt(mc, at))
             : RotationMath.angularDistance(aimRotation, at) <= Math.max(0.2, RotationMath.gcdStep() * 1.5) && (capturedHit == null || raycastAt(mc, at).getType() == Type.MISS);
       }
    }
@@ -472,7 +472,7 @@ public final class CombatInteractionController {
       aimState.pitchUpHalfWidth = aimState.pitchDownHalfWidth = Math.max(0.25, Math.min(1.5, aimState.yawHalfWidth));
       aimState.allowExcursion = false;
       aimState.clampInsideBox = true;
-      aimState.compensateObserverMotion = !close;
+      aimState.compensateObserverMotion = !targetChanged;
       aimState.allowPromptFlick = true;
       aimState.instantPromptFlick = true;
       aimState.prioritizeStrike = true;
@@ -483,7 +483,7 @@ public final class CombatInteractionController {
       aimState.maxAccelUp = 18.0;
       aimState.forceWhiff = false;
       aimState.legacyNoCooldown = LegacyCombatDetector.isLegacyCombat(trackedPlayer);
-      aimState.targetChanged = close;
+      aimState.targetChanged = targetChanged;
    }
 
    private static void update_V(Minecraft mc) {
@@ -509,7 +509,7 @@ public final class CombatInteractionController {
       float yaw = ServerRotationTracker.getLastWireYaw();
       RotationMath.Rotation from = new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.currentYaw(), wire.currentPitch());
       RotationMath.Rotation rounded = RotationMath.applyGcd(camera, from);
-      if (load(mc, rounded)) {
+      if (hitsSameAt(mc, rounded)) {
          return rounded;
       }
 
@@ -522,7 +522,7 @@ public final class CombatInteractionController {
             if (x != 0 || y != 0) {
                RotationMath.Rotation candidate = RotationMath.applyGcd(new RotationMath.Rotation(rounded.yaw() + x * step, rounded.pitch() + y * step), from);
                double distance = RotationMath.angularDistance(camera, candidate);
-               if (distance < bestDistance && load(mc, candidate)) {
+               if (distance < bestDistance && hitsSameAt(mc, candidate)) {
                   best = candidate;
                   bestDistance = distance;
                }
@@ -533,7 +533,7 @@ public final class CombatInteractionController {
       return best;
    }
 
-   private static boolean load(Minecraft mc, RotationMath.Rotation at) {
+   private static boolean hitsSameAt(Minecraft mc, RotationMath.Rotation at) {
       HitResult wanted = raycastAt(mc, RotationMath.ofPlayer(mc.player));
       HitResult actual = raycastAt(mc, at);
       if (wanted.getType() != actual.getType()) {

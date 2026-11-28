@@ -30,7 +30,7 @@ public class GhostBlockCommand extends Command {
          return 1;
       });
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("toggle").executes(ctx -> {
-         GhostBlockModule module = init();
+         GhostBlockModule module = module();
          if (module == null) {
             return 1;
          }
@@ -42,7 +42,7 @@ public class GhostBlockCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("reset")
             .executes(
                ctx -> {
-                  GhostBlockModule module = init();
+                  GhostBlockModule module = module();
                   if (module == null) {
                      return 1;
                   }
@@ -58,16 +58,16 @@ public class GhostBlockCommand extends Command {
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("creative").executes(ctx -> init((String)null)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("creative").executes(ctx -> setEnabled((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
                   .suggests(autismclient.commands.CommandSuggestions::suggestDelayState)
-                  .executes(ctx -> init(StringArgumentType.getString(ctx, "state")))
+                  .executes(ctx -> setEnabled(StringArgumentType.getString(ctx, "state")))
             )
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("block").executes(ctx -> {
-               GhostBlockModule module = init();
+               GhostBlockModule module = module();
                if (module == null) {
                   return 1;
                }
@@ -79,13 +79,13 @@ public class GhostBlockCommand extends Command {
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("block", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
                   .suggests(autismclient.commands.CommandSuggestions::suggestBlockId)
-                  .executes(ctx -> load(autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "block")))
+                  .executes(ctx -> setMode(autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "block")))
             )
       );
    }
 
-   private static int init(String state) {
-      GhostBlockModule module = init();
+   private static int setEnabled(String state) {
+      GhostBlockModule module = module();
       if (module == null) {
          return 1;
       }
@@ -115,8 +115,8 @@ public class GhostBlockCommand extends Command {
       return 1;
    }
 
-   private static int load(String input) {
-      GhostBlockModule module = init();
+   private static int setMode(String input) {
+      GhostBlockModule module = module();
       if (module == null) {
          return 1;
       }
@@ -150,7 +150,7 @@ public class GhostBlockCommand extends Command {
       }
    }
 
-   private static GhostBlockModule init() {
+   private static GhostBlockModule module() {
       if (al.init_Module_Str("ghostblock") instanceof GhostBlockModule ghostBlock) {
          return ghostBlock;
       } else {

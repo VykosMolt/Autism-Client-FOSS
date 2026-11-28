@@ -8,7 +8,7 @@ public class IfAction implements MacroAction {
    public MacroCondition condition = MacroCondition.createDefault();
    public int thenSteps = 1;
    public int elseSteps = 0;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -23,7 +23,7 @@ public class IfAction implements MacroAction {
       return this.condition == null || this.condition.evaluate(mc);
    }
 
-   public int init(List<MacroAction> actions, int headerIndex) {
+   public int branchLength(List<MacroAction> actions, int headerIndex) {
       if (actions != null && headerIndex >= 0 && headerIndex < actions.size()) {
          int want = Math.max(0, this.thenSteps) + Math.max(0, this.elseSteps);
          int max = Math.min(want, actions.size() - headerIndex - 1);
@@ -53,7 +53,7 @@ public class IfAction implements MacroAction {
       c.writeFlat(tag, "cond_");
       tag.putInt("thenSteps", this.thenSteps);
       tag.putInt("elseSteps", this.elseSteps);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -63,7 +63,7 @@ public class IfAction implements MacroAction {
       this.thenSteps = Math.max(0, tag.getIntOr("thenSteps", 1));
       this.elseSteps = Math.max(0, tag.getIntOr("elseSteps", 0));
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -80,11 +80,11 @@ public class IfAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

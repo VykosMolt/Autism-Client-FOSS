@@ -23,7 +23,7 @@ public final class GifModule extends Module {
          new StringSetting("cape-image", "Image", "")
             .description("GIF, PNG or JPEG.")
             .group("Cape")
-            .formatter(GifModule::read)
+            .formatter(GifModule::fileNameOf)
             .filePicker("cape-pick")
             .visibleWhen(() -> this.bool("cape-enabled"))
             .build()
@@ -55,7 +55,7 @@ public final class GifModule extends Module {
          new DoubleSetting("cape-fps", "Framerate (FPS)", 0.0, 0.0, 60.0, 0.5)
             .description("Animation speed; Original keeps the file's own timing.")
             .group("Cape")
-            .formatter(GifModule::load)
+            .formatter(GifModule::scaleLabel)
             .visibleWhen(() -> this.bool("cape-enabled"))
             .build()
       );
@@ -63,7 +63,7 @@ public final class GifModule extends Module {
          new IntSetting("cape-quality", "Quality", 4, 1, 4, 1)
             .description("Render resolution; Original is the file's own.")
             .group("Cape")
-            .formatter(GifModule::init_Str)
+            .formatter(GifModule::qualityLabel)
             .visibleWhen(() -> this.bool("cape-enabled"))
             .build()
       );
@@ -72,13 +72,13 @@ public final class GifModule extends Module {
          new StringSetting("shield-image", "Image", "")
             .description("GIF, PNG or JPEG.")
             .group("Shield")
-            .formatter(GifModule::read)
+            .formatter(GifModule::fileNameOf)
             .filePicker("shield-pick")
             .visibleWhen(() -> this.bool("shield-enabled"))
             .build()
       );
       this.add(
-         new ActionSetting("shield-pick", "Pick File", this::load)
+         new ActionSetting("shield-pick", "Pick File", this::pickShieldImage)
             .description("Choose image file.")
             .group("Shield")
             .availableOffline()
@@ -104,7 +104,7 @@ public final class GifModule extends Module {
          new DoubleSetting("shield-fps", "Framerate (FPS)", 0.0, 0.0, 60.0, 0.5)
             .description("Animation speed; Original keeps the file's own timing.")
             .group("Shield")
-            .formatter(GifModule::load)
+            .formatter(GifModule::scaleLabel)
             .visibleWhen(() -> this.bool("shield-enabled"))
             .build()
       );
@@ -112,7 +112,7 @@ public final class GifModule extends Module {
          new IntSetting("shield-quality", "Quality", 4, 1, 4, 1)
             .description("Render resolution; Original is the file's own.")
             .group("Shield")
-            .formatter(GifModule::init_Str)
+            .formatter(GifModule::qualityLabel)
             .visibleWhen(() -> this.bool("shield-enabled"))
             .build()
       );
@@ -147,43 +147,43 @@ public final class GifModule extends Module {
 
    @Override
    public void onEnable() {
-      this.read();
+      this.pushOverlayState();
    }
 
    @Override
    public void onDisable() {
-      this.read();
+      this.pushOverlayState();
    }
 
    @Override
    public void tick() {
-      this.read();
+      this.pushOverlayState();
    }
 
    @Override
    public void onGameJoin() {
-      this.read();
+      this.pushOverlayState();
    }
 
    @Override
    protected void onOptionValueChanged(String settingId) {
-      this.read();
+      this.pushOverlayState();
    }
 
    @Override
    protected void onSettingsReset() {
-      this.read();
+      this.pushOverlayState();
    }
 
    private void pickCapeImage() {
       autismclient.util.NativeImageFilePicker.pickImage(this.text("cape-image").trim(), selected -> this.setValue("cape-image", selected));
    }
 
-   private void load() {
+   private void pickShieldImage() {
       autismclient.util.NativeImageFilePicker.pickImage(this.text("shield-image").trim(), selected -> this.setValue("shield-image", selected));
    }
 
-   private void read() {
+   private void pushOverlayState() {
       GifOverlayState.setSnapshot(
          new GifOverlayState.OverlaySnapshot(
             this.isEnabledRaw(),
@@ -197,16 +197,16 @@ public final class GifModule extends Module {
             this.decimal("shield-fps"),
             this.bool("cape-keep-aspect"),
             this.bool("shield-keep-aspect"),
-            init(this.integer("cape-quality")),
-            init(this.integer("shield-quality")),
-            init(this.list("cape-custom")),
-            init(this.list("shield-custom")),
-            this.init_Str_3()
+            scaleForStep(this.integer("cape-quality")),
+            scaleForStep(this.integer("shield-quality")),
+            parseEntries(this.list("cape-custom")),
+            parseEntries(this.list("shield-custom")),
+            this.playerName()
          )
       );
    }
 
-   private String init_Str_3() {
+   private String playerName() {
       if (MC != null && MC.getUser() != null) {
          String name = MC.getUser().getName();
          if (name != null && !name.isBlank()) {
@@ -217,11 +217,11 @@ public final class GifModule extends Module {
       return GifOverlayState.init_Str();
    }
 
-   private static Map<String, String> init(List<String> entries) {
+   private static Map<String, String> parseEntries(List<String> entries) {
       Map<String, String> out = new LinkedHashMap<>();
 
       for (String entry : entries) {
-         int split = init_I(entry);
+         int split = separatorIndex(entry);
          if (split > 0) {
             String name = entry.substring(0, split).trim();
             String path = entry.substring(split + 1).trim();
@@ -234,12 +234,12 @@ public final class GifModule extends Module {
       return Collections.unmodifiableMap(out);
    }
 
-   private static int init_I(String entry) {
+   private static int separatorIndex(String entry) {
       int split = entry.indexOf(61);
       return split >= 0 ? split : entry.indexOf(58);
    }
 
-   private static double init(int step) {
+   private static double scaleForStep(int step) {
       double var10000;
       switch (step) {
          case 1:
@@ -258,7 +258,7 @@ public final class GifModule extends Module {
       return var10000;
    }
 
-   private static String init_Str(String raw) {
+   private static String qualityLabel(String raw) {
       String var10000;
       switch (raw == null ? "" : raw.trim()) {
          case "1":
@@ -277,7 +277,7 @@ public final class GifModule extends Module {
       return var10000;
    }
 
-   private static String load(String raw) {
+   private static String scaleLabel(String raw) {
       try {
          double value = Double.parseDouble(raw.trim());
          if (value <= 0.0) {
@@ -290,7 +290,7 @@ public final class GifModule extends Module {
       }
    }
 
-   private static String read(String value) {
+   private static String fileNameOf(String value) {
       if (value != null && !value.isBlank()) {
          try {
             Path name = Paths.get(value).getFileName();

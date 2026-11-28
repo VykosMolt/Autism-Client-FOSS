@@ -430,7 +430,7 @@ public final class AiBridger {
             : var6.putAt(var1, var7, var7, var3, var5, var9);
          var7 = var7.stepToward(var10.yaw(), var10.pitch());
          if (var10.place() > 0) {
-            var5.putAt_V(
+            var5.addBlock(
                this.putAt_TextStore_JsonCach.cellX(var10.place()), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var10.place())
             );
          }
@@ -701,26 +701,26 @@ public final class AiBridger {
 
    static final class Inner_BufferHelper implements AiPhysics.PhysicsWorld {
       private final AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat;
-      private final List<AABB> putAt_List = new ArrayList<>();
+      private final List<AABB> placedBoxes = new ArrayList<>();
 
       Inner_BufferHelper(AiPhysics.PhysicsWorld var1) {
          this.putAt_TokenCore_TaskStat = var1;
       }
 
-      void putAt_V(int var1, int var2, int var3) {
-         this.putAt_List.add(new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1));
+      void addBlock(int var1, int var2, int var3) {
+         this.placedBoxes.add(new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1));
       }
 
       @Override
       public List<AABB> collisions(AABB var1) {
          var var2 = this.putAt_TokenCore_TaskStat.collisions(var1);
-         if (this.putAt_List.isEmpty()) {
+         if (this.placedBoxes.isEmpty()) {
             return var2;
          }
 
          ArrayList var3 = new ArrayList(var2);
 
-         for (AABB var5 : this.putAt_List) {
+         for (AABB var5 : this.placedBoxes) {
             if (var5.intersects(var1)) {
                var3.add(var5);
             }

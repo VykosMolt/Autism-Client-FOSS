@@ -21,13 +21,13 @@ final class TeamDyeColorResolver {
          TextColor color = team == null ? null : team.getColor().map(TeamColor::textColor).orElse(null);
          String name = mc.player.getGameProfile().name();
          PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
-         return init(name, info == null ? null : info.getTabListDisplayName(), mc.player.getDisplayName(), color == null ? null : color.getValue());
+         return firstAvailableColor(name, info == null ? null : info.getTabListDisplayName(), mc.player.getDisplayName(), color == null ? null : color.getValue());
       } else {
          return null;
       }
    }
 
-   static DyeColor init(String name, Component tab, Component display, Integer teamRgb) {
+   static DyeColor firstAvailableColor(String name, Component tab, Component display, Integer teamRgb) {
       TeamDyeColorResolver.Inner_DataUtil tabName = init_b_DataUtil(name, tab);
       TeamDyeColorResolver.Inner_DataUtil shownName = init_b_DataUtil(name, display);
       if (tabName != null && tabName.init_DyeColor() != null) {
@@ -35,7 +35,7 @@ final class TeamDyeColorResolver {
       } else if (shownName != null && shownName.init_DyeColor() != null) {
          return shownName.init_DyeColor();
       } else if (teamRgb != null) {
-         return init(teamRgb);
+         return fromTeamRgb(teamRgb);
       } else {
          return shownName != null && shownName.init_Z() || tabName != null && tabName.init_Z() ? DyeColor.WHITE : null;
       }
@@ -44,7 +44,7 @@ final class TeamDyeColorResolver {
    static DyeColor resolve(String name, Component tab, Component display, Integer teamRgb) {
       DyeColor tabColor = init_DyeColor(name, tab);
       DyeColor shownColor = init_DyeColor(name, display);
-      DyeColor teamColor = teamRgb == null ? null : init(teamRgb);
+      DyeColor teamColor = teamRgb == null ? null : fromTeamRgb(teamRgb);
       DyeColor settled = null;
 
       for (DyeColor candidate : new DyeColor[]{tabColor, shownColor, teamColor}) {
@@ -84,7 +84,7 @@ final class TeamDyeColorResolver {
             if (style.getColor() == null) {
                plain[0] = true;
             } else {
-               DyeColor dye = init(style.getColor().getValue());
+               DyeColor dye = fromTeamRgb(style.getColor().getValue());
                if (color[0] != null && color[0] != dye) {
                   ambiguous[0] = true;
                }
@@ -98,12 +98,12 @@ final class TeamDyeColorResolver {
       return new TeamDyeColorResolver.Inner_DataUtil(!ambiguous[0] && !plain[0] ? color[0] : null, plain[0] && color[0] == null);
    }
 
-   static DyeColor init(int rgb) {
+   static DyeColor fromTeamRgb(int rgb) {
       rgb &= 16777215;
 
       for (TeamColor format : TeamColor.values()) {
          if (format.textColor().getValue() == rgb) {
-            return init(format);
+            return fromTeamColor(format);
          }
       }
 
@@ -111,7 +111,7 @@ final class TeamDyeColorResolver {
       long distance = 9223372036854775807L;
 
       for (DyeColor color : DyeColor.values()) {
-         long d = init(rgb, color.getTextureDiffuseColor());
+         long d = colorDistance(rgb, color.getTextureDiffuseColor());
          if (d < distance) {
             nearest = color;
             distance = d;
@@ -119,9 +119,9 @@ final class TeamDyeColorResolver {
       }
 
       for (TeamColor format : TeamColor.values()) {
-         long d = init(rgb, format.textColor().getValue());
+         long d = colorDistance(rgb, format.textColor().getValue());
          if (d < distance) {
-            nearest = init(format);
+            nearest = fromTeamColor(format);
             distance = d;
          }
       }
@@ -129,14 +129,14 @@ final class TeamDyeColorResolver {
       return nearest;
    }
 
-   private static long init(int first, int second) {
+   private static long colorDistance(int first, int second) {
       int r = (first >> 16 & 0xFF) - (second >> 16 & 0xFF);
       int g = (first >> 8 & 0xFF) - (second >> 8 & 0xFF);
       int b = (first & 0xFF) - (second & 0xFF);
       return r * r + g * g + b * b;
    }
 
-   private static DyeColor init(TeamColor color) {
+   private static DyeColor fromTeamColor(TeamColor color) {
       DyeColor var10000;
       switch (color) {
          case BLACK:

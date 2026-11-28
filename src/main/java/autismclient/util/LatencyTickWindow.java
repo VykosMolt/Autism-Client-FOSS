@@ -5,29 +5,29 @@ import java.util.Map;
 import java.util.Set;
 
 public final class LatencyTickWindow<K> {
-   private final Map<K, Integer> init_Map = new LinkedHashMap<>();
-   private final int init_I;
+   private final Map<K, Integer> expiries = new LinkedHashMap<>();
+   private final int capacity;
 
    public LatencyTickWindow(int maximum) {
-      this.init_I = Math.max(1, maximum);
+      this.capacity = Math.max(1, maximum);
    }
 
    public void mark(K key, int tick, int latencyMs) {
       int expiry = tick + windowTicks(latencyMs);
-      this.init_Map.put(key, expiry);
+      this.expiries.put(key, expiry);
       this.expire(tick);
 
-      while (this.init_Map.size() > this.init_I) {
-         this.init_Map.remove(this.init_Map.keySet().iterator().next());
+      while (this.expiries.size() > this.capacity) {
+         this.expiries.remove(this.expiries.keySet().iterator().next());
       }
    }
 
    public boolean isPending(K key, int tick) {
-      Integer expiry = this.init_Map.get(key);
+      Integer expiry = this.expiries.get(key);
       if (expiry == null) {
          return false;
       } else if (tick - expiry >= 0) {
-         this.init_Map.remove(key);
+         this.expiries.remove(key);
          return false;
       } else {
          return true;
@@ -35,28 +35,28 @@ public final class LatencyTickWindow<K> {
    }
 
    public void remove(K key) {
-      this.init_Map.remove(key);
+      this.expiries.remove(key);
    }
 
    public void expire(int tick) {
-      this.init_Map.entrySet().removeIf(entry -> tick - entry.getValue() >= 0);
+      this.expiries.entrySet().removeIf(entry -> tick - entry.getValue() >= 0);
    }
 
    public int size() {
-      return this.init_Map.size();
+      return this.expiries.size();
    }
 
    public Set<K> init_Set() {
-      return this.init_Map.keySet();
+      return this.expiries.keySet();
    }
 
    public Set<K> activeKeys(int tick) {
       this.expire(tick);
-      return this.init_Map.keySet();
+      return this.expiries.keySet();
    }
 
    public void clear() {
-      this.init_Map.clear();
+      this.expiries.clear();
    }
 
    public static int windowTicks(int latencyMs) {

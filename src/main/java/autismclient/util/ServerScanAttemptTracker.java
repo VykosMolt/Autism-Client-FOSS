@@ -2,29 +2,29 @@ package autismclient.util;
 
 final class ServerScanAttemptTracker {
    private static final int init_I = 4;
-   private final long init_J;
-   private final String init_Str;
-   private boolean init_Z;
+   private final long generation;
+   private final String serverAddress;
+   private boolean cancelled;
 
    ServerScanAttemptTracker(long generation, String serverAddress) {
-      this.init_J = generation;
-      this.init_Str = serverAddress == null ? "" : serverAddress;
+      this.generation = generation;
+      this.serverAddress = serverAddress == null ? "" : serverAddress;
    }
 
    boolean init(long expectedGeneration, String currentAddress) {
-      return !this.init_Z && this.init_J == expectedGeneration && this.init_Str.equals(currentAddress == null ? "" : currentAddress);
+      return !this.cancelled && this.generation == expectedGeneration && this.serverAddress.equals(currentAddress == null ? "" : currentAddress);
    }
 
    boolean canRetry(int completedAttempts) {
-      return !this.init_Z && completedAttempts + 1 < 4;
+      return !this.cancelled && completedAttempts + 1 < 4;
    }
 
    boolean finish() {
-      if (this.init_Z) {
+      if (this.cancelled) {
          return false;
       }
 
-      this.init_Z = true;
+      this.cancelled = true;
       return true;
    }
 
@@ -33,6 +33,6 @@ final class ServerScanAttemptTracker {
    }
 
    boolean isFinished() {
-      return this.init_Z;
+      return this.cancelled;
    }
 }

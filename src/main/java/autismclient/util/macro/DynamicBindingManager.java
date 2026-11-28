@@ -79,7 +79,7 @@ public final class DynamicBindingManager {
       }
    }
 
-   public static Map<String, String> init(MacroAction action) {
+   public static Map<String, String> bindingsFor(MacroAction action) {
       synchronized (BINDINGS_BY_ACTION) {
          Map<String, String> values = BINDINGS_BY_ACTION.get(action);
          return values == null ? Map.of() : Map.copyOf(values);
@@ -91,7 +91,7 @@ public final class DynamicBindingManager {
          return true;
       }
 
-      for (Entry<String, String> binding : init(action).entrySet()) {
+      for (Entry<String, String> binding : bindingsFor(action).entrySet()) {
          MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(binding.getValue(), mc);
          if (!resolution.success()) {
             return false;

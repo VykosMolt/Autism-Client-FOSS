@@ -44,15 +44,15 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
    @Override
    public IoSupplier<InputStream> getRootResource(String... path) {
       return this.prefix.isEmpty() && path.length == 1 && "pack.mcmeta".equals(path[0]) && this.snapshot.packMetadata != null
-         ? init(this.snapshot.packMetadata)
+         ? supplier(this.snapshot.packMetadata)
          : null;
    }
 
    @Override
    public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && init(location.getPath())) {
-         byte[] bytes = this.snapshot.languages.get(this.init(location.getNamespace(), location.getPath()));
-         return bytes == null ? null : init(bytes);
+      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && isLangPath(location.getPath())) {
+         byte[] bytes = this.snapshot.languages.get(this.entryPath(location.getNamespace(), location.getPath()));
+         return bytes == null ? null : supplier(bytes);
       } else {
          return null;
       }
@@ -60,7 +60,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
 
    @Override
    public void listResources(PackType type, String namespace, String directory, ResourceOutput output) {
-      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && init(directory) && Identifier.isValidNamespace(namespace)) {
+      if (!this.metadataOnly && type == PackType.CLIENT_RESOURCES && isLangPath(directory) && Identifier.isValidNamespace(namespace)) {
          String root = this.prefix + type.getDirectory() + "/" + namespace + "/";
          String directoryPrefix = root + directory + "/";
 
@@ -68,8 +68,8 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
             String path = entry.getKey();
             if (path.startsWith(directoryPrefix)) {
                Identifier identifier = Identifier.tryBuild(namespace, path.substring(root.length()));
-               if (identifier != null && init(identifier.getPath())) {
-                  output.accept(identifier, init(entry.getValue()));
+               if (identifier != null && isLangPath(identifier.getPath())) {
+                  output.accept(identifier, supplier(entry.getValue()));
                }
             }
          }
@@ -104,15 +104,15 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
    public void close() {
    }
 
-   private String init(String namespace, String path) {
+   private String entryPath(String namespace, String path) {
       return this.prefix + PackType.CLIENT_RESOURCES.getDirectory() + "/" + namespace + "/" + path;
    }
 
-   private static IoSupplier<InputStream> init(byte[] bytes) {
+   private static IoSupplier<InputStream> supplier(byte[] bytes) {
       return () -> new ByteArrayInputStream(bytes);
    }
 
-   private static boolean init(String path) {
+   private static boolean isLangPath(String path) {
       return path.equals("lang") || path.startsWith("lang/") && path.length() > "lang/".length();
    }
 
@@ -142,7 +142,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
                if (!entry.isDirectory()) {
                   String name = entry.getName();
                   boolean metadataEntry = "pack.mcmeta".equals(name);
-                  if (metadataEntry || load(name)) {
+                  if (metadataEntry || isAllowedEntry(name)) {
                      if ((!metadataEntry || metadata == null) && (languages.size() < 4096 || metadataEntry)) {
                         int limit = metadataEntry ? 1048576 : 8388608;
                         if (entry.getSize() > limit) {
@@ -151,7 +151,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
 
                         byte[] bytes;
                         try (InputStream input = zip.getInputStream(entry)) {
-                           bytes = init(input, limit);
+                           bytes = readLimited(input, limit);
                         }
 
                         if (metadataEntry) {
@@ -207,7 +207,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
          }
       }
 
-      private static boolean load(String name) {
+      private static boolean isAllowedEntry(String name) {
          String path = name;
          if (!path.startsWith(PackType.CLIENT_RESOURCES.getDirectory() + "/")) {
             int separator = path.indexOf(47);
@@ -226,14 +226,14 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
             if (namespaceEnd > assets.length() && path.startsWith("lang/", namespaceEnd + 1)) {
                String namespace = path.substring(assets.length(), namespaceEnd);
                String languagePath = path.substring(namespaceEnd + 1);
-               return IsolatedResourcePack.init(languagePath) && Identifier.tryBuild(namespace, languagePath) != null;
+               return IsolatedResourcePack.isLangPath(languagePath) && Identifier.tryBuild(namespace, languagePath) != null;
             } else {
                return false;
             }
          }
       }
 
-      private static byte[] init(InputStream input, int limit) throws IOException {
+      private static byte[] readLimited(InputStream input, int limit) throws IOException {
          ByteArrayOutputStream output = new ByteArrayOutputStream();
          byte[] buffer = new byte[8192];
          int total = 0;

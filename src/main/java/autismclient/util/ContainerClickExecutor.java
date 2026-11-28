@@ -22,14 +22,14 @@ public final class ContainerClickExecutor {
       }
 
       if (mc.isSameThread()) {
-         return load(mc, handlerSlotId, button, input);
+         return sendClick(mc, handlerSlotId, button, input);
       }
 
       CountDownLatch latch = new CountDownLatch(1);
       AtomicBoolean clicked = new AtomicBoolean(false);
       mc.execute(() -> {
          try {
-            clicked.set(load(mc, handlerSlotId, button, input));
+            clicked.set(sendClick(mc, handlerSlotId, button, input));
          } finally {
             latch.countDown();
          }
@@ -47,7 +47,7 @@ public final class ContainerClickExecutor {
       return clicked.get();
    }
 
-   private static boolean load(Minecraft mc, int handlerSlotId, int button, ContainerInput input) {
+   private static boolean sendClick(Minecraft mc, int handlerSlotId, int button, ContainerInput input) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }

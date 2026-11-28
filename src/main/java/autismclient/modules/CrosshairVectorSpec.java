@@ -41,16 +41,16 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style,
       return var10000;
    }
 
-   public double init(double x, double y) {
+   public double distanceAt(double x, double y) {
       double half = this.init_D / 2.0;
       double var10000;
       switch (this.style) {
          case CROSS:
-            var10000 = Math.min(init(x, y, 7.0 + half, half), init(x, y, half, 7.0 + half));
+            var10000 = Math.min(boxDistance(x, y, 7.0 + half, half), boxDistance(x, y, half, 7.0 + half));
             break;
          case TACTICAL:
             double arm = half + this.load + 2.5;
-            var10000 = Math.min(init(x, y, half, half), Math.min(init(Math.abs(x) - arm, y, 2.5, half), init(x, Math.abs(y) - arm, half, 2.5)));
+            var10000 = Math.min(boxDistance(x, y, half, half), Math.min(boxDistance(Math.abs(x) - arm, y, 2.5, half), boxDistance(x, Math.abs(y) - arm, half, 2.5)));
             break;
          case CIRCLE:
             var10000 = Math.min(Math.abs(Math.hypot(x, y) - this.load()) - half, Math.hypot(x, y) - this.init_D());
@@ -72,7 +72,7 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style,
       return 2.0 * pixelsPerGuiUnit * (this.extent() * scale + outlineWidth) + 4.0;
    }
 
-   private static double init(double x, double y, double bx, double by) {
+   private static double boxDistance(double x, double y, double bx, double by) {
       double dx = Math.abs(x) - bx;
       double dy = Math.abs(y) - by;
       return Math.hypot(Math.max(dx, 0.0), Math.max(dy, 0.0)) + Math.min(Math.max(dx, dy), 0.0);

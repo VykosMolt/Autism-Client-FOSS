@@ -36,7 +36,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    private boolean load_Z;
    private boolean read_Z;
    private boolean write_Z;
-   private boolean update;
+   private boolean stopped;
    private int init_I;
    private int load_I;
    private int read_I;
@@ -159,7 +159,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public boolean allowsDynamicState(BlockPos at, BlockState actual) {
-      return !this.init_Z || !this.open() || !this.spec.allows(at, actual, !this.load_Z, true)
+      return !this.init_Z || !this.isCurrent() || !this.spec.allows(at, actual, !this.load_Z, true)
          ? false
          : !actual.is(Blocks.MOVING_PISTON)
             || this.env.getBlockEntity(at) instanceof PistonMovingBlockEntity moving
@@ -175,12 +175,12 @@ public final class PrintClockSequence implements PrintMachineJob {
    public PrintMachineJob.JobStatus prepare() {
       if (this.jobStatus == PrintMachineJob.JobStatus.SENT || this.jobStatus == PrintMachineJob.JobStatus.NEEDS_SUPPLY || this.poll_Z()) {
          return this.jobStatus;
-      } else if (!this.open()) {
-         return this.init("Clock world changed before the next native action");
+      } else if (!this.isCurrent()) {
+         return this.report("Clock world changed before the next native action");
       } else {
          String changed = this.load_Str();
          if (changed != null) {
-            return this.init(changed);
+            return this.report(changed);
          } else if (this.stage == PrintClockSequence.Inner_StreamUtil.STOCK) {
             return this.read_BitSetUtil_DataUti();
          } else if (this.stage == PrintClockSequence.Inner_StreamUtil.AUDIT) {
@@ -193,7 +193,7 @@ public final class PrintClockSequence implements PrintMachineJob {
                this.detail = this.currentJob.detail();
                return this.jobStatus = result;
             } else {
-               return this.init(this.currentJob.detail());
+               return this.report(this.currentJob.detail());
             }
          }
       }
@@ -218,7 +218,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
       if ((this.stage == PrintClockSequence.Inner_StreamUtil.FILL || this.stage == PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND)
          && !this.spec.holding(this.env::getBlockState)) {
-         this.init("The protected holding phase changed before clock preload");
+         this.report("The protected holding phase changed before clock preload");
          return false;
       }
 
@@ -239,12 +239,12 @@ public final class PrintClockSequence implements PrintMachineJob {
    public PrintMachineJob.JobStatus pollStatus() {
       if (this.jobStatus != PrintMachineJob.JobStatus.SENT) {
          return this.jobStatus;
-      } else if (!this.open()) {
-         return this.init("Clock world changed with a native action outstanding");
+      } else if (!this.isCurrent()) {
+         return this.report("Clock world changed with a native action outstanding");
       } else {
          String changed = this.load_Str();
          if (changed != null) {
-            return this.init(changed);
+            return this.report(changed);
          } else {
             PrintMachineJob.JobStatus result = this.currentJob.pollStatus();
             this.detail = this.currentJob.detail();
@@ -253,7 +253,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             } else {
                return result == PrintMachineJob.JobStatus.SUCCEEDED
                   ? this.load_BitSetUtil_DataUti_2()
-                  : this.init("Clock action did not complete: " + this.currentJob.detail());
+                  : this.report("Clock action did not complete: " + this.currentJob.detail());
             }
          }
       }
@@ -261,7 +261,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    private PrintMachineJob.JobStatus load_BitSetUtil_DataUti_2() {
       if (this.currentJob != null) {
-         this.receipts.add(this.init(this.currentJob));
+         this.receipts.add(this.receiptFor(this.currentJob));
       }
 
       this.currentJob = null;
@@ -277,10 +277,10 @@ public final class PrintClockSequence implements PrintMachineJob {
             break;
          case STOCK:
          default:
-            return this.init("Unexpected clock action boundary");
+            return this.report("Unexpected clock action boundary");
          case HOLD:
             if (!this.spec.holding(this.env::getBlockState)) {
-               return this.init("Native lever receipt did not establish the protected clock phase");
+               return this.report("Native lever receipt did not establish the protected clock phase");
             }
 
             this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND;
@@ -346,7 +346,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             this.detail = "Preparing the complete exact clock stock";
             return this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
          } else {
-            return this.init("Free inventory space for exact clock stock");
+            return this.report("Free inventory space for exact clock stock");
          }
       } else if (!this.write_Z && this.actions.canFetch(this.spec.material())) {
          this.init_ItemStack = this.spec.material().copyWithCount(Math.min(missing, this.spec.material().getMaxStackSize()));
@@ -398,7 +398,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          }
 
          if (this.env.currentTick() - this.read_J > 20L) {
-            return this.init("Clock motion did not settle into either complete phase");
+            return this.report("Clock motion did not settle into either complete phase");
          }
       } else {
          this.read_J = -9223372036854775808L;
@@ -415,7 +415,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       }
 
       if (this.env.currentTick() - this.init_J > this.spec.quantity() * 32L + 200L) {
-         return this.init("Clock did not complete two native cycles within its stock-derived bound");
+         return this.report("Clock did not complete two native cycles within its stock-derived bound");
       }
 
       this.detail = "Observing native clock phases "
@@ -432,13 +432,13 @@ public final class PrintClockSequence implements PrintMachineJob {
          return this.jobStatus;
       }
 
-      if (!this.open()) {
-         return this.init("Clock world changed before final audit");
+      if (!this.isCurrent()) {
+         return this.report("Clock world changed before final audit");
       }
 
       String changed = this.load_Str();
       if (changed != null) {
-         return this.init(changed);
+         return this.report(changed);
       }
 
       if (this.spec.phase(this.env::getBlockState) >= 0) {
@@ -450,7 +450,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          this.read_J = this.env.currentTick();
       }
 
-      return this.env.currentTick() - this.read_J > 20L ? this.init("Clock phase became invalid during final audit") : PrintMachineJob.JobStatus.PREPARING;
+      return this.env.currentTick() - this.read_J > 20L ? this.report("Clock phase became invalid during final audit") : PrintMachineJob.JobStatus.PREPARING;
    }
 
    private String load_Str() {
@@ -499,8 +499,8 @@ public final class PrintClockSequence implements PrintMachineJob {
       return null;
    }
 
-   private boolean open() {
-      return !this.update && this.worldToken != null && this.env.worldToken() == this.worldToken && this.actions.contextValid();
+   private boolean isCurrent() {
+      return !this.stopped && this.worldToken != null && this.env.worldToken() == this.worldToken && this.actions.contextValid();
    }
 
    private boolean poll_Z() {
@@ -510,7 +510,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          || this.jobStatus == PrintMachineJob.JobStatus.UNCERTAIN;
    }
 
-   private PrintMachineJob.JobStatus init(String message) {
+   private PrintMachineJob.JobStatus report(String message) {
       this.detail = message;
       return this.jobStatus = !this.init_Z && this.jobStatus != PrintMachineJob.JobStatus.SENT
          ? PrintMachineJob.JobStatus.CONFLICT
@@ -519,14 +519,14 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public void cancel() {
-      if (!this.update) {
-         this.update = true;
+      if (!this.stopped) {
+         this.stopped = true;
          if (this.currentJob != null) {
             this.currentJob.cancel();
          }
 
          if (this.init_Z && !this.load_Z || this.jobStatus == PrintMachineJob.JobStatus.SENT) {
-            this.init("Clock startup interrupted; inspect the retained control and hopper receipts before restarting");
+            this.report("Clock startup interrupted; inspect the retained control and hopper receipts before restarting");
          }
       }
    }
@@ -555,13 +555,13 @@ public final class PrintClockSequence implements PrintMachineJob {
       this.receipts.forEach(receipts::add);
       data.add("completedNativeActions", receipts);
       if (this.currentJob != null) {
-         data.add("currentNativeAction", this.init(this.currentJob));
+         data.add("currentNativeAction", this.receiptFor(this.currentJob));
       }
 
       return data.toString();
    }
 
-   private JsonObject init(PrintMachineJob action) {
+   private JsonObject receiptFor(PrintMachineJob action) {
       JsonObject receipt = new JsonObject();
       receipt.addProperty("stage", this.stage.name());
       receipt.addProperty("position", action.position().toShortString());

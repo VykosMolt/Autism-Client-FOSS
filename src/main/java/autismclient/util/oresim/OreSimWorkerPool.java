@@ -11,14 +11,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 final class OreSimWorkerPool {
    private final int workerCount;
-   private final ThreadPoolExecutor init_ThreadPoolExecutor;
+   private final ThreadPoolExecutor executor;
    private final Set<Future<?>> activeTasks = Collections.newSetFromMap(new IdentityHashMap<>());
    private OreSimWorkerPool.Inner_DataUtil work;
 
    OreSimWorkerPool(String threadName) {
       this.workerCount = Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
       AtomicInteger ids = new AtomicInteger();
-      this.init_ThreadPoolExecutor = new ThreadPoolExecutor(
+      this.executor = new ThreadPoolExecutor(
          this.workerCount, this.workerCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), task -> {
             Thread thread = new Thread(task, threadName + "-" + ids.incrementAndGet());
             thread.setDaemon(true);
@@ -37,17 +37,17 @@ final class OreSimWorkerPool {
          throw new IllegalArgumentException("OreSim work must not be null");
       }
 
-      this.read();
+      this.cancelPending();
       OreSimWorkerPool.Inner_DataUtil work = new OreSimWorkerPool.Inner_DataUtil();
       this.work = work;
-      Future<?> future = this.init_ThreadPoolExecutor.submit(() -> {
+      Future<?> future = this.executor.submit(() -> {
          try {
             task.run();
          } finally {
-            this.init(work);
+            this.finishWork(work);
          }
       });
-      work.init = future;
+      work.future = future;
       this.activeTasks.add(future);
       if (this.work != work) {
          future.cancel(true);
@@ -61,7 +61,7 @@ final class OreSimWorkerPool {
       }
 
       Future<?>[] holder = new Future[1];
-      Future<?> future = this.init_ThreadPoolExecutor.submit(() -> {
+      Future<?> future = this.executor.submit(() -> {
          try {
             task.run();
          } finally {
@@ -79,19 +79,19 @@ final class OreSimWorkerPool {
    }
 
    synchronized void init_V() {
-      this.read();
+      this.cancelPending();
    }
 
    synchronized boolean isIdle() {
-      return this.work == null && this.activeTasks.isEmpty() && this.init_ThreadPoolExecutor.getQueue().isEmpty();
+      return this.work == null && this.activeTasks.isEmpty() && this.executor.getQueue().isEmpty();
    }
 
-   private void read() {
+   private void cancelPending() {
       OreSimWorkerPool.Inner_DataUtil work = this.work;
       this.work = null;
-      this.init_ThreadPoolExecutor.getQueue().clear();
-      if (work != null && work.init != null) {
-         work.init.cancel(true);
+      this.executor.getQueue().clear();
+      if (work != null && work.future != null) {
+         work.future.cancel(true);
       }
 
       if (!this.activeTasks.isEmpty()) {
@@ -105,9 +105,9 @@ final class OreSimWorkerPool {
       }
    }
 
-   private synchronized void init(OreSimWorkerPool.Inner_DataUtil work) {
-      if (work != null && work.init != null) {
-         this.activeTasks.remove(work.init);
+   private synchronized void finishWork(OreSimWorkerPool.Inner_DataUtil work) {
+      if (work != null && work.future != null) {
+         this.activeTasks.remove(work.future);
       }
 
       if (this.work == work) {
@@ -115,12 +115,12 @@ final class OreSimWorkerPool {
       }
    }
 
-   void load() {
+   void shutdown() {
       this.init_V();
-      this.init_ThreadPoolExecutor.shutdownNow();
+      this.executor.shutdownNow();
    }
 
    private static final class Inner_DataUtil {
-      volatile Future<?> init;
+      volatile Future<?> future;
    }
 }

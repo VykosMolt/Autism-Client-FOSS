@@ -23,37 +23,37 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class AiNetherStructures {
    private static AiNetherStructures.Inner_DataUtil bastionAt;
-   private static WeakReference<Object> init_WeakReference = new WeakReference<>(null);
-   private static long load;
+   private static WeakReference<Object> trackedLevel = new WeakReference<>(null);
+   private static long lastScanTick;
    static final long init_J = 120000000000L;
-   private static final AiNetherStructures.Inner_StreamUtil init_aC_StreamUtil = new AiNetherStructures.Inner_StreamUtil();
-   private static String init_Str = "";
-   private static Object init_Obj;
+   private static final AiNetherStructures.Inner_StreamUtil skippedTargets = new AiNetherStructures.Inner_StreamUtil();
+   private static String worldKey = "";
+   private static Object connection;
 
    private AiNetherStructures() {
    }
 
-   private static void init(Minecraft mc) {
+   private static void resetIfWorldChanged(Minecraft mc) {
       String world = AiWorldIdentity.currentWorldKey(mc);
-      if (!world.equals(init_Str) || mc.getConnection() != init_Obj) {
-         init_aC_StreamUtil.init();
-         init_Str = world;
-         init_Obj = mc.getConnection();
+      if (!world.equals(worldKey) || mc.getConnection() != connection) {
+         skippedTargets.clear();
+         worldKey = world;
+         connection = mc.getConnection();
       }
    }
 
    static void recordBarter(Minecraft mc, Piglin partner) {
-      init(mc);
-      init_aC_StreamUtil.init(partner.getUUID(), System.nanoTime());
+      resetIfWorldChanged(mc);
+      skippedTargets.skip(partner.getUUID(), System.nanoTime());
    }
 
    static boolean canBarter(Minecraft mc, Piglin partner) {
       if (mc.player != null && mc.level != null && partner.isAlive() && partner.isAdult() && !partner.isConverting() && !partner.isAggressive()) {
-         init(mc);
+         resetIfWorldChanged(mc);
          double reach = Math.min(3.0, mc.player.entityInteractionRange());
          boolean reachable = mc.player.getEyePosition().distanceToSqr(partner.getBoundingBox().getCenter()) <= reach * reach
             && mc.player.hasLineOfSight(partner);
-         if (!init_aC_StreamUtil.init(partner.getUUID(), reachable, System.nanoTime())) {
+         if (!skippedTargets.isAllowed(partner.getUUID(), reachable, System.nanoTime())) {
             return false;
          }
 
@@ -74,13 +74,13 @@ final class AiNetherStructures {
             }
          }
 
-         return !init(bruteDistance, heavyBodyDistance, heavyPartnerDistance) ? false : !init_Z(partner.blockPosition());
+         return !farFromThreats(bruteDistance, heavyBodyDistance, heavyPartnerDistance) ? false : !init_Z(partner.blockPosition());
       } else {
          return false;
       }
    }
 
-   static boolean init(double bruteSquared, double heavyBodySquared, double heavyPartnerSquared) {
+   static boolean farFromThreats(double bruteSquared, double heavyBodySquared, double heavyPartnerSquared) {
       return bruteSquared > 1600.0 && heavyBodySquared > 576.0 && heavyPartnerSquared >= 256.0;
    }
 
@@ -108,10 +108,10 @@ final class AiNetherStructures {
    static AiNetherStructures.Inner_DataUtil bastionAt(BlockPos at) {
       Minecraft mc = Minecraft.getInstance();
       if (bastionAt != null
-         && init_WeakReference.get() == mc.level
+         && trackedLevel.get() == mc.level
          && bastionAt.at.distSqr(at) < 64.0
-         && AiThreats.currentClientTick() - load >= 0L
-         && AiThreats.currentClientTick() - load < 100L
+         && AiThreats.currentClientTick() - lastScanTick >= 0L
+         && AiThreats.currentClientTick() - lastScanTick < 100L
          && bastionAt.revision == autismclient.ai.engine.AiGridRevisions.globalRevision()) {
          return bastionAt;
       }
@@ -189,7 +189,7 @@ final class AiNetherStructures {
          }
       }
 
-      load = AiThreats.currentClientTick();
+      lastScanTick = AiThreats.currentClientTick();
       bastionAt = new AiNetherStructures.Inner_DataUtil(
          at.immutable(),
          bricks,
@@ -205,14 +205,14 @@ final class AiNetherStructures {
          variants,
          AiWorldIdentity.currentWorldKey(mc),
          AiWorldIdentity.currentDimensionId(mc),
-         load,
+         lastScanTick,
          autismclient.ai.engine.AiGridRevisions.globalRevision()
       );
-      init_WeakReference = new WeakReference<>(mc.level);
+      trackedLevel = new WeakReference<>(mc.level);
       return bastionAt;
    }
 
-   static double init(AiNetherStructures.Inner_DataUtil e, double distance) {
+   static double structureCost(AiNetherStructures.Inner_DataUtil e, double distance) {
       return distance / 0.22 + e.brutes * 1200 + e.hoglins * 400 + Math.min(800, e.lava * 3) + (e.partial ? 300 : 0) + (1.0 - e.confidence) * 200.0;
    }
 
@@ -275,7 +275,7 @@ final class AiNetherStructures {
             "verifyBeforeAction",
             true,
             "estimatedAccessTicks",
-            Minecraft.getInstance().player == null ? -1.0 : AiNetherStructures.init(this, Math.sqrt(this.at.distSqr(Minecraft.getInstance().player.blockPosition()))),
+            Minecraft.getInstance().player == null ? -1.0 : AiNetherStructures.structureCost(this, Math.sqrt(this.at.distSqr(Minecraft.getInstance().player.blockPosition()))),
             "costIsEstimate",
             true
          );
@@ -283,18 +283,18 @@ final class AiNetherStructures {
    }
 
    static final class Inner_StreamUtil {
-      private final Map<UUID, Long> init = new LinkedHashMap<>();
+      private final Map<UUID, Long> skipUntil = new LinkedHashMap<>();
 
-      void init(UUID identity, long now) {
-         this.init.remove(identity);
-         this.init.put(identity, now + 120000000000L);
-         if (this.init.size() > 128) {
-            this.init.remove(this.init.keySet().iterator().next());
+      void skip(UUID identity, long now) {
+         this.skipUntil.remove(identity);
+         this.skipUntil.put(identity, now + 120000000000L);
+         if (this.skipUntil.size() > 128) {
+            this.skipUntil.remove(this.skipUntil.keySet().iterator().next());
          }
       }
 
-      boolean init(UUID identity, boolean actuallyReachable, long now) {
-         Long until = this.init.get(identity);
+      boolean isAllowed(UUID identity, boolean actuallyReachable, long now) {
+         Long until = this.skipUntil.get(identity);
          if (until == null) {
             return true;
          }
@@ -303,12 +303,12 @@ final class AiNetherStructures {
             return false;
          }
 
-         this.init.remove(identity);
+         this.skipUntil.remove(identity);
          return true;
       }
 
-      void init() {
-         this.init.clear();
+      void clear() {
+         this.skipUntil.clear();
       }
    }
 }

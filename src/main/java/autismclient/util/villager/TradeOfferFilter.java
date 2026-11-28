@@ -47,7 +47,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
             String key = enchantment.unwrapKey().map(k -> k.identifier().toString()).orElse("");
 
             for (TradeOfferFilter.Inner_DataUtil book : this.read) {
-               if (key.equals(book.enchantment()) && init(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
+               if (key.equals(book.enchantment()) && countMatches(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
                   return true;
                }
             }
@@ -59,7 +59,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
       }
    }
 
-   public static boolean init(int actual, int wanted, boolean exact) {
+   public static boolean countMatches(int actual, int wanted, boolean exact) {
       return exact ? actual == wanted : actual >= wanted;
    }
 
@@ -72,10 +72,10 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
    }
 
    public static int cost(MerchantOffer offer) {
-      return init(offer.getCostA()) + init(offer.getCostB());
+      return emeraldCount(offer.getCostA()) + emeraldCount(offer.getCostB());
    }
 
-   private static int init(ItemStack stack) {
+   private static int emeraldCount(ItemStack stack) {
       return stack.is(Items.EMERALD) ? stack.getCount() : 0;
    }
 

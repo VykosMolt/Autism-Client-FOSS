@@ -60,7 +60,7 @@ final class AiSettingsView {
    final autismclient.gui.ui.widgets.TextInputWidget outputField = digitField();
    final autismclient.gui.ui.widgets.TextInputWidget requestsField = digitField();
    final autismclient.gui.ui.widgets.TextInputWidget tokensField = digitField();
-   final autismclient.gui.ui.widgets.TextInputWidget close = digitField();
+   final autismclient.gui.ui.widgets.TextInputWidget maxMinutesField = digitField();
    private final autismclient.gui.ui.widgets.DropdownWidget providerDropdown;
    private final autismclient.gui.ui.widgets.DropdownWidget modelDropdown;
    private final List<autismclient.gui.ui.widgets.DropdownWidget> dropdowns;
@@ -115,9 +115,9 @@ final class AiSettingsView {
          this.outputField,
          this.requestsField,
          this.tokensField,
-         this.close
+         this.maxMinutesField
       )) {
-         field.setOnSubmit(text -> this.close());
+         field.setOnSubmit(text -> this.applyChanges());
       }
    }
 
@@ -130,7 +130,7 @@ final class AiSettingsView {
          this.outputField,
          this.requestsField,
          this.tokensField,
-         this.close
+         this.maxMinutesField
       );
    }
 
@@ -169,7 +169,7 @@ final class AiSettingsView {
       this.outputField.setValue(Integer.toString(s.outputTokens));
       this.requestsField.setValue(Integer.toString(s.maxRequests));
       this.tokensField.setValue(Long.toString(s.maxTokens));
-      this.close.setValue(Integer.toString(s.maxMinutes));
+      this.maxMinutesField.setValue(Integer.toString(s.maxMinutes));
       this.savedSnapshot = this.formSnapshot();
       this.errorMessage = "";
       this.capturingKey = false;
@@ -197,7 +197,7 @@ final class AiSettingsView {
          this.outputField.getValue(),
          this.requestsField.getValue(),
          this.tokensField.getValue(),
-         this.close.getValue()
+         this.maxMinutesField.getValue()
       };
    }
 
@@ -563,9 +563,9 @@ final class AiSettingsView {
       int start = y;
       AiSettings live = this.view.settings;
       boolean hasKey = this.service.hasProviderKey(this.provider);
-      y = this.init(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
+      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
-         autismclient.gui.f.NetHelper field = this.init(kit, "Provider", x, y, w, labelW);
+         autismclient.gui.f.NetHelper field = this.labelRow(kit, "Provider", x, y, w, labelW);
          this.providerDropdown.setBounds(field.read(), field.write(), field.update(), field.sync());
          if (kit.isVisibleInClip(field)) {
             kit.addClickRegion(
@@ -587,9 +587,9 @@ final class AiSettingsView {
 
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.PROVIDER) && !this.builtIn) {
          this.apiKeyField.setPlaceholder(hasKey ? "Key saved - type to replace" : "Paste your API key");
-         kit.drawTextInput(this.apiKeyField, this.init(kit, "API key", x, y, w, labelW));
+         kit.drawTextInput(this.apiKeyField, this.labelRow(kit, "API key", x, y, w, labelW));
          y += ctrl + 2;
-         autismclient.gui.f.NetHelper modelBounds = this.init(kit, "Model", x, y, w - (ctrl + 2), labelW);
+         autismclient.gui.f.NetHelper modelBounds = this.labelRow(kit, "Model", x, y, w - (ctrl + 2), labelW);
          this.modelDropdown.setBounds(modelBounds.read(), modelBounds.write(), modelBounds.update(), modelBounds.sync());
          if (kit.isVisibleInClip(modelBounds)) {
             kit.addInteractiveRegion(
@@ -621,7 +621,7 @@ final class AiSettingsView {
          y += 2;
       }
 
-      y = this.init(kit, AiSettingsView.Inner_CachePool.BEHAVIOR, x, y, w);
+      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.BEHAVIOR, x, y, w);
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.BEHAVIOR)) {
          for (AiSettingsView.Inner_DataUtil flag : MODE_FLAGS) {
             if (!this.builtIn || !init_Set.contains(flag.key())) {
@@ -631,7 +631,7 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.init(kit, AiSettingsView.Inner_CachePool.VISUALS, x, y, w);
+      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.VISUALS, x, y, w);
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.VISUALS)) {
          for (AiSettingsView.Inner_DataUtil flag : VISUAL_FLAGS) {
             y = this.drawFlagRow(kit, flag, live, x, y, w, now);
@@ -683,7 +683,7 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.init(kit, AiSettingsView.Inner_CachePool.MOVEMENT, x, y, w);
+      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.MOVEMENT, x, y, w);
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.MOVEMENT)) {
          for (AiSettingsView.Inner_DataUtil flag : PERMISSION_FLAGS) {
             y = this.drawFlagRow(kit, flag, live, x, y, w, now);
@@ -695,26 +695,26 @@ final class AiSettingsView {
 
       y += 2;
       if (!this.builtIn) {
-         y = this.init(kit, AiSettingsView.Inner_CachePool.LIMITS, x, y, w);
+         y = this.drawSection(kit, AiSettingsView.Inner_CachePool.LIMITS, x, y, w);
          if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.LIMITS)) {
             y = this.drawFieldRow(kit, "Context", this.contextField, x, y, w, labelW);
             y = this.drawFieldRow(kit, "Output", this.outputField, x, y, w, labelW);
             y = this.drawFieldRow(kit, "Requests", this.requestsField, x, y, w, labelW);
             y = this.drawFieldRow(kit, "Tokens", this.tokensField, x, y, w, labelW);
-            y = this.drawFieldRow(kit, "Minutes", this.close, x, y, w, labelW);
+            y = this.drawFieldRow(kit, "Minutes", this.maxMinutesField, x, y, w, labelW);
          }
 
          y += 2;
       }
 
-      y = this.init(kit, AiSettingsView.Inner_CachePool.ADVANCED, x, y, w);
+      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.ADVANCED, x, y, w);
       if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.ADVANCED)) {
          if (!this.builtIn) {
             this.endpointField.setPlaceholder(this.provider.endpoint);
-            kit.drawTextInput(this.endpointField, this.init(kit, "Endpoint", x, y, w, labelW));
+            kit.drawTextInput(this.endpointField, this.labelRow(kit, "Endpoint", x, y, w, labelW));
             y += ctrl + 2;
             this.searchKeyField.setPlaceholder(live.hasKey("BRAVE") ? "Key saved - type to replace" : "Brave Search API key");
-            kit.drawTextInput(this.searchKeyField, this.init(kit, "Search key", x, y, w, labelW));
+            kit.drawTextInput(this.searchKeyField, this.labelRow(kit, "Search key", x, y, w, labelW));
             y += ctrl + 2;
          }
 
@@ -738,7 +738,7 @@ final class AiSettingsView {
                autismclient.util.GuiIconAtlas.DELETE,
                label,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
-               this::poll
+               this::confirmClearKey
             );
             y += ctrl + 2;
          }
@@ -761,18 +761,18 @@ final class AiSettingsView {
       this.drawFooter(kit, footer, live);
    }
 
-   private autismclient.gui.f.NetHelper init(AiUiKit kit, String label, int x, int y, int w, int labelW) {
+   private autismclient.gui.f.NetHelper labelRow(AiUiKit kit, String label, int x, int y, int w, int labelW) {
       autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.toolbarHeight());
       kit.drawCenteredRowText(label, row, x + 5, labelW - 5, kit.colors.textPrimary);
       return autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(20, w - labelW), AiUiKit.toolbarHeight());
    }
 
    private int drawFieldRow(AiUiKit kit, String label, autismclient.gui.ui.widgets.TextInputWidget field, int x, int y, int w, int labelW) {
-      kit.drawTextInput(field, this.init(kit, label, x, y, w, labelW));
+      kit.drawTextInput(field, this.labelRow(kit, label, x, y, w, labelW));
       return y + AiUiKit.toolbarHeight() + 2;
    }
 
-   private int init(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
+   private int drawSection(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.scaledHeight(12));
       boolean folded = this.collapsedSections.contains(section);
       autismclient.gui.ui.widgets.GroupHeaderRenderer.render(kit.renderContext, bounds, section.init_Str, folded, kit.isHovered(bounds));
@@ -835,7 +835,7 @@ final class AiSettingsView {
          autismclient.gui.f.NetHelper.init(x, footer.write(), saveW, ctrl),
          "Save",
          dirty ? autismclient.gui.f.b.CachePool.Inner_DataUtil.read : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-         this::close,
+         this::applyChanges,
          dirty ? null : "Nothing to save"
       );
       x += saveW + 2;
@@ -845,7 +845,7 @@ final class AiSettingsView {
             autismclient.gui.f.NetHelper.init(x, footer.write(), testW, ctrl),
             "Test",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            this::open,
+            this::testConnection,
             "Run a two-request round trip"
          );
          x += testW + 6;
@@ -914,7 +914,7 @@ final class AiSettingsView {
       }
    }
 
-   private void close() {
+   private void applyChanges() {
       if (this.isDirty()) {
          AiSettings next = this.service.getSettings();
 
@@ -955,7 +955,7 @@ final class AiSettingsView {
             next.outputTokens = parseIntField(this.outputField, "Output");
             next.maxRequests = parseIntField(this.requestsField, "Requests");
             next.maxTokens = parseNumber(this.tokensField, "Tokens");
-            next.maxMinutes = parseIntField(this.close, "Minutes");
+            next.maxMinutes = parseIntField(this.maxMinutesField, "Minutes");
             if (!this.apiKeyField.getValue().isBlank()) {
                next.setKey(this.provider.name(), this.apiKeyField.getValue().trim());
             }
@@ -997,9 +997,9 @@ final class AiSettingsView {
       return all;
    }
 
-   private void open() {
+   private void testConnection() {
       if (this.isDirty() && this.differsFromLive()) {
-         this.close();
+         this.applyChanges();
       } else if (!this.view.hasProviderKey && this.apiKeyField.getValue().isBlank()) {
          this.errorMessage = "Add an API key first";
       } else {
@@ -1009,7 +1009,7 @@ final class AiSettingsView {
       }
    }
 
-   private void poll() {
+   private void confirmClearKey() {
       long now = System.currentTimeMillis();
       if (now - this.sync_J >= 3000L) {
          this.sync_J = now;

@@ -40,8 +40,8 @@ final class AiChatView {
    private final Map<AiService.TranscriptEntry, String> toolStatusCache = new IdentityHashMap<>();
    private String wrappedQuestionText = "";
    private List<String> wrappedQuestionLines = List.of();
-   private int flush = -1;
-   private int close;
+   private int wrappedWidth = -1;
+   private int wrappedEpoch;
    private boolean planModeTogglePending;
    private boolean pendingPlanMode;
    private long planModeToggleDeadline;
@@ -189,7 +189,7 @@ final class AiChatView {
          if (this.view.pendingQuestion != null) {
             AiService.UserPromptQuestion q = this.view.pendingQuestion;
             int options = q.options().size();
-            int base = load(options);
+            int base = composerHeight(options);
             int wrapped = this.wrappedQuestionFor(kit, q, area.update() - 10).size();
             int lines = Math.max(1, Math.min(Math.min(4, wrapped), (bottom - area.write() - keep - base - 2) / AiUiKit.lineHeight()));
             int h = base + lines * AiUiKit.lineHeight();
@@ -226,10 +226,10 @@ final class AiChatView {
          if (builtIn) {
             this.actionMenu.render(kit, composer, now);
          } else {
-            this.load(kit, composer);
+            this.drawComposerButtons(kit, composer);
          }
 
-         this.read(kit, status);
+         this.drawStatusLine(kit, status);
       }
    }
 
@@ -303,7 +303,7 @@ final class AiChatView {
          this.actionMenu.render(kit, this.transcriptArea, now);
       }
 
-      this.read(kit, status);
+      this.drawStatusLine(kit, status);
    }
 
    private AiTranscriptLayout.LayoutMetrics transcriptMetrics(AiUiKit kit) {
@@ -611,28 +611,28 @@ final class AiChatView {
          autismclient.util.GuiIconAtlas.CHECK,
          "Approve",
          autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
-         this::update
+         this::onApprovePlan
       );
       kit.drawButton(
          autismclient.gui.f.NetHelper.init(x + approveW + 2, y, kit.measureButtonWidth("Reject"), ctrl),
          "Reject",
          autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-         this::sync,
+         this::onRejectPlan,
          "Reject with the composer text as feedback"
       );
    }
 
-   private static int load(int options) {
+   private static int composerHeight(int options) {
       int ctrl = AiUiKit.toolbarHeight();
       return AiUiKit.inputHeight() + 2 + 2 + (options > 0 ? options * (ctrl + 2) : AiUiKit.lineHeight() + 2) + 4;
    }
 
    private List<String> wrappedQuestionFor(AiUiKit kit, AiService.UserPromptQuestion q, int w) {
       int epoch = textEpoch();
-      if (this.flush != w || this.close != epoch || !this.wrappedQuestionText.equals(q.text())) {
+      if (this.wrappedWidth != w || this.wrappedEpoch != epoch || !this.wrappedQuestionText.equals(q.text())) {
          this.wrappedQuestionLines = kit.renderContext.init_PoolEntry().wrapLines(AiUiKit.flattenSingleLine(q.text()), Math.max(20, w));
-         this.flush = w;
-         this.close = epoch;
+         this.wrappedWidth = w;
+         this.wrappedEpoch = epoch;
          this.wrappedQuestionText = q.text();
       }
 
@@ -737,7 +737,7 @@ final class AiChatView {
       }
    }
 
-   private void load(AiUiKit kit, autismclient.gui.f.NetHelper c) {
+   private void drawComposerButtons(AiUiKit kit, autismclient.gui.f.NetHelper c) {
       int h = c.sync();
       int right = c.init();
       int attachW = kit.measureButtonWidth(this.attachmentPending ? "Loading..." : "Attach");
@@ -763,18 +763,18 @@ final class AiChatView {
             false,
             false,
             "Stop (" + autismclient.util.ValueSink.init_Str(this.view.settings.emergencyKey) + ")",
-            this::open
+            this::onStop
          );
          right -= 2;
       }
 
       if (this.view.isWorking()) {
          right -= h;
-         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.PAUSE, false, false, "Pause", this::flush);
+         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.PAUSE, false, false, "Pause", this::onPause);
          right -= 2;
       } else if (canResume) {
          right -= h;
-         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.PLAY, false, false, "Resume", this::close);
+         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.PLAY, false, false, "Resume", this::onResume);
          right -= 2;
       }
 
@@ -786,7 +786,7 @@ final class AiChatView {
       right -= 2;
       if (this.view.isActive() && !this.view.awaitingPlanApproval) {
          right -= h;
-         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.QUEUE, false, false, "Queue as the next objective", this::write);
+         kit.drawIconButton(autismclient.gui.f.NetHelper.init(right, c.write(), h, h), autismclient.util.GuiIconAtlas.QUEUE, false, false, "Queue as the next objective", this::send);
          right -= 2;
       }
 
@@ -889,7 +889,7 @@ final class AiChatView {
          if (this.view.pendingQuestion != null) {
             this.answerQuestion(this.takeComposerInput());
          } else if (this.view.awaitingPlanApproval) {
-            this.sync();
+            this.onRejectPlan();
          } else {
             String text = AiAttachments.composeMessage(this.input.getValue().isBlank() ? "" : this.takeComposerInput(), this.attachments);
             this.attachments.clear();
@@ -900,7 +900,7 @@ final class AiChatView {
       }
    }
 
-   private void write() {
+   private void send() {
       if (!this.attachmentPending) {
          String text = this.input.getValue().isBlank() && !this.attachments.isEmpty() ? "" : this.takeComposerInput();
          if (text == null) {
@@ -914,13 +914,13 @@ final class AiChatView {
       }
    }
 
-   private void update() {
+   private void onApprovePlan() {
       this.service.approvePlan();
       this.transcriptScroll.scrollToBottom();
       this.view.invalidate();
    }
 
-   private void sync() {
+   private void onRejectPlan() {
       if (this.input.getValue().isBlank()) {
          this.load_Z = true;
          this.host.focusInput(this.input);
@@ -933,23 +933,23 @@ final class AiChatView {
       }
    }
 
-   private void flush() {
+   private void onPause() {
       this.service.pauseTask();
       this.view.invalidate();
    }
 
-   private void close() {
+   private void onResume() {
       this.service.resumeTask();
       this.transcriptScroll.scrollToBottom();
       this.view.invalidate();
    }
 
-   private void open() {
+   private void onStop() {
       this.service.stopTask();
       this.view.invalidate();
    }
 
-   private void read(AiUiKit kit, autismclient.gui.f.NetHelper s) {
+   private void drawStatusLine(AiUiKit kit, autismclient.gui.f.NetHelper s) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       int limit = s.init() - 10;
       int x = s.read() + 2;

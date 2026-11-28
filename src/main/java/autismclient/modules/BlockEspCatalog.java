@@ -32,12 +32,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class BlockEspCatalog {
-   private static volatile BlockEspCatalog.Inner_DataUtil init_ad_DataUtil = new BlockEspCatalog.Inner_DataUtil("", Set.of());
-   private static volatile String init_Str;
-   private static volatile List<String> init_List = List.of();
+   private static volatile BlockEspCatalog.Inner_DataUtil cachedSelection = new BlockEspCatalog.Inner_DataUtil("", Set.of());
+   private static volatile String cachedIdsValue;
+   private static volatile List<String> cachedIds = List.of();
    static final int DEFAULT_COLOR = -855688389;
    private static final int load = 2048;
-   private static final Set<Block> init_Set = Set.of(Blocks.BARRIER);
+   private static final Set<Block> BARRIER_ONLY = Set.of(Blocks.BARRIER);
    private static final int read = -50373;
 
    private BlockEspCatalog() {
@@ -49,21 +49,21 @@ final class BlockEspCatalog {
          value = "";
       }
 
-      if (!value.equals(init_Str)) {
+      if (!value.equals(cachedIdsValue)) {
          List<String> ids = new ArrayList<>();
 
          for (String raw : value.split("\\|")) {
-            String id = init_Str(raw);
+            String id = normalizeId(raw);
             if (!id.isEmpty() && !ids.contains(id)) {
                ids.add(id);
             }
          }
 
-         init_List = List.copyOf(ids);
-         init_Str = value;
+         cachedIds = List.copyOf(ids);
+         cachedIdsValue = value;
       }
 
-      return init_List;
+      return cachedIds;
    }
 
    static boolean isSelected(Module module, String blockId) {
@@ -75,13 +75,13 @@ final class BlockEspCatalog {
       return block == null ? -855688389 : -872415232 | am.init(block);
    }
 
-   static int init_I(Module module, String blockId) {
+   static int colorFor(Module module, String blockId) {
       return am.init_I_Module(module, "color-" + blockId, defaultColor(blockId));
    }
 
    static Block resolveBlock(String blockId) {
       if (blockId != null && !blockId.isBlank()) {
-         Identifier parsed = Identifier.tryParse(init_Str(blockId));
+         Identifier parsed = Identifier.tryParse(normalizeId(blockId));
          if (parsed == null) {
             return null;
          }
@@ -95,15 +95,15 @@ final class BlockEspCatalog {
 
    static void init(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
-         BlockEspCatalog.Inner_DataUtil selection = init_ad_DataUtil(module.value("blocks"));
+         BlockEspCatalog.Inner_DataUtil selection = parseSelection(module.value("blocks"));
          if (!selection.targets().isEmpty()) {
-            int maxTargets = init_I_Str(module.value("max-targets"), 1024, 64, 8192);
+            int maxTargets = parseIntClamped(module.value("max-targets"), 1024, 64, 8192);
             Map<Block, Integer> colors = new IdentityHashMap<>();
-            StringBuilder stamp = new StringBuilder(selection.init_Str());
+            StringBuilder stamp = new StringBuilder(selection.source());
 
             for (Block block : selection.targets()) {
                Identifier id = BuiltInRegistries.BLOCK.getKey(block);
-               int color = init_I(module, id.toString());
+               int color = colorFor(module, id.toString());
                colors.put(block, color);
                stamp.append('|').append(Integer.toHexString(color));
             }
@@ -121,19 +121,19 @@ final class BlockEspCatalog {
                stamp.append("|end-portal");
             }
 
-            init(level, player, targets, stamp.toString(), maxTargets, colors, EspChunkWorker.INSTANCE, boxEmit, traceEmit);
+            scanTargets(level, player, targets, stamp.toString(), maxTargets, colors, EspChunkWorker.INSTANCE, boxEmit, traceEmit);
          }
       }
    }
 
    static void load(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
-         int maxTargets = init_I_Str(module.value("max-targets"), 1024, 64, 8192);
-         init(level, player, init_Set, "minecraft:barrier", maxTargets, Map.of(Blocks.BARRIER, -50373), EspChunkWorker.blocks, boxEmit, traceEmit);
+         int maxTargets = parseIntClamped(module.value("max-targets"), 1024, 64, 8192);
+         scanTargets(level, player, BARRIER_ONLY, "minecraft:barrier", maxTargets, Map.of(Blocks.BARRIER, -50373), EspChunkWorker.blocks, boxEmit, traceEmit);
       }
    }
 
-   private static void init(
+   private static void scanTargets(
       ClientLevel level,
       Player player,
       Set<Block> targets,
@@ -162,15 +162,15 @@ final class BlockEspCatalog {
                if (Math.max(Math.abs(dx), Math.abs(dz)) == radius) {
                   int chunkX = playerChunkX + dx;
                   int chunkZ = playerChunkZ + dz;
-                  if (!(init(playerPos, chunkX, chunkZ) > maxDistSq)) {
+                  if (!(chunkDistanceSq(playerPos, chunkX, chunkZ) > maxDistSq)) {
                      LevelChunk chunk = chunks.getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
                      if (chunk != null) {
                         List<EspChunkWorker.EspBox> entries = cache.initAsync(
-                           chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, targets, colors, playerBlockY, out)
+                           chunk, gameTime, stamp, (scanned, out) -> scanChunk(level, scanned, targets, colors, playerBlockY, out)
                         );
                         if (entries.size() > 1) {
                            entries = new ArrayList<>(entries);
-                           entries.sort(Comparator.comparingDouble(e -> init_D_Vec3(playerPos, e.tracer().x, e.tracer().y, e.tracer().z)));
+                           entries.sort(Comparator.comparingDouble(e -> distanceSq(playerPos, e.tracer().x, e.tracer().y, e.tracer().z)));
                         }
 
                         for (EspChunkWorker.EspBox entry : entries) {
@@ -179,7 +179,7 @@ final class BlockEspCatalog {
                            }
 
                            Vec3 trace = entry.tracer();
-                           if (!(init_D_Vec3(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
+                           if (!(distanceSq(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                               if (boxEmit != null) {
                                  boxEmit.accept(entry.box(), entry.color());
                               }
@@ -199,7 +199,7 @@ final class BlockEspCatalog {
       }
    }
 
-   private static double init(Vec3 playerPos, int chunkX, int chunkZ) {
+   private static double chunkDistanceSq(Vec3 playerPos, int chunkX, int chunkZ) {
       double minX = chunkX << 4;
       double minZ = chunkZ << 4;
       double dx = playerPos.x < minX ? minX - playerPos.x : (playerPos.x > minX + 16.0 ? playerPos.x - minX - 16.0 : 0.0);
@@ -207,7 +207,7 @@ final class BlockEspCatalog {
       return dx * dx + dz * dz;
    }
 
-   private static void init(ClientLevel level, LevelChunk chunk, Set<Block> targets, Map<Block, Integer> colors, int playerBlockY, List<EspChunkWorker.EspBox> out) {
+   private static void scanChunk(ClientLevel level, LevelChunk chunk, Set<Block> targets, Map<Block, Integer> colors, int playerBlockY, List<EspChunkWorker.EspBox> out) {
       LevelChunkSection[] sections = chunk.getSections();
       int minX = chunk.getPos().getMinBlockX();
       int minZ = chunk.getPos().getMinBlockZ();
@@ -236,7 +236,7 @@ final class BlockEspCatalog {
             int band = chunk.getSectionYFromSectionIndex(sectionIndex);
             int baseY = band << 4;
 
-            for (int sy : init(band, playerBand, playerSy)) {
+            for (int sy : sectionOrder(band, playerBand, playerSy)) {
                if (out.size() >= 2048) {
                   break;
                }
@@ -253,7 +253,7 @@ final class BlockEspCatalog {
                            mutable.set(x, y, z);
                            out.add(
                               new EspChunkWorker.EspBox(
-                                 init(mutable, state), new Vec3(x + 0.5, y + 0.5, z + 0.5), colors.getOrDefault(state.getBlock(), -855688389)
+                                 boxFor(mutable, state), new Vec3(x + 0.5, y + 0.5, z + 0.5), colors.getOrDefault(state.getBlock(), -855688389)
                               )
                            );
                         }
@@ -265,7 +265,7 @@ final class BlockEspCatalog {
       }
    }
 
-   private static int[] init(int band, int playerBand, int playerSy) {
+   private static int[] sectionOrder(int band, int playerBand, int playerSy) {
       int[] order = new int[16];
       if (band != playerBand) {
          boolean below = band < playerBand;
@@ -292,7 +292,7 @@ final class BlockEspCatalog {
       }
    }
 
-   private static AABB init(BlockPos pos, BlockState state) {
+   private static AABB boxFor(BlockPos pos, BlockState state) {
       if (state.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) {
          return new AABB(pos);
       }
@@ -305,17 +305,17 @@ final class BlockEspCatalog {
       }
    }
 
-   private static BlockEspCatalog.Inner_DataUtil init_ad_DataUtil(String value) {
+   private static BlockEspCatalog.Inner_DataUtil parseSelection(String value) {
       String safe = value == null ? "" : value;
-      BlockEspCatalog.Inner_DataUtil cached = init_ad_DataUtil;
-      if (cached.init_Str().equals(safe)) {
+      BlockEspCatalog.Inner_DataUtil cached = cachedSelection;
+      if (cached.source().equals(safe)) {
          return cached;
       }
 
       Set<Block> blocks = new LinkedHashSet<>();
 
       for (String raw : safe.split("\\|")) {
-         String id = init_Str(raw);
+         String id = normalizeId(raw);
          if (!id.isEmpty()) {
             Identifier parsed = Identifier.tryParse(id);
             if (parsed != null) {
@@ -328,11 +328,11 @@ final class BlockEspCatalog {
       }
 
       BlockEspCatalog.Inner_DataUtil next = new BlockEspCatalog.Inner_DataUtil(safe, Set.copyOf(blocks));
-      init_ad_DataUtil = next;
+      cachedSelection = next;
       return next;
    }
 
-   private static String init_Str(String raw) {
+   private static String normalizeId(String raw) {
       if (raw == null) {
          return "";
       } else {
@@ -345,14 +345,14 @@ final class BlockEspCatalog {
       }
    }
 
-   private static double init_D_Vec3(Vec3 from, double x, double y, double z) {
+   private static double distanceSq(Vec3 from, double x, double y, double z) {
       double dx = from.x - x;
       double dy = from.y - y;
       double dz = from.z - z;
       return dx * dx + dy * dy + dz * dz;
    }
 
-   private static int init_I_Str(String value, int fallback, int min, int max) {
+   private static int parseIntClamped(String value, int fallback, int min, int max) {
       try {
          return Math.max(min, Math.min(max, Integer.parseInt(value)));
       } catch (Exception ignored) {
@@ -360,6 +360,6 @@ final class BlockEspCatalog {
       }
    }
 
-   private record Inner_DataUtil(String init_Str, Set<Block> targets) {
+   private record Inner_DataUtil(String source, Set<Block> targets) {
    }
 }

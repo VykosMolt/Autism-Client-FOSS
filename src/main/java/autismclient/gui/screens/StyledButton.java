@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 
 public class StyledButton extends Button {
    private static final int init_I = -15594737;
-   private final autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil;
+   private final autismclient.gui.f.b.CachePool.Inner_DataUtil style;
    private final Supplier<String> dynamicLabel;
    private boolean toggled;
 
@@ -23,11 +23,11 @@ public class StyledButton extends Button {
       int x, int y, int width, int height, Component label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, Supplier<String> dynamicLabel, OnPress onPress
    ) {
       super(x, y, width, height, label, onPress, DEFAULT_NARRATION);
-      this.init_CachePool_DataUtil = tone == null ? autismclient.gui.f.b.CachePool.Inner_DataUtil.init : tone;
+      this.style = tone == null ? autismclient.gui.f.b.CachePool.Inner_DataUtil.init : tone;
       this.dynamicLabel = dynamicLabel;
    }
 
-   public StyledButton init(boolean toggled) {
+   public StyledButton withToggled(boolean toggled) {
       this.toggled = toggled;
       return this;
    }
@@ -47,7 +47,7 @@ public class StyledButton extends Button {
          autismclient.gui.f.UiHelper.init(graphics, font, mouseX, mouseY),
          bounds,
          text,
-         this.toggled ? this.init_CachePool_DataUtil : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
+         this.toggled ? this.style : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
          hovered,
          this.toggled
       );

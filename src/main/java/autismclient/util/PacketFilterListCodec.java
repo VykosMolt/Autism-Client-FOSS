@@ -25,7 +25,7 @@ public final class PacketFilterListCodec {
       Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String token : init_List(value)) {
-         Class<? extends Packet<?>> packetClass = init(token, pool);
+         Class<? extends Packet<?>> packetClass = resolvePacket(token, pool);
          if (packetClass != null) {
             packets.add(packetClass);
          }
@@ -39,7 +39,7 @@ public final class PacketFilterListCodec {
       Set<Class<? extends Packet<?>>> pool = c2s ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
       for (String token : init_List(value)) {
-         if (init(token, pool) == null) {
+         if (resolvePacket(token, pool) == null) {
             invalid.add(token);
          }
       }
@@ -83,7 +83,7 @@ public final class PacketFilterListCodec {
       return out;
    }
 
-   private static Class<? extends Packet<?>> init(String token, Set<Class<? extends Packet<?>>> pool) {
+   private static Class<? extends Packet<?>> resolvePacket(String token, Set<Class<? extends Packet<?>>> pool) {
       Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(token);
       if (packetClass != null && pool.contains(packetClass)) {
          return packetClass;
@@ -97,7 +97,7 @@ public final class PacketFilterListCodec {
 
       for (Class<? extends Packet<?>> candidate : pool) {
          String registryName = PacketTypeRegistry.getPacketName(candidate);
-         if (init(token, registryName, candidate)) {
+         if (matchesToken(token, registryName, candidate)) {
             return candidate;
          }
       }
@@ -105,17 +105,17 @@ public final class PacketFilterListCodec {
       return null;
    }
 
-   private static boolean init(String token, String registryName, Class<? extends Packet<?>> candidate) {
-      String needle = load(token);
+   private static boolean matchesToken(String token, String registryName, Class<? extends Packet<?>> candidate) {
+      String needle = normalizeToken(token);
       if (needle.isEmpty()) {
          return false;
       }
 
-      String registry = load(registryName);
+      String registry = normalizeToken(registryName);
       String registryNoSuffix = registry.endsWith("packet") ? registry.substring(0, registry.length() - 6) : registry;
-      String simple = load(candidate.getSimpleName());
-      String full = load(candidate.getName());
-      String friendly = load(PacketNameResolver.nameOfClass(candidate));
+      String simple = normalizeToken(candidate.getSimpleName());
+      String full = normalizeToken(candidate.getName());
+      String friendly = normalizeToken(PacketNameResolver.nameOfClass(candidate));
       return needle.equals(registry)
          || needle.equals(registryNoSuffix)
          || needle.equals(simple)
@@ -124,7 +124,7 @@ public final class PacketFilterListCodec {
          || full.endsWith(needle);
    }
 
-   private static String load(String value) {
+   private static String normalizeToken(String value) {
       return value == null ? "" : value.trim().replace(" ", "").replace("_", "").replace("-", "").toLowerCase(Locale.ROOT);
    }
 }

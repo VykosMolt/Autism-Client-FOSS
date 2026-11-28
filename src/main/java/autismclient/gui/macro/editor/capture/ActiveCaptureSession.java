@@ -1,23 +1,23 @@
 package autismclient.gui.macro.editor.capture;
 
 public final class ActiveCaptureSession {
-   private String init;
+   private String activeKey;
 
    public String key() {
-      return this.init;
+      return this.activeKey;
    }
 
    public boolean isActive() {
-      return this.init != null;
+      return this.activeKey != null;
    }
 
    public boolean isCapturing(String key) {
-      return key != null && key.equals(this.init);
+      return key != null && key.equals(this.activeKey);
    }
 
-   public void init(String key, Runnable beginCapture) {
+   public void begin(String key, Runnable beginCapture) {
       if (key != null && !key.isBlank()) {
-         this.init = key;
+         this.activeKey = key;
          if (beginCapture != null) {
             beginCapture.run();
          }
@@ -25,11 +25,11 @@ public final class ActiveCaptureSession {
    }
 
    public boolean end(Runnable endCapture) {
-      if (this.init == null) {
+      if (this.activeKey == null) {
          return false;
       }
 
-      this.init = null;
+      this.activeKey = null;
       if (endCapture != null) {
          endCapture.run();
       }
@@ -41,11 +41,11 @@ public final class ActiveCaptureSession {
       if (this.isCapturing(key)) {
          this.end(endCapture);
       } else {
-         this.init(key, beginCapture);
+         this.begin(key, beginCapture);
       }
    }
 
    public void clear() {
-      this.init = null;
+      this.activeKey = null;
    }
 }

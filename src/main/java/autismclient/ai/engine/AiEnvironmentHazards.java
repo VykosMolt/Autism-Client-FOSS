@@ -16,7 +16,7 @@ public final class AiEnvironmentHazards {
    private static final ThreadLocal<AiEnvironmentHazards.Inner_DataUtil> CACHE = ThreadLocal.withInitial(AiEnvironmentHazards.Inner_DataUtil::new);
    private static final AiEnvironmentHazards.Inner_ConfigStore CLIENT_WORLD = new AiEnvironmentHazards.Inner_ConfigStore() {
       @Override
-      public boolean init(Object world, BlockPos at) {
+      public boolean isInBuildHeight(Object world, BlockPos at) {
          return ((ClientLevel)world).isInsideBuildHeight(at);
       }
 
@@ -51,7 +51,7 @@ public final class AiEnvironmentHazards {
             LevelChunkSection data = sections[section];
             if (data != null && !data.hasOnlyAir() && data.maybeHas(state -> state.getBlock() instanceof PotentSulfurBlock)) {
                for (int y = 0; y < 16; y++) {
-                  AiEnvironmentHazards.Inner_BufferHelper range = AiEnvironmentHazards.init(
+                  AiEnvironmentHazards.Inner_BufferHelper range = AiEnvironmentHazards.sulfurBand(
                      (loaded.getSectionYFromSectionIndex(section) << 4) + y, data.getBlockState(x & 15, y, z & 15)
                   );
                   if (range != null) {
@@ -69,19 +69,19 @@ public final class AiEnvironmentHazards {
    }
 
    public static boolean isHazardous(ClientLevel level, BlockPos at) {
-      return init(level, CLIENT_WORLD, at);
+      return mayBeHazardous(level, CLIENT_WORLD, at);
    }
 
-   static boolean init(Object world, AiEnvironmentHazards.Inner_ConfigStore source, BlockPos at) {
+   static boolean mayBeHazardous(Object world, AiEnvironmentHazards.Inner_ConfigStore source, BlockPos at) {
       if (world == null) {
          return true;
       }
 
       AiEnvironmentHazards.Inner_DataUtil cache = CACHE.get();
-      cache.init(world);
+      cache.bindWorld(world);
 
       try {
-         if (!source.init(world, at)) {
+         if (!source.isInBuildHeight(world, at)) {
             return true;
          }
 
@@ -99,7 +99,7 @@ public final class AiEnvironmentHazards {
                }
 
                int revision = AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz));
-               AiEnvironmentHazards.Inner_StreamUtil summary = init(cache, world, source, chunk, cx, cz, revision, tick);
+               AiEnvironmentHazards.Inner_StreamUtil summary = chunkSummary(cache, world, source, chunk, cx, cz, revision, tick);
                if (summary == null) {
                   return true;
                }
@@ -107,7 +107,7 @@ public final class AiEnvironmentHazards {
                if (summary.containsSulfur) {
                   for (int x = Math.max(minX, cx << 4); x <= Math.min(maxX, (cx << 4) + 15); x++) {
                      for (int z = Math.max(minZ, cz << 4); z <= Math.min(maxZ, (cz << 4) + 15); z++) {
-                        if (init(cache, world, source, chunk, cx, cz, revision, tick, x, at.getY(), z)) {
+                        if (chunkMayBeHazardous(cache, world, source, chunk, cx, cz, revision, tick, x, at.getY(), z)) {
                            return true;
                         }
                      }
@@ -119,12 +119,12 @@ public final class AiEnvironmentHazards {
          return false;
       } catch (RuntimeException racingChunk) {
          cache.chunkCache.clear();
-         cache.load.clear();
+         cache.summaries.clear();
          return true;
       }
    }
 
-   private static boolean init(
+   private static boolean chunkMayBeHazardous(
       AiEnvironmentHazards.Inner_DataUtil cache,
       Object world,
       AiEnvironmentHazards.Inner_ConfigStore source,
@@ -141,7 +141,7 @@ public final class AiEnvironmentHazards {
       AiEnvironmentHazards.Inner_CachePool cached = cache.chunkCache.get(key);
       if (cached == null || cached.chunk.get() != chunk || cached.revision != revision || tick - cached.tick > 200L || tick < cached.tick) {
          List<AiEnvironmentHazards.Inner_BufferHelper> ranges = List.copyOf(source.hazardRanges(chunk, x, z));
-         if (!init(world, source, chunk, cx, cz, revision)) {
+         if (!isChunkCurrent(world, source, chunk, cx, cz, revision)) {
             return true;
          }
 
@@ -162,33 +162,33 @@ public final class AiEnvironmentHazards {
       return false;
    }
 
-   private static AiEnvironmentHazards.Inner_StreamUtil init(
+   private static AiEnvironmentHazards.Inner_StreamUtil chunkSummary(
       AiEnvironmentHazards.Inner_DataUtil cache, Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision, long tick
    ) {
       long key = AiGridRevisions.chunkKey(cx, cz);
-      AiEnvironmentHazards.Inner_StreamUtil summary = cache.load.get(key);
+      AiEnvironmentHazards.Inner_StreamUtil summary = cache.summaries.get(key);
       if (summary == null || summary.chunk.get() != chunk || summary.revision != revision || tick - summary.tick > 200L || tick < summary.tick) {
          boolean contains = source.hasSulfur(chunk);
-         if (!init(world, source, chunk, cx, cz, revision)) {
+         if (!isChunkCurrent(world, source, chunk, cx, cz, revision)) {
             return null;
          }
 
          summary = new AiEnvironmentHazards.Inner_StreamUtil(new WeakReference<>(chunk), revision, tick, contains);
-         cache.load.put(key, summary);
+         cache.summaries.put(key, summary);
 
-         while (cache.load.size() > 384) {
-            cache.load.remove(cache.load.keySet().iterator().next());
+         while (cache.summaries.size() > 384) {
+            cache.summaries.remove(cache.summaries.keySet().iterator().next());
          }
       }
 
       return summary;
    }
 
-   private static boolean init(Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision) {
+   private static boolean isChunkCurrent(Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision) {
       return AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz)) == revision && source.loadedChunk(world, cx, cz) == chunk;
    }
 
-   static AiEnvironmentHazards.Inner_BufferHelper init(int bottom, BlockState state) {
+   static AiEnvironmentHazards.Inner_BufferHelper sulfurBand(int bottom, BlockState state) {
       return state.getBlock() instanceof PotentSulfurBlock && !state.getValue(PotentSulfurBlock.STATE).toString().equalsIgnoreCase("dry")
          ? new AiEnvironmentHazards.Inner_BufferHelper(bottom - 1, bottom + 24)
          : null;
@@ -201,7 +201,7 @@ public final class AiEnvironmentHazards {
    }
 
    interface Inner_ConfigStore {
-      boolean init(Object var1, BlockPos var2);
+      boolean isInBuildHeight(Object var1, BlockPos var2);
 
       long gameTime(Object var1);
 
@@ -214,13 +214,13 @@ public final class AiEnvironmentHazards {
 
    private static final class Inner_DataUtil {
       final LinkedHashMap<Long, AiEnvironmentHazards.Inner_CachePool> chunkCache = new LinkedHashMap<>(64, 0.75F, true);
-      final LinkedHashMap<Long, AiEnvironmentHazards.Inner_StreamUtil> load = new LinkedHashMap<>(64, 0.75F, true);
+      final LinkedHashMap<Long, AiEnvironmentHazards.Inner_StreamUtil> summaries = new LinkedHashMap<>(64, 0.75F, true);
       WeakReference<Object> world = new WeakReference<>(null);
 
-      void init(Object world) {
+      void bindWorld(Object world) {
          if (this.world.get() != world) {
             this.chunkCache.clear();
-            this.load.clear();
+            this.summaries.clear();
             this.world = new WeakReference<>(world);
          }
       }

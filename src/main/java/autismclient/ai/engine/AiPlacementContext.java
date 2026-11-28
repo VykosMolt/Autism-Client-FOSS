@@ -21,8 +21,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class AiPlacementContext extends BlockPlaceContext {
    private final float yaw;
-   private final float load;
-   private final float read;
+   private final float pitch;
+   private final float headYaw;
    private final boolean secondaryUse;
 
    static boolean satisfies(Item item, PlacementGoal.PlaceConstraint constraint, BlockPos target, Function<BlockPos, BlockState> states) {
@@ -55,8 +55,8 @@ public final class AiPlacementContext extends BlockPlaceContext {
       super(player, InteractionHand.MAIN_HAND, stack, hit);
       Vec3 ray = hit.getLocation().subtract(eye);
       this.yaw = (float)(Math.toDegrees(Math.atan2(ray.z, ray.x)) - 90.0);
-      this.load = (float)(-Math.toDegrees(Math.atan2(ray.y, Math.hypot(ray.x, ray.z))));
-      this.read = this.yaw;
+      this.pitch = (float)(-Math.toDegrees(Math.atan2(ray.y, Math.hypot(ray.x, ray.z))));
+      this.headYaw = this.yaw;
       this.secondaryUse = true;
    }
 
@@ -67,8 +67,8 @@ public final class AiPlacementContext extends BlockPlaceContext {
    public AiPlacementContext(Player player, ItemStack stack, BlockHitResult hit, float yaw, float headYaw, float pitch, boolean secondary) {
       super(player, InteractionHand.MAIN_HAND, stack, hit);
       this.yaw = yaw;
-      this.read = headYaw;
-      this.load = pitch;
+      this.headYaw = headYaw;
+      this.pitch = pitch;
       this.secondaryUse = secondary;
    }
 
@@ -84,12 +84,12 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    @Override
    public Direction getNearestLookingDirection() {
-      return facingOrder(this.read, this.load)[0];
+      return facingOrder(this.headYaw, this.pitch)[0];
    }
 
    @Override
    public Direction getNearestLookingVerticalDirection() {
-      return this.load < 0.0F ? Direction.UP : Direction.DOWN;
+      return this.pitch < 0.0F ? Direction.UP : Direction.DOWN;
    }
 
    @Override
@@ -99,7 +99,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    @Override
    public Direction[] getNearestLookingDirections() {
-      Direction[] directions = facingOrder(this.read, this.load);
+      Direction[] directions = facingOrder(this.headYaw, this.pitch);
       if (!this.replacingClickedOnBlock()) {
          Direction first = this.getClickedFace().getOpposite();
          int index = 0;
@@ -130,18 +130,18 @@ public final class AiPlacementContext extends BlockPlaceContext {
       Direction z = yawCos > 0.0F ? Direction.SOUTH : Direction.NORTH;
       if (xYaw > zYaw) {
          if (yMag > xMag) {
-            return init(y, x, z);
+            return directionsFrom(y, x, z);
          } else {
-            return zMag > yMag ? init(x, z, y) : init(x, y, z);
+            return zMag > yMag ? directionsFrom(x, z, y) : directionsFrom(x, y, z);
          }
       } else if (yMag > zMag) {
-         return init(y, z, x);
+         return directionsFrom(y, z, x);
       } else {
-         return xMag > yMag ? init(z, x, y) : init(z, y, x);
+         return xMag > yMag ? directionsFrom(z, x, y) : directionsFrom(z, y, x);
       }
    }
 
-   private static Direction[] init(Direction first, Direction second, Direction third) {
+   private static Direction[] directionsFrom(Direction first, Direction second, Direction third) {
       return new Direction[]{first, second, third, third.getOpposite(), second.getOpposite(), first.getOpposite()};
    }
 }

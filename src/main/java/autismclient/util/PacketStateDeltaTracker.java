@@ -65,7 +65,7 @@ public final class PacketStateDeltaTracker {
    private int selectedSlot = -1;
    private PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil;
    private PacketStateDeltaTracker.Inner_StreamUtil load_bq_StreamUtil;
-   private int sync = -1;
+   private int lastPositionId = -1;
    private String dimension = "";
    private Integer chunkCenterX;
    private Integer chunkCenterZ;
@@ -87,7 +87,7 @@ public final class PacketStateDeltaTracker {
       this.selectedSlot = -1;
       this.init_bq_StreamUtil = null;
       this.load_bq_StreamUtil = null;
-      this.sync = -1;
+      this.lastPositionId = -1;
       this.dimension = "";
       this.chunkCenterX = null;
       this.chunkCenterZ = null;
@@ -103,7 +103,7 @@ public final class PacketStateDeltaTracker {
          return EMPTY_CAPTURE;
       }
 
-      this.load();
+      this.capturePoses();
       PacketStateDeltaTracker.Inner_CachePool before = this.snapshot();
       List<String> changes = new ArrayList<>();
       this.applyPacket(packet, direction == null ? "" : direction.toUpperCase(Locale.ROOT), changes);
@@ -147,19 +147,19 @@ public final class PacketStateDeltaTracker {
 
    private void applyPacket(Packet<?> packet, String direction, List<String> changes) {
       if (packet instanceof ClientboundLoginPacket login) {
-         this.read();
+         this.resetMenuState();
          this.phase = "play";
          this.dimension = String.valueOf(login.commonPlayerSpawnInfo().dimension().identifier());
          this.chunkRadius = login.chunkRadius();
          this.simulationDistance = login.simulationDistance();
          changes.add("Entered world " + this.dimension + " as entity #" + login.playerId());
       } else if (packet instanceof ClientboundRespawnPacket respawn) {
-         this.read();
+         this.resetMenuState();
          this.phase = "play";
          this.dimension = String.valueOf(respawn.commonPlayerSpawnInfo().dimension().identifier());
          changes.add("Respawned / switched world to " + this.dimension);
       } else if (packet instanceof ClientboundTransferPacket transfer) {
-         this.read();
+         this.resetMenuState();
          this.phase = "transfer " + transfer.host() + ":" + transfer.port();
          changes.add("Server transfer to " + transfer.host() + ":" + transfer.port());
       } else if (packet instanceof ClientboundStartConfigurationPacket) {
@@ -174,7 +174,7 @@ public final class PacketStateDeltaTracker {
       } else if (packet instanceof ClientboundOpenScreenPacket open) {
          this.containerId = open.getContainerId();
          this.stateId = -1;
-         this.menuType = load(open.getType());
+         this.menuType = safeString(open.getType());
          this.menuTitle = open.getTitle() == null ? "" : open.getTitle().getString();
          this.totalSlots = -1;
          this.inventoryStart = -1;
@@ -238,7 +238,7 @@ public final class PacketStateDeltaTracker {
          );
       } else if (packet instanceof ServerboundContainerClosePacket || packet instanceof ClientboundContainerClosePacket) {
          changes.add("Closed container #" + this.containerId);
-         this.read();
+         this.resetMenuState();
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
          PacketStateDeltaTracker.Inner_StreamUtil before = this.init_bq_StreamUtil == null ? currentPlayerPose() : this.init_bq_StreamUtil;
          double x = move.getX(before == null ? 0.0 : before.x());
@@ -254,12 +254,12 @@ public final class PacketStateDeltaTracker {
          PacketStateDeltaTracker.Inner_StreamUtil base = this.load_bq_StreamUtil == null ? currentPlayerPose() : this.load_bq_StreamUtil;
          PacketStateDeltaTracker.Inner_StreamUtil next = applyRelative(base, position.change(), position.relatives());
          this.load_bq_StreamUtil = next;
-         this.sync = position.id();
-         changes.add("Server correction/teleport #" + this.sync + " -> " + formatPosition(next));
+         this.lastPositionId = position.id();
+         changes.add("Server correction/teleport #" + this.lastPositionId + " -> " + formatPosition(next));
       } else if (packet instanceof ServerboundAcceptTeleportationPacket ack) {
-         changes.add("Client acknowledged teleport #" + ack.id() + (ack.id() == this.sync ? " (matches pending)" : " (tracked pending " + this.sync + ")"));
-         if (ack.id() == this.sync) {
-            this.sync = -1;
+         changes.add("Client acknowledged teleport #" + ack.id() + (ack.id() == this.lastPositionId ? " (matches pending)" : " (tracked pending " + this.lastPositionId + ")"));
+         if (ack.id() == this.lastPositionId) {
+            this.lastPositionId = -1;
          }
       } else if (packet instanceof ClientboundSetChunkCacheCenterPacket center) {
          this.chunkCenterX = center.getX();
@@ -284,7 +284,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private void load() {
+   private void capturePoses() {
       if (this.init_bq_StreamUtil == null) {
          this.init_bq_StreamUtil = currentPlayerPose();
       }
@@ -314,7 +314,7 @@ public final class PacketStateDeltaTracker {
          this.selectedSlot,
          this.init_bq_StreamUtil,
          this.load_bq_StreamUtil,
-         this.sync,
+         this.lastPositionId,
          this.dimension,
          this.chunkCenterX,
          this.chunkCenterZ,
@@ -326,7 +326,7 @@ public final class PacketStateDeltaTracker {
       );
    }
 
-   private void read() {
+   private void resetMenuState() {
       this.containerId = -1;
       this.stateId = -1;
       this.menuType = "";
@@ -411,15 +411,15 @@ public final class PacketStateDeltaTracker {
       if (stack == null || stack == HashedStack.EMPTY) {
          return "empty";
       } else if (stack instanceof ActualItem actual) {
-         String id = actual.item().unwrapKey().map(key -> key.identifier().toString()).orElseGet(() -> load(actual.item()));
+         String id = actual.item().unwrapKey().map(key -> key.identifier().toString()).orElseGet(() -> safeString(actual.item()));
          return actual.count() + "x " + id + componentsSuffix(actual.components());
       } else {
-         return load(stack);
+         return safeString(stack);
       }
    }
 
    private static String componentsSuffix(Object components) {
-      String value = load(components);
+      String value = safeString(components);
       return value != null && !value.isBlank() && !"HashedPatchMap[hashedPatches={}]".equals(value) ? " components" : "";
    }
 
@@ -560,7 +560,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private static String load(Object value) {
+   private static String safeString(Object value) {
       if (value == null) {
          return "";
       }

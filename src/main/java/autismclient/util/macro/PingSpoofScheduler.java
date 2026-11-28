@@ -110,7 +110,7 @@ public final class PingSpoofScheduler {
       }
    }
 
-   public static void init(int delayMs, boolean realIncoming, boolean realOutgoing) {
+   public static void setDefaultRunOverride(int delayMs, boolean realIncoming, boolean realOutgoing) {
       setRunOverride(0L, delayMs, realIncoming, realOutgoing);
    }
 
@@ -125,12 +125,12 @@ public final class PingSpoofScheduler {
 
    public static void stop(long ownerRunId) {
       runOverrides.remove(ownerRunId);
-      flush();
+      updateSchedulerState();
    }
 
    public static void clearRunOverrides() {
       runOverrides.clear();
-      flush();
+      updateSchedulerState();
    }
 
    public static void setGlobal(int delayMs, boolean realIncoming, boolean realOutgoing) {
@@ -143,7 +143,7 @@ public final class PingSpoofScheduler {
 
    public static void disable() {
       globalEnabled = false;
-      flush();
+      updateSchedulerState();
    }
 
    public static int effectiveDelayMs() {
@@ -151,7 +151,7 @@ public final class PingSpoofScheduler {
          return -1;
       }
 
-      sync();
+      pruneExpiredOverrides();
       if (runOverrides.isEmpty()) {
          return globalEnabled ? globalDelayMs : -1;
       }
@@ -170,7 +170,7 @@ public final class PingSpoofScheduler {
          return false;
       }
 
-      sync();
+      pruneExpiredOverrides();
       if (!runOverrides.isEmpty()) {
          for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
             if (override.realIncoming) {
@@ -189,7 +189,7 @@ public final class PingSpoofScheduler {
          return false;
       }
 
-      sync();
+      pruneExpiredOverrides();
       if (!runOverrides.isEmpty()) {
          for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
             if (override.load) {
@@ -207,23 +207,23 @@ public final class PingSpoofScheduler {
       return effectiveDelayMs() >= 0;
    }
 
-   private static void sync() {
+   private static void pruneExpiredOverrides() {
       if (runOverrides.isEmpty()) {
-         flush();
+         updateSchedulerState();
       } else {
          long now = System.nanoTime();
 
          for (Entry<Long, PingSpoofScheduler.Inner_StreamUtil> entry : runOverrides.entrySet()) {
-            if (!entry.getValue().init(now)) {
+            if (!entry.getValue().isLive(now)) {
                runOverrides.remove(entry.getKey(), entry.getValue());
             }
          }
 
-         flush();
+         updateSchedulerState();
       }
    }
 
-   private static void flush() {
+   private static void updateSchedulerState() {
       write_Z = globalEnabled || !runOverrides.isEmpty();
       if (!write_Z && schedulerInstance != null) {
          ScheduledExecutorService local;
@@ -299,7 +299,7 @@ public final class PingSpoofScheduler {
 
       int delay = effectiveDelayMs();
       if (delay > 0 && packet instanceof ServerboundKeepAlivePacket) {
-         init(packet, delay);
+         schedule(packet, delay);
          return true;
       }
 
@@ -361,27 +361,27 @@ public final class PingSpoofScheduler {
       }
    }
 
-   private static void init(Packet<?> packet, int delayMs) {
+   private static void schedule(Packet<?> packet, int delayMs) {
       long wait = load_AtomicInteger.get() >= 256 ? 0L : Math.max(0L, Math.min(delayMs, 8000L));
       int epoch = scheduleEpoch;
       if (wait <= 0L) {
-         load(packet, epoch);
+         deliver(packet, epoch);
       } else {
          load_AtomicInteger.incrementAndGet();
 
          try {
             scheduler().schedule(() -> {
                load_AtomicInteger.decrementAndGet();
-               load(packet, epoch);
+               deliver(packet, epoch);
             }, wait, TimeUnit.MILLISECONDS);
          } catch (Throwable rejected) {
             load_AtomicInteger.decrementAndGet();
-            load(packet, epoch);
+            deliver(packet, epoch);
          }
       }
    }
 
-   private static void load(Packet<?> packet, int epoch) {
+   private static void deliver(Packet<?> packet, int epoch) {
       if (epoch == scheduleEpoch) {
          ClientPacketListener connection = MINECRAFT == null ? null : MINECRAFT.getConnection();
          if (connection != null) {
@@ -390,7 +390,7 @@ public final class PingSpoofScheduler {
             try {
                connection.send(packet);
             } catch (Throwable t) {
-               init("keepalive", packet, t);
+               logFailure("keepalive", packet, t);
             } finally {
                consumeOwnPacket(packet);
             }
@@ -406,7 +406,7 @@ public final class PingSpoofScheduler {
             gamePacket.handle(connection);
          } catch (RunningOnDifferentThreadException var3) {
          } catch (Throwable t) {
-            init("incoming", packet, t);
+            logFailure("incoming", packet, t);
          }
       }
    }
@@ -419,7 +419,7 @@ public final class PingSpoofScheduler {
          try {
             connection.send(packet);
          } catch (Throwable t) {
-            init("outgoing", packet, t);
+            logFailure("outgoing", packet, t);
          } finally {
             consumeOwnPacket(packet);
          }
@@ -445,7 +445,7 @@ public final class PingSpoofScheduler {
       return true;
    }
 
-   private static void init(String direction, Packet<?> packet, Throwable t) {
+   private static void logFailure(String direction, Packet<?> packet, Throwable t) {
       if (!(t instanceof RunningOnDifferentThreadException) && !(t.getCause() instanceof RunningOnDifferentThreadException)) {
          long now = System.currentTimeMillis();
          if (now - read_J >= 5000L) {
@@ -530,7 +530,7 @@ public final class PingSpoofScheduler {
    }
 
    private record Inner_StreamUtil(int delayMs, boolean realIncoming, boolean load, long expiresAtMs, boolean read) {
-      boolean init(long now) {
+      boolean isLive(long now) {
          return this.read || now - this.expiresAtMs < 0L;
       }
    }

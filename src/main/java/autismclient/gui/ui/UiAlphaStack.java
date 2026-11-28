@@ -2,48 +2,48 @@ package autismclient.gui.ui;
 
 public final class UiAlphaStack {
    private static final int init_I = 16;
-   private static final float[] init_FArr = new float[16];
-   private static int load;
-   private static float init_F = 1.0F;
+   private static final float[] STACK = new float[16];
+   private static int depth;
+   private static float current = 1.0F;
 
    private UiAlphaStack() {
    }
 
    public static float current() {
-      return init_F;
+      return current;
    }
 
    public static void push(float alpha) {
-      if (load < 16) {
-         init_FArr[load] = init_F;
+      if (depth < 16) {
+         STACK[depth] = current;
       }
 
-      load++;
-      init_F = init_F * Math.max(0.0F, Math.min(1.0F, alpha));
+      depth++;
+      current = current * Math.max(0.0F, Math.min(1.0F, alpha));
    }
 
    public static void pop() {
-      if (load > 0) {
-         load--;
-         init_F = load < 16 ? init_FArr[load] : init_F;
-         if (load == 0) {
-            init_F = 1.0F;
+      if (depth > 0) {
+         depth--;
+         current = depth < 16 ? STACK[depth] : current;
+         if (depth == 0) {
+            current = 1.0F;
          }
       }
    }
 
    public static int depth() {
-      return load;
+      return depth;
    }
 
    public static void popTo(int target) {
-      while (load > Math.max(0, target)) {
+      while (depth > Math.max(0, target)) {
          pop();
       }
    }
 
    public static int apply(int argb) {
-      float a = init_F;
+      float a = current;
       if (a >= 1.0F) {
          return argb;
       }

@@ -45,8 +45,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    private Object lastLevel;
    private String statusText = "Idle";
    private int previousSlot = -1;
-   private int update = -1;
-   private int sync = -2147483648;
+   private int swapSlot = -1;
+   private int swapTick = -2147483648;
    private ItemStack previousHeld = ItemStack.EMPTY;
    private Object previousSlotLevel;
 
@@ -181,10 +181,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       int slot = init(
          MC.player.getInventory().getSelectedSlot(),
          this.previousSlot,
-         this.update,
+         this.swapSlot,
          this.previousSlotLevel == MC.level,
          this.isEnabled(),
-         (long)this.clientTick() - this.sync,
+         (long)this.clientTick() - this.swapTick,
          ItemStack.isSameItem(MC.player.getMainHandItem(), this.previousHeld)
       );
       if (slot < 0) {
@@ -209,8 +209,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    private void clearSlotRestore() {
-      this.previousSlot = this.update = -1;
-      this.sync = -2147483648;
+      this.previousSlot = this.swapSlot = -1;
+      this.swapTick = -2147483648;
       this.previousHeld = ItemStack.EMPTY;
       this.previousSlotLevel = null;
    }
@@ -237,7 +237,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean open() {
+   private boolean ownsRotation() {
       return this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
@@ -246,7 +246,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || this.isEnabled() && this.routeTick == this.clientTick());
    }
 
-   private boolean poll() {
+   private boolean canOperate() {
       return MC.player != null
          && MC.level != null
          && MC.gameMode != null
@@ -300,11 +300,11 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          this.lastLevel = MC.level;
       }
 
-      if (!this.poll()) {
+      if (!this.canOperate()) {
          this.stopWithReason("Paused", true);
       } else {
          if (this.load_I_7() >= 0) {
-            this.sync = this.clientTick();
+            this.swapTick = this.clientTick();
          }
 
          EspChunkWorker.setLevel(MC.level);
@@ -433,7 +433,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                this.routeTick = this.clientTick();
                this.statusText = this.route.first().init_Z() ? "Breaking bed" : "Opening bed";
                autismclient.util.SilentRotationManager.requestRotation(this.id(), 12, goal);
-               if (!this.open()) {
+               if (!this.ownsRotation()) {
                   this.stopMining();
                } else {
                   autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 37.0F, 37.0F);
@@ -453,10 +453,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
                            autismclient.util.InventorySlotHelper.selectHotbarSlot(MC, slot);
                            this.load_I = this.clientTick();
-                           this.update = slot;
+                           this.swapSlot = slot;
                            this.previousHeld = MC.player.getMainHandItem().copy();
                            this.previousSlotLevel = MC.level;
-                           this.sync = this.clientTick();
+                           this.swapTick = this.clientTick();
                         } finally {
                            autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
                         }
@@ -563,7 +563,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       this.stopMining();
       this.pendingSlot = -1;
       this.statusText = reason;
-      if (this.open()) {
+      if (this.ownsRotation()) {
          autismclient.util.SilentRotationManager.releaseOwner(this.id());
          if (pump && MC.player != null) {
             autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
@@ -581,7 +581,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    @Override
    public void onDisable() {
-      this.sync = this.clientTick();
+      this.swapTick = this.clientTick();
       this.resetRoute();
       BedMiningEstimator.clearCache();
       this.stopWithReason("Idle", false);
@@ -593,7 +593,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       this.clearSlotRestore();
       BedMiningEstimator.clearCache();
       this.paceGuard.reset();
-      if (this.open()) {
+      if (this.ownsRotation()) {
          autismclient.util.SilentRotationManager.resetAll();
       }
 
@@ -607,12 +607,12 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean hasDisabledTickWork() {
-      return this.open();
+      return this.ownsRotation();
    }
 
    @Override
    public void tick() {
-      if (!this.isEnabled() && this.open() && MC.player != null) {
+      if (!this.isEnabled() && this.ownsRotation() && MC.player != null) {
          autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
       }
    }

@@ -29,16 +29,16 @@ public final class AiBackfill {
    private final Deque<BlockPos> pendingCells = new ArrayDeque<>();
    private final Set<Long> visitedCells = new HashSet<>();
    private BlockPos currentCell;
-   private int write;
-   private int update = -1;
-   private int sync;
+   private int cellTicks;
+   private int previousSlot = -1;
+   private int placedCount;
 
    public AiBackfill(Minecraft mc) {
       this.client = mc;
    }
 
    public int getBackfilledCount() {
-      return this.sync;
+      return this.placedCount;
    }
 
    boolean isBackfilling() {
@@ -64,11 +64,11 @@ public final class AiBackfill {
       }
    }
 
-   static boolean init(double dot, double distanceSqr, boolean open, boolean supported, boolean reserved) {
+   static boolean isBehindCandidate(double dot, double distanceSqr, boolean open, boolean supported, boolean reserved) {
       return dot < -0.2 && distanceSqr >= 4.0 && open && supported && !reserved;
    }
 
-   static double init(Vec3 toCell, Vec3 lookVec) {
+   static double facingDot(Vec3 toCell, Vec3 lookVec) {
       return toCell.normalize().dot(lookVec.normalize());
    }
 
@@ -90,13 +90,13 @@ public final class AiBackfill {
                boolean open = probe.passable() && !probe.water() && !probe.lava();
                if (open && this.init_Z(cell)) {
                   double distanceSqr = center.distanceToSqr(pos);
-                  if (!init(init(center.subtract(pos), look), distanceSqr, true, true, false)) {
+                  if (!isBehindCandidate(facingDot(center.subtract(pos), look), distanceSqr, true, true, false)) {
                      if (DEBUG) {
                         AiNavDebug.log(
                            "backfill skip-geometry cell="
                               + cell
                               + " dot="
-                              + String.format("%.2f", init(center.subtract(pos), look))
+                              + String.format("%.2f", facingDot(center.subtract(pos), look))
                               + " dist2="
                               + String.format("%.1f", distanceSqr)
                         );
@@ -105,7 +105,7 @@ public final class AiBackfill {
                      if (!(this.client.player.getEyePosition().distanceToSqr(center) > 22.5625)) {
                         iterator.remove();
                         this.currentCell = cell;
-                        this.write = 0;
+                        this.cellTicks = 0;
                         this.load_Z = false;
                         this.read_V();
                         return;
@@ -125,8 +125,8 @@ public final class AiBackfill {
    }
 
    private void read_V() {
-      if (++this.write > 40) {
-         this.init(false);
+      if (++this.cellTicks > 40) {
+         this.finishCell(false);
       } else {
          if (!this.load_Z) {
             if (!this.classifyCell(this.currentCell).passable()) {
@@ -134,7 +134,7 @@ public final class AiBackfill {
                   AiNavDebug.log("backfill fail occupied cell=" + this.currentCell);
                }
 
-               this.init(false);
+               this.finishCell(false);
                return;
             }
 
@@ -144,43 +144,43 @@ public final class AiBackfill {
                   AiNavDebug.log("backfill fail no-throwaway cell=" + this.currentCell);
                }
 
-               this.init(false);
+               this.finishCell(false);
                return;
             }
 
-            this.update = this.client.player.getInventory().getSelectedSlot();
+            this.previousSlot = this.client.player.getInventory().getSelectedSlot();
             this.placer.start(this.currentCell, this.client.player.getInventory().getItem(slot).getItem());
             this.load_Z = true;
          }
 
          switch (this.placer.tick()) {
             case PLACED:
-               this.init(true);
+               this.finishCell(true);
                break;
             case FAILED:
                if (DEBUG) {
                   AiNavDebug.log("backfill placer-failed cell=" + this.currentCell);
                }
 
-               this.init(false);
+               this.finishCell(false);
             case WORKING:
          }
       }
    }
 
-   private void init(boolean verified) {
+   private void finishCell(boolean verified) {
       if (verified) {
-         this.sync++;
+         this.placedCount++;
       }
 
       this.visitedCells.remove(this.currentCell.asLong());
       this.currentCell = null;
-      this.write = 0;
+      this.cellTicks = 0;
       this.placer.reset();
       this.load_Z = false;
-      if (this.update >= 0 && this.client.player != null) {
-         this.client.player.getInventory().setSelectedSlot(this.update);
-         this.update = -1;
+      if (this.previousSlot >= 0 && this.client.player != null) {
+         this.client.player.getInventory().setSelectedSlot(this.previousSlot);
+         this.previousSlot = -1;
       }
    }
 
@@ -188,7 +188,7 @@ public final class AiBackfill {
       this.pendingCells.clear();
       this.visitedCells.clear();
       if (this.currentCell != null) {
-         this.init(false);
+         this.finishCell(false);
       }
 
       this.placer.reset();
@@ -199,13 +199,13 @@ public final class AiBackfill {
       List<AiRestock.BackpackSlotView> hotbar = new ArrayList<>(9);
 
       for (int slot = 0; slot < 9; slot++) {
-         hotbar.add(this.init(this.client.player.getInventory().getItem(slot)));
+         hotbar.add(this.restockOption(this.client.player.getInventory().getItem(slot)));
       }
 
       return AiRestock.pickBestBackpackSlot(hotbar, null);
    }
 
-   private AiRestock.BackpackSlotView init(ItemStack stack) {
+   private AiRestock.BackpackSlotView restockOption(ItemStack stack) {
       return stack.getItem() instanceof BlockItem block && AiRestock.canSpendStack(stack, this.client.player.getInventory())
          ? new AiRestock.BackpackSlotView(
             BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class CombatAttackDispatcher {
-   private static final CombatAttackDispatcher.Inner_DataUtil init = new CombatAttackDispatcher.Inner_DataUtil();
+   private static final CombatAttackDispatcher.Inner_DataUtil DISPATCHER = new CombatAttackDispatcher.Inner_DataUtil();
 
    private CombatAttackDispatcher() {
    }
@@ -20,52 +20,52 @@ public final class CombatAttackDispatcher {
          return false;
       }
 
-      init.load(dispatched);
+      DISPATCHER.replaceLast(dispatched);
       return true;
    }
 
    public static void onAttack(Player player, Entity target) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc != null && player == mc.player && !init.init_Z(target) && ClientInteractionOverride.ownsAttackInput()) {
-         init.load(target);
+      if (mc != null && player == mc.player && !DISPATCHER.init_Z(target) && ClientInteractionOverride.ownsAttackInput()) {
+         DISPATCHER.fireReceipt(target);
       }
    }
 
    public static void dispatch(Entity target, Runnable attack, Runnable dispatched) {
-      init.init(target, attack, dispatched);
+      DISPATCHER.runWithReceipt(target, attack, dispatched);
    }
 
    static void clear() {
-      init.init(() -> {});
+      DISPATCHER.enqueue(() -> {});
    }
 
    public static Runnable receiptFor(Entity target) {
-      return init.init_Runnable(target);
+      return DISPATCHER.init_Runnable(target);
    }
 
    static void init_V(Entity target) {
-      init.init_V(target);
+      DISPATCHER.init_V(target);
    }
 
    static void load() {
-      init.load();
+      DISPATCHER.clearBound();
    }
 
    static void read() {
-      init.init();
+      DISPATCHER.clearQueue();
    }
 
    static void write() {
-      init.read();
+      DISPATCHER.clearAll();
    }
 
    static final class Inner_DataUtil {
       private final Deque<Runnable> queue = new ArrayDeque<>();
-      private final Deque<Runnable> load = new ArrayDeque<>();
+      private final Deque<Runnable> boundReceipts = new ArrayDeque<>();
       private Object init_Obj;
       private CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2 init_r_DataUtil_DataUti;
 
-      void init(Object target, Runnable attack, Runnable dispatched) {
+      void runWithReceipt(Object target, Runnable attack, Runnable dispatched) {
          CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2 previous = this.init_r_DataUtil_DataUti;
          this.init_r_DataUtil_DataUti = new CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2(target, Objects.requireNonNull(dispatched));
 
@@ -78,7 +78,7 @@ public final class CombatAttackDispatcher {
 
       boolean init_Z(Object hit) {
          if (this.init_r_DataUtil_DataUti != null && this.init_r_DataUtil_DataUti.init_Obj == hit) {
-            Runnable receipt = this.init_r_DataUtil_DataUti.init();
+            Runnable receipt = this.init_r_DataUtil_DataUti.take();
             if (receipt != null) {
                receipt.run();
             }
@@ -89,23 +89,23 @@ public final class CombatAttackDispatcher {
          }
       }
 
-      void init(Runnable receipt) {
+      void enqueue(Runnable receipt) {
          this.queue.addLast(Objects.requireNonNull(receipt));
       }
 
-      void load(Runnable receipt) {
+      void replaceLast(Runnable receipt) {
          this.queue.removeLast();
-         this.init(receipt);
+         this.enqueue(receipt);
       }
 
       void init_V(Object target) {
-         this.load();
-         this.load.addAll(this.queue);
+         this.clearBound();
+         this.boundReceipts.addAll(this.queue);
          this.queue.clear();
          this.init_Obj = target;
       }
 
-      void load(Object hit) {
+      void fireReceipt(Object hit) {
          Runnable receipt = this.init_Runnable(hit);
          if (receipt != null) {
             receipt.run();
@@ -114,24 +114,24 @@ public final class CombatAttackDispatcher {
 
       Runnable init_Runnable(Object hit) {
          if (this.init_r_DataUtil_DataUti != null && this.init_r_DataUtil_DataUti.init_Obj == hit) {
-            return this.init_r_DataUtil_DataUti.init();
+            return this.init_r_DataUtil_DataUti.take();
          } else {
-            return this.init_Obj != null && this.init_Obj == hit ? this.load.pollFirst() : null;
+            return this.init_Obj != null && this.init_Obj == hit ? this.boundReceipts.pollFirst() : null;
          }
       }
 
-      void init() {
+      void clearQueue() {
          this.queue.clear();
       }
 
-      void load() {
+      void clearBound() {
          this.init_Obj = null;
-         this.load.clear();
+         this.boundReceipts.clear();
       }
 
-      void read() {
-         this.init();
-         this.load();
+      void clearAll() {
+         this.clearQueue();
+         this.clearBound();
       }
 
       private static final class Inner_DataUtil_2 {
@@ -143,7 +143,7 @@ public final class CombatAttackDispatcher {
             this.init_Runnable = receipt;
          }
 
-         Runnable init() {
+         Runnable take() {
             Runnable result = this.init_Runnable;
             this.init_Runnable = null;
             return result;

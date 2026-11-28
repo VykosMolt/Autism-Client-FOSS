@@ -28,7 +28,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
    private UUID vehicleId;
    private PrintMachineJob.JobStatus status = PrintMachineJob.JobStatus.PREPARING;
    private long dispatchNanos;
-   private long load = -9223372036854775808L;
+   private long lastSeenNanos = -9223372036854775808L;
    private Vec3 targetPosition;
    private AABB bounds;
    private String failure = "Waiting for observed rail and entity state";
@@ -105,11 +105,11 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
    }
 
-   private boolean open() {
+   private boolean isCurrent() {
       return this.worldToken != null && this.worldToken == this.env.worldToken();
    }
 
-   private boolean init(PrintRailVehicle.Inner_DataUtil observed) {
+   private boolean matchesSpec(PrintRailVehicle.Inner_DataUtil observed) {
       if (observed.uuid() != null && this.spec.entityId().equals(observed.entityId()) && observed.position() != null) {
          return this.spec.railPlacement()
             ? observed.position().distanceToSqr(this.targetPosition) <= 0.25
@@ -130,7 +130,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.isCurrent()) {
          this.status = PrintMachineJob.JobStatus.CONFLICT;
          this.failure = "World changed before vehicle placement";
          return this.status;
@@ -177,7 +177,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
          }
 
          ids.add(observed.uuid());
-         if (this.init(observed)) {
+         if (this.matchesSpec(observed)) {
             if (existing != null) {
                this.status = PrintMachineJob.JobStatus.CONFLICT;
                this.failure = "Multiple matching vehicles already occupy the saved position";
@@ -235,7 +235,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.isCurrent()) {
          this.status = PrintMachineJob.JobStatus.UNCERTAIN;
          this.failure = "World changed after the vehicle attempt; do not repeat it";
          return this.status;
@@ -245,7 +245,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       PrintRailVehicle.Inner_DataUtil created = null;
       if (observations != null) {
          for (PrintRailVehicle.Inner_DataUtil observed : observations) {
-            if (this.init(observed) && !this.existingIds.contains(observed.uuid())) {
+            if (this.matchesSpec(observed) && !this.existingIds.contains(observed.uuid())) {
                if (created != null) {
                   this.status = PrintMachineJob.JobStatus.UNCERTAIN;
                   this.failure = "Ambiguous native vehicle receipt; do not repeat the attempt";
@@ -278,13 +278,13 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.isCurrent()) {
          this.failure = "World changed before final vehicle verification";
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
       if (this.firstUnloadedCell() != null) {
-         this.load = -9223372036854775808L;
+         this.lastSeenNanos = -9223372036854775808L;
          return PrintMachineJob.JobStatus.PREPARING;
       }
 
@@ -292,23 +292,23 @@ public final class PrintRailVehicle implements PrintMachineJob {
       if (observations != null) {
          for (PrintRailVehicle.Inner_DataUtil observed : observations) {
             if (this.vehicleId.equals(observed.uuid())) {
-               if (!this.init(observed)) {
+               if (!this.matchesSpec(observed)) {
                   this.failure = "The verified vehicle left its saved placement at " + this.spec.rail().toShortString();
                   return this.status = PrintMachineJob.JobStatus.CONFLICT;
                }
 
-               this.load = -9223372036854775808L;
+               this.lastSeenNanos = -9223372036854775808L;
                this.failure = "Native vehicle identity reverified after access recovery";
                return PrintMachineJob.JobStatus.SUCCEEDED;
             }
          }
       }
 
-      if (this.load == -9223372036854775808L) {
-         this.load = this.env.nanoTime();
+      if (this.lastSeenNanos == -9223372036854775808L) {
+         this.lastSeenNanos = this.env.nanoTime();
       }
 
-      if (this.env.nanoTime() - this.load >= 5000000000L) {
+      if (this.env.nanoTime() - this.lastSeenNanos >= 5000000000L) {
          this.failure = "The verified vehicle is unavailable at " + this.spec.rail().toShortString() + "; do not repeat placement";
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       } else {

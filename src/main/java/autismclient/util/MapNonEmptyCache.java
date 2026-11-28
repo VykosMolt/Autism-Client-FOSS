@@ -7,10 +7,10 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 final class MapNonEmptyCache {
    private Object level;
    private MapId id;
-   private MapItemSavedData init_MapItemSavedData;
-   private int init_I;
-   private boolean init_Z;
-   private boolean load;
+   private MapItemSavedData cachedData;
+   private int cachedTick;
+   private boolean cacheValid;
+   private boolean cachedNonEmpty;
 
    boolean isNonEmpty(Object level, MapId id, MapItemSavedData data, int tick) {
       if (level == null || id == null || data == null) {
@@ -18,37 +18,37 @@ final class MapNonEmptyCache {
          return false;
       }
 
-      if (this.init_Z && this.level == level && id.equals(this.id) && this.init_MapItemSavedData == data && this.init_I == tick) {
-         return this.load;
+      if (this.cacheValid && this.level == level && id.equals(this.id) && this.cachedData == data && this.cachedTick == tick) {
+         return this.cachedNonEmpty;
       }
 
       this.level = level;
       this.id = id;
-      this.init_MapItemSavedData = data;
-      this.init_I = tick;
-      this.init_Z = true;
-      this.load = false;
+      this.cachedData = data;
+      this.cachedTick = tick;
+      this.cacheValid = true;
+      this.cachedNonEmpty = false;
 
       for (byte color : data.colors) {
          if (MapColor.getColorFromPackedId(color) != 0) {
-            this.load = true;
+            this.cachedNonEmpty = true;
             break;
          }
       }
 
-      return this.load;
+      return this.cachedNonEmpty;
    }
 
    void invalidate(MapId id) {
       if (id != null && id.equals(this.id)) {
-         this.init_Z = false;
+         this.cacheValid = false;
       }
    }
 
    void clear() {
       this.level = null;
       this.id = null;
-      this.init_MapItemSavedData = null;
-      this.init_Z = this.load = false;
+      this.cachedData = null;
+      this.cacheValid = this.cachedNonEmpty = false;
    }
 }

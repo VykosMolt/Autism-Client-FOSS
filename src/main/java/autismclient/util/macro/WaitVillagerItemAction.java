@@ -16,8 +16,8 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
 
    @Override
    public void run(MacroExecutionContext ctx) {
-      WaitVillagerItemAction.Inner_DataUtil watcher = new WaitVillagerItemAction.Inner_DataUtil(ctx, init(this.timeoutTicks, 0, 1200));
-      autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(watcher::init);
+      WaitVillagerItemAction.Inner_DataUtil watcher = new WaitVillagerItemAction.Inner_DataUtil(ctx, clamp(this.timeoutTicks, 0, 1200));
+      autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(watcher::poll);
 
       while (!watcher.load_Z && ctx.isActive()) {
          CompletableFuture<Void> next = watcher.init_CompletableFuture;
@@ -43,7 +43,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       tag.putString("filter", this.filter.name());
       tag.putBoolean("traders", this.traders);
       tag.putBoolean("holdEmerald", this.holdEmerald);
-      tag.putInt("timeoutTicks", init(this.timeoutTicks, 0, 1200));
+      tag.putInt("timeoutTicks", clamp(this.timeoutTicks, 0, 1200));
       tag.putBoolean("enabled", this.enabled);
       return tag;
    }
@@ -53,7 +53,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(tag.getStringOr("filter", "ALL"));
       this.traders = tag.getBooleanOr("traders", true);
       this.holdEmerald = tag.getBooleanOr("holdEmerald", true);
-      this.timeoutTicks = init(tag.getIntOr("timeoutTicks", 0), 0, 1200);
+      this.timeoutTicks = clamp(tag.getIntOr("timeoutTicks", 0), 0, 1200);
       this.enabled = tag.getBooleanOr("enabled", true);
    }
 
@@ -82,7 +82,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
       this.enabled = value;
    }
 
-   private static int init(int n, int min, int max) {
+   private static int clamp(int n, int min, int max) {
       return Math.max(min, Math.min(max, n));
    }
 
@@ -93,8 +93,8 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
          WaitVillagerItemAction.this.filter, WaitVillagerItemAction.this.traders, true, false, true, false, false, 1
       );
       private final autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil itemFilter = WaitVillagerItemAction.this.filter;
-      private final boolean read = WaitVillagerItemAction.this.traders;
-      private final boolean write = WaitVillagerItemAction.this.holdEmerald;
+      private final boolean useTraders = WaitVillagerItemAction.this.traders;
+      private final boolean holdingEmerald = WaitVillagerItemAction.this.holdEmerald;
       final int init_I;
       private int load_I;
       volatile autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
@@ -107,16 +107,16 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
          this.init_I = timeout;
       }
 
-      boolean init(Minecraft mc) {
+      boolean poll(Minecraft mc) {
          if (!this.context.isActive()) {
             return this.init_Z();
          }
 
-         autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next = (this.write
+         autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next = (this.holdingEmerald
                ? this.driver.start(mc, this.driverOptions)
                : this.driver.resume(mc, this.driverOptions))
             .status();
-         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.hasTrader(mc, this.itemFilter, this.read);
+         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.hasTrader(mc, this.itemFilter, this.useTraders);
          this.load_I++;
          if (!this.init_Z && (this.init_I <= 0 || this.load_I < this.init_I)) {
             if (next != this.init_DataUtil_ConfigSto) {

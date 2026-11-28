@@ -18,7 +18,7 @@ import org.joml.Matrix3x2f;
 import org.lwjgl.system.MemoryUtil;
 
 public final class SdfIconRenderer {
-   private static final SdfIconRenderer.Inner_DataUtil[] init_CachePool_DataUtilArr = new SdfIconRenderer.Inner_DataUtil[]{
+   private static final SdfIconRenderer.Inner_DataUtil[] GLYPHS = new SdfIconRenderer.Inner_DataUtil[]{
       new SdfIconRenderer.Inner_DataUtil("x", new float[]{4.0F, 4.0F, 12.0F, 12.0F, 12.0F, 4.0F, 4.0F, 12.0F}),
       new SdfIconRenderer.Inner_DataUtil("plus", new float[]{8.0F, 3.0F, 8.0F, 13.0F, 3.0F, 8.0F, 13.0F, 8.0F}),
       new SdfIconRenderer.Inner_DataUtil("minus", new float[]{3.0F, 8.0F, 13.0F, 8.0F}),
@@ -619,11 +619,11 @@ public final class SdfIconRenderer {
       ),
       new SdfIconRenderer.Inner_DataUtil("dot", new float[0])
    };
-   private static final Map<String, Integer> TILE_INDEX = new HashMap<>(init_CachePool_DataUtilArr.length * 2);
+   private static final Map<String, Integer> TILE_INDEX = new HashMap<>(GLYPHS.length * 2);
    private static final int init_I = 64;
-   private static final Identifier init_Identifier;
-   private static volatile SdfIconRenderer.Inner_StreamUtil init_CachePool_StreamUt;
-   private static volatile boolean init_Z;
+   private static final Identifier TEXTURE_ID;
+   private static volatile SdfIconRenderer.Inner_StreamUtil atlas;
+   private static volatile boolean buildFailed;
    private static volatile NativeImage prewarmedImage;
 
    private SdfIconRenderer() {
@@ -648,7 +648,7 @@ public final class SdfIconRenderer {
          }
 
          if (w > 0 && h > 0 && color >>> 24 != 0) {
-            SdfIconRenderer.Inner_StreamUtil atlas = init_CachePool_StreamUt();
+            SdfIconRenderer.Inner_StreamUtil atlas = ensureAtlas();
             if (atlas == null) {
                return false;
             }
@@ -656,8 +656,8 @@ public final class SdfIconRenderer {
             float size = Math.min(w, h);
             float left = x + (w - size) * 0.5F;
             float top = y + (h - size) * 0.5F;
-            float u = (float)tile / init_CachePool_DataUtilArr.length;
-            float u1 = (tile + 1.0F) / init_CachePool_DataUtilArr.length;
+            float u = (float)tile / GLYPHS.length;
+            float u1 = (tile + 1.0F) / GLYPHS.length;
             TexturedQuadRenderState element = TexturedQuadRenderState.create(
                SdfRenderPipelines.pipeline(),
                TextureSetup.singleTexture(atlas.getTextureView(), atlas.getSampler()),
@@ -681,11 +681,11 @@ public final class SdfIconRenderer {
    }
 
    public static void prewarm() {
-      if (init_CachePool_StreamUt == null && !init_Z && prewarmedImage == null) {
+      if (atlas == null && !buildFailed && prewarmedImage == null) {
          try {
-            NativeImage built = init_NativeImage();
+            NativeImage built = renderAtlasImage();
             synchronized (SdfIconRenderer.class) {
-               if (init_CachePool_StreamUt == null && !init_Z && prewarmedImage == null) {
+               if (atlas == null && !buildFailed && prewarmedImage == null) {
                   prewarmedImage = built;
                } else {
                   built.close();
@@ -699,9 +699,9 @@ public final class SdfIconRenderer {
    public static void releaseAll() {
       SdfIconRenderer.Inner_StreamUtil toRelease;
       synchronized (SdfIconRenderer.class) {
-         toRelease = init_CachePool_StreamUt;
-         init_CachePool_StreamUt = null;
-         init_Z = false;
+         toRelease = atlas;
+         atlas = null;
+         buildFailed = false;
          if (prewarmedImage != null) {
             prewarmedImage.close();
             prewarmedImage = null;
@@ -709,29 +709,29 @@ public final class SdfIconRenderer {
       }
 
       if (toRelease != null) {
-         Minecraft.getInstance().getTextureManager().release(init_Identifier);
+         Minecraft.getInstance().getTextureManager().release(TEXTURE_ID);
       }
    }
 
-   private static SdfIconRenderer.Inner_StreamUtil init_CachePool_StreamUt() {
-      SdfIconRenderer.Inner_StreamUtil current = init_CachePool_StreamUt;
-      if (current == null && !init_Z) {
+   private static SdfIconRenderer.Inner_StreamUtil ensureAtlas() {
+      SdfIconRenderer.Inner_StreamUtil current = atlas;
+      if (current == null && !buildFailed) {
          synchronized (SdfIconRenderer.class) {
-            current = init_CachePool_StreamUt;
-            if (current == null && !init_Z) {
+            current = atlas;
+            if (current == null && !buildFailed) {
                NativeImage pixels = null;
                boolean ownedByAtlas = false;
                try {
                   pixels = prewarmedImage;
                   prewarmedImage = null;
                   if (pixels == null) {
-                     pixels = init_NativeImage();
+                     pixels = renderAtlasImage();
                   }
 
                   current = new SdfIconRenderer.Inner_StreamUtil(pixels);
                   ownedByAtlas = true;
-                  Minecraft.getInstance().getTextureManager().register(init_Identifier, current);
-                  init_CachePool_StreamUt = current;
+                  Minecraft.getInstance().getTextureManager().register(TEXTURE_ID, current);
+                  atlas = current;
                } catch (Throwable error) {
                   if (pixels != null && !ownedByAtlas) {
                      try {
@@ -739,7 +739,7 @@ public final class SdfIconRenderer {
                      } catch (Throwable ignored) {
                      }
                   }
-                  init_Z = true;
+                  buildFailed = true;
                   return null;
                }
             }
@@ -749,15 +749,15 @@ public final class SdfIconRenderer {
       return current;
    }
 
-   private static NativeImage init_NativeImage() {
-      int width = 64 * init_CachePool_DataUtilArr.length;
+   private static NativeImage renderAtlasImage() {
+      int width = 64 * GLYPHS.length;
       NativeImage image = new NativeImage(Format.LUMINANCE, width, 64, false);
       long base = image.getPointer();
 
-      for (int tile = 0; tile < init_CachePool_DataUtilArr.length; tile++) {
-         SdfIconRenderer.Inner_DataUtil glyph = init_CachePool_DataUtilArr[tile];
-         float[] segments = glyph.init_FArr();
-         String name = glyph.init_Str();
+      for (int tile = 0; tile < GLYPHS.length; tile++) {
+         SdfIconRenderer.Inner_DataUtil glyph = GLYPHS[tile];
+         float[] segments = glyph.segments();
+         String name = glyph.name();
          boolean isDot = "dot".equals(name);
          boolean isProfiles = "profiles".equals(name);
          boolean isCatPlayer = "cat_player".equals(name);
@@ -813,14 +813,14 @@ public final class SdfIconRenderer {
    }
 
    static {
-      for (int i = 0; i < init_CachePool_DataUtilArr.length; i++) {
-         TILE_INDEX.put(init_CachePool_DataUtilArr[i].init_Str(), i);
+      for (int i = 0; i < GLYPHS.length; i++) {
+         TILE_INDEX.put(GLYPHS[i].name(), i);
       }
 
-      init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_icons");
+      TEXTURE_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_icons");
    }
 
-   private record Inner_DataUtil(String init_Str, float[] init_FArr) {
+   private record Inner_DataUtil(String name, float[] segments) {
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {

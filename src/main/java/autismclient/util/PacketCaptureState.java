@@ -7,7 +7,7 @@ public final class PacketCaptureState {
    private static final int read = 3;
    private static volatile long capturedState;
    private static volatile long load_J;
-   private static final ThreadLocal<int[]> init_ThreadLocal = new ThreadLocal<>();
+   private static final ThreadLocal<int[]> CAPTURE_DEPTH = new ThreadLocal<>();
 
    private PacketCaptureState() {
    }
@@ -22,29 +22,29 @@ public final class PacketCaptureState {
          return current;
       }
 
-      int[] depth = init_ThreadLocal.get();
+      int[] depth = CAPTURE_DEPTH.get();
       return depth != null && depth[0] > 0 ? current & -3L : current;
    }
 
-   public static void init_V() {
-      int[] depth = init_ThreadLocal.get();
+   public static void enterCapture() {
+      int[] depth = CAPTURE_DEPTH.get();
       if (depth == null) {
          depth = new int[1];
-         init_ThreadLocal.set(depth);
+         CAPTURE_DEPTH.set(depth);
       }
 
       depth[0]++;
    }
 
-   public static void load_V() {
-      int[] depth = init_ThreadLocal.get();
+   public static void exitCapture() {
+      int[] depth = CAPTURE_DEPTH.get();
       if (depth != null && --depth[0] <= 0) {
-         init_ThreadLocal.remove();
+         CAPTURE_DEPTH.remove();
       }
    }
 
    public static void read() {
-      init_ThreadLocal.remove();
+      CAPTURE_DEPTH.remove();
    }
 
    public static int captureFlags(long capturedState) {
@@ -96,15 +96,15 @@ public final class PacketCaptureState {
          load_J = 0L;
       }
 
-      init_V_I(next);
+      setCaptureMode(next);
    }
 
    public static void update() {
       load_J = 0L;
-      init_V_I(0);
+      setCaptureMode(0);
    }
 
-   private static void init_V_I(int nextMode) {
+   private static void setCaptureMode(int nextMode) {
       long previous = capturedState;
       if (captureFlags(previous) != nextMode) {
          synchronized (PacketCaptureState.class) {
