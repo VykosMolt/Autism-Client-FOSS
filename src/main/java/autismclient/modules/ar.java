@@ -494,7 +494,7 @@ public final class ar {
                            push_ar_CachePool = frameFrame;
                            pop_ar_CachePool = xrayFrame;
                            tick_ar_CachePool = xrayNearFrame;
-                           load_F = OreSimEspScanner.init_F(xray);
+                           load_F = OreSimEspScanner.xrayOpacity(xray);
                            init_AABB = airBox;
                            write_I = airColor;
                            flush_Z = close_Z = tpClickBox != null;

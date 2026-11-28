@@ -30,7 +30,7 @@ public final class OverlayFrameHelper {
       boolean active,
       boolean headerHovered
    ) {
-      WindowFrameRenderer.init(context, bounds, title, collapsed, true, true, headerHovered, active, 4, 4, headerHeight);
+      WindowFrameRenderer.drawFrame(context, bounds, title, collapsed, true, true, headerHovered, active, 4, 4, headerHeight);
    }
 
    public static boolean beginClip(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, int headerHeight, boolean collapsed) {

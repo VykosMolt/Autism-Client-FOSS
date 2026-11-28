@@ -189,7 +189,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
 
    @Inject(method = "consumeClick", at = @At("HEAD"), cancellable = true)
    private void autism$consumeHotbarKeysDuringTotemOperation(CallbackInfoReturnable<Boolean> cir) {
-      if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.isClickPending()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.options != null) {
             KeyMapping self = (KeyMapping)(Object)this;

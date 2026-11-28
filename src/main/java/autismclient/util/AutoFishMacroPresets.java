@@ -61,7 +61,7 @@ public final class AutoFishMacroPresets {
       return action instanceof autismclient.util.macro.ak toggle && init(toggle);
    }
 
-   public static boolean load(MacroAction action) {
+   public static boolean isPresetToggle(MacroAction action) {
       return action instanceof autismclient.util.macro.ak toggle && load(toggle);
    }
 

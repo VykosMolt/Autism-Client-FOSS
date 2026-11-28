@@ -39,7 +39,7 @@ final class AiPlaybooks {
       }
    }
 
-   static String init(String text, int maxCharacters) {
+   static String strategyPlaybooks(String text, int maxCharacters) {
       if (text != null && !text.isBlank()) {
          String lower = " " + text.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ") + " ";
          StringBuilder result = new StringBuilder();
@@ -81,7 +81,7 @@ final class AiPlaybooks {
       return playbooks.size();
    }
 
-   static String load(String text, int maxCharacters) {
+   static String addonTemplate(String text, int maxCharacters) {
       if (text != null && !text.isBlank()) {
          String lower = " " + text.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ") + " ";
          if (!lower.contains(" addon") && !lower.contains("add on")) {

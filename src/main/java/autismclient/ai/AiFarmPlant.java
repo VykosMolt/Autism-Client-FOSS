@@ -61,7 +61,7 @@ final class AiFarmPlant {
          throw new IllegalArgumentException("No " + seedItem + " to plant; obtain some first (missing " + seedItem + ": " + requested + ")");
       }
 
-      if (!soulSand && AiGameState.countInventoryItem("#minecraft:hoes") <= 0 && !init(client)) {
+      if (!soulSand && AiGameState.countInventoryItem("#minecraft:hoes") <= 0 && !hasHoe(client)) {
          throw new IllegalArgumentException("A hoe is needed to till; craft one first (missing minecraft:wooden_hoe: 1)");
       }
 
@@ -345,7 +345,7 @@ final class AiFarmPlant {
       };
    }
 
-   static boolean init(Minecraft mc) {
+   static boolean hasHoe(Minecraft mc) {
       Inventory inventory = mc.player.getInventory();
 
       for (int i = 0; i < inventory.getContainerSize(); i++) {

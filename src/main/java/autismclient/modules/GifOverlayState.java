@@ -67,31 +67,31 @@ public final class GifOverlayState {
       return "Others".equalsIgnoreCase(target) ? !isSelf : isSelf;
    }
 
-   public static double init_D() {
+   public static double capeFps() {
       return current.init_D();
    }
 
-   public static double load_D() {
+   public static double shieldFps() {
       return current.load_D();
    }
 
-   public static boolean read_Z() {
+   public static boolean capeKeepAspect() {
       return current.write_Z();
    }
 
-   public static boolean write_Z() {
+   public static boolean shieldKeepAspect() {
       return current.update_Z();
    }
 
-   public static double read_D() {
+   public static double capeQuality() {
       return current.read_D();
    }
 
-   public static double write_D() {
+   public static double shieldQuality() {
       return current.write_D();
    }
 
-   public static String init_Str() {
+   public static String targetName() {
       return current.update_Str();
    }
 

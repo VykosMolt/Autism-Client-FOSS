@@ -22,7 +22,7 @@ public class AutismSplashRendererMixin {
          }
 
          ci.cancel();
-      } else if (!CustomMainMenuGuard.load()) {
+      } else if (!CustomMainMenuGuard.isSuppressed()) {
          ci.cancel();
       }
    }

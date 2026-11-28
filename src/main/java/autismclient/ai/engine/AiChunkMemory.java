@@ -113,7 +113,7 @@ public final class AiChunkMemory {
       instance.onTick(mc);
    }
 
-   public static int init_I(int flags) {
+   public static int packClassFor(int flags) {
       if ((flags & 104) != 0) {
          return 3;
       } else if ((flags & 4) != 0) {
@@ -143,7 +143,7 @@ public final class AiChunkMemory {
             for (int y = 0; y < height; y++) {
                int source = (x * 16 + z) * height + y;
                if ((flags[source] & 1) != 0) {
-                  packClass(packed, y * 256 + z * 16 + x, init_I(flags[source]));
+                  packClass(packed, y * 256 + z * 16 + x, packClassFor(flags[source]));
                }
             }
          }

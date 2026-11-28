@@ -106,7 +106,7 @@ public final class GridWalkNavigator {
       return pos != null && mc != null && mc.level != null && isStandable(pos.getX(), pos.getY(), pos.getZ());
    }
 
-   public static boolean load(BlockPos target) {
+   public static boolean isAtTarget(BlockPos target) {
       if (target != null && mc != null && mc.level != null && mc.player != null) {
          double dx = target.getX() + 0.5 - mc.player.getX();
          double dz = target.getZ() + 0.5 - mc.player.getZ();
@@ -117,7 +117,7 @@ public final class GridWalkNavigator {
    }
 
    public static double pathCost(BlockPos target) {
-      if (target != null && mc != null && mc.level != null && mc.player != null && !write(target)) {
+      if (target != null && mc != null && mc.level != null && mc.player != null && !isTargetBlocked(target)) {
          int now = AutismSessionState.getInstance().getClientTick();
          if (costCacheTick != now) {
             costCacheTick = now;
@@ -129,7 +129,7 @@ public final class GridWalkNavigator {
             return cached;
          }
 
-         double cost = load(target) ? 0.0 : estimatePathCost(mc.player.getX(), mc.player.getY(), mc.player.getZ(), target, false, 1200);
+         double cost = isAtTarget(target) ? 0.0 : estimatePathCost(mc.player.getX(), mc.player.getY(), mc.player.getZ(), target, false, 1200);
          pathCostCache.put(target.immutable(), cost);
          return cost;
       } else {
@@ -178,7 +178,7 @@ public final class GridWalkNavigator {
       directApproach = false;
    }
 
-   public static boolean read(BlockPos target) {
+   public static boolean walkToward(BlockPos target) {
       if (mc == null || mc.player == null || mc.level == null || mc.options == null) {
          releaseKeys();
          clearPath();
@@ -193,7 +193,7 @@ public final class GridWalkNavigator {
       }
 
       int now = AutismSessionState.getInstance().getClientTick();
-      if (write(target)) {
+      if (isTargetBlocked(target)) {
          releaseKeys();
          clearPath();
          currentTarget = null;
@@ -224,7 +224,7 @@ public final class GridWalkNavigator {
          }
       }
 
-      if (load(currentTarget)) {
+      if (isAtTarget(currentTarget)) {
          targetFailures.remove(currentTarget);
          stuckTicks = 0;
          jumpStreak = 0;
@@ -283,7 +283,7 @@ public final class GridWalkNavigator {
          advancePathIndex(px, py, pz, feetY);
       } else if (needPlan) {
          releaseKeys();
-         if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.AutoArmorModule.load_Z_9()) {
+         if (!autismclient.modules.AutoTotemModule.isBusy() && !autismclient.modules.AutoArmorModule.isBusy()) {
             double movedX = px - lastProgressX;
             double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
@@ -345,7 +345,7 @@ public final class GridWalkNavigator {
          boolean headroom = isPassable(Mth.floor(px), standCellY + 2, Mth.floor(pz));
          double jumpRangeSq = floorHeight(nodeX, nodeY, nodeZ) - py > 0.6 ? 3.61 : 2.5600000000000005;
          double liveRise = floorHeight(nodeX, nodeY, nodeZ) - py;
-         if (liveRise <= -0.5 && !FarmlandTrampleGuard.init(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, false, liveRise)) {
+         if (liveRise <= -0.5 && !FarmlandTrampleGuard.isSafeFromTrample(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, false, liveRise)) {
             releaseKeys();
             clearPath();
             return true;
@@ -356,7 +356,7 @@ public final class GridWalkNavigator {
             jump = !onFarmland(px, feetY, pz) && !isFarmland(nodeX, nodeY - 1, nodeZ);
          }
 
-         if (jump && !FarmlandTrampleGuard.init(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, true, 0.0)) {
+         if (jump && !FarmlandTrampleGuard.isSafeFromTrample(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, true, 0.0)) {
             jump = false;
             if (nodeJump) {
                releaseKeys();
@@ -368,7 +368,7 @@ public final class GridWalkNavigator {
          int sprint = (mask & 1) != 0 && !jump ? 32 : 0;
          applyKeyMask(mask | (jump ? 16 : 0) | sprint);
          jumpStreak = jump ? jumpStreak + 1 : 0;
-         if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.AutoArmorModule.load_Z_9()) {
+         if (!autismclient.modules.AutoTotemModule.isBusy() && !autismclient.modules.AutoArmorModule.isBusy()) {
             double movedX = px - lastProgressX;
             double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
@@ -413,7 +413,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   public static void init_V_BlockPos_I(BlockPos target, int ticks) {
+   public static void blockTarget(BlockPos target, int ticks) {
       if (target != null && ticks > 0) {
          BlockPos key = target.immutable();
          blockedSince.put(key, AutismSessionState.getInstance().getClientTick());
@@ -421,7 +421,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   public static boolean write(BlockPos target) {
+   public static boolean isTargetBlocked(BlockPos target) {
       if (target == null) {
          return false;
       }
@@ -444,7 +444,7 @@ public final class GridWalkNavigator {
    private static void recordTargetFailure() {
       int fails = targetFailures.merge(currentTarget, 1, Integer::sum);
       int ticks = Math.min(100 << Math.min(fails - 1, 2), 400);
-      init_V_BlockPos_I(currentTarget, ticks);
+      blockTarget(currentTarget, ticks);
    }
 
    private static int keyMaskFor(float delta) {
@@ -693,7 +693,7 @@ public final class GridWalkNavigator {
             if (isStandable(nx, cy + 1, nz)
                && (!hop || isPassable(cx, cy + 2, cz))
                && rise <= 1.25
-               && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, nx, cy + 1, nz, hop, rise)) {
+               && FarmlandTrampleGuard.isSafeFromTrample(mc.level, cx, cy, cz, nx, cy + 1, nz, hop, rise)) {
                relaxNeighbor(currentKey, gCurrent, nx, cy + 1, nz, (hop ? 14 : 10) + (hop && isFarmland(nx, cy, nz) ? 26 : 0), hop);
             }
 
@@ -706,7 +706,7 @@ public final class GridWalkNavigator {
                      && floorRise <= 1.25
                      && floorRise >= -3.0
                      && (!needsHop || isPassable(cx, cy + 2, cz))
-                     && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, nx, ny, nz, needsHop, floorRise)) {
+                     && FarmlandTrampleGuard.isSafeFromTrample(mc.level, cx, cy, cz, nx, ny, nz, needsHop, floorRise)) {
                      boolean trample = (needsHop || floorRise <= -0.5) && isFarmland(nx, ny - 1, nz);
                      relaxNeighbor(
                         currentKey, gCurrent, nx, ny, nz, 10 + (needsHop ? 4 : (int)Math.ceil(Math.max(0.0, -floorRise) * 2.0)) + (trample ? 26 : 0), needsHop
@@ -729,7 +729,7 @@ public final class GridWalkNavigator {
                && !isFireOrPowderSnow(nx, cy + 2, nz)
                && Math.abs(floorHeight(jx, cy, jz) - fromFloor) < 0.0625
                && hasSafeLandingBelow(nx, cy, nz)
-               && FarmlandTrampleGuard.init(mc.level, cx, cy, cz, jx, cy, jz, true, 0.0)) {
+               && FarmlandTrampleGuard.isSafeFromTrample(mc.level, cx, cy, cz, jx, cy, jz, true, 0.0)) {
                relaxNeighbor(currentKey, gCurrent, jx, cy, jz, 18 + (isFarmland(jx, cy - 1, jz) ? 26 : 0), true);
             }
          }

@@ -39,7 +39,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
          return "Wait Sound: Any" + GuiWaitAware.waitSuffix(this);
       }
 
-      String first = RegistryDisplayNameCache.write(this.soundIds.get(0));
+      String first = RegistryDisplayNameCache.displayName(this.soundIds.get(0));
       String s = this.soundIds.size() == 1 ? first : first + " (+" + (this.soundIds.size() - 1) + ")";
       return "Wait Sound: " + s + GuiWaitAware.waitSuffix(this);
    }

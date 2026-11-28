@@ -60,7 +60,7 @@ public final class NoSlowModule extends Module {
       }
    }
 
-   public static boolean load(LocalPlayer player) {
+   public static boolean ignoresCrouchSlow(LocalPlayer player) {
       NoSlowModule module = activeFor((Entity)player);
       return module != null && (player.isCrouching() && module.bool("sneak") || player.isVisuallyCrawling() && module.bool("crawl"));
    }

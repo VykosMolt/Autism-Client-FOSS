@@ -50,7 +50,7 @@ public class AutismLocalPlayerMovementMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMovingSlowly()Z")
    )
    private boolean autism$noPostureSlowdown(boolean slow) {
-      return !AutismLiteVariant.enabled() && slow && NoSlowModule.load((LocalPlayer)(Object)this) ? false : slow;
+      return !AutismLiteVariant.enabled() && slow && NoSlowModule.ignoresCrouchSlow((LocalPlayer)(Object)this) ? false : slow;
    }
 
    @ModifyExpressionValue(method = "sendPosition", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getYRot()F"))
@@ -90,24 +90,24 @@ public class AutismLocalPlayerMovementMixin {
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;canStartSprinting()Z"))
    private boolean autism$sprintDecisionMovementTick(boolean original) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.init(original, true) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.wantsSprint(original, true) && !KillAuraModule.isCritClickImminent() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Input;sprint()Z"))
    private boolean autism$sprintDecisionInput(boolean original) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.init(original, false) && !KillAuraModule.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? false : MovementModuleHooks.wantsSprint(original, false) && !KillAuraModule.isCritClickImminent() && !ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
    private boolean autism$sprintNetworkDecision(boolean original) {
-      boolean announced = MovementModuleHooks.init(original);
+      boolean announced = MovementModuleHooks.announcedSprint(original);
       SprintStateTracker.update(announced);
       return announced;
    }
 
    @ModifyExpressionValue(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
    private boolean autism$omniSprintForwardImpulse(boolean original) {
-      return MovementModuleHooks.load() ? ((LocalPlayer)(Object)this).input.getMoveVector().length() > 1.0E-5F : original;
+      return MovementModuleHooks.isOmniSprintActive() ? ((LocalPlayer)(Object)this).input.getMoveVector().length() > 1.0E-5F : original;
    }
 
    @ModifyExpressionValue(
@@ -115,17 +115,17 @@ public class AutismLocalPlayerMovementMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", opcode = 180)
    )
    private boolean autism$sprintIgnoreCollision(boolean original) {
-      return !MovementModuleHooks.read() && original;
+      return !MovementModuleHooks.ignoresSprintCollision() && original;
    }
 
    @ModifyReturnValue(method = "shouldStopRunSprinting", at = @At("RETURN"))
    private boolean autism$sprintForceStop(boolean shouldStop) {
-      return !AutismLiteVariant.enabled() && DangerModule.push() ? true : shouldStop || MovementModuleHooks.update() || KillAuraModule.close_Z_6() || ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && DangerModule.push() ? true : shouldStop || MovementModuleHooks.forceStopSprint() || KillAuraModule.isCritClickImminent() || ScaffoldModule.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "isSprintingPossible", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMobilityRestricted()Z"))
    private boolean autism$sprintIgnoreBlindness(boolean original) {
-      return !MovementModuleHooks.write() && original;
+      return !MovementModuleHooks.ignoresSprintBlindness() && original;
    }
 
    @Inject(method = "getJumpRidingScale", at = @At("RETURN"), cancellable = true)

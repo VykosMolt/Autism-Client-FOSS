@@ -2146,7 +2146,7 @@ public final class AiPaceScript {
                                                 : var3.fill_AtomicIntegerArr[var28].getAndIncrement() < 64
                                           )
                                     )) {
-                                    AiJumpSolver.JumpPlan var27 = AiWallJump.putAt(var2, var6, var14, var13.wallTargets(), var35, var5);
+                                    AiJumpSolver.JumpPlan var27 = AiWallJump.planWallJump(var2, var6, var14, var13.wallTargets(), var35, var5);
                                     if (var27 != null) {
                                        var33 = var27.maneuver();
                                     }
@@ -4220,8 +4220,8 @@ public final class AiPaceScript {
       }
 
       @Override
-      public boolean putAt(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
-         return this.putAt_TokenCore_TaskStat.putAt(var1, var2, var3, var4, var5, var6, var7);
+      public boolean isRegionPassable(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+         return this.putAt_TokenCore_TaskStat.isRegionPassable(var1, var2, var3, var4, var5, var6, var7);
       }
    }
 

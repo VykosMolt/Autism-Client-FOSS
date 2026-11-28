@@ -179,8 +179,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.chatView.actionMenu.confirmPlacement();
    }
 
-   void close_V() {
-      this.chatView.actionMenu.update_V();
+   void tickReview() {
+      this.chatView.actionMenu.tickReview();
    }
 
    JsonObject actionMenuStatus() {
@@ -436,7 +436,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.contextMenuX = (int)x;
          this.contextMenuY = (int)y;
          if (this.contextMenu.isOpen()) {
-            this.contextMenu.init(x, y, button, (id, label, index) -> this.sessionsDrawer.onMenuAction(id, index));
+            this.contextMenu.handleClick(x, y, button, (id, label, index) -> this.sessionsDrawer.onMenuAction(id, index));
             return true;
          }
 

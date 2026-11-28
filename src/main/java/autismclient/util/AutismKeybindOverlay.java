@@ -237,7 +237,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             new autismclient.gui.ui.layout.ButtonNode("Profiles", autismclient.gui.ui.layout.ButtonNode.Variant.PRIMARY, this::openProfilesOverlay)
                .withGrowX(true)
                .setConnectedStyle(true)
-               .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.read)
+               .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.JOINED_LEFT)
                .setFixedHeight(this.toolbarHeight())
          );
          this.settingsWindow.body().addChild(settingsPages);

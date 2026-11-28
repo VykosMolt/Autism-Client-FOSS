@@ -94,7 +94,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                if (mc.level == preview.level && mc.player != null && AiAssistant.getInstance().isShown()) {
                   preview.tickPreview();
                } else {
-                  AiAssistant.getInstance().push();
+                  AiAssistant.getInstance().cancelActionMenu();
                   preview.cancel();
                }
             }
@@ -628,7 +628,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
       if (this.search != null) {
          this.search.step(4096, System.nanoTime() + 2000000L);
-         if (this.search.isDone() || this.search.init_J() > 1500000L || System.nanoTime() - this.searchStartedAt > 8000000000L) {
+         if (this.search.isDone() || this.search.getClassifiedCells() > 1500000L || System.nanoTime() - this.searchStartedAt > 8000000000L) {
             AiPlacementSearch.CandidateScore found = this.search.getResult();
             this.search = null;
             if (found == null) {
@@ -664,8 +664,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
                   return !live.hasBlockEntity()
                         && !(live.getDestroySpeed(AiSchematicPlacement.this.level, p) < 0.0F)
                         && live.getFluidState().isEmpty()
-                        && AiSchematicActions.init(live)
-                        && AiSchematicActions.init(AiSchematicPlacement.this.level, p)
+                        && AiSchematicActions.isNaturalTerrain(live)
+                        && AiSchematicActions.isOpeningFluidSafe(AiSchematicPlacement.this.level, p)
                      ? AiPlacementSearch.CellEdit.BREAK
                      : AiPlacementSearch.CellEdit.UNSAFE;
                }
@@ -675,7 +675,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          }
 
          @Override
-         public boolean init_Z(BlockPos p, AiBuilder.CellSpec cell) {
+         public boolean isUnsupportedGround(BlockPos p, AiBuilder.CellSpec cell) {
             BlockState below = AiSchematicPlacement.this.level.getBlockState(p.below());
             return cell.dy() == 0
                && below.getCollisionShape(AiSchematicPlacement.this.level, p.below()).isEmpty()
@@ -698,7 +698,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
 
       try {
-         AiSchematic.init(this.survivalCells);
+         AiSchematic.validateBounds(this.survivalCells);
          if (Files.size(this.path) == this.fileSize && Files.getLastModifiedTime(this.path).toMillis() == this.fileModified) {
             AiPlacementSearch.WorldProbe view = this.worldProbe();
 

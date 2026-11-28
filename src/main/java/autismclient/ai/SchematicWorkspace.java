@@ -786,7 +786,7 @@ public final class SchematicWorkspace {
       }
 
       if (this.paste != null) {
-         this.paste.init();
+         this.paste.cancel();
          this.noticeText = "Pausing paste";
       }
 

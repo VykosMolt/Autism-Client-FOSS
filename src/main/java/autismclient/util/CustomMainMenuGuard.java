@@ -13,7 +13,7 @@ public final class CustomMainMenuGuard {
       return config == null || config.customMainMenu;
    }
 
-   public static boolean load() {
+   public static boolean isSuppressed() {
       return autismclient.modules.aD.init_Z() || !isEnabled();
    }
 }

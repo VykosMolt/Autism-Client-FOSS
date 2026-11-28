@@ -161,7 +161,7 @@ public final class RegistrySuggestions {
       }
    }
 
-   public static <S> CompletableFuture<Suggestions> init(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestInventoryItems(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (String id : inventoryItemIds(Minecraft.getInstance())) {

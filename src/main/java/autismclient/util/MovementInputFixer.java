@@ -35,10 +35,10 @@ public final class MovementInputFixer {
    }
 
    public Input init(Input input, float cameraYaw, float silentYaw, int clientTick) {
-      return this.init(input, cameraYaw, silentYaw, clientTick, null);
+      return this.preview(input, cameraYaw, silentYaw, clientTick, null);
    }
 
-   public Input init(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
+   public Input preview(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
       MovementInputFixer copy = new MovementInputFixer();
       copy.currentBand = this.currentBand;
       copy.chosen = this.chosen;
@@ -51,14 +51,14 @@ public final class MovementInputFixer {
       copy.prevChosenStreak = this.prevChosenStreak;
       copy.prevLateralDrift = this.prevLateralDrift;
       copy.prevPressed = this.prevPressed;
-      return copy.load(input, cameraYaw, silentYaw, clientTick, footing);
+      return copy.fix(input, cameraYaw, silentYaw, clientTick, footing);
    }
 
    public Input fix(Input input, float cameraYaw, float silentYaw, int clientTick) {
-      return this.load(input, cameraYaw, silentYaw, clientTick, null);
+      return this.fix(input, cameraYaw, silentYaw, clientTick, null);
    }
 
-   public Input load(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
+   public Input fix(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
       if (input == null) {
          return null;
       }

@@ -39,7 +39,7 @@ public final class EndPortalRenderer {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean shouldRender() {
       EndPortalModule m = activeModule();
       if (m == null) {
          return false;
@@ -50,7 +50,7 @@ public final class EndPortalRenderer {
    }
 
    private static boolean shouldRenderTarget(EndPortalModule module, Vec3 target, Vec3 camera) {
-      if (module.sync() && EndPortalDisplayHelper.init(camera, target, am.init_I())) {
+      if (module.showBeacon() && EndPortalDisplayHelper.isWithinViewDistance(camera, target, am.init_I())) {
          int x = (int)Math.floor(target.x) >> 4;
          int z = (int)Math.floor(target.z) >> 4;
          return MINECRAFT.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false) != null;
@@ -130,11 +130,11 @@ public final class EndPortalRenderer {
    private static EndPortalRenderer.PortalMarker markerFor(GuiGraphicsExtractor graphics, EndPortalModule module) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, MINECRAFT.font, 0, 0);
       Vec3 target = module.target();
-      float scale = module.init_F();
+      float scale = module.labelScale();
       String label = module.showsCoordinates()
-         ? EndPortalDisplayHelper.init(target, module.close(), module.open())
-         : EndPortalDisplayHelper.init(MINECRAFT.player.position(), target, module.close(), module.open());
-      String prompt = EndPortalDisplayHelper.prompt(target != null, EndPortalModule.load_Z(), module.flush());
+         ? EndPortalDisplayHelper.coordinateText(target, module.hasFrames(), module.hasEstimate())
+         : EndPortalDisplayHelper.distanceText(MINECRAFT.player.position(), target, module.hasFrames(), module.hasEstimate());
+      String prompt = EndPortalDisplayHelper.prompt(target != null, EndPortalModule.isStrongholdDimension(), module.hasTrackedEyes());
       if (!prompt.isEmpty()) {
          label = prompt;
       }
@@ -151,7 +151,7 @@ public final class EndPortalRenderer {
          }
 
          Vec3 camera = WorldProjectionHelper.cameraPosition();
-         double y = module.close() ? target.y : camera.y;
+         double y = module.hasFrames() ? target.y : camera.y;
          SCRATCH_VECTOR.set((float)(target.x - camera.x), (float)(y - camera.y), (float)(target.z - camera.z), 1.0F);
          PROJECTION.transform(SCRATCH_VECTOR);
          float yaw = MINECRAFT.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;

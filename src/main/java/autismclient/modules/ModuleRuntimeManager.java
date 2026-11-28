@@ -448,7 +448,7 @@ public final class ModuleRuntimeManager {
       SodiumRegionResourceProbe.invalidate();
       ar.load_V();
       autismclient.util.oresim.OreSimEngine.reset();
-      autismclient.util.oresim.OreSimEngine.write_V();
+      autismclient.util.oresim.OreSimEngine.clearDisproven();
       this.joinedPlayConnection = false;
       this.spawnedInWorld = false;
       this.autoProbePending = false;

@@ -132,7 +132,7 @@ final class AiCraftCapacity {
                data.add("pendingCapacityChild", AiRunResources.parseEvidenceJson(this.lastResult.dataJson()));
             }
 
-            AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
+            AiOperation.Result result = AiNetherRun.phaseResult(
                actual.status(), actual.message(), data, this.requiresReconciliationAfterEmergency(), receipt
             );
             this.finalResult = new AiOperation.Result(

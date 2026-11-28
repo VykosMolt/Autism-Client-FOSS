@@ -7,7 +7,7 @@ import java.util.Objects;
 public final class CellRetryLimiter<T> {
    private final Map<Long, CellRetryLimiter.RetryEntry<T>> entries = new LinkedHashMap<>();
 
-   public boolean init(long cell, T state, int tick, int limit) {
+   public boolean tryAcquire(long cell, T state, int tick, int limit) {
       CellRetryLimiter.RetryEntry<T> old = this.entries.get(cell);
       int elapsed = old == null ? 0 : tick - old.tick();
       int count = old != null && Objects.equals(old.state(), state) && elapsed >= 0 && elapsed <= 20 ? old.count() + (elapsed == 0 ? 0 : 1) : 1;

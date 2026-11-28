@@ -128,7 +128,7 @@ public final class AutismPayloadSupport {
       byte[] rawBytes = payloadBytes.bytes();
       Integer commandApiValue = detectCommandApiValue(payload, channel, rawBytes);
       String dump = formatJsonDump(direction, channel, rawBytes, commandApiValue);
-      String protocolPhase = packetSnapshot == null ? PACKET_PROTOCOL_PHASES.getOrDefault(packet, "") : packetSnapshot.load();
+      String protocolPhase = packetSnapshot == null ? PACKET_PROTOCOL_PHASES.getOrDefault(packet, "") : packetSnapshot.protocol();
       int packetId = packetSnapshot == null ? -1 : packetSnapshot.packetId();
       if (packetId < 0) {
          packetId = PacketWireCaptureStore.numericId(protocolPhase, direction, packet.type());
@@ -196,7 +196,7 @@ public final class AutismPayloadSupport {
                      payloadClassName,
                      protocolPhase,
                      packetId,
-                     PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.init()
+                     PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.id()
                   );
                } else {
                   return null;
@@ -248,27 +248,27 @@ public final class AutismPayloadSupport {
 
    private static AutismPayloadSupport.EncodedBytes resolveEncodedBytes(CustomPacketPayload payload) {
       if (payload == null) {
-         return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.init());
+         return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.id());
       } else if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
-         return new AutismPayloadSupport.EncodedBytes(raw.bytes(), PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.EncodedBytes(raw.bytes(), PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.id());
       } else {
          byte[] remembered = getRememberedBytes(payload);
          if (remembered != null) {
-            return new AutismPayloadSupport.EncodedBytes(remembered, PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.init());
+            return new AutismPayloadSupport.EncodedBytes(remembered, PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.id());
          }
 
          byte[] codecBytes = encodeWithStreamCodec(payload);
          if (codecBytes != null) {
-            return new AutismPayloadSupport.EncodedBytes(codecBytes, PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(codecBytes, PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.id());
          }
 
          try {
             Method writeMethod = payload.getClass().getMethod("write", FriendlyByteBuf.class);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             writeMethod.invoke(payload, buf);
-            return new AutismPayloadSupport.EncodedBytes(copyBufferBytes(buf), PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(copyBufferBytes(buf), PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.id());
          } catch (Throwable var5) {
-            return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.init());
+            return new AutismPayloadSupport.EncodedBytes(new byte[0], PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.id());
          }
       }
    }
@@ -300,7 +300,7 @@ public final class AutismPayloadSupport {
             System.arraycopy(bytes, index[0], body, 0, body.length);
          }
 
-         return new AutismPayloadSupport.EncodedBytes(body, PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.init());
+         return new AutismPayloadSupport.EncodedBytes(body, PayloadEditorModel.PayloadProvenance.CAPTURED_EXACT.id());
       } else {
          return null;
       }
@@ -1130,7 +1130,7 @@ public final class AutismPayloadSupport {
    private record EncodedBytes(byte[] bytes, String provenance) {
       private EncodedBytes {
          bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
-         provenance = provenance != null && !provenance.isBlank() ? provenance : PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.init();
+         provenance = provenance != null && !provenance.isBlank() ? provenance : PayloadEditorModel.PayloadProvenance.REENCODED_FROM_PAYLOAD.id();
       }
 
       public byte[] bytes() {

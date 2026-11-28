@@ -18,7 +18,7 @@ public abstract class AutismSprintInputMixin {
       if (!AutismLiteVariant.enabled() && (WTappingModule.isTapping() || AiMotionSafety.isSprintSuppressed())) {
          return new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.shift(), false);
       } else if (original.forward() && !ScaffoldModule.close_Z_4()) {
-         return !original.sprint() && MovementModuleHooks.init(false, false)
+         return !original.sprint() && MovementModuleHooks.wantsSprint(false, false)
             ? new Input(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.shift(), true)
             : original;
       } else {

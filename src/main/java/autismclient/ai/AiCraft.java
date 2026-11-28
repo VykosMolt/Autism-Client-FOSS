@@ -590,7 +590,7 @@ final class AiCraft {
 
                   AiOperation.Result result = this.tidyRetryResult == null
                      ? AiGuardLayer.wrapPendingTermination(this.needsReconciliation, new AiOperation.Result(status, message, data.toString(), List.of()))
-                     : AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, this.needsReconciliation, this.tidyRetryResult);
+                     : AiNetherRun.phaseResult(status, message, data, this.needsReconciliation, this.tidyRetryResult);
                   if (this.tidyRetryResult != null) {
                      result = new AiOperation.Result(
                         result.status(), result.message(), result.dataJson(), this.tidyRetryResult.evidence(), this.tidyRetryResult.failure()

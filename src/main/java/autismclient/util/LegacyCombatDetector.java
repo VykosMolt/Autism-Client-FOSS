@@ -47,7 +47,7 @@ public final class LegacyCombatDetector {
       return checked;
    }
 
-   public static boolean init() {
+   public static boolean isLegacy() {
       return isViaLegacyTarget();
    }
 

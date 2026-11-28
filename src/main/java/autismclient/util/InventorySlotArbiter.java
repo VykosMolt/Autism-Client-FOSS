@@ -137,7 +137,7 @@ public final class InventorySlotArbiter {
          return false;
       }
 
-      if (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.open_Z_5()) {
+      if (AutismLiteVariant.enabled() || !ClutchModule.isClutchEngaged() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.catchHolds()) {
          if (!AutismLiteVariant.enabled() && autismclient.modules.DangerModule.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
             return false;
          }
@@ -156,7 +156,7 @@ public final class InventorySlotArbiter {
          return false;
       }
 
-      if (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.open_Z_5()) {
+      if (AutismLiteVariant.enabled() || !ClutchModule.isClutchEngaged() || "clutch".equals(id) || "auto-totem".equals(id) || "danger".equals(id) && ClutchModule.catchHolds()) {
          if (!AutismLiteVariant.enabled() && autismclient.modules.DangerModule.sync_Z_12() && !"danger".equals(id) && !"clutch".equals(id) && !"auto-totem".equals(id)) {
             return false;
          }

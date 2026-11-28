@@ -84,11 +84,11 @@ final class AiGhastReflect {
       return this.projectileId >= 0 && !this.reflected;
    }
 
-   int init_I() {
+   int getConfirmedReflections() {
       return this.confirmedReflections;
    }
 
-   boolean load_Z() {
+   boolean hasReflected() {
       return this.reflected && this.update_I >= 0;
    }
 

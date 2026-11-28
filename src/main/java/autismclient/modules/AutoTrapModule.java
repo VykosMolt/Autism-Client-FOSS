@@ -258,7 +258,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       } else if (SilentMovementCoordinator.isSafeWalkActive() || ScaffoldModule.update_Z_5()) {
          return false;
       } else if (!MC.player.isUsingItem() && !MC.player.isHandsBusy()) {
-         return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20() : false;
+         return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.isClickPending() : false;
       } else {
          return false;
       }

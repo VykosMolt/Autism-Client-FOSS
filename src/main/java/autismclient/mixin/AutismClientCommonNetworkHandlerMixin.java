@@ -102,7 +102,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                   }
 
                   packSource.configureForServerControl(this.connection, promptStatus);
-                  autismclient.protector.ResourcePackSessionTracker.init(context, packet.id(), policy);
+                  autismclient.protector.ResourcePackSessionTracker.registerPack(context, packet.id(), policy);
                   if (!prompt) {
                      packSource.pushPack(packet.id(), url, packet.hash());
                      ci.cancel();
@@ -128,7 +128,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handlePing", at = @At("HEAD"))
    private void autism$pingAfterOwnFlags(ClientboundPingPacket packet, CallbackInfo ci) {
       if (Minecraft.getInstance().isSameThread()) {
-         autismclient.util.SprintStateTracker.init(packet.getId());
+         autismclient.util.SprintStateTracker.tagPendingWithPing(packet.getId());
          if (!AutismLiteVariant.enabled()) {
             LeafDupePacketTracker.onReceive(packet);
          }

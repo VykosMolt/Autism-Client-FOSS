@@ -36,7 +36,7 @@ public final class RegistryCompatGuard {
       return null;
    }
 
-   public static void load(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static void beginGuard(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (shouldGuard(context)) {
          RegistryCompatGuard.GuardState state = STATE.get();
          if (state == null) {
@@ -52,10 +52,10 @@ public final class RegistryCompatGuard {
       return context != null
          && !context.isLocalOrMemory()
          && ConnectionPrivacyRegistry.isActive(context)
-         && (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED || autismclient.compat.via.ViaFabricPlusBridge.init_Z(context.connection()));
+         && (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED || autismclient.compat.via.ViaFabricPlusBridge.isOlderProtocol(context.connection()));
    }
 
-   public static void load() {
+   public static void endGuard() {
       RegistryCompatGuard.GuardState state = STATE.get();
       if (state != null) {
          state.depth--;
@@ -65,7 +65,7 @@ public final class RegistryCompatGuard {
       }
    }
 
-   public static boolean init(ResourceKey<?> valueKey, Throwable error) {
+   public static boolean isMissingTrimMaterial(ResourceKey<?> valueKey, Throwable error) {
       if (valueKey == null || error == null || activeState() == null) {
          return false;
       }
@@ -78,7 +78,7 @@ public final class RegistryCompatGuard {
       return error instanceof IllegalStateException && message != null && message.startsWith("Missing element ResourceKey[");
    }
 
-   public static void init(ResourceKey<?> valueKey) {
+   public static void warnMissingTrimMaterial(ResourceKey<?> valueKey) {
       RegistryCompatGuard.GuardState state = activeState();
       if (valueKey != null && state != null) {
          String id = valueKey.identifier().toString();
@@ -102,7 +102,7 @@ public final class RegistryCompatGuard {
       return message == null ? false : message.startsWith("Missing tag ") || message.startsWith("Missing element ");
    }
 
-   public static void init_V(Throwable error) {
+   public static void warnMissingDelayedComponent(Throwable error) {
       RegistryCompatGuard.GuardState state = activeState();
       if (state != null) {
          String message = error != null && error.getMessage() != null ? error.getMessage() : "unknown";

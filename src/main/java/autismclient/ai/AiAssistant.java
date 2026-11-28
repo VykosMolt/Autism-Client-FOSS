@@ -137,7 +137,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void open() {
       if (this.overlay != null) {
-         this.overlay.close_V();
+         this.overlay.tickReview();
       }
    }
 
@@ -155,13 +155,13 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       return this.overlay != null && this.overlay.isVisible() || aP.init_Z();
    }
 
-   void push() {
+   void cancelActionMenu() {
       if (this.overlay != null) {
          this.overlay.cancelActionMenu();
       }
    }
 
-   public void pop() {
+   public void closeScreen() {
       if (this.overlay != null
          && this.overlay.isVisible()
          && MC.gui.screen() != null

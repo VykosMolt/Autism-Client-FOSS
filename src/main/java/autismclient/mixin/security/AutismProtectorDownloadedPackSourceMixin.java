@@ -75,19 +75,19 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
       if (context != null) {
          ResourcePackSessionTracker.PackSession contextSession = ResourcePackSessionTracker.sessionFor(context);
-         ResourcePackSessionTracker.PackSession sourceSession = ResourcePackSessionTracker.init(this);
-         ResourcePackSessionTracker.init_V(contextSession);
+         ResourcePackSessionTracker.PackSession sourceSession = ResourcePackSessionTracker.sessionForSource(this);
+         ResourcePackSessionTracker.cancelAllWaits(contextSession);
          if (sourceSession != null && sourceSession != contextSession) {
-            ResourcePackSessionTracker.load_V(sourceSession);
+            ResourcePackSessionTracker.closeSession(sourceSession);
          }
 
          if (this.autism$downloaderSession != null && this.autism$downloaderSession != contextSession && this.autism$downloaderSession != sourceSession) {
-            ResourcePackSessionTracker.load_V(this.autism$downloaderSession);
+            ResourcePackSessionTracker.closeSession(this.autism$downloaderSession);
          }
 
          this.autism$restoreDownloader();
          ConnectionPrivacyRegistry.bindPackManager(connection, this.manager);
-         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(context, this, this.manager, this::autism$recoverAfterDisconnect);
+         ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.openSession(context, this, this.manager, this::autism$recoverAfterDisconnect);
          this.autism$installDownloader(session);
       }
    }
@@ -98,7 +98,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
       PackDownloader current = accessor.autism$downloader();
       if (session != this.autism$downloaderSession || current != this.autism$scopedDownloader) {
          PackDownloader original = current == this.autism$scopedDownloader ? this.autism$originalDownloader : current;
-         PackDownloader scoped = IsolatedPackDownloader.init((DownloadedPackSource)(Object)this, this.manager, original);
+         PackDownloader scoped = IsolatedPackDownloader.wrapDownloader((DownloadedPackSource)(Object)this, this.manager, original);
          this.autism$originalDownloader = original;
          this.autism$scopedDownloader = scoped;
          this.autism$downloaderSession = session;
@@ -132,13 +132,13 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
    private static void autism$scopePackResponses(Connection connection, CallbackInfoReturnable<PackLoadFeedback> cir) {
       ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionFor(ConnectionPrivacyRegistry.getActive(connection));
       if (session != null) {
-         cir.setReturnValue(IsolatedPackDownloader.init(session, cir.getReturnValue()));
+         cir.setReturnValue(IsolatedPackDownloader.wrapFeedback(session, cir.getReturnValue()));
       }
    }
 
    @Inject(method = "waitForPackFeedback", at = @At("HEAD"), cancellable = true)
    private void autism$scopedPackWait(final UUID packId, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
-      final ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(this);
+      final ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionForSource(this);
       final long generation = ResourcePackSessionTracker.generation(session, packId);
       ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
       if (policy != null && policy != ResourcePackSessionTracker.PackPolicy.FULL && ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
@@ -163,7 +163,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
             }
          };
          callbackRef[0] = (id, result) -> {
-            ResourcePackSessionTracker.init_V(session, packId, generation);
+            ResourcePackSessionTracker.cancelWait(session, packId, generation);
             restore.run();
             if (result == FinalResult.APPLIED) {
                future.complete(null);
@@ -211,10 +211,10 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
             }
          }
          future.whenComplete((ignored, failure) -> {
-            ResourcePackSessionTracker.init_V(session, packId, generation);
+            ResourcePackSessionTracker.cancelWait(session, packId, generation);
             restore.run();
          });
-         ResourcePackSessionTracker.init(session, packId, generation, future, restore);
+         ResourcePackSessionTracker.addPendingWait(session, packId, generation, future, restore);
          cir.setReturnValue(future);
       }
    }
@@ -224,17 +224,17 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
       at = @At(value = "NEW", target = "(Ljava/nio/file/Path;)Lnet/minecraft/server/packs/FilePackResources$FileResourcesSupplier;")
    )
    private FileResourcesSupplier autism$wrapFilePackSupplier(Path file, Operation<FileResourcesSupplier> original, @Local IdAndPath idAndPath) {
-      return IsolatedPackDownloader.init(ResourcePackSessionTracker.init(this), idAndPath.id(), file, () -> original.call(file));
+      return IsolatedPackDownloader.isolatedResources(ResourcePackSessionTracker.sessionForSource(this), idAndPath.id(), file, () -> original.call(file));
    }
 
    @Inject(method = "loadRequestedPacks", at = @At("RETURN"))
    private void autism$recordLoadedPacks(List<IdAndPath> packsToLoad, CallbackInfoReturnable<List<Pack>> cir) {
-      IsolatedPackDownloader.init(ResourcePackSessionTracker.init(this), packsToLoad, cir.getReturnValue());
+      IsolatedPackDownloader.recordLoadedPacks(ResourcePackSessionTracker.sessionForSource(this), packsToLoad, cir.getReturnValue());
    }
 
    @Inject(method = {"cleanupAfterDisconnect", "configureForLocalWorld", "close"}, at = @At("HEAD"))
    private void autism$cancelDownloads(CallbackInfo ci) {
-      ResourcePackSessionTracker.load_V(ResourcePackSessionTracker.init(this));
+      ResourcePackSessionTracker.closeSession(ResourcePackSessionTracker.sessionForSource(this));
       ResourcePackDownloadScope.init_V(this.manager);
       synchronized (this.autism$waitCallbacks) {
          this.autism$waitCallbacks.clear();

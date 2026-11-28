@@ -354,7 +354,7 @@ final class AiTidy {
       int blocks = 0;
 
       for (int slot = 0; slot < 36; slot++) {
-         if (init_Z(inventory.getItem(slot))) {
+         if (isFillerBlock(inventory.getItem(slot))) {
             blocks += inventory.getItem(slot).getCount();
          }
       }
@@ -377,7 +377,7 @@ final class AiTidy {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty() && slot != selected && !isKept(stack, keep)) {
             int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.reservedItemCount(stack.getItem()));
-            if ((reserved <= 0 || AiGameState.countMainInventoryItem(itemId(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
+            if ((reserved <= 0 || AiGameState.countMainInventoryItem(itemId(stack)) - stack.getCount() >= reserved) && (!isFillerBlock(stack) || blocks - stack.getCount() >= 64)) {
                int stackWood = stack.is(ItemTags.PLANKS) ? stack.getCount() : (stack.is(ItemTags.LOGS) ? 4 * stack.getCount() : 0);
                if ((stackWood <= 0 || wood - stackWood >= keptWood)
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
@@ -535,7 +535,7 @@ final class AiTidy {
       return var10000;
    }
 
-   static boolean init_Z(ItemStack stack) {
+   static boolean isFillerBlock(ItemStack stack) {
       if (!stack.isEmpty() && stack.getItem() instanceof BlockItem item) {
          Block block = item.getBlock();
          BlockState state = block.defaultBlockState();

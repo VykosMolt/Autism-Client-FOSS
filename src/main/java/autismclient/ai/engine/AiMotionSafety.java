@@ -126,7 +126,7 @@ public final class AiMotionSafety {
                AiPhysics.MoveInput.running(var3, var2.sprint()), AiPhysics.MoveInput.NONE, AiPhysics.MoveInput.running(var3 + 180.0F, false)
             }) {
                AiStride.FallResult var11 = AiStride.fallResult(var1, var10, false, var0);
-               if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.putAt(var11.at(), var4, var0)) {
+               if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.holdsStill(var11.at(), var4, var0)) {
                   return true;
                }
             }
@@ -398,7 +398,7 @@ public final class AiMotionSafety {
          && Math.abs(var1.y() - var2) <= 0.02
          && var4.test(AiStride.putAt_J_D_D(var1.x(), var1.z()))
          && hasSolidSupport(var0, var1)
-         && AiStride.putAt(var1, var4, var0);
+         && AiStride.holdsStill(var1, var4, var0);
    }
 
    public static int[] relativeMoveAxes(float var0, float var1) {

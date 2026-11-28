@@ -53,7 +53,7 @@ public final class GoldenLeverModule extends Module {
       return Component.literal("Golden Lever").withStyle(ChatFormatting.GOLD);
    }
 
-   public static void init(ItemStackRenderState output) {
+   public static void tintLayers(ItemStackRenderState output) {
       if (output != null) {
          AutismItemStackRenderStateAccessor accessor = (AutismItemStackRenderStateAccessor)output;
          LayerRenderState[] layers = accessor.autism$getLayers();

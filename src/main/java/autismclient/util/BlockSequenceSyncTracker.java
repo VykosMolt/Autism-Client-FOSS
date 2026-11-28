@@ -11,7 +11,7 @@ public final class BlockSequenceSyncTracker {
       this.init_Z = true;
    }
 
-   public void init(Object world, boolean expectedBlock) {
+   public void confirmExpected(Object world, boolean expectedBlock) {
       if (this.init_Obj == world && expectedBlock) {
          this.init_Z = false;
       }

@@ -21,7 +21,7 @@ final class TrajectoryStateCache {
    private TrajectoryStateCache() {
    }
 
-   static void init(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
+   static void refresh(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
       if (ensureContext(mc)) {
          cachedPaths = paths;
          Vec3 explosion = null;

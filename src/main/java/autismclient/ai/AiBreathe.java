@@ -52,7 +52,7 @@ public final class AiBreathe {
       if (mc.player != null && mc.level != null) {
          final int seconds = Math.max(5, Math.min(60, AiJson.getInt(args, "timeoutSeconds", 25)));
          if (mc.player.isUnderWater()) {
-            autismclient.ai.engine.AiBlockMine.init_V();
+            autismclient.ai.engine.AiBlockMine.markBreatheStart();
          }
 
          return new AiOperation() {

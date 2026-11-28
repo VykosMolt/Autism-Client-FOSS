@@ -201,7 +201,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            ResourcePackSessionTracker.read();
+            ResourcePackSessionTracker.drainIfRequested();
          } catch (Throwable t) {
             logTickError("packResponses", t);
          }
@@ -213,7 +213,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            OreSimEspScanner.init_V();
+            OreSimEspScanner.resetIfPaused();
          } catch (Throwable t) {
             logTickError("oreSimRetention", t);
          }
@@ -281,14 +281,14 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("cfg.instaBreak", BlockPreviewRenderer::clear);
          runSafe("cfg.packFailureGuard", PackFailureGuard::reset);
-         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
+         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.removePackFor(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!OverlayScreenController.hasRetainedForeground()) {
                OverlayManager.getInstance().minimizeAll();
             }
          });
          runSafe("cfg.onGameLeft", () -> ModuleRuntimeManager.getInstance().onGameLeave());
-         runSafe("cfg.joinMacro", JoinMacroController::update);
+         runSafe("cfg.joinMacro", JoinMacroController::onConfigReload);
       });
       ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
          runSafe("join.clientInfo", AuditJoinSend.create(client, handler));
@@ -314,7 +314,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("leave.instaBreak", BlockPreviewRenderer::clear);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
-         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));
+         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.removePackFor(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));
          runSafe("leave.packFailureGuard", PackFailureGuard::reset);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::onLeave);
          runSafe("leave.lanSync", () -> LanSyncManager.getInstance().resetActiveExecution());

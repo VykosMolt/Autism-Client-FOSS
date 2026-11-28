@@ -50,7 +50,7 @@ final class PrintAccess {
    boolean allowBury;
    double heuristicWeight = 1.0;
    boolean alternateGuide;
-   boolean write_Z;
+   boolean focusedSearch;
    private boolean columnReachSearch;
    private double bandMinFeet = -1.0 / 0.0;
    private double bandMaxFeet = 1.0 / 0.0;
@@ -96,7 +96,7 @@ final class PrintAccess {
    int lowestGoalY = -2147483648;
 
    private boolean canPlaceTemp(BlockPos cell, BlockState material) {
-      if (this.core.sync_Z_J(cell.asLong()) || !this.core.load_Z_BlockPos_BlockState(cell, material)) {
+      if (this.core.isHeldByUnsettledFlow(cell.asLong()) || !this.core.isTemporaryMaterialSafe(cell, material)) {
          return false;
       }
 
@@ -108,7 +108,7 @@ final class PrintAccess {
             || this.core.targets[i].kind() != PrintTarget.TargetKind.FLUID
                && this.core.targets[i].kind() != PrintTarget.TargetKind.FLOW) {
             if (!this.enclosedCellCache.containsKey(key)) {
-               this.enclosedCellCache.put(key, this.core.read_Z_BlockPos_BlockPos(cell, null));
+               this.enclosedCellCache.put(key, this.core.isEnclosedAfterFill(cell, null));
             }
 
             return !this.enclosedCellCache.get(key) || this.core.close_Z_BlockPos(cell);
@@ -132,13 +132,13 @@ final class PrintAccess {
          && !this.groundOnly
          && (
             this.update_Z
-               ? this.core.init_Z_BlockPos(BlockPos.of(node.key), node.feet, node.temps)
-               : this.core.init_Z_BlockPos(BlockPos.of(node.key), node.feet, node.temps, this.maxTemps)
+               ? this.core.canTowerToTop(BlockPos.of(node.key), node.feet, node.temps)
+               : this.core.canTowerToTop(BlockPos.of(node.key), node.feet, node.temps, this.maxTemps)
          );
    }
 
    private int compareGoals(int a, int b, double x, double y, double z) {
-      if (this.write_Z) {
+      if (this.focusedSearch) {
          int load = Integer.compare(
             this.neighborCountCache.computeIfAbsent(a, this.core::neighborCount),
             this.neighborCountCache.computeIfAbsent(b, this.core::neighborCount)
@@ -179,7 +179,7 @@ final class PrintAccess {
 
    PrintAccess.AccessSearch startFocusedSearch(BlockPos start, double feet, IntArrayList goals) {
       this.groundOnly = true;
-      this.write_Z = true;
+      this.focusedSearch = true;
       return this.startSearch(start, feet, goals, null);
    }
 
@@ -200,7 +200,7 @@ final class PrintAccess {
 
       this.columnReachSearch = true;
       this.alternateGuide = true;
-      this.write_Z = true;
+      this.focusedSearch = true;
       PrintAccess.AccessSearch session = this.startSearch(start, feet, goals, tempState);
       session.openQueue.clear();
       session.bestCost.clear();
@@ -482,7 +482,7 @@ final class PrintAccess {
                            return t;
                         }
 
-                        if (!proof.write) {
+                        if (!proof.trapBlocked) {
                            break;
                         }
                      }
@@ -519,9 +519,9 @@ final class PrintAccess {
             && !this.core.temporaryBlocks.containsKey(BlockPos.asLong(x, y - 2, z))
             && n.via != null
             && n.via.kind == PrintAccess.StepKind.WALK
-            && !this.core.sync_Z_J(floor)
-            && this.core.update_Z_BlockPos(under)
-            && this.core.write_Z_BlockPos_BlockPos(under, under)) {
+            && !this.core.isHeldByUnsettledFlow(floor)
+            && this.core.hasLandingAfterDig(under)
+            && this.core.canEscapeFromDugStance(under, under)) {
             return floor;
          }
 
@@ -541,7 +541,7 @@ final class PrintAccess {
                && Math.abs(tz - z) <= 4
                && ty - y <= 4
                && y - ty <= 5
-               && !this.core.sync_Z_J(t)
+               && !this.core.isHeldByUnsettledFlow(t)
                && (tx != x || tz != z || ty != y - 1)
                && !this.core.failedDigStances.contains(PrintCore.cellStanceKey((int)(t & 2147483647L), n.key))) {
                BlockPos p = BlockPos.of(t);
@@ -549,7 +549,7 @@ final class PrintAccess {
                   && (n.temps <= 0 || t != this.avoidSwap || this.core.canEscape(BlockPos.of(n.key), p, Blocks.AIR.defaultBlockState(), true))) {
                   PrintTarget probe = new PrintTarget(-1, p, this.view.getBlockState(p), PrintTarget.TargetKind.PLACE, Items.AIR, null);
                   PrintClicks.Inner_StreamUtil click = this.core.findClickFrom(n.key, n.feet, probe, budget, n.key == this.rootKey);
-                  if (click != null && this.core.write_Z_BlockPos_BlockPos(BlockPos.of(n.key), p)) {
+                  if (click != null && this.core.canEscapeFromDugStance(BlockPos.of(n.key), p)) {
                      this.removalClick = click;
                      return t;
                   }
@@ -873,7 +873,7 @@ final class PrintAccess {
          at = at.parent;
       }
 
-      return this.core.pop_Z_BlockPos(BlockPos.of(floor));
+      return this.core.isNaturalSolidFloor(BlockPos.of(floor));
    }
 
    private static boolean hasTempPillarBelow(PrintAccess.SearchNode n, BlockPos cell) {
@@ -963,7 +963,7 @@ final class PrintAccess {
             );
             boolean pour = tg.kind() == PrintTarget.TargetKind.FLUID;
             boolean waterlog = !pour && this.core.cellStates[g] == 2;
-            if (!pour && !waterlog || this.core.init_Z_J_ListPool(n.key, tg)) {
+            if (!pour && !waterlog || this.core.isPourStanceSafe(n.key, tg)) {
                for (Vec3 feet : points) {
                   boolean exact = !pour && !waterlog && this.view.hasNoHypothesisInNeighborhood(p);
                   PrintClicks.Inner_StreamUtil geo = !pour && !waterlog
@@ -1018,7 +1018,7 @@ final class PrintAccess {
 
       for (Direction d : Direction.values()) {
          BlockPos sn = p.relative(d);
-         if (this.core.init_Z_BlockPos_BlockPos(sn, p)) {
+         if (this.core.isUsableSupportSlot(sn, p)) {
             PrintTarget probe = new PrintTarget(-1, sn, tempState, PrintTarget.TargetKind.PLACE, temp, null);
 
             for (Vec3 feet : points) {
@@ -1165,19 +1165,19 @@ final class PrintAccess {
          BlockPos feetCell = this.view.getBlockState(new BlockPos(x, y, z)).isAir() ? new BlockPos(x, y, z) : new BlockPos(x, y + 1, z);
          int py = feetCell.getY();
          if (canConstruct
-            && this.core.init_Z_I_2(x, py, z)
+            && this.core.isStandableCell(x, py, z)
             && bounds.contains(x, py + 1, z)
             && this.view.isEmptyOutlineCell(feetCell.above())
             && this.view.isEmptyOutlineCell(feetCell.above(2))
             && !this.core.refusedPillarCells.contains(feetCell.asLong())) {
             int i = this.core.cellIndexByPos.get(feetCell.asLong());
             boolean own = i >= 0
-               && this.core.init_Z_BlockPos_IntSet(feetCell, this.ownPlacedOnPath(n))
+               && this.core.isPillarCandidate(feetCell, this.ownPlacedOnPath(n))
                && !hasTempPillarBelow(n, feetCell);
             boolean buries = !own && !this.clearOfTargetsAbove(feetCell);
             boolean temp = !own
                && n.temps < this.maxTemps
-               && this.core.pop_Z_I(i)
+               && this.core.isPendingFluidOrNone(i)
                && tempState != null
                && (this.allowBury || !buries)
                && !this.load(n, feetCell)
@@ -1220,12 +1220,12 @@ final class PrintAccess {
                            AABB lean = PrintGeometry.bodyBox(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off, true);
                            if (this.view.isBoxClear(lean)) {
                               int i = this.core.cellIndexByPos.get(cell.asLong());
-                              boolean own = i >= 0 && this.core.cellStates[i] == 0 && this.placeableAsBridge(i, d) && this.core.read_Z_I(i);
+                              boolean own = i >= 0 && this.core.cellStates[i] == 0 && this.placeableAsBridge(i, d) && this.core.isCellReady(i);
                               boolean buries = !own && !this.clearOfTargetsAbove(cell);
                               if (own || !this.init_Z_I(x, y, z)) {
                                  boolean temp = !own
                                     && n.temps < this.maxTemps
-                                    && this.core.pop_Z_I(i)
+                                    && this.core.isPendingFluidOrNone(i)
                                     && tempState != null
                                     && (this.allowBury || !buries)
                                     && !this.load(n, cell)
@@ -1263,7 +1263,7 @@ final class PrintAccess {
                   BlockPos stand = cell.above();
                   int i = this.core.cellIndexByPos.get(cell.asLong());
                   if (bounds.contains(stand.getX(), stand.getY(), stand.getZ())
-                     && this.core.pop_Z_I(i)
+                     && this.core.isPendingFluidOrNone(i)
                      && !this.core.abandonedCells.contains(cell.asLong())
                      && this.view.getBlockState(cell).isAir()
                      && this.view.isPassableCell(stand)
@@ -1310,8 +1310,8 @@ final class PrintAccess {
             if (h == y
                && (this.core.temporaryBlocks.containsKey(under) || this.view.isOwnedTemporaryAt(BlockPos.of(under)))
                && (this.exitMode || !this.core.isFailedDig(under, n.key))
-               && !this.core.sync_Z_J(under)
-               && (!this.requireSolidFloor || this.core.init_Z_BlockPos(BlockPos.of(under)))
+               && !this.core.isHeldByUnsettledFlow(under)
+               && (!this.requireSolidFloor || this.core.canRemoveTemporary(BlockPos.of(under)))
                && this.core.floorBelow(BlockPos.of(under)) != null) {
                this.view.pushHypothesis(BlockPos.of(under), Blocks.AIR.defaultBlockState());
 
@@ -1373,7 +1373,7 @@ final class PrintAccess {
          if (bounds.contains(f.getX(), f.getY(), f.getZ())) {
             boolean fs = !this.view.getCollisionShape(f).isEmpty() || !this.view.getOutlineShape(f).isEmpty();
             boolean hs = !this.view.getCollisionShape(head).isEmpty() || !this.view.getOutlineShape(head).isEmpty();
-            if ((fs || hs) && (!fs || this.core.open_Z_BlockPos(f)) && (!hs || this.core.open_Z_BlockPos(head))) {
+            if ((fs || hs) && (!fs || this.core.isSafeToDig(f)) && (!hs || this.core.isSafeToDig(head))) {
                this.view.pushHypothesis(f, air);
                this.view.pushHypothesis(head, air);
 
@@ -1409,7 +1409,7 @@ final class PrintAccess {
       if (h == y
          && !this.core.temporaryBlocks.containsKey(under.asLong())
          && !this.view.isOwnedTemporaryAt(under)
-         && this.core.open_Z_BlockPos(under)
+         && this.core.isSafeToDig(under)
          && (this.exitMode || !this.core.isFailedDig(under.asLong(), n.key))) {
          this.view.pushHypothesis(under, air);
 
@@ -2378,7 +2378,7 @@ final class PrintAccess {
          }
 
          private void considerGoal(int g, double x, double y, double z) {
-            if (this.walkReachable && AccessSearch.this.walkSkipByGoal.computeIfAbsent(g, PrintAccess.this.core::close_Z_I)) {
+            if (this.walkReachable && AccessSearch.this.walkSkipByGoal.computeIfAbsent(g, PrintAccess.this.core::isStanceMissStillValid)) {
                AccessSearch.this.walkSkips++;
             } else if (!PrintAccess.this.core.init_Z_I(g, this.evalNode.feet, this.evalNode.key)
                && PrintAccess.this.core.targets[g].pos().distToCenterSqr(x, y, z) <= PrintAccess.square(5.8500000000000005)) {
@@ -2475,7 +2475,7 @@ final class PrintAccess {
 
                         if (PrintAccess.this.core.machineJobAt(g) == null
                            && PrintAccess.this.core
-                              .init_Z_J(
+                              .isAccessCacheFresh(
                                  this.evalNode.key,
                                  this.evalNode.feet,
                                  g,
@@ -2525,7 +2525,7 @@ final class PrintAccess {
                            )) {
                            long pair = PrintCore.cellStanceKey(g, this.evalNode.key);
                            this.refusedStance = PrintAccess.this.core.refusedCellStances.contains(pair)
-                              || PrintAccess.this.core.open_LongOpenHashSet.contains(pair);
+                              || PrintAccess.this.core.refusedStandingStances.contains(pair);
                            this.poseIterator = Collections.emptyIterator();
                         } else {
                            this.poseIterator = this.poses.iterator();
@@ -2577,12 +2577,12 @@ final class PrintAccess {
                                  this.refusedStance = true;
                               }
 
-                              if (PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                              if (PrintAccess.this.core.refusedStandingStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
                                  this.refusedStance = true;
                               }
 
                               if (this.nodeClick == null
-                                 && !PrintAccess.this.core.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
+                                 && !PrintAccess.this.core.refusedStandingStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
                                  this.nodeClick = PrintClicks.findClick(
                                     PrintAccess.this.view,
                                     PrintAccess.this.core.env,
@@ -2618,7 +2618,7 @@ final class PrintAccess {
                               4.1000000000000005
                            );
                            if (this.nodeClick != null
-                              && !PrintAccess.this.core.push_Z_BlockPos(BlockPos.of(this.evalNode.key))) {
+                              && !PrintAccess.this.core.isFluidTargetStance(BlockPos.of(this.evalNode.key))) {
                               if (target.kind() != PrintTarget.TargetKind.FLUID) {
                                  this.foundGoal = g;
                               } else {
@@ -2655,13 +2655,13 @@ final class PrintAccess {
                               this.foundGoal = g;
                               this.viaTempSupport = true;
                            } else if (!this.refusedStance) {
-                              PrintAccess.this.core.init_V_J(this.evalNode.key, this.evalNode.feet, g, true, this.contextHash);
+                              PrintAccess.this.core.storeAccessCache(this.evalNode.key, this.evalNode.feet, g, true, this.contextHash);
                            }
 
                            this.supportProbe = null;
                         } else if (!this.refusedStance && PrintAccess.this.core.machineJobAt(g) == null) {
                            PrintAccess.this.core
-                              .init_V_J(
+                              .storeAccessCache(
                                  this.evalNode.key,
                                  this.evalNode.feet,
                                  g,
@@ -2742,7 +2742,7 @@ final class PrintAccess {
                         }
 
                         BlockPos next = this.supportTarget.pos().relative(Direction.values()[this.sideCursor++]);
-                        if (!PrintAccess.this.core.init_Z_BlockPos_BlockPos(next, this.supportTarget.pos())) {
+                        if (!PrintAccess.this.core.isUsableSupportSlot(next, this.supportTarget.pos())) {
                            return;
                         }
 
@@ -2847,8 +2847,8 @@ final class PrintAccess {
                      && !PrintAccess.this.core.temporaryBlocks.containsKey(BlockPos.asLong(x, y - 2, z))
                      && NodeEvaluation.this.evalNode.via != null
                      && NodeEvaluation.this.evalNode.via.kind == PrintAccess.StepKind.WALK
-                     && !PrintAccess.this.core.sync_Z_J(floor)
-                     && PrintAccess.this.core.update_Z_BlockPos(BlockPos.of(floor))) {
+                     && !PrintAccess.this.core.isHeldByUnsettledFlow(floor)
+                     && PrintAccess.this.core.hasLandingAfterDig(BlockPos.of(floor))) {
                      this.removalCell = floor;
                      this.standingRemoval = true;
                      this.removalEscape = AccessSearch.this.new EscapeCheck(
@@ -2935,7 +2935,7 @@ final class PrintAccess {
                      || Math.abs(tz - z) > 4
                      || ty - y > 4
                      || y - ty > 5
-                     || PrintAccess.this.core.sync_Z_J(candidate)
+                     || PrintAccess.this.core.isHeldByUnsettledFlow(candidate)
                      || tx == x && tz == z && ty == y - 1
                      || PrintAccess.this.core
                         .failedDigStances

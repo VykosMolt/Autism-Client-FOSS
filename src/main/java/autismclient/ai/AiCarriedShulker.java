@@ -626,7 +626,7 @@ final class AiCarriedShulker implements AiOperation {
 
    private int carriedCount() {
       return this.exactMaterial.isEmpty()
-         ? AiPrintSupply.init(this.mc.player.getInventory(), this.item)
+         ? AiPrintSupply.countCarried(this.mc.player.getInventory(), this.item)
          : AiInventoryController.countMatching(this.mc.player.getInventory(), this.exactMaterial);
    }
 

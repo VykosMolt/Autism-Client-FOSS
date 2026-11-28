@@ -149,7 +149,7 @@ final class AiPrintOp implements AiOperation {
       this.core.trace = Boolean.getBoolean("autism.ai.print.trace");
       this.blockObserver = pos -> {
          this.env.notifyBlockChanged(pos);
-         this.supply.load(pos);
+         this.supply.noteChange(pos);
       };
       this.chunkObserver = key -> {
          this.env.notifyChunkChanged(key);
@@ -255,7 +255,7 @@ final class AiPrintOp implements AiOperation {
          }
       }
 
-      autismclient.ai.engine.AiRoutePolicy.putAt(this.supply.ownedCells()::contains);
+      autismclient.ai.engine.AiRoutePolicy.blockCellsTemporarily(this.supply.ownedCells()::contains);
       if (!this.env.isCreativeMode()) {
          AiOperation.Result guarded = this.guard
             .tick(
@@ -334,7 +334,7 @@ final class AiPrintOp implements AiOperation {
 
          if (!this.env.isCreativeMode()
             && !this.core.hasUncertainMachineJob()
-            && !this.core.flush_Z()
+            && !this.core.trapdoorRecoveryInteracted()
             && this.mc.player.getFoodData().getFoodLevel() <= 14
             && !this.core.isRestingOnGround()) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
@@ -404,7 +404,7 @@ final class AiPrintOp implements AiOperation {
 
          if (!this.env.isCreativeMode() && this.core.getRequestedItem() != null) {
             this.requestedItem = this.core.getRequestedItem();
-            this.requestedItemHeld = AiPrintSupply.load(this.mc.player.getInventory(), this.requestedItem);
+            this.requestedItemHeld = AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.requestedItem);
             this.env.applyControls(controls);
             return this.runningStatus("Preparing to recover " + itemId(this.requestedItem));
          }
@@ -528,7 +528,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result refillMissingItem() {
-      if ((this.env.isCreativeMode() || AiPrintSupply.load(this.mc.player.getInventory(), this.missingItem) > 0) && this.core.isRestingOnGround()) {
+      if ((this.env.isCreativeMode() || AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.missingItem) > 0) && this.core.isRestingOnGround()) {
          this.supply.resetRefill();
          this.missingItem = null;
          this.core.resetActivity();
@@ -550,9 +550,9 @@ final class AiPrintOp implements AiOperation {
          return this.runningStatus("Returning to ground for " + itemId(this.missingItem));
       }
 
-      if (!this.env.isCreativeMode() && AiPrintSupply.load(this.mc.player.getInventory(), this.missingItem) <= 0) {
-         this.missingItemHeld = AiPrintSupply.load(this.mc.player.getInventory(), this.missingItem);
-         if (!this.supply.load(16384)) {
+      if (!this.env.isCreativeMode() && AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.missingItem) <= 0) {
+         this.missingItemHeld = AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.missingItem);
+         if (!this.supply.advanceStockScan(16384)) {
             return this.runningStatus("Checking shulker stock for " + itemId(this.missingItem));
          }
 
@@ -583,13 +583,13 @@ final class AiPrintOp implements AiOperation {
 
    private AiOperation.Result startSoilGather() {
       this.soilGatherActive = true;
-      this.dirtAtGatherStart = AiPrintSupply.load(this.mc.player.getInventory(), Items.DIRT);
-      this.startChild(new AiPrintOp.LocalSoilGather(Math.max(this.missingItemHeld, this.supply.init_I())));
+      this.dirtAtGatherStart = AiPrintSupply.countInInventory(this.mc.player.getInventory(), Items.DIRT);
+      this.startChild(new AiPrintOp.LocalSoilGather(Math.max(this.missingItemHeld, this.supply.neededStock())));
       return this.runningStatus("Gathering soil nearby");
    }
 
    private int soilCollected() {
-      return this.soilCollectedBanked + (this.soilGatherActive ? Math.max(0, AiPrintSupply.load(this.mc.player.getInventory(), Items.DIRT) - this.dirtAtGatherStart) : 0);
+      return this.soilCollectedBanked + (this.soilGatherActive ? Math.max(0, AiPrintSupply.countInInventory(this.mc.player.getInventory(), Items.DIRT) - this.dirtAtGatherStart) : 0);
    }
 
    private void bankSoilCollected() {
@@ -598,7 +598,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result recoverRequestedItem() {
-      int held = AiPrintSupply.load(this.mc.player.getInventory(), this.requestedItem);
+      int held = AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.requestedItem);
       if (held > this.requestedItemHeld) {
          this.core.recordSupplied(this.requestedItem, held - this.requestedItemHeld);
          this.requestedItem = null;
@@ -623,7 +623,7 @@ final class AiPrintOp implements AiOperation {
                   return this.runningStatus("Temporary material reconciled; resuming construction");
                } else {
                   this.startChild(
-                     AiGameplay.write(
+                     AiGameplay.pickupItems(
                         AiJson.objectOf(
                            "item", itemId(this.requestedItem), "count", Math.min(remaining, 2304), "additional", true, "radius", 16, "timeoutSeconds", 20
                         )
@@ -793,7 +793,7 @@ final class AiPrintOp implements AiOperation {
             } else {
                BlockPos p = this.terrainCell;
                this.terrainCell = null;
-               if (result.status() == AiOperation.Status.SUCCEEDED && !AiSchematicActions.init(this.mc.level.getBlockState(p))) {
+               if (result.status() == AiOperation.Status.SUCCEEDED && !AiSchematicActions.isNaturalTerrain(this.mc.level.getBlockState(p))) {
                   this.supply.terrainCleared++;
                   return this.runningStatus("Terrain removed; checking the next obstruction");
                } else {
@@ -801,7 +801,7 @@ final class AiPrintOp implements AiOperation {
                }
             }
          } else if (this.requestedItem != null) {
-            int gained = Math.max(0, AiPrintSupply.load(this.mc.player.getInventory(), this.requestedItem) - this.requestedItemHeld);
+            int gained = Math.max(0, AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.requestedItem) - this.requestedItemHeld);
             this.core.recordSupplied(this.requestedItem, gained);
             if (result.status() == AiOperation.Status.SUCCEEDED) {
                this.requestedItem = null;
@@ -818,7 +818,7 @@ final class AiPrintOp implements AiOperation {
          } else if (this.requestedContents.isEmpty()) {
             this.core.resetActivity();
             this.resetActivityAfterRefill = false;
-            if (AiPrintSupply.load(this.mc.player.getInventory(), this.missingItem) > this.missingItemHeld) {
+            if (AiPrintSupply.countInInventory(this.mc.player.getInventory(), this.missingItem) > this.missingItemHeld) {
                this.supply.completeRefill();
                this.missingItem = null;
                return this.runningStatus("Shulker stock received; resuming construction");
@@ -1040,7 +1040,7 @@ final class AiPrintOp implements AiOperation {
          this.closeJobScope();
          autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
          autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(0L);
-         autismclient.ai.engine.AiRoutePolicy.putAt_V();
+         autismclient.ai.engine.AiRoutePolicy.clearBlockedCells();
          AiServerEvidence.removeBlockObserver(this.blockObserver);
          AiServerEvidence.removeChunkObserver(this.chunkObserver);
          this.env.releaseControls();
@@ -1106,7 +1106,7 @@ final class AiPrintOp implements AiOperation {
             return this.finishWith(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT) >= this.targetCount && !this.receipt.requiresReconciliation(this.breakOp)) {
+         if (AiPrintSupply.countInInventory(AiPrintOp.this.mc.player.getInventory(), Items.DIRT) >= this.targetCount && !this.receipt.requiresReconciliation(this.breakOp)) {
             return this.finishWith(new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Collected the required soil", "{}", List.of()));
          }
 
@@ -1120,7 +1120,7 @@ final class AiPrintOp implements AiOperation {
             }
 
             this.target = this.candidates.get(this.cursor++);
-            this.dirtBefore = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
+            this.dirtBefore = AiPrintSupply.countInInventory(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
             this.waitTicks = 0;
             this.breakOp = autismclient.ai.engine.AiBreakBlock.breakBlock(
                this.target,
@@ -1153,7 +1153,7 @@ final class AiPrintOp implements AiOperation {
                : this.finishWith(result);
          } else {
             AiPrintOp.this.soilBroken++;
-            int held = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
+            int held = AiPrintSupply.countInInventory(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
             if (held > this.dirtBefore) {
                return this.running("Soil picked up; approaching the next block");
             } else {
@@ -1163,7 +1163,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       private AiOperation.Result running(String message) {
-         int held = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
+         int held = AiPrintSupply.countInInventory(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
          return new AiOperation.Result(AiOperation.Status.RUNNING, "(" + held + "/" + this.targetCount + ") " + message, "{}", List.of());
       }
 

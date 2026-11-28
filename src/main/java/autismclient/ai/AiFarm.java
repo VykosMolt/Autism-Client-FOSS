@@ -599,7 +599,7 @@ final class AiFarm {
                   AiFarm.Inner_CachePool w = this.followUps.poll();
                   if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                      AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(w.cell());
-                     if (AiReplantEvidence.init(
+                     if (AiReplantEvidence.replantState(
                            this.mc.level.getBlockState(w.cell()),
                            update,
                            this.harvestRevision.getOrDefault(w.cell().asLong(), 0L),

@@ -172,7 +172,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public boolean b_() {
+   public boolean hasSkippableContents() {
       return this.optional && !this.inspectEmpty && !this.requireInitiallyEmpty;
    }
 
@@ -188,7 +188,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean reopenForCapacityRecheck() {
-      if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.b_() && this.sameWorld()) {
+      if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.hasSkippableContents() && this.sameWorld()) {
          this.resetTransfer();
          this.setStatus(
             autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING, "Rechecking native container capacity after a machine update"
@@ -210,8 +210,8 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public void init(Map<Item, Integer> removed) {
-      if (this.b_()) {
+   public void acceptRecoveredMaterial(Map<Item, Integer> removed) {
+      if (this.hasSkippableContents()) {
          this.removed = removed;
          this.poll = true;
          this.isChest = this.state.is(Blocks.CHEST);
@@ -220,7 +220,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean write_Z() {
-      return this.b_() && this.state.is(Blocks.CHEST) && this.open();
+      return this.hasSkippableContents() && this.state.is(Blocks.CHEST) && this.open();
    }
 
    @Override
@@ -390,7 +390,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public boolean sync() {
+   public boolean canFillEarly() {
       if ((
             this.status == autismclient.ai.print.PrintMachineJob.JobStatus.READY
                || this.status == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING

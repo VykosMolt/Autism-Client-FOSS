@@ -597,7 +597,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       } else if (this.rotationOwnedByOther()) {
          return false;
       } else {
-         return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20() : false;
+         return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.isClickPending() : false;
       }
    }
 
@@ -2243,7 +2243,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
       }
 
-      if (this.retryLimiter.init(cell.asLong(), new AutoFarmModule.RetryKey(target.kind(), state), tick, limit)) {
+      if (this.retryLimiter.tryAcquire(cell.asLong(), new AutoFarmModule.RetryKey(target.kind(), state), tick, limit)) {
          return true;
       }
 
@@ -2487,7 +2487,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private void tickWalking() {
       int tick = AutismSessionState.getInstance().getClientTick();
       BlockPos goal = this.walkGoal;
-      if (goal != null && (GridWalkNavigator.write(goal) || this.actionFor(goal, tick) == null)) {
+      if (goal != null && (GridWalkNavigator.isTargetBlocked(goal) || this.actionFor(goal, tick) == null)) {
          goal = null;
          this.walkGoal = null;
          this.lastGoalSearchTick = tick - 20;
@@ -2505,8 +2505,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (goal == null) {
          GridWalkNavigator.stop();
          this.requestRotation(null);
-      } else if (!GridWalkNavigator.read(goal)) {
-         if (GridWalkNavigator.load(goal)) {
+      } else if (!GridWalkNavigator.walkToward(goal)) {
+         if (GridWalkNavigator.isAtTarget(goal)) {
             this.walkGoal = null;
             GridWalkNavigator.stop();
             this.nextActionTick = tick + 2 + this.random.nextInt(3);
@@ -2514,7 +2514,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             this.requestRotation(null);
          } else {
             GridWalkNavigator.stop();
-            GridWalkNavigator.init_V_BlockPos_I(goal, 200);
+            GridWalkNavigator.blockTarget(goal, 200);
             this.walkGoal = null;
             this.lastGoalSearchTick = tick - 20;
             this.requestRotation(null);
@@ -2533,17 +2533,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       BlockPos goal = this.walkGoalFor(target, eye, reachSqr, tick);
       if (goal == null) {
          return false;
-      } else if (GridWalkNavigator.read(goal)) {
+      } else if (GridWalkNavigator.walkToward(goal)) {
          this.lastGoalSearchTick = tick - 20;
          return true;
       } else {
          this.searchedGoal = null;
-         if (GridWalkNavigator.load(goal)) {
+         if (GridWalkNavigator.isAtTarget(goal)) {
             GridWalkNavigator.stop();
             return false;
          } else {
             GridWalkNavigator.stop();
-            GridWalkNavigator.init_V_BlockPos_I(goal, 200);
+            GridWalkNavigator.blockTarget(goal, 200);
             this.queue = tick - 20;
             return false;
          }
@@ -2553,7 +2553,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private BlockPos walkGoalFor(AutoFarmModule.FarmTarget target, Vec3 eye, double reachSqr, int tick) {
       if (target.kind() == autismclient.util.FarmActionScheduler.ActionKind.HARVEST && this.rowEndTick == tick && this.rowEnd != null) {
          return distanceSqToCell(eye, this.rowEnd.getX(), this.rowEnd.getY(), this.rowEnd.getZ()) > reachSqr
-               && !GridWalkNavigator.write(this.rowEnd)
+               && !GridWalkNavigator.isTargetBlocked(this.rowEnd)
                && this.actionFor(this.rowEnd, tick) != null
             ? this.rowEnd
             : null;
@@ -2561,7 +2561,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       BlockPos goal = this.searchedGoal;
       if (goal != null
-         && (GridWalkNavigator.write(goal) || this.actionFor(goal, tick) == null || distanceSqToCell(eye, goal.getX(), goal.getY(), goal.getZ()) <= reachSqr)) {
+         && (GridWalkNavigator.isTargetBlocked(goal) || this.actionFor(goal, tick) == null || distanceSqToCell(eye, goal.getX(), goal.getY(), goal.getZ()) <= reachSqr)) {
          goal = null;
          this.searchedGoal = null;
          this.queue = tick - 20;
@@ -2728,7 +2728,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                      int cz = this.searchOriginZ + dz;
                      cursor.set(cx, cy, cz);
                      if (MC.level.hasChunkAt(cursor)
-                        && !GridWalkNavigator.write(cursor)
+                        && !GridWalkNavigator.isTargetBlocked(cursor)
                         && this.actionAt(cursor, cx, cy, cz, crops, tick, wantReplant, wantPlant, wantTill, wantBonemeal) != null
                         && (!(this.searchMinDistSqr > 0.0) || !(distanceSqToCell(this.searchEye, cx, cy, cz) <= this.searchMinDistSqr))) {
                         float correction = Math.abs(RotationMath.angleDelta(this.searchYaw, yawToCell(this.searchPlayerX, this.searchPlayerZ, cx, cz)));
@@ -2770,7 +2770,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       for (AutoFarmModule.CellCandidate choice : this.candidates) {
          BlockPos cell = choice.cell();
-         if (this.actionFor(cell, tick) != null && !GridWalkNavigator.write(cell)) {
+         if (this.actionFor(cell, tick) != null && !GridWalkNavigator.isTargetBlocked(cell)) {
             double cost = GridWalkNavigator.pathCost(cell);
             if (Double.isFinite(cost)) {
                int neighbours = 0;

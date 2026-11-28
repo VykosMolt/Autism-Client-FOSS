@@ -115,7 +115,7 @@ public class AutismHudEditorScreen extends Screen {
       if (pos != null) {
          int x = pos[0];
          int y = pos[1];
-         autismclient.gui.ui.widgets.WindowFrameRenderer.init(
+         autismclient.gui.ui.widgets.WindowFrameRenderer.drawFrame(
             autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             "Autism HUD Editor",
@@ -233,7 +233,7 @@ public class AutismHudEditorScreen extends Screen {
 
    private void drawPicker(GuiGraphicsExtractor graphics, int mx, int my) {
       AutismHudEditorScreen.PickerLayout p = this.pickerLayout();
-      autismclient.gui.ui.widgets.WindowFrameRenderer.init(
+      autismclient.gui.ui.widgets.WindowFrameRenderer.drawFrame(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
          autismclient.gui.f.NetHelper.init(p.x, p.y, p.width, p.height),
          "Add Element",

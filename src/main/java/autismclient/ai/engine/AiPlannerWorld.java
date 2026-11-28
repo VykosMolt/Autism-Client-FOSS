@@ -64,7 +64,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private AiPathfinder.PathStep seenIncomingMove;
    private NavigationOpenSet.Inner_DataUtil seenActiveNode;
    private boolean readEx_Z;
-   long putAt_J;
+   long pendingCellsMet;
 
    @Override
    public double dropLimit() {
@@ -202,7 +202,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       double var28,
       double var30
    ) {
-      long var32 = this.putAt_J;
+      long var32 = this.pendingCellsMet;
       int var34 = (int)Math.floor(var20);
       int var35 = (int)Math.floor(var26);
       int var36 = (int)Math.floor(var22) - 1;
@@ -210,7 +210,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       int var38 = (int)Math.floor(var24);
       int var39 = (int)Math.floor(var30);
       AABB[] var40 = this.putAt_AABBArr_I(var34, var36, var38, var35, var37, var39);
-      if (this.cachedGrid != null && this.putAt_J == var32) {
+      if (this.cachedGrid != null && this.pendingCellsMet == var32) {
          this.cachedBoxValid = true;
          this.cachedMinX = var34;
          this.cachedMinY = var36;
@@ -302,7 +302,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return this.fill_AABBArr2[var14];
       }
 
-      long var15 = this.putAt_J;
+      long var15 = this.pendingCellsMet;
       ArrayList var17 = null;
       double var18 = var2 + 1;
 
@@ -336,7 +336,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       }
 
       AABB[] var28 = var17 == null ? putAt_AABBArr : ((java.util.Collection<AABB>)var17).toArray(putAt_AABBArr);
-      if (var10 && this.putAt_J == var15) {
+      if (var10 && this.pendingCellsMet == var15) {
          this.fill_AABBArr2[var14] = var28;
          this.rangeBoxKeys[var14] = var11;
          this.rangeBoxSpans[var14] = var13;
@@ -388,7 +388,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return var7;
       }
 
-      long var8 = this.putAt_J;
+      long var8 = this.pendingCellsMet;
       short var10 = this.putAt_S_I(var1, var2, var3, var4);
       var var11 = AiShapes.boxes(var10);
       AABB[] var12 = var11.isEmpty() ? putAt_AABBArr : new AABB[var11.size()];
@@ -397,7 +397,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var12[var13] = ((AABB)var11.get(var13)).move(var1, var2, var3);
       }
 
-      if (this.putAt_J == var8) {
+      if (this.pendingCellsMet == var8) {
          this.blockBoxKeys[var6] = var4;
          this.putAt_AABBArr2[var6] = var12;
       }
@@ -420,9 +420,9 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return var6;
       }
 
-      long var7 = this.putAt_J;
+      long var7 = this.pendingCellsMet;
       short var9 = this.fill_S(var1, var2, var3);
-      if (this.putAt_J != var7) {
+      if (this.pendingCellsMet != var7) {
          return var9;
       }
 
@@ -539,7 +539,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
          return var7.lava();
       } else {
-         this.putAt_J++;
+         this.pendingCellsMet++;
          return true;
       }
    }
@@ -568,7 +568,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
          return var8;
       } else {
-         this.putAt_J++;
+         this.pendingCellsMet++;
          return true;
       }
    }
@@ -583,7 +583,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return var4.hazardFeet() || var4.thorny() || !var4.passable() && var4.floorContactHazard() && var4.top16() == 15;
       }
 
-      this.putAt_J++;
+      this.pendingCellsMet++;
       return true;
    }
 
@@ -597,7 +597,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return var4.feetTrigger();
       }
 
-      this.putAt_J++;
+      this.pendingCellsMet++;
       return false;
    }
 
@@ -611,7 +611,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean putAt(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+   public boolean isRegionPassable(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
       if (this.cachedGrid == null) {
          return false;
       }
@@ -663,10 +663,10 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public int putAt_I_AABB(AABB var1) {
-      return this.putAt_I_D(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ);
+      return this.strongestHold(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ);
    }
 
-   int putAt_I_D(double var1, double var3, double var5, double var7, double var9, double var11) {
+   int strongestHold(double var1, double var3, double var5, double var7, double var9, double var11) {
       if (!this.fill_Z) {
          return 0;
       }
@@ -741,7 +741,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          ? this.grid.putAt_S_I(var1, var2, var3)
          : this.cachedGrid.putAt_S_I(var1, var2, var3);
       if (var6 < 0) {
-         this.putAt_J++;
+         this.pendingCellsMet++;
          if (this.cachedGrid != null) {
             this.cachedGrid.queryFlags |= 1;
          }
@@ -756,7 +756,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       return this.putAt_J_BlockPos(var1, var2, true);
    }
 
-   boolean putAt_Z_I(int var1, int var2, double var3) {
+   boolean hasFullFlatSupport(int var1, int var2, double var3) {
       if (this.cachedGrid == null) {
          return AiJumpSolver.computeFullFlatSupport(this, var1, var2, var3);
       }
@@ -769,9 +769,9 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return this.readEx_BArr[var9] == 1;
       }
 
-      long var10 = this.putAt_J;
+      long var10 = this.pendingCellsMet;
       boolean var12 = AiJumpSolver.computeFullFlatSupport(this, var1, var2, var3);
-      if (this.putAt_J == var10) {
+      if (this.pendingCellsMet == var10) {
          this.state_JArr[var9] = var5;
          this.closeOf_JArr[var9] = var7;
          this.readEx_BArr[var9] = (byte)(var12 ? 1 : -1);
@@ -808,14 +808,14 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return this.chunkAt_JArr[var8];
       }
 
-      long var9 = this.putAt_J;
+      long var9 = this.pendingCellsMet;
       long var11 = 5871781006564002453L ^ var5;
 
       for (int var13 = var3; var13 <= var4; var13++) {
          var11 = (var11 ^ HashCommon.mix((long)this.readEx_I(var1, var2, var13))) * 1099511628211L;
       }
 
-      if (this.cachedGrid != null && this.putAt_J == var9) {
+      if (this.cachedGrid != null && this.pendingCellsMet == var9) {
          this.prev_JArr[var8] = var6;
          this.columnHashSpans[var8] = var5;
          this.chunkAt_JArr[var8] = var11;
@@ -831,7 +831,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return var6;
       }
 
-      long var7 = this.putAt_J;
+      long var7 = this.pendingCellsMet;
       int var9 = this.putAt_S_I(var1, var2, var3) & '\uffff';
       var9 |= (this.putAt_B_I(var1, var2, var3) & 255) << 16;
       if (this.climbableAt(var1, var2, var3)) {
@@ -851,7 +851,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var9 |= 536870912;
       }
 
-      if (this.cachedGrid != null && this.putAt_J == var7) {
+      if (this.cachedGrid != null && this.pendingCellsMet == var7) {
          if (this.putAt_Long2IntOpenHashMa.size() >= 65536) {
             this.putAt_Long2IntOpenHashMa.clear();
          }

@@ -42,7 +42,7 @@ public class AutismMultiPlayerGameModeMixin {
    @WrapMethod(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V")
    private void autism$displaceKnockback(Player player, Entity target, Operation<Void> original) {
       if (!AutismLiteVariant.enabled()) {
-         if (BacktrackModule.init_Z_Player_Entity(player, target)) {
+         if (BacktrackModule.holdAttack(player, target)) {
             return;
          }
 
@@ -66,7 +66,7 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V", at = @At("RETURN"))
    private void autism$recordCombatEngagement(Player player, Entity entity, CallbackInfo ci) {
-      autismclient.util.SprintStateTracker.load(player);
+      autismclient.util.SprintStateTracker.onAttack(player);
       if (!AutismLiteVariant.enabled()) {
          WTappingModule.onAttack(player, entity);
          CombatAttackDispatcher.onAttack(player, entity);
@@ -121,7 +121,7 @@ public class AutismMultiPlayerGameModeMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            AiOps.init_V(hitPos);
+            AiOps.onBlockHit(hitPos);
          }
       }
    }

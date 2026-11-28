@@ -342,7 +342,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (player != null && packet.id() == player.getId()) {
          for (DataValue<?> value : packet.packedItems()) {
             if (value.id() == 0 && value.value() instanceof Byte flags) {
-               autismclient.util.SprintStateTracker.load((flags & 8) != 0);
+               autismclient.util.SprintStateTracker.onSprintFlagSent((flags & 8) != 0);
             }
          }
       }
@@ -351,15 +351,15 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetEntityMotion", at = @At("HEAD"))
    private void autism$clutchMotionBefore(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && Minecraft.getInstance().isSameThread()) {
-         ClutchModule.init_V_I_11(packet.id());
+         ClutchModule.beforeEntityMotion(packet.id());
       }
    }
 
    @Inject(method = "handleSetEntityMotion", at = @At("RETURN"))
    private void autism$aiEntityMotion(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.load_V_I_3(packet.id());
-         AntiKnockbackModule.init_V_I_7(packet.id());
+         ClutchModule.afterEntityMotion(packet.id());
+         AntiKnockbackModule.onEntityMotion(packet.id());
          Minecraft mc = Minecraft.getInstance();
          Entity entity = mc.level == null ? null : mc.level.getEntity(packet.id());
          if (entity != null) {
@@ -513,22 +513,22 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleMovePlayer", at = @At("RETURN"))
    private void autism$onServerPositionCorrection(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-      SodiumRegionResourceProbe.load_V();
+      SodiumRegionResourceProbe.invalidateIfInactive();
       Minecraft mc = Minecraft.getInstance();
       this.autism$restoreView(mc);
       long correctionToken = this.autism$pacedTeleportCorrectionToken;
       this.autism$pacedTeleportCorrectionToken = 0L;
       if (mc.player != null) {
          if (!AutismLiteVariant.enabled()) {
-            autismclient.modules.AirStuckModule.init_V();
+            autismclient.modules.AirStuckModule.onPositionCorrection();
          }
 
          if (!AutismLiteVariant.enabled()) {
-            AntiKnockbackModule.init_V_16();
+            AntiKnockbackModule.onPositionCorrection();
          }
 
          if (!AutismLiteVariant.enabled()) {
-            ClutchModule.init_V_Vec3(this.autism$clutchCorrectionFrom);
+            ClutchModule.onPositionCorrection(this.autism$clutchCorrectionFrom);
          }
 
          this.autism$clutchCorrectionFrom = null;
@@ -626,14 +626,14 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!aD.read_Z()) {
          MacroWaitRegistry.bumpInventoryRevision();
          boolean macroWaits = MacroWaitRegistry.hasInventoryWaits();
-         boolean inventoryTweaks = InventoryTweaksModule.write_Z_3();
+         boolean inventoryTweaks = InventoryTweaksModule.autoStealOrDump();
          if (macroWaits || inventoryTweaks) {
             if (macroWaits) {
                MacroWaitRegistry.onInventoryUpdate(Minecraft.getInstance());
             }
 
             if (inventoryTweaks) {
-               InventoryTweaksModule.init_V_I_5(packet.containerId());
+               InventoryTweaksModule.onContainerOpen(packet.containerId());
             }
          }
       }
@@ -644,14 +644,14 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!aD.read_Z()) {
          MacroWaitRegistry.bumpInventoryRevision();
          boolean macroWaits = MacroWaitRegistry.hasInventoryWaits();
-         boolean inventoryTweaks = InventoryTweaksModule.write_Z_3();
+         boolean inventoryTweaks = InventoryTweaksModule.autoStealOrDump();
          if (macroWaits || inventoryTweaks) {
             if (macroWaits) {
                MacroWaitRegistry.onSlotUpdate(packet.getSlot());
             }
 
             if (inventoryTweaks) {
-               InventoryTweaksModule.init_V_I_5(packet.getContainerId());
+               InventoryTweaksModule.onContainerOpen(packet.getContainerId());
             }
          }
       }

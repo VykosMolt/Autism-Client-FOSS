@@ -87,7 +87,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       if (this.menuClosed) {
          this.closeAnimStart = 0L;
          if (this.menuController != null) {
-            this.menuController.read_V();
+            this.menuController.resumeMenu();
          }
       }
 
@@ -300,7 +300,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       if (!this.menuClosed) {
          this.menuClosed = true;
          if (this.menuController != null) {
-            this.menuController.close();
+            this.menuController.closeProfilesView();
          }
 
          OverlayManager.getInstance().restoreStashedIfFits();
@@ -940,12 +940,12 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       @Override
-      public void init(Module module, Setting<?, ?> option) {
+      public void openPacketSelector(Module module, Setting<?, ?> option) {
          AutismModulesScreen.this.init(module, option);
       }
 
       @Override
-      public void load(Module module, Setting<?, ?> option) {
+      public void openStringListEditor(Module module, Setting<?, ?> option) {
          if (AutismModulesScreen.this.minecraft != null) {
             AutismModulesScreen.this.selectedModuleId = module == null ? null : module.id();
             AutismModulesScreen.this.minecraft.gui.setScreen(new StringListEditorScreen(AutismModulesScreen.this, module, option));
@@ -953,7 +953,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       @Override
-      public void read(Module module, Setting<?, ?> option) {
+      public void openRegistrySelector(Module module, Setting<?, ?> option) {
          if (AutismModulesScreen.this.minecraft != null) {
             AutismModulesScreen.this.selectedModuleId = module == null ? null : module.id();
             AutismModulesScreen.this.minecraft.gui.setScreen(new RegistrySelectorScreen(AutismModulesScreen.this, module, option));
@@ -961,7 +961,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       @Override
-      public void write(Module module, Setting<?, ?> option) {
+      public void openMacroEditor(Module module, Setting<?, ?> option) {
          this.openMacroEditor(module, option, null);
       }
 
@@ -983,12 +983,12 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       @Override
-      public void init(String id) {
+      public void openToolById(String id) {
          AutismModulesScreen.this.openTool(id);
       }
 
       @Override
-      public void init(Module module) {
+      public void addToMacro(Module module) {
          AutismModulesScreen.this.addModuleToMacro(module);
       }
    }

@@ -26,7 +26,7 @@ public interface AutismDataComponentInitializerMixin {
             throw error;
          }
 
-         RegistryCompatGuard.init_V(error);
+         RegistryCompatGuard.warnMissingDelayedComponent(error);
          return null;
       }
    }

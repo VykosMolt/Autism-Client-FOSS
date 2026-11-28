@@ -164,8 +164,8 @@ public final class SmoothRotationIntegrator {
          long yawCounts = toCounts(yawCandidate, yawError);
          long pitchCounts = toCounts(pitchCandidate, pitchError);
          SmoothRotationIntegrator.CountStep varied = this.varyCounts(yawCounts, pitchCounts, yawError, pitchError);
-         this.lastYawCounts = varied.init;
-         this.lastPitchCounts = varied.load;
+         this.lastYawCounts = varied.yawCounts;
+         this.lastPitchCounts = varied.pitchCounts;
          this.hasLastCounts = true;
          return varied;
       } else {
@@ -287,10 +287,10 @@ public final class SmoothRotationIntegrator {
       return Math.max(min, Math.min(max, value));
    }
 
-   public record CountStep(long init, long load) {
+   public record CountStep(long yawCounts, long pitchCounts) {
       public RotationMath.Rotation step(double degreesPerCount) {
          return Double.isFinite(degreesPerCount) && !(degreesPerCount <= 0.0)
-            ? new RotationMath.Rotation((float)(this.init * degreesPerCount), (float)(this.load * degreesPerCount))
+            ? new RotationMath.Rotation((float)(this.yawCounts * degreesPerCount), (float)(this.pitchCounts * degreesPerCount))
             : new RotationMath.Rotation(0.0F, 0.0F);
       }
    }

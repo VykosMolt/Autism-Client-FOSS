@@ -68,7 +68,7 @@ public final class BlastShieldPosFinder {
       }
    }
 
-   public static boolean init(
+   public static boolean isShieldWorthIt(
       double beforeTarget, double beforeSelf, double afterTarget, double afterSelf, double minimumTarget, double maximumSelf, boolean efficient
    ) {
       if (WeaponDamageCalculator.worthIt(afterTarget, afterSelf, minimumTarget, maximumSelf, efficient)

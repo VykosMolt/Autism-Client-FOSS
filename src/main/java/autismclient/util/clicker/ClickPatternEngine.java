@@ -220,7 +220,7 @@ public final class ClickPatternEngine {
    private void load_V_J(long now) {
       long start = now;
       if (this.set_J != -9223372036854775808L && now - this.set_J < this.profile.maxIntervalNanos) {
-         long interval = this.profile.technique.init_Z()
+         long interval = this.profile.technique.isHumanized()
             ? this.sampleInterval(now - this.push_J, 0.0, this.minInterval(), this.maxInterval(), 0.0, this.activeGenerator.rng)
             : this.floorIntervalNanos();
          start = Math.max(now, this.set_J + interval);
@@ -312,7 +312,7 @@ public final class ClickPatternEngine {
       boolean lapses = technique == ClickTechnique.NORMAL
          || technique == ClickTechnique.JITTER
          || technique == ClickTechnique.BUTTERFLY;
-      return lapses && this.profile.sync > 0.0 ? 11.0 / this.profile.sync : 0.0;
+      return lapses && this.profile.variationShare > 0.0 ? 11.0 / this.profile.variationShare : 0.0;
    }
 
    private int init_I_D(double every) {
@@ -395,7 +395,7 @@ public final class ClickPatternEngine {
    }
 
    private double timingSpread() {
-      return 2.5 * this.profile.sync * this.personality.init_D();
+      return 2.5 * this.profile.variationShare * this.personality.init_D();
    }
 
    private void advanceDrift(long at) {
@@ -423,7 +423,7 @@ public final class ClickPatternEngine {
          + this.profile.technique.clockSd * this.timingSpread() * r.nextGaussian()
          + boundary
          + envelope
-         + 0.7 * this.profile.flush * this.fatigue
+         + 0.7 * this.profile.fatigueShare * this.fatigue
          + this.init_D_J_J(fastNs, slowNs);
       return fastNs + (long)Math.ceil((slowNs - fastNs) * sigmoid(latent));
    }
@@ -436,7 +436,7 @@ public final class ClickPatternEngine {
    }
 
    private long load_J_J(long interval) {
-      long pulse = ClickTimingMath.msToNanos(this.profile.pop);
+      long pulse = ClickTimingMath.msToNanos(this.profile.pulseMs);
       long room = Math.min(interval / 2L, interval - 2000000L);
       return Math.max(1000000L, Math.min(pulse, room));
    }
@@ -459,7 +459,7 @@ public final class ClickPatternEngine {
 
    private double write_D() {
       ClickTechnique technique = this.profile.technique;
-      if (!technique.init_Z()) {
+      if (!technique.isHumanized()) {
          return 0.0;
       }
 
@@ -614,7 +614,7 @@ public final class ClickPatternEngine {
 
          for (int step = 0; step < 6000; step++) {
             double omega = 3.141592653589793 * this.fingerRateHz;
-            double pull = 1.0 * ClickPatternEngine.this.profile.open * Math.sin(ClickPatternEngine.wrapRadians(this.load_D - this.init_D - 3.141592653589793));
+            double pull = 1.0 * ClickPatternEngine.this.profile.fingerSyncScale * Math.sin(ClickPatternEngine.wrapRadians(this.load_D - this.init_D - 3.141592653589793));
             double detune = ClickPatternEngine.this.personality.init_Z() ? 0.01 : -0.01;
             double rateA = Math.max(0.1 * omega, omega + detune + this.read_D + pull);
             double rateB = Math.max(0.1 * omega, omega - detune + this.rateNoiseB - pull);
@@ -759,8 +759,8 @@ public final class ClickPatternEngine {
             this.nextFreeSpinClick();
          } else {
             if (this.load_I == 0) {
-               this.init_I = ClickPatternEngine.this.profile.init_I
-                  + this.rng.nextInt(ClickPatternEngine.this.profile.load_I - ClickPatternEngine.this.profile.init_I + 1);
+               this.init_I = ClickPatternEngine.this.profile.burstMin
+                  + this.rng.nextInt(ClickPatternEngine.this.profile.burstMax - ClickPatternEngine.this.profile.burstMin + 1);
             }
 
             long down = this.init_J;
@@ -844,8 +844,8 @@ public final class ClickPatternEngine {
          }
 
          this.read_J = at;
-         long low = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.poll);
-         long high = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.push);
+         long low = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.resetPauseLowMs);
+         long high = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.resetPauseHighMs);
          long gap = low + (long)Math.ceil((high - low) * ClickPatternEngine.sigmoid(this.load_D));
          return Math.max(gap, ClickPatternEngine.this.minInterval() - hold);
       }
@@ -949,7 +949,7 @@ public final class ClickPatternEngine {
 
       private double init_D_J(long at) {
          if (this.read_J != -9223372036854775808L && at > this.read_J) {
-            this.read_D = ClickPatternEngine.ornsteinUhlenbeckStep(this.read_D, (at - this.read_J) / 1.0E9, 0.5, 0.06 * ClickPatternEngine.this.profile.close, this.rng);
+            this.read_D = ClickPatternEngine.ornsteinUhlenbeckStep(this.read_D, (at - this.read_J) / 1.0E9, 0.5, 0.06 * ClickPatternEngine.this.profile.wobbleScale, this.rng);
          }
 
          if (this.read_J == -9223372036854775808L || at > this.read_J) {

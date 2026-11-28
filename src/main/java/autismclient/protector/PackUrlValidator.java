@@ -481,7 +481,7 @@ public final class PackUrlValidator {
       return exception;
    }
 
-   public record PackRoute(Type proxyType, PackUrlValidator.ResolvedEndpoint endpoint, String init_Str, boolean init_Z) {
+   public record PackRoute(Type proxyType, PackUrlValidator.ResolvedEndpoint endpoint, String init_Str, boolean viaProxy) {
    }
 
    public record ResolvedEndpoint(URI uri, String init_Str, int port, List<InetAddress> addresses) {

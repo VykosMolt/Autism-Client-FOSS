@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AutismTridentBoostMixin {
    @WrapOperation(method = {"use", "releaseUsing"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isInWaterOrRain()Z"))
    private boolean autism$allowDryRiptide(Player player, Operation<Boolean> original) {
-      return original.call(player) || TridentBoostModule.init_Z(player);
+      return original.call(player) || TridentBoostModule.canBoost(player);
    }
 
    @Inject(method = "releaseUsing", at = @At("RETURN"))
@@ -28,7 +28,7 @@ public abstract class AutismTridentBoostMixin {
          && player.isAutoSpinAttack()
          && EnchantmentHelper.getTridentSpinAttackStrength(stack, player) > 0.0F
          && !player.isInWaterOrRain()) {
-         TridentBoostModule.init_V(player);
+         TridentBoostModule.markBoosted(player);
       }
    }
 }

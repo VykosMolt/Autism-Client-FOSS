@@ -298,7 +298,7 @@ public final class AutismWaypoints {
    }
 
    public AutismWaypoints.Waypoint init(String var1, int var2, int var3, int var4, int var5, long var6, int var8) {
-      AutismWaypoints.Waypoint var10000 = AuditDeathWaypoints.kw_record_AutismWaypoints_Wa(
+      AutismWaypoints.Waypoint var10000 = AuditDeathWaypoints.recordDeath(
          this.init_Map, normalizeScope(var1), var2, var3, var4, var5, var6, var8
       );
       if (var10000 != null) {

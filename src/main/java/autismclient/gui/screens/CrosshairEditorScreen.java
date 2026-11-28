@@ -561,7 +561,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          0.0,
          look.art()
       );
-      autismclient.gui.ui.widgets.CrosshairPreviewRenderer.load(context, box, shown);
+      autismclient.gui.ui.widgets.CrosshairPreviewRenderer.drawPreview(context, box, shown);
    }
 
    private void uploadCanvasTexture() {

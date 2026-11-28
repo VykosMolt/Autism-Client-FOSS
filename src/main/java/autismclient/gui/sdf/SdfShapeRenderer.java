@@ -109,7 +109,7 @@ public final class SdfShapeRenderer {
       }
    }
 
-   public static void load(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
+   public static void drawShadow(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       if (!(w <= 0.0F) && !(h <= 0.0F) && color >>> 24 != 0) {
          int alpha = color >>> 24;
 
@@ -132,7 +132,7 @@ public final class SdfShapeRenderer {
       }
    }
 
-   public static void read(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
+   public static void drawRoundRect(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       if (!(w <= 0.0F) && !(h <= 0.0F) && color >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
          if (!(r < 0.75F) && isAvailable()) {

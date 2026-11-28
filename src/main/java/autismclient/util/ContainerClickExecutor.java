@@ -60,7 +60,7 @@ public final class ContainerClickExecutor {
 
             try {
                mc.gameMode.handleContainerInput(handler.containerId, handlerSlotId, button, input, mc.player);
-               ContainerPickUpAllHelper.init(mc, handler, handlerSlotId, button, input, beforeCarried, beforeSlot);
+               ContainerPickUpAllHelper.afterClick(mc, handler, handlerSlotId, button, input, beforeCarried, beforeSlot);
                return true;
             } catch (RuntimeException ignored) {
                return false;

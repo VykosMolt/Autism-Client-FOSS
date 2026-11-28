@@ -33,7 +33,7 @@ public enum ClickTechnique {
       this.highRate = highRate;
    }
 
-   public boolean init_Z() {
+   public boolean isHumanized() {
       return this != RAGE;
    }
 

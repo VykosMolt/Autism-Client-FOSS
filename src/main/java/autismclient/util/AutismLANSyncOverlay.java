@@ -547,7 +547,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.textRenderer, x, y, w, h, label, variant, enabled, tone, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(ctx, this.textRenderer, x, y, w, h, label, variant, enabled, tone, mx, my);
    }
 
    private static String blankToNull(String value) {
@@ -716,7 +716,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       for (int i = 0; i < TAB_NAMES.length; i++) {
          int tx = this.panelX + i * tabW;
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.textRenderer, tx, y, tabW, this.tabHeight, TAB_NAMES[i], i == this.activeTab, mx, my);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(ctx, this.textRenderer, tx, y, tabW, this.tabHeight, TAB_NAMES[i], i == this.activeTab, mx, my);
          int tabIdx = i;
          this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(tx, y, tabW, this.tabHeight, () -> {
             this.activeTab = tabIdx;

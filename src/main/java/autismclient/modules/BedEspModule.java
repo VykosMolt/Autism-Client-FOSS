@@ -105,7 +105,7 @@ public final class BedEspModule extends Module {
                      return (BedEspModule.BedInfo)b;
                   }
 
-                  List<BlockPos> cuts = route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+                  List<BlockPos> cuts = route.cells().stream().filter(c -> !c.bed()).map(BedBreachRouteSolver.BreachCell::pos).toList();
                   return new BedEspModule.BedInfo(
                      b.pos(),
                      b.partner(),
@@ -127,7 +127,7 @@ public final class BedEspModule extends Module {
             .toList();
    }
 
-   public static boolean init_Z_Block(Block block) {
+   public static boolean isCoverBlock(Block block) {
       return COVER_BLOCKS.contains(block);
    }
 
@@ -389,13 +389,13 @@ public final class BedEspModule extends Module {
          } else if (!at.equals(p) && (!hasPartner || !at.equals(partner))) {
             if (s.isAir()) {
                grid.nodes[i] = new BedCoverPathSolver.GridNode(0, 0.0, -1);
-            } else if (init_Z_Block(s.getBlock())) {
+            } else if (isCoverBlock(s.getBlock())) {
                BedEspModule.ToolChoice best = toolCache.computeIfAbsent(s.getBlock(), b -> this.bestTool(s, at, tools));
                grid.nodes[i] = new BedCoverPathSolver.GridNode(2, best.breakTicks(), tools.indexOf(best.tool()));
             }
          } else {
             grid.nodes[i] = new BedCoverPathSolver.GridNode(3, 0.0, -1);
-            grid.init_List.add(i);
+            grid.bedCells.add(i);
          }
       }
 
@@ -405,17 +405,17 @@ public final class BedEspModule extends Module {
          ? BedCoverPathSolver.plan(grid, MC.player.position(), MC.player.blockInteractionRange(), cover)
          : new BedCoverPathSolver.CoverPlan(
             cover.cells(),
-            local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList(),
+            local.cells().stream().filter(c -> !c.bed()).map(BedBreachRouteSolver.BreachCell::pos).toList(),
             List.of(),
             local.ticks(),
             true,
-            cover.init_I(),
+            cover.layers(),
             MC.player.getEyePosition(),
             local.eye()
          );
       Map<String, List<BlockPos>> groups = new LinkedHashMap<>();
 
-      for (BlockPos at : plan.init_Set()) {
+      for (BlockPos at : plan.cover()) {
          groups.computeIfAbsent(materialGroupName(MC.level.getBlockState(at).getBlock()), k -> new ArrayList<>()).add(at);
       }
 
@@ -431,7 +431,7 @@ public final class BedEspModule extends Module {
 
       List<ItemStack> routeTools = new ArrayList<>();
       Map<Block, BedEspModule.ToolChoice> actualTools = this.bool("my-tools") ? toolCache : new HashMap<>();
-      double actualTicks = plan.load_Z() ? Math.max(0, plan.path().size() - 1) * 5 : 1.0 / 0.0;
+      double actualTicks = plan.hasRoute() ? Math.max(0, plan.path().size() - 1) * 5 : 1.0 / 0.0;
 
       for (BlockPos at : plan.path()) {
          BlockState block = MC.level.getBlockState(at);
@@ -445,7 +445,7 @@ public final class BedEspModule extends Module {
 
       AABB box = (hasPartner ? new AABB(p).minmax(new AABB(partner)) : new AABB(p)).setMaxY(p.getY() + 0.5625);
       if (local != null) {
-         List<BlockPos> cuts = local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+         List<BlockPos> cuts = local.cells().stream().filter(c -> !c.bed()).map(BedBreachRouteSolver.BreachCell::pos).toList();
          return new BedEspModule.BedInfo(
             p,
             partner,
@@ -463,7 +463,7 @@ public final class BedEspModule extends Module {
             local.eye()
          );
       } else {
-         String status = !plan.load_Z() ? (!loaded ? "Loading" : "No way in") : (plan.path().isEmpty() ? "Open" : "");
+         String status = !plan.hasRoute() ? (!loaded ? "Loading" : "No way in") : (plan.path().isEmpty() ? "Open" : "");
          return new BedEspModule.BedInfo(
             p,
             partner,
@@ -476,9 +476,9 @@ public final class BedEspModule extends Module {
             actualTicks,
             status,
             plan.init_Z_2(),
-            plan.load_List(),
-            plan.init_Vec3(),
-            plan.load_Vec3()
+            plan.route(),
+            plan.fromEye(),
+            plan.routeEye()
          );
       }
    }
@@ -608,7 +608,7 @@ public final class BedEspModule extends Module {
    record ToolChoice(ItemStack tool, double breakTicks) {
    }
 
-   record EspPolicy(boolean init_Z, boolean load, boolean read, int range) {
+   record EspPolicy(boolean myTools, boolean path, boolean tags, int range) {
    }
 
    record BedInfo(
@@ -618,10 +618,10 @@ public final class BedEspModule extends Module {
       AABB box,
       Vec3 labelPos,
       List<BedEspModule.CoverMaterial> materials,
-      List<BlockPos> load_List,
+      List<BlockPos> path,
       List<ItemStack> routeTools,
       double ticks,
-      String init_Str,
+      String status,
       boolean init_Z,
       List<BlockPos> write,
       Vec3 fromEye,

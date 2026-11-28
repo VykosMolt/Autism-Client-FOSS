@@ -121,7 +121,7 @@ final class AiCombat {
       return (int)Math.ceil(t.secondsToClosest() * 20.0);
    }
 
-   static Vec3 init_Vec3_Minecraft_Vec3(Minecraft mc, Vec3 preferred) {
+   static Vec3 shieldAimPoint(Minecraft mc, Vec3 preferred) {
       List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
       for (AiProjectiles.IncomingProjectile shot : AiProjectiles.incoming(mc)) {
@@ -146,7 +146,7 @@ final class AiCombat {
          }
       }
 
-      float bestYaw = AiCombatPriority.init_F_F(mc.player.getYRot(), preferred == null ? null : yawTo(mc, preferred.x, preferred.z), yaws, 70.0);
+      float bestYaw = AiCombatPriority.coveringYaw(mc.player.getYRot(), preferred == null ? null : yawTo(mc, preferred.x, preferred.z), yaws, 70.0);
       double r = Math.toRadians(bestYaw);
       return eye.add(new Vec3(-Math.sin(r), 0.0, Math.cos(r)).scale(4.0));
    }
@@ -155,7 +155,7 @@ final class AiCombat {
       return (float)Math.toDegrees(Math.atan2(-(x - mc.player.getX()), z - mc.player.getZ()));
    }
 
-   static boolean init_Z_Minecraft(Minecraft mc, AiProjectiles.IncomingProjectile t, float yaw) {
+   static boolean isShotInFront(Minecraft mc, AiProjectiles.IncomingProjectile t, float yaw) {
       double dx = t.x() - mc.player.getX();
       double dz = t.z() - mc.player.getZ();
       return dx * dx + dz * dz < 1.0E-4 ? true : Math.abs(Mth.wrapDegrees(yawTo(mc, t.x(), t.z()) - yaw)) <= 70.0;
@@ -163,7 +163,7 @@ final class AiCombat {
 
    static boolean allWithinCoverYaw(Minecraft mc, List<AiProjectiles.IncomingProjectile> ts, float yaw) {
       for (AiProjectiles.IncomingProjectile t : ts) {
-         if (!init_Z_Minecraft(mc, t, yaw)) {
+         if (!isShotInFront(mc, t, yaw)) {
             return false;
          }
       }
@@ -257,7 +257,7 @@ final class AiCombat {
             AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.isLegacyCombatEnabled() ? AiCombat.nearestIncoming(mc) : null;
             if (coming != null) {
                this.aim
-                  .aimAt(AiCombat.init_Vec3_Minecraft_Vec3(mc, shooter == null ? null : autismclient.ai.engine.AiAim.bestEntityAimPoint(shooter)));
+                  .aimAt(AiCombat.shieldAimPoint(mc, shooter == null ? null : autismclient.ai.engine.AiAim.bestEntityAimPoint(shooter)));
                this.aim.tick();
             } else if (shooter != null) {
                this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(shooter));
@@ -332,7 +332,7 @@ final class AiCombat {
       return (!unreachable || distanceSq < 9.0 && reachGap <= 1.0) && (legacy || !deepWater || reachGap <= 1.0);
    }
 
-   static boolean init_Z_Minecraft_Entity(Minecraft mc, Entity entity) {
+   static boolean isEngageable(Minecraft mc, Entity entity) {
       if (mc.player != null && entity != null && entity.isAlive()) {
          double gap = entity instanceof Mob mob ? AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) : 0.0;
          return engageable(isIgnored(entity), entity.distanceToSqr(mc.player), gap, isInDeepWater(entity), AiThreats.isLegacyCombatEnabled());
@@ -425,7 +425,7 @@ final class AiCombat {
       return false;
    }
 
-   static int init_I_Minecraft(Minecraft mc, Entity target, double maxHorizontal) {
+   static int checkStraightRun(Minecraft mc, Entity target, double maxHorizontal) {
       double dx = target.getX() - mc.player.getX();
       double dz = target.getZ() - mc.player.getZ();
       double horizontal = Math.hypot(dx, dz);
@@ -663,8 +663,8 @@ final class AiCombat {
                   mc.options.keyShift.setDown(true);
                }
 
-               if (!AiThreats.isLegacyCombatEnabled() && !this.onPerch && mc.player.onGround() && AiEndRun.init_Z(mc)) {
-                  BlockPos out = AiEndRun.init_BlockPos(mc);
+               if (!AiThreats.isLegacyCombatEnabled() && !this.onPerch && mc.player.onGround() && AiEndRun.isInFire(mc)) {
+                  BlockPos out = AiEndRun.fireEscapeCell(mc);
                   if (out != null) {
                      this.cancelChild();
                      this.lowerShield();
@@ -907,7 +907,7 @@ final class AiCombat {
                               this.cancelChild();
                               this.releaseMovementKeys();
                               this.aim
-                                 .aimAt(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target)));
+                                 .aimAt(AiCombat.shieldAimPoint(mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target)));
                               this.aim.tick();
                               if (!this.shieldRaised) {
                                  this.shieldRaised = true;
@@ -1041,7 +1041,7 @@ final class AiCombat {
                            if (coming != null) {
                               this.aim
                                  .aimAt(
-                                    AiCombat.init_Vec3_Minecraft_Vec3(
+                                    AiCombat.shieldAimPoint(
                                        mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(shooter != null ? shooter : this.target)
                                     )
                                  );
@@ -1078,7 +1078,7 @@ final class AiCombat {
                            AiCombat.ignoreUntil(dropped, System.nanoTime() + 8000000000L);
                            return this.running("The enderman teleported off; not chasing it");
                         } else {
-                           int run = AiCombat.init_I_Minecraft(mc, this.target, 16.0);
+                           int run = AiCombat.checkStraightRun(mc, this.target, 16.0);
                            return run >= 0 ? this.runInApproach(distance, run == 1) : this.approachClear(distance);
                         }
                      }
@@ -1948,7 +1948,7 @@ final class AiCombat {
                      if (entity != mc.player && entity.isAlive() && entity instanceof LivingEntity living && this.matchesTargetFilter(entity)) {
                         if (!AiThreats.isLegacyCombatEnabled() && AiCombat.isInDeepWater(entity) && entity instanceof Mob swimmer && AiThreats.horizontalGapToAttackBox(swimmer, mc.player.getBoundingBox()) > 1.0) {
                            AiCombat.ignoreUntil(entity, now + 15000000000L);
-                        } else if (AiCombat.init_Z_Minecraft_Entity(mc, entity)) {
+                        } else if (AiCombat.isEngageable(mc, entity)) {
                            double distanceSq = entity.distanceToSqr(mc.player);
                            if (!(distanceSq > radius * radius)) {
                               if (!AiThreats.isLegacyCombatEnabled() && !entity.onGround() && entity.getBoundingBox().minY - mc.player.getEyeY() > eyeReach) {

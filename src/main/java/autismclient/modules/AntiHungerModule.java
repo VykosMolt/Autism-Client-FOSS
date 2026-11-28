@@ -21,7 +21,7 @@ public final class AntiHungerModule extends Module {
       return this.bool("no-sprint") && (!CLIENT.player.isSwimming() || this.bool("sprint-while-swimming"));
    }
 
-   public static boolean load() {
+   public static boolean suppressesSprint() {
       return al.init_Module_Str("anti-hunger") instanceof AntiHungerModule antiHunger && antiHunger.isEnabled() && CLIENT.player != null && antiHunger.suppressSprint()
          ? true
          : al.init_Module_Str("flight") instanceof f.Inner_FileCache flightModule && flightModule.isEnabled() && flightModule.init_Z_42();

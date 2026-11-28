@@ -69,10 +69,10 @@ public final class FireballBlastPredictor {
             if (!warning.init_Z()
                && warning.entity() instanceof LargeFireball
                && !warning.entity().isRemoved()
-               && warning.init_A_DataUtil().init_Vec3() != null) {
+               && warning.flight().init_Vec3() != null) {
                UUID id = warning.entity().getUUID();
                live.add(id);
-               Vec3 center = warning.init_A_DataUtil().init_Vec3();
+               Vec3 center = warning.flight().init_Vec3();
                saved = this.savedById.get(id);
                if (savedBlastStillValid(saved, level, center)) {
                   break;
@@ -88,7 +88,7 @@ public final class FireballBlastPredictor {
          }
 
          for (FireballBlastPredictor.DestroyedBlock block : saved.blocks) {
-            combined.merge(block.pos, block.init_D, Math::max);
+            combined.merge(block.pos, block.risk, Math::max);
          }
       }
    }
@@ -217,7 +217,7 @@ public final class FireballBlastPredictor {
    record CellResistance(float resistance, boolean init_Z) {
    }
 
-   public record DestroyedBlock(BlockPos pos, double init_D) {
+   public record DestroyedBlock(BlockPos pos, double risk) {
    }
 
    private record SavedBlast(Vec3 center, Map<BlockPos, BlockState> states, Set<BlockPos> positions, List<FireballBlastPredictor.DestroyedBlock> blocks) {

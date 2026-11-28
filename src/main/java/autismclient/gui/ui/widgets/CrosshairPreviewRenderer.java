@@ -14,11 +14,11 @@ public final class CrosshairPreviewRenderer {
       if (bounds.update() > 8 && bounds.sync() > 8) {
          BufferHelper.init_V(context, bounds, "Preview");
          int top = BufferHelper.init_I(context, bounds, "Preview") + 2;
-         load(context, autismclient.gui.f.NetHelper.init(bounds.read() + 4, top, bounds.update() - 8, bounds.load() - top - 4), look);
+         drawPreview(context, autismclient.gui.f.NetHelper.init(bounds.read() + 4, top, bounds.update() - 8, bounds.load() - top - 4), look);
       }
    }
 
-   public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, CrosshairRenderState.Inner_DataUtil look) {
+   public static void drawPreview(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, CrosshairRenderState.Inner_DataUtil look) {
       if (box.update() > 0 && box.sync() > 0) {
          GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
          int half = box.update() / 2;

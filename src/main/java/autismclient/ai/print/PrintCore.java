@@ -486,7 +486,7 @@ public final class PrintCore {
    final LongOpenHashSet refusedPillarCells = new LongOpenHashSet();
    final LongOpenHashSet interactWalkStances = new LongOpenHashSet();
    final LongOpenHashSet refusedCellStances = new LongOpenHashSet();
-   final LongOpenHashSet open_LongOpenHashSet = new LongOpenHashSet();
+   final LongOpenHashSet refusedStandingStances = new LongOpenHashSet();
    final Int2IntOpenHashMap outOfReachUntil = new Int2IntOpenHashMap();
    static final int chunk_I = 8;
    final IntOpenHashSet heldBackCells = new IntOpenHashSet();
@@ -772,7 +772,7 @@ public final class PrintCore {
    private void dispatchCell(int i) {
       PrintMachineJob job = this.machineJobs.get(this.targets[i].pos().asLong());
       if (job != null
-         && job.b_()
+         && job.hasSkippableContents()
          && !this.env.getBlockState(this.targets[i].pos()).is(this.targets[i].wanted().getBlock())) {
          this.dispatchedJobCells.add(i);
       }
@@ -1567,7 +1567,7 @@ public final class PrintCore {
       boolean firstCompletion = this.cellStates[i] == 3 && (this.progressFlags[i] & 2) == 0;
       if (this.dispatchedJobCells.remove(i)) {
          PrintMachineJob job = this.machineJobs.get(this.targets[i].pos().asLong());
-         if (job != null && job.b_()) {
+         if (job != null && job.hasSkippableContents()) {
             this.jobBlocksPlaced.add(job.position().asLong());
          }
       }
@@ -1582,7 +1582,7 @@ public final class PrintCore {
          this.lastFreshProgressTick = now;
          this.retainOrder = false;
          this.refusedCellStances.clear();
-         this.open_LongOpenHashSet.clear();
+         this.refusedStandingStances.clear();
          this.failedWalkStances.clear();
          this.progressRevision++;
          this.refusedPillarCells.clear();
@@ -1719,7 +1719,7 @@ public final class PrintCore {
          throw new IllegalArgumentException("Multiple saved actions at " + job.position().toShortString());
       }
 
-      if (job.b_() && job.needsAccess()) {
+      if (job.hasSkippableContents() && job.needsAccess()) {
          this.containerOrder.track(job);
       }
    }
@@ -1970,7 +1970,7 @@ public final class PrintCore {
    }
 
    private void skipMachineJob(PrintMachineJob job) {
-      this.containerOrder.init_V(job.position());
+      this.containerOrder.onJobFinished(job.position());
       this.releaseQuietInput(job);
       this.removedMachineJobs.remove(job.position().asLong());
       this.runningMachineJob = null;
@@ -2013,11 +2013,11 @@ public final class PrintCore {
          || this.pendingMachineJob != null
          || !this.dispatchedCells.isEmpty()
          || !this.pendingTemporary.isEmpty()
-         || this.flush_Z()
+         || this.trapdoorRecoveryInteracted()
          || this.env.currentTick() - this.lastActionTick < 12L;
    }
 
-   public boolean flush_Z() {
+   public boolean trapdoorRecoveryInteracted() {
       return this.activity instanceof PrintCore.TrapdoorRecoveryStep fold && fold.interacted;
    }
 
@@ -2102,7 +2102,7 @@ public final class PrintCore {
          this.trackAim();
          if (this.supplyReturnStep != null) {
             PrintControls controls = this.supplyReturnStep.tick();
-            if (controls != null && controls.digPos != null && !this.init_Z_BlockPos(controls.digPos)) {
+            if (controls != null && controls.digPos != null && !this.canRemoveTemporary(controls.digPos)) {
                return null;
             }
 
@@ -2132,7 +2132,7 @@ public final class PrintCore {
                   this.env.playerMotionState().y() - 0.001,
                   this.env.playerMotionState().z()
                );
-               this.stockFloorReady = this.pop_Z_BlockPos(floor);
+               this.stockFloorReady = this.isNaturalSolidFloor(floor);
                if (!this.stockFloorReady) {
                   PrintNav.ReachResult reachable = PrintNav.searchReachable(
                      this.view,
@@ -2145,7 +2145,7 @@ public final class PrintCore {
 
                   for (long key : reachable.costByCell.keySet()) {
                      BlockPos footing = new BlockPos(BlockPos.getX(key), PrintView.floorInt(reachable.feetYOf(key) - 0.001), BlockPos.getZ(key));
-                     if (this.pop_Z_BlockPos(footing)) {
+                     if (this.isNaturalSolidFloor(footing)) {
                         this.stockFloorReady = true;
                         break;
                      }
@@ -2205,14 +2205,14 @@ public final class PrintCore {
       }
    }
 
-   boolean init_Z_BlockPos(BlockPos block) {
+   boolean canRemoveTemporary(BlockPos block) {
       long key = block.asLong();
-      return this.temporaryBlocks.containsKey(key) && !this.sync_Z_J(key) && !this.tick_Z_J(key) && !this.ownerStillOpen(key)
-         ? this.load_Z_BlockPos(block)
+      return this.temporaryBlocks.containsKey(key) && !this.isHeldByUnsettledFlow(key) && !this.tick_Z_J(key) && !this.ownerStillOpen(key)
+         ? this.temporaryRemovalKeepsNeighbors(block)
          : false;
    }
 
-   boolean load_Z_BlockPos(BlockPos block) {
+   boolean temporaryRemovalKeepsNeighbors(BlockPos block) {
       long key = block.asLong();
       if (this.temporaryBlocks.containsKey(key) && this.read_Z_BlockPos(block)) {
          this.view.pushHypothesis(block, Blocks.AIR.defaultBlockState());
@@ -2476,7 +2476,7 @@ public final class PrintCore {
             return this.idleControls();
          }
 
-         if ((this.pendingMachineJob instanceof PrintClockSequence || this.pendingMachineJob.c_())
+         if ((this.pendingMachineJob instanceof PrintClockSequence || this.pendingMachineJob.hasFurtherSteps())
             && (result == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING || result == autismclient.ai.print.PrintMachineJob.JobStatus.READY)) {
             this.reason = this.pendingMachineJob.detail();
             this.pendingMachineJob = null;
@@ -2500,7 +2500,7 @@ public final class PrintCore {
          }
 
          if (result == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT
-            && (this.pendingMachineJob == this.earlyFillJob && this.phase == PrintCore.PrintPhase.BUILD || this.pendingMachineJob.b_())) {
+            && (this.pendingMachineJob == this.earlyFillJob && this.phase == PrintCore.PrintPhase.BUILD || this.pendingMachineJob.hasSkippableContents())) {
             PrintMachineJob disturbed = this.pendingMachineJob;
             if (this.skipNotes.size() < 16) {
                this.skipNotes.add(disturbed.position().toShortString() + ": " + disturbed.detail());
@@ -2941,7 +2941,7 @@ public final class PrintCore {
 
       if (!changed.isEmpty()) {
          if (changed.contains(-9223372036854775808L)) {
-            this.chunkWork.load();
+            this.chunkWork.rescanLoadedChunks();
          } else {
             for (long key : changed) {
                this.chunkWork.markChunkDirty(key);
@@ -3108,7 +3108,7 @@ public final class PrintCore {
          this.heldBackCells.clear();
          this.outOfReachUntil.clear();
          this.refusedCellStances.clear();
-         this.open_LongOpenHashSet.clear();
+         this.refusedStandingStances.clear();
          this.progressRevision++;
          this.refusedPillarCells.clear();
          this.load_LongOpenHashSet.clear();
@@ -3265,7 +3265,7 @@ public final class PrintCore {
          for (it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry<BlockState> entry : this.temporaryBlocks.long2ObjectEntrySet()) {
             if (entry.getValue().getBlock().asItem() == item) {
                long key = entry.getLongKey();
-               if (!this.ownerStillOpen(key) && !this.sync_Z_J(key) && !this.tick_Z_J(key)) {
+               if (!this.ownerStillOpen(key) && !this.isHeldByUnsettledFlow(key) && !this.tick_Z_J(key)) {
                   BlockPos block = BlockPos.of(key);
                   PrintCore.PrintStep dig = this.digStep(
                      reach, block, "recovering " + BuiltInRegistries.ITEM.getKey(item)
@@ -3281,7 +3281,7 @@ public final class PrintCore {
          for (it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry<BlockState> entry : this.temporaryBlocks.long2ObjectEntrySet()) {
             if (entry.getValue().getBlock().asItem() == item) {
                long key = entry.getLongKey();
-               if (!this.ownerStillOpen(key) && !this.sync_Z_J(key) && !this.tick_Z_J(key)) {
+               if (!this.ownerStillOpen(key) && !this.isHeldByUnsettledFlow(key) && !this.tick_Z_J(key)) {
                   PrintCore.PrintStep climb = this.approachStep(
                      here, BlockPos.of(key), "recovering " + BuiltInRegistries.ITEM.getKey(item)
                   );
@@ -3402,7 +3402,7 @@ public final class PrintCore {
       return false;
    }
 
-   boolean read_Z_I(int i) {
+   boolean isCellReady(int i) {
       return !this.env.hasChunkAt(this.targets[i].pos()) ? false : this.dependenciesReady(i);
    }
 
@@ -3839,7 +3839,7 @@ public final class PrintCore {
                return false;
             }
 
-            if (comparator && this.containerOrder.init_Z(this.targets[input].pos())) {
+            if (comparator && this.containerOrder.covers(this.targets[input].pos())) {
                inventorySignal = true;
                if (this.machineJobs.containsKey(this.targets[input].pos().asLong())) {
                   return false;
@@ -4037,10 +4037,10 @@ public final class PrintCore {
    }
 
    boolean read_Z_BlockPos(BlockPos cell) {
-      return this.load_Z_BlockPos_BlockState(cell, this.temporaryBlocks.get(cell.asLong()));
+      return this.isTemporaryMaterialSafe(cell, this.temporaryBlocks.get(cell.asLong()));
    }
 
-   boolean load_Z_BlockPos_BlockState(BlockPos cell, BlockState material) {
+   boolean isTemporaryMaterialSafe(BlockPos cell, BlockState material) {
       BlockState outcome = this.machineOutcomes.get(cell.asLong());
       if (outcome != null && outcome.is(Blocks.PISTON_HEAD)) {
          return false;
@@ -4424,7 +4424,7 @@ public final class PrintCore {
                && this.targets[i].pos().getY() < lowest
                && !this.heldBackCells.contains(i)
                && !this.isOutOfReach(i)
-               && this.read_Z_I(i)) {
+               && this.isCellReady(i)) {
                lowest = this.targets[i].pos().getY();
             }
          }
@@ -4553,7 +4553,7 @@ public final class PrintCore {
             int cell = it.nextInt();
             PrintMachineJob job = this.machineJobAt(cell);
             it.remove();
-            if (job != null && job.sync() && !this.earlyFillsSetAside.contains(job.position().asLong())) {
+            if (job != null && job.canFillEarly() && !this.earlyFillsSetAside.contains(job.position().asLong())) {
                this.earlyFillJob = job;
                this.earlyFillStartTick = this.env.currentTick();
                this.runningMachineJob = this.machineJobs.getAndMoveToFirst(job.position().asLong());
@@ -4621,7 +4621,7 @@ public final class PrintCore {
                return fluid;
             }
 
-            if (this.push_Z_BlockPos(at)) {
+            if (this.isFluidTargetStance(at)) {
                PrintCore.PrintStep leave = this.exitPlanStep(at);
                if (leave != null) {
                   return leave;
@@ -4713,8 +4713,8 @@ public final class PrintCore {
 
       if (!justClimbed
          && this.temporaryBlocks.containsKey(underFeet)
-         && !this.sync_Z_J(underFeet)
-         && this.update_Z_BlockPos(BlockPos.of(underFeet))
+         && !this.isHeldByUnsettledFlow(underFeet)
+         && this.hasLandingAfterDig(BlockPos.of(underFeet))
          && !this.hasWorkNear(here)
          && this.canEscapeAfterDig(BlockPos.of(underFeet), BlockPos.of(underFeet))) {
          this.logTrace("scaffold: nothing left to do from " + here.toShortString() + ", digging down");
@@ -4814,7 +4814,7 @@ public final class PrintCore {
                && this.isPlaceableWorkCell(i)
                && !this.heldBackCells.contains(i)
                && !this.isOutOfReach(i)
-               && this.read_Z_I(i)
+               && this.isCellReady(i)
                && !this.open_Z_I(i)
                && !this.init_Z_I_I(i, lowest)
          );
@@ -5067,7 +5067,7 @@ public final class PrintCore {
       for (int i = this.workableCells.nextSetBit(0); i >= 0 && out.size() < 16; i = this.workableCells.nextSetBit(i + 1)) {
          if (this.cellStates[i] == 0
             && this.isPlaceableWorkCell(i)
-            && this.read_Z_I(i)
+            && this.isCellReady(i)
             && this.targets[i].kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE
             && this.targets[i].pos().getY() == lowest
             && this.targets[i].pos().getY() + 2 <= feetY
@@ -5087,7 +5087,7 @@ public final class PrintCore {
       for (int i = 0; i < this.targets.length; i++) {
          if (this.cellStates[i] == 0
             && this.isPlaceableWorkCell(i)
-            && this.read_Z_I(i)
+            && this.isCellReady(i)
             && !this.isOutOfReach(i)
             && this.targets[i].pos().getY() <= lowest + 1
             && (this.cellHasSolidNeighbor(i) || this.hasSolidNeighborAt(this.targets[i].pos()))
@@ -5157,16 +5157,16 @@ public final class PrintCore {
    }
 
    boolean isRideable(BlockPos cell) {
-      return this.init_Z_BlockPos_IntSet(cell, IntSets.EMPTY_SET);
+      return this.isPillarCandidate(cell, IntSets.EMPTY_SET);
    }
 
-   boolean init_Z_BlockPos_IntSet(BlockPos cell, IntSet completedOnPath) {
+   boolean isPillarCandidate(BlockPos cell, IntSet completedOnPath) {
       int i = this.cellIndexByPos.get(cell.asLong());
       if (i >= 0
          && this.cellStates[i] == 0
          && this.isRideCompatible(i)
          && this.update_Z_I(i)
-         && this.read_Z_I(i)
+         && this.isCellReady(i)
          && !this.hasUnownedTemporaryBelow(cell)
          && !this.load_LongOpenHashSet.contains(cell.asLong())
          && !this.refusedPillarCells.contains(cell.asLong())) {
@@ -5397,7 +5397,7 @@ public final class PrintCore {
       this.outOfReachUntil.clear();
       this.heldBackCells.clear();
       this.refusedCellStances.clear();
-      this.open_LongOpenHashSet.clear();
+      this.refusedStandingStances.clear();
       this.failedWalkStances.clear();
       this.progressRevision++;
       this.refusedPillarCells.clear();
@@ -5512,7 +5512,7 @@ public final class PrintCore {
                if (Math.max(Math.abs(dx), Math.abs(dz)) == d) {
                   for (int dy = 3; dy >= -5 && tried < 24; dy--) {
                      long key = BlockPos.asLong(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
-                     if (reach.isReachable(key) && (!dry || !this.push_Z_BlockPos(BlockPos.of(key)))) {
+                     if (reach.isReachable(key) && (!dry || !this.isFluidTargetStance(BlockPos.of(key)))) {
                         tried++;
                         h = h * 1000003L + key;
                         h = h * 31L + Double.doubleToLongBits(reach.feetYOf(key));
@@ -6220,7 +6220,7 @@ public final class PrintCore {
                      continue;
                   }
 
-                  boolean recovery = this.read_Z_BlockPos_BlockPos(n, c);
+                  boolean recovery = this.isEnclosedAfterFill(n, c);
                   PrintTarget probe = new PrintTarget(-1, n, tempState, autismclient.ai.print.PrintTarget.TargetKind.PLACE, temp, null);
                   PrintCore.StanceWitness shared = this.supportWitness(r, probe, recovery);
                   if (shared != null) {
@@ -6230,7 +6230,7 @@ public final class PrintCore {
                   if (recovery) {
                      continue;
                   }
-               } else if (!this.init_Z_BlockPos_BlockPos(n, c)) {
+               } else if (!this.isUsableSupportSlot(n, c)) {
                   continue;
                }
 
@@ -6513,7 +6513,7 @@ public final class PrintCore {
       boolean rideFloor = rideFeet == t.pos().getY() && (reach.isReachable(self) || anywhere);
       if (rideFloor
          && this.isRideCompatible(r)
-         && this.read_Z_I(r)
+         && this.isCellReady(r)
          && this.update_Z_I(r)
          && !this.hasUnownedTemporaryBelow(t.pos())
          && this.view.isEmptyOutlineCell(t.pos().above())
@@ -6737,7 +6737,7 @@ public final class PrintCore {
       return (h ^ h >>> 32) * 2L + (leaf ? 1 : 0);
    }
 
-   boolean init_Z_J(long stance, double feet, int goal, boolean leaf, long context) {
+   boolean isAccessCacheFresh(long stance, double feet, int goal, boolean leaf, long context) {
       long key = init_J_J(stance, feet, goal, leaf, context);
       if (!this.load_Long2LongOpenHashM.containsKey(key)) {
          return false;
@@ -6750,7 +6750,7 @@ public final class PrintCore {
       }
    }
 
-   void init_V_J(long stance, double feet, int goal, boolean leaf, long context) {
+   void storeAccessCache(long stance, double feet, int goal, boolean leaf, long context) {
       if (this.load_Long2LongOpenHashM.size() > 2000000) {
          this.load_Long2LongOpenHashM.clear();
       }
@@ -6764,7 +6764,7 @@ public final class PrintCore {
          PrintCore.WitnessMiss miss = this.witnessMisses.missFor(r);
          if (miss != null
             && miss.revision() == this.view.worldMutationRevision()
-            && miss.ready() == this.read_Z_I(r)
+            && miss.ready() == this.isCellReady(r)
             && this.missOrigins.containsKey(r)
             && this.missOrigins.get(r) == BlockPos.containing(this.planningOrigin()).asLong()
             && this.view.matchesHypothesesNear(miss.assumptions(), this.targets[r].pos(), 8)) {
@@ -6788,11 +6788,11 @@ public final class PrintCore {
             && assumptionsHold
             && (miss.revision() == this.view.worldMutationRevision() || this.unchangedSince(this.targets[r].pos(), miss.revision()))
             && (EXP_MISS_IGNORES_REACH || miss.reach() == this.reach || miss.tight() == this.init_J_I(r))
-            && miss.ready() == this.read_Z_I(r);
+            && miss.ready() == this.isCellReady(r);
          if (!fresh
             && miss != null
             && assumptionsHold
-            && miss.ready() == this.read_Z_I(r)
+            && miss.ready() == this.isCellReady(r)
             && (EXP_MISS_IGNORES_REACH || miss.reach() == this.reach || miss.tight() == this.init_J_I(r))) {
             LongArrayList added = this.init_LongArrayList_BlockPos_J(this.targets[r].pos(), miss.revision());
             if (added == null) {
@@ -6944,7 +6944,7 @@ public final class PrintCore {
                      proposed,
                      this.nearbyBucketRevision(this.targets[r].pos()),
                      0L,
-                     this.read_Z_I(r),
+                     this.isCellReady(r),
                      this.init_J_I(r)
                   )
                );
@@ -7090,7 +7090,7 @@ public final class PrintCore {
             this.cellCooldowns.forget(r);
          }
 
-         if (!this.read_Z_I(r) && this.beforeOrderCells.add(r)) {
+         if (!this.isCellReady(r) && this.beforeOrderCells.add(r)) {
             this.logTrace("order: " + this.targets[r].pos().toShortString() + " goes before its order (its last click)");
          }
 
@@ -7104,7 +7104,7 @@ public final class PrintCore {
    private void noteSealedJob(int cell, PrintMachineJob job) {
       long key = job.position().asLong();
       if (this.phase == PrintCore.PrintPhase.BUILD && job.needsAccess() && !this.earlyFillsSetAside.contains(key)) {
-         if (job.sync()) {
+         if (job.canFillEarly()) {
             this.earlyFillCandidates.add(cell);
          } else if (!this.sealedJobTick.containsKey(key)) {
             this.sealedJobTick.put(key, this.env.currentTick());
@@ -7463,7 +7463,7 @@ public final class PrintCore {
          for (int dz = -4; dz <= 4; dz++) {
             for (int dy = -5; dy <= 3; dy++) {
                long key = BlockPos.asLong(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
-               if (reach.isReachable(key) && !this.open_LongOpenHashSet.contains(cellStanceKey(i, key)) && !this.failedWalkStances.contains(key)) {
+               if (reach.isReachable(key) && !this.refusedStandingStances.contains(cellStanceKey(i, key)) && !this.failedWalkStances.contains(key)) {
                   candidates.add(key);
                }
             }
@@ -7520,7 +7520,7 @@ public final class PrintCore {
       return null;
    }
 
-   boolean close_Z_I(int i) {
+   boolean isStanceMissStillValid(int i) {
       long[] miss = this.stanceMisses.get(i);
       return miss != null && this.reachable != null && !this.view.hasHypotheses()
          ? miss[1] == this.stanceSignature(this.reachable, i, this.env.playerMotionState().position())
@@ -7618,9 +7618,9 @@ public final class PrintCore {
 
          for (int i : cells) {
             PrintTarget t = this.targets[i];
-            if (!this.open_LongOpenHashSet.contains(cellStanceKey(i, reach.startKey))
+            if (!this.refusedStandingStances.contains(cellStanceKey(i, reach.startKey))
                && !this.init_Z_I(i, body.y(), reach.startKey)
-               && this.read_Z_I(i)
+               && this.isCellReady(i)
                && (
                   !this.inComponent(i)
                      || !(t.pos().getY() >= body.y() + 2.0)
@@ -7952,7 +7952,7 @@ public final class PrintCore {
                         && state.isCollisionShapeFullBlock(this.view, target.pos())
                         && !PrintView.isHazardBlock(state)
                         && !this.init_Z_I(i, feet.y, batch.stanceKey)
-                        && this.read_Z_I(i)
+                        && this.isCellReady(i)
                         && (
                            !this.inComponent(i)
                               || !(target.pos().getY() >= feet.y + 2.0)
@@ -8274,7 +8274,7 @@ public final class PrintCore {
       for (int i = 0; i < this.targets.length; i++) {
          if (this.cellStates[i] == 0
             && this.isPlaceableWorkCell(i)
-            && this.read_Z_I(i)
+            && this.isCellReady(i)
             && !this.heldBackCells.contains(i)
             && !this.isOutOfReach(i)
             && !this.open_Z_I(i)
@@ -8546,7 +8546,7 @@ public final class PrintCore {
       return false;
    }
 
-   boolean update_Z_BlockPos(BlockPos block) {
+   boolean hasLandingAfterDig(BlockPos block) {
       BlockPos floor = this.floorBelow(block);
       return floor != null && this.canLandAfterDig(block, floor);
    }
@@ -8601,7 +8601,7 @@ public final class PrintCore {
       try {
          return PrintNav.searchReachable(this.view, land, this.bounds, 64, null).reachableCount() > 1
             ? true
-            : this.init_Z_I_2(land.getX(), land.getY(), land.getZ()) && this.view.isPassableCell(land.above()) && this.view.isPassableCell(land.above(2));
+            : this.isStandableCell(land.getX(), land.getY(), land.getZ()) && this.view.isPassableCell(land.above()) && this.view.isPassableCell(land.above(2));
       } finally {
          this.view.popHypothesis(dug);
       }
@@ -8699,7 +8699,7 @@ public final class PrintCore {
                      + (
                         ni < 0
                            ? 0
-                           : (this.read_Z_I(ni) ? 1 : 2)
+                           : (this.isCellReady(ni) ? 1 : 2)
                               + (this.heldBackCells.contains(ni) ? 4 : 0)
                               + (this.isOutOfReach(ni) ? 8 : 0)
                               + 16 * this.cellStates[ni]
@@ -8737,13 +8737,13 @@ public final class PrintCore {
                                     && this.targets[ni].item() instanceof BlockItem
                                     && !(this.targets[ni].wanted().getBlock() instanceof FallingBlock)
                                     && !PrintView.isHazardBlock(this.targets[ni].wanted())
-                                    && this.read_Z_I(ni)
+                                    && this.isCellReady(ni)
                                     && !this.heldBackCells.contains(ni)
                                     && !this.isOutOfReach(ni)
                                  : tempState != null && (pass == 1 ? freeCell : !freeCell && this.cellStates[ni] == 0)
                            )
                            && (
-                              permanent || this.read_Z_BlockPos(n) && (!this.read_Z_BlockPos_BlockPos(n, t.pos()) || this.load_Z_BlockPos_BlockPos(n, t.pos()))
+                              permanent || this.read_Z_BlockPos(n) && (!this.isEnclosedAfterFill(n, t.pos()) || this.load_Z_BlockPos_BlockPos(n, t.pos()))
                            )) {
                            BlockState supportState = permanent ? this.targets[ni].wanted() : tempState;
                            boolean anchored = false;
@@ -9163,8 +9163,8 @@ public final class PrintCore {
       return v;
    }
 
-   boolean init_Z_BlockPos_BlockPos(BlockPos n, BlockPos cell) {
-      return this.isFreeTempSlot(n) && this.hasSolidNeighborExcept(n, cell) && (!this.read_Z_BlockPos_BlockPos(n, cell) || this.load_Z_BlockPos_BlockPos(n, cell));
+   boolean isUsableSupportSlot(BlockPos n, BlockPos cell) {
+      return this.isFreeTempSlot(n) && this.hasSolidNeighborExcept(n, cell) && (!this.isEnclosedAfterFill(n, cell) || this.load_Z_BlockPos_BlockPos(n, cell));
    }
 
    boolean load_Z_BlockPos_BlockPos(BlockPos support, BlockPos owner) {
@@ -9302,7 +9302,7 @@ public final class PrintCore {
       return false;
    }
 
-   boolean open_Z_BlockPos(BlockPos p) {
+   boolean isSafeToDig(BlockPos p) {
       BlockState s = this.view.getBlockState(p);
       if (s.isAir() || s == PrintView.UNLOADED_SENTINEL || !s.getFluidState().isEmpty() || s.getDestroySpeed(this.view, p) < 0.0F) {
          return false;
@@ -9394,7 +9394,7 @@ public final class PrintCore {
       for (it.unimi.dsi.fastutil.longs.Long2IntMap.Entry e : this.temporaryOwner.long2IntEntrySet()) {
          long key = e.getLongKey();
          int cell = e.getIntValue();
-         if (this.temporaryBlocks.containsKey(key) && !this.sync_Z_J(key) && this.cellStates[cell] != 0 && this.cellStates[cell] != 1) {
+         if (this.temporaryBlocks.containsKey(key) && !this.isHeldByUnsettledFlow(key) && this.cellStates[cell] != 0 && this.cellStates[cell] != 1) {
             PrintCore.PrintStep dig = this.digStep(reach, BlockPos.of(key), "support");
             if (dig != null) {
                return dig;
@@ -9409,11 +9409,11 @@ public final class PrintCore {
       for (it.unimi.dsi.fastutil.longs.Long2IntMap.Entry e : this.temporaryOwner.long2IntEntrySet()) {
          long key = e.getLongKey();
          if (this.temporaryBlocks.containsKey(key)
-            && !this.sync_Z_J(key)
+            && !this.isHeldByUnsettledFlow(key)
             && this.cellStates[e.getIntValue()] != 0
             && this.cellStates[e.getIntValue()] != 1) {
             BlockPos p = BlockPos.of(key);
-            if (this.isUnderfoot(p) && this.update_Z_BlockPos(p) && this.write_Z_BlockPos_BlockPos(p, p)) {
+            if (this.isUnderfoot(p) && this.hasLandingAfterDig(p) && this.canEscapeFromDugStance(p, p)) {
                return new PrintCore.DigStep(p, true);
             }
 
@@ -9545,7 +9545,7 @@ public final class PrintCore {
                this.view.popHypothesis(support.pos());
             }
 
-            if (!this.write_Z_BlockPos_BlockPos(BlockPos.of(key), support.pos())) {
+            if (!this.canEscapeFromDugStance(BlockPos.of(key), support.pos())) {
                return false;
             }
          } finally {
@@ -9553,13 +9553,13 @@ public final class PrintCore {
          }
 
          if (!alreadyClosed) {
-            return this.write_Z_BlockPos_BlockPos(BlockPos.of(key), support.pos());
+            return this.canEscapeFromDugStance(BlockPos.of(key), support.pos());
          }
 
          this.view.pushHypothesis(open.pos(), open.wanted());
 
          try {
-            return this.write_Z_BlockPos_BlockPos(BlockPos.of(key), support.pos());
+            return this.canEscapeFromDugStance(BlockPos.of(key), support.pos());
          } finally {
             this.view.popHypothesis(open.pos());
          }
@@ -9626,7 +9626,7 @@ public final class PrintCore {
 
    private PrintCore.PrintStep digStep(PrintNav.ReachResult reach, BlockPos p, String why) {
       long key = p.asLong();
-      if (this.sync_Z_J(key)) {
+      if (this.isHeldByUnsettledFlow(key)) {
          return null;
       }
 
@@ -9656,7 +9656,7 @@ public final class PrintCore {
             autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.findClickAt(reach, sk, probe, budget);
             if (click != null) {
                boolean keepDown = this.isAboveBase(BlockPos.of(sk)) && (this.hasHighComponents() || p.distChessboard(BlockPos.of(sk)) <= 8);
-               if (keepDown ? this.write_Z_BlockPos_BlockPos(BlockPos.of(sk), p) : this.canEscapeAfterDig(BlockPos.of(sk), p)) {
+               if (keepDown ? this.canEscapeFromDugStance(BlockPos.of(sk), p) : this.canEscapeAfterDig(BlockPos.of(sk), p)) {
                   this.logTrace(why + ": digging out " + p.toShortString());
                   PrintCore.PrintStep dig = new PrintCore.DigStep(p, false, sk, click.crouch(), click.feet());
                   return sk == reach.startKey ? dig : new PrintCore.WalkRouteStep(reach.reconstructPath(sk), reach, dig);
@@ -9925,7 +9925,7 @@ public final class PrintCore {
       return -1;
    }
 
-   boolean read_Z_BlockPos_BlockPos(BlockPos cell, BlockPos filled) {
+   boolean isEnclosedAfterFill(BlockPos cell, BlockPos filled) {
       if (this.escapesToBounds(cell, filled)) {
          return false;
       }
@@ -10039,7 +10039,7 @@ public final class PrintCore {
       parts.add(
          () -> this.phase == PrintCore.PrintPhase.TEARDOWN
                && this.temporaryBlocks.containsKey(target.asLong())
-               && this.update_Z_BlockPos(target)
+               && this.hasLandingAfterDig(target)
                && PrintNav.resolveStandingCell(this.view, this.feetPosition()).asLong() == station
             ? this.removalAt(new PrintNav.ReachResult(station), station, target, true, null)
             : null
@@ -10285,7 +10285,7 @@ public final class PrintCore {
                   for (Direction side : Plane.HORIZONTAL) {
                      BlockPos support = t.pos().relative(side);
                      long key = support.asLong();
-                     if (this.temporaryOwner.getOrDefault(key, -1) == i && this.temporaryBlocks.containsKey(key) && !this.sync_Z_J(key)) {
+                     if (this.temporaryOwner.getOrDefault(key, -1) == i && this.temporaryBlocks.containsKey(key) && !this.isHeldByUnsettledFlow(key)) {
                         PrintNav.ReachResult local = new PrintNav.ReachResult(hereKey);
                         local.costByCell.put(hereKey, 0.0);
                         local.feetYByCell.put(hereKey, feet.y);
@@ -10500,7 +10500,7 @@ public final class PrintCore {
                            budget,
                            4.1000000000000005
                         );
-                        if (click != null && this.hasWayOut(reach, key) && this.init_Z_J_ListPool(key, t)) {
+                        if (click != null && this.hasWayOut(reach, key) && this.isPourStanceSafe(key, t)) {
                            this.reason = "Pouring " + BuiltInRegistries.ITEM.getKey(bucket).getPath();
                            this.logTrace(
                               "fluids: "
@@ -10528,7 +10528,7 @@ public final class PrintCore {
       }
 
       this.logTrace("fluids: " + this.noWorkReason + " (body " + formatVec(this.feetPosition()) + ", reach " + reach.reachableCount() + ")");
-      if (this.push_Z_BlockPos(here)) {
+      if (this.isFluidTargetStance(here)) {
          PrintCore.PrintStep leave = this.exitPlanStep(here);
          if (leave != null) {
             return leave;
@@ -10570,7 +10570,7 @@ public final class PrintCore {
          if (++this.pourLogCounter % 40 == 0) {
             this.cache_LongOpenHashSet.clear();
             this.refusedCellStances.clear();
-            this.open_LongOpenHashSet.clear();
+            this.refusedStandingStances.clear();
             this.failedWalkStances.clear();
             this.progressRevision++;
          }
@@ -10629,7 +10629,7 @@ public final class PrintCore {
          && !this.pendingTemporary.containsKey(key)
          && !this.ownerStillOpen(key)
          && !this.tick_Z_J(key)
-         && !this.sync_Z_J(key)
+         && !this.isHeldByUnsettledFlow(key)
          && !blocks.contains(key)) {
          blocks.add(key);
       }
@@ -10653,7 +10653,7 @@ public final class PrintCore {
             return dig;
          }
 
-         if (this.isUnderfoot(block) && this.update_Z_BlockPos(block) && this.write_Z_BlockPos_BlockPos(block, block)) {
+         if (this.isUnderfoot(block) && this.hasLandingAfterDig(block) && this.canEscapeFromDugStance(block, block)) {
             return new PrintCore.DigStep(block, true);
          }
       }
@@ -10881,7 +10881,7 @@ public final class PrintCore {
                return dig;
             }
 
-            if (this.isUnderfoot(p) && this.update_Z_BlockPos(p) && this.write_Z_BlockPos_BlockPos(p, p)) {
+            if (this.isUnderfoot(p) && this.hasLandingAfterDig(p) && this.canEscapeFromDugStance(p, p)) {
                return new PrintCore.DigStep(p, true);
             }
          }
@@ -10945,7 +10945,7 @@ public final class PrintCore {
                      );
                      if (click != null
                         && this.hasWayOut(reach, key)
-                        && this.init_Z_J_ListPool(key, target)
+                        && this.isPourStanceSafe(key, target)
                         && this.pourKeepsReach(reach, target)
                         && !this.takesLastWay(target.pos(), target.wanted())) {
                         this.predictFlow(target.pos(), target.wanted().getFluidState().getType());
@@ -11118,7 +11118,7 @@ public final class PrintCore {
       return false;
    }
 
-   boolean pop_Z_I(int i) {
+   boolean isPendingFluidOrNone(int i) {
       if (i < 0) {
          return true;
       }
@@ -11471,7 +11471,7 @@ public final class PrintCore {
             }
          }
 
-         if (this.temporaryBlocks.containsKey(under) && !this.sync_Z_J(under) && this.update_Z_BlockPos(BlockPos.of(under))) {
+         if (this.temporaryBlocks.containsKey(under) && !this.isHeldByUnsettledFlow(under) && this.hasLandingAfterDig(BlockPos.of(under))) {
             PrintCore.PrintStep removal = this.removalAt(
                this.reachFrom(here), here.asLong(), BlockPos.of(under), true, null
             );
@@ -11572,7 +11572,7 @@ public final class PrintCore {
       Vec3[] eyes = new Vec3[]{PrintGeometry.eyePos(body, false), PrintGeometry.eyePos(body, true)};
 
       for (long original : this.temporaryBlocks.keySet()) {
-         if (!this.localTemporaries.contains(original) && !this.sync_Z_J(original)) {
+         if (!this.localTemporaries.contains(original) && !this.isHeldByUnsettledFlow(original)) {
             Vec3 target = Vec3.atCenterOf(BlockPos.of(original));
 
             for (Vec3 eye : eyes) {
@@ -11624,7 +11624,7 @@ public final class PrintCore {
 
       for (long key : this.temporaryBlocks.keySet()) {
          int y = BlockPos.getY(key);
-         if (y >= top && !this.localTemporaries.contains(key) && !this.sync_Z_J(key)) {
+         if (y >= top && !this.localTemporaries.contains(key) && !this.isHeldByUnsettledFlow(key)) {
             if (y > top) {
                highest.clear();
                top = y;
@@ -11682,7 +11682,7 @@ public final class PrintCore {
          return this.triedRemovalOrders.contains(key) ? null : new PrintCore.PickRemovalStep(reach, key);
       } else {
          for (long key : order) {
-            if (!this.sync_Z_J(key)) {
+            if (!this.isHeldByUnsettledFlow(key)) {
                BlockPos p = BlockPos.of(key);
                PrintTarget probe = new PrintTarget(-1, p, this.view.getBlockState(p), autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null);
                long top = BlockPos.asLong(p.getX(), p.getY() + 1, p.getZ());
@@ -11690,7 +11690,7 @@ public final class PrintCore {
                   && reach.isReachable(top)
                   && reach.reconstructPath(top).size() <= 2
                   && (top == reach.startKey || !this.failedWalkStances.contains(top))
-                  && this.update_Z_BlockPos(p)) {
+                  && this.hasLandingAfterDig(p)) {
                   PrintCore.PrintStep removal = this.removalAt(reach, top, p, true, null);
                   if (removal != null) {
                      return removal;
@@ -11715,7 +11715,7 @@ public final class PrintCore {
                for (long sk : candidates) {
                   if (reach.isReachable(sk) && (sk == reach.startKey || !this.failedWalkStances.contains(sk))) {
                      if (sk == BlockPos.asLong(p.getX(), p.getY() + 1, p.getZ())) {
-                        if (minimumFeet == -1.0 / 0.0 && this.update_Z_BlockPos(p)) {
+                        if (minimumFeet == -1.0 / 0.0 && this.hasLandingAfterDig(p)) {
                            PrintCore.PrintStep removal = this.removalAt(reach, sk, p, true, null);
                            if (removal != null) {
                               return removal;
@@ -11757,7 +11757,7 @@ public final class PrintCore {
       PrintNav.ReachResult reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click
    ) {
       if (this.phase != PrintCore.PrintPhase.TEARDOWN) {
-         if (this.hasWayOut(reach, station) && this.write_Z_BlockPos_BlockPos(under ? position : BlockPos.of(station), position)) {
+         if (this.hasWayOut(reach, station) && this.canEscapeFromDugStance(under ? position : BlockPos.of(station), position)) {
             PrintCore.PrintStep dig = under
                ? new PrintCore.DigStep(position, true)
                : new PrintCore.DigStep(position, false, station, click.crouch(), click.feet());
@@ -11998,7 +11998,7 @@ public final class PrintCore {
 
                         int slots = job.verifiedSlots();
                         if (job.needsRevisit()) {
-                           this.containerOrder.init_V(job.position());
+                           this.containerOrder.onJobFinished(job.position());
                            this.savedSlotsVerified -= slots;
                            this.containersFilled = this.containersFilled - job.fillCount();
                            this.machineJobs.put(job.position().asLong(), job);
@@ -12108,7 +12108,7 @@ public final class PrintCore {
    }
 
    private boolean init_Z_BitSetUtil(PrintMachineJob job, BlockHitResult hit, PrintControls controls) {
-      boolean early = this.phase == PrintCore.PrintPhase.BUILD && job == this.earlyFillJob && job.sync();
+      boolean early = this.phase == PrintCore.PrintPhase.BUILD && job == this.earlyFillJob && job.canFillEarly();
       if ((early || this.phase == PrintCore.PrintPhase.VERIFY && this.openCells == 0)
          && this.pendingMachineJob == null
          && hit != null
@@ -12241,7 +12241,7 @@ public final class PrintCore {
       }
 
       if (this.jobBlocksPlaced.contains(job.position().asLong())) {
-         job.init(this.recoveredTemporaryItems);
+         job.acceptRecoveredMaterial(this.recoveredTemporaryItems);
       }
 
       autismclient.ai.print.PrintMachineJob.JobStatus state = job.prepare();
@@ -12275,7 +12275,7 @@ public final class PrintCore {
 
          this.logTrace("Skipped the off-rail minecart at " + job.position().toShortString());
          return new PrintCore.WaitTicksStep(1);
-      } else if (state == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT && job.b_()) {
+      } else if (state == autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT && job.hasSkippableContents()) {
          if (this.skipNotes.size() < 16) {
             this.skipNotes.add(job.position().toShortString() + ": " + job.detail());
          }
@@ -12552,7 +12552,7 @@ public final class PrintCore {
       for (int i : this.groundWorkCells) {
          if ((this.cellStates[i] == 0 || this.cellStates[i] == 2)
             && !this.heldBackCells.contains(i)
-            && this.read_Z_I(i)
+            && this.isCellReady(i)
             && (!this.groundAnchor || this.isGroundAnchorWork(i))
             && (
                this.targets[i].pos().distToCenterSqr(origin) <= 64.0
@@ -12598,7 +12598,7 @@ public final class PrintCore {
             return this.load_UiHelper_NetHelper_Z(goal.click.mode() != PrintClicks.Inner_CachePool.DIG);
          }
 
-         if (this.sync_Z_J(position.asLong())) {
+         if (this.isHeldByUnsettledFlow(position.asLong())) {
             return this.load_UiHelper_NetHelper_Z(true);
          }
 
@@ -12644,7 +12644,7 @@ public final class PrintCore {
             return this.load_UiHelper_NetHelper_Z(false);
          }
 
-         if (!this.read_Z_I(cell)) {
+         if (!this.isCellReady(cell)) {
             return this.load_UiHelper_NetHelper_Z(true);
          }
 
@@ -12707,7 +12707,7 @@ public final class PrintCore {
                work = new PrintCore.MultiCellPlaceStep(station, click.feet(), click.crouch(), IntArrayList.of(cell));
             }
          } else {
-            if (mode == PrintClicks.Inner_CachePool.POUR && !this.init_Z_J_ListPool(station, this.targets[cell])) {
+            if (mode == PrintClicks.Inner_CachePool.POUR && !this.isPourStanceSafe(station, this.targets[cell])) {
                return this.load_UiHelper_NetHelper_Z(true);
             }
 
@@ -13174,7 +13174,7 @@ public final class PrintCore {
 
    private PrintFlight.FlightPath exitFlightFrom(Vec3 body) {
       PrintCore.FlightExitSearch search = new PrintCore.FlightExitSearch(body);
-      search.init(9223372036854775807L);
+      search.stepSearch(9223372036854775807L);
       return search.result;
    }
 
@@ -13240,7 +13240,7 @@ public final class PrintCore {
          && (!this.cellCooldowns.isCoolingDown(i) || !this.open_IntOpenHashSet.contains(i) && this.hasRecoverableHopperFace(i))
          && !this.isLatePassage(i)
          && !this.heldBackCells.contains(i)
-         && this.read_Z_I(i)
+         && this.isCellReady(i)
          && (
             this.targets[i].kind() != autismclient.ai.print.PrintTarget.TargetKind.FLUID
                || (this.spillShapeOf(i) == null || this.spillShapeReady(this.spillShapeOf(i)))
@@ -13256,7 +13256,7 @@ public final class PrintCore {
       }
 
       for (int i = this.placedCells.nextSetBit(0); i >= 0; i = this.placedCells.nextSetBit(i + 1)) {
-         if (!this.cellCooldowns.isCoolingDown(i) && !this.isLatePassage(i) && !this.heldBackCells.contains(i) && this.read_Z_I(i)) {
+         if (!this.cellCooldowns.isCoolingDown(i) && !this.isLatePassage(i) && !this.heldBackCells.contains(i) && this.isCellReady(i)) {
             candidates.add(i);
          }
       }
@@ -13270,7 +13270,7 @@ public final class PrintCore {
          if ((this.cellStates[i] == 0 || this.cellStates[i] == 2)
             && !this.cellCooldowns.isCoolingDown(i)
             && !this.heldBackCells.contains(i)
-            && this.read_Z_I(i)
+            && this.isCellReady(i)
             && !candidates.contains(i)) {
             candidates.add(i);
          }
@@ -13285,7 +13285,7 @@ public final class PrintCore {
       if (this.nextOwner >= 0
          && (this.cellStates[this.nextOwner] == 0 || this.cellStates[this.nextOwner] == 2)
          && !this.heldBackCells.contains(this.nextOwner)
-         && this.read_Z_I(this.nextOwner)
+         && this.isCellReady(this.nextOwner)
          && !candidates.contains(this.nextOwner)) {
          candidates.add(this.nextOwner);
       }
@@ -13573,7 +13573,7 @@ public final class PrintCore {
                && this.cellStates[neighbor] == 0
                && this.targets[neighbor].kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE
                && this.targets[neighbor].item() instanceof BlockItem
-               && this.read_Z_I(neighbor)) {
+               && this.isCellReady(neighbor)) {
                autismclient.ai.engine.PlacementGoal.PlaceConstraint placement = this.constraintFor(neighbor);
                if (placement == null || placement.acceptsFace(face)) {
                   users++;
@@ -13607,7 +13607,7 @@ public final class PrintCore {
                   && this.targets[other].item() instanceof BlockItem
                ? this.targets[other].wanted().getBlock() instanceof HopperBlock
                      && this.targets[other].wanted().getValue(BlockStateProperties.FACING_HOPPER) == outlet.getOpposite()
-                  || !this.read_Z_I(other)
+                  || !this.isCellReady(other)
                : false;
          } else {
             return false;
@@ -14139,7 +14139,7 @@ public final class PrintCore {
                BlockPos to = BlockPos.of(step.to());
                if (step.kind() == autismclient.ai.print.PrintAccess.StepKind.DIG) {
                   BlockPos block = BlockPos.of(step.block());
-                  if (!this.temporaryBlocks.containsKey(step.block()) && !this.view.isOwnedTemporaryAt(block) || this.sync_Z_J(step.block())) {
+                  if (!this.temporaryBlocks.containsKey(step.block()) && !this.view.isOwnedTemporaryAt(block) || this.isHeldByUnsettledFlow(step.block())) {
                      return null;
                   }
 
@@ -14169,7 +14169,7 @@ public final class PrintCore {
 
             BlockPos floor = BlockPos.containing(end.getX(), feet - 0.001, end.getZ());
             boolean above = !groundOnly && end.getY() > this.maxTargetY();
-            if (above || this.pop_Z_BlockPos(floor) && (groundOnly || this.isWithinFootprint(end.getX(), end.getZ()))) {
+            if (above || this.isNaturalSolidFloor(floor) && (groundOnly || this.isWithinFootprint(end.getX(), end.getZ()))) {
                return !reads.isComplete()
                   ? null
                   : new PrintCore.StanceProof(height, this.view.requireDropOvershootSafety, reads.recordedStates, digs, stances, floor, above, 0);
@@ -14268,7 +14268,7 @@ public final class PrintCore {
       }
    }
 
-   boolean init_Z_BlockPos(BlockPos here, double height, int placed, int allowance) {
+   boolean canTowerToTop(BlockPos here, double height, int placed, int allowance) {
       if (Double.isFinite(height) && !(Math.abs(height - Math.rint(height)) > 1.0E-6) && allowance > 0 && placed <= allowance) {
          int rise = this.maxTargetY() + 1 - (int)Math.rint(height);
          return rise > 0 && rise <= allowance - placed ? this.load_Z_BlockPos(here, height, rise) : false;
@@ -14277,7 +14277,7 @@ public final class PrintCore {
       }
    }
 
-   boolean init_Z_BlockPos(BlockPos here, double height, int placed) {
+   boolean canTowerToTop(BlockPos here, double height, int placed) {
       if (Double.isFinite(height) && !(Math.abs(height - Math.rint(height)) > 1.0E-6) && placed >= 0 && placed <= 64) {
          int rise = this.maxTargetY() + 1 - (int)Math.rint(height);
          return rise > 0 && this.load_Z_BlockPos(here, height, rise);
@@ -14301,7 +14301,7 @@ public final class PrintCore {
       }
    }
 
-   boolean push_Z_BlockPos(BlockPos s) {
+   boolean isFluidTargetStance(BlockPos s) {
       for (BlockPos cell : new BlockPos[]{s, s.above()}) {
          int i = this.cellIndexByPos.get(cell.asLong());
          if (i >= 0
@@ -14317,9 +14317,9 @@ public final class PrintCore {
       return false;
    }
 
-   boolean init_Z_J_ListPool(long key, PrintTarget t) {
+   boolean isPourStanceSafe(long key, PrintTarget t) {
       BlockPos s = BlockPos.of(key);
-      if (this.push_Z_BlockPos(s)) {
+      if (this.isFluidTargetStance(s)) {
          return false;
       } else {
          return t.kind() == autismclient.ai.print.PrintTarget.TargetKind.FLUID && this.canEscape(s, null, null)
@@ -14328,7 +14328,7 @@ public final class PrintCore {
       }
    }
 
-   boolean write_Z_BlockPos_BlockPos(BlockPos stance, BlockPos dug) {
+   boolean canEscapeFromDugStance(BlockPos stance, BlockPos dug) {
       BlockPos before = stance.equals(dug) ? stance.above() : stance;
       if (this.init_Z_BlockPos(before, null, null, true, 0)) {
          return this.init_Z_BlockPos(stance, dug, Blocks.AIR.defaultBlockState(), true, 0);
@@ -14365,7 +14365,7 @@ public final class PrintCore {
       return floor.getY() + (shape.isEmpty() ? 0.0 : shape.max(Axis.Y));
    }
 
-   boolean init_Z_I_2(int x, int y, int z) {
+   boolean isStandableCell(int x, int y, int z) {
       BlockPos cell = new BlockPos(x, y, z);
       if (!this.view.getBlockState(cell).isAir()) {
          return false;
@@ -14390,7 +14390,7 @@ public final class PrintCore {
       return floorTop >= y - 0.2;
    }
 
-   boolean pop_Z_BlockPos(BlockPos floor) {
+   boolean isNaturalSolidFloor(BlockPos floor) {
       return this.init_Z_BlockPos_LongOpenHashSet(floor, new LongOpenHashSet());
    }
 
@@ -14993,7 +14993,7 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep approachStep(BlockPos here, BlockPos p, String why) {
-      if (this.sync_Z_J(p.asLong())) {
+      if (this.isHeldByUnsettledFlow(p.asLong())) {
          return null;
       }
 
@@ -15100,7 +15100,7 @@ public final class PrintCore {
       return this.fallingFlows;
    }
 
-   boolean sync_Z_J(long key) {
+   boolean isHeldByUnsettledFlow(long key) {
       this.spillShapeList();
       List<PrintCore.SpillShape> sourceOwners = this.spillShapesByFloor.get(key);
       if (sourceOwners != null) {
@@ -15568,7 +15568,7 @@ public final class PrintCore {
                   }
                }
 
-               if (this.target.kind() != autismclient.ai.print.PrintTarget.TargetKind.FLUID || !PrintCore.this.push_Z_BlockPos(BlockPos.of(this.currentStance))) {
+               if (this.target.kind() != autismclient.ai.print.PrintTarget.TargetKind.FLUID || !PrintCore.this.isFluidTargetStance(BlockPos.of(this.currentStance))) {
                   this.stancesTried++;
                   if (PrintClicks.isCellWithinStanceReach(this.currentStance, height, this.target.pos(), 4.1000000000000005)
                      && (
@@ -15711,7 +15711,7 @@ public final class PrintCore {
          }
 
          if ((machineJob != null || this.step.equals(PrintCore.this.rules.nextInteraction(t, live)))
-            && PrintCore.this.read_Z_I(this.cell)) {
+            && PrintCore.this.isCellReady(this.cell)) {
             if (++this.ticks > 60) {
                PrintCore.this.refusedCellStances.add(PrintCore.cellStanceKey(this.cell, this.stanceKey));
                PrintCore.this.logTrace("interact: gave up on " + t.pos().toShortString());
@@ -16756,7 +16756,7 @@ public final class PrintCore {
 
       @Override
       public PrintControls tick() {
-         if (PrintCore.this.env.canUseFlight() && PrintCore.this.cellStates[this.cell] == 0 && PrintCore.this.read_Z_I(this.cell)) {
+         if (PrintCore.this.env.canUseFlight() && PrintCore.this.cellStates[this.cell] == 0 && PrintCore.this.isCellReady(this.cell)) {
             BlockState proposed = this.goal.click.predicted();
             if (proposed != null
                && PrintCore.this.view
@@ -16926,7 +16926,7 @@ public final class PrintCore {
                         if (!PrintCore.this.abandonedCells.contains(this.missingFloor.asLong())
                            && PrintCore.this.isFreeTempSlot(this.missingFloor)
                            && PrintCore.this.read_Z_BlockPos(this.missingFloor)
-                           && !PrintCore.this.read_Z_BlockPos_BlockPos(this.missingFloor, null)) {
+                           && !PrintCore.this.isEnclosedAfterFill(this.missingFloor, null)) {
                            Item material = PrintCore.this.env.isCreativeMode() ? Items.DIRT : PrintCore.this.tempItem();
                            PrintTarget probe = new PrintTarget(
                               -1,
@@ -16988,7 +16988,7 @@ public final class PrintCore {
          this.cellsTested++;
          return PrintCore.this.cellStates[cell] == 0
             && PrintCore.this.isPlaceableWorkCell(cell)
-            && PrintCore.this.read_Z_I(cell)
+            && PrintCore.this.isCellReady(cell)
             && !PrintCore.this.heldBackCells.contains(cell)
             && !PrintCore.this.isOutOfReach(cell)
             && !PrintCore.this.open_Z_I(cell);
@@ -17908,10 +17908,10 @@ public final class PrintCore {
                                  && this.body.onGround()) {
                                  int i = this.nearestFrontier.getInt(this.cursor++);
                                  PrintTarget t = PrintCore.this.targets[i];
-                                 if (!PrintCore.this.open_LongOpenHashSet
+                                 if (!PrintCore.this.refusedStandingStances
                                        .contains(PrintCore.cellStanceKey(i, this.safety.reach.startKey))
                                     && !PrintCore.this.init_Z_I(i, this.body.y(), this.safety.reach.startKey)
-                                    && PrintCore.this.read_Z_I(i)
+                                    && PrintCore.this.isCellReady(i)
                                     && (
                                        !PrintCore.this.inComponent(i)
                                           || !(t.pos().getY() >= this.body.y() + 2.0)
@@ -18338,7 +18338,7 @@ public final class PrintCore {
             PrintCore.this.outOfReachUntil.clear();
             PrintCore.this.heldBackCells.clear();
             PrintCore.this.refusedCellStances.clear();
-            PrintCore.this.open_LongOpenHashSet.clear();
+            PrintCore.this.refusedStandingStances.clear();
             PrintCore.this.failedWalkStances.clear();
             PrintCore.this.progressRevision++;
          } else if (!this.finished
@@ -18567,7 +18567,7 @@ public final class PrintCore {
 
       PrintCore.WorkGoal cachedSupportGoal(int owner, PrintTarget support, boolean recovery) {
          PrintCore.GoalEvalKey key = this.keyFor(recovery ? 3 : 1, support, null, null, null, 0L, owner);
-         if (recovery && (PrintCore.this.sync_Z_J(support.pos().asLong()) || !PrintCore.this.read_Z_BlockPos(support.pos()))) {
+         if (recovery && (PrintCore.this.isHeldByUnsettledFlow(support.pos().asLong()) || !PrintCore.this.read_Z_BlockPos(support.pos()))) {
             if (this.entries.containsKey(key)) {
                this.stale = true;
                throw PrintCore.StaleSearchSignal.INSTANCE;
@@ -19299,7 +19299,7 @@ public final class PrintCore {
       }
 
       private LongOpenHashSet refusedStances() {
-         return this.crouch ? PrintCore.this.refusedCellStances : PrintCore.this.open_LongOpenHashSet;
+         return this.crouch ? PrintCore.this.refusedCellStances : PrintCore.this.refusedStandingStances;
       }
 
       boolean skipRefusedCells() {
@@ -19416,7 +19416,7 @@ public final class PrintCore {
                int i = this.cells.getInt(this.cellCursor);
                if (PrintCore.this.init_Z_I(i, feet.y, this.stanceKey) && !PrintCore.this.load_Z_I_Vec3(i, feet)) {
                   this.cellCursor++;
-               } else if (PrintCore.this.cellStates[i] == 0 && PrintCore.this.read_Z_I(i)) {
+               } else if (PrintCore.this.cellStates[i] == 0 && PrintCore.this.isCellReady(i)) {
                   if (!atStance && nearWork && (!PrintCore.this.init_Z_I(i, feet.y, this.stanceKey) || PrintCore.this.load_Z_I_Vec3(i, feet))) {
                      autismclient.ai.print.PrintClicks.Inner_StreamUtil actual = PrintClicks.findClick(
                         PrintCore.this.view,
@@ -19792,7 +19792,7 @@ public final class PrintCore {
 
          if (k < this.cells.size()) {
             int i = this.cells.getInt(k);
-            if (PrintCore.this.read_Z_I(i)) {
+            if (PrintCore.this.isCellReady(i)) {
                PrintTarget t = PrintCore.this.targets[i];
                if (!PrintCore.isBodyCell(this.stanceKey, t.pos())) {
                   autismclient.ai.print.PrintClicks.Inner_StreamUtil next = PrintClicks.findClick(
@@ -19933,7 +19933,7 @@ public final class PrintCore {
                      BlockState served = PrintCore.this.env
                         .predictPlacedState(item, pick, PrintCore.this.env.serverYaw(), PrintCore.this.env.serverPitch(), true, cell);
                      if (served != null && (!own || PrintCore.this.matchesPredictedState(PrintCore.this.targets[ti], served))) {
-                        if (!own && PrintCore.this.useGlassTemporaries && !PrintCore.this.load_Z_BlockPos_BlockState(cell, served)) {
+                        if (!own && PrintCore.this.useGlassTemporaries && !PrintCore.this.isTemporaryMaterialSafe(cell, served)) {
                            this.finished = true;
                            return c;
                         }
@@ -20201,8 +20201,8 @@ public final class PrintCore {
                         BlockPos previous = BlockPos.of(step.from()).below();
                         if (this.reachedStepEnd(step)
                            && PrintCore.this.temporaryBlocks.containsKey(previous.asLong())
-                           && !PrintCore.this.sync_Z_J(previous.asLong())
-                           && PrintCore.this.write_Z_BlockPos_BlockPos(BlockPos.of(step.to()), previous)) {
+                           && !PrintCore.this.isHeldByUnsettledFlow(previous.asLong())
+                           && PrintCore.this.canEscapeFromDugStance(BlockPos.of(step.to()), previous)) {
                            for (int j = this.stepCursor; j < this.plan.steps().size(); j++) {
                               PrintAccess.AccessStep later = this.plan.steps().get(j);
                               if (later.to() == previous.above().asLong() || later.block() == previous.asLong()) {
@@ -20270,7 +20270,7 @@ public final class PrintCore {
             return null;
          } else if (this.init_Item == Items.GLASS && PrintCore.this.useGlassTemporaries) {
             Item alternative = PrintCore.this.tempItem();
-            return PrintCore.this.load_Z_BlockPos_BlockState(BlockPos.of(step.block()), PrintCore.defaultStateOf(alternative))
+            return PrintCore.this.isTemporaryMaterialSafe(BlockPos.of(step.block()), PrintCore.defaultStateOf(alternative))
                ? alternative
                : this.init_Item;
          } else {
@@ -20618,7 +20618,7 @@ public final class PrintCore {
 
          int tiCell = PrintCore.this.cellIndexByPos.get(cell.asLong());
          boolean own = tiCell >= 0 && PrintCore.this.cellStates[tiCell] == 0 && PrintCore.this.isRideCompatible(tiCell);
-         if (!own && !PrintCore.this.load_Z_BlockPos_BlockState(cell, PrintCore.defaultStateOf(this.tempItem))) {
+         if (!own && !PrintCore.this.isTemporaryMaterialSafe(cell, PrintCore.defaultStateOf(this.tempItem))) {
             PrintCore.this.logTrace("pillar: temporary material would disturb " + cell.toShortString());
             this.finished = true;
             return null;
@@ -20913,7 +20913,7 @@ public final class PrintCore {
                         continue;
                      }
 
-                     this.requireRecovery = borrowedFace || PrintCore.this.read_Z_BlockPos_BlockPos(candidate, this.ownerTarget.pos());
+                     this.requireRecovery = borrowedFace || PrintCore.this.isEnclosedAfterFill(candidate, this.ownerTarget.pos());
                      this.neededSupport = candidate;
                      this.frontier.clear();
                      this.visited.clear();
@@ -21045,7 +21045,7 @@ public final class PrintCore {
                               && !PrintCore.this.abandonedCells.contains(next.asLong())
                               && PrintCore.this.isFreeTempSlot(next)
                               && PrintCore.this.read_Z_BlockPos(next)
-                              && !PrintCore.this.read_Z_BlockPos_BlockPos(next, this.ownerTarget.pos())) {
+                              && !PrintCore.this.isEnclosedAfterFill(next, this.ownerTarget.pos())) {
                               this.frontier.addLast(new PrintCore.SupportSourceSearch.SearchDepthCell(next, this.currentCell.depth() + 1));
                            }
                         }
@@ -21195,7 +21195,7 @@ public final class PrintCore {
 
                                  if (PrintCore.this.cellStates[i] == 0
                                     && PrintCore.this.isPlaceableWorkCell(i)
-                                    && PrintCore.this.read_Z_I(i)
+                                    && PrintCore.this.isCellReady(i)
                                     && !PrintCore.this.heldBackCells.contains(i)
                                     && !PrintCore.this.isOutOfReach(i)
                                     && !PrintCore.this.open_Z_I(i)
@@ -22160,7 +22160,7 @@ public final class PrintCore {
             && PrintCore.this.view.matchesHypotheses(this.hypothesesSnapshot)
             && PrintCore.this.view.matchesOwnedTemporaries(this.ownedTemporariesSnapshot)
             && this.shapeTracker.verifyStillValid()
-            && !PrintCore.this.sync_Z_J(this.support.pos().asLong())
+            && !PrintCore.this.isHeldByUnsettledFlow(this.support.pos().asLong())
             && PrintCore.this.read_Z_BlockPos(this.support.pos());
       }
 
@@ -22284,7 +22284,7 @@ public final class PrintCore {
                                     this.exitSearch = PrintCore.this.new FlightExitSearch(this.point);
                                  }
 
-                                 this.exitSearch.init(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
+                                 this.exitSearch.stepSearch(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
                                  if (this.exitSearch.done) {
                                     this.finished = true;
                                     this.recoverable = this.exitSearch.result != null;
@@ -22383,7 +22383,7 @@ public final class PrintCore {
             return null;
          }
 
-         if (!PrintCore.this.load_Z_BlockPos_BlockState(this.pos, PrintCore.defaultStateOf(this.item))) {
+         if (!PrintCore.this.isTemporaryMaterialSafe(this.pos, PrintCore.defaultStateOf(this.item))) {
             this.giveUp("the temporary block would disturb the machine");
             return null;
          }
@@ -22494,7 +22494,7 @@ public final class PrintCore {
       boolean complete;
       boolean blocked;
       boolean invalidated;
-      boolean write;
+      boolean trapBlocked;
 
       PlacementPurpose(autismclient.ai.print.PrintClicks.Inner_StreamUtil click, PrintNav.ReachResult beforeReach) {
          this.click = click;
@@ -22527,7 +22527,7 @@ public final class PrintCore {
                }
 
                if (this.trapCheck.blocked) {
-                  this.write = this.blocked = this.complete = true;
+                  this.trapBlocked = this.blocked = this.complete = true;
                   return;
                }
 
@@ -22889,7 +22889,7 @@ public final class PrintCore {
          this.search = new PrintAccess(PrintCore.this, 80.0);
          this.search.allowBury = true;
          this.search.alternateGuide = true;
-         this.search.write_Z = true;
+         this.search.focusedSearch = true;
          this.accessSearch = this.search
             .startSearch(this.startPos, this.feet, this.goals, this.tempState);
          this.reads = this.sliceReads = 0L;
@@ -23040,7 +23040,7 @@ public final class PrintCore {
                      } else if (this.stage == 1) {
                         if (this.focusCell >= 0) {
                            if (PrintCore.this.cellStates[this.focusCell] != 0
-                              || !PrintCore.this.read_Z_I(this.focusCell)
+                              || !PrintCore.this.isCellReady(this.focusCell)
                               || PrintCore.this.heldBackCells.contains(this.focusCell)
                               || PrintCore.this.isOutOfReach(this.focusCell)) {
                               this.finishWith(PrintCore.this.load_UiHelper_NetHelper_Z(true));
@@ -23083,7 +23083,7 @@ public final class PrintCore {
                                        && PrintCore.this.isPlaceableWorkCell(ix)
                                        && !PrintCore.this.heldBackCells.contains(ix)
                                        && !PrintCore.this.isOutOfReach(ix)
-                                       && PrintCore.this.read_Z_I(ix)
+                                       && PrintCore.this.isCellReady(ix)
                                        && !PrintCore.this.open_Z_I(ix)
                                        && !PrintCore.this.init_Z_I_I(ix, this.lowest)
                                  );
@@ -23373,7 +23373,7 @@ public final class PrintCore {
                            this.stage = 1;
                            PrintCore.this.logTrace("wide reach: " + this.reach.reachableCount() + " stances");
                         } else if (this.stage == 7) {
-                           if (PrintCore.this.push_Z_BlockPos(this.here) && this.cellCursor < PrintCore.this.fluidCellsByHeight().length) {
+                           if (PrintCore.this.isFluidTargetStance(this.here) && this.cellCursor < PrintCore.this.fluidCellsByHeight().length) {
                               int i = PrintCore.this.fluidCellsByHeight()[this.cellCursor++];
                               if (PrintCore.this.cellStates[i] == 0
                                  && PrintCore.this.findSpill(
@@ -23569,7 +23569,7 @@ public final class PrintCore {
                            this.cellCursor = PrintCore.this.workableCells.nextSetBit(i + 1);
                            if (PrintCore.this.cellStates[i] == 0
                               && PrintCore.this.isPlaceableWorkCell(i)
-                              && PrintCore.this.read_Z_I(i)
+                              && PrintCore.this.isCellReady(i)
                               && !PrintCore.this.heldBackCells.contains(i)
                               && !PrintCore.this.isOutOfReach(i)
                               && PrintCore.this.targets[i].pos().getY() <= this.lowest + 2
@@ -23592,7 +23592,7 @@ public final class PrintCore {
       }
 
       private void refuseStanceCell(int cell) {
-         (this.stanceRoute.crouch() ? PrintCore.this.refusedCellStances : PrintCore.this.open_LongOpenHashSet)
+         (this.stanceRoute.crouch() ? PrintCore.this.refusedCellStances : PrintCore.this.refusedStandingStances)
             .add(PrintCore.cellStanceKey(cell, this.stanceRoute.stanceKey()));
          PrintCore.this.stancesByCell.remove(cell);
          PrintCore.this.logTrace(
@@ -23824,7 +23824,7 @@ public final class PrintCore {
       public PrintControls tick() {
          PrintControls c = PrintControls.idle();
          c.sneak = this.crouch;
-         if (PrintCore.this.temporaryBlocks.containsKey(this.pos.asLong()) && PrintCore.this.sync_Z_J(this.pos.asLong())) {
+         if (PrintCore.this.temporaryBlocks.containsKey(this.pos.asLong()) && PrintCore.this.isHeldByUnsettledFlow(this.pos.asLong())) {
             this.finished = true;
             return c;
          }
@@ -24549,7 +24549,7 @@ public final class PrintCore {
                }
 
                long next = this.key.order().get(this.candidateCursor++);
-               if (PrintCore.this.sync_Z_J(next)) {
+               if (PrintCore.this.isHeldByUnsettledFlow(next)) {
                   continue;
                }
 
@@ -24593,7 +24593,7 @@ public final class PrintCore {
                long station = this.stations.getLong(this.stationCursor++);
                if (station == this.reach.startKey || !PrintCore.this.failedWalkStances.contains(station)) {
                   if (station == this.candidatePos.above().asLong()) {
-                     if (this.key.minimumFeet() == -1.0 / 0.0 && PrintCore.this.update_Z_BlockPos(this.candidatePos)) {
+                     if (this.key.minimumFeet() == -1.0 / 0.0 && PrintCore.this.hasLandingAfterDig(this.candidatePos)) {
                         this.removal = PrintCore.this.new CleanupDescentStep(this.safety, station, this.candidatePos, true, null);
                      }
                   } else if (!PrintCore.this.failedDigStances.contains(PrintCore.cellStanceKey((int)(this.candidatePos.asLong() & 2147483647L), station))) {
@@ -24826,7 +24826,7 @@ public final class PrintCore {
 
          if (this.dug == null
             || PrintCore.this.temporaryBlocks.get(this.dug.asLong()) == PrintCore.this.view.getBlockState(this.dug)
-               && !PrintCore.this.sync_Z_J(this.dug.asLong())) {
+               && !PrintCore.this.isHeldByUnsettledFlow(this.dug.asLong())) {
             int digAllowance = this.dug != null && !PrintCore.this.env.isCreativeMode()
                ? (int)Math.ceil(
                   Math.max(
@@ -24876,7 +24876,7 @@ public final class PrintCore {
                   mode = PrintClicks.Inner_CachePool.INTERACT;
                }
 
-               if (this.cell >= 0 && !PrintCore.this.read_Z_I(this.cell)) {
+               if (this.cell >= 0 && !PrintCore.this.isCellReady(this.cell)) {
                   this.finished = true;
                   return null;
                }
@@ -26115,7 +26115,7 @@ public final class PrintCore {
 
                      if (PrintCore.this.cellStates[owner] == 3 || PrintCore.this.cellStates[owner] == 5) {
                         BlockPos position = BlockPos.of(key);
-                        if (PrintCore.this.env.hasChunkAt(position) && !PrintCore.this.sync_Z_J(key)) {
+                        if (PrintCore.this.env.hasChunkAt(position) && !PrintCore.this.isHeldByUnsettledFlow(key)) {
                            if (!PrintCore.this.temporaryBlocks.containsKey(key)) {
                               return this.finishWith(PrintCore.this.new WaitTicksStep(1));
                            }
@@ -26225,7 +26225,7 @@ public final class PrintCore {
                   if (this.blockingTemporaries != null && this.cursor < this.blockingTemporaries.size()) {
                      long key = this.blockingTemporaries.get(this.cursor);
                      int owner = PrintCore.this.temporaryOwner.getOrDefault(key, -1);
-                     if (!PrintCore.this.sync_Z_J(key) && (!blocking || owner < 0 || PrintCore.this.cellStates[owner] == 3 || PrintCore.this.cellStates[owner] == 5)
+                     if (!PrintCore.this.isHeldByUnsettledFlow(key) && (!blocking || owner < 0 || PrintCore.this.cellStates[owner] == 3 || PrintCore.this.cellStates[owner] == 5)
                         )
                       {
                         BlockPos at = BlockPos.of(key);
@@ -26483,7 +26483,7 @@ public final class PrintCore {
                                  .currentEntry;
                               if (entry != null
                                  && PrintCore.this.temporaryBlocks.containsKey(entry.cellKey)
-                                 && !PrintCore.this.sync_Z_J(entry.cellKey)
+                                 && !PrintCore.this.isHeldByUnsettledFlow(entry.cellKey)
                                  && !PrintCore.this.pool_LongOpenHashSet.contains(entry.cellKey)
                                  && BlockPos.of(entry.cellKey).distToCenterSqr(this.origin) <= 144.0) {
                                  return this.finishWith((PrintCore.PrintStep)null);
@@ -26642,7 +26642,7 @@ public final class PrintCore {
             && this.approaches.equals(PrintCore.this.failedClicks)
             && PrintCore.this.feetPosition().distanceToSqr(this.startFeet) <= 0.04
             && Math.abs(PrintCore.this.feetPosition().y - this.startFeet.y) < 0.01
-            && !PrintCore.this.sync_Z_J(this.target.asLong());
+            && !PrintCore.this.isHeldByUnsettledFlow(this.target.asLong());
       }
 
       private void beginRemovalSearch(boolean directed) {
@@ -26873,7 +26873,7 @@ public final class PrintCore {
                   for (int dy = -5; dy <= 3; dy++) {
                      long key = BlockPos.asLong(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
                      if (safety.reach.isReachable(key)
-                        && !PrintCore.this.open_LongOpenHashSet.contains(PrintCore.cellStanceKey(cell, key))
+                        && !PrintCore.this.refusedStandingStances.contains(PrintCore.cellStanceKey(cell, key))
                         && !PrintCore.this.failedWalkStances.contains(key)) {
                         this.stances.add(key);
                      }
@@ -27179,7 +27179,7 @@ public final class PrintCore {
                      chunk.cells.add(t.index());
                      chunk.unfinishedCells++;
                      if (t.kind() != autismclient.ai.print.PrintTarget.TargetKind.FLOW && t.kind() != autismclient.ai.print.PrintTarget.TargetKind.PARTNER) {
-                        chunk.load++;
+                        chunk.pendingCells++;
                      }
 
                      PrintCore.this.cellsByChunk.put(key, chunk.cells);
@@ -27818,8 +27818,8 @@ public final class PrintCore {
                   || PrintCore.this.unchangedSince(this.support, this.startRevision, 13)
                      && PrintCore.this.unchangedSince(PrintCore.this.targets[this.goal].pos(), this.startRevision, 13)
             )
-            && PrintCore.this.read_Z_I(this.goal)
-            && (this.source < 0 || PrintCore.this.read_Z_I(this.source))) {
+            && PrintCore.this.isCellReady(this.goal)
+            && (this.source < 0 || PrintCore.this.isCellReady(this.source))) {
             PrintCore.this.reason = "Checking construction order before adding support";
             if (this.provingTarget) {
                if (this.source >= 0) {
@@ -27857,7 +27857,7 @@ public final class PrintCore {
                PrintCore.this.logTrace(
                   "support proof: blocked " + (this.provingTarget ? "target " : "support ") + this.activePurpose.click.target().pos().toShortString()
                );
-               if (!this.activePurpose.write) {
+               if (!this.activePurpose.trapBlocked) {
                   PrintCore.this.blockedSupportProofs.put(PrintCore.cellStanceKey(this.goal, this.support.asLong()), this.startRevision);
                }
 
@@ -28044,7 +28044,7 @@ public final class PrintCore {
                                           + (
                                              ni < 0
                                                 ? 0
-                                                : (PrintCore.this.read_Z_I(ni) ? 1 : 2)
+                                                : (PrintCore.this.isCellReady(ni) ? 1 : 2)
                                                    + (PrintCore.this.heldBackCells.contains(ni) ? 4 : 0)
                                                    + (PrintCore.this.isOutOfReach(ni) ? 8 : 0)
                                                    + 16 * PrintCore.this.cellStates[ni]
@@ -28393,7 +28393,7 @@ public final class PrintCore {
       }
 
       private void rememberRefusal(IdentityHashMap<BlockState, PrintCore.PlacementSafetyProof> refusals, PrintCore.PlacementPurpose purpose) {
-         if (!purpose.write && purpose.safety.complete && purpose.safety.blocked && !purpose.safety.invalidated) {
+         if (!purpose.trapBlocked && purpose.safety.complete && purpose.safety.blocked && !purpose.safety.invalidated) {
             if (refusals.size() >= 16) {
                refusals.clear();
             }
@@ -28440,7 +28440,7 @@ public final class PrintCore {
                   || !(PrintCore.this.targets[this.supportCell].item() instanceof BlockItem)
                   || PrintCore.this.targets[this.supportCell].wanted().getBlock() instanceof FallingBlock
                   || PrintView.isHazardBlock(PrintCore.this.targets[this.supportCell].wanted())
-                  || !PrintCore.this.read_Z_I(this.supportCell)
+                  || !PrintCore.this.isCellReady(this.supportCell)
                   || PrintCore.this.heldBackCells.contains(this.supportCell)
                   || PrintCore.this.isOutOfReach(this.supportCell)) {
                   return false;
@@ -28452,7 +28452,7 @@ public final class PrintCore {
             if (this.supportIsTarget
                || PrintCore.this.read_Z_BlockPos(this.supportPos)
                   && (
-                     !PrintCore.this.read_Z_BlockPos_BlockPos(this.supportPos, target.pos())
+                     !PrintCore.this.isEnclosedAfterFill(this.supportPos, target.pos())
                         || PrintCore.this.load_Z_BlockPos_BlockPos(this.supportPos, target.pos())
                   )) {
                this.supportState = this.supportIsTarget ? PrintCore.this.targets[this.supportCell].wanted() : this.tempState;
@@ -30322,7 +30322,7 @@ public final class PrintCore {
                         } else {
                            this.pourStance = this.stances.getLong(this.stanceCursor);
                            if (!PrintCore.this.refusedCellStances.contains(PrintCore.cellStanceKey(i, this.pourStance))
-                              && !PrintCore.this.push_Z_BlockPos(BlockPos.of(this.pourStance))
+                              && !PrintCore.this.isFluidTargetStance(BlockPos.of(this.pourStance))
                               && (this.only == null || PrintCore.this.routeAvoidsFluidCells(this.reach, this.pourStance))) {
                               if (this.candidateFeet == null) {
                                  this.candidateFeet = PrintClicks.getCandidateFeetPositions(PrintCore.this.view, this.pourStance, this.reach.feetYOf(this.pourStance));
@@ -30942,7 +30942,7 @@ public final class PrintCore {
             } else if (this.inputCursor < PrintCore.this.inputCells[this.currentPiston].length) {
                int input = PrintCore.this.inputCells[this.currentPiston][this.inputCursor++];
                long key = PrintCore.this.targets[input].pos().asLong();
-               if (PrintCore.this.containerOrder.init_Z(PrintCore.this.targets[input].pos())) {
+               if (PrintCore.this.containerOrder.covers(PrintCore.this.targets[input].pos())) {
                   PrintCore.this.pistonsByInput.computeIfAbsent(key, ignored -> new IntArrayList()).add(this.currentPiston);
                }
 
@@ -30962,7 +30962,7 @@ public final class PrintCore {
             }
          } else if (this.queueCursor < this.inputQueue.size()) {
             BlockPos at = PrintCore.this.targets[this.inputQueue.getInt(this.queueCursor++)].pos();
-            if (PrintCore.this.containerOrder.init_Z(at)
+            if (PrintCore.this.containerOrder.covers(at)
                && PrintCore.this.quietInputs.add(at.asLong())
                && PrintCore.this.machineJobs.containsKey(at.asLong())) {
                PrintCore.this.pendingQuietInputs.add(at.asLong());
@@ -31743,7 +31743,7 @@ public final class PrintCore {
                         && !PrintCore.this.isLatePassage(candidate)
                         && !PrintCore.this.heldBackCells.contains(candidate)
                         && !PrintCore.this.cellCooldowns.isCoolingDown(candidate)
-                        && PrintCore.this.read_Z_I(candidate)) {
+                        && PrintCore.this.isCellReady(candidate)) {
                         this.ownerCell = candidate;
                         this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(
                            PrintCore.this.targets[this.ownerCell],
@@ -31852,7 +31852,7 @@ public final class PrintCore {
                }
 
                this.job = this.jobIterator.next();
-               if (!this.job.b_()
+               if (!this.job.hasSkippableContents()
                   || !this.job.needsAccess()
                   || PrintCore.this.earlyFillsSetAside.contains(this.job.position().asLong())) {
                   this.job = null;
@@ -31881,7 +31881,7 @@ public final class PrintCore {
             } else {
                PrintMachineJob job = this.job;
                this.job = null;
-               if (this.pistonsPlaced && job.sync()) {
+               if (this.pistonsPlaced && job.canFillEarly()) {
                   PrintCore.this.earlyFillJob = job;
                   PrintCore.this.earlyFillStartTick = PrintCore.this.env.currentTick();
                   PrintCore.this.runningMachineJob = PrintCore.this.machineJobs.getAndMoveToFirst(job.position().asLong());
@@ -31936,8 +31936,8 @@ public final class PrintCore {
             double next = candidate.position().distToCenterSqr(this.startFeet);
             boolean assembly = candidate instanceof PrintClockSequence;
             boolean bestAssembly = this.bestJob instanceof PrintClockSequence;
-            boolean stable = !candidate.b_() || candidate.sync();
-            boolean bestStable = this.bestJob != null && (!this.bestJob.b_() || this.bestJob.sync());
+            boolean stable = !candidate.hasSkippableContents() || candidate.canFillEarly();
+            boolean bestStable = this.bestJob != null && (!this.bestJob.hasSkippableContents() || this.bestJob.canFillEarly());
             if (this.bestJob == null
                || stable && !bestStable
                || stable == bestStable
@@ -32068,7 +32068,7 @@ public final class PrintCore {
                && PrintCore.this.view.matchesHypotheses(this.hypothesesSnapshot)
                && PrintCore.this.view.matchesOwnedTemporaries(this.ownedTemporariesSnapshot)
                && this.shapeTracker.verifyStillValid()
-               && !PrintCore.this.sync_Z_J(this.support.pos().asLong())
+               && !PrintCore.this.isHeldByUnsettledFlow(this.support.pos().asLong())
                && PrintCore.this.read_Z_BlockPos(this.support.pos())) {
             try (ShapeAttachment geometry = this.requireRecovery ? this.shapeTracker.attach() : null) {
                this.searchStep(allowance);
@@ -32150,7 +32150,7 @@ public final class PrintCore {
                      this.exitSearch = PrintCore.this.new FlightExitSearch(this.click.feet());
                   }
 
-                  this.exitSearch.init(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
+                  this.exitSearch.stepSearch(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
                } finally {
                   PrintCore.this.view.popHypothesis(this.support.pos());
                }
@@ -32308,7 +32308,7 @@ public final class PrintCore {
          this.savedFailedRouteCells = new LongOpenHashSet(PrintCore.this.failedRouteCells);
          this.savedConfirmedAirCells = new LongOpenHashSet(PrintCore.this.confirmedAirCells);
          this.savedRefusedCellStances = new LongOpenHashSet(PrintCore.this.refusedCellStances);
-         this.savedRefusedStandingStances = new LongOpenHashSet(PrintCore.this.open_LongOpenHashSet);
+         this.savedRefusedStandingStances = new LongOpenHashSet(PrintCore.this.refusedStandingStances);
          this.savedFailedDigStances = new LongOpenHashSet(PrintCore.this.failedDigStances);
          this.savedBeforeOrderCells = new IntOpenHashSet(PrintCore.this.beforeOrderCells);
          this.savedAssumptions = new Long2ObjectOpenHashMap<>();
@@ -32343,7 +32343,7 @@ public final class PrintCore {
             && this.savedFailedRouteCells.equals(PrintCore.this.failedRouteCells)
             && this.savedConfirmedAirCells.equals(PrintCore.this.confirmedAirCells)
             && this.savedRefusedCellStances.equals(PrintCore.this.refusedCellStances)
-            && this.savedRefusedStandingStances.equals(PrintCore.this.open_LongOpenHashSet)
+            && this.savedRefusedStandingStances.equals(PrintCore.this.refusedStandingStances)
             && this.savedFailedDigStances.equals(PrintCore.this.failedDigStances)
             && this.savedBeforeOrderCells.equals(PrintCore.this.beforeOrderCells)
             && PrintCore.this.view.matchesHypotheses(this.savedAssumptions)
@@ -32401,7 +32401,7 @@ public final class PrintCore {
          }
 
          for (long key : this.digs) {
-            if (!core.temporaryBlocks.containsKey(key) && !core.view.isOwnedTemporaryAt(BlockPos.of(key)) || core.sync_Z_J(key)) {
+            if (!core.temporaryBlocks.containsKey(key) && !core.view.isOwnedTemporaryAt(BlockPos.of(key)) || core.isHeldByUnsettledFlow(key)) {
                return false;
             }
          }
@@ -32412,7 +32412,7 @@ public final class PrintCore {
             }
          }
 
-         return this.above || core.pop_Z_BlockPos(this.floor);
+         return this.above || core.isNaturalSolidFloor(this.floor);
       }
    }
 
@@ -32485,7 +32485,7 @@ public final class PrintCore {
                         above = !this.groundOnly && this.currentPos.getY() > PrintCore.this.maxTargetY();
                         if (!above
                            && (
-                              !PrintCore.this.pop_Z_BlockPos(floor)
+                              !PrintCore.this.isNaturalSolidFloor(floor)
                                  || !this.groundOnly && !PrintCore.this.isWithinFootprint(this.currentPos.getX(), this.currentPos.getZ())
                            )) {
                            this.concluded = true;
@@ -32502,7 +32502,7 @@ public final class PrintCore {
                      if (step.kind() == autismclient.ai.print.PrintAccess.StepKind.DIG) {
                         BlockPos block = BlockPos.of(step.block());
                         if (!PrintCore.this.temporaryBlocks.containsKey(step.block()) && !PrintCore.this.view.isOwnedTemporaryAt(block)
-                           || PrintCore.this.sync_Z_J(step.block())) {
+                           || PrintCore.this.isHeldByUnsettledFlow(step.block())) {
                            this.concluded = true;
                            return;
                         }
@@ -32814,7 +32814,7 @@ public final class PrintCore {
          }
       }
 
-      void init(long allowance) {
+      void stepSearch(long allowance) {
          if (!this.done) {
             if (this.search == null) {
                for (long key : this.exitGoals) {
@@ -32934,7 +32934,7 @@ public final class PrintCore {
 
                   boolean searchedBefore = !this.beforeSearch.done;
                   if (searchedBefore) {
-                     this.beforeSearch.init(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
+                     this.beforeSearch.stepSearch(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
                   }
 
                   if (!this.beforeSearch.done) {
@@ -32959,7 +32959,7 @@ public final class PrintCore {
                            this.afterSearch = PrintCore.this.new FlightExitSearch(this.startFeet);
                         }
 
-                        this.afterSearch.init(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
+                        this.afterSearch.stepSearch(Math.max(1L, allowance - (PrintCore.this.view.workUnits() - started)));
                         if (this.afterSearch.done) {
                            this.intermediateTraps = this.afterSearch.result == null;
                            this.finished = true;
@@ -33613,7 +33613,7 @@ public final class PrintCore {
                   && PrintCore.this.temporaryBlocks.containsKey(this.support.pos().asLong())
                   && PrintCore.this.view.getBlockState(this.support.pos()) == this.support.wanted()
                   && PrintCore.this.doorAndSupportDry(open.pos(), this.support.pos())
-                  && PrintCore.this.load_Z_BlockPos(this.support.pos())
+                  && PrintCore.this.temporaryRemovalKeepsNeighbors(this.support.pos())
                ? this.digStep.tick()
                : null;
             if (c == null || this.digStep.isDone()) {
@@ -33998,7 +33998,7 @@ public final class PrintCore {
                   if (PrintCore.this.cellStates[i] == 0
                      && PrintCore.this.isNonFlowCell(i)
                      && !PrintCore.this.heldBackCells.contains(i)
-                     && PrintCore.this.read_Z_I(i)
+                     && PrintCore.this.isCellReady(i)
                      && (
                         PrintCore.this.tick_Z_I(i)
                            || this.allowAnchor

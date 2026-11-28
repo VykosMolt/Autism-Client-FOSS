@@ -45,7 +45,7 @@ final class AiForage {
       return bow && (AiRunResources.totalArrowCount() >= 24 || bedCount() >= 7 && AiRunResources.totalArrowCount() >= 12);
    }
 
-   static boolean load() {
+   static boolean hasFightPlan() {
       return bedCount() >= 4 || AiRunResources.countUsableItem("minecraft:bow", 12) > 0 && AiRunResources.totalArrowCount() >= 12;
    }
 
@@ -177,7 +177,7 @@ final class AiForage {
                int want = AiCraft.countItem(id) + 1;
                return AiNetherRun.sequence(
                   AiGameOperations.blockAction("break", AiJson.objectOf("x", bed.getX(), "y", bed.getY(), "z", bed.getZ(), "timeoutSeconds", 60, "requireDrops", false)),
-                  () -> AiGameplay.write(AiJson.objectOf("item", id, "count", want, "radius", 8, "timeoutSeconds", 15))
+                  () -> AiGameplay.pickupItems(AiJson.objectOf("item", id, "count", want, "radius", 8, "timeoutSeconds", 15))
                );
             }
 
@@ -213,10 +213,10 @@ final class AiForage {
    }
 
    static AiOperation init(Minecraft mc, double range) {
-      return init_AiOperation_Minecraft(mc, range, 2);
+      return fillWaterBuckets(mc, range, 2);
    }
 
-   static AiOperation init_AiOperation_Minecraft(Minecraft mc, double range, int want) {
+   static AiOperation fillWaterBuckets(Minecraft mc, double range, int want) {
       if (!mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
          && AiCraft.countItem("minecraft:water_bucket") < want
          && AiCraft.countItem("minecraft:bucket") != 0) {
@@ -250,7 +250,7 @@ final class AiForage {
 
    static Entity findEntity(Minecraft mc, String type, double range) {
       for (Entity e : AiWorldScan.findEntitiesByType(type, range)) {
-         if (!(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e)) {
+         if (!(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.isEngageable(mc, e)) {
             return e;
          }
       }
@@ -264,7 +264,7 @@ final class AiForage {
             AiJson.objectOf("target", type, "count", 1, "radius", (int)Math.ceil(range), "useShield", true, "retreatHealth", 8, "timeoutSeconds", 40)
          ),
          drop,
-         () -> AiGameplay.write(AiJson.objectOf("item", drop, "count", 64, "radius", 10, "timeoutSeconds", 10))
+         () -> AiGameplay.pickupItems(AiJson.objectOf("item", drop, "count", 64, "radius", 10, "timeoutSeconds", 10))
       );
    }
 
@@ -371,7 +371,7 @@ final class AiForage {
       };
    }
 
-   static boolean init(Minecraft mc, BlockPos feet) {
+   static boolean isFeetInHole(Minecraft mc, BlockPos feet) {
       if (mc.level.getBlockState(feet.below()).getCollisionShape(mc.level, feet.below()).isEmpty()) {
          return false;
       }
@@ -392,7 +392,7 @@ final class AiForage {
       return true;
    }
 
-   static boolean load(Minecraft mc, BlockPos feet) {
+   static boolean canDigFightingHole(Minecraft mc, BlockPos feet) {
       BlockPos cell = feet.below();
       BlockState state = mc.level.getBlockState(cell);
       if (!state.getCollisionShape(mc.level, cell).isEmpty()
@@ -422,8 +422,8 @@ final class AiForage {
       }
    }
 
-   static boolean read(Minecraft mc, BlockPos at) {
-      if (init(mc, at)) {
+   static boolean isSafeArena(Minecraft mc, BlockPos at) {
+      if (isFeetInHole(mc, at)) {
          return true;
       }
 
@@ -455,20 +455,20 @@ final class AiForage {
       return true;
    }
 
-   static AiOperation load(double range) {
-      AiOperation provoked = read(range);
+   static AiOperation pearlHuntOp(double range) {
+      AiOperation provoked = provokeEndermanOp(range);
       return provoked != null ? provoked : huntFor("minecraft:enderman", "minecraft:ender_pearl", range);
    }
 
-   static AiOperation read(double range) {
+   static AiOperation provokeEndermanOp(double range) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player != null && mc.player.onGround() && write(mc, mc.player.blockPosition())) {
+      if (mc.player != null && mc.player.onGround() && isProvokeFooting(mc, mc.player.blockPosition())) {
          for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", range)) {
             if (Math.abs(e.getY() - mc.player.getY()) <= 12.0 && mc.player.hasLineOfSight(e)) {
                return AiNetherRun.fightThenPickup(
-                  huntEnderman(e.getId(), p -> write(mc, p), () -> {}),
+                  huntEnderman(e.getId(), p -> isProvokeFooting(mc, p), () -> {}),
                   "minecraft:ender_pearl",
-                  () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
+                  () -> AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
                );
             }
          }
@@ -477,8 +477,8 @@ final class AiForage {
       return null;
    }
 
-   static boolean write(Minecraft mc, BlockPos feet) {
-      if (init(mc, feet)) {
+   static boolean isProvokeFooting(Minecraft mc, BlockPos feet) {
+      if (isFeetInHole(mc, feet)) {
          return true;
       }
 

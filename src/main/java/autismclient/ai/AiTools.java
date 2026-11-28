@@ -2765,7 +2765,7 @@ final class AiTools {
       String key = AiRetryGuard.keyFor(tool, args);
       this.retryGuard.beginDispatch(key, this.service.shouldVerifyOutcomes());
       if (tool.equals("observe")) {
-         this.retryGuard.load();
+         this.retryGuard.clearUncertain();
       }
 
       if (this.service.isPlanPendingOrPlanning() && !AiService.READ_ONLY_TOOLS.contains(tool) && !"perform".equals(tool)) {
@@ -2981,7 +2981,7 @@ final class AiTools {
                }
 
                if (entry.contract().classification() == AiCapabilityDescriptor.Classification.OBSERVE) {
-                  this.retryGuard.load();
+                  this.retryGuard.clearUncertain();
                }
 
                JsonObject var35 = result;
@@ -3334,10 +3334,10 @@ final class AiTools {
             var10000 = AiFollow.create(args);
             break;
          case "game:surface":
-            var10000 = autismclient.ai.engine.AiSeek.init(args);
+            var10000 = autismclient.ai.engine.AiSeek.surfaceSeek(args);
             break;
          case "game:cave":
-            var10000 = autismclient.ai.engine.AiSeek.load(args);
+            var10000 = autismclient.ai.engine.AiSeek.caveSeek(args);
             break;
          case "game:entities":
             var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.query(args));
@@ -3601,7 +3601,7 @@ final class AiTools {
             var10000 = AiAnvil.create(args);
             break;
          case "game:collect_drops":
-            var10000 = AiGameplay.write(args);
+            var10000 = AiGameplay.pickupItems(args);
             break;
          case "game:collect":
             var10000 = AiCollect.collect(args);

@@ -464,7 +464,7 @@ final class AiBarter {
 
                AiOperation.Result recoverIngot() {
                   if (this.child == null) {
-                     this.child = AiGameplay.write(
+                     this.child = AiGameplay.pickupItems(
                         AiJson.objectOf("item", "minecraft:gold_ingot", "count", 1, "additional", true, "timeoutSeconds", 25)
                      );
                      return this.running("Walking back onto the thrown ingot");
@@ -518,7 +518,7 @@ final class AiBarter {
                      if (next != null) {
                         this.pickupItem = next;
                         int onGround = this.groundCount(next);
-                        this.child = AiGameplay.write(AiJson.objectOf("item", next, "count", onGround, "additional", true, "timeoutSeconds", 25));
+                        this.child = AiGameplay.pickupItems(AiJson.objectOf("item", next, "count", onGround, "additional", true, "timeoutSeconds", 25));
                         return this.running("Collecting " + onGround + " " + next);
                      }
 

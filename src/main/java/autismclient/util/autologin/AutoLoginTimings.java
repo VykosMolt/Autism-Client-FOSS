@@ -1,13 +1,13 @@
 package autismclient.util.autologin;
 
-public record AutoLoginTimings(long giveUpMs, long load, long read, int maxAttempts, long write, long update) {
+public record AutoLoginTimings(long giveUpMs, long load, long loginRetryMs, int maxAttempts, long menuRetryMs, long registerRetryMs) {
    public AutoLoginTimings {
       giveUpMs = clamp(giveUpMs, 1000L, 300000L);
       load = clamp(load, 0L, 60000L);
-      read = clamp(read, 250L, 30000L);
+      loginRetryMs = clamp(loginRetryMs, 250L, 30000L);
       maxAttempts = (int)clamp(maxAttempts, 1L, 20L);
-      write = clamp(write, 100L, 10000L);
-      update = clamp(update, 250L, 30000L);
+      menuRetryMs = clamp(menuRetryMs, 100L, 10000L);
+      registerRetryMs = clamp(registerRetryMs, 250L, 30000L);
    }
 
    public static AutoLoginTimings legacyDefaults() {

@@ -30,7 +30,7 @@ final class AiRetryGuard {
       this.uncertainKeys.clear();
    }
 
-   synchronized void load() {
+   synchronized void clearUncertain() {
       this.uncertainKeys.clear();
    }
 

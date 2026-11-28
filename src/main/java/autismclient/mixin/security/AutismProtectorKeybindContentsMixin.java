@@ -59,7 +59,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    private Object autism$tagResolvedKeybind(Supplier<?> supplier, Operation<Object> original) {
       if (this.autism$fromPacket
          && (this.autism$packetOrigin == null || this.autism$packetOrigin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA)
-         && !ModNamespaceCatalog.init_Z(this.name)) {
+         && !ModNamespaceCatalog.isVanillaKeybind(this.name)) {
          Component replacement = Component.translatable(this.name);
          PacketComponentOriginTracker.markComponentFromPacket(replacement, this.autism$packetOrigin);
          return replacement;

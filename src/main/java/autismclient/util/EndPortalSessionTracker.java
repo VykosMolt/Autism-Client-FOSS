@@ -14,7 +14,7 @@ public final class EndPortalSessionTracker {
       this.cache = Objects.requireNonNull(memory);
    }
 
-   public boolean init(Object world, Object connection, String server, String dimension) {
+   public boolean updateSession(Object world, Object connection, String server, String dimension) {
       Objects.requireNonNull(world);
       Objects.requireNonNull(connection);
       Objects.requireNonNull(server);

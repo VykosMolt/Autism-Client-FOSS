@@ -105,7 +105,7 @@ final class ClickerSettingsGroup {
          try {
             autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.shared();
             this.cachedHandTraits = new autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore(
-               0.85 + 0.3 * traitFraction(hand.open()), 0.9 + 0.2 * traitFraction(hand.fittsSlope()), hand.sync() >= 0.0
+               0.85 + 0.3 * traitFraction(hand.open()), 0.9 + 0.2 * traitFraction(hand.fittsSlope()), hand.curvature() >= 0.0
             );
          } catch (Throwable unavailable) {
             this.cachedHandTraits = autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore.DEFAULT;

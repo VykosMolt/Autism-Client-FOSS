@@ -21,7 +21,7 @@ public final class ItemSnbtCodec {
    public static String giveCommand(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-         String components = write(stack);
+         String components = componentsSnbt(stack);
          return "/give @p " + id + components + " " + Math.max(1, Math.min(99, stack.getCount()));
       } else {
          return "";
@@ -58,7 +58,7 @@ public final class ItemSnbtCodec {
       return stack != null && !stack.isEmpty() ? ItemStack.validateStrict(stack).error().map(Object::toString).orElse("") : "item stack is empty";
    }
 
-   public static String write(ItemStack stack) {
+   public static String componentsSnbt(ItemStack stack) {
       if (stack != null && !stack.isEmpty() && CLIENT.player != null) {
          try {
             Tag encoded = DataComponentPatch.CODEC

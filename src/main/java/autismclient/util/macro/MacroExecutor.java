@@ -532,7 +532,7 @@ public class MacroExecutor {
    }
 
    public static boolean isResourceLocked(MacroResourceClassifier.MacroResource resource) {
-      return EXTERNAL_RESOURCE_LOCK.init(resource);
+      return EXTERNAL_RESOURCE_LOCK.isLocked(resource);
    }
 
    private static boolean areResourcesBusy(EnumSet<MacroResourceClassifier.MacroResource> requested) {
@@ -2795,7 +2795,7 @@ public class MacroExecutor {
          }
 
          @Override
-         public boolean read() {
+         public boolean usernamesOnly() {
             return false;
          }
       };
@@ -2855,7 +2855,7 @@ public class MacroExecutor {
             return 100000;
          }
       };
-      CommandTabNameProber.init(connection, names, self, vectors, control);
+      CommandTabNameProber.probe(connection, names, self, vectors, control);
       List<String> out = new ArrayList<>(names.values());
       out.sort(String.CASE_INSENSITIVE_ORDER);
       return out;
@@ -3610,7 +3610,7 @@ public class MacroExecutor {
       } else if (action instanceof WaitPacketMatchAction packetMatch) {
          return armPacketMatchWait(packetMatch);
       } else if (action instanceof WaitInventoryPredicateAction inv) {
-         inv.init();
+         inv.resetBaseline();
          return armPollingWait(action, () -> inv.isSatisfied(mc), inv.timeoutMs);
       } else if (action instanceof WaitDurabilityAction durability) {
          return durability.useNext ? null : armPollingWait(action, () -> checkDurabilityOnce(mc, durability), durability.timeoutMs);
@@ -4235,7 +4235,7 @@ public class MacroExecutor {
                   wait2.count = action.untilInventoryCount;
                   wait2.slot = action.untilInventorySlot;
                   wait2.timeoutMs = Math.max(0, action.durationValue);
-                  wait2.init();
+                  wait2.resetBaseline();
                   waitUntilOrTimeout(() -> wait2.isSatisfied(mc), wait2.timeoutMs);
                   releasePacketGate(mc, action);
             }
@@ -5835,7 +5835,7 @@ public class MacroExecutor {
          if (action instanceof OpenContainerAction open) {
             return open.open(mc);
          } else {
-            return action instanceof InteractEntityAction interact ? interact.load(mc) : true;
+            return action instanceof InteractEntityAction interact ? interact.hasTargets(mc) : true;
          }
       }, Boolean.FALSE);
    }
@@ -6077,7 +6077,7 @@ public class MacroExecutor {
 
          runOnClientThread(mc, () -> {
             try {
-               action.load(mc);
+               action.finishRelease(mc);
             } catch (Exception e) {
                AutismClientMessaging.sendPrefixed("§cError in Use release: " + e.getMessage());
             }
@@ -8962,7 +8962,7 @@ public class MacroExecutor {
 
       try {
          Minecraft mcInst = Minecraft.getInstance();
-         autismclient.util.ContainerCloseGuard.init(mcInst == null ? null : mcInst.getConnection());
+         autismclient.util.ContainerCloseGuard.flushDeferredCloses(mcInst == null ? null : mcInst.getConnection());
       } catch (Throwable var8) {
       }
 

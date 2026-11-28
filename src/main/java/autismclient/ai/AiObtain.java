@@ -86,7 +86,7 @@ final class AiObtain {
                return AiObsidian.load(want, AiJson.getInt(args, "timeoutSeconds", 600));
             }
 
-            if (!equippedObsidian && AiProgression.init_Z(only, want)) {
+            if (!equippedObsidian && AiProgression.needsToolTier(only, want)) {
                return AiProgression.obtain(args, only, want);
             }
 
@@ -231,7 +231,7 @@ final class AiObtain {
 
                            if ((this.currentStrategy == AiObtain.ObtainStrategy.MINE || this.currentStrategy == AiObtain.ObtainStrategy.GATHER)
                               && !this.read_Z
-                              && AiObtain.init_Str(result.dataJson()) != null) {
+                              && AiObtain.missingToolId(result.dataJson()) != null) {
                               this.read_Z = true;
                               this.currentStrategy = null;
                               return this.running("Mining tool broke; re-tooling before one more attempt");
@@ -607,7 +607,7 @@ final class AiObtain {
                                        && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState());
                                     String fuelId;
                                     int needed;
-                                    if (fuel == null || AiSmelt.init_I(fuelStack) != 1 || fuel != Items.COAL && fuel != Items.CHARCOAL) {
+                                    if (fuel == null || AiSmelt.fuelTier(fuelStack) != 1 || fuel != Items.COAL && fuel != Items.CHARCOAL) {
                                        if (coalNearby && allowMining && !visiting.contains("minecraft:coal")) {
                                           fuelId = "minecraft:coal";
                                           needed = AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
@@ -843,7 +843,7 @@ final class AiObtain {
                               }
 
                               String dropIds = String.join(",", ids);
-                              this.currentOp = AiGameplay.write(
+                              this.currentOp = AiGameplay.pickupItems(
                                  AiJson.objectOf(
                                     "item", dropIds, "count", missing, "additional", true, "timeoutSeconds", Math.max(1, Math.min(60, init_I_19()))
                                  )
@@ -1552,9 +1552,9 @@ final class AiObtain {
                return this.finish(AiOperation.Status.FAILED, "No " + what + " found in " + this.legCount + " legs");
             }
 
-            if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.seekRetries < 2) {
+            if (!AiSpeedrun.seesSkyNear(mc, 5) && this.seekRetries < 2) {
                this.seekRetries++;
-               this.legOp = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", (int)Math.min(120L, left)));
+               this.legOp = autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", (int)Math.min(120L, left)));
                return this.finish(AiOperation.Status.RUNNING, "Up to open sky to look for " + what);
             }
 
@@ -1733,7 +1733,7 @@ final class AiObtain {
       return Math.max(10, Math.min(45, remainingSeconds / 4));
    }
 
-   static String init_Str(String dataJson) {
+   static String missingToolId(String dataJson) {
       if (dataJson != null && !dataJson.isBlank()) {
          try {
             JsonObject data = AiJson.parseObject(dataJson);
@@ -1827,7 +1827,7 @@ final class AiObtain {
          }
 
          @Override
-         public int load_I(String itemId) {
+         public int acquisitionRank(String itemId) {
             boolean craftable = !inner.recipesFor(itemId).isEmpty();
             boolean smeltable = BuiltInRegistries.ITEM
                .getOptional(Identifier.parse(itemId))
@@ -1842,16 +1842,16 @@ final class AiObtain {
          }
 
          @Override
-         public boolean init_Z(String itemId) {
+         public boolean isFarmAnimalDrop(String itemId) {
             return BuiltInRegistries.ITEM.getOptional(Identifier.parse(itemId)).map(item -> AiObtain.allPassive(AiItems.sourceEntitiesFor(item))).orElse(false);
          }
 
          @Override
-         public double init_D(String itemId) {
+         public double acquisitionEffort(String itemId) {
             return mc != null && mc.player != null && mc.level != null ? distances.computeIfAbsent(itemId, id -> {
                double distance = AiObtain.nearestSourceDistance(id);
                return distance == 1.7976931348623157E308 ? 256.0 : 1.0 + Math.sqrt(distance);
-            }) : inner.init_D(itemId);
+            }) : inner.acquisitionEffort(itemId);
          }
       };
    }

@@ -125,7 +125,7 @@ public final class aD {
          }
 
          al.tick_V();
-         autismclient.util.VirtualInputDispatcher.pop();
+         autismclient.util.VirtualInputDispatcher.resetAllAndDrainClicks();
       });
    }
 
@@ -162,7 +162,7 @@ public final class aD {
    public static void read_V() {
       autismclient.util.PacketCaptureState.update();
       al.tick_V();
-      autismclient.util.VirtualInputDispatcher.pop();
+      autismclient.util.VirtualInputDispatcher.resetAllAndDrainClicks();
       autismclient.util.LanSyncManager.getInstance().shutdownSilently();
       if (MacroExecutor.isRunning()) {
          MacroExecutor.stopAll();

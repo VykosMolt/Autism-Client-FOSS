@@ -55,7 +55,7 @@ public class OreSimCommand extends Command {
                + AutismWaypoints.scopeFor(Minecraft.getInstance())
                + "§7; the same world/server scoping as waypoints. No world or server seed is read."
          );
-         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.targetCount(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.read_I(xray)));
+         AutismClientMessaging.sendPrefixed("§7ore list entries: §f" + OreSimEspScanner.targetCount(xray) + "§7  families: §f" + Integer.bitCount(OreSimEspScanner.familyMask(xray)));
          String worldgen = autismclient.util.oresim.OreSimEngine.hasError()
             ? "§cFAILED"
             : (

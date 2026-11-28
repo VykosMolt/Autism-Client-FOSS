@@ -88,7 +88,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       }
    }
 
-   public void init() {
+   public void resetBaseline() {
       this.baselineTaken = false;
    }
 

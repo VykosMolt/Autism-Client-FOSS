@@ -479,7 +479,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       boolean enabled
    ) {
       int w = Math.min(width, this.buttonWidthFor(label));
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
          context,
          this.font,
          x,
@@ -499,7 +499,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    private int renderButtonWithTooltip(
       GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, Runnable action, boolean enabled, String animationKey
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, this.controlHeight(), label, enabled, animationKey, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, this.font, x, y, width, this.controlHeight(), label, enabled, animationKey, mouseX, mouseY);
       this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, width, this.controlHeight(), action, true));
       return y + this.controlHeight() + this.searchGap();
    }

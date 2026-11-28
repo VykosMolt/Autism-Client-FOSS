@@ -117,7 +117,7 @@ final class AiScaffoldWalk {
             }
 
             boolean selectBuildBlock() {
-               int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
+               int slot = AiTelly.constructionSlot(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
                if (slot < 0) {
                   return false;
                }
@@ -284,7 +284,7 @@ final class AiScaffoldWalk {
                   if (support != null && this.lavaBelow(support)) {
                      return this.finish(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + support.toShortString());
                   } else {
-                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
+                     int slot = AiTelly.constructionSlot(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
                      if (slot < 0 && support != null) {
                         autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);

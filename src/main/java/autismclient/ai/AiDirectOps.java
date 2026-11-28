@@ -42,7 +42,7 @@ public final class AiDirectOps {
       cachedToolSettings = AiToolSettings.loadFrom(aiFolder());
    }
 
-   static void init(Minecraft client) {
+   static void tickClient(Minecraft client) {
       try {
          AiGhastReflect.tickAll();
          if (++tickCount % 20 == 0 || CATALOG.snapshot().entries().isEmpty()) {
@@ -155,11 +155,11 @@ public final class AiDirectOps {
          Runnable prepare = () -> {
             if (requiredResources.contains("INPUT")) {
                autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
-               AiAssistant.getInstance().pop();
+               AiAssistant.getInstance().closeScreen();
             }
 
             if (action && id.startsWith("game:")) {
-               AiModuleScope.init();
+               AiModuleScope.borrowConflicting();
             }
          };
          AutoCloseable lease = id.equals("client:run_macro") ? () -> {} : MacroExecutor.acquireExternalResources(entry.contract().resources());

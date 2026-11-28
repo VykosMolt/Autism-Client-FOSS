@@ -114,11 +114,11 @@ final class KnockbackThrowPlanner {
             long deadline = System.nanoTime() + 4000000L;
             TerrainDropGrid grid = new TerrainDropGrid(world, input.body, input.read, radius, minimum, voidOnly);
             lastStatus = "no-edge";
-            if (!grid.init()) {
+            if (!grid.hasDropColumn()) {
                return null;
             }
 
-            KnockbackThrowPlanner.ThrowInput unturned = world.init_W_ConfigStore_W_ConfigStore_F(input, yaw);
+            KnockbackThrowPlanner.ThrowInput unturned = world.inputForYaw(input, yaw);
             KnockbackThrowPlanner.ThrowEvaluation original = evaluate(unturned, yaw, world);
             lastStatus = original.outcome == KnockbackThrowPlanner.LandingOutcome.UNKNOWN ? "unknown-terrain" : "already-falls";
             if (original.outcome != KnockbackThrowPlanner.LandingOutcome.UNKNOWN && !original.meetsGoal(minimum, voidOnly)) {
@@ -136,7 +136,7 @@ final class KnockbackThrowPlanner {
 
                         if (!(turn < 0.01)) {
                            float candidate = yaw + (float)(sign * turn);
-                           if (seen.add(candidate) && world.init_Z_F(candidate)) {
+                           if (seen.add(candidate) && world.acceptsYaw(candidate)) {
                               TerrainDropGrid.FlightResult flight = grid.simulateFlight(
                                  input.body, pushedVelocity(unturned, candidate), input.grounded, KnockbackThrowPlanner.CounterSteer.NONE
                               );
@@ -157,7 +157,7 @@ final class KnockbackThrowPlanner {
                ArrayList<KnockbackThrowPlanner.ThrowCandidate> throwsFound = new ArrayList<>();
 
                for (KnockbackThrowPlanner.ThrowCandidate c : candidates) {
-                  if (c.landing.init_Z() && c.landing.isLethal(minimum, voidOnly)) {
+                  if (c.landing.edge() && c.landing.isLethal(minimum, voidOnly)) {
                      throwsFound.add(c);
                   }
                }
@@ -171,7 +171,7 @@ final class KnockbackThrowPlanner {
                      TerrainDropGrid.FlightResult countered = grid.simulateFlight(
                         input.body, pushedVelocity(unturned, c.yaw), input.grounded, hypotheses.counter()
                      );
-                     holds = countered.init_Z() && countered.isLethal(minimum, voidOnly);
+                     holds = countered.edge() && countered.isLethal(minimum, voidOnly);
                   }
 
                   robust.put(c, holds);
@@ -185,7 +185,7 @@ final class KnockbackThrowPlanner {
                   boolean holds = strafe == null ? robust.get(c) : false;
                   if (strafe != null) {
                      TerrainDropGrid.FlightResult strafed = grid.simulateFlight(input.body, pushed, input.grounded, strafe);
-                     holds = strafed.init_Z() && strafed.isLethal(minimum, voidOnly);
+                     holds = strafed.edge() && strafed.isLethal(minimum, voidOnly);
                   }
 
                   strafeHolds.put(c, holds);
@@ -194,9 +194,9 @@ final class KnockbackThrowPlanner {
                throwsFound.sort(
                   Comparator.<KnockbackThrowPlanner.ThrowCandidate, Boolean>comparing(c -> !strafeHolds.get(c))
                      .thenComparing(c -> !robust.get(c))
-                     .thenComparing(c -> c.landing.read_Z())
+                     .thenComparing(c -> c.landing.grazed())
                      .thenComparing(c -> c.landing.outcome() != KnockbackThrowPlanner.LandingOutcome.VOID)
-                     .thenComparingDouble(c -> c.init_D * 0.01 + c.landing.load_I() * 0.03)
+                     .thenComparingDouble(c -> c.init_D * 0.01 + c.landing.crossTick() * 0.03)
                );
                lastStatus = throwsFound.isEmpty() ? "no-throw" : "unconfirmed";
                int confirmations = 0;
@@ -219,13 +219,13 @@ final class KnockbackThrowPlanner {
                      break;
                   }
 
-                  if (world.load_Z_F(c.yaw)) {
-                     KnockbackThrowPlanner.ThrowInput at = world.init_W_ConfigStore_W_ConfigStore_F(input, c.yaw);
+                  if (world.confirmsYaw(c.yaw)) {
+                     KnockbackThrowPlanner.ThrowInput at = world.inputForYaw(input, c.yaw);
                      if (isValidInput(at)) {
                         TerrainDropGrid.FlightResult actualFlight = grid.simulateFlight(
                            at.body, pushedVelocity(at, c.yaw), at.grounded, KnockbackThrowPlanner.CounterSteer.NONE
                         );
-                        if (actualFlight.init_Z() && actualFlight.isLethal(minimum, voidOnly)) {
+                        if (actualFlight.edge() && actualFlight.isLethal(minimum, voidOnly)) {
                            KnockbackThrowPlanner.ThrowEvaluation result = evaluate(at, c.yaw, world, KnockbackThrowPlanner.CounterSteer.NONE);
                            confirmations++;
                            if (result.meetsGoal(minimum, voidOnly)) {
@@ -370,7 +370,7 @@ final class KnockbackThrowPlanner {
                return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick);
             }
 
-            if (world.load_Z_AABB(body)) {
+            if (world.touchesFallCatcher(body)) {
                return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
             }
 
@@ -379,7 +379,7 @@ final class KnockbackThrowPlanner {
             if (Double.isFinite(friction) && !(friction <= 0.0) && !(friction > 1.0)) {
                if (countering && steer.opposes(motion.x, motion.z)) {
                   double accel = ground ? steer.groundStrength() * (0.21600002 / (block * block * block)) : steer.airAccel();
-                  motion = motion.add(steer.init_D() * accel, 0.0, steer.dirZ() * accel);
+                  motion = motion.add(steer.dirX() * accel, 0.0, steer.dirZ() * accel);
                }
 
                Vec3 wanted = Math.abs(motion.y) < 1.0E-8 ? new Vec3(motion.x, -0.01, motion.z) : motion;
@@ -388,7 +388,7 @@ final class KnockbackThrowPlanner {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick);
                }
 
-               if (world.load_Z_AABB(body.expandTowards(actual))) {
+               if (world.touchesFallCatcher(body.expandTowards(actual))) {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
                }
 
@@ -398,7 +398,7 @@ final class KnockbackThrowPlanner {
 
                ground = wanted.y < 0.0 && actual.y > wanted.y + 1.0E-7;
                body = body.move(actual);
-               if (world.load_Z_AABB(body)) {
+               if (world.touchesFallCatcher(body)) {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
                }
 
@@ -422,7 +422,7 @@ final class KnockbackThrowPlanner {
                   }
 
                   KnockbackThrowPlanner.FloorProbe below = world.probeFloor(region);
-                  if (below != null && below.read && below.init_Z && !below.load) {
+                  if (below != null && below.known && below.voidColumn && !below.caught) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.VOID, 1.0 / 0.0, tick);
                   }
                }
@@ -437,16 +437,16 @@ final class KnockbackThrowPlanner {
                }
 
                KnockbackThrowPlanner.FloorProbe floor = world.probeFloor(body);
-               if (floor != null && floor.read) {
-                  if (floor.load) {
+               if (floor != null && floor.known) {
+                  if (floor.caught) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
                   }
 
-                  if (floor.write) {
+                  if (floor.lava) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.LAVA, 1.0 / 0.0, tick);
                   }
 
-                  if (floor.init_Z) {
+                  if (floor.voidColumn) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.VOID, 1.0 / 0.0, tick);
                   }
 
@@ -523,7 +523,7 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   record FloorProbe(double floorY, boolean init_Z, boolean load, boolean read, boolean write) {
+   record FloorProbe(double floorY, boolean voidColumn, boolean caught, boolean known, boolean lava) {
       FloorProbe(double y, boolean voidColumn, boolean caught, boolean known) {
          this(y, voidColumn, caught, known, false);
       }
@@ -543,10 +543,10 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   record SimulatedMotion(AABB body, boolean init_Z, Vec3 motion, int ticks) {
+   record SimulatedMotion(AABB body, boolean grounded, Vec3 motion, int ticks) {
    }
 
-   record ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome outcome, double dropDistance, int init_I) {
+   record ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome outcome, double dropDistance, int ticks) {
       boolean meetsGoal(double minimum, boolean voidOnly) {
          return this.outcome == KnockbackThrowPlanner.LandingOutcome.VOID
             || !voidOnly
@@ -554,7 +554,7 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   record ThrowPlan(float yaw, KnockbackThrowPlanner.ThrowEvaluation init_W_JsonUtil, KnockbackThrowPlanner.ThrowEvaluation original, boolean steer, boolean robust, double init_D) {
+   record ThrowPlan(float yaw, KnockbackThrowPlanner.ThrowEvaluation redirected, KnockbackThrowPlanner.ThrowEvaluation original, boolean steer, boolean robust, double init_D) {
       ThrowPlan(float yaw, KnockbackThrowPlanner.ThrowEvaluation result, KnockbackThrowPlanner.ThrowEvaluation original) {
          this(yaw, result, original, false, false, 0.0);
       }
@@ -566,7 +566,7 @@ final class KnockbackThrowPlanner {
    private record ThrowCandidate(float yaw, double init_D, TerrainDropGrid.FlightResult landing) {
    }
 
-   record CounterSteer(double init_D, double dirZ, double groundStrength, double airAccel, boolean active) {
+   record CounterSteer(double dirX, double dirZ, double groundStrength, double airAccel, boolean active) {
       static final KnockbackThrowPlanner.CounterSteer NONE = new KnockbackThrowPlanner.CounterSteer(0.0, 0.0, 0.0, 0.0);
 
       CounterSteer(double x, double z, double speed, double air) {
@@ -574,7 +574,7 @@ final class KnockbackThrowPlanner {
       }
 
       boolean opposes(double vx, double vz) {
-         return !this.active || vx * this.init_D + vz * this.dirZ < 0.0;
+         return !this.active || vx * this.dirX + vz * this.dirZ < 0.0;
       }
 
       static KnockbackThrowPlanner.CounterSteer forYaw(float yaw, double speed, double air) {
@@ -600,7 +600,7 @@ final class KnockbackThrowPlanner {
 
       Vec3 collide(AABB var1, Vec3 var2);
 
-      boolean load_Z_AABB(AABB var1);
+      boolean touchesFallCatcher(AABB var1);
 
       KnockbackThrowPlanner.FloorProbe probeFloor(AABB var1);
 
@@ -608,15 +608,15 @@ final class KnockbackThrowPlanner {
 
       TerrainDropGrid.Column column(int var1, int var2, int var3, double var4);
 
-      default boolean init_Z_F(float yaw) {
+      default boolean acceptsYaw(float yaw) {
          return true;
       }
 
-      default boolean load_Z_F(float yaw) {
+      default boolean confirmsYaw(float yaw) {
          return true;
       }
 
-      default KnockbackThrowPlanner.ThrowInput init_W_ConfigStore_W_ConfigStore_F(KnockbackThrowPlanner.ThrowInput input, float yaw) {
+      default KnockbackThrowPlanner.ThrowInput inputForYaw(KnockbackThrowPlanner.ThrowInput input, float yaw) {
          return input;
       }
 

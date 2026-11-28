@@ -877,7 +877,7 @@ final class ModuleSettingsView {
       return ValueRange.parse(module.value(option.id()), ValueRange.parse(option.defaultValue(), new ValueRange(option.min(), option.max())));
    }
 
-   int init_I_ConfigStore_Stream_I(ModulesMenuController.HitRegion hit, int mx) {
+   int pickRangeHandle(ModulesMenuController.HitRegion hit, int mx) {
       Setting<?, ?> option = hit.setting();
       Module module = hit.module();
       ValueRange range = this.currentRange(module, option);
@@ -889,7 +889,7 @@ final class ModuleSettingsView {
       );
    }
 
-   void init_V_ConfigStore_Stream_I(ModulesMenuController.HitRegion hit, int mx) {
+   void applySliderAt(ModulesMenuController.HitRegion hit, int mx) {
       Module module = hit.module();
       Setting<?, ?> option = hit.setting();
       if (module != null && option != null) {

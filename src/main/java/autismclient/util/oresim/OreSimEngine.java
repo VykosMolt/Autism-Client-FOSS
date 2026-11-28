@@ -219,7 +219,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static void write_V() {
+   public static void clearDisproven() {
       boolean cleared;
       synchronized (disprovenPositions) {
          cleared = !disprovenPositions.isEmpty();
@@ -232,7 +232,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static void init(ClientLevel level, BlockPos playerPos, Long worldSeed, int radius, int enabledMask) {
+   public static void requestScan(ClientLevel level, BlockPos playerPos, Long worldSeed, int radius, int enabledMask) {
       if (level != null && playerPos != null && worldSeed != null) {
          ResourceKey<Level> dimension = level.dimension();
          if (!supportsDimension(dimension)) {
@@ -350,7 +350,7 @@ public final class OreSimEngine {
          boolean tagsVerified;
          try {
             built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.create(key.seed(), key.dimension());
-            tagsVerified = built.init_Z();
+            tagsVerified = built.tagsMatchVanilla();
          } catch (Throwable error) {
             fail(token, "Minecraft 26.3 worldgen bootstrap failed", error);
             return;
@@ -377,7 +377,7 @@ public final class OreSimEngine {
       WORKERS.submit(() -> {
          try {
             try {
-               if (!context.init_Z()) {
+               if (!context.tagsMatchVanilla()) {
                   failIfCurrent(token, "Minecraft block tags changed before initial chunk generation");
                   return;
                }
@@ -392,7 +392,7 @@ public final class OreSimEngine {
                }
 
                OreSimEngine.ChunkOres ores = extractOres(chunk, () -> token != generation);
-               if (!context.init_Z()) {
+               if (!context.tagsMatchVanilla()) {
                   failIfCurrent(token, "Minecraft block tags changed during initial chunk generation");
                   return;
                }
@@ -449,7 +449,7 @@ public final class OreSimEngine {
 
       WORKERS.submitParallel(() -> {
          try {
-            if (!context.init_Z()) {
+            if (!context.tagsMatchVanilla()) {
                failIfCurrent(token, "Minecraft block tags changed before region generation");
             } else {
                int regionMinX = tile.minChunkX() - 2;
@@ -474,7 +474,7 @@ public final class OreSimEngine {
                   }
                }
 
-               if (!context.init_Z()) {
+               if (!context.tagsMatchVanilla()) {
                   failIfCurrent(token, "Minecraft block tags changed during region generation");
                } else {
                   synchronized (LOCK) {
@@ -606,7 +606,7 @@ public final class OreSimEngine {
          Throwable failure = null;
 
          try {
-            verified = context.init_Z();
+            verified = context.tagsMatchVanilla();
          } catch (Throwable error) {
             failure = error;
          }
@@ -770,7 +770,7 @@ public final class OreSimEngine {
             for (int ring = 0; ring <= drawRadius; ring++) {
                if (nearest.isFull()) {
                   double ringMin = Math.max(0.0, (ring - 1) * 16.0);
-                  if (ringMin * ringMin > nearest.init_D()) {
+                  if (ringMin * ringMin > nearest.nearestDistance()) {
                      break;
                   }
                }

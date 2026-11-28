@@ -149,12 +149,12 @@ public final class AiContext {
       return false;
    }
 
-   static long init(JsonElement value) {
+   static long measureChars(JsonElement value) {
       if (value.isJsonArray()) {
          long count = 0L;
 
          for (JsonElement e : value.getAsJsonArray()) {
-            count += init(e);
+            count += measureChars(e);
          }
 
          return count;
@@ -172,7 +172,7 @@ public final class AiContext {
                media = true;
             }
 
-            count += media ? 8192L : init(e.getValue());
+            count += media ? 8192L : measureChars(e.getValue());
          }
 
          return count;
@@ -341,8 +341,8 @@ public final class AiContext {
       int room = maxCharacters - stable.length() - 1;
       StringBuilder tier = new StringBuilder(header);
       String topic = objective + " " + String.join(" ", updates == null ? List.of() : updates) + " " + (taskState == null ? "" : taskState);
-      appendIfRoom(tier, AiPlaybooks.init(topic, 4000), room);
-      appendIfRoom(tier, AiPlaybooks.load(topic, 12000), room);
+      appendIfRoom(tier, AiPlaybooks.strategyPlaybooks(topic, 4000), room);
+      appendIfRoom(tier, AiPlaybooks.addonTemplate(topic, 12000), room);
       boolean scoped = isSpeedrunObjective(objective);
 
       for (AiCatalog.Entry e : catalog.search(topic, 0, 6)) {
@@ -411,7 +411,7 @@ public final class AiContext {
       }
    }
 
-   static String init(
+   static String observationTurn(
       AiContext.ObservationTracker tracker,
       String taskState,
       JsonObject structuredTask,
@@ -453,7 +453,7 @@ public final class AiContext {
    public static String build(
       AiCatalog.Snapshot catalog, AiObservation observation, String objective, String task, List<AiMemoryStore.Memory> memories, int maxCharacters
    ) {
-      String turn = init(new AiContext.ObservationTracker(), task, new JsonObject(), -1, 60, 0L, null, null, observation);
+      String turn = observationTurn(new AiContext.ObservationTracker(), task, new JsonObject(), -1, 60, 0L, null, null, observation);
       AiContext.PromptParts prompt = buildPrompt(
          catalog, objective, List.of(), task, false, true, memories, System.currentTimeMillis(), maxCharacters - turn.length() - 1
       );

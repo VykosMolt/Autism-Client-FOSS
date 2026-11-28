@@ -163,7 +163,7 @@ final class AiDodge {
                      }
 
                      if (deflect) {
-                        if (this.ghastReflect.load_Z()
+                        if (this.ghastReflect.hasReflected()
                            && threats.stream()
                               .anyMatch(
                                  tx -> this.mc.level.getEntity(tx.entityId()) instanceof LargeFireball && !this.ghastReflect.isReflected(tx.entityId())
@@ -458,7 +458,7 @@ final class AiDodge {
                   "dodged",
                   this.dodgedCount,
                   "deflected",
-                  this.deflectedIds.size() + this.reflectors.stream().mapToInt(AiGhastReflect::init_I).sum(),
+                  this.deflectedIds.size() + this.reflectors.stream().mapToInt(AiGhastReflect::getConfirmedReflections).sum(),
                   "blocked",
                   this.blockedCount,
                   "shieldTicks",

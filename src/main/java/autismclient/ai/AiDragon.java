@@ -653,13 +653,13 @@ final class AiDragon {
                   BlockPos at = mc.player.blockPosition();
                   this.zoneEscapeRepeats = at.equals(this.at) && mc.player.tickCount - this.lastZoneEscapeTick < 60 ? this.zoneEscapeRepeats + 1 : 0;
                   double extra = 1.0 + Math.min(4, this.zoneEscapeRepeats) * 1.5;
-                  AiOperation out = inZone ? AiDragonZones.init(mc, 1.0 + extra) : AiDragon.planBreathEscape(mc, extra);
+                  AiOperation out = inZone ? AiDragonZones.leave(mc, 1.0 + extra) : AiDragon.planBreathEscape(mc, extra);
                   if (out == null && inZone && clouded) {
                      out = AiDragon.planBreathEscape(mc, extra);
                   }
 
                   if (out == null && clouded) {
-                     out = AiDragonZones.init_AiOperation(mc);
+                     out = AiDragonZones.dropOffPillar(mc);
                   }
 
                   if (out == null) {
@@ -760,14 +760,14 @@ final class AiDragon {
                      }
                   }
 
-                  boolean inFire = AiEndRun.init_Z(mc);
+                  boolean inFire = AiEndRun.isInFire(mc);
                   if (!inFire && !mc.player.isOnFire()) {
                      return null;
                   }
 
                   AiOperation op = AiEndRun.douseFire(mc);
                   if (op == null && inFire) {
-                     op = AiEndRun.load_AiOperation(mc);
+                     op = AiEndRun.escapeFireOp(mc);
                   }
 
                   if (op == null) {
@@ -1950,7 +1950,7 @@ final class AiDragon {
 
             boolean hasLiveCrystal() {
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity instanceof EndCrystal && !entity.isRemoved() && !AiCrystals.init(mc, entity.blockPosition())) {
+                  if (entity instanceof EndCrystal && !entity.isRemoved() && !AiCrystals.isCaged(mc, entity.blockPosition())) {
                      return true;
                   }
                }
@@ -2712,7 +2712,7 @@ final class AiDragon {
             data.add("pendingChildren", this.pending.deepCopy());
          }
 
-         return AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, bedClicked || this.pendingReconciliation, null);
+         return AiNetherRun.phaseResult(status, message, data, bedClicked || this.pendingReconciliation, null);
       }
 
       private static boolean needsReconciliation(AiOperation child, AiOperation.Result result) {

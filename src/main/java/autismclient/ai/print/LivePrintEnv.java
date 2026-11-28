@@ -539,7 +539,7 @@ public final class LivePrintEnv implements PrintEnv {
             }
          }
 
-         int slot = this.creativeStock.load(i -> p.getInventory().getItem(i));
+         int slot = this.creativeStock.stockedHotbarSlot(i -> p.getInventory().getItem(i));
          if (slot < 0) {
             this.creativeStockError = "Free one inventory or offhand slot for automatic Creative materials";
          } else {

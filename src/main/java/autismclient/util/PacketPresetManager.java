@@ -43,7 +43,7 @@ public class PacketPresetManager {
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§ePreset name cannot be empty.");
          return false;
-      } else if (this.update(sanitized)) {
+      } else if (this.isBuiltIn(sanitized)) {
          AutismClientMessaging.sendPrefixed("§cThat preset name is reserved for developer templates.");
          return false;
       } else {
@@ -79,7 +79,7 @@ public class PacketPresetManager {
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§eSelect a user preset first.");
          return false;
-      } else if (this.update(sanitized)) {
+      } else if (this.isBuiltIn(sanitized)) {
          AutismClientMessaging.sendPrefixed("§cDeveloper presets cannot be overwritten.");
          return false;
       } else {
@@ -112,7 +112,7 @@ public class PacketPresetManager {
       if (sanitized == null) {
          AutismClientMessaging.sendPrefixed("§eSelect a user preset first.");
          return false;
-      } else if (this.update(sanitized)) {
+      } else if (this.isBuiltIn(sanitized)) {
          AutismClientMessaging.sendPrefixed("§cDeveloper presets cannot be deleted.");
          return false;
       } else {
@@ -134,7 +134,7 @@ public class PacketPresetManager {
    public boolean importShared(String presetName, String presetJson, String sender) {
       String sanitized = this.sanitizeName(presetName);
       if (sanitized != null && presetJson != null && !presetJson.isBlank()) {
-         if (this.update(sanitized)) {
+         if (this.isBuiltIn(sanitized)) {
             sanitized = sanitized + " (LAN)";
          }
 
@@ -159,7 +159,7 @@ public class PacketPresetManager {
       }
    }
 
-   public boolean update(String name) {
+   public boolean isBuiltIn(String name) {
       String normalized = this.normalizeKey(name);
       if (normalized.isEmpty()) {
          return false;
@@ -335,7 +335,7 @@ public class PacketPresetManager {
                   preset.name = file.getName().replace(".json", "");
                }
 
-               if (this.update(preset.name)) {
+               if (this.isBuiltIn(preset.name)) {
                   AutismClientAddon.LOG.warn("Ignoring user preset with reserved built-in name: {}", preset.name);
                } else {
                   if (preset.c2sPackets == null) {
@@ -475,7 +475,7 @@ public class PacketPresetManager {
       String candidate = baseName;
       int suffix = 1;
 
-      while (this.findPreset(candidate) != null || this.update(candidate)) {
+      while (this.findPreset(candidate) != null || this.isBuiltIn(candidate)) {
          candidate = baseName + " (" + suffix++ + ")";
       }
 

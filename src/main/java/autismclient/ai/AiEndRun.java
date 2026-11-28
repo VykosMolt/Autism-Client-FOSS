@@ -36,7 +36,7 @@ final class AiEndRun {
    private AiEndRun() {
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean isInFire(Minecraft mc) {
       AABB box = mc.player.getBoundingBox().deflate(0.001);
 
       for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ), BlockPos.containing(box.maxX, box.maxY, box.maxZ))) {
@@ -53,7 +53,7 @@ final class AiEndRun {
          return null;
       }
 
-      if (init_Z(mc) && init_BlockPos(mc) != null) {
+      if (isInFire(mc) && fireEscapeCell(mc) != null) {
          return null;
       }
 
@@ -66,7 +66,7 @@ final class AiEndRun {
       );
    }
 
-   static BlockPos init_BlockPos(Minecraft mc) {
+   static BlockPos fireEscapeCell(Minecraft mc) {
       BlockPos feet = mc.player.blockPosition();
       BlockPos best = null;
       double bestD = 1.7976931348623157E308;
@@ -99,7 +99,7 @@ final class AiEndRun {
       return best;
    }
 
-   static boolean load_Z(Minecraft mc) {
+   static boolean extinguishFire(Minecraft mc) {
       if (mc.gameMode == null) {
          return false;
       }
@@ -117,7 +117,7 @@ final class AiEndRun {
       return false;
    }
 
-   static AiOperation load_AiOperation(Minecraft mc) {
+   static AiOperation escapeFireOp(Minecraft mc) {
       BlockPos feet = mc.player.blockPosition();
       BlockPos best = null;
       double bestD = 1.7976931348623157E308;
@@ -301,7 +301,7 @@ final class AiEndRun {
                         autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(5000000000L);
                         autismclient.ai.engine.AiMotionSafety.setPitchFloor(25.0F, 5000000000L);
                         if (mc.player.onGround() && mc.player.tickCount % 40 == 0) {
-                           AiMlg.init(mc.player, Items.WATER_BUCKET);
+                           AiMlg.moveToHotbar(mc.player, Items.WATER_BUCKET);
                         }
 
                         if (this.fountain == null) {
@@ -327,7 +327,7 @@ final class AiEndRun {
                               return this.running(this.label + ": " + r.message());
                            }
 
-                           r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.child, r);
+                           r = AiNetherRun.finishChild(this.child, r);
                            this.lastChildResult = r;
                            this.child = null;
                            AiSpeedrun.log("[AI] end step {}: {} - {}", r.status(), this.label, AiSpeedrun.clip(r.message()));
@@ -368,10 +368,10 @@ final class AiEndRun {
                            return this.running("Landing");
                         }
 
-                        if ((mc.player.isOnFire() || AiEndRun.init_Z(mc)) && !mc.player.isInWater()) {
+                        if ((mc.player.isOnFire() || AiEndRun.isInFire(mc)) && !mc.player.isInWater()) {
                            AiOperation out = AiEndRun.douseFire(mc);
-                           if (out == null && AiEndRun.init_Z(mc)) {
-                              out = AiEndRun.load_AiOperation(mc);
+                           if (out == null && AiEndRun.isInFire(mc)) {
+                              out = AiEndRun.escapeFireOp(mc);
                            }
 
                            if (out != null) {
@@ -696,7 +696,7 @@ final class AiEndRun {
 
             AiOperation.Result finishWithChild(AiOperation.Status status, String message, AiOperation.Result child) {
                boolean pending = this.requiresReconciliationAfterEmergency();
-               AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.progressJson(), pending, child);
+               AiOperation.Result result = AiNetherRun.phaseResult(status, message, this.progressJson(), pending, child);
                this.reconcilePending = this.reconcilePending | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
                this.stopChild();
                this.guard.cancel();

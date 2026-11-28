@@ -235,8 +235,8 @@ public final class ProjectileBallistics {
          return velocity.add(velocity.normalize().scale(0.1)).scale(drag);
       } else {
          return info.kind() == ProjectileBallistics.ProjectileKind.ARROW
-            ? velocity.scale(drag).add(0.0, -info.init_D(), 0.0)
-            : velocity.add(0.0, -info.init_D(), 0.0).scale(drag);
+            ? velocity.scale(drag).add(0.0, -info.gravity(), 0.0)
+            : velocity.add(0.0, -info.gravity(), 0.0).scale(drag);
       }
    }
 
@@ -247,7 +247,7 @@ public final class ProjectileBallistics {
    public static ProjectileBallistics.Trajectory simulate(Level level, Entity owner, ProjectileBallistics.ProjectileShot shot, float yaw, float pitch, Vec3 inherited) {
       if (level != null && owner != null) {
          Vec3 velocity = shotVelocity(yaw, pitch, shot);
-         if (shot.info().init_Z() && inherited != null) {
+         if (shot.info().copiesPlayerVelocity() && inherited != null) {
             velocity = velocity.add(inherited);
          }
 
@@ -271,7 +271,7 @@ public final class ProjectileBallistics {
                   velocity = velocity.scale(info.waterDrag());
                }
             } else if (info.kind() == ProjectileBallistics.ProjectileKind.FISHING) {
-               velocity = velocity.add(0.0, -info.init_D(), 0.0);
+               velocity = velocity.add(0.0, -info.gravity(), 0.0);
             } else {
                velocity = applyDrag(velocity, info, water);
                collisionVelocity = velocity;
@@ -295,7 +295,7 @@ public final class ProjectileBallistics {
                   velocity = velocity.scale(info.airDrag());
                }
 
-               velocity = velocity.add(0.0, -info.init_D(), 0.0);
+               velocity = velocity.add(0.0, -info.gravity(), 0.0);
             } else if (info.kind() == ProjectileBallistics.ProjectileKind.FISHING) {
                velocity = velocity.scale(info.airDrag());
             }
@@ -369,13 +369,13 @@ public final class ProjectileBallistics {
    }
 
    public record ProjectileInfo(
-      double init_D,
+      double gravity,
       double load_D,
       double read_D,
       double airDrag,
       double waterDrag,
       float init_F,
-      boolean init_Z,
+      boolean copiesPlayerVelocity,
       boolean load_Z,
       boolean read_Z,
       ProjectileBallistics.ProjectileKind kind
@@ -407,7 +407,7 @@ public final class ProjectileBallistics {
 
       ProjectileBallistics.ProjectileInfo withVelocity(double velocity) {
          return new ProjectileBallistics.ProjectileInfo(
-            this.init_D, this.load_D, velocity, this.airDrag, this.waterDrag, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.kind
+            this.gravity, this.load_D, velocity, this.airDrag, this.waterDrag, this.init_F, this.copiesPlayerVelocity, this.load_Z, this.read_Z, this.kind
          );
       }
    }

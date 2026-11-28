@@ -112,7 +112,7 @@ public final class AiCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("trace").executes(ctx -> this.trace(10)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("n", IntegerArgumentType.integer(1, 50))
-                  .suggests(autismclient.commands.CommandSuggestions::push)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestCounts)
                   .executes(ctx -> this.trace(IntegerArgumentType.getInteger(ctx, "n")))
             )
       );

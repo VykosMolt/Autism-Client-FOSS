@@ -409,13 +409,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
             for (DangerModule.Inner_CachePool threat : this.threats) {
                DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(threat.entity.getUUID());
-               if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.currentTick - attempt.tick))) {
+               if (threat.init_Z && (attempt == null || FireballInterceptMath.canRetry(this.currentTick - attempt.tick))) {
                   Fireball ball = (Fireball)threat.entity;
                   RotationMath.Rotation goal = this.init_ce_DataUtil_Entity(ball);
                   ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
                   double yaw = wire.initialized() ? wire.currentYaw() : MC.player.getYRot();
                   double pitch = wire.initialized() ? wire.currentPitch() : MC.player.getXRot();
-                  double strike = FireballInterceptMath.init_D_Vec3(
+                  double strike = FireballInterceptMath.ticksUntilInReach(
                      MC.player.getEyePosition(),
                      this.effectiveMotion(),
                      ball.getBoundingBox(),
@@ -477,7 +477,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                      from = RotationMath.ofPlayer(MC.player);
                   }
 
-                  double strike = FireballInterceptMath.init_D_Vec3(
+                  double strike = FireballInterceptMath.ticksUntilInReach(
                      MC.player.getEyePosition(),
                      this.effectiveMotion(),
                      this.interceptTarget.getBoundingBox(),
@@ -521,9 +521,9 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          for (DangerModule.Inner_CachePool threat : this.threats) {
             if (threat.init_Z && threat.load_Z) {
                DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(threat.entity.getUUID());
-               if (attempt == null || FireballInterceptMath.init(this.currentTick - attempt.tick)) {
+               if (attempt == null || FireballInterceptMath.canRetry(this.currentTick - attempt.tick)) {
                   Fireball ball = (Fireball)threat.entity;
-                  double strike = FireballInterceptMath.init_D_Vec3(
+                  double strike = FireballInterceptMath.ticksUntilInReach(
                      MC.player.getEyePosition(),
                      this.effectiveMotion(),
                      ball.getBoundingBox(),
@@ -551,7 +551,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          ? shooter.getBoundingBox().getCenter().add(shooter.getDeltaMovement().scale(Math.min(10.0, shooter.distanceTo(ball) / 1.5))).subtract(box.getCenter())
          : ball.getDeltaMovement().scale(-1.0);
       FireballInterceptMath.AimSolution aim = FireballInterceptMath.solve(eye, this.effectiveMotion(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
-      return RotationMath.lookAt(aim.load(), aim.init());
+      return RotationMath.lookAt(aim.point(), aim.eye());
    }
 
    private Vec3 effectiveMotion() {
@@ -616,7 +616,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private boolean canIntercept() {
-      return (!ClutchModule.init_Z_49() || ClutchModule.open_Z_5())
+      return (!ClutchModule.isClutchEngaged() || ClutchModule.catchHolds())
          && MC != null
          && MC.player != null
          && MC.level != null
@@ -652,7 +652,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(entity.getUUID());
             if ((attempt == null || ball.getOwner() != MC.player && !(entity.getDeltaMovement().dot(attempt.velocity) < 0.0)) && ball.getOwner() != MC.player) {
                double inertia = ball.isInWater() ? 0.8 : 0.95;
-               double impact = FireballInterceptMath.init_D_AABB(
+               double impact = FireballInterceptMath.ticksUntilBodyHit(
                   MC.player.getBoundingBox(), playerMotion, entity.getBoundingBox(), entity.getDeltaMovement(), 40, 1.5, ball.accelerationPower, inertia
                );
                boolean hits = impact >= 0.0;
@@ -660,10 +660,10 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(MC.level, ball, IncomingProjectileScanner.ProjectileKind.FIREBALL);
                   Vec3 landing = flight.init_Vec3();
                   if (landing != null && MC.player.getBoundingBox().distanceToSqr(landing) <= 12.25) {
-                     impact = flight.init_D();
+                     impact = flight.impactTicks();
                      hits = true;
                   } else {
-                     impact = FireballInterceptMath.load(
+                     impact = FireballInterceptMath.ticksUntilClosingHit(
                         MC.player.getBoundingBox(),
                         playerMotion,
                         entity.getBoundingBox(),
@@ -809,7 +809,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                            break;
                         }
 
-                        if (kind != IncomingProjectileScanner.ProjectileKind.ARROW || shot.info().init_D() != 0.0) {
+                        if (kind != IncomingProjectileScanner.ProjectileKind.ARROW || shot.info().gravity() != 0.0) {
                            IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.predict(MC.level, owner, kind, shot);
                            IncomingProjectileScanner.ProjectileWarning warning = new IncomingProjectileScanner.ProjectileWarning(owner, owner, kind, true, flight, this.init_I_Player(owner));
                            if (showPearlGhosts && IncomingProjectileScanner.isPearlThreat(warning)) {
@@ -830,12 +830,12 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             }
          }
 
-         result.sort(Comparator.comparing(IncomingProjectileScanner.ProjectileWarning::init_Z).thenComparingDouble(warningx -> warningx.init_A_DataUtil().init_D()));
+         result.sort(Comparator.comparing(IncomingProjectileScanner.ProjectileWarning::init_Z).thenComparingDouble(warningx -> warningx.flight().impactTicks()));
          this.incomingProjectiles = List.copyOf(result.subList(0, Math.min(16, result.size())));
          ArrayList<IncomingProjectileScanner.ProjectileWarning> models = new ArrayList<>(landingModels.values());
          models.sort(
             Comparator.comparing(IncomingProjectileScanner.ProjectileWarning::init_Z)
-               .thenComparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(MC.player.position()))
+               .thenComparingDouble(warningx -> warningx.flight().load().distanceToSqr(MC.player.position()))
          );
          this.read_List = List.copyOf(models);
          if (this.isKindEnabled(IncomingProjectileScanner.ProjectileKind.FIREBALL) && this.bool("fireball-blast-blocks")) {
@@ -860,7 +860,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                }
             }
 
-            blastSources.sort(Comparator.comparingDouble(source -> source.init_A_DataUtil().init_D()));
+            blastSources.sort(Comparator.comparingDouble(source -> source.flight().impactTicks()));
             this.predictedBlasts = this.blastPredictor.predict(MC.level, blastSources);
          } else {
             this.resetBlasts();
@@ -925,7 +925,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          this.status = "Sprint still announced";
       } else {
          DangerModule.Inner_DataUtil previousAttempt = this.interceptAttempts.get(this.interceptTarget.getUUID());
-         if (previousAttempt != null && !FireballInterceptMath.init(this.currentTick - previousAttempt.tick)) {
+         if (previousAttempt != null && !FireballInterceptMath.canRetry(this.currentTick - previousAttempt.tick)) {
             this.status = "Retry interval";
          } else {
             RotationMath.Rotation rotation = autismclient.util.SilentRotationManager.getCurrentRotation();
@@ -988,7 +988,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    private void flush_V_10() {
       if (this.intercepting) {
-         if (ClutchModule.init_Z_49() && !ClutchModule.open_Z_5()) {
+         if (ClutchModule.isClutchEngaged() && !ClutchModule.catchHolds()) {
             this.close_V_9();
             this.intercepting = this.load_Z = false;
             this.interceptTarget = null;

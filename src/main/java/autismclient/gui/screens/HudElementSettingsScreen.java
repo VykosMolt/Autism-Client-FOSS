@@ -307,7 +307,7 @@ public class HudElementSettingsScreen extends Screen {
    private void drawButton(
       GuiGraphicsExtractor graphics, String label, int x, int y, int w, int h, int mx, int my, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
    }
 
    private int labelWidth(String label) {

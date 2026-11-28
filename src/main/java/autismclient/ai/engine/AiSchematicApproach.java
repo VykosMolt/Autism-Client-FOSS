@@ -71,7 +71,7 @@ public final class AiSchematicApproach implements AiOperation {
          this.click = click;
          this.pending = pending;
          if (this.child != null) {
-            AiWalkingWork.init(this.child, look, click);
+            AiWalkingWork.setLookAndClick(this.child, look, click);
          }
       }
    }
@@ -177,7 +177,7 @@ public final class AiSchematicApproach implements AiOperation {
                         options
                      );
                      this.init_BlockPos = next.pos();
-                     AiWalkingWork.init(this.child, this.look, this.click);
+                     AiWalkingWork.setLookAndClick(this.child, this.look, this.click);
                   } else {
                      this.draft.rejected = this.draft.update.get(scheduled.station()).probe.feet;
                      this.draft.clearBatchChoice();

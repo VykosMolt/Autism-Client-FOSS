@@ -150,7 +150,7 @@ final class AiChatPolicy {
       }
    }
 
-   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.ChatEntry entry, String selfName) {
+   static AiChatPolicy.Inner_StreamUtil incomingLine(AiChatLedger.ChatEntry entry, String selfName) {
       if (entry == null) {
          return null;
       }
@@ -292,7 +292,7 @@ final class AiChatPolicy {
       return objective != null && TASK_REQUEST.matcher(objective).find();
    }
 
-   static List<String> init_List(String objective) {
+   static List<String> chatPartners(String objective) {
       if (objective != null && !objective.isBlank()) {
          List<String> out = new ArrayList<>();
          Pattern pattern = Pattern.compile(

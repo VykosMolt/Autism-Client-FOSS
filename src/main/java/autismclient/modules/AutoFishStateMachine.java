@@ -121,7 +121,7 @@ final class AutoFishStateMachine {
       }
    }
 
-   boolean init_Z(int delay) {
+   boolean scheduleCatch(int delay) {
       if (this.state == AutoFishStateMachine.FishState.FISHING && this.tick >= this.castSettleTick) {
          this.state = AutoFishStateMachine.FishState.CATCH_DELAY;
          this.nextActionTick = this.tick + Math.max(0, delay);
@@ -131,7 +131,7 @@ final class AutoFishStateMachine {
       }
    }
 
-   boolean init_Z_I_J(int delay, long clientTick) {
+   boolean onBite(int delay, long clientTick) {
       boolean fresh = this.lastBiteTick == -9223372036854775808L || clientTick - this.lastBiteTick >= 4L;
       this.lastBiteTick = clientTick;
       if (fresh && this.state == AutoFishStateMachine.FishState.CAST_WAIT) {
@@ -139,7 +139,7 @@ final class AutoFishStateMachine {
          this.nextActionTick = Math.max(this.castSettleTick, this.tick + Math.max(0, delay));
          return true;
       } else {
-         return fresh && this.init_Z(delay);
+         return fresh && this.scheduleCatch(delay);
       }
    }
 
@@ -195,7 +195,7 @@ final class AutoFishStateMachine {
       this.catchCompleted = true;
    }
 
-   boolean load_Z() {
+   boolean consumeCatchCompleted() {
       boolean result = this.catchCompleted;
       this.catchCompleted = false;
       return result;
@@ -213,7 +213,7 @@ final class AutoFishStateMachine {
       this.catchCompleted = false;
    }
 
-   void init_V(int beforeUseHook) {
+   void onRodUsed(int beforeUseHook) {
       this.clearPendingAction();
       this.catchCompleted = false;
       if (beforeUseHook != -1) {
@@ -231,19 +231,19 @@ final class AutoFishStateMachine {
       }
    }
 
-   void init_V() {
+   void onRodUsed() {
       boolean wasCast = this.state == AutoFishStateMachine.FishState.CAST_WAIT
          || this.state == AutoFishStateMachine.FishState.FISHING
          || this.state == AutoFishStateMachine.FishState.CATCH_DELAY
          || this.state == AutoFishStateMachine.FishState.REEL_PENDING;
-      this.init_V(-1);
+      this.onRodUsed(-1);
       if (wasCast) {
          this.reelTick = this.tick;
          this.state = AutoFishStateMachine.FishState.REEL_WAIT;
       }
    }
 
-   void load_V() {
+   void cancelPendingCatch() {
       if (this.pendingAction != null) {
          this.state = this.resumeState;
          this.clearPendingAction();
@@ -261,7 +261,7 @@ final class AutoFishStateMachine {
       this.actionSeq++;
    }
 
-   void read() {
+   void reset() {
       this.clearPendingAction();
       this.state = AutoFishStateMachine.FishState.IDLE;
       this.trackedHook = this.reeledHook = -1;

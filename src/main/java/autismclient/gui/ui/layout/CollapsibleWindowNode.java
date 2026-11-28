@@ -260,7 +260,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
          this.lastHeaderHeight = headerH;
          this.lastDrawnHeight = drawH;
          this.body.setVisible(this.expanded || reveal > 0.0F);
-         WindowFrameRenderer.init(
+         WindowFrameRenderer.drawFrame(
             autismclient.gui.f.UiHelper.init(
                drawContext.graphics(), drawContext.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             ),

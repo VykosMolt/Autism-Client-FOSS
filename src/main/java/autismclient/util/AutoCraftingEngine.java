@@ -105,7 +105,7 @@ public final class AutoCraftingEngine {
    }
 
    public static AutoCraftingEngine.CraftContext captureContext(Minecraft mc, boolean forExecution) {
-      return mc != null && mc.player != null && mc.level != null ? captureContextWithRecipes(mc, forExecution ? RecipeCatalogLoader.craftingRecipes(mc) : RecipeCatalogLoader.read(mc)) : null;
+      return mc != null && mc.player != null && mc.level != null ? captureContextWithRecipes(mc, forExecution ? RecipeCatalogLoader.craftingRecipes(mc) : RecipeCatalogLoader.craftingRecipesIfReady(mc)) : null;
    }
 
    public static void prewarmCatalog(Minecraft mc) {

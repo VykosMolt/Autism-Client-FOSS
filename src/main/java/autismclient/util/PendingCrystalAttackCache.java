@@ -26,7 +26,7 @@ public final class PendingCrystalAttackCache {
       return entry != null && !entry.init_Z() && entry.cell().equals(cell) && tick - entry.expiresTick() < 0;
    }
 
-   public void init(BlockPos cell, int tick) {
+   public void markHit(BlockPos cell, int tick) {
       this.expire(tick);
       this.pending
          .replaceAll(

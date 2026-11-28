@@ -228,7 +228,7 @@ public final class ModulesMenuController {
       this.closeMacroPicker();
    }
 
-   public void read_V() {
+   public void resumeMenu() {
       this.menuSuspended = false;
    }
 
@@ -451,7 +451,7 @@ public final class ModulesMenuController {
       }
 
       if (this.isClassicStyle()) {
-         this.close();
+         this.closeProfilesView();
          this.renderClassicWindows(context, frameSeconds, now);
          this.renderPopups(popupContext, mouseX, mouseY);
       } else {
@@ -1108,7 +1108,7 @@ public final class ModulesMenuController {
                         return true;
                      }
 
-                     this.host.init(hit.id);
+                     this.host.openToolById(hit.id);
                      return true;
                   case MODULE:
                      if (button == 1) {
@@ -1163,7 +1163,7 @@ public final class ModulesMenuController {
                   case MACRO_MODULE:
                      Module module = hit.module;
                      this.leaveSettings();
-                     this.host.init(module);
+                     this.host.addToMacro(module);
                      return true;
                   case GROUP:
                      collapsedGroups.put(hit.module.id() + "|" + hit.id, !collapsedGroups.getOrDefault(hit.module.id() + "|" + hit.id, false));
@@ -1181,13 +1181,13 @@ public final class ModulesMenuController {
                      this.sliderModule = hit.module;
                      this.sliderSetting = hit.setting;
                      this.activeRangeHandle = -1;
-                     this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
+                     this.settingsView.applySliderAt(hit, mx);
                      return true;
                   case RANGE_SLIDER:
                      this.sliderModule = hit.module;
                      this.sliderSetting = hit.setting;
-                     this.activeRangeHandle = this.settingsView.init_I_ConfigStore_Stream_I(hit, mx);
-                     this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
+                     this.activeRangeHandle = this.settingsView.pickRangeHandle(hit, mx);
+                     this.settingsView.applySliderAt(hit, mx);
                      return true;
                   case TEXT_FIELD:
                      if (button != 0) {
@@ -1215,16 +1215,16 @@ public final class ModulesMenuController {
                      if (hit.setting != null) {
                         switch (hit.setting.kind()) {
                            case STRING_LIST:
-                              this.host.load(hit.module, hit.setting);
+                              this.host.openStringListEditor(hit.module, hit.setting);
                               break;
                            default:
-                              this.host.read(hit.module, hit.setting);
+                              this.host.openRegistrySelector(hit.module, hit.setting);
                         }
                      }
 
                      return true;
                   case PACKET_EDITOR:
-                     this.host.init(hit.module, hit.setting);
+                     this.host.openPacketSelector(hit.module, hit.setting);
                      return true;
                   case MACRO_PICKER:
                      this.openMacroPicker(hit.module, hit.setting, hit.bounds);
@@ -1407,7 +1407,7 @@ public final class ModulesMenuController {
             } else if (this.sliderModule != null && this.sliderSetting != null) {
                ModulesMenuController.HitRegion hit = this.hitFor(this.sliderModule, this.sliderSetting);
                if (hit != null) {
-                  this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
+                  this.settingsView.applySliderAt(hit, mx);
                }
 
                return true;
@@ -1754,7 +1754,7 @@ public final class ModulesMenuController {
 
    void showModuleSettings(Module module) {
       if (module != null) {
-         this.close();
+         this.closeProfilesView();
          this.endTextEdit(true);
          this.searchEdit = null;
          this.settingsModule = module;
@@ -1940,9 +1940,9 @@ public final class ModulesMenuController {
       this.macroPicker = null;
    }
 
-   void init_V_Module_Setting(Module module, Setting<?, ?> option) {
+   void openMacroEditorFromPicker(Module module, Setting<?, ?> option) {
       this.closeMacroPicker();
-      this.host.write(module, option);
+      this.host.openMacroEditor(module, option);
    }
 
    private int railScroll(NetHelper rail, int contentHeight) {
@@ -2436,7 +2436,7 @@ public final class ModulesMenuController {
    private void renderCategoryWindow(SyncManager context, String id, NetHelper bounds, String title, boolean collapsed, boolean collapse, boolean close) {
       int header = this.headerHeight;
       boolean headerHovered = WindowHeaderHelper.read(bounds, header, context.read(), context.write());
-      WindowFrameRenderer.init(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
+      WindowFrameRenderer.drawFrame(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
       this.addHit(ModulesMenuController.HitType.WINDOW_BODY, bounds, null, null, id, -1);
       this.addHit(ModulesMenuController.HitType.WINDOW_HEADER, WindowHeaderHelper.headerBounds(bounds, header), null, null, id, -1);
       if (collapse) {
@@ -2740,7 +2740,7 @@ public final class ModulesMenuController {
       return this.profilesVisible() && this.profilesView.isEditing();
    }
 
-   public void close() {
+   public void closeProfilesView() {
       if (this.profilesView != null) {
          this.profilesView.reset();
          this.profilesView = null;
@@ -2764,7 +2764,7 @@ public final class ModulesMenuController {
 
    private void selectCategory(String key) {
       if (key != null && (!key.equals(selectedCategoryKey) || this.settingsModule != null || !this.searchQuery.isBlank())) {
-         this.close();
+         this.closeProfilesView();
          this.searchEdit = null;
          this.searchQuery = "";
          this.setScroll("modules", 0.0F);
@@ -2893,19 +2893,19 @@ public final class ModulesMenuController {
 
       void saveConfig();
 
-      void init(Module var1, Setting<?, ?> var2);
+      void openPacketSelector(Module var1, Setting<?, ?> var2);
 
-      void load(Module var1, Setting<?, ?> var2);
+      void openStringListEditor(Module var1, Setting<?, ?> var2);
 
-      void read(Module var1, Setting<?, ?> var2);
+      void openRegistrySelector(Module var1, Setting<?, ?> var2);
 
-      void write(Module var1, Setting<?, ?> var2);
+      void openMacroEditor(Module var1, Setting<?, ?> var2);
 
       void openMacroEditor(Module var1, Setting<?, ?> var2, AutismMacro var3);
 
-      void init(String var1);
+      void openToolById(String var1);
 
-      void init(Module var1);
+      void addToMacro(Module var1);
    }
 
    enum HitType {

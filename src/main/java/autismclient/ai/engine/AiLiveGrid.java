@@ -683,7 +683,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       return var0.isDamageableItem() && !AiItems.hasEnoughDurability(var0, 2);
    }
 
-   public static void putAt(Minecraft var0, AiChunkMemory var1) {
+   public static void scanNearbyChunks(Minecraft var0, AiChunkMemory var1) {
       if (var1 != null && var0.level != null && var0.player != null) {
          if (scannedLevel != var0.level) {
             chunkScanTimes.clear();
@@ -758,7 +758,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                      }
 
                      var9[(var12 * 16 + var13) * var8 + (var14 - var6)] = var18;
-                     if (var16.notable() && AiChunkMemory.init_I(var18) == 1) {
+                     if (var16.notable() && AiChunkMemory.packClassFor(var18) == 1) {
                         if (var10 == null) {
                            var10 = new HashMap();
                         }

@@ -71,7 +71,7 @@ final class ThrownPearlTracker {
                ThrownEnderpearl pearl = this.ownPearls.get(i);
                IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(mc.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
                if (flight.load() != null) {
-                  this.forecasts.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.init_D()));
+                  this.forecasts.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.impactTicks()));
                }
             }
 

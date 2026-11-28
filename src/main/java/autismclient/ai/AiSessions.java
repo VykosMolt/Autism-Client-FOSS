@@ -221,7 +221,7 @@ public final class AiSessions {
 
       for (int i = parsed.size() - 1; i >= 0; i--) {
          JsonObject line = parsed.get(i);
-         long cost = AiContext.init(line);
+         long cost = AiContext.measureChars(line);
          if (!tail.isEmpty() && used + cost > charBudget) {
             break;
          }

@@ -194,8 +194,8 @@ public final class AiCraftPlanner {
                      this.stock.clear();
                      this.stock.putAll(snapshot);
                   } else {
-                     boolean cutOfAMinedItem = recipe.stonecutting() && this.graph.load_I(itemId) == 0;
-                     if (this.graph.init_Z(itemId)) {
+                     boolean cutOfAMinedItem = recipe.stonecutting() && this.graph.acquisitionRank(itemId) == 0;
+                     if (this.graph.isFarmAnimalDrop(itemId)) {
                         cutOfAMinedItem = true;
                      }
 
@@ -243,7 +243,7 @@ public final class AiCraftPlanner {
          double cost = 0.0;
 
          for (Entry<String, Integer> entry : missing.entrySet()) {
-            cost += entry.getValue().intValue() * this.graph.init_D(entry.getKey());
+            cost += entry.getValue().intValue() * this.graph.acquisitionEffort(entry.getKey());
          }
 
          return cost;
@@ -330,13 +330,13 @@ public final class AiCraftPlanner {
          int bestRank = 2147483647;
 
          for (String option : accepted) {
-            bestRank = Math.min(bestRank, this.graph.load_I(option));
+            bestRank = Math.min(bestRank, this.graph.acquisitionRank(option));
          }
 
          List<String> tied = new ArrayList<>();
 
          for (String option : accepted) {
-            if (this.graph.load_I(option) == bestRank) {
+            if (this.graph.acquisitionRank(option) == bestRank) {
                tied.add(option);
             }
          }
@@ -372,7 +372,7 @@ public final class AiCraftPlanner {
 
          for (String option : tied) {
             int have = this.available(option);
-            double cost = this.graph.init_D(option);
+            double cost = this.graph.acquisitionEffort(option);
             if (have > pickStock || have == pickStock && cost < pickCost) {
                pickStock = have;
                pickCost = cost;
@@ -420,7 +420,7 @@ public final class AiCraftPlanner {
 
       int held(String var1);
 
-      default int load_I(String itemId) {
+      default int acquisitionRank(String itemId) {
          return this.recipesFor(itemId).isEmpty() ? 2 : 1;
       }
 
@@ -428,11 +428,11 @@ public final class AiCraftPlanner {
          return null;
       }
 
-      default double init_D(String itemId) {
+      default double acquisitionEffort(String itemId) {
          return 1.0;
       }
 
-      default boolean init_Z(String itemId) {
+      default boolean isFarmAnimalDrop(String itemId) {
          return false;
       }
    }

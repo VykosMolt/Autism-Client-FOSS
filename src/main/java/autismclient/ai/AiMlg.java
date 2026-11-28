@@ -111,7 +111,7 @@ final class AiMlg {
    }
 
    static float landingDamageMultiplier(String landingBlockId, boolean sneaking) {
-      return AiDanger.init_F_Str_Z(landingBlockId, sneaking);
+      return AiDanger.fallDamageMultiplier(landingBlockId, sneaking);
    }
 
    static boolean isSafeMultiplier(float multiplier) {
@@ -518,7 +518,7 @@ final class AiMlg {
             }
 
             boolean moveToHotbar(LocalPlayer player, Item item) {
-               return AiMlg.init(player, item);
+               return AiMlg.moveToHotbar(player, item);
             }
 
             AiOperation.Result finish(AiOperation.Status status, String message) {
@@ -560,7 +560,7 @@ final class AiMlg {
       }
    }
 
-   static boolean init(LocalPlayer player, Item item) {
+   static boolean moveToHotbar(LocalPlayer player, Item item) {
       if (player != null && player.containerMenu == player.inventoryMenu) {
          Inventory inventory = player.getInventory();
 

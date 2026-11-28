@@ -251,8 +251,8 @@ final class AiSpeedrun {
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(600, Math.min(14400, AiJson.getInt(args, "timeoutSeconds", 7200)));
          AiOracle.enable(true);
-         AiNetherEntry.init_Z = false;
-         AiNetherRun.init_Z = false;
+         AiNetherEntry.spareObsidianTried = false;
+         AiNetherRun.returnedForSupplies = false;
          return new AiOperation() {
             final AiRunDiagnostics diagnostics = AiRunDiagnostics.start();
             final Object campaignToken = AiRunResources.beginCampaign();
@@ -396,7 +396,7 @@ final class AiSpeedrun {
 
             @Override
             public AiOperation.Result tick() {
-               this.diagnostics.init(this.phase == null ? "START" : this.phase.name(), this.lastMessage);
+               this.diagnostics.sample(this.phase == null ? "START" : this.phase.name(), this.lastMessage);
                if (mc.player != null && mc.level != null) {
                   if (!this.worldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.connection != mc.getConnection() || !this.playerId.equals(mc.player.getUUID())) {
                      return this.finish(AiOperation.Status.CANCELLED, "World or player identity changed; revalidate before resuming");
@@ -449,7 +449,7 @@ final class AiSpeedrun {
                      }
 
                      AiOperation pearlOp = this.phaseOp != null && !this.pearlHunting && this.shouldHuntEnderman() && this.phaseOp.canInterruptNow()
-                        ? AiForage.read(32.0)
+                        ? AiForage.provokeEndermanOp(32.0)
                         : null;
                      if (pearlOp != null) {
                         AiSpeedrun.log(
@@ -909,7 +909,7 @@ final class AiSpeedrun {
                }
 
                if (dimension == Level.END) {
-                  return !AiNetherRun.load_Z()
+                  return !AiNetherRun.isNetherRouteReady()
                      ? this.finish(
                         AiOperation.Status.UNCERTAIN,
                         "Already in the End, but the required barter and blaze-spawner route cannot be verified for this campaign"
@@ -944,10 +944,10 @@ final class AiSpeedrun {
                   return this.finish(AiOperation.Status.UNCERTAIN, "Campaign entered an unsupported dimension; revalidate the route");
                }
 
-               if (AiNetherRun.init_Z && this.missingGear().isEmpty() && this.armourEquipped()) {
+               if (AiNetherRun.returnedForSupplies && this.missingGear().isEmpty() && this.armourEquipped()) {
                   long dayTime = mc.level.getOverworldClockTime() % 24000L;
                   boolean night = dayTime > 13000L && dayTime < 23000L;
-                  if (this.safeFoodItems() < 10 && night && this.netherFoodTrips >= 1 && this.nightBurrows < 1 && AiBurrow.init()) {
+                  if (this.safeFoodItems() < 10 && night && this.netherFoodTrips >= 1 && this.nightBurrows < 1 && AiBurrow.hasBurrowBlocks()) {
                      this.nightBurrows++;
                      AiSpeedrun.log("[AI] speedrun: home for food at night (day time {}); a hole until dawn", dayTime);
                      return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", 600)), null);
@@ -989,9 +989,9 @@ final class AiSpeedrun {
                      null
                   );
                } else {
-                  boolean strongholdLeft = AiNetherRun.init_Z() && AiRunResources.blazePowderEquivalents() + AiCraft.countItem("minecraft:ender_pearl") > 0;
+                  boolean strongholdLeft = AiNetherRun.isRouteAssumedProven() && AiRunResources.blazePowderEquivalents() + AiCraft.countItem("minecraft:ender_pearl") > 0;
                   if (this.pearlRecoveryPending
-                     || !strongholdLeft && (!AiNetherRun.load_Z() || AiRunResources.blazePowderEquivalents() < 16 && this.pearlRecoveryReturns <= 0 || !this.missingGear().isEmpty() || !this.armourEquipped())) {
+                     || !strongholdLeft && (!AiNetherRun.isNetherRouteReady() || AiRunResources.blazePowderEquivalents() < 16 && this.pearlRecoveryReturns <= 0 || !this.missingGear().isEmpty() || !this.armourEquipped())) {
                      Map<String, Integer> missing = this.missingGear();
                      if (!missing.isEmpty()) {
                         int nutritionGoal = AiSpeedrun.foodTarget(missing);
@@ -1067,7 +1067,7 @@ final class AiSpeedrun {
                            && mc.level.getOverworldClockTime() % 24000L < 23000L
                            && this.failedNightBurrowDay != mc.level.getOverworldClockTime() / 24000L
                            && !AiSpeedrun.hasHuntable(mc, 48.0)
-                           && AiBurrow.init()) {
+                           && AiBurrow.hasBurrowBlocks()) {
                            this.nightBurrowing = true;
                            return this.enterPhase(
                               AiSpeedrun.RunPhase.FOOD, AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", Math.min(600, this.secondsLeft()))), null
@@ -1116,7 +1116,7 @@ final class AiSpeedrun {
                            return this.enterPhase(AiSpeedrun.RunPhase.KIT, carryTable, null);
                         }
 
-                        if (this.safeFoodItems() < (AiSpeedrun.init_Z_Minecraft_I(mc, 8) ? 6 : 2) && System.nanoTime() > this.nextFoodTripAt) {
+                        if (this.safeFoodItems() < (AiSpeedrun.seesSkyNear(mc, 8) ? 6 : 2) && System.nanoTime() > this.nextFoodTripAt) {
                            this.nextFoodTripAt = System.nanoTime() + 600000000000L;
                            return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
                         }
@@ -1159,7 +1159,7 @@ final class AiSpeedrun {
                         return this.enterPhase(AiSpeedrun.RunPhase.EQUIP, AiEquip.create(AiJson.objectOf("what", "armor")), null);
                      }
                   } else {
-                     AiNetherRun.init_V();
+                     AiNetherRun.assumeRouteProven();
                      return this.enterPhase(AiSpeedrun.RunPhase.STRONGHOLD, AiStronghold.create(AiJson.objectOf("timeoutSeconds", Math.min(5400, this.secondsLeft()))), null);
                   }
                }
@@ -1283,7 +1283,7 @@ final class AiSpeedrun {
                   "memoryCapabilities",
                   AiWorldMemory.snapshotJson(),
                   "requiredNetherRouteVerified",
-                  AiNetherRun.load_Z(),
+                  AiNetherRun.isNetherRouteReady(),
                   "seedFree",
                   AiOracle.isActive(),
                   "ironBootstrapTried",
@@ -1681,12 +1681,12 @@ final class AiSpeedrun {
                      return this.running("Hunting food");
                   }
 
-                  if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.surfaceAttempts < 2) {
+                  if (!AiSpeedrun.seesSkyNear(mc, 5) && this.surfaceAttempts < 2) {
                      this.surfaceAttempts++;
                      this.legFactory = () -> AiRunDiagnostics.trace(
                         "food_trip",
                         "surface for animals",
-                        autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", Math.min(120, this.secondsLeft())))
+                        autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", Math.min(120, this.secondsLeft())))
                      );
                      this.legOp = this.legFactory.get();
                      this.legName = "surface";
@@ -1848,7 +1848,7 @@ final class AiSpeedrun {
    static boolean isHuntable(Minecraft mc, Entity e, double range) {
       if (mc.player != null && e != null && e.isAlive() && !(e.distanceToSqr(mc.player) > range * range)) {
          String id = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString();
-         return MOB_DROPS.containsKey(id) && !(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.init_Z_Minecraft_Entity(mc, e);
+         return MOB_DROPS.containsKey(id) && !(e instanceof AgeableMob mob && mob.isBaby()) && AiCombat.isEngageable(mc, e);
       } else {
          return false;
       }
@@ -1868,7 +1868,7 @@ final class AiSpeedrun {
       }
    }
 
-   static boolean init_Z_Minecraft_I(Minecraft mc, int radius) {
+   static boolean seesSkyNear(Minecraft mc, int radius) {
       BlockPos feet = mc.player.blockPosition();
 
       for (int dx = -radius; dx <= radius; dx++) {
@@ -2001,7 +2001,7 @@ final class AiSpeedrun {
             actual = this.childResult != null ? this.childResult : this.pendingResult;
          }
 
-         AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, this.needsReconciliation, actual);
+         AiOperation.Result result = AiNetherRun.phaseResult(status, message, data, this.needsReconciliation, actual);
          return actual == null ? result : new AiOperation.Result(result.status(), result.message(), result.dataJson(), actual.evidence(), actual.failure());
       }
 

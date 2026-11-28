@@ -68,7 +68,7 @@ public final class EntityMotionTracker {
       return this.lastPosition.add(this.velocity.scale(ahead));
    }
 
-   public double init(Vec3 eye, double centerYaw, int tick) {
+   public double serverYawOffset(Vec3 eye, double centerYaw, int tick) {
       if (this.lastPosition == null) {
          return 0.0;
       }

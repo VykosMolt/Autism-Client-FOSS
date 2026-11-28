@@ -129,7 +129,7 @@ public final class AiServerEvidence {
       }
 
       if (Minecraft.getInstance() != null) {
-         AiWorldMemory.init(pos);
+         AiWorldMemory.observeChange(pos);
       }
 
       while (blockRevisions.size() > 4096) {

@@ -31,7 +31,7 @@ public class AutismBacktrackPacketMixin {
    private static final String THREAD = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V";
 
    private void autism$backtrack(Packet<?> packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet)) {
+      if (!AutismLiteVariant.enabled() && BacktrackModule.interceptIncoming((ClientPacketListener)(Object)this, packet)) {
          ci.cancel();
       }
    }

@@ -994,7 +994,7 @@ public final class ScaffoldModule extends Module {
 
    @Override
    public void preMovementTick() {
-      if (AutismLiteVariant.enabled() || !ClutchModule.read_Z_20()) {
+      if (AutismLiteVariant.enabled() || !ClutchModule.isSteering()) {
          boolean tellyTickRan = false;
          if (this.isTellyOrEagleMode()) {
             if (!this.cache_Z && this.diagonalBridgeActive() && this.canOperate() && MC.player.onGround()) {
@@ -1850,7 +1850,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (this.pendingPlacement != null && brokenChain.contains(this.pendingPlacement.support())) {
-            autismclient.util.VirtualInputDispatcher.update_V();
+            autismclient.util.VirtualInputDispatcher.releaseScaffold();
             this.init_V_Str_3("ack-support-air");
          }
       }
@@ -4004,7 +4004,7 @@ public final class ScaffoldModule extends Module {
    ) {
       SmoothRotationIntegrator.CountStep step = smoother.step(yawError, pitchError, gcd, maxYawStep, maxPitchStep, 180.0F, directionChange, 0.35F, true, true);
       RotationMath.Rotation delta = new SmoothRotationIntegrator.CountStep(
-            deadbandCounts(clampCounts(step.init(), maxYawStep, gcd), yawError, gcd), deadbandCounts(clampCounts(step.load(), maxPitchStep, gcd), pitchError, gcd)
+            deadbandCounts(clampCounts(step.yawCounts(), maxYawStep, gcd), yawError, gcd), deadbandCounts(clampCounts(step.pitchCounts(), maxPitchStep, gcd), pitchError, gcd)
          )
          .step(gcd);
       return new RotationMath.Rotation(Mth.wrapDegrees(current.yaw() + delta.yaw()), Mth.clamp(current.pitch() + delta.pitch(), -90.0F, 90.0F));
@@ -6074,7 +6074,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static void write_V_12() {
-      if ((AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20())
+      if ((AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.isSteering())
          && MC != null
          && MC.player != null
          && MC.level != null
@@ -6120,7 +6120,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static boolean load_Z_11() {
-      if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20()) {
+      if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.isSteering()) {
          if (init_Z_26() && !BlinkPacketManager.isHoldingActionsOnly()) {
             Module module = al.init_Module_Str("scaffold");
             ScaffoldModule scaffold = (ScaffoldModule)module;
@@ -6142,7 +6142,7 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         long edgeGeneration = autismclient.util.VirtualInputDispatcher.init_J();
+         long edgeGeneration = autismclient.util.VirtualInputDispatcher.scaffoldConsumedGeneration();
          if (edgeGeneration > 0L && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.frame_Z()) {
             ScaffoldModule.PlannedPlacement pending = scaffold.pendingPlacement;
             BlockHitResult hit = use.hitResult();
@@ -6424,7 +6424,7 @@ public final class ScaffoldModule extends Module {
             this.drain_V();
             int age = Math.max(0, AutismSessionState.getInstance().getClientTick() - this.pendingTick);
             if (isArmedWithoutSubmit(this.placementState, age, this.resultSeen, this.submittedCount)) {
-               autismclient.util.VirtualInputDispatcher.update_V();
+               autismclient.util.VirtualInputDispatcher.releaseScaffold();
                this.init_V_Str_3("input-not-consumed");
             }
 
@@ -6444,7 +6444,7 @@ public final class ScaffoldModule extends Module {
             this.pool_V();
             if (this.placementState != ScaffoldModule.PlacementState.IDLE
                && (this.placementState == ScaffoldModule.PlacementState.PREDICTED || this.placementState == ScaffoldModule.PlacementState.FAILED || age >= 2)) {
-               autismclient.util.VirtualInputDispatcher.update_V();
+               autismclient.util.VirtualInputDispatcher.releaseScaffold();
                this.resetPlacementState();
             }
          }
@@ -6906,7 +6906,7 @@ public final class ScaffoldModule extends Module {
          Vec3 motion = MC.player.getDeltaMovement().add(this.airControlVector().scale(0.0196));
          Vec3 next = eye.add(this.collideMovement(MC.player, MC.player.getBoundingBox(), motion));
          double reach = MC.player.blockInteractionRange() - 0.035;
-         if (ClutchBlockPlanner.init_Z_Vec3_2(
+         if (ClutchBlockPlanner.rayHitsCell(
             next, Vec3.directionFromRotation(target.rotation().pitch(), target.rotation().yaw()), target.load(), target.face(), reach
          )) {
             return target;
@@ -6914,7 +6914,7 @@ public final class ScaffoldModule extends Module {
 
          RotationMath.Rotation from = this.lastSentRotation();
 
-         for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
+         for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.placementAimAngles(
             eye,
             next,
             ClutchBlockPlanner.faceBox(target.support(), target.face()),
@@ -6928,7 +6928,7 @@ public final class ScaffoldModule extends Module {
             RotationMath.gcdStep(),
             0.02
          )) {
-            RotationMath.Rotation rotation = new RotationMath.Rotation(from.yaw() + Mth.wrapDegrees(counts.init() - from.yaw()), counts.load());
+            RotationMath.Rotation rotation = new RotationMath.Rotation(from.yaw() + Mth.wrapDegrees(counts.yaw() - from.yaw()), counts.pitch());
             if (!(Math.abs(Mth.wrapDegrees(rotation.yaw() - from.yaw())) > cap)
                && !(Math.abs(rotation.pitch() - from.pitch()) > cap)
                && !(Math.abs(rotation.pitch()) > 89.5)) {
@@ -7003,7 +7003,7 @@ public final class ScaffoldModule extends Module {
 
    private void cancelPendingPlacement() {
       if (this.placementState != ScaffoldModule.PlacementState.IDLE || this.pendingPlacement != null) {
-         autismclient.util.VirtualInputDispatcher.update_V();
+         autismclient.util.VirtualInputDispatcher.releaseScaffold();
          this.resetPlacementState();
       }
    }
@@ -9704,10 +9704,10 @@ public final class ScaffoldModule extends Module {
       RotationMath.Rotation best = null;
       double cost = 1.0 / 0.0;
 
-      for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
+      for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.placementAimAngles(
          eye, nextEye, ClutchBlockPlanner.faceBox(support, face), support, face, support, face, reach, from.yaw(), from.pitch(), gcd, 0.02
       )) {
-         RotationMath.Rotation look = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(counts.init(), from.yaw()), counts.load());
+         RotationMath.Rotation look = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(counts.yaw(), from.yaw()), counts.pitch());
          if (!(side * RotationMath.angleDelta(look.yaw(), course) <= 0.0)) {
             double travel = Math.hypot(RotationMath.angleDelta(look.yaw(), from.yaw()), look.pitch() - from.pitch());
             if (travel < cost) {
@@ -10878,7 +10878,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static void onUseItemOnResult(InteractionHand hand, BlockHitResult hit, InteractionResult result) {
-      long generation = autismclient.util.VirtualInputDispatcher.init_J();
+      long generation = autismclient.util.VirtualInputDispatcher.scaffoldConsumedGeneration();
       if (generation > 0L && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.frame_Z()) {
          scaffold.handleUseResult(generation, hand, hit, result);
       }
@@ -10992,7 +10992,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean canOperate() {
-      return !AutismLiteVariant.enabled() && ClutchModule.read_Z_20()
+      return !AutismLiteVariant.enabled() && ClutchModule.isSteering()
          ? false
          : MC != null
             && MC.player != null
@@ -11010,7 +11010,7 @@ public final class ScaffoldModule extends Module {
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.isRunning()
             && !AutoTotemModule.init_Z_6()
-            && !AutoArmorModule.init_Z_20();
+            && !AutoArmorModule.isClickPending();
    }
 
    public static boolean read_Z_12() {
@@ -11043,7 +11043,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static Input overrideInput(ClientInput source, Input original) {
-      if (!AutismLiteVariant.enabled() && ClutchModule.read_Z_20()) {
+      if (!AutismLiteVariant.enabled() && ClutchModule.isSteering()) {
          return original;
       }
 
@@ -11052,7 +11052,7 @@ public final class ScaffoldModule extends Module {
       }
 
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold
-         && (DangerModule.read_Z_22() || ClutchModule.read_Z_20())
+         && (DangerModule.read_Z_22() || ClutchModule.isSteering())
          && MC != null
          && MC.player != null
          && MC.player.input == source
@@ -12582,13 +12582,13 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean isSilentRotationActive() {
-      return !AutismLiteVariant.enabled() && (DangerModule.read_Z_22() || ClutchModule.read_Z_20()) ? false : isSilentActive(this.rotationWindingDown, this.isEnabled(), this.chunk_Z(), this.canOperate());
+      return !AutismLiteVariant.enabled() && (DangerModule.read_Z_22() || ClutchModule.isSteering()) ? false : isSilentActive(this.rotationWindingDown, this.isEnabled(), this.chunk_Z(), this.canOperate());
    }
 
    public static RotationMath.Rotation resumeRotation() {
       boolean clutchHandoff = false;
       if (!AutismLiteVariant.enabled()) {
-         clutchHandoff = ClutchModule.read_Z_20();
+         clutchHandoff = ClutchModule.isSteering();
       }
 
       return al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && (scaffold.canOperate() || clutchHandoff) && scaffold.rotationHoldTicks > 0
@@ -16012,7 +16012,7 @@ public final class ScaffoldModule extends Module {
    private boolean placeTarget(
       ScaffoldModule.PlannedPlacement target, InteractionHand hand, ItemStack stack, boolean restoreClientRotation, boolean sendPlacementRotation
    ) {
-      if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20()) {
+      if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.isSteering()) {
          RotationMath.Rotation rotation = target.rotation();
          ScaffoldModule.MotionVectorPair placementLine = this.courseLine;
          Vec3 previousFallOff = this.fallOffPoint(placementLine);
@@ -17964,7 +17964,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void releaseControls(boolean restoreSlot) {
-      autismclient.util.VirtualInputDispatcher.update_V();
+      autismclient.util.VirtualInputDispatcher.releaseScaffold();
       if (restoreSlot
          && this.bool("switch-back")
          && this.switchBackSlot >= 0

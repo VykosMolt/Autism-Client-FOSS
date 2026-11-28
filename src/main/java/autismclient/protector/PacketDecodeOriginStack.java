@@ -36,7 +36,7 @@ public final class PacketDecodeOriginStack {
       return state.depth == 0 ? null : state.init_BufferHelper_StreaArr[state.depth - 1];
    }
 
-   public static void init(boolean value) {
+   public static void pushOrPop(boolean value) {
       if (value) {
          push(current());
       } else {

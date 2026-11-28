@@ -51,7 +51,7 @@ public final class ModNamespaceCatalog {
             fabricNamespaces.addAll(FORCED_MODS);
 
             for (String id : FORCED_MODS) {
-               read_V(id);
+               addForeignModId(id);
             }
 
             read();
@@ -63,11 +63,11 @@ public final class ModNamespaceCatalog {
    }
 
    private static void read() {
-      read_V("fabric-resource-loader-v1");
-      read_V("fabric-creative-tab-api-v1");
-      read_V("fabric-registry-sync-v0");
-      read_V("fabric-convention-tags-v2");
-      read_V("fabric-data-attachment-api-v1");
+      addForeignModId("fabric-resource-loader-v1");
+      addForeignModId("fabric-creative-tab-api-v1");
+      addForeignModId("fabric-registry-sync-v0");
+      addForeignModId("fabric-convention-tags-v2");
+      addForeignModId("fabric-data-attachment-api-v1");
    }
 
    public static void reset() {
@@ -77,27 +77,27 @@ public final class ModNamespaceCatalog {
       clearCaches();
    }
 
-   public static void init_V(String key) {
+   public static void addServerKey(String key) {
       if (key != null && !key.isBlank() && serverKnownKeys.add(key)) {
          clearCaches();
       }
    }
 
-   public static void init_V(String key, String value) {
+   public static void addServerTranslation(String key, String value) {
       if (key != null && !key.isBlank() && value != null) {
          serverTranslations.put(key, value);
          clearCaches();
       }
    }
 
-   public static void load(String key, String modId) {
+   public static void addKeyOwner(String key, String modId) {
       String normalized = normalizeModId(modId);
       if (key != null && !key.isBlank() && normalized != null && keyOwners.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
          clearCaches();
       }
    }
 
-   public static void init(Iterable<String> removed, Map<String, String> renamed) {
+   public static void applyDeprecations(Iterable<String> removed, Map<String, String> renamed) {
       if (removed != null) {
          for (String key : removed) {
             serverKnownKeys.remove(key);
@@ -122,7 +122,7 @@ public final class ModNamespaceCatalog {
       clearCaches();
    }
 
-   public static void load_V(String key) {
+   public static void addVanillaKeybind(String key) {
       if (key != null && !key.isBlank() && flush.add(key)) {
          clearCaches();
       }
@@ -135,17 +135,17 @@ public final class ModNamespaceCatalog {
       }
    }
 
-   public static void read_V(String modId) {
+   public static void addForeignModId(String modId) {
       String normalized = normalizeModId(modId);
       if (normalized != null && !BUILTIN_NAMESPACES.contains(normalized) && foreignModIds.add(normalized)) {
          clearCaches();
       }
    }
 
-   public static void init(Iterable<String> modIds) {
+   public static void addForeignModIds(Iterable<String> modIds) {
       if (modIds != null) {
          for (String modId : modIds) {
-            read_V(modId);
+            addForeignModId(modId);
          }
       }
    }
@@ -176,7 +176,7 @@ public final class ModNamespaceCatalog {
       }
    }
 
-   public static boolean init_Z(String key) {
+   public static boolean isVanillaKeybind(String key) {
       return key != null && flush.contains(key) && !blockKeyOwners.containsKey(key);
    }
 
@@ -231,7 +231,7 @@ public final class ModNamespaceCatalog {
       }
    }
 
-   public static boolean init(Identifier channel) {
+   public static boolean isVanillaOrFabricChannel(Identifier channel) {
       if (channel == null) {
          return false;
       }

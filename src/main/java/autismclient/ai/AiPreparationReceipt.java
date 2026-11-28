@@ -35,7 +35,7 @@ final class AiPreparationReceipt {
 
    AiOperation.Result finalizeResult(AiOperation.Result result, boolean currentPending) {
       this.markReconciliationPending(currentPending);
-      return AiMiningPreparation.init(result, this.reconciliationPending, this.lastChildResult);
+      return AiMiningPreparation.preserveBoundaryResult(result, this.reconciliationPending, this.lastChildResult);
    }
 
    void cancelChild(AiOperation child) {

@@ -24,7 +24,7 @@ public final class SilentMovementCoordinator {
    }
 
    public static boolean isSafeWalkActive() {
-      if (!AutismLiteVariant.enabled() && ClutchModule.init_Z_49()) {
+      if (!AutismLiteVariant.enabled() && ClutchModule.isClutchEngaged()) {
          return true;
       } else {
          return !AutismLiteVariant.enabled() && autismclient.modules.DangerModule.read_Z_22()
@@ -68,7 +68,7 @@ public final class SilentMovementCoordinator {
          }
 
          if (!AutismLiteVariant.enabled() && "kb-displacement".equals(SilentRotationManager.getActiveOwnerId())) {
-            return combatMoveFixer.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
+            return combatMoveFixer.fix(input, autismclient.modules.KBDisplacementModule.movementYaw(mc.player.getYRot()), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
          }
 
          String aimOwner = SilentRotationManager.getActiveOwnerId();
@@ -80,11 +80,11 @@ public final class SilentMovementCoordinator {
                }
             }
 
-            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
+            return combatMoveFixer.fix(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
          } else if (!"crystal-aura".equals(aimOwner) && !"anchor-aura".equals(aimOwner)) {
             combatMoveFixer.reset();
             if ("bed-nuker".equals(SilentRotationManager.getActiveOwnerId())) {
-               return bedNukerMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
+               return bedNukerMoveFixer.fix(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
             }
 
             bedNukerMoveFixer.reset();
@@ -95,7 +95,7 @@ public final class SilentMovementCoordinator {
             clutchMoveFixer.reset();
             return autismclient.modules.ScaffoldModule.remapSilentInput(input, mc.player.getYRot(), rotation.yaw());
          } else {
-            return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
+            return combatMoveFixer.fix(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc.player));
          }
       } else {
          return input;
@@ -104,11 +104,11 @@ public final class SilentMovementCoordinator {
 
    public static Input correctInputForYaw(Input input, float referenceYaw, float yaw) {
       Minecraft mc = Minecraft.getInstance();
-      return combatMoveFixer.init(input, referenceYaw, yaw, AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc == null ? null : mc.player));
+      return combatMoveFixer.preview(input, referenceYaw, yaw, AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.predict(mc == null ? null : mc.player));
    }
 
    private static boolean isClutchMoveFixActive() {
-      return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.getActiveOwnerId()) && !ClutchModule.sync_Z_10();
+      return AutismLiteVariant.enabled() ? false : "clutch".equals(SilentRotationManager.getActiveOwnerId()) && !ClutchModule.isSteeringClearOfBoostDrop();
    }
 
    private static boolean shouldSkipMoveFix(RotationMath.Rotation rotation) {
@@ -121,7 +121,7 @@ public final class SilentMovementCoordinator {
             )
             || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.ScaffoldModule scaffold && scaffold.isEnabled()
          ? false
-         : AutismLiteVariant.enabled() || !ClutchModule.sync_Z_10();
+         : AutismLiteVariant.enabled() || !ClutchModule.isSteeringClearOfBoostDrop();
    }
 
    public static float getMovementYaw(LocalPlayer player) {
@@ -215,7 +215,7 @@ public final class SilentMovementCoordinator {
          return null;
       }
 
-      if (!AutismLiteVariant.enabled() && ClutchModule.close_Z_8()) {
+      if (!AutismLiteVariant.enabled() && ClutchModule.ownsRotation()) {
          return activeRotation();
       }
 

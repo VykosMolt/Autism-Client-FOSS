@@ -110,7 +110,7 @@ final class AiDanger {
       return !respawnAnchorWorks && charge > 0;
    }
 
-   static float init_F_Str_Z(String landingBlockId, boolean suppressingBounce) {
+   static float fallDamageMultiplier(String landingBlockId, boolean suppressingBounce) {
       if (landingBlockId != null && !landingBlockId.isEmpty()) {
          float var10000;
          switch (landingBlockId) {
@@ -472,7 +472,7 @@ final class AiDanger {
          Optional<BlockPos> support = mc.level.findSupportingBlock(player, swept);
          if (support.isPresent()) {
             String id = BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(support.get()).getBlock()).getPath();
-            float multiplier = init_F_Str_Z(id, player.isSuppressingBounce());
+            float multiplier = fallDamageMultiplier(id, player.isSuppressingBounce());
             if (multiplier <= 0.0F) {
                return new AiDanger.FallPrediction(0.0F, tick, false);
             }

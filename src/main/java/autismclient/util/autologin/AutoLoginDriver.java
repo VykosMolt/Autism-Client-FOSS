@@ -141,7 +141,7 @@ public final class AutoLoginDriver {
          CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.acceptButton(snapshot.buttons());
          button = accept != null ? accept : CustomMenuActionPlanner.fallbackButton(snapshot.buttons());
          if (button == null) {
-            this.nextMenuTryAt = now + this.timings.write();
+            this.nextMenuTryAt = now + this.timings.menuRetryMs();
             return true;
          }
 
@@ -151,19 +151,19 @@ public final class AutoLoginDriver {
             values.put(input.key(), input.kind() == CustomMenuInput.Kind.TEXT ? password : input.initialValue());
          }
       } catch (RuntimeException error) {
-         this.nextMenuTryAt = now + this.timings.write();
+         this.nextMenuTryAt = now + this.timings.menuRetryMs();
          return true;
       }
 
       if (!this.host.submit(snapshot, new CustomMenuSubmission(values, button))) {
-         this.nextMenuTryAt = now + this.timings.write();
+         this.nextMenuTryAt = now + this.timings.menuRetryMs();
          return true;
       }
 
       this.submittedMenuGeneration = snapshot.generation();
       if (hasText) {
          this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-         this.loginSettleAt = now + this.timings.read();
+         this.loginSettleAt = now + this.timings.loginRetryMs();
       }
 
       return true;
@@ -194,17 +194,17 @@ public final class AutoLoginDriver {
                            this.nextCommandAt = now + 250L;
                         } else {
                            this.attempts++;
-                           this.nextCommandAt = now + this.timings.read();
+                           this.nextCommandAt = now + this.timings.loginRetryMs();
                            if (detection.kind() == AuthPromptParser.PromptKind.REGISTER) {
                               this.registerCommand = detection.command();
                               this.state = AutoLoginDriver.Inner_DataUtil.REGISTERING;
                               this.loginAfterRegister = true;
-                              this.followUpLoginAt = now + this.timings.update();
+                              this.followUpLoginAt = now + this.timings.registerRetryMs();
                            } else {
                               this.loginCommand = detection.command();
                               this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
                               this.loginAfterRegister = false;
-                              this.loginSettleAt = now + this.timings.read();
+                              this.loginSettleAt = now + this.timings.loginRetryMs();
                            }
                         }
                      }
@@ -226,15 +226,15 @@ public final class AutoLoginDriver {
       } else {
          String password = this.host.password();
          if (!password.isEmpty() && this.host.hasConnection()) {
-            String token = AuthPromptParser.init(this.registerCommand, this.loginCommand);
+            String token = AuthPromptParser.loginCommandFor(this.registerCommand, this.loginCommand);
             if (!this.host.sendCommand(token + " " + password)) {
                this.loginAfterRegister = true;
                this.followUpLoginAt = now + 250L;
             } else {
                this.attempts++;
-               this.nextCommandAt = now + this.timings.read();
+               this.nextCommandAt = now + this.timings.loginRetryMs();
                this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-               this.loginSettleAt = now + this.timings.read();
+               this.loginSettleAt = now + this.timings.loginRetryMs();
             }
          }
       }

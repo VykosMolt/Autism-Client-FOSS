@@ -214,7 +214,7 @@ public final class GifModule extends Module {
          }
       }
 
-      return GifOverlayState.init_Str();
+      return GifOverlayState.targetName();
    }
 
    private static Map<String, String> parseEntries(List<String> entries) {

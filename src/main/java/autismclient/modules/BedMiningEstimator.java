@@ -48,7 +48,7 @@ final class BedMiningEstimator {
          trackedLevel = MC.level;
       }
 
-      boolean ideal = !BedEspModule.policy().init_Z();
+      boolean ideal = !BedEspModule.policy().myTools();
       List<ItemStack> recommended = ideal ? BedEspModule.recommendedTools() : List.of();
       Map<BlockPos, Double> actualCosts = ideal ? new HashMap<>() : null;
       Map<BlockState, Double> idealCosts = ideal ? new HashMap<>() : null;
@@ -86,7 +86,7 @@ final class BedMiningEstimator {
                if (!shape.isEmpty()) {
                   List<AABB> boxes = shape.toAabbs().stream().map(b -> b.move(p)).toList();
                   boolean target = p.equals(bed) || paired && p.equals(other);
-                  boolean breakable = target || BedEspModule.init_Z_Block(block.getBlock());
+                  boolean breakable = target || BedEspModule.isCoverBlock(block.getBlock());
                   int slot = MC.player.getInventory().getSelectedSlot();
                   double ticks = 1.0 / 0.0;
                   if (breakable) {
@@ -136,10 +136,10 @@ final class BedMiningEstimator {
                ticksx = Math.max(1.0, Math.ceil(ticksx * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
             }
 
-            return new BedBreachRouteSolver.BreachCell(c.pos(), c.boxes(), ticksx, c.slot(), c.init_Z());
+            return new BedBreachRouteSolver.BreachCell(c.pos(), c.boxes(), ticksx, c.slot(), c.bed());
          }).toList();
          return new BedBreachRouteSolver.BreachRoute(
-            actual, route.eye(), actual.stream().mapToDouble(BedBreachRouteSolver.BreachCell::ticks).sum() + Math.max(0, actual.size() - 1) * 5, route.init_Z()
+            actual, route.eye(), actual.stream().mapToDouble(BedBreachRouteSolver.BreachCell::ticks).sum() + Math.max(0, actual.size() - 1) * 5, route.inReach()
          );
       } else {
          return route;
@@ -152,7 +152,7 @@ final class BedMiningEstimator {
       }
 
       BlockState state = MC.level.getBlockState(pos);
-      if (!state.isAir() && (state.getBlock() instanceof BedBlock || BedEspModule.init_Z_Block(state.getBlock()))) {
+      if (!state.isAir() && (state.getBlock() instanceof BedBlock || BedEspModule.isCoverBlock(state.getBlock()))) {
          Vec3 eye = MC.player.getEyePosition();
          List<AABB> boxes = state.getShape(MC.level, pos, CollisionContext.of(MC.player))
             .toAabbs()

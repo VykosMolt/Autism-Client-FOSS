@@ -21,7 +21,7 @@ final class AiWalkingWork {
       executors.put(var0, new WeakReference<>(var1));
    }
 
-   static void putAt(AiOperation var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
+   static void forwardLookAndClick(AiOperation var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
       if (!AutismLiteVariant.enabled()) {
          var var3 = executors.get(var0);
          AiWrExecutor var4 = var3 == null ? null : (AiWrExecutor)var3.get();
@@ -33,5 +33,5 @@ final class AiWalkingWork {
 
    // 5.3 external ABI bridges
    static void bindExecutor(AiOperation op, AiWrExecutor exec) { register(op, exec); }
-   static void init(AiOperation op, Function<Predicate<AABB>, Vec3> look, Runnable click) { putAt(op, look, click); }
+   static void setLookAndClick(AiOperation op, Function<Predicate<AABB>, Vec3> look, Runnable click) { forwardLookAndClick(op, look, click); }
 }

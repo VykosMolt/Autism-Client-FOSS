@@ -199,7 +199,7 @@ final class AiObsidian {
                         this.load_Z = true;
                         this.init_I = -1;
                         this.init_Str = "surface";
-                        this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", Math.min(150, AiObsidian.secondsLeft(this.deadlineNanos))));
+                        this.init_AiOperation = autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", Math.min(150, AiObsidian.secondsLeft(this.deadlineNanos))));
                         return AiObsidian.running("Up to open sky for water");
                      }
 

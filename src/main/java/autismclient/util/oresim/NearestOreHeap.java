@@ -21,7 +21,7 @@ final class NearestOreHeap {
       return this.size == this.distances.length;
    }
 
-   double init_D() {
+   double nearestDistance() {
       if (this.size == 0) {
          throw new IllegalStateException("selector is empty");
       } else {

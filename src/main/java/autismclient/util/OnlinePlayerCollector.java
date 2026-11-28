@@ -23,7 +23,7 @@ public final class OnlinePlayerCollector {
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
          List<CommandTabNameProber.ProbeVector> vectors = CommandTabNameProber.discoverVectors(connection);
-         CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.ProbeControl() {
+         CommandTabNameProber.probe(connection, names, self, vectors, new CommandTabNameProber.ProbeControl() {
             @Override
             public boolean isCancelled() {
                Minecraft m = Minecraft.getInstance();

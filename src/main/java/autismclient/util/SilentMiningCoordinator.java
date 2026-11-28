@@ -69,14 +69,14 @@ public final class SilentMiningCoordinator {
       }
    }
 
-   public static void load(BlockPos block) {
+   public static void scheduleStop(BlockPos block) {
       Minecraft mc = Minecraft.getInstance();
       if (block != null && mc.player != null && mc.gameMode != null) {
          pendingStop = new SilentMiningCoordinator.PendingStop(mc.player, mc.level, mc.gameMode, block.immutable());
       }
    }
 
-   public static void load() {
+   public static void flushPendingStop() {
       SilentMiningCoordinator.PendingStop stop = pendingStop;
       pendingStop = null;
       Minecraft mc = Minecraft.getInstance();

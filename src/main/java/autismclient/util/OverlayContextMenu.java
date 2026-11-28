@@ -189,7 +189,7 @@ public class OverlayContextMenu<T> {
       }
    }
 
-   public boolean init(double mouseX, double mouseY, int button, OverlayContextMenu.PickHandler<T> onPick) {
+   public boolean handleClick(double mouseX, double mouseY, int button, OverlayContextMenu.PickHandler<T> onPick) {
       if (!this.isOpen()) {
          return false;
       }

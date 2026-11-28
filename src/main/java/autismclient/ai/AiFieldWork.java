@@ -495,7 +495,7 @@ final class AiFieldWork {
                BlockPos ground = BlockPos.of(key);
                BlockPos above = ground.above();
                boolean ownClick = this.ownSown.contains(key);
-               AiReplantEvidence.ReplantState state = AiReplantEvidence.init(
+               AiReplantEvidence.ReplantState state = AiReplantEvidence.replantState(
                   mc.level.getBlockState(above),
                   AiServerEvidence.lastBlockUpdate(above),
                   this.breakRevision.getOrDefault(key, 0L),
@@ -551,7 +551,7 @@ final class AiFieldWork {
             } else {
                return !this.unresolvedReplants.contains(key)
                   ? true
-                  : AiReplantEvidence.init(
+                  : AiReplantEvidence.isBreakConfirmed(
                      mc.level.getBlockState(ground.above()),
                      AiServerEvidence.lastBlockUpdate(ground.above()),
                      this.breakRevision.get(key),

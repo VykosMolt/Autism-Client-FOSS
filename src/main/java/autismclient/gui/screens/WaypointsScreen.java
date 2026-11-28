@@ -246,7 +246,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
       this.hitRegions.add(new WaypointsScreen.HitRegion(type, x, y, w, h, value));
    }
 

@@ -58,7 +58,7 @@ public final class CommandPrefixHelper {
       return new ArrayList<>(names);
    }
 
-   public static boolean init(String moduleName, autismclient.util.macro.ak.Inner_StreamUtil toggleMode) {
+   public static boolean toggleModule(String moduleName, autismclient.util.macro.ak.Inner_StreamUtil toggleMode) {
       if (autismclient.modules.aD.init_Z() && !autismclient.modules.aD.init(moduleName)) {
          return false;
       }

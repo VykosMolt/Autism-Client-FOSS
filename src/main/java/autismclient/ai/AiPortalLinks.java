@@ -322,7 +322,7 @@ final class AiPortalLinks {
          return "the player is suffocating inside a block";
       } else if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
          return "arrival terrain is unavailable";
-      } else if (AiEndRun.init_Z(mc) || mc.player.isOnFire()) {
+      } else if (AiEndRun.isInFire(mc) || mc.player.isOnFire()) {
          return "the arrival is burning";
       } else if (!mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
          return "arrival has no confirmed supported stance";

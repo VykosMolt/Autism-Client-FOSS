@@ -68,7 +68,7 @@ public final class ModdedParticleGuard {
       }
    }
 
-   public static boolean init(ClientboundLevelParticlesPacket packet) {
+   public static boolean isPlaceholder(ClientboundLevelParticlesPacket packet) {
       return packet != null && packet.particle() == ModdedParticleGuard.PlaceholderParticle.INSTANCE;
    }
 
@@ -79,7 +79,7 @@ public final class ModdedParticleGuard {
          && !provider.getClass().getName().startsWith("net.minecraft.client.particle.");
    }
 
-   public static <T> T init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context, Supplier<T> invocation) {
+   public static <T> T guardCreate(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context, Supplier<T> invocation) {
       return init(provider, context) ? null : invocation.get();
    }
 

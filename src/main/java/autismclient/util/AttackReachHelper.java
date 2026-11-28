@@ -25,7 +25,7 @@ public final class AttackReachHelper {
       return range.effectiveMaxRange(attacker) + forward;
    }
 
-   public static boolean init(Vec3 eyes, AABB box, Vec3 ownStep, Vec3 targetStep, double reach) {
+   public static boolean leavesReachNextTick(Vec3 eyes, AABB box, Vec3 ownStep, Vec3 targetStep, double reach) {
       return box.distanceToSqr(eyes) > reach * reach ? false : box.move(targetStep).distanceToSqr(eyes.add(ownStep)) > reach * reach;
    }
 }

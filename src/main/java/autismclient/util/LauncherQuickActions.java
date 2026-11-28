@@ -39,7 +39,7 @@ public final class LauncherQuickActions {
       module.notifyQueueCleared(module.clearPacketQueue());
    }
 
-   public static void update() {
+   public static void closeScreen() {
       GuiDesyncHelper.load(MINECRAFT, false);
    }
 
@@ -49,7 +49,7 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static void flush() {
+   public static void saveGui() {
       GuiDesyncHelper.saveGui(MINECRAFT);
    }
 
@@ -65,7 +65,7 @@ public final class LauncherQuickActions {
       ScreenTitleCopier.copy();
    }
 
-   public static void poll() {
+   public static void disconnect() {
       if (!autismclient.modules.aD.read_Z()) {
          autismclient.modules.ModuleRuntimeManager.getInstance().setDelayGuiPackets(false);
          if (MINECRAFT.getConnection() != null) {
@@ -75,7 +75,7 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static String init(String raw) {
+   public static String sendChat(String raw) {
       if (!autismclient.modules.aD.read_Z() && raw != null) {
          String message = raw.trim();
          if (message.isEmpty()) {

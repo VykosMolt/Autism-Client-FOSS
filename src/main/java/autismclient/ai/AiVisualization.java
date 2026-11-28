@@ -129,7 +129,7 @@ public final class AiVisualization {
          ScreenEvents.AFTER_INIT.register((mc, screen, width, height) -> {
             if (screen instanceof AbstractContainerScreen) {
                ScreenEvents.afterExtract(screen).register((shown, graphics, mouseX, mouseY, delta) -> {
-                  if (load_Z() && !mc.gui.hud.isHidden() && !autismclient.modules.aD.init_Z() && autismclient.e.TokenStore.init()) {
+                  if (isHudVisible() && !mc.gui.hud.isHidden() && !autismclient.modules.aD.init_Z() && autismclient.e.TokenStore.init()) {
                      graphics.nextStratum();
                      autismclient.util.cA.init_V_GuiGraphicsExtract(graphics);
 
@@ -735,7 +735,7 @@ public final class AiVisualization {
                   && loaded
                   && !satisfied
                   && !live.isAir()
-                  && (live.hasBlockEntity() || live.getDestroySpeed(l.level, at) < 0.0F || !live.getFluidState().isEmpty() || !AiSchematicActions.init(live))) {
+                  && (live.hasBlockEntity() || live.getDestroySpeed(l.level, at) < 0.0F || !live.getFluidState().isEmpty() || !AiSchematicActions.isNaturalTerrain(live))) {
                   color = -885830;
                }
 
@@ -1089,12 +1089,12 @@ public final class AiVisualization {
                   autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.cornerA).move(offset), -12067963, 1.8F);
                }
 
-               if (selection.load != null) {
-                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.load).move(offset), -20923, 1.8F);
+               if (selection.cornerB != null) {
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.cornerB).move(offset), -20923, 1.8F);
                }
 
-               if (selection.read != null) {
-                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.read).move(offset).inflate(0.008), -11093505, 2.0F);
+               if (selection.aimPos != null) {
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.aimPos).move(offset).inflate(0.008), -11093505, 2.0F);
                }
             }
 
@@ -1188,9 +1188,9 @@ public final class AiVisualization {
             }
 
             for (AiPlanMesh plan : f.plans) {
-               statGreen = statGreen + plan.write_I;
-               statBlue = statBlue + plan.update;
-               statOrange = statOrange + plan.sync;
+               statGreen = statGreen + plan.greenCells;
+               statBlue = statBlue + plan.blueCells;
+               statOrange = statOrange + plan.orangeCells;
             }
 
             frameCostNanos[frameCostCursor++ % frameCostNanos.length] = statRenderNanos + statCollectNanos;
@@ -1384,7 +1384,7 @@ public final class AiVisualization {
       statRenderNanos = 0L;
    }
 
-   public static boolean load_Z() {
+   public static boolean isHudVisible() {
       if (aP.init_Z()) {
          return true;
       }
@@ -1396,7 +1396,7 @@ public final class AiVisualization {
          && !layers.isEmpty();
    }
 
-   public static autismclient.gui.f.NetHelper init_NetHelper(GuiGraphicsExtractor g) {
+   public static autismclient.gui.f.NetHelper hudBounds(GuiGraphicsExtractor g) {
       if (aP.init_Z()) {
          return aP.init_NetHelper_GuiGraphicsExtract(g);
       }
@@ -1427,9 +1427,9 @@ public final class AiVisualization {
    public static void renderHud(GuiGraphicsExtractor g) {
       if (aP.init_Z()) {
          aP.init_V_GuiGraphicsExtract(g);
-      } else if (load_Z()) {
+      } else if (isHudVisible()) {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
-         autismclient.gui.f.NetHelper b = init_NetHelper(g);
+         autismclient.gui.f.NetHelper b = hudBounds(g);
          AiTaskStatus.Inner_StreamUtil status = hudFrame.status;
          autismclient.gui.ui.widgets.StatusToastCardRenderer.render(
             ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().colors().textPrimary, status.percent()

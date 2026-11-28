@@ -239,7 +239,7 @@ final class AiRunDiagnostics {
       }
    }
 
-   void init(String phase, String message) {
+   void sample(String phase, String message) {
       if (!this.stopped) {
          try {
             Minecraft mc = Minecraft.getInstance();

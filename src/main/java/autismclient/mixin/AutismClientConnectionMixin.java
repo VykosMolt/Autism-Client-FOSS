@@ -187,7 +187,7 @@ public abstract class AutismClientConnectionMixin {
 
          ServerRotationTracker.onOutgoingPacket(packet);
          if (!AutismLiteVariant.enabled()) {
-            BacktrackModule.init_V_Connection_Packet((Connection)(Object)this, packet);
+            BacktrackModule.onPacketSent((Connection)(Object)this, packet);
          }
 
          if (!AutismLiteVariant.enabled()) {
@@ -328,7 +328,7 @@ public abstract class AutismClientConnectionMixin {
 
                if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.interceptOutgoing(packet) && !BlinkPacketManager.interceptOutgoing(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
-                     autismclient.util.SprintStateTracker.load(pong.getId());
+                     autismclient.util.SprintStateTracker.onPong(pong.getId());
                   }
 
                   boolean payloadLoggedEarly = false;
@@ -493,7 +493,7 @@ public abstract class AutismClientConnectionMixin {
    private void yang$afterSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
       if (!aD.read_Z() && this.isPlayConnectionActive()) {
          if (!AutismLiteVariant.enabled() && Minecraft.getInstance().isSameThread()) {
-            QueuedCombatAction.init(packet);
+            QueuedCombatAction.onPacketSent(packet);
          }
 
          if (this.isAutismActive()) {

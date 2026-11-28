@@ -265,7 +265,7 @@ final class PrintCleanupAccess {
                      }
 
                      if (!this.init_LongIterator.hasNext()) {
-                        this.load_Z = PrintCleanupAccess.this.core.load_Z_BlockPos(BlockPos.of(this.key));
+                        this.load_Z = PrintCleanupAccess.this.core.temporaryRemovalKeepsNeighbors(BlockPos.of(this.key));
                         this.init_Z = true;
                         return;
                      }
@@ -276,7 +276,7 @@ final class PrintCleanupAccess {
                      if (!PrintCleanupAccess.this.core.env.hasChunkAt(pos)
                         || !PrintCleanupAccess.this.core.temporaryBlocks.containsKey(this.key)
                         || !PrintFlight.isFlightPointSafe(PrintCleanupAccess.this.core.view, this.certificate.point)
-                        || !PrintCleanupAccess.this.core.load_Z_BlockPos(pos)) {
+                        || !PrintCleanupAccess.this.core.temporaryRemovalKeepsNeighbors(pos)) {
                         this.init_Z = true;
                         return;
                      }
@@ -764,7 +764,7 @@ final class PrintCleanupAccess {
          long started = PrintCleanupAccess.this.core.view.workUnits();
          if (!this.started) {
             this.started = true;
-            if (!PrintCleanupAccess.this.core.load_Z_BlockPos(this.target.pos())) {
+            if (!PrintCleanupAccess.this.core.temporaryRemovalKeepsNeighbors(this.target.pos())) {
                this.init_Z = true;
                return;
             }
@@ -842,7 +842,7 @@ final class PrintCleanupAccess {
             }
 
             if (this.read_I == 1) {
-               this.init_UiHelper_h.init(left);
+               this.init_UiHelper_h.stepSearch(left);
                if (!this.init_UiHelper_h.done) {
                   return;
                }
@@ -869,7 +869,7 @@ final class PrintCleanupAccess {
                      this.load_UiHelper_h = PrintCleanupAccess.this.core.new FlightExitSearch(this.init_Vec3);
                   }
 
-                  this.load_UiHelper_h.init(left);
+                  this.load_UiHelper_h.stepSearch(left);
                   if (!this.load_UiHelper_h.done) {
                      return;
                   }

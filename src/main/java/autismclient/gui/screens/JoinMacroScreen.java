@@ -358,7 +358,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void renderButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       for (JoinMacroScreen.ScreenButton button : this.buttons) {
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
             graphics,
             this.font,
             button.x,

@@ -38,12 +38,12 @@ public final class IsolatedPackDownloader {
    private IsolatedPackDownloader() {
    }
 
-   public static PackDownloader init(final DownloadedPackSource source, final ServerPackManager manager, final PackDownloader original) {
-      return ResourcePackSessionTracker.init(source) == null ? original : new PackDownloader() {
+   public static PackDownloader wrapDownloader(final DownloadedPackSource source, final ServerPackManager manager, final PackDownloader original) {
+      return ResourcePackSessionTracker.sessionForSource(source) == null ? original : new PackDownloader() {
          @Override
          public void download(Map requests, Consumer output) {
-            ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(source);
-            if (session != null && ResourcePackSessionTracker.load_Z(session)) {
+            ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.sessionForSource(source);
+            if (session != null && ResourcePackSessionTracker.hasFilteredPack(session)) {
                IsolatedPackDownloader.init(session, manager, original, requests, output);
             } else {
                IsolatedPackDownloader.load(session, manager, original, requests, output);
@@ -59,7 +59,7 @@ public final class IsolatedPackDownloader {
       Map<UUID, DownloadRequest> requests,
       Consumer<BatchResult> output
    ) {
-      if (session != null && ResourcePackSessionTracker.load_Z(session)) {
+      if (session != null && ResourcePackSessionTracker.hasFilteredPack(session)) {
          Map<UUID, DownloadRequest> vanillaRequests = new LinkedHashMap<>();
          Map<UUID, DownloadRequest> controlledRequests = new LinkedHashMap<>();
          Map<UUID, Long> controlled = new LinkedHashMap<>();
@@ -67,7 +67,7 @@ public final class IsolatedPackDownloader {
          if (requests != null) {
             for (Entry<UUID, DownloadRequest> entry : requests.entrySet()) {
                UUID packId = entry.getKey();
-               long claim = ResourcePackSessionTracker.load(session, packId);
+               long claim = ResourcePackSessionTracker.claimDownload(session, packId);
                if (claim < 0L) {
                   omitted.add(packId);
                } else if (claim > 0L) {
@@ -139,7 +139,7 @@ public final class IsolatedPackDownloader {
                original.download(requests, ResourcePackDownloadScope.init(snapshot, result -> {
                   if (result != null) {
                      for (Entry<UUID, Long> entry : generations.entrySet()) {
-                        if (!ResourcePackSessionTracker.load(session, entry.getKey(), entry.getValue())) {
+                        if (!ResourcePackSessionTracker.isClaimCurrent(session, entry.getKey(), entry.getValue())) {
                            result.downloaded().remove(entry.getKey());
                            result.failed().remove(entry.getKey());
                         }
@@ -169,7 +169,7 @@ public final class IsolatedPackDownloader {
 
       for (Entry<UUID, Long> entry : controlled.entrySet()) {
          UUID packId = entry.getKey();
-         if (ResourcePackSessionTracker.load(session, packId, entry.getValue())) {
+         if (ResourcePackSessionTracker.isClaimCurrent(session, packId, entry.getValue())) {
             currentControlled = true;
          } else {
             result.downloaded().remove(packId);
@@ -186,7 +186,7 @@ public final class IsolatedPackDownloader {
       }
 
       if (ResourcePackSessionTracker.isActive(session) && ResourcePackSessionTracker.policyFor(session, packId) != null) {
-         ResourcePackSessionTracker.init(session, packId, update, vanilla);
+         ResourcePackSessionTracker.onPackUpdate(session, packId, update, vanilla);
       }
 
       return true;
@@ -198,13 +198,13 @@ public final class IsolatedPackDownloader {
       }
 
       if (ResourcePackSessionTracker.isActive(session) && ResourcePackSessionTracker.policyFor(session, packId) != null) {
-         ResourcePackSessionTracker.init(session, packId, result, vanilla);
+         ResourcePackSessionTracker.onPackResult(session, packId, result, vanilla);
       }
 
       return true;
    }
 
-   public static PackLoadFeedback init(final ResourcePackSessionTracker.PackSession session, final PackLoadFeedback vanilla) {
+   public static PackLoadFeedback wrapFeedback(final ResourcePackSessionTracker.PackSession session, final PackLoadFeedback vanilla) {
       return new PackLoadFeedback() {
          @Override
          public void reportUpdate(UUID packId, Update update) {
@@ -228,10 +228,10 @@ public final class IsolatedPackDownloader {
       }
 
       ResourcePackSessionTracker.PackPolicy policy = ResourcePackSessionTracker.policyFor(session, packId);
-      return policy == ResourcePackSessionTracker.PackPolicy.FULL ? false : policy != null || ResourcePackSessionTracker.init_Z(session, packId);
+      return policy == ResourcePackSessionTracker.PackPolicy.FULL ? false : policy != null || ResourcePackSessionTracker.hasFilteredPackFor(session, packId);
    }
 
-   public static FileResourcesSupplier init(ResourcePackSessionTracker.PackSession session, UUID packId, Path path, Supplier<FileResourcesSupplier> ordinary) {
+   public static FileResourcesSupplier isolatedResources(ResourcePackSessionTracker.PackSession session, UUID packId, Path path, Supplier<FileResourcesSupplier> ordinary) {
       if (session == null) {
          return ordinary.get();
       }
@@ -243,7 +243,7 @@ public final class IsolatedPackDownloader {
          && ResourcePackSessionTracker.isActive(session)
          && policy != ResourcePackSessionTracker.PackPolicy.DECLINE
          && (policy == null || ResourcePackSessionTracker.isCurrent(session, packId, generation))
-         && (policy != null || !ResourcePackSessionTracker.load_Z(session) || ServerPackSelectionRegistry.init(session, packId, path))) {
+         && (policy != null || !ResourcePackSessionTracker.hasFilteredPack(session) || ServerPackSelectionRegistry.init(session, packId, path))) {
          if (policy != ResourcePackSessionTracker.PackPolicy.ISOLATED) {
             return ordinary.get();
          }
@@ -277,7 +277,7 @@ public final class IsolatedPackDownloader {
       }
    }
 
-   public static void init(ResourcePackSessionTracker.PackSession session, List<IdAndPath> requested, List<Pack> loaded) {
+   public static void recordLoadedPacks(ResourcePackSessionTracker.PackSession session, List<IdAndPath> requested, List<Pack> loaded) {
       try {
          if (loaded == null) {
             ServerPackSelectionRegistry.init_V(session, null);
@@ -285,11 +285,11 @@ public final class IsolatedPackDownloader {
             ServerPackSelectionRegistry.recordSelection(session, requested, loaded);
          }
       } finally {
-         init_V(session, null);
+         dropSnapshots(session, null);
       }
    }
 
-   static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   static void dropSnapshots(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null) {
          synchronized (LOCK) {
             if (packId == null) {

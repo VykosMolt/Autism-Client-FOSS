@@ -11,7 +11,7 @@ final class AiReplantEvidence {
       return before.is(crop) && AiFarm.isRipe(before) && after.isAir();
    }
 
-   static boolean init(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, int now, int brokenAt, int latencyMillis, boolean ownClickPending) {
+   static boolean isBreakConfirmed(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, int now, int brokenAt, int latencyMillis, boolean ownClickPending) {
       return !ownClickPending
          && current.isAir()
          && update != null
@@ -20,7 +20,7 @@ final class AiReplantEvidence {
          && !autismclient.util.BlockBreakGraceCalc.inGrace(now, brokenAt, latencyMillis);
    }
 
-   static AiReplantEvidence.ReplantState init(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
+   static AiReplantEvidence.ReplantState replantState(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
       if (current.is(crop) && update != null && update.revision() > brokenRevision && update.state().is(crop) && !AiFarm.isRipe(update.state())) {
          return ownReplantClick ? AiReplantEvidence.ReplantState.LOCAL : AiReplantEvidence.ReplantState.EXTERNAL;
       } else {

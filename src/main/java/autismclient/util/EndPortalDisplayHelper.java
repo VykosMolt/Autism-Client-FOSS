@@ -8,7 +8,7 @@ public final class EndPortalDisplayHelper {
    private EndPortalDisplayHelper() {
    }
 
-   public static boolean init(Vec3 camera, Vec3 target, int radius) {
+   public static boolean isWithinViewDistance(Vec3 camera, Vec3 target, int radius) {
       if (StrongholdTriangulator.isValidPoint(camera) && StrongholdTriangulator.isValidPoint(target) && radius >= 1 && radius <= 46340) {
          int cx = (int)Math.floor(camera.x) >> 4;
          int cz = (int)Math.floor(camera.z) >> 4;
@@ -39,7 +39,7 @@ public final class EndPortalDisplayHelper {
       return alpha << 24 | argb & 16777215;
    }
 
-   public static String init(Vec3 target, boolean observed, boolean estimated) {
+   public static String coordinateText(Vec3 target, boolean observed, boolean estimated) {
       if (StrongholdTriangulator.isValidPoint(target) && (observed || estimated)) {
          long x = (long)Math.floor(target.x);
          long z = (long)Math.floor(target.z);
@@ -49,7 +49,7 @@ public final class EndPortalDisplayHelper {
       }
    }
 
-   public static String init(Vec3 player, Vec3 target, boolean observed, boolean estimated) {
+   public static String distanceText(Vec3 player, Vec3 target, boolean observed, boolean estimated) {
       if (StrongholdTriangulator.isValidPoint(player) && StrongholdTriangulator.isValidPoint(target) && (observed || estimated)) {
          double distance = observed ? player.distanceTo(target) : StrongholdTriangulator.horizontalDistance(player, target);
          return Double.isFinite(distance) ? Math.round(distance) + " m" : "";

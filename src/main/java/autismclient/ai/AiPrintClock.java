@@ -37,7 +37,7 @@ final class AiPrintClock {
          }
 
          @Override
-         public int init_I(ItemStack material) {
+         public int countHeld(ItemStack material) {
             return mc.player == originalPlayer && mc.player != null ? AiInventoryController.countMatching(mc.player.getInventory(), material) : 0;
          }
 
@@ -47,7 +47,7 @@ final class AiPrintClock {
          }
 
          @Override
-         public boolean init_Z(ItemStack material) {
+         public boolean giveCreativeStack(ItemStack material) {
             return mc.player == originalPlayer && env.giveCreativeStack(material);
          }
 

@@ -80,19 +80,19 @@ public class ThemeColorScreen extends Screen {
    @Override
    protected void init() {
       if (this.logoTexture == null) {
-         this.logoTexture = ThemeTextureRecolorer.init(
+         this.logoTexture = ThemeTextureRecolorer.previewRecolor(
             Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/autism_client_logo.png"), ThemePaletteManager.ColorRole.ACCENT, 2048
          );
       }
 
       if (this.panoramaTexture == null) {
-         this.panoramaTexture = ThemeTextureRecolorer.init(
+         this.panoramaTexture = ThemeTextureRecolorer.previewRecolor(
             Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/panorama_0.png"), ThemePaletteManager.ColorRole.BACKDROP, 640
          );
       }
 
       if (this.tickTexture == null) {
-         this.tickTexture = ThemeTextureRecolorer.init(autismclient.gui.f.a.DataUtil.tick, ThemePaletteManager.ColorRole.ACCENT, 128);
+         this.tickTexture = ThemeTextureRecolorer.previewRecolor(autismclient.gui.f.a.DataUtil.tick, ThemePaletteManager.ColorRole.ACCENT, 128);
       }
    }
 
@@ -613,7 +613,7 @@ public class ThemeColorScreen extends Screen {
 
    private void renderPreviewToggle(GuiGraphicsExtractor g, int x, int y, int h, boolean on) {
       autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(x, y, 30, h);
-      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.uiContext(g, -1, -1, this.draftTheme), b, null, on, false, "themePreviewToggle:" + x + ":" + y);
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.drawToggle(this.uiContext(g, -1, -1, this.draftTheme), b, null, on, false, "themePreviewToggle:" + x + ":" + y);
    }
 
    private int buttonWidth(String label) {

@@ -929,7 +929,7 @@ public final class AutoTotemModule extends Module {
       }
    }
 
-   public static boolean read_Z_3() {
+   public static boolean isBusy() {
       if (autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.totem)) {
          return autismclient.aggressivepvp.Versions.aggressiveTotemBusy();
       }

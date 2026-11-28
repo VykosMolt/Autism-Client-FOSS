@@ -199,7 +199,7 @@ public final class JoinMacroController {
       }
    }
 
-   public static void update() {
+   public static void onConfigReload() {
       reset();
    }
 

@@ -25,7 +25,7 @@ public abstract class AutismProtectorClientCommonNetworkHandlerMixin {
    @Inject(method = "handleResourcePackPop", at = @At("HEAD"))
    private void autism$onPackPop(ClientboundResourcePackPopPacket packet, CallbackInfo ci) {
       if (this.minecraft.isSameThread()) {
-         ResourcePackSessionTracker.init(ConnectionPrivacyRegistry.getActive(this.connection), packet.id().orElse(null));
+         ResourcePackSessionTracker.removePackFor(ConnectionPrivacyRegistry.getActive(this.connection), packet.id().orElse(null));
       }
    }
 }

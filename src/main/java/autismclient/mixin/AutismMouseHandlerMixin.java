@@ -121,7 +121,7 @@ public abstract class AutismMouseHandlerMixin {
          }
       }
 
-      MouseMovementRouter.init_V();
+      MouseMovementRouter.resetIfInactive();
    }
 
    @Inject(method = "onButton", at = @At("HEAD"))
@@ -176,7 +176,7 @@ public abstract class AutismMouseHandlerMixin {
          }
       }
 
-      if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.isClickPending()) {
          ci.cancel();
       } else if (FreecamController.handleMouseScroll(yOffset)) {
          ci.cancel();
@@ -226,7 +226,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
    private void autism$swallowTurnDuringTotemOperation(double deltaTime, CallbackInfo ci) {
-      if (AutoTotemModule.init_Z_6() || AutoArmorModule.load_Z_9()) {
+      if (AutoTotemModule.init_Z_6() || AutoArmorModule.isBusy()) {
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          this.autism$simulatedDX = 0.0;

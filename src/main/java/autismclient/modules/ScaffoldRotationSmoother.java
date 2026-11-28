@@ -161,8 +161,8 @@ final class ScaffoldRotationSmoother {
          this.targetYaw = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.yaw() + RotationMath.angleDelta(target.yaw(), from.yaw());
          this.read_D = 0.0;
          this.write_D = init_D_D(isReturn ? this.load_D : this.init_D);
-         this.update_D = Math.max(0.84, Math.min(1.08, this.hand.close() + 0.06 * this.random.nextGaussian()));
-         this.arcBias = Math.max(-0.012, Math.min(0.012, this.hand.sync() * 0.25 + this.hand.flush() * 0.2 * this.random.nextGaussian()));
+         this.update_D = Math.max(0.84, Math.min(1.08, this.hand.strokeEase() + 0.06 * this.random.nextGaussian()));
+         this.arcBias = Math.max(-0.012, Math.min(0.012, this.hand.curvature() * 0.25 + this.hand.curvatureJitter() * 0.2 * this.random.nextGaussian()));
       }
 
       if (isReturn && this.write_Z) {

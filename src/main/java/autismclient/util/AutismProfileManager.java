@@ -49,7 +49,7 @@ public final class AutismProfileManager {
       return INSTANCE;
    }
 
-   static void init_V() {
+   static void flushInstanceSnapshot() {
       AutismProfileManager current = INSTANCE;
       if (current != null) {
          current.flushPendingSnapshot();
@@ -546,7 +546,7 @@ public final class AutismProfileManager {
 
    public synchronized void flushPendingSnapshot() {
       if (this.snapshotPending && this.pendingSnapshot == null) {
-         AutismConfigPersistence.init();
+         AutismConfigPersistence.flushConfig();
       }
 
       if (this.snapshotPending) {

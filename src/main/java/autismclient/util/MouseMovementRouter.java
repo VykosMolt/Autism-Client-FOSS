@@ -34,7 +34,7 @@ public final class MouseMovementRouter {
    }
 
    public static void submitDegrees(MouseMovementRouter.MovementSource source, float yawDelta, float pitchDelta) {
-      if (!read()) {
+      if (!canRoute()) {
          release(source);
       } else {
          double degreesPerRawInput = RotationMath.mouseGcd();
@@ -55,7 +55,7 @@ public final class MouseMovementRouter {
    }
 
    public static void submitCounts(MouseMovementRouter.MovementSource source, long yawCounts, long pitchCounts) {
-      if (!read()) {
+      if (!canRoute()) {
          release(source);
       } else {
          double rawX = yawCounts;
@@ -77,7 +77,7 @@ public final class MouseMovementRouter {
    }
 
    public static void submitRaw(MouseMovementRouter.MovementSource source, double deltaX, double deltaY) {
-      if (!read()) {
+      if (!canRoute()) {
          release(source);
       } else if (Double.isFinite(deltaX) && Double.isFinite(deltaY)) {
          if (source == MouseMovementRouter.MovementSource.AIM_ASSIST) {
@@ -93,7 +93,7 @@ public final class MouseMovementRouter {
    }
 
    public static MouseMovementRouter.MouseDelta consumeDelta() {
-      if (!read()) {
+      if (!canRoute()) {
          reset();
          return new MouseMovementRouter.MouseDelta(0.0, 0.0);
       }
@@ -129,8 +129,8 @@ public final class MouseMovementRouter {
       return new MouseMovementRouter.MouseDelta(x, y);
    }
 
-   public static void init_V() {
-      if (!read()) {
+   public static void resetIfInactive() {
+      if (!canRoute()) {
          reset();
       }
    }
@@ -161,7 +161,7 @@ public final class MouseMovementRouter {
       }
    }
 
-   public static void init(boolean active) {
+   public static void setActive(boolean active) {
       init_Z = active;
    }
 
@@ -191,7 +191,7 @@ public final class MouseMovementRouter {
       return source != null && exclusiveSource == source;
    }
 
-   public static boolean read() {
+   public static boolean canRoute() {
       return CLIENT != null
          && CLIENT.player != null
          && CLIENT.level != null

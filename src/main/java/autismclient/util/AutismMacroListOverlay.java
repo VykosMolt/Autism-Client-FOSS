@@ -1180,7 +1180,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       float uiMouseY = viewport.toUiY(mouseY);
       if (this.contextMenu.isOpen()) {
          if (button == 0) {
-            if (this.contextMenu.init(uiMouseX, uiMouseY, button, (item, label, index) -> this.onContextMenuItem(item, index))) {
+            if (this.contextMenu.handleClick(uiMouseX, uiMouseY, button, (item, label, index) -> this.onContextMenuItem(item, index))) {
                return true;
             }
          } else if (button == 1 && !this.contextMenu.handleClick(uiMouseX, uiMouseY)) {

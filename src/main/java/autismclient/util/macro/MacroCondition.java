@@ -163,7 +163,7 @@ public final class MacroCondition {
 
    private boolean evaluateLeaf(Minecraft mc) {
       if (this.kind == MacroCondition.Inner_CachePool.TOOLS) {
-         return MacroToolBridge.init(MacroExecutor.getCurrentRunId(), this.toolScope, this.toolFilter, this.toolState);
+         return MacroToolBridge.matchesJobState(MacroExecutor.getCurrentRunId(), this.toolScope, this.toolFilter, this.toolState);
       }
 
       if (mc == null) {

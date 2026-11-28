@@ -54,7 +54,7 @@ public final class CrosshairRenderer {
 
          try {
             graphics.pose().scale(1.0F / guiScale, 1.0F / guiScale);
-            if (CrosshairVectorPipeline.init(graphics, look, MINECRAFT.getWindow().getWidth() / 2.0F, MINECRAFT.getWindow().getHeight() / 2.0F, guiScale, 0, aimedTargetType(look))) {
+            if (CrosshairVectorPipeline.drawPreset(graphics, look, MINECRAFT.getWindow().getWidth() / 2.0F, MINECRAFT.getWindow().getHeight() / 2.0F, guiScale, 0, aimedTargetType(look))) {
                return true;
             }
          } finally {
@@ -95,7 +95,7 @@ public final class CrosshairRenderer {
 
             try {
                graphics.pose().scale(1.0F / pixelsPerUnit, 1.0F / pixelsPerUnit);
-               if (CrosshairVectorPipeline.init(graphics, look, (float)(centerX * pixelsPerUnit), (float)(centerY * pixelsPerUnit), guiScale, maxPixels, 0)) {
+               if (CrosshairVectorPipeline.drawPreset(graphics, look, (float)(centerX * pixelsPerUnit), (float)(centerY * pixelsPerUnit), guiScale, maxPixels, 0)) {
                   return;
                }
             } finally {

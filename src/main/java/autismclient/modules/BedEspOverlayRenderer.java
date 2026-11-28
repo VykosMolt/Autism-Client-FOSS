@@ -54,15 +54,15 @@ public final class BedEspOverlayRenderer {
          Vec3 camera = WorldProjectionHelper.cameraPosition();
          AutismBufferSource source = BUFFERS.init();
          List<BedEspModule.BedInfo> beds = currentBeds();
-         boolean path = BedEspModule.policy().load();
+         boolean path = BedEspModule.policy().path();
          VertexConsumer fill = source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (BedEspModule.BedInfo bed : beds) {
             int rgb = bed.color().getTextureDiffuseColor();
             WorldLineRenderer.box(matrices.last(), fill, bed.box().move(camera.scale(-1.0)), withAlpha(rgb, 32));
             if (path && bed.init_Z()) {
-               for (int n = 0; n < bed.load_List().size(); n++) {
-                  WorldLineRenderer.box(matrices.last(), fill, new AABB(bed.load_List().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
+               for (int n = 0; n < bed.path().size(); n++) {
+                  WorldLineRenderer.box(matrices.last(), fill, new AABB(bed.path().get(n)).inflate(0.005).move(camera.scale(-1.0)), n == 0 ? 540999579 : 419417696);
                }
             }
          }
@@ -74,9 +74,9 @@ public final class BedEspOverlayRenderer {
                matrices.last(), lines, bed.box().inflate(0.004).move(camera.scale(-1.0)), withAlpha(bed.color().getTextureDiffuseColor(), 204), 1.5F
             );
             if (path && bed.init_Z()) {
-               for (int n = 0; n < bed.load_List().size(); n++) {
+               for (int n = 0; n < bed.path().size(); n++) {
                   WorldLineRenderer.box(
-                     matrices.last(), lines, new AABB(bed.load_List().get(n)).inflate(0.007).move(camera.scale(-1.0)), n == 0 ? -868286565 : -855650720, 1.5F
+                     matrices.last(), lines, new AABB(bed.path().get(n)).inflate(0.007).move(camera.scale(-1.0)), n == 0 ? -868286565 : -855650720, 1.5F
                   );
                }
             }
@@ -87,7 +87,7 @@ public final class BedEspOverlayRenderer {
    }
 
    public static void renderHud(GuiGraphicsExtractor graphics) {
-      if (isActive() && BedEspModule.policy().read()) {
+      if (isActive() && BedEspModule.policy().tags()) {
          Matrix4f matrix = new Matrix4f();
          if (WorldProjectionHelper.projection(matrix)) {
             Vec3 camera = WorldProjectionHelper.cameraPosition();
@@ -112,7 +112,7 @@ public final class BedEspOverlayRenderer {
                   if (point != null) {
                      String name = bed.color().getName().replace('_', ' ');
                      name = Character.toUpperCase(name.charAt(0)) + name.substring(1) + " Bed";
-                     String time = bed.init_Str().isEmpty() ? String.format(Locale.ROOT, "%.1fs", bed.ticks() / 20.0) : bed.init_Str();
+                     String time = bed.status().isEmpty() ? String.format(Locale.ROOT, "%.1fs", bed.ticks() / 20.0) : bed.status();
                      int width = ui.init_PoolEntry().measureWidth(name) + 8 + ui.init_PoolEntry().measureWidth(time);
                      float[] widths = new float[1 + bed.materials().size()];
                      widths[0] = width + 4;

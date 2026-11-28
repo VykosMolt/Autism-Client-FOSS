@@ -41,7 +41,7 @@ public class AutismLevelRendererTracerMixin {
       boolean ai = !AutismLiteVariant.enabled() && AiVisualization.hasContent();
       boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.isActive();
       boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.isActive();
-      boolean portal = !AutismLiteVariant.enabled() && EndPortalRenderer.init_Z();
+      boolean portal = !AutismLiteVariant.enabled() && EndPortalRenderer.shouldRender();
       if (tracers || esp || waypoints || skeleton || ai || danger || beds || portal) {
          PoseStack matrixStack = new PoseStack();
          matrixStack.mulPose(cameraState.viewRotationMatrix);

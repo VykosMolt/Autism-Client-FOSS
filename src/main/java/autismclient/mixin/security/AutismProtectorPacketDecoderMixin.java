@@ -40,7 +40,7 @@ public class AutismProtectorPacketDecoderMixin {
          return autism$decodeCompatibly(instance, buffer, original, modded);
       } finally {
          ModdedParticleGuard.pop();
-         PacketDecodeOriginStack.init(false);
+         PacketDecodeOriginStack.pushOrPop(false);
       }
    }
 

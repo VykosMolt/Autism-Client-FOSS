@@ -28,11 +28,11 @@ public class ak implements MacroAction {
       if (!this.entries.isEmpty()) {
          for (ak.Inner_DataUtil entry : this.entries) {
             if (entry != null && entry.init_Str != null && !entry.init_Str.isBlank()) {
-               autismclient.util.CommandPrefixHelper.init(entry.init_Str, entry.init_ak_StreamUtil);
+               autismclient.util.CommandPrefixHelper.toggleModule(entry.init_Str, entry.init_ak_StreamUtil);
             }
          }
       } else {
-         autismclient.util.CommandPrefixHelper.init(this.moduleName, this.toggleMode);
+         autismclient.util.CommandPrefixHelper.toggleModule(this.moduleName, this.toggleMode);
       }
    }
 

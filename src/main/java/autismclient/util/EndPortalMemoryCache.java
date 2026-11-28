@@ -53,7 +53,7 @@ public final class EndPortalMemoryCache {
       public final StrongholdTriangulator triangulator = new StrongholdTriangulator();
       public final Map<Long, StrongholdTriangulator.PortalFrame> frames = new LinkedHashMap<>();
 
-      public void init(StrongholdTriangulator.PortalFrame frame) {
+      public void addFrame(StrongholdTriangulator.PortalFrame frame) {
          if (this.frames.size() >= 512 && !this.frames.containsKey(frame.pos().asLong())) {
             this.frames.remove(this.frames.keySet().iterator().next());
          }

@@ -32,7 +32,7 @@ public final class RegistryDisplayNameCache {
       return entityNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.ENTITY_TYPE, entity -> entity.getDescription().getString()));
    }
 
-   public static String write(String rawId) {
+   public static String displayName(String rawId) {
       return genericName(rawId);
    }
 
@@ -41,7 +41,7 @@ public final class RegistryDisplayNameCache {
       return genericNames.computeIfAbsent(key, RegistryDisplayNameCache::fallbackName);
    }
 
-   public static String sync(String rawId) {
+   public static String shortName(String rawId) {
       String key = normalizeKey(rawId);
       if (key.isEmpty()) {
          return "";
@@ -51,10 +51,10 @@ public final class RegistryDisplayNameCache {
       return parsed == null ? key : parsed.getPath();
    }
 
-   public static boolean init(String text, String rawId) {
+   public static boolean isDefaultName(String text, String rawId) {
       String trimmed = text == null ? "" : text.trim();
       String key = normalizeKey(rawId);
-      return trimmed.isEmpty() ? true : trimmed.equalsIgnoreCase(key) || trimmed.equalsIgnoreCase(sync(key)) || trimmed.equalsIgnoreCase(genericName(key));
+      return trimmed.isEmpty() ? true : trimmed.equalsIgnoreCase(key) || trimmed.equalsIgnoreCase(shortName(key)) || trimmed.equalsIgnoreCase(genericName(key));
    }
 
    private static <T> String lookupName(String rawId, Registry<T> registry, Function<T, String> nameProvider) {

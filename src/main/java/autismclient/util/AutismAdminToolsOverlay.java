@@ -84,7 +84,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.setVisible(true);
    }
 
-   public void read_V_2() {
+   public void openItemEditor() {
       this.mainTab = 1;
       this.itemEditorTab = 3;
       this.scrollOffset = 0;

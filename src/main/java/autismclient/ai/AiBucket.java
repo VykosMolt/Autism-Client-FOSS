@@ -237,7 +237,7 @@ final class AiBucket {
                      return hitx.getType() == Type.BLOCK && hitx.getBlockPos().equals(this.target);
                   });
                } else {
-                  BlockHitResult hit = AiBucket.init(
+                  BlockHitResult hit = AiBucket.emptyHitFor(
                      mc, this.target, fluid.equals("water") && AiBucket.isWaterloggable(mc.level.getBlockState(this.target)), fluid.equals("water")
                   );
                   return hit == null ? null : hit.getLocation();
@@ -403,10 +403,10 @@ final class AiBucket {
    }
 
    static BlockHitResult unusedRaycastTarget(Minecraft mc, BlockPos target, boolean waterlog) {
-      return init(mc, target, waterlog, false);
+      return emptyHitFor(mc, target, waterlog, false);
    }
 
-   static BlockHitResult init(Minecraft mc, BlockPos target, boolean waterlog, boolean water) {
+   static BlockHitResult emptyHitFor(Minecraft mc, BlockPos target, boolean waterlog, boolean water) {
       if (mc.player != null && mc.level != null) {
          if (waterlog) {
             return autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);

@@ -66,7 +66,7 @@ public final class SodiumRegionResourceProbe {
       GENERATION.incrementAndGet();
    }
 
-   public static void load_V() {
+   public static void invalidateIfInactive() {
       if (!shouldProbe()) {
          invalidate();
       }

@@ -199,7 +199,7 @@ final class AiGuard {
       } else {
          return shooter.distanceTo(mc.player) <= 4.5 && Math.abs(shooter.getY() - mc.player.getY()) <= 3.0 && mc.player.hasLineOfSight(shooter)
             ? true
-            : AiCombat.init_I_Minecraft(mc, shooter, 10.0) >= 0;
+            : AiCombat.checkStraightRun(mc, shooter, 10.0) >= 0;
       }
    }
 

@@ -25,6 +25,6 @@ public abstract class AutismPanoramaOverlayMixin {
       index = 1
    )
    private Identifier autism$swapOverlay(Identifier original) {
-      return CustomMainMenuGuard.load() ? original : ThemeTextureRecolorer.load(AUTISM_PANORAMA_OVERLAY);
+      return CustomMainMenuGuard.isSuppressed() ? original : ThemeTextureRecolorer.recoloredBackdrop(AUTISM_PANORAMA_OVERLAY);
    }
 }

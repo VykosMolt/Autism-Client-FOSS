@@ -34,7 +34,7 @@ public final class AuthPromptParser {
       }
    }
 
-   public static String init(String registerCommand, String seenLoginCommand) {
+   public static String loginCommandFor(String registerCommand, String seenLoginCommand) {
       if (seenLoginCommand != null && !seenLoginCommand.isBlank()) {
          return seenLoginCommand;
       } else {

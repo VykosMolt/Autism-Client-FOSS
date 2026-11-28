@@ -29,7 +29,7 @@ public final class ToolsAction implements MacroAction {
    public String saveAs = "";
    private boolean enabled = true;
 
-   public boolean init() {
+   public boolean hasCoordinateInput() {
       MacroToolBridge.ToolInfo tool = MacroToolBridge.findTool(this.toolId);
       if (tool == null) {
          return false;
@@ -70,7 +70,7 @@ public final class ToolsAction implements MacroAction {
    public JsonObject buildArgs(Minecraft mc) {
       JsonObject args = parseArgs(this.argumentsJson);
       resolveTemplates(args, mc);
-      if (this.init()) {
+      if (this.hasCoordinateInput()) {
          if (this.isNavigationTool()) {
             for (String key : new String[]{"x", "y", "z", "dx", "dy", "dz", "waypoint"}) {
                args.remove(key);

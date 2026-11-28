@@ -88,7 +88,7 @@ final class AiPlacementSearch {
                      this.breakCount++;
                   }
 
-                  if (!this.currentCells.containsKey(packKey(this.cursorX, this.cursorY - 1, this.cursorZ)) && this.world.init_Z(pos, cell)) {
+                  if (!this.currentCells.containsKey(packKey(this.cursorX, this.cursorY - 1, this.cursorZ)) && this.world.isUnsupportedGround(pos, cell)) {
                      this.unsupportedCount++;
                   }
                }
@@ -145,7 +145,7 @@ final class AiPlacementSearch {
       return this.candidates.size();
    }
 
-   long init_J() {
+   long getClassifiedCells() {
       return this.classifiedCells;
    }
 
@@ -166,7 +166,7 @@ final class AiPlacementSearch {
    interface WorldProbe {
       AiPlacementSearch.CellEdit classify(BlockPos var1, AiBuilder.CellSpec var2);
 
-      boolean init_Z(BlockPos var1, AiBuilder.CellSpec var2);
+      boolean isUnsupportedGround(BlockPos var1, AiBuilder.CellSpec var2);
    }
 
    record PlacementCandidate(BlockPos origin, int rotation, List<AiBuilder.CellSpec> cells, double distance) {

@@ -441,7 +441,7 @@ public final class AutoTradeModule extends Module {
          autismclient.util.villager.VillagerTradeSession.Inner_CachePool result = this.session.status();
          this.tradesDone = this.tradesDone + this.session.traded();
          this.emeraldsSpent = this.emeraldsSpent + this.session.spent();
-         this.session.init_V_Minecraft(MC);
+         this.session.abortSession(MC);
          this.session = null;
          if (this.rerollMode) {
             this.stopWith(
@@ -872,7 +872,7 @@ public final class AutoTradeModule extends Module {
    @Override
    public void onDisable() {
       if (this.session != null) {
-         this.session.init_V_Minecraft(MC);
+         this.session.abortSession(MC);
          this.session = null;
       }
 
@@ -941,7 +941,7 @@ public final class AutoTradeModule extends Module {
    public void onGameLeft() {
       autismclient.util.villager.VillagerTradeSession var1 = this.session;
       if (var1 != null) {
-         var1.init_V_Minecraft(Module.MC);
+         var1.abortSession(Module.MC);
       }
 
       this.session = null;

@@ -82,7 +82,7 @@ public final class UnexplainedBlockTracker {
       return this.explanations.stream().anyMatch(c -> c.until > now && c.pos.distSqr(pos) <= c.radius);
    }
 
-   public void init(long now, BiPredicate<BlockPos, String> unchanged, Predicate<BlockPos> worldCause) {
+   public void sweep(long now, BiPredicate<BlockPos, String> unchanged, Predicate<BlockPos> worldCause) {
       this.explanations.removeIf(cx -> cx.until <= now);
       this.suppressedUntil.values().removeIf(until -> until <= now);
       this.bursts.values().removeIf(q -> {

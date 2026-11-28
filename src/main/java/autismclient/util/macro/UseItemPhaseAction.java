@@ -64,7 +64,7 @@ public class UseItemPhaseAction implements MacroAction {
          }
 
          if (!stopped) {
-            this.load(mc);
+            this.finishRelease(mc);
          }
       }
    }
@@ -148,7 +148,7 @@ public class UseItemPhaseAction implements MacroAction {
       PacketGateManager.removeGate(this.gateId);
    }
 
-   public void load(Minecraft mc) {
+   public void finishRelease(Minecraft mc) {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          if (this.swapSlotBeforeRelease >= 0) {
             this.clickSlot(mc, this.swapSlotBeforeRelease, this.swapButton, ContainerInput.SWAP);

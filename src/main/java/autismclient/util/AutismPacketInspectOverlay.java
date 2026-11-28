@@ -316,7 +316,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant = var10000;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      context, this.font, button.x(), button.y(), button.width(), this.footerRowHeight(), button.label(), variant, true, mouseX, mouseY
                   );
                }
@@ -774,9 +774,9 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
 
       if (packet != null) {
-         out.append("Captured Protocol: ").append(packet.load()).append('\n');
+         out.append("Captured Protocol: ").append(packet.protocol()).append('\n');
          out.append("Captured Packet ID: ").append(packet.packetId()).append('\n');
-         out.append("Captured Packet Type: ").append(packet.write()).append('\n');
+         out.append("Captured Packet Type: ").append(packet.packetType()).append('\n');
       }
 
       String decoded = PacketDetailFormatter.describe(entry);

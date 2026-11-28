@@ -233,13 +233,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int mouseX,
       int mouseY
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, variant, enabled, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(context, this.font, x, y, w, h, label, variant, enabled, mouseX, mouseY);
    }
 
    private void renderToggleButton(
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean toggleState, String animationKey, boolean enabled, int mouseX, int mouseY
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, toggleState, animationKey, enabled, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, this.font, x, y, w, h, label, toggleState, animationKey, enabled, mouseX, mouseY);
    }
 
    private void renderRunButton(GuiGraphicsExtractor context, int x, int y, int w, int h, boolean running, boolean enabled, int mouseX, int mouseY) {
@@ -269,7 +269,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int mouseX,
       int mouseY
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, "", variant, enabled, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(context, this.font, x, y, w, h, "", variant, enabled, mouseX, mouseY);
       int icon = 8;
       int gap = 3;
       int textW = autismclient.gui.f.b.k.init(
@@ -2597,7 +2597,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void addDelayPacketsAction() {
       autismclient.util.macro.DelayPacketsAction action = new autismclient.util.macro.DelayPacketsAction();
       if (AutismSessionState.getInstance().isUseCustomPackets()) {
-         action.write();
+         action.syncPacketNames();
       } else {
          action.resetDefaults();
       }
@@ -3759,7 +3759,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    public void discardAndClose() {
       this.stopEditedRun();
       this.revertTempSave();
-      this.update_V_10();
+      this.closeEditor();
    }
 
    private boolean isJoinMacroMenuMode() {
@@ -3826,7 +3826,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void update_V_10() {
+   public void closeEditor() {
       this.stopEditedRun();
       if (this.tempSavedForRun) {
          this.revertTempSave();
@@ -4281,7 +4281,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             }
 
             MacroLibraryManager.getInstance().removeMacro(this.macro);
-            this.update_V_10();
+            this.closeEditor();
          }, !stepListLocked);
       }
 
@@ -4794,7 +4794,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                      callback.accept(savedOrUpdated);
                   }
 
-                  this.update_V_10();
+                  this.closeEditor();
                }
             }
          }
@@ -5514,7 +5514,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       String title = this.paletteMode == AutismMacroEditorOverlay.PaletteSectionKind.ACTION
          ? "Add Action"
          : (this.paletteMode == AutismMacroEditorOverlay.PaletteSectionKind.PRESET ? "Presets" : "Add Conditional");
-      autismclient.gui.ui.widgets.WindowFrameRenderer.init(
+      autismclient.gui.ui.widgets.WindowFrameRenderer.drawFrame(
          autismclient.gui.f.UiHelper.init(context, this.font, mouseX, mouseY),
          autismclient.gui.f.NetHelper.init(pickerX, pickerY, pickerW, pickerH),
          title,
@@ -5671,7 +5671,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
       if (this.contextMenu.isOpen()) {
          if (button == 0) {
-            if (this.contextMenu.init(mouseX, mouseY, button, (idx, label, i) -> this.onContextMenuItem(idx, i))) {
+            if (this.contextMenu.handleClick(mouseX, mouseY, button, (idx, label, i) -> this.onContextMenuItem(idx, i))) {
                return true;
             }
          } else if (button == 1 && !this.contextMenu.handleClick(mouseX, mouseY)) {
@@ -5702,7 +5702,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.togglePinned();
             return true;
          } else if (this.isOverCloseButton(mouseX, mouseY)) {
-            this.update_V_10();
+            this.closeEditor();
             return true;
          } else {
             this.clearSelection();
@@ -6324,19 +6324,19 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   return true;
                } else {
                   if (this.configurationOnly) {
-                     this.update_V_10();
+                     this.closeEditor();
                      return true;
                   }
 
                   if (this.isJoinMacroMenuMode()) {
-                     this.update_V_10();
+                     this.closeEditor();
                      return true;
                   }
 
                   if (MC.gui.screen() != null) {
                      MC.execute(() -> MC.gui.setScreen(null));
                   } else {
-                     this.update_V_10();
+                     this.closeEditor();
                   }
 
                   return true;

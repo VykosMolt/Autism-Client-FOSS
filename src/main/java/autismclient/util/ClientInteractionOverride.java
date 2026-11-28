@@ -453,7 +453,7 @@ public final class ClientInteractionOverride {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         QueuedCombatAction.load();
+         QueuedCombatAction.cancelAll();
       }
 
       remainingAttackClicks = 0;
@@ -494,7 +494,7 @@ public final class ClientInteractionOverride {
       }
 
       useDispatchPending = false;
-      if (!AutismLiteVariant.enabled() && !QueuedCombatAction.init_Z()) {
+      if (!AutismLiteVariant.enabled() && !QueuedCombatAction.isActiveReady()) {
          return false;
       }
 
@@ -539,7 +539,7 @@ public final class ClientInteractionOverride {
          return false;
       }
 
-      if (!AutismLiteVariant.enabled() && !QueuedCombatAction.init_Z()) {
+      if (!AutismLiteVariant.enabled() && !QueuedCombatAction.isActiveReady()) {
          return false;
       }
 
@@ -566,7 +566,7 @@ public final class ClientInteractionOverride {
       } else if (MC != null && MC.player != null && MC.options != null && !autismclient.modules.aD.read_Z()) {
          applyDeferredKeyReset();
          if (!AutismLiteVariant.enabled()) {
-            QueuedCombatAction.init_V();
+            QueuedCombatAction.promoteQueued();
          }
 
          BlockHitResult useHit = pendingUseHit;
@@ -601,7 +601,7 @@ public final class ClientInteractionOverride {
             pendingGuardOwner = null;
             ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
             if (!AutismLiteVariant.enabled() && "kill-aura".equals(activeAttackOwner) && attackHit != null) {
-               attackHit = autismclient.modules.KillAuraModule.init_EntityHitResult_EntityHitResult_ch_CachePool(attackHit, wire);
+               attackHit = autismclient.modules.KillAuraModule.confirmAttackHit(attackHit, wire);
                if (attackHit == null) {
                   activeAttackOwner = null;
                   return;
@@ -708,7 +708,7 @@ public final class ClientInteractionOverride {
 
    public static void cleanupAfterInputTick() {
       if (!AutismLiteVariant.enabled()) {
-         QueuedCombatAction.load();
+         QueuedCombatAction.cancelAll();
       }
 
       activeAttackOwner = null;

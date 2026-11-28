@@ -24,7 +24,7 @@ public final class GuiMovementPassThrough {
    private GuiMovementPassThrough() {
    }
 
-   public static boolean init(KeyEvent input, boolean pressed) {
+   public static boolean handleKey(KeyEvent input, boolean pressed) {
       if (input == null) {
          return false;
       } else if (autismclient.modules.AutoTotemModule.init_Z_6()) {

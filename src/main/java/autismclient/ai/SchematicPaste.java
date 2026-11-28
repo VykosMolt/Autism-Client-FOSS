@@ -198,7 +198,7 @@ final class SchematicPaste {
       }
    }
 
-   void init() {
+   void cancel() {
       this.cancelled = true;
    }
 

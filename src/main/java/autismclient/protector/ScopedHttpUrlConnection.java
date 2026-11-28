@@ -384,7 +384,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                redirects++;
                this.closeActiveSocket();
                if (response.code == 305) {
-                  if (route != null && route.init_Z()) {
+                  if (route != null && route.viaProxy()) {
                      throw new ProtocolException("HTTP 305 cannot replace the configured resource-pack proxy");
                   }
 
@@ -525,7 +525,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       InputStream input = this.socketInputFor(socket);
       ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.scopeSnapshot.proxyEndpoint();
       if (frozen == null
-         || route.init_Z()
+         || route.viaProxy()
             && frozen.port() == route.endpoint().port()
             && frozen.host().equalsIgnoreCase(route.endpoint().host())) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
@@ -729,7 +729,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private void appendProxyAuthorization(StringBuilder request, PackUrlValidator.PackRoute route) {
-      if (route.init_Z()) {
+      if (route.viaProxy()) {
          for (String value : headerValues(this.requestHeaders, "Proxy-Authorization")) {
             appendHeader(request, "Proxy-Authorization", value);
          }

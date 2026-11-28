@@ -1139,7 +1139,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       int target = this.prefixWidths[safeCursor] - Math.max(0, availableWidth);
       if (this.prefixWidths[this.horizontalScrollIndex] < target) {
-         this.horizontalScrollIndex = Utf16TextCursor.load(this.value, lowerBound(this.prefixWidths, 0, safeCursor, target));
+         this.horizontalScrollIndex = Utf16TextCursor.nextBoundary(this.value, lowerBound(this.prefixWidths, 0, safeCursor, target));
       }
 
       int maxOffsetWidth = Math.max(0, this.prefixWidths[this.value.length()] - Math.max(0, availableWidth));
@@ -1157,7 +1157,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int start = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       int target = Math.max(0, this.prefixWidths[start] + Math.round(mouseInnerX));
       int candidate = nearestWidthIndex(this.prefixWidths, 0, this.value.length(), target);
-      return Utf16TextCursor.init(this.value, this.prefixWidths, candidate, target);
+      return Utf16TextCursor.nearestBoundary(this.value, this.prefixWidths, candidate, target);
    }
 
    private List<String> wrapPlaceholderLines(Font renderer, Identifier font, int color, String text, int availableWidth) {
@@ -1539,7 +1539,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int visibleEnd = Math.max(start, Math.min(contentEnd, this.value.length()));
       int target = this.prefixWidths[start] + Math.max(0, Math.round(mouseInnerX));
       int candidate = nearestWidthIndex(this.prefixWidths, start, visibleEnd, target);
-      int best = Utf16TextCursor.init(this.value, this.prefixWidths, candidate, target);
+      int best = Utf16TextCursor.nearestBoundary(this.value, this.prefixWidths, candidate, target);
       return Math.max(line.start(), Math.min(best, contentEnd));
    }
 
@@ -1645,7 +1645,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          }
 
          this.selectionAnchor = Utf16TextCursor.clampIndex(this.value, start);
-         this.cursorIndex = Utf16TextCursor.load(this.value, Math.max(start, end));
+         this.cursorIndex = Utf16TextCursor.nextBoundary(this.value, Math.max(start, end));
       }
    }
 
@@ -1843,7 +1843,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
    private void replaceRange(int start, int end, String replacement) {
       int safeStart = Utf16TextCursor.clampIndex(this.value, start);
-      int safeEnd = Math.max(safeStart, Utf16TextCursor.load(this.value, end));
+      int safeEnd = Math.max(safeStart, Utf16TextCursor.nextBoundary(this.value, end));
       int capacity = Math.max(0, this.maxLength - (this.value.length() - (safeEnd - safeStart)));
       String sanitizedReplacement = Utf16TextCursor.truncate(this.sanitizeInput(replacement), capacity);
       String next = this.value.substring(0, safeStart) + sanitizedReplacement + this.value.substring(safeEnd);

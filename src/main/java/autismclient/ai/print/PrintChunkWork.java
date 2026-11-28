@@ -35,7 +35,7 @@ final class PrintChunkWork {
             }
 
             if (this.countsAsPending(i, core.cellStates[i])) {
-               chunk.load++;
+               chunk.pendingCells++;
             }
          }
       }
@@ -65,11 +65,11 @@ final class PrintChunkWork {
       }
 
       if (this.countsAsPending(i, before)) {
-         chunk.load--;
+         chunk.pendingCells--;
       }
 
       if (this.countsAsPending(i, after)) {
-         chunk.load++;
+         chunk.pendingCells++;
       }
 
       if (chunk.verified
@@ -93,7 +93,7 @@ final class PrintChunkWork {
       }
    }
 
-   void load() {
+   void rescanLoadedChunks() {
       for (PrintChunkWork.ChunkEntry chunk : this.chunks.values()) {
          if (this.isLoaded(chunk)) {
             chunk.resetScan();
@@ -103,7 +103,7 @@ final class PrintChunkWork {
 
    boolean hasPendingChunks() {
       for (PrintChunkWork.ChunkEntry chunk : this.chunks.values()) {
-         if (chunk.load > 0 && this.isLoaded(chunk)) {
+         if (chunk.pendingCells > 0 && this.isLoaded(chunk)) {
             return true;
          }
       }
@@ -116,7 +116,7 @@ final class PrintChunkWork {
 
       for (PrintChunkWork.ChunkEntry chunk : this.chunks.values()) {
          if (!this.isLoaded(chunk)
-            && (verification ? !this.auditStarted || !chunk.verified : chunk.load != 0)
+            && (verification ? !this.auditStarted || !chunk.verified : chunk.pendingCells != 0)
             && (best == null || chunk.distSqTo(position) < best.distSqTo(position) || chunk.distSqTo(position) == best.distSqTo(position) && chunk.chunkKey < best.chunkKey)) {
             best = chunk;
          }
@@ -201,7 +201,7 @@ final class PrintChunkWork {
       final long chunkKey;
       final IntArrayList cells;
       int unfinishedCells;
-      int load;
+      int pendingCells;
       int scanned;
       int missing;
       int failed;

@@ -38,7 +38,7 @@ final class CrosshairVectorPipeline {
    private CrosshairVectorPipeline() {
    }
 
-   static boolean init(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
+   static boolean drawPreset(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
       if (!look.style().isPreset() || !ensurePipelines()) {
          return false;
       }
@@ -90,7 +90,7 @@ final class CrosshairVectorPipeline {
       }
    }
 
-   static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, float x, float y, float radiusX, float radiusY) {
+   static void drawEllipse(GuiGraphicsExtractor graphics, float x, float y, float radiusX, float radiusY) {
       if (ensurePipelines()) {
          float w = radiusX + 2.0F;
          float h = radiusY + 2.0F;

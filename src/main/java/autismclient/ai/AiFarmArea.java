@@ -158,7 +158,7 @@ final class AiFarmArea {
       }
 
       AiFarmBuild.FarmLayout layout(String substrate) {
-         return new AiFarmBuild.FarmLayout(this.width(), this.length(), "soul_sand".equals(substrate) ? List.of() : AiFarmBuild.init(this.width(), this.length()));
+         return new AiFarmBuild.FarmLayout(this.width(), this.length(), "soul_sand".equals(substrate) ? List.of() : AiFarmBuild.waterCenters(this.width(), this.length()));
       }
 
       List<BlockPos> cells(int groundY) {

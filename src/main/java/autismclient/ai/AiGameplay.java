@@ -451,7 +451,7 @@ final class AiGameplay {
       }
    }
 
-   static AiOperation write(JsonObject args) {
+   static AiOperation pickupItems(JsonObject args) {
       final String item = AiJson.getString(args, "item", "");
       int amount = AiJson.getInt(args, "count", 1);
       if (!item.isBlank() && amount >= 1 && amount <= 2304) {
@@ -730,7 +730,7 @@ final class AiGameplay {
       return Math.max(3, Math.min(10, 2 + (int)Math.ceil(ms * 1.5 / 50.0)));
    }
 
-   static AiOperation update(final JsonObject args) {
+   static AiOperation smeltSession(final JsonObject args) {
       final String input = AiJson.getString(args, "input", "");
       final String output = AiJson.getString(args, "item", "");
       final String fuel = AiJson.getString(args, "fuel", "minecraft:coal");

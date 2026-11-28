@@ -411,7 +411,7 @@ final class AiOracle {
          @Override
          public AiOperation.Result tick() {
             if (!this.cancelled && mc.player != null && mc.level != null) {
-               autismclient.util.oresim.OreSimEngine.init(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
+               autismclient.util.oresim.OreSimEngine.requestScan(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
                if (autismclient.util.oresim.OreSimEngine.hasError()) {
                   return this.finish(
                      AiOperation.Status.FAILED,

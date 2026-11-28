@@ -540,7 +540,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    public void setCaptureAllowed(boolean allowed) {
       this.captureAllowed = allowed;
       if (!allowed) {
-         this.poll_Z_2();
+         this.cancelCapture();
       }
    }
 
@@ -1142,7 +1142,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.standalonePayloadMode = true;
    }
 
-   public boolean init_Z_Str(String channel) {
+   public boolean applyPayloadChannel(String channel) {
       String target = channel == null ? "" : channel.trim();
       if (!this.visible || target.isBlank()) {
          return false;
@@ -1379,11 +1379,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return slotText.equals(slotDetail) ? "Hover: " + slotText + " | " + itemText : "Hover: " + slotText + " | " + slotDetail + " | " + itemText;
    }
 
-   public boolean poll_Z_2() {
+   public boolean cancelCapture() {
       return this.cancelPacketClickTargetCapture() ? true : this.captureSession.end(() -> this.finishCapture(false, false));
    }
 
-   public boolean push_Z_2() {
+   public boolean isCapturing() {
       AutismSessionState state = AutismSessionState.getInstance();
       return this.captureSession.isActive()
          || this.capturingFieldKey != null
@@ -2060,7 +2060,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int times = this.itemActionDraft.getItemTimes(i);
                String summary = " • " + summaryAct + (summaryBtn.isBlank() ? "" : " " + summaryBtn) + (times != 1 ? " ×" + times : "");
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx, this.font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, ListRowRenderer.RowTone.NORMAL, true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -2627,7 +2627,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                int nameW = useMax ? maxX - 3 - x : maxX - 3 - amountW - 3 - x;
                boolean rowHovered = mx >= x && mx < x + nameW && my >= siy && my < siy + 13;
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   entry.displayName(),
@@ -2701,7 +2701,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                ListRowRenderer.RowTone tone = inList
                   ? ListRowRenderer.RowTone.READY
                   : (opt.craftable ? ListRowRenderer.RowTone.NORMAL : ListRowRenderer.RowTone.MISSING);
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx, this.font, opt.outputHoverName, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
                );
                if (opt.outputStack != null && opt.outputStack.getCount() > 1) {
@@ -2845,7 +2845,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String summary = " • " + (cnt == 0 ? "all" : "×" + cnt);
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + dropItemW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   rowLabel,
@@ -3702,7 +3702,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.packetMatchRules.get(i);
                boolean selected = i == this.selectedPacketRule;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   this.ruleLabel(rule),
@@ -3882,7 +3882,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String pname = qp != null && qp.packet != null ? PacketNameResolver.nameOf(qp.packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.getDelay() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+            autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                ctx,
                this.font,
                Component.literal(rowText),
@@ -5496,7 +5496,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private String payloadStatusText() {
       if (this.payloadEditor != null) {
-         String decoded = this.payloadEditor.close == null ? "payload" : this.payloadEditor.close;
+         String decoded = this.payloadEditor.bodyKind == null ? "payload" : this.payloadEditor.bodyKind;
          int bytes = this.payloadEditor.bodyBytes == null ? 0 : this.payloadEditor.bodyBytes.length;
          return !this.payloadContentDirty && !this.payloadEdited ? "Ready: " + bytes + "B " + decoded : "Edited: " + bytes + "B " + decoded;
       } else if (this.payloadContentDirty) {
@@ -5953,7 +5953,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderActionButton(
          ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", OverlayActionButton.ButtonTone.PRIMARY, true, mx, my, () -> {
             autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
-            tmp.write();
+            tmp.syncPacketNames();
             this.listFields.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
             this.listFields.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
          }
@@ -6097,7 +6097,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void renderRemoveButton(GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, Runnable action) {
       boolean hovered = mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.drawDeleteButton(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
       this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (mouseButton != 0) {
             return false;
@@ -6839,7 +6839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, String symbol, boolean danger, boolean active, Runnable action
    ) {
       boolean hovered = active && mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.drawSymbolButton(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
       this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (active && mouseButton == 0) {
             action.run();
@@ -7360,7 +7360,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                } else {
                   boolean selected = macroName.equals(current);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 14;
-                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                      ctx,
                      this.font,
                      Component.literal(macroName),
@@ -7544,9 +7544,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (af != null) {
-         af.setX(toolbar.init().read());
-         af.setY(toolbar.init().write());
-         af.setWidth(toolbar.init().update());
+         af.setX(toolbar.rowBounds().read());
+         af.setY(toolbar.rowBounds().write());
+         af.setWidth(toolbar.rowBounds().update());
          af.render(ctx, mx, my, delta);
       }
 
@@ -7682,11 +7682,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean hovered = mx >= x && mx < x + rowAreaW && my >= iy && my < iy + 14;
                if (field.captureMode() == CaptureMode.PACKET_NAME) {
                   int textColor = this.listEntryColor(lst.get(ri), ri, selected);
-                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.drawColoredRow(
                      ctx, this.font, displayValue, autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14), hovered, selected, textColor, this.isItemEntryListKey(key)
                   );
                } else {
-                  autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+                  autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                      ctx,
                      this.font,
                      displayValue,
@@ -7862,7 +7862,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int siy = catSelViewport.getRowY(i);
             if (siy != -2147483648) {
                String display = RegistryDisplayNameCache.blockName(sel.get(i));
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   Component.literal(display),
@@ -7930,7 +7930,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String display = RegistryDisplayNameCache.blockName(id);
             boolean already = sel.contains(id);
             boolean hov = mx >= x && mx < x + catItemW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+            autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                ctx,
                this.font,
                Component.literal(display),
@@ -9441,7 +9441,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (!autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns)) {
          if (keyCode == 256) {
-            if (this.poll_Z_2()) {
+            if (this.cancelCapture()) {
                return true;
             } else if (this.hasFocusedTextInput()) {
                this.clearInputFocus();
@@ -11098,7 +11098,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (vp != null) {
             vp.scrollByRows(-1);
          }
-      }, RegistryDisplayNameCache::write, "(any sound - add to filter)");
+      }, RegistryDisplayNameCache::displayName, "(any sound - add to filter)");
       ThemedTextInputBox search = this.internalTextFields.get("soundIds");
       if (search != null) {
          search.setX(x);
@@ -11109,14 +11109,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       cy += 18;
       String filter = search != null ? search.getValue().trim().toLowerCase() : "";
-      List<String> filtered = this.filterCached("wait_sound_search", soundIds(), filter, RegistryDisplayNameCache::write);
+      List<String> filtered = this.filterCached("wait_sound_search", soundIds(), filter, RegistryDisplayNameCache::displayName);
       this.renderSelectableList(ctx, x, cy, w, mx, my, "wait_sound_search", filtered, 6, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, RegistryDisplayNameCache::write);
+      }, selected::contains, RegistryDisplayNameCache::displayName);
    }
 
    private void renderWaitEntityEditor(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
@@ -11664,7 +11664,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean sel = this.containsIgnoreCase(selected, row.name());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
                String label = autismclient.gui.f.b.k.init(this.font, "  " + row.name(), w - 6, font, UiColorPalette.textBody());
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   Component.literal(label),
@@ -11727,7 +11727,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int modeW = this.dropdownWidth(tmOptions, 52);
                int rowW = itemW - removeW - modeW - 4;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy + 1 && my < iy + 14;
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   Component.literal(entry.init_Str),
@@ -12063,7 +12063,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String modeSummary = " • " + e.describeMode();
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx, this.font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, ListRowRenderer.RowTone.NORMAL, true
                );
                int fi = i;
@@ -13937,7 +13937,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void applyModuleDelayPreset() {
       autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
-      tmp.write();
+      tmp.syncPacketNames();
       this.listFields.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
       this.listFields.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
    }
@@ -14401,11 +14401,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
             Component richLabel = richFormatter == null ? null : richFormatter.apply(value);
             if (richLabel != null) {
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx, this.font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, ListRowRenderer.RowTone.NORMAL, true
                );
             } else {
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   Component.literal(formatter.apply(value)),
@@ -14509,7 +14509,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean selected = selectedPredicate != null && selectedPredicate.test(value);
                boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + rowH;
                ItemStack icon = this.iconFor(listKey, value);
-               autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+               autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
                   ctx,
                   this.font,
                   Component.literal(display),
@@ -14643,7 +14643,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private static String registryDisplayName(String value) {
-      return RegistryDisplayNameCache.sync(value);
+      return RegistryDisplayNameCache.shortName(value);
    }
 
    private String entityEntryLabel(String entry) {

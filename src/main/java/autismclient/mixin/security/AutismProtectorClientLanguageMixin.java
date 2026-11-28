@@ -72,9 +72,9 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
       BiConsumer<String, String> snapshotOutput = snapshotOutput(output, resource);
       PackResources source = resource.source();
       if (source instanceof VanillaPackResources) {
-         original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.init_V(key)));
+         original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.addServerKey(key)));
       } else if (source instanceof FilePackResources || source instanceof OverlayedPackResources || source instanceof IsolatedResourcePack) {
-         original.call(stream, trackingOutput(snapshotOutput, ModNamespaceCatalog::init_V));
+         original.call(stream, trackingOutput(snapshotOutput, ModNamespaceCatalog::addServerTranslation));
       } else if (source instanceof PathPackResources) {
          original.call(stream, snapshotOutput);
       } else {
@@ -82,7 +82,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
          if (modId == null) {
             original.call(stream, snapshotOutput);
          } else {
-            original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.load(key, modId)));
+            original.call(stream, trackingOutput(snapshotOutput, (key, value) -> ModNamespaceCatalog.addKeyOwner(key, modId)));
          }
       }
    }

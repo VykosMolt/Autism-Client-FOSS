@@ -78,7 +78,7 @@ final class KBDisplacementWarmup {
       }
 
       @Override
-      public boolean load_Z_AABB(AABB body) {
+      public boolean touchesFallCatcher(AABB body) {
          return false;
       }
 
@@ -103,7 +103,7 @@ final class KBDisplacementWarmup {
       @Override
       public TerrainDropGrid.Column column(int x, int z, int base, double stepTop) {
          boolean cell = this.overlapsPlatform(x, x + 1, z, z + 1);
-         long walls = cell ? TerrainDropGrid.init_J_I(base, this.platform.minY, this.platform.maxY) : 0L;
+         long walls = cell ? TerrainDropGrid.sliceMask(base, this.platform.minY, this.platform.maxY) : 0L;
          return new TerrainDropGrid.Column(walls, 0L, cell ? this.platform.maxY : -1.0 / 0.0, (byte)(cell ? 1 : 2), 0.6F);
       }
    }

@@ -33,7 +33,7 @@ public final class SprintStateTracker {
       previousSprinting = sprinting;
    }
 
-   public static void load(boolean sprinting) {
+   public static void onSprintFlagSent(boolean sprinting) {
       long roundTrip = (Math.max(0, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs()) + 100L) * 1000000L;
       if (System.nanoTime() - lastChangeNanos > roundTrip) {
          predictedServerSprinting = sprinting;
@@ -48,7 +48,7 @@ public final class SprintStateTracker {
       }
    }
 
-   public static void init(int id) {
+   public static void tagPendingWithPing(int id) {
       synchronized (pendingSprintFlags) {
          for (int[] flag : pendingSprintFlags) {
             if (flag[1] == -2147483648) {
@@ -58,7 +58,7 @@ public final class SprintStateTracker {
       }
    }
 
-   public static void load(int id) {
+   public static void onPong(int id) {
       synchronized (pendingSprintFlags) {
          Iterator<int[]> it = pendingSprintFlags.iterator();
 
@@ -99,7 +99,7 @@ public final class SprintStateTracker {
       }
    }
 
-   public static void load(Player attacker) {
+   public static void onAttack(Player attacker) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && attacker == mc.player) {
          attackResetSprint = attackStartSprinting && !attacker.isSprinting();

@@ -412,7 +412,7 @@ public final class AiBlockMine {
 
    public static AiOperation create(JsonObject args) {
       if (!AutismLiteVariant.enabled()) {
-         AiOperation preparation = AiMiningPreparation.load(args);
+         AiOperation preparation = AiMiningPreparation.preparationOp(args);
          if (preparation != null) {
             return preparation;
          }
@@ -868,7 +868,7 @@ public final class AiBlockMine {
             public AiOperation.Result tick() {
                AiOperation.Result result = this.step();
                if (!AutismLiteVariant.enabled() && result.terminal() && this.reconcileAfterPreparation) {
-                  result = AiMiningPreparation.init(result, true, this.lastPreparationResult);
+                  result = AiMiningPreparation.preserveBoundaryResult(result, true, this.lastPreparationResult);
                }
 
                if (!AutismLiteVariant.enabled() && !result.terminal() && this.preparation == null) {
@@ -1103,7 +1103,7 @@ public final class AiBlockMine {
                                  this.toolPrepared = true;
                                  JsonObject investment = args.deepCopy();
                                  investment.addProperty("timeoutSeconds", (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L));
-                                 AiOperation prepared = AiMiningPreparation.init(investment);
+                                 AiOperation prepared = AiMiningPreparation.investmentOp(investment);
                                  if (prepared != null) {
                                     this.stopActivity();
                                     this.preparation = prepared;
@@ -3511,7 +3511,7 @@ public final class AiBlockMine {
       }
    }
 
-   public static synchronized void init_V() {
+   public static synchronized void markBreatheStart() {
       BREATHE_START_NANOS[0] = BREATHE_START_NANOS[1];
       BREATHE_START_NANOS[1] = System.nanoTime();
    }

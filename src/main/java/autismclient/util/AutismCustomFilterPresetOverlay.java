@@ -439,7 +439,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private boolean canSave() {
       String name = this.typedName();
-      return name != null && !PacketPresetManager.getInstance().update(name);
+      return name != null && !PacketPresetManager.getInstance().isBuiltIn(name);
    }
 
    private boolean canLoad() {
@@ -477,7 +477,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    private void drawButton(GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, boolean enabled) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
          context,
          this.textRenderer,
          x,

@@ -114,12 +114,12 @@ final class AiGuardLayer {
          }
 
          if (!AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null) {
-            AiOperation out = AiDragonZones.isDragonPerched(zoneClient) ? AiDragonZones.load(zoneClient) : null;
+            AiOperation out = AiDragonZones.isDragonPerched(zoneClient) ? AiDragonZones.leave(zoneClient) : null;
             boolean cloud = false;
             if (out == null && !zoneClient.player.isInWater() && AiDragon.isInBreath(zoneClient)) {
                out = AiDragon.escapeBreath(zoneClient);
                if (out == null) {
-                  out = AiDragonZones.init_AiOperation(zoneClient);
+                  out = AiDragonZones.dropOffPillar(zoneClient);
                }
 
                cloud = true;
@@ -141,7 +141,7 @@ final class AiGuardLayer {
             && this.waterDouseOp == null
             && zoneClient.player != null
             && !zoneClient.player.isInWater()
-            && (zoneClient.player.isOnFire() || AiEndRun.init_Z(zoneClient))) {
+            && (zoneClient.player.isOnFire() || AiEndRun.isInFire(zoneClient))) {
             this.waterDouseOp = AiEndRun.douseFire(zoneClient);
          }
 
@@ -174,7 +174,7 @@ final class AiGuardLayer {
                      && (this.activeGuardOp == null || !this.activeGuardOp.requiresReconciliationAfterEmergency())
                      && zoneClient.player.getHealth() >= 8.0F
                      && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
-                     && AiEndRun.init_Z(zoneClient)
+                     && AiEndRun.isInFire(zoneClient)
             )) {
             if (this.fireControl == null) {
                this.fireControl = new AiFireControl(true);
@@ -194,9 +194,9 @@ final class AiGuardLayer {
             this.fireControl = null;
          }
 
-         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null && !zoneClient.player.isInWater() && AiEndRun.init_Z(zoneClient)) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && zoneClient.player != null && !zoneClient.player.isInWater() && AiEndRun.isInFire(zoneClient)) {
             boolean stepFailedLately = System.nanoTime() - this.lastFireStepFailNanos < 3000000000L;
-            AiOperation out = stepFailedLately ? null : AiEndRun.load_AiOperation(zoneClient);
+            AiOperation out = stepFailedLately ? null : AiEndRun.escapeFireOp(zoneClient);
             if (out != null) {
                this.preemptForHazard(leg, cancelLeg);
                this.activeFlee = false;
@@ -207,19 +207,19 @@ final class AiGuardLayer {
                return this.tickActiveGuardOp();
             }
 
-            if (AiEndRun.load_Z(zoneClient)) {
+            if (AiEndRun.extinguishFire(zoneClient)) {
                return runningResult("Interrupted: putting out the fire");
             }
          }
 
          Minecraft client = Minecraft.getInstance();
-         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && !client.player.isInWater() && (AiEndRun.init_Z(client) || client.player.isOnFire())) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeHazardEscape && !client.player.isInWater() && (AiEndRun.isInFire(client) || client.player.isOnFire())) {
             AiOperation out = client.player.isOnFire() ? AiEndRun.douseFire(client) : null;
-            if (out == null && AiEndRun.init_Z(client) && System.nanoTime() - this.lastFireStepFailNanos >= 3000000000L) {
-               out = AiEndRun.load_AiOperation(client);
+            if (out == null && AiEndRun.isInFire(client) && System.nanoTime() - this.lastFireStepFailNanos >= 3000000000L) {
+               out = AiEndRun.escapeFireOp(client);
             }
 
-            if (out == null && AiEndRun.init_Z(client) && AiEndRun.load_Z(client)) {
+            if (out == null && AiEndRun.isInFire(client) && AiEndRun.extinguishFire(client)) {
                this.preemptForHazard(leg, cancelLeg);
                return runningResult("Interrupted: putting out the fire");
             }
@@ -252,7 +252,7 @@ final class AiGuardLayer {
             && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
             AiGuard.StatusSnapshot live = AiGuard.sampleStatus();
             AiGuard.GuardAction next = AiGuard.decide(this.effectivePolicy(zoneClient), live).action();
-            if (AiCombatPriority.init_Z_X_DataUtil(this.activeGuardAction, next, live.hostilesNear())
+            if (AiCombatPriority.shouldPreempt(this.activeGuardAction, next, live.hostilesNear())
                || this.activeGuardAction == AiGuard.GuardAction.EAT && AiSurvival.nearestThreat(zoneClient) != null) {
                AiRunTrace.emitServiceEvent(
                   "survival_reprioritize",
@@ -506,8 +506,8 @@ final class AiGuardLayer {
          return AiPowderEscape.escape();
       } else if (mc.player.isInWater()) {
          return null;
-      } else if (AiEndRun.init_Z(mc)) {
-         return AiEndRun.load_AiOperation(mc);
+      } else if (AiEndRun.isInFire(mc)) {
+         return AiEndRun.escapeFireOp(mc);
       } else {
          return mc.player.isOnFire() ? AiEndRun.douseFire(mc) : null;
       }

@@ -77,10 +77,10 @@ final class TerrainDropGrid {
    }
 
    long occupancyMask(double lo, double hi) {
-      return init_J_I(this.baseY, lo, hi);
+      return sliceMask(this.baseY, lo, hi);
    }
 
-   static long init_J_I(int base, double lo, double hi) {
+   static long sliceMask(int base, double lo, double hi) {
       if (!(hi > lo)) {
          return 0L;
       }
@@ -191,7 +191,7 @@ final class TerrainDropGrid {
          double friction = ground ? block * 0.91 : 0.91;
          if (countering && steer.opposes(vx, vz)) {
             double accel = ground ? steer.groundStrength() * (0.21600002 / (block * block * block)) : steer.airAccel();
-            vx += steer.init_D() * accel;
+            vx += steer.dirX() * accel;
             vz += steer.dirZ() * accel;
          }
 
@@ -561,7 +561,7 @@ final class TerrainDropGrid {
       return true;
    }
 
-   boolean init() {
+   boolean hasDropColumn() {
       int r = (int)Math.ceil(this.radius) + 1;
 
       for (int ring = 0; ring <= r; ring++) {
@@ -585,11 +585,11 @@ final class TerrainDropGrid {
       int init_I,
       double load_D,
       double read_D,
-      boolean init_Z,
-      int load_I,
+      boolean edge,
+      int crossTick,
       double crossSpeed,
       boolean load_Z,
-      boolean read_Z
+      boolean grazed
    ) {
       boolean isLethal(double minimum, boolean voidOnly) {
          return this.outcome == KnockbackThrowPlanner.LandingOutcome.VOID

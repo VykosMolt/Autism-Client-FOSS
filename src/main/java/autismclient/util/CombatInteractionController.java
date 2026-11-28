@@ -95,7 +95,7 @@ public final class CombatInteractionController {
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !autismclient.modules.BlinkPacketManager.isBlinking()
          && !autismclient.modules.AutoTotemModule.init_Z_6()
-         && !autismclient.modules.AutoArmorModule.init_Z_20();
+         && !autismclient.modules.AutoArmorModule.isClickPending();
    }
 
    private static boolean isUseKeyPhysicallyDown(Minecraft mc) {
@@ -119,7 +119,7 @@ public final class CombatInteractionController {
             reset();
          }
 
-         if (autismclient.modules.KillAuraModule.init_Z_31()) {
+         if (autismclient.modules.KillAuraModule.canBlockHit()) {
             reset();
             return false;
          }
@@ -155,7 +155,7 @@ public final class CombatInteractionController {
             trackedLevel = mc.level;
             load_Z = true;
             write_I = tick;
-            autismclient.modules.KillAuraModule.init_V_27();
+            autismclient.modules.KillAuraModule.stopOwnBlockHit();
             if (!trackedPlayer.isUsingItem() || pressed) {
                update_Z = false;
             } else if (!update_Z) {
@@ -202,7 +202,7 @@ public final class CombatInteractionController {
                RotationMath.Rotation written = wire.initialized() ? new RotationMath.Rotation(Float.isFinite(yaw) ? yaw : wire.currentYaw(), wire.currentPitch()) : null;
                boolean ready = tick > captureTick && written != null && init_Z(mc, written);
                write_V(mc);
-               if (!autismclient.modules.KillAuraModule.init_Z_ce_DataUtil(ready ? written : aimRotation, aimState, ready)) {
+               if (!autismclient.modules.KillAuraModule.requestAuraRotation(ready ? written : aimRotation, aimState, ready)) {
                   reset();
                   return false;
                }
@@ -269,7 +269,7 @@ public final class CombatInteractionController {
 
    public static void tick(Minecraft mc) {
       if (mc.options != null && isAuraDriving() && canInteract(mc)) {
-         if (autismclient.modules.KillAuraModule.init_Z_31()) {
+         if (autismclient.modules.KillAuraModule.canBlockHit()) {
             sync_Z = false;
          } else {
             AutismKeyMappingAccessor key = useKeyAccessor(mc);
@@ -332,7 +332,7 @@ public final class CombatInteractionController {
       if (!read_Z
          && isAuraDriving()
          && !ClientInteractionOverride.ownsUseInput()
-         && !autismclient.modules.KillAuraModule.init_Z_31()
+         && !autismclient.modules.KillAuraModule.canBlockHit()
          && !autismclient.modules.ScaffoldModule.init_Z_26()
          && !f.load()
          && !autismclient.modules.aD.init_Z()

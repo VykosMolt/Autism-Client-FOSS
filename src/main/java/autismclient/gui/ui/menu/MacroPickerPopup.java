@@ -148,7 +148,7 @@ final class MacroPickerPopup {
       }
 
       if (this.newRect.init_Z(mouseX, mouseY)) {
-         this.controller.init_V_Module_Setting(this.module, this.option);
+         this.controller.openMacroEditorFromPicker(this.module, this.option);
          return false;
       }
 

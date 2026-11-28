@@ -63,7 +63,7 @@ final class AiNetherRun {
    static Object unusedExploreLevel;
    static final long update_J = 150000000000L;
    static final int sync_I = 6;
-   static volatile boolean init_Z;
+   static volatile boolean returnedForSupplies;
    static final Map<Long, Long> crowdedSpawnerSkipUntil = new ConcurrentHashMap<>();
    static volatile int unusedRouteCounter;
    static volatile Object unusedRouteObject;
@@ -150,7 +150,7 @@ final class AiNetherRun {
          }
 
          refreshRouteMemory();
-         boolean routeProven = load_Z();
+         boolean routeProven = isNetherRouteReady();
          final boolean pearlRecovery = AiJson.getBoolean(args, "pearlRecovery", false) && routeProven;
          final int rods = rodGoal(AiJson.getInt(args, "rods", 8), AiRunResources.isCampaignActive(), pearlRecovery, routeProven, AiRunResources.blazePowderEquivalents());
          final int pearls = Math.max(0, Math.min(32, AiJson.getInt(args, "pearls", 16)));
@@ -161,7 +161,7 @@ final class AiNetherRun {
             rememberedPortal = portal;
          }
 
-         init_Z = false;
+         returnedForSupplies = false;
          final BlockPos remembered = firstPlausiblePortal(portal, AiPortalLinks.nearestKnownPortal(2147483647), rememberedPortal, at -> isPortalOrUnloaded(mc, at));
          return new AiOperation() {
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -440,7 +440,7 @@ final class AiNetherRun {
                         this,
                         1,
                         "Nether",
-                        AiGoal.init(this.label, this.phase == null ? "" : this.phase.name()),
+                        AiGoal.goalLabel(this.label, this.phase == null ? "" : this.phase.name()),
                         this.heldRods() + " of " + this.wantedRods + " blaze rods, " + this.heldPearls() + " of " + pearls + " pearls"
                      );
                      if (++this.warpedScanTicks % 200 == 0 && mc.level.dimension() == Level.NETHER) {
@@ -471,7 +471,7 @@ final class AiNetherRun {
                               return this.running("Verifying Overworld arrival: " + arrival.message());
                            }
 
-                           arrival = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.child, arrival);
+                           arrival = AiNetherRun.finishChild(this.child, arrival);
                            this.child = null;
                            if (arrival.status() != AiOperation.Status.SUCCEEDED) {
                               return this.finish(arrival.status(), arrival.message(), arrival);
@@ -479,9 +479,9 @@ final class AiNetherRun {
 
                            boolean route = !AiRunResources.isCampaignActive() || this.confirmedBarters > 0 && this.confirmedSpawner != null;
                            return this.finish(
-                              (this.heldRods() < this.wantedRods || !route) && !AiNetherRun.init_Z ? AiOperation.Status.FAILED : AiOperation.Status.SUCCEEDED,
+                              (this.heldRods() < this.wantedRods || !route) && !AiNetherRun.returnedForSupplies ? AiOperation.Status.FAILED : AiOperation.Status.SUCCEEDED,
                               (
-                                    AiNetherRun.init_Z
+                                    AiNetherRun.returnedForSupplies
                                        ? "Home for supplies (" + (this.stopReason.isEmpty() ? "food or equipment" : this.stopReason) + ") with "
                                        : "Verified Overworld return with "
                                  )
@@ -508,7 +508,7 @@ final class AiNetherRun {
                            && this.heldRods() < this.wantedRods
                            && mc.player.getHealth() >= 12.0F
                            && mc.player.onGround()
-                           && !AiEndRun.init_Z(mc)
+                           && !AiEndRun.isInFire(mc)
                            && !mc.player.isInLava()
                            && mc.level.dimension() == Level.NETHER) {
                            Entity inSight = this.nearestVisibleBlaze(16);
@@ -528,7 +528,7 @@ final class AiNetherRun {
                                        )
                                     ),
                                     "minecraft:blaze_rod",
-                                    () -> AiGameplay.write(
+                                    () -> AiGameplay.pickupItems(
                                        AiJson.objectOf(
                                           "item",
                                           "minecraft:blaze_rod",
@@ -548,7 +548,7 @@ final class AiNetherRun {
                         if (this.guard.isActive()
                            || !this.label.startsWith("fight a blaze")
                            || mc.player.getHealth() < 10.0F
-                           || AiEndRun.init_Z(mc)
+                           || AiEndRun.isInFire(mc)
                            || mc.player.isInLava()) {
                            AiOperation.Result g = this.guard.tick(this.child, () -> {
                               this.rememberInterruptedLeg();
@@ -586,7 +586,7 @@ final class AiNetherRun {
                               return this.running(this.label + ": " + r.message());
                            }
 
-                           r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.child, r);
+                           r = AiNetherRun.finishChild(this.child, r);
                            this.child = null;
                            AiSpeedrun.log("[AI] nether step {}: {} - {}", r.status(), this.label, AiSpeedrun.clip(r.message()));
                            this.stepLog
@@ -627,7 +627,7 @@ final class AiNetherRun {
                         label,
                         AiNetherRun.thenOnSuccess(
                            this.breakBlock(ore, 30),
-                           () -> AiGameplay.write(
+                           () -> AiGameplay.pickupItems(
                               AiJson.objectOf("item", "minecraft:gold_nugget", "count", 1, "additional", true, "radius", 10, "timeoutSeconds", 15)
                            )
                         )
@@ -655,7 +655,7 @@ final class AiNetherRun {
                               )
                            ),
                            "minecraft:blaze_rod",
-                           () -> AiGameplay.write(
+                           () -> AiGameplay.pickupItems(
                               AiJson.objectOf(
                                  "item",
                                  "minecraft:blaze_rod",
@@ -771,20 +771,20 @@ final class AiNetherRun {
                }
 
                if (this.recoveringFromRetreat) {
-                  if (mc.player.getHealth() >= 18.0F && !AiEndRun.init_Z(mc) && !mc.player.isInLava()) {
+                  if (mc.player.getHealth() >= 18.0F && !AiEndRun.isInFire(mc) && !mc.player.isInLava()) {
                      this.recoveringFromRetreat = false;
                   } else {
                      if (AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0 || mc.player.getFoodData().getFoodLevel() >= 18) {
                         return this.startChild("recover after blaze retreat", AiCover.create(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
                      }
 
-                     AiNetherRun.init_Z = true;
+                     AiNetherRun.returnedForSupplies = true;
                      this.stopReason = "no food for recovery after blaze retreat";
                   }
                }
 
                if (AiRunResources.isCampaignActive() && AiRunResources.missingMandatoryGear().keySet().stream().anyMatch(id -> !id.equals("minecraft:golden_boots"))) {
-                  AiNetherRun.init_Z = true;
+                  AiNetherRun.returnedForSupplies = true;
                   this.stopReason = "required equipment repair: " + AiRunResources.missingMandatoryGear().keySet();
                   return this.returnHome();
                }
@@ -799,7 +799,7 @@ final class AiNetherRun {
                      );
                   }
 
-                  AiNetherRun.init_Z = true;
+                  AiNetherRun.returnedForSupplies = true;
                   this.stopReason = "golden boots below their durability reserve";
                   return this.returnHome();
                } else {
@@ -807,10 +807,10 @@ final class AiNetherRun {
                      return this.startChild("restore required Nether armor", AiEquip.create(AiJson.objectOf("what", "armor")));
                   }
 
-                  if (!AiNetherRun.init_Z
+                  if (!AiNetherRun.returnedForSupplies
                      && AiSurvival.bestFoodSlot(mc.player.getInventory()) < 0
                      && (mc.player.getHealth() < 18.0F && mc.player.getFoodData().getFoodLevel() < 18 || mc.player.getFoodData().getFoodLevel() <= 6)) {
-                     AiNetherRun.init_Z = true;
+                     AiNetherRun.returnedForSupplies = true;
                      this.stopReason = "no carried food for continued travel or healing";
                      AiSpeedrun.log(
                         "[AI] nether: out of food at {} health, food {}; home for food with {} rods",
@@ -820,7 +820,7 @@ final class AiNetherRun {
                      );
                   }
 
-                  if (AiNetherRun.init_Z) {
+                  if (AiNetherRun.returnedForSupplies) {
                      return this.returnHome();
                   }
 
@@ -841,7 +841,7 @@ final class AiNetherRun {
                   boolean wasStarted = this.pearlTracker.started;
                   boolean wasGround = this.pearlTracker.groundPhase;
                   boolean optionalPearls = this.pearlTracker
-                     .pearlHuntWorthwhile(System.nanoTime(), pearlPhaseReady, pearlsNow, pearls, pearlGround, this.pearlsGivenUp, AiNetherRun.init_Z);
+                     .pearlHuntWorthwhile(System.nanoTime(), pearlPhaseReady, pearlsNow, pearls, pearlGround, this.pearlsGivenUp, AiNetherRun.returnedForSupplies);
                   if (!wasStarted && this.pearlTracker.started) {
                      this.exploreLegs = 0;
                   }
@@ -885,7 +885,7 @@ final class AiNetherRun {
                   boolean earlyGoldPartner = this.heldRods() < this.wantedRods && !committedGoldVein && this.hasBarterPiglinWithin(32.0);
                   if (this.heldPearls() < pearls
                      && !this.pearlsGivenUp
-                     && !AiNetherRun.init_Z
+                     && !AiNetherRun.returnedForSupplies
                      && !this.pearlTracker.groundPhase
                      && this.goldMineAttempts < 48
                      && this.fruitlessGoldMines < 3
@@ -898,7 +898,7 @@ final class AiNetherRun {
                            "mine safe barter gold",
                            AiNetherRun.thenOnSuccess(
                               this.breakBlock(ore, 30),
-                              () -> AiGameplay.write(
+                              () -> AiGameplay.pickupItems(
                                  AiJson.objectOf("item", "minecraft:gold_nugget", "count", 1, "additional", true, "radius", 10, "timeoutSeconds", 15)
                               )
                            )
@@ -913,7 +913,7 @@ final class AiNetherRun {
                            this.nextLootPickupAt = System.nanoTime() + 10000000000L;
                            return this.startChild(
                               "pick up the " + loot.substring(10).replace('_', ' ') + "s lying near",
-                              AiGameplay.write(AiJson.objectOf("item", loot, "count", 64, "radius", 12, "timeoutSeconds", 15))
+                              AiGameplay.pickupItems(AiJson.objectOf("item", loot, "count", 64, "radius", 12, "timeoutSeconds", 15))
                            );
                         }
                      }
@@ -940,14 +940,14 @@ final class AiNetherRun {
                      return this.startChild("shield to the offhand", AiEquip.create(AiJson.objectOf("what", "minecraft:shield", "hand", "offhand")));
                   }
 
-                  float provokeHealth = AiForage.init(mc, mc.player.blockPosition()) ? 12.0F : 16.0F;
+                  float provokeHealth = AiForage.isFeetInHole(mc, mc.player.blockPosition()) ? 12.0F : 16.0F;
                   Entity provokable = optionalPearls
                         && this.heldPearls() < pearls
                         && mc.player.getHealth() >= provokeHealth
                         && System.nanoTime() > this.nextProvokeAt
                         && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0
                         && mc.player.onGround()
-                        && AiForage.write(mc, mc.player.blockPosition())
+                        && AiForage.isProvokeFooting(mc, mc.player.blockPosition())
                      ? this.findHuntableEnderman(48)
                      : null;
                   if (provokable != null) {
@@ -957,7 +957,7 @@ final class AiNetherRun {
                         AiNetherRun.fightThenPickup(
                            this.huntEnderman(provokable.getId()),
                            "minecraft:ender_pearl",
-                           () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
+                           () -> AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
                         )
                      );
                   }
@@ -967,8 +967,8 @@ final class AiNetherRun {
                      && mc.player.getHealth() >= 16.0F
                      && mc.player.onGround()
                      && System.nanoTime() > this.nextFightingHoleAt
-                     && !AiForage.write(mc, mc.player.blockPosition())
-                     && AiForage.load(mc, mc.player.blockPosition())
+                     && !AiForage.isProvokeFooting(mc, mc.player.blockPosition())
+                     && AiForage.canDigFightingHole(mc, mc.player.blockPosition())
                      && !AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).isEmpty()) {
                      this.nextFightingHoleAt = System.nanoTime() + 10000000000L;
                      BlockPos under = mc.player.blockPosition().below();
@@ -986,7 +986,7 @@ final class AiNetherRun {
                      && mc.player.getHealth() >= 16.0F
                      && mc.player.onGround()
                      && System.nanoTime() > this.nextFootingMoveAt
-                     && !AiForage.write(mc, mc.player.blockPosition())
+                     && !AiForage.isProvokeFooting(mc, mc.player.blockPosition())
                      && AiWorldScan.findEntitiesByType("minecraft:enderman", 24.0).size() >= 2) {
                      this.nextFootingMoveAt = System.nanoTime() + 15000000000L;
                      BlockPos footing = this.findLedgeFreeFooting(12);
@@ -1028,7 +1028,7 @@ final class AiNetherRun {
                               )
                            ),
                            "minecraft:ender_pearl",
-                           () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
+                           () -> AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
                         )
                      );
                   }
@@ -1137,7 +1137,7 @@ final class AiNetherRun {
                                           )
                                        ),
                                        "minecraft:blaze_rod",
-                                       () -> AiGameplay.write(
+                                       () -> AiGameplay.pickupItems(
                                           AiJson.objectOf(
                                              "item",
                                              "minecraft:blaze_rod",
@@ -1236,7 +1236,7 @@ final class AiNetherRun {
                                        )
                                     ),
                                     "minecraft:blaze_rod",
-                                    () -> AiGameplay.write(
+                                    () -> AiGameplay.pickupItems(
                                        AiJson.objectOf(
                                           "item",
                                           "minecraft:blaze_rod",
@@ -1421,7 +1421,7 @@ final class AiNetherRun {
                                  "extract a safe Nether gold batch",
                                  AiNetherRun.thenOnSuccess(
                                     this.breakBlock(ore, 30),
-                                    () -> AiGameplay.write(
+                                    () -> AiGameplay.pickupItems(
                                        AiJson.objectOf(
                                           "item", "minecraft:gold_nugget", "count", 1, "additional", true, "radius", 10, "timeoutSeconds", 15
                                        )
@@ -1439,7 +1439,7 @@ final class AiNetherRun {
                                  "mine the gold block at " + gold.toShortString(),
                                  AiNetherRun.thenOnSuccess(
                                     this.breakBlock(gold, 20),
-                                    () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:gold_block", "count", 64, "radius", 8, "timeoutSeconds", 10))
+                                    () -> AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:gold_block", "count", 64, "radius", 8, "timeoutSeconds", 10))
                                  )
                               );
                            }
@@ -1477,7 +1477,7 @@ final class AiNetherRun {
                                        )
                                     ),
                                     "minecraft:ender_pearl",
-                                    () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
+                                    () -> AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
                                  )
                               )
                            );
@@ -1517,9 +1517,9 @@ final class AiNetherRun {
                         }
 
                         if (!AiWorldScan.findEntitiesByType("minecraft:enderman", 48.0).isEmpty() && this.endermanHuntAttempts < 24) {
-                           if (!AiForage.init(mc, mc.player.blockPosition())
+                           if (!AiForage.isFeetInHole(mc, mc.player.blockPosition())
                               && mc.player.onGround()
-                              && AiForage.load(mc, mc.player.blockPosition())
+                              && AiForage.canDigFightingHole(mc, mc.player.blockPosition())
                               && System.nanoTime() > this.nextFightingHoleAt) {
                               this.nextFightingHoleAt = System.nanoTime() + 10000000000L;
                               BlockPos under = mc.player.blockPosition().below();
@@ -1560,13 +1560,13 @@ final class AiNetherRun {
                boolean routeRootProven = AiNetherRun.spawnerRouteReady(
                   this.confirmedSpawner != null, this.confirmedBarters > 0, AiRunResources.isCampaignActive(), AiRunResources.blazePowderEquivalents(), 16, this.heldPearls() + AiCraft.countItem("minecraft:ender_eye")
                );
-               if (AiRunResources.isCampaignActive() && !AiNetherRun.init_Z && this.confirmedSpawner == null) {
+               if (AiRunResources.isCampaignActive() && !AiNetherRun.returnedForSupplies && this.confirmedSpawner == null) {
                   return this.exploreLegs < 14
                      ? this.exploreFor("an actual reachable blaze spawner")
                      : this.finish(AiOperation.Status.FAILED, "Required blaze spawner visit remains unverified");
                }
 
-               if (AiRunResources.isCampaignActive() && !AiNetherRun.init_Z && this.confirmedBarters == 0 && !routeRootProven) {
+               if (AiRunResources.isCampaignActive() && !AiNetherRun.returnedForSupplies && this.confirmedBarters == 0 && !routeRootProven) {
                   return this.exploreLegs < 14
                      ? this.exploreFor("safe adult piglins and barter gold")
                      : this.finish(
@@ -1813,7 +1813,7 @@ final class AiNetherRun {
                AiSpeedrun.log("[AI] nether: {}", label);
                AiOperation inner = op;
                if (session && op instanceof AiGoto.GotoOp travel) {
-                  inner = AiNetherRun.init(travel);
+                  inner = AiNetherRun.arriveOp(travel);
                }
 
                if (waitTicks > 0) {
@@ -1862,7 +1862,7 @@ final class AiNetherRun {
                   public AiOperation.Result tick() {
                      if (mc.player != null && mc.level != null) {
                         Entity target = mc.level.getEntity(enderman);
-                        if (target != null && target.isAlive() && !AiForage.init(mc, mc.player.blockPosition()) && !write(target.blockPosition())) {
+                        if (target != null && target.isAlive() && !AiForage.isFeetInHole(mc, mc.player.blockPosition()) && !write(target.blockPosition())) {
                            fight.cancel();
                            return AiGameOperations.result(
                               AiOperation.Status.FAILED, "The enderman went where a knock would not land on ground", new JsonObject()
@@ -1909,7 +1909,7 @@ final class AiNetherRun {
                      && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
                      && !mc.level.getBlockState(p.below()).getCollisionShape(mc.level, p.below()).isEmpty()
                      && mc.level.getFluidState(p).isEmpty()
-                     && AiForage.write(mc, p)) {
+                     && AiForage.isProvokeFooting(mc, p)) {
                      double d = p.distSqr(feet);
                      if (d < bestD) {
                         bestD = d;
@@ -1942,7 +1942,7 @@ final class AiNetherRun {
             }
 
             AiOperation huntEnderman(int enderman) {
-               return AiForage.huntEnderman(enderman, p -> AiForage.write(mc, p), () -> this.huntCooldowns.put(enderman, System.nanoTime() + 120000000000L));
+               return AiForage.huntEnderman(enderman, p -> AiForage.isProvokeFooting(mc, p), () -> this.huntCooldowns.put(enderman, System.nanoTime() + 120000000000L));
             }
 
             Entity endermanTarget(int radius, boolean here) {
@@ -1963,7 +1963,7 @@ final class AiNetherRun {
             }
 
             boolean write(BlockPos at) {
-               return AiForage.read(mc, at);
+               return AiForage.isSafeArena(mc, at);
             }
 
             boolean canSeeFromEye(BlockPos pos) {
@@ -2251,11 +2251,11 @@ final class AiNetherRun {
                      "bodyOnGround",
                      mc.player.onGround(),
                      "bodyLedgeFree",
-                     AiForage.write(mc, mc.player.blockPosition()),
+                     AiForage.isProvokeFooting(mc, mc.player.blockPosition()),
                      "bodyArenaSafe",
                      this.write(mc.player.blockPosition()),
                      "bodyWalled",
-                     AiForage.init(mc, mc.player.blockPosition()),
+                     AiForage.isFeetInHole(mc, mc.player.blockPosition()),
                      "safeFoodAvailable",
                      AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0,
                      "provokeRetryInSeconds",
@@ -2296,7 +2296,7 @@ final class AiNetherRun {
                   "rodGoal",
                   this.wantedRods,
                   "returningForSupplies",
-                  AiNetherRun.init_Z,
+                  AiNetherRun.returnedForSupplies,
                   "returnReason",
                   this.stopReason,
                   "pearlSearchEvidence",
@@ -2331,7 +2331,7 @@ final class AiNetherRun {
             AiOperation.Result finish(AiOperation.Status status, String message, AiOperation.Result child) {
                AiGoal.clear(this);
                boolean pending = this.requiresReconciliationAfterEmergency();
-               AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.progressSnapshot(), pending, child);
+               AiOperation.Result result = AiNetherRun.phaseResult(status, message, this.progressSnapshot(), pending, child);
                this.reobserveBeforeResuming = this.reobserveBeforeResuming | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
                if (this.child != null) {
                   this.child.cancel();
@@ -2409,7 +2409,7 @@ final class AiNetherRun {
          unusedRouteObject = null;
          savedConfirmedBarters = 0;
          rememberedSpawner = null;
-         init_Z = false;
+         returnedForSupplies = false;
          routeAssumedProven = false;
       }
 
@@ -2452,17 +2452,17 @@ final class AiNetherRun {
       }
    }
 
-   static void init_V() {
+   static void assumeRouteProven() {
       refreshRouteMemory();
       routeAssumedProven = true;
    }
 
-   static boolean init_Z() {
+   static boolean isRouteAssumedProven() {
       refreshRouteMemory();
       return routeAssumedProven;
    }
 
-   static boolean load_Z() {
+   static boolean isNetherRouteReady() {
       refreshRouteMemory();
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && routeWorldKey.equals(AiWorldIdentity.currentWorldKey(mc)) && routeConnection == mc.getConnection()) {
@@ -2510,7 +2510,7 @@ final class AiNetherRun {
       return !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL);
    }
 
-   static AiOperation init(final AiGoto.GotoOp travel) {
+   static AiOperation arriveOp(final AiGoto.GotoOp travel) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
@@ -2570,7 +2570,7 @@ final class AiNetherRun {
             }
 
             this.needsReconciliation = this.current.requiresReconciliationAfterEmergency();
-            r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.current, r);
+            r = AiNetherRun.finishChild(this.current, r);
             this.needsReconciliation = this.needsReconciliation | AiJson.getBoolean(AiRunResources.parseEvidenceJson(r.dataJson()), "reobserveBeforeResuming", false);
             if (this.switched
                || r.status() == AiOperation.Status.UNCERTAIN
@@ -2601,7 +2601,7 @@ final class AiNetherRun {
       };
    }
 
-   static AiOperation.Result init_AiOperation_Result_AiOperation_AiOperation_Result(AiOperation child, AiOperation.Result result) {
+   static AiOperation.Result finishChild(AiOperation child, AiOperation.Result result) {
       JsonObject evidence = AiRunResources.parseEvidenceJson(result.dataJson());
       boolean pending = child.requiresReconciliationAfterEmergency()
          || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
@@ -2611,7 +2611,7 @@ final class AiNetherRun {
       return captured;
    }
 
-   static AiOperation.Result init_AiOperation_Result_AiOperation_Status(
+   static AiOperation.Result phaseResult(
       AiOperation.Status status, String message, JsonObject phaseData, boolean pending, AiOperation.Result child
    ) {
       JsonObject data = phaseData.deepCopy();

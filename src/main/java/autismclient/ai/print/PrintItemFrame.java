@@ -65,7 +65,7 @@ public final class PrintItemFrame implements PrintMachineJob {
    }
 
    @Override
-   public boolean c_() {
+   public boolean hasFurtherSteps() {
       return true;
    }
 

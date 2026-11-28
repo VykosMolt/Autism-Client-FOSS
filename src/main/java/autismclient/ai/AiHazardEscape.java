@@ -20,7 +20,7 @@ final class AiHazardEscape {
          return "out of air";
       } else if (AiPowderEscape.isInPowderSnow(mc)) {
          return "in powder snow";
-      } else if (!mc.player.isInWater() && AiEndRun.init_Z(mc)) {
+      } else if (!mc.player.isInWater() && AiEndRun.isInFire(mc)) {
          return "standing in fire";
       } else {
          return mc.player.isOnFire()

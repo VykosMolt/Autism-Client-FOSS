@@ -63,7 +63,7 @@ final class AiTravelFar {
                            int z = this.client.player.blockPosition().getZ();
                            if (observations.size() >= 2) {
                               this.regionSearch = CompletableFuture.supplyAsync(
-                                 () -> AiRegions.init(observations, x, z, target.getX(), target.getZ())
+                                 () -> AiRegions.regionRoute(observations, x, z, target.getX(), target.getZ())
                               );
                            }
                         }

@@ -30,7 +30,7 @@ public final class AiClientTick {
       QUEUE.runPhase(() -> {
          try {
             AiMacroTools.tick(client);
-            AiDirectOps.init(client);
+            AiDirectOps.tickClient(client);
             AiService service = AiService.getExistingInstance();
             if (service != null) {
                service.onClientTick();

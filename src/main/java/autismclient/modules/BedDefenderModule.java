@@ -387,13 +387,13 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          && !MacroExecutor.isRunning()
          && !MC.player.isDeadOrDying()
          && !MC.player.isSpectator()
-         && (!MC.player.isUsingItem() || KillAuraModule.read_Z_14())
-         && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() && !DangerModule.sync_Z_12())
+         && (!MC.player.isUsingItem() || KillAuraModule.holdsBlockHit())
+         && (AutismLiteVariant.enabled() || !ClutchModule.isClutchEngaged() && !DangerModule.sync_Z_12())
          && !MC.player.isHandsBusy()
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20();
+         && !AutoArmorModule.isClickPending();
    }
 
    private boolean open_Z() {
@@ -403,7 +403,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private boolean holdsWeapon() {
       if (MC != null && MC.player != null) {
          ItemStack mainHand = MC.player.getMainHandItem();
-         return KillAuraModule.init_Z_ItemStack_6(mainHand) ? true : mainHand.isEmpty() && KillAuraModule.init_Z_ItemStack_6(MC.player.getOffhandItem());
+         return KillAuraModule.isThrowable(mainHand) ? true : mainHand.isEmpty() && KillAuraModule.isThrowable(MC.player.getOffhandItem());
       } else {
          return false;
       }
@@ -1130,7 +1130,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.releaseRotation();
             this.tickSwitchBack();
          } else {
-            KillAuraModule.load_V_20();
+            KillAuraModule.releaseBlockHitNow();
             if (MC.player.isUsingItem()) {
                this.releaseRotation();
             } else {

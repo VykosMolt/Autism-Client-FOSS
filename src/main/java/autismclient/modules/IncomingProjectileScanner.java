@@ -84,7 +84,7 @@ public final class IncomingProjectileScanner {
    static IncomingProjectileScanner.ProjectilePath predict(Level level, Player owner, IncomingProjectileScanner.ProjectileKind kind, ProjectileBallistics.ProjectileShot shot) {
       ProjectileBallistics.ProjectileInfo info = shot.info();
       Vec3 velocity = ProjectileBallistics.shotVelocity(owner.getYRot(), owner.getXRot(), shot);
-      if (info.init_Z()) {
+      if (info.copiesPlayerVelocity()) {
          Vec3 inherited = ProjectileBallistics.inheritedVelocity(owner);
          if (owner instanceof RemotePlayer && owner.tickCount > 1) {
             Vec3 observed = owner.position().subtract(new Vec3(owner.xOld, owner.yOld, owner.zOld));
@@ -98,7 +98,7 @@ public final class IncomingProjectileScanner {
 
       IncomingProjectileScanner.BallisticParams physics = kind == IncomingProjectileScanner.ProjectileKind.FIREBALL
          ? new IncomingProjectileScanner.BallisticParams(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
-         : new IncomingProjectileScanner.BallisticParams(info.init_D(), info.airDrag(), info.waterDrag(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
+         : new IncomingProjectileScanner.BallisticParams(info.gravity(), info.airDrag(), info.waterDrag(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
       return tracePath(
          traceWorld(level, owner, owner, 0, kind == IncomingProjectileScanner.ProjectileKind.FIREBALL ? 1.0 : 0.25),
          new Vec3(owner.getX(), owner.getEyeY() - 0.1, owner.getZ()),
@@ -246,7 +246,7 @@ public final class IncomingProjectileScanner {
    static boolean isPearlThreat(IncomingProjectileScanner.ProjectileWarning warning) {
       return warning != null
          && warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
-         && hasImpact(warning.init_A_DataUtil())
+         && hasImpact(warning.flight())
          && warning.shooter() != null
          && warning.shooter().isAlive()
          && !warning.entity().isRemoved();
@@ -261,7 +261,7 @@ public final class IncomingProjectileScanner {
    }
 
    public record ProjectileWarning(
-      Entity entity, Player shooter, IncomingProjectileScanner.ProjectileKind kind, boolean init_Z, IncomingProjectileScanner.ProjectilePath init_A_DataUtil, int init_I
+      Entity entity, Player shooter, IncomingProjectileScanner.ProjectileKind kind, boolean init_Z, IncomingProjectileScanner.ProjectilePath flight, int init_I
    ) {
       Vec3 aimPoint() {
          return this.entity.position().add(0.0, this.init_Z ? this.entity.getEyeHeight() : this.entity.getBbHeight() * 0.5, 0.0);
@@ -279,7 +279,7 @@ public final class IncomingProjectileScanner {
       HitResult trace(Vec3 var1, Vec3 var2, int var3);
    }
 
-   public record ProjectilePath(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double init_D) {
+   public record ProjectilePath(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double impactTicks) {
       public Vec3 init_Vec3() {
          return this.hit == null ? null : this.hit.getLocation();
       }

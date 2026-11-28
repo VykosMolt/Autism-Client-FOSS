@@ -37,7 +37,7 @@ public final class LateRegisterSynthesizer {
    private LateRegisterSynthesizer() {
    }
 
-   public static void init_V(Connection connection) {
+   public static void markRegisterSeen(Connection connection) {
       LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session != null) {
          synchronized (SESSIONS) {
@@ -48,7 +48,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static boolean init_Z(Connection connection) {
+   static boolean shouldWarnOnce(Connection connection) {
       LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session == null) {
          return false;
@@ -223,7 +223,7 @@ public final class LateRegisterSynthesizer {
          receivable = List.of();
       }
 
-      return CustomPayloadFilter.filter(receivable, ModNamespaceCatalog::init);
+      return CustomPayloadFilter.filter(receivable, ModNamespaceCatalog::isVanillaOrFabricChannel);
    }
 
    static List<Identifier> fallbackChannels(boolean voicechatLoaded) {

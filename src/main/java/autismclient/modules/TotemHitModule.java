@@ -106,7 +106,7 @@ public final class TotemHitModule extends Module {
          && !RemoteViewController.isActive()
          && !MacroExecutor.isRunning()
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20()
+         && !AutoArmorModule.isClickPending()
          && !autismclient.util.SilentRotationManager.hasActiveRotation()
          && !ScaffoldModule.update_Z_5();
    }
@@ -118,7 +118,7 @@ public final class TotemHitModule extends Module {
             int tick = AutismSessionState.getInstance().getClientTick();
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.switchTick != -2147483648 && selected != this.totemSlot) {
-               if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+               if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.hasBorrowedSlot(selected)) {
                   this.reset();
                }
             } else if (!this.swordHitDone
@@ -188,7 +188,7 @@ public final class TotemHitModule extends Module {
    }
 
    private void reset() {
-      autismclient.util.QueuedCombatAction.init("totem-hit");
+      autismclient.util.QueuedCombatAction.clearIfOwnedBy("totem-hit");
       this.target = null;
       this.targetLevel = null;
       this.originalSlot = this.totemSlot = -1;
@@ -216,7 +216,7 @@ public final class TotemHitModule extends Module {
 
    @Override
    public void onDisable() {
-      autismclient.util.QueuedCombatAction.init("totem-hit");
+      autismclient.util.QueuedCombatAction.clearIfOwnedBy("totem-hit");
    }
 
    @Override

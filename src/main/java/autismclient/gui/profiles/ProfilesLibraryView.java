@@ -858,7 +858,7 @@ public final class ProfilesLibraryView {
       NetHelper row = NetHelper.init(x, y, w, sync_I());
       boolean hovered = this.isHovered(ctx, row);
       PacketUtil.load(ctx.init_GuiGraphicsExtract(), row, 3, hovered ? this.colors.cardSurfaceElevated : this.colors.cardSurface);
-      ToggleSwitchRenderer.init(ctx, row, label, value, hovered, "profiles:" + label);
+      ToggleSwitchRenderer.drawToggle(ctx, row, label, value, hovered, "profiles:" + label);
       this.addHitRegion(row, action);
       return row.load() + 2;
    }

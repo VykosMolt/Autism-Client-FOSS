@@ -253,7 +253,7 @@ public final class CommandTabNameProber {
       return colon >= 0 ? literal.substring(colon + 1) : literal;
    }
 
-   public static void init(
+   public static void probe(
       ClientPacketListener connection, Map<String, String> names, String self, List<CommandTabNameProber.ProbeVector> vectors, CommandTabNameProber.ProbeControl control
    ) {
       if (connection != null && vectors != null && control != null) {
@@ -261,8 +261,8 @@ public final class CommandTabNameProber {
          long[] gap = new long[]{8L};
          int[] conc = new int[]{10};
          int[] stall = new int[]{0};
-         int stallLimit = control.write() ? 2147483647 : 20;
-         control.init(names.size(), queries[0], control.maxQueries(), "Probing " + vectors.size() + " commands");
+         int stallLimit = control.exhaustive() ? 2147483647 : 20;
+         control.onProgress(names.size(), queries[0], control.maxQueries(), "Probing " + vectors.size() + " commands");
          List<String> baseTexts = new ArrayList<>(vectors.size());
 
          for (CommandTabNameProber.ProbeVector vector : vectors) {
@@ -273,13 +273,13 @@ public final class CommandTabNameProber {
          List<CommandTabNameProber.ProbeVector> productive = new ArrayList<>();
 
          for (int i = 0; i < vectors.size() && i < bases.size(); i++) {
-            if (hasNameLike(bases.get(i), control.read())) {
+            if (hasNameLike(bases.get(i), control.usernamesOnly())) {
                productive.add(vectors.get(i));
             }
          }
 
          productive.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::priority));
-         int maxDepth = control.write() ? 2147483647 : 1;
+         int maxDepth = control.exhaustive() ? 2147483647 : 1;
          int dry = 0;
 
          for (CommandTabNameProber.ProbeVector vector : productive) {
@@ -298,14 +298,14 @@ public final class CommandTabNameProber {
             }
          }
 
-         control.init(names.size(), queries[0], control.maxQueries(), "Done");
+         control.onProgress(names.size(), queries[0], control.maxQueries(), "Done");
       }
    }
 
    public static List<String> probe(ClientPacketListener connection, String query, CommandTabNameProber.ProbeControl control) {
       LinkedHashMap<String, String> names = new LinkedHashMap<>();
       if (connection != null && query != null && !query.isBlank() && control != null) {
-         init(connection, names, "", List.of(new CommandTabNameProber.ProbeVector(query, 0, query.trim())), control);
+         probe(connection, names, "", List.of(new CommandTabNameProber.ProbeVector(query, 0, query.trim())), control);
       }
 
       return new ArrayList<>(names.values());
@@ -456,9 +456,9 @@ public final class CommandTabNameProber {
                                  List<String> reply = readSuggestions(listeners.get(li));
                                  results.set(pending.get(k), reply);
                                  int prev = names.size();
-                                 addSuggestions(names, reply, self, control.maxNames(), control.read());
+                                 addSuggestions(names, reply, self, control.maxNames(), control.usernamesOnly());
                                  stall[0] = names.size() > prev ? 0 : stall[0] + 1;
-                                 control.init(names.size(), queries[0], control.maxQueries(), status);
+                                 control.onProgress(names.size(), queries[0], control.maxQueries(), status);
                                  progressed = true;
                               }
                            }
@@ -487,7 +487,7 @@ public final class CommandTabNameProber {
                                  }
                               }
 
-                              control.init(names.size(), queries[0], control.maxQueries(), status);
+                              control.onProgress(names.size(), queries[0], control.maxQueries(), status);
                            }
                         } else {
                            for (int li = 0; li < listeners.size(); li++) {
@@ -635,15 +635,15 @@ public final class CommandTabNameProber {
 
       int maxQueries();
 
-      default boolean read() {
+      default boolean usernamesOnly() {
          return true;
       }
 
-      default boolean write() {
+      default boolean exhaustive() {
          return false;
       }
 
-      default void init(int names, int queries, int maxQueries, String vector) {
+      default void onProgress(int names, int queries, int maxQueries, String vector) {
       }
    }
 

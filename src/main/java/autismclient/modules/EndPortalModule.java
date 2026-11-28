@@ -148,7 +148,7 @@ public final class EndPortalModule extends Module {
             server = "connection:" + System.identityHashCode(MC.getConnection());
          }
 
-         if (this.sessionTracker.init(MC.level, MC.getConnection(), server, MC.level.dimension().identifier().toString())) {
+         if (this.sessionTracker.updateSession(MC.level, MC.getConnection(), server, MC.level.dimension().identifier().toString())) {
             this.clearState();
             this.memory = this.sessionTracker.getMemory();
             this.memory.triangulator.configure(true, false);
@@ -161,7 +161,7 @@ public final class EndPortalModule extends Module {
       }
    }
 
-   static boolean load_Z() {
+   static boolean isStrongholdDimension() {
       return MC.level != null && EndPortalSessionTracker.isStrongholdDimension(MC.level.dimensionType().hasSkyLight(), MC.level.dimensionType().hasEnderDragonFight());
    }
 
@@ -187,7 +187,7 @@ public final class EndPortalModule extends Module {
          if (this.memory.triangulator.lastThrow() == null
             && this.memory.frames.isEmpty()
             && this.trackedEyes.isEmpty()
-            && load_Z()
+            && isStrongholdDimension()
             && MC.gui.screen() == null
             && (this.trackingStartAt < 0L || nowMillis() >= this.trackingStartAt)) {
             this.trackingStartAt = nowMillis() + 60000L;
@@ -203,7 +203,7 @@ public final class EndPortalModule extends Module {
             && MC.isSameThread()
             && listener == MC.getConnection()
             && module.syncSession()
-            && load_Z()
+            && isStrongholdDimension()
             && MC.level.getEntity(packet.getId()) instanceof EyeOfEnder eye
             && eye.getUUID().equals(packet.getUUID())
             && !(eye.position().distanceToSqr(MC.player.position()) > 4096.0)
@@ -291,7 +291,7 @@ public final class EndPortalModule extends Module {
                current.add(pos.asLong());
                BlockState state = chunk.getBlockState(pos);
                if (state.is(Blocks.END_PORTAL_FRAME)) {
-                  this.memory.init(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.memory.addFrame(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
             }
 
@@ -342,10 +342,10 @@ public final class EndPortalModule extends Module {
                iterator.remove();
             } else {
                if (state.getValue(EndPortalFrameBlock.FACING) != f.facing()) {
-                  this.memory.init(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.memory.addFrame(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
 
-               if (EndPortalDisplayHelper.init(MC.player.position(), Vec3.atCenterOf(pos), view)) {
+               if (EndPortalDisplayHelper.isWithinViewDistance(MC.player.position(), Vec3.atCenterOf(pos), view)) {
                   shown.add(pos);
                }
             }
@@ -379,7 +379,7 @@ public final class EndPortalModule extends Module {
       return this.color.get();
    }
 
-   float init_F() {
+   float labelScale() {
       return this.scale.get().floatValue();
    }
 
@@ -395,11 +395,11 @@ public final class EndPortalModule extends Module {
       return this.bool("guide");
    }
 
-   boolean sync() {
-      return this.bool("beacon") && (this.close() || this.open());
+   boolean showBeacon() {
+      return this.bool("beacon") && (this.hasFrames() || this.hasEstimate());
    }
 
-   boolean flush() {
+   boolean hasTrackedEyes() {
       return this.isSameSession() && !this.trackedEyes.isEmpty();
    }
 
@@ -409,31 +409,31 @@ public final class EndPortalModule extends Module {
       } else if (this.navTarget != null) {
          return this.navTarget;
       } else {
-         return load_Z() ? this.memory.triangulator.destinationFor(MC.player.position()) : null;
+         return isStrongholdDimension() ? this.memory.triangulator.destinationFor(MC.player.position()) : null;
       }
    }
 
-   boolean close() {
+   boolean hasFrames() {
       return this.isSameSession() && this.memory != null && !this.memory.frames.isEmpty();
    }
 
-   boolean open() {
-      return this.isSameSession() && !this.close() && this.memory != null && this.memory.triangulator.estimate() != null;
+   boolean hasEstimate() {
+      return this.isSameSession() && !this.hasFrames() && this.memory != null && this.memory.triangulator.estimate() != null;
    }
 
    boolean hasRingEstimate() {
-      return this.open() && this.memory.triangulator.ringEstimate() != null;
+      return this.hasEstimate() && this.memory.triangulator.ringEstimate() != null;
    }
 
    double uncertainty() {
-      return this.open() ? this.memory.triangulator.estimate().uncertainty() : 0.0;
+      return this.hasEstimate() ? this.memory.triangulator.estimate().uncertainty() : 0.0;
    }
 
    String statusText() {
-      return this.close()
+      return this.hasFrames()
          ? (this.nearestPortal != null ? "Portal ring observed" : "Portal frame observed")
          : (
-            this.open()
+            this.hasEstimate()
                ? (this.hasRingEstimate() ? (this.memory.triangulator.throwCount() == 1 ? "One-Eye estimate" : "Generation estimate") : "Stronghold estimate")
                : (
                   this.memory != null && this.memory.triangulator.lastThrow() != null

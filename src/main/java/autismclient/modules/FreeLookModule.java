@@ -73,7 +73,7 @@ public final class FreeLookModule extends Module {
       return MC != null && MC.player != null ? activeInstance() : null;
    }
 
-   public boolean init_Z_8() {
+   public boolean viewsFront() {
       return this.isFrontView();
    }
 

@@ -24,7 +24,7 @@ final class AiStride {
       return (long)var0 << 32 ^ var1 & 4294967295L;
    }
 
-   static boolean putAt(AiPhysics.MotionState var0, LongPredicate var1, AiPhysics.PhysicsWorld var2) {
+   static boolean holdsStill(AiPhysics.MotionState var0, LongPredicate var1, AiPhysics.PhysicsWorld var2) {
       AiPhysics.MotionState var3 = var0;
       double var4 = var0.y();
       AiPhysics.MoveInput var6 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, 0.0F);
@@ -66,7 +66,7 @@ final class AiStride {
          }
 
          if (var4.test(putAt_J_D_D(var6.x(), var6.z()))) {
-            return putAt(var6, var4, var5);
+            return holdsStill(var6, var4, var5);
          }
       }
 
@@ -203,7 +203,7 @@ final class AiStride {
          var8 |= var11;
          if (var7.onGround()) {
             if (var7.y() >= var3 - 0.001) {
-               return new AiStride.ContactTicks(!putAt(var7, var5, var6) && !putAt_Z_TokenCore_TableCac_2(var7, var1, var3, var5, var6) ? -1 : var10, var9);
+               return new AiStride.ContactTicks(!holdsStill(var7, var5, var6) && !putAt_Z_TokenCore_TableCac_2(var7, var1, var3, var5, var6) ? -1 : var10, var9);
             }
 
             if (var8 && var10 > var2 + 1) {
@@ -356,7 +356,7 @@ final class AiStride {
          }
 
          if (var9.onGround()) {
-            if (!(Math.abs(var9.y() - var3) > 0.02) && !(var9.vy() > 0.0) && var5.test(putAt_J_D_D(var9.x(), var9.z())) && putAt(var9, var5, var6)) {
+            if (!(Math.abs(var9.y() - var3) > 0.02) && !(var9.vy() > 0.0) && var5.test(putAt_J_D_D(var9.x(), var9.z())) && holdsStill(var9, var5, var6)) {
                return new AiStride.FallResult(var9, var8 + 1, false, false);
             }
 
@@ -397,7 +397,7 @@ final class AiStride {
                var14 = var20;
             }
 
-            if (var4.test(putAt_J_D_D(var22.at().x(), var22.at().z())) && putAt(var22.at(), var4, var10)) {
+            if (var4.test(putAt_J_D_D(var22.at().x(), var22.at().z())) && holdsStill(var22.at(), var4, var10)) {
                if (var5) {
                   return var20;
                }

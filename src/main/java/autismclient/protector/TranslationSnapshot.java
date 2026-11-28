@@ -46,8 +46,8 @@ public final class TranslationSnapshot {
                   && sourced.init_Str() != null
                   && (
                      connectionBound
-                        ? PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str(), origin)
-                        : PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str())
+                        ? PackTranslationPolicyResolver.policyAllows(snapshot.resourceManager, sourced.source(), sourced.init_Str(), origin)
+                        : PackTranslationPolicyResolver.policyAllows(snapshot.resourceManager, sourced.source(), sourced.init_Str())
                   )) {
                   return entry.value();
                }
@@ -105,7 +105,7 @@ public final class TranslationSnapshot {
          Objects.requireNonNull(value, "value");
          if (source instanceof VanillaPackResources) {
             this.put(TranslationSnapshot.EntryOrigin.VANILLA, key, value);
-         } else if (PackTranslationPolicyResolver.init(this.resourceManager, source, sourcePackId)) {
+         } else if (PackTranslationPolicyResolver.policyAllows(this.resourceManager, source, sourcePackId)) {
             this.put(originOf(source), key, value, source, sourcePackId);
          }
       }

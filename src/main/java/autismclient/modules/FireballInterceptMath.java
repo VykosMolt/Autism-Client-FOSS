@@ -41,11 +41,11 @@ final class FireballInterceptMath {
       return Math.max(1, (int)((counts + capacity - 1L) / capacity));
    }
 
-   static boolean init(int elapsedTicks) {
+   static boolean canRetry(int elapsedTicks) {
       return elapsedTicks >= 1;
    }
 
-   static double init_D_Vec3(Vec3 eye, Vec3 bodyMotion, AABB projectile, Vec3 velocity, double acceleration, double inertia, double reach, int horizon) {
+   static double ticksUntilInReach(Vec3 eye, Vec3 bodyMotion, AABB projectile, Vec3 velocity, double acceleration, double inertia, double reach, int horizon) {
       if (isFinite(velocity) && isFinite(bodyMotion) && !(velocity.lengthSqr() < 1.0E-8)) {
          Vec3 relativeEye = eye;
          Vec3 motion = velocity;
@@ -76,10 +76,10 @@ final class FireballInterceptMath {
    }
 
    static double init(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin) {
-      return init_D_AABB(body, bodyMotion, projectile, velocity, horizon, margin, 0.1, 0.95);
+      return ticksUntilBodyHit(body, bodyMotion, projectile, velocity, horizon, margin, 0.1, 0.95);
    }
 
-   static double init_D_AABB(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
+   static double ticksUntilBodyHit(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
       if (!(velocity.lengthSqr() < 1.0E-8) && isFinite(velocity) && isFinite(bodyMotion)) {
          Vec3 center = projectile.getCenter();
          AABB expanded = body.inflate(projectile.getXsize() * 0.5 + margin, projectile.getYsize() * 0.5 + margin, projectile.getZsize() * 0.5 + margin);
@@ -106,7 +106,7 @@ final class FireballInterceptMath {
       }
    }
 
-   static double load(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
+   static double ticksUntilClosingHit(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
       if (!(velocity.lengthSqr() < 1.0E-8) && isFinite(velocity) && isFinite(bodyMotion)) {
          Vec3 center = projectile.getCenter();
          Vec3 motion = velocity;
@@ -251,6 +251,6 @@ final class FireballInterceptMath {
       return Double.isFinite(vector.x) && Double.isFinite(vector.y) && Double.isFinite(vector.z);
    }
 
-   record AimSolution(Vec3 init, Vec3 load) {
+   record AimSolution(Vec3 eye, Vec3 point) {
    }
 }

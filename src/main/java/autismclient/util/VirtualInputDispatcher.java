@@ -41,7 +41,7 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static boolean init(String owner, BooleanSupplier guard, Consumer<Boolean> receipt) {
+   public static boolean requestGuardedUse(String owner, BooleanSupplier guard, Consumer<Boolean> receipt) {
       if (owner != null && guard != null && receipt != null && !autismclient.modules.aD.read_Z() && pendingTicket == null && activeTicket == null) {
          pendingTicket = new GuardedInputTicket(owner, guard, receipt);
          return true;
@@ -60,7 +60,7 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void load(String owner) {
+   public static void cancelPendingFor(String owner) {
       if (pendingTicket != null && pendingTicket.owner.equals(owner)) {
          GuardedInputTicket old = pendingTicket;
          pendingTicket = null;
@@ -125,11 +125,11 @@ public final class VirtualInputDispatcher {
       return consumedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD;
    }
 
-   public static long init_J() {
+   public static long scaffoldConsumedGeneration() {
       return isScaffoldConsumed() ? consumedGeneration : 0L;
    }
 
-   public static void update_V() {
+   public static void releaseScaffold() {
       if (requestedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
          || dispatchedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
          || consumedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
@@ -263,7 +263,7 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void close() {
+   public static void dispatchBeforeInputTick() {
       if (!canDispatch()) {
          resetForState();
       } else {
@@ -333,13 +333,13 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void open() {
+   public static void resetIfUnavailable() {
       if (!canDispatch()) {
          resetForState();
       }
    }
 
-   public static void poll() {
+   public static void releasePresses() {
       finishActiveTicket();
       if (MC != null && MC.options != null) {
          if (attackPressed) {
@@ -372,9 +372,9 @@ public final class VirtualInputDispatcher {
 
    private static void resetForState() {
       if (isScreenBlocked()) {
-         pop();
+         resetAllAndDrainClicks();
       } else {
-         push();
+         resetAll();
       }
    }
 
@@ -388,7 +388,7 @@ public final class VirtualInputDispatcher {
          || MC.gui.overlay() != null;
    }
 
-   public static void push() {
+   public static void resetAll() {
       dropPendingTicket();
       attackQueued = false;
       useQueued = false;
@@ -398,11 +398,11 @@ public final class VirtualInputDispatcher {
       consumedGeneration = 0L;
       pendingSlot = -1;
       pendingSlotFrom = -1;
-      poll();
+      releasePresses();
       releaseHolds();
    }
 
-   public static void pop() {
+   public static void resetAllAndDrainClicks() {
       dropPendingTicket();
       attackQueued = false;
       useQueued = false;
@@ -412,7 +412,7 @@ public final class VirtualInputDispatcher {
       consumedGeneration = 0L;
       pendingSlot = -1;
       pendingSlotFrom = -1;
-      poll();
+      releasePresses();
       releaseHolds();
       drainClicks();
    }

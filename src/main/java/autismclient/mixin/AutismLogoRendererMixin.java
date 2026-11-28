@@ -31,7 +31,7 @@ public class AutismLogoRendererMixin {
 
    @Inject(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFI)V", at = @At("HEAD"), cancellable = true)
    private void autism$renderHighResolutionLogo(GuiGraphicsExtractor graphics, int width, float alpha, int heightOffset, CallbackInfo ci) {
-      if (!CustomMainMenuGuard.load()) {
+      if (!CustomMainMenuGuard.isSuppressed()) {
          int maxWidth = Math.min(320, Math.max(180, width - 40));
          float scale = Math.min(maxWidth / 516.0F, 0.5F);
          int drawWidth = Math.round(516.0F * scale);

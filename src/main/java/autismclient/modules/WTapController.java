@@ -206,11 +206,11 @@ final class WTapController {
          && !FreecamController.isAiControllingBody()) {
          Module scaffold = al.init_Module_Str("scaffold");
          return (scaffold == null || !scaffold.isEnabled())
-            && !ClutchModule.init_Z_49()
+            && !ClutchModule.isClutchEngaged()
             && !DangerModule.sync_Z_12()
             && !BedNukerModule.init_Z_23()
             && !AutoTotemModule.init_Z_6()
-            && !AutoArmorModule.init_Z_20()
+            && !AutoArmorModule.isClickPending()
             && !autismclient.util.macro.MacroAimController.isActive()
             && !SilentMovementCoordinator.isSafeWalkActive();
       } else {
@@ -221,7 +221,7 @@ final class WTapController {
    private long sampleDelay(ValueRange range, int minimum) {
       ValueRange band = (range == null ? (minimum > 0 ? DEFAULT_RELEASE_MS : DEFAULT_DELAY_MS) : range).clamp(minimum, 200.0);
       this.drift = this.drift * 0.92 + this.random.nextGaussian() * 0.035;
-      double style = (autismclient.util.HumanHandProfile.shared().close() - 0.9) * 0.5;
+      double style = (autismclient.util.HumanHandProfile.shared().strokeEase() - 0.9) * 0.5;
       double sample = Math.max(0.0, Math.min(1.0, (this.random.nextDouble() + this.random.nextDouble()) * 0.5 + style + this.drift));
       return Math.round((band.min() + (band.max() - band.min()) * sample) * 1000000.0);
    }

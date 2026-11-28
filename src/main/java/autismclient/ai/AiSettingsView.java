@@ -367,14 +367,14 @@ final class AiSettingsView {
       }
 
       this.modelCatalog.retarget(identity);
-      if (force || !this.modelCatalog.init_Z()) {
+      if (force || !this.modelCatalog.wasRequested()) {
          long generation = this.modelCatalog.beginFetch(identity);
          this.scanMessage = "";
          this.init_Z = false;
          autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.dropdowns);
          this.refreshModels();
          if (k.isBlank()) {
-            this.modelCatalog.init(generation, identity, new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models"));
+            this.modelCatalog.acceptResult(generation, identity, new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models"));
             this.scanMessage = this.modelCatalog.message();
             this.init_Z = true;
             this.refreshModels();
@@ -400,7 +400,7 @@ final class AiSettingsView {
                               return;
                            }
 
-                           if (this.modelCatalog.init(generation, identity, result)) {
+                           if (this.modelCatalog.acceptResult(generation, identity, result)) {
                               this.init_Z = !result.ok();
                               if (result.ok()) {
                                  boolean detected = resolution.provider() != this.provider;

@@ -35,11 +35,11 @@ final class AutismConfigPersistence {
       });
    }
 
-   static void init() {
+   static void flushConfig() {
       DebouncedPersistenceScheduler.flushConfig();
    }
 
-   static void init(long timeoutMs) {
+   static void flushAll(long timeoutMs) {
       DebouncedPersistenceScheduler.flushAll(timeoutMs);
    }
 }

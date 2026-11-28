@@ -280,7 +280,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   public static Identifier load(Identifier original) {
+   public static Identifier recoloredBackdrop(Identifier original) {
       ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
       if (!st.isModified(ThemePaletteManager.ColorRole.BACKDROP)) {
          return original;
@@ -365,7 +365,7 @@ public final class ThemeTextureRecolorer {
       recolorPanorama();
    }
 
-   public static ThemeTextureRecolorer.RecolorPreview init(Identifier source, ThemePaletteManager.ColorRole channel, int maxDim) {
+   public static ThemeTextureRecolorer.RecolorPreview previewRecolor(Identifier source, ThemePaletteManager.ColorRole channel, int maxDim) {
       try {
          TextureContents contents = TextureContents.load(MINECRAFT.getResourceManager(), source);
          NativeImage full = contents.image();

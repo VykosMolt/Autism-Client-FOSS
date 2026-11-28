@@ -82,7 +82,7 @@ public abstract class AutismInGameHudMixin {
          boolean macroFrameWork = MacroExecutor.isSmoothLookActive();
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;
-         boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.load_Z();
+         boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.isHudVisible();
          boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.showsGuide();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
             UiClipStack.getInstance().clear(context);
@@ -141,7 +141,7 @@ public abstract class AutismInGameHudMixin {
                         : null;
                      ArrayList<AutismHudManager.HudElementBounds> hudOccluders = new ArrayList<>(3);
                      if (!AutismLiteVariant.enabled() && aiPlan) {
-                        NetHelper b = AiVisualization.init_NetHelper(context);
+                        NetHelper b = AiVisualization.hudBounds(context);
                         hudOccluders.add(new AutismHudManager.HudElementBounds("ai_plan", b.read(), b.write(), b.update(), b.sync()));
                      }
 
@@ -198,9 +198,9 @@ public abstract class AutismInGameHudMixin {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
                            NetHelper.init(captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.height()),
-                           captureBanner.init_Str(),
-                           captureBanner.load_Str(),
-                           captureBanner.read_Str()
+                           captureBanner.title(),
+                           captureBanner.message(),
+                           captureBanner.detail()
                         );
                      }
 
@@ -208,9 +208,9 @@ public abstract class AutismInGameHudMixin {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
                            NetHelper.init(payloadStudyBanner.x(), payloadStudyBanner.y(), payloadStudyBanner.width(), payloadStudyBanner.height()),
-                           payloadStudyBanner.init_Str(),
-                           payloadStudyBanner.load_Str(),
-                           payloadStudyBanner.read_Str()
+                           payloadStudyBanner.title(),
+                           payloadStudyBanner.message(),
+                           payloadStudyBanner.detail()
                         );
                      }
 
@@ -388,7 +388,7 @@ public abstract class AutismInGameHudMixin {
          return false;
       } else if (!shared.isTimedCaptureMode() && !shared.hasCaptureCancelCallback() && !shared.hasAttackCaptureCallback() && !shared.hasBlockCaptureCallback() && !shared.hasEntityCaptureCallback() && !shared.isGbreakCapturing()) {
          ActionEditorOverlay editor = ActionEditorOverlay.getExisting();
-         return editor != null && editor.push_Z_2();
+         return editor != null && editor.isCapturing();
       } else {
          return true;
       }

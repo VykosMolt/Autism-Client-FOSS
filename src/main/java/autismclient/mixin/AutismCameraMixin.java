@@ -115,7 +115,7 @@ public abstract class AutismCameraMixin {
                Mth.lerp(partialTicks, this.entity.zo, this.entity.getZ())
             )
          );
-         if (freeLook.init_Z_8()) {
+         if (freeLook.viewsFront()) {
             this.setRotation(freeLook.cameraYaw() + 180.0F, -freeLook.cameraPitch());
          } else {
             this.setRotation(freeLook.cameraYaw(), freeLook.cameraPitch());

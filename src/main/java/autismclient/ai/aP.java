@@ -93,19 +93,19 @@ public final class aP {
             }
          }
 
-         init_aO.init_V();
+         init_aO.activate();
          autismclient.util.ClientInteractionOverride.clearAll();
          long window = mc.getWindow().handle();
 
          for (int key = 32; key <= 348; key++) {
             if (CompatGLFW.glfwGetKey(window, key) == 1) {
-               init_aO.init(key, true);
+               init_aO.trackKey(key, true);
             }
          }
 
          for (int button = 0; button <= 7; button++) {
             if (CompatGLFW.glfwGetMouseButton(window, button) == 1) {
-               init_aO.init(init_I_I(button), true);
+               init_aO.trackKey(init_I_I(button), true);
             }
          }
 
@@ -164,7 +164,7 @@ public final class aP {
    }
 
    public static boolean load_Z() {
-      return init_aO.load_Z();
+      return init_aO.ownsInput();
    }
 
    private static int init_I_I(int button) {
@@ -182,7 +182,7 @@ public final class aP {
                   : CompatGLFW.glfwGetKey(mc.getWindow().handle(), key) == 1
             );
          if (!down) {
-            init_aO.init(key, false);
+            init_aO.trackKey(key, false);
          }
       }
 
@@ -204,7 +204,7 @@ public final class aP {
 
    public static boolean init_Z_I_KeyEvent(int action, KeyEvent event) {
       boolean wasHeld = init_aO.isHeld(Compat263.keyEventGlfwKey(event));
-      boolean owned = init_aO.init(Compat263.keyEventGlfwKey(event), action != 0);
+      boolean owned = init_aO.trackKey(Compat263.keyEventGlfwKey(event), action != 0);
       aP mode = init_aP;
       if (mode == null) {
          return owned;
@@ -298,7 +298,7 @@ public final class aP {
 
    public static boolean init_Z_I_I(int button, int action) {
       boolean wasHeld = init_aO.isHeld(init_I_I(button));
-      boolean owned = init_aO.init(init_I_I(button), action != 0);
+      boolean owned = init_aO.trackKey(init_I_I(button), action != 0);
       aP mode = init_aP;
       if (mode != null && action == 1 && !wasHeld) {
          if (mode.init_aR instanceof AiNavigationSelection navigation) {
@@ -328,7 +328,7 @@ public final class aP {
    public static boolean init_Z_D(double amount) {
       aP mode = init_aP;
       if (mode == null) {
-         return init_aO.load_Z();
+         return init_aO.ownsInput();
       } else if (mode.init_aR instanceof AiNavigationSelection) {
          return true;
       } else if (mode.init_aR instanceof SchematicSelection selection) {
@@ -366,7 +366,7 @@ public final class aP {
    private void init_V_Z_Z(boolean use, boolean review) {
       if (init_aP == this && (!use || !(this.init_aR instanceof AiFarmPlacement farm && !farm.confirmCorner())) && (!use || this.init_aR.isReadyToConfirm())) {
          init_aP = null;
-         init_aO.load_V();
+         init_aO.deactivate();
          if (this.init_aP_StreamUtil != null) {
             this.init_aP_StreamUtil.close();
             this.init_aP_StreamUtil = null;

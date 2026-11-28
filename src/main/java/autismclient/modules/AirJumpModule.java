@@ -31,7 +31,7 @@ public final class AirJumpModule extends Module {
       return al.init_Module_Str("air-jump") instanceof AirJumpModule airJump && airJump.isEnabled() && airJump.allowsJump();
    }
 
-   public static void init(LivingEntity entity) {
+   public static void onJump(LivingEntity entity) {
       if (MC != null
          && MC.player != null
          && entity == MC.player

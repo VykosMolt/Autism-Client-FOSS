@@ -245,7 +245,7 @@ public final class VanillaWorldGenBootstrap {
       return this.templates;
    }
 
-   public boolean init_Z() {
+   public boolean tagsMatchVanilla() {
       Map<Identifier, List<Identifier>> current = blockTags(BuiltInRegistries.BLOCK);
 
       for (Entry<Identifier, List<Identifier>> entry : bootstrapState.vanillaBlockTags().entrySet()) {

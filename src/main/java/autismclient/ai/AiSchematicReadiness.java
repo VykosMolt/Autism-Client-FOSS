@@ -453,7 +453,7 @@ final class AiSchematicReadiness {
       return count;
    }
 
-   static List<BlockPos> load(AiBuilder.Blueprint blueprint) {
+   static List<BlockPos> sourcelessFluidEdges(AiBuilder.Blueprint blueprint) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
       HashMap<AiSchematicReadiness.BlockStateKey, BlockState> states = new HashMap<>();
       Long2ObjectOpenHashMap<BlockState> placed = new Long2ObjectOpenHashMap<>();
@@ -657,7 +657,7 @@ final class AiSchematicReadiness {
       return required;
    }
 
-   static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
+   static List<BlockPos> requiredCounterpartCells(AiBuilder.Blueprint blueprint) {
       HashMap<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans = new HashMap<>();
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = requiredPairCells(blueprint, plans);
       LinkedHashSet<BlockPos> positions = new LinkedHashSet<>();

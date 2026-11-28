@@ -11,7 +11,7 @@ public final class RegistryIdValidator {
    private RegistryIdValidator() {
    }
 
-   public static boolean init(String registryId, String entry) {
+   public static boolean matchesEntry(String registryId, String entry) {
       if (registryId != null && entry != null) {
          String normalized = entry.trim().toLowerCase(Locale.ROOT);
          return registryId.equalsIgnoreCase(normalized) || registryId.toLowerCase(Locale.ROOT).endsWith(":" + normalized);

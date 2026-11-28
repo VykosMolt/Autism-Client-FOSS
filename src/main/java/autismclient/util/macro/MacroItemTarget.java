@@ -141,7 +141,7 @@ public final class MacroItemTarget {
          }
 
          String registryLabel = RegistryDisplayNameCache.itemName(this.registryId);
-         return !RegistryDisplayNameCache.init(this.displayName, this.registryId) && !this.displayName.equalsIgnoreCase(registryLabel) ? this.displayName : registryLabel;
+         return !RegistryDisplayNameCache.isDefaultName(this.displayName, this.registryId) && !this.displayName.equalsIgnoreCase(registryLabel) ? this.displayName : registryLabel;
       } else {
          return this.hasRegistryId() ? RegistryDisplayNameCache.itemName(this.registryId) : "";
       }

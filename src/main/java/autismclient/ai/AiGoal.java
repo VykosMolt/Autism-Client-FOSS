@@ -228,7 +228,7 @@ public final class AiGoal {
       return var10000;
    }
 
-   static String init(String label, String step) {
+   static String goalLabel(String label, String step) {
       String l = label == null ? "" : label.toLowerCase(Locale.ROOT);
       if (l.contains("blaze") || l.contains("drink fire resistance") || l.contains("lava round the spawner") || l.contains("away from the lava")) {
          return "Getting blaze rods";

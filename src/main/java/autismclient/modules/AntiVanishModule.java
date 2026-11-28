@@ -278,7 +278,7 @@ public final class AntiVanishModule extends Module {
    }
 
    private void handleTrackedPacket(Packet<?> packet, long at) {
-      if (!this.worldActivityEnabled() || !this.activityDetector.init_Z_Packet_J(packet, at)) {
+      if (!this.worldActivityEnabled() || !this.activityDetector.observePacket(packet, at)) {
          if (packet instanceof ClientboundPlayerInfoUpdatePacket info) {
             if (this.bool("gamemode-alerts") && info.actions().contains(Action.UPDATE_GAME_MODE) && !info.actions().contains(Action.ADD_PLAYER)) {
                for (net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Entry entry : info.entries()) {
@@ -299,7 +299,7 @@ public final class AntiVanishModule extends Module {
          } else if (packet instanceof ClientboundSystemChatPacket chat) {
             if (!chat.overlay()) {
                String text = chat.content() == null ? "" : chat.content().getString();
-               this.rosterTracker.init(text, at);
+               this.rosterTracker.onSystemMessage(text, at);
                this.quitTracker.onChat(chat.content(), at);
             }
 
@@ -319,7 +319,7 @@ public final class AntiVanishModule extends Module {
                   return;
                }
 
-               this.rosterTracker.load(suggestions.getList().stream().map(s -> s.getText()).toList(), request.at, at);
+               this.rosterTracker.onCompletionReply(suggestions.getList().stream().map(s -> s.getText()).toList(), request.at, at);
             } else if (packet instanceof ClientboundAnimatePacket animation) {
                if (animation.getAction() != 0 && animation.getAction() != 3) {
                   return;
@@ -352,7 +352,7 @@ public final class AntiVanishModule extends Module {
          && !(player.distanceToSqr(MC.player) > (double)this.integer("range") * this.integer("range"))) {
          String name = player.getGameProfile().name();
          boolean npc = ArmorFilterMatcher.isNpcUuid(player.getUUID()) || AntiBotTracker.isConfirmedBotUuid(player.getUUID());
-         this.rosterTracker.init(new autismclient.util.AntiVanishRosterTracker.ActorInfo(player.getUUID(), name, true, npc), action, at);
+         this.rosterTracker.observeAction(new autismclient.util.AntiVanishRosterTracker.ActorInfo(player.getUUID(), name, true, npc), action, at);
       }
    }
 
@@ -398,7 +398,7 @@ public final class AntiVanishModule extends Module {
          }
       }
 
-      this.rosterTracker.init(roster, at);
+      this.rosterTracker.updateRoster(roster, at);
       this.quitTracker.updateRoster(roster, at);
       this.lastGameModes.clear();
 
@@ -438,7 +438,7 @@ public final class AntiVanishModule extends Module {
                }
             }
 
-            this.rosterTracker.init(unknown, at);
+            this.rosterTracker.observeUnknownIds(unknown, at);
          }
       }
    }
@@ -530,7 +530,7 @@ public final class AntiVanishModule extends Module {
                   )
                )
                .toList();
-            module.rosterTracker.init(profiles, request.at, at);
+            module.rosterTracker.onProfileReply(profiles, request.at, at);
             module.nextListProbeAt = at + (module.rosterTracker.needsRecheck() ? 2000 : 10000);
             module.updateDetections(at);
             return true;
@@ -567,7 +567,7 @@ public final class AntiVanishModule extends Module {
    }
 
    private boolean isStillSuspect(UUID id, AntiVanishModule.Detection detection, long at) {
-      return detection.possibleVanish ? this.quitTracker.isSuspect(id, at) && !this.rosterTracker.init(id, at) : this.rosterTracker.init(id, at);
+      return detection.possibleVanish ? this.quitTracker.isSuspect(id, at) && !this.rosterTracker.isSuspectedVanished(id, at) : this.rosterTracker.isSuspectedVanished(id, at);
    }
 
    private void updateDetections(long at) {
@@ -606,7 +606,7 @@ public final class AntiVanishModule extends Module {
          }
 
          for (autismclient.util.PlayerQuitEventTracker.QuitAlert alert : this.quitTracker.collectAlerts(at)) {
-            if (!this.rosterTracker.init(alert.uuid(), at) && this.isTrackedPlayer(alert.uuid(), alert.name())) {
+            if (!this.rosterTracker.isSuspectedVanished(alert.uuid(), at) && this.isTrackedPlayer(alert.uuid(), alert.name())) {
                AntiVanishModule.Detection detection = new AntiVanishModule.Detection(
                   alert.name(), "Possible vanish: left TAB without a matching leave message", 0, alert.expiresAt(), false, true
                );

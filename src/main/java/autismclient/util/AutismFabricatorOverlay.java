@@ -342,11 +342,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       int mouseX,
       int mouseY
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, MINECRAFT.font, x, y, w, h, label, variant, enabled, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(context, MINECRAFT.font, x, y, w, h, label, variant, enabled, mouseX, mouseY);
    }
 
    private void drawToggleButton(GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean enabled, String animationKey, int mouseX, int mouseY) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, MINECRAFT.font, x, y, w, h, label, enabled, animationKey, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, MINECRAFT.font, x, y, w, h, label, enabled, animationKey, mouseX, mouseY);
    }
 
    public AutismFabricatorOverlay(AbstractContainerScreen<?> parentScreen) {

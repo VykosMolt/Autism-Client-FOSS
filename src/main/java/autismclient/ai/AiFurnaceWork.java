@@ -473,7 +473,7 @@ final class AiFurnaceWork implements AiOperation {
                if (observed.has("matches")) {
                   for (JsonElement match : observed.getAsJsonArray("matches")) {
                      JsonObject fact = match.getAsJsonObject();
-                     AiWorldMemory.init(new BlockPos(AiJson.getInt(fact, "x", 0), AiJson.getInt(fact, "y", 0), AiJson.getInt(fact, "z", 0)));
+                     AiWorldMemory.observeChange(new BlockPos(AiJson.getInt(fact, "x", 0), AiJson.getInt(fact, "y", 0), AiJson.getInt(fact, "z", 0)));
                      if (this.load_JsonArray.size() < 32) {
                         this.load_JsonArray.add(fact.deepCopy());
                      }

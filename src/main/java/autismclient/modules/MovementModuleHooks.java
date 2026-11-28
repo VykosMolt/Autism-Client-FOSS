@@ -48,25 +48,25 @@ public final class MovementModuleHooks {
    }
 
    public static boolean init_Z() {
-      return load();
+      return isOmniSprintActive();
    }
 
-   public static boolean load() {
+   public static boolean isOmniSprintActive() {
       return currentToggles().init_Z() && !ScaffoldModule.open_Z_3();
    }
 
-   public static boolean read() {
+   public static boolean ignoresSprintCollision() {
       return currentToggles().load() && !ScaffoldModule.open_Z_3();
    }
 
-   public static boolean write() {
+   public static boolean ignoresSprintBlindness() {
       return currentToggles().read() && !ScaffoldModule.open_Z_3();
    }
 
-   public static boolean init(boolean original, boolean movementTick) {
+   public static boolean wantsSprint(boolean original, boolean movementTick) {
       if (!AutismLiteVariant.enabled() && WTappingModule.isTapping()) {
          return false;
-      } else if (!AutismLiteVariant.enabled() && ClutchModule.flush_Z_9()) {
+      } else if (!AutismLiteVariant.enabled() && ClutchModule.ownsCameraKeys()) {
          return false;
       } else if (!AutismLiteVariant.enabled() && autismclient.ai.engine.AiMotionSafety.isSprintSuppressed()) {
          return false;
@@ -77,7 +77,7 @@ public final class MovementModuleHooks {
       }
    }
 
-   public static boolean update() {
+   public static boolean forceStopSprint() {
       if (!AutismLiteVariant.enabled() && (WTappingModule.isTapping() || autismclient.ai.engine.AiMotionSafety.isSprintSuppressed())) {
          return true;
       } else {
@@ -85,11 +85,11 @@ public final class MovementModuleHooks {
       }
    }
 
-   public static boolean init(boolean original) {
-      return AntiHungerModule.load() ? false : original;
+   public static boolean announcedSprint(boolean original) {
+      return AntiHungerModule.suppressesSprint() ? false : original;
    }
 
-   public static boolean sync() {
+   public static boolean useSprintJumpYaw() {
       return al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.read();
    }
 

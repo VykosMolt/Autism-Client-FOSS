@@ -47,12 +47,12 @@ public final class NameScrapeController {
       }
 
       @Override
-      public boolean write() {
+      public boolean exhaustive() {
          return NameScrapeController.deepScan;
       }
 
       @Override
-      public void init(int names, int queries, int maxQueries, String status) {
+      public void onProgress(int names, int queries, int maxQueries, String status) {
          NameScrapeController.namesFound = names;
          NameScrapeController.queriesSent = queries;
          NameScrapeController.statusText = status == null ? "" : status;
@@ -132,7 +132,7 @@ public final class NameScrapeController {
 
    private static void runProbe(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.ProbeVector> vectors) {
       try {
-         CommandTabNameProber.init(connection, names, self, vectors, PROBE_CONTROL);
+         CommandTabNameProber.probe(connection, names, self, vectors, PROBE_CONTROL);
          List<String> result = new ArrayList<>(names.values());
          if (hasLimit && result.size() > targetLimit) {
             result = new ArrayList<>(result.subList(0, targetLimit));

@@ -88,12 +88,12 @@ public final class CustomPayloadFilter {
             if ("minecraft".equals(namespace) && "mco".equals(path)) {
                return DROP_VERDICT;
             } else {
-               return ModNamespaceCatalog.init(id) ? PASS_VERDICT : DROP_VERDICT;
+               return ModNamespaceCatalog.isVanillaOrFabricChannel(id) ? PASS_VERDICT : DROP_VERDICT;
             }
          } else {
             CustomPayloadFilter.Verdict verdict = inspectPayload(connection, payload);
             if ("register".equals(path) && verdict.kind != CustomPayloadFilter.Verdict.VerdictKind.DROP) {
-               LateRegisterSynthesizer.init_V(connection);
+               LateRegisterSynthesizer.markRegisterSeen(connection);
             }
 
             return verdict;
@@ -105,7 +105,7 @@ public final class CustomPayloadFilter {
 
    private static void noteRegisterChannel(Connection connection, Identifier id) {
       if (id != null && "minecraft".equals(id.getNamespace()) && "register".equals(id.getPath())) {
-         LateRegisterSynthesizer.init_V(connection);
+         LateRegisterSynthesizer.markRegisterSeen(connection);
       }
    }
 
@@ -123,7 +123,7 @@ public final class CustomPayloadFilter {
 
    private static CustomPayloadFilter.Verdict inspectPayload(Connection connection, CustomPacketPayload payload) {
       if (payload instanceof RegistrationPayload registrationPayload) {
-         List<Identifier> kept = filter(registrationPayload.channels(), ModNamespaceCatalog::init);
+         List<Identifier> kept = filter(registrationPayload.channels(), ModNamespaceCatalog::isVanillaOrFabricChannel);
          if (kept.size() == registrationPayload.channels().size()) {
             return PASS_VERDICT;
          } else {
@@ -141,7 +141,7 @@ public final class CustomPayloadFilter {
          }
 
          for (Identifier channel : channels) {
-            if (!ModNamespaceCatalog.init(channel)) {
+            if (!ModNamespaceCatalog.isVanillaOrFabricChannel(channel)) {
                warnOnce(connection, "dropping non-whitelisted register channel " + channel);
                return DROP_VERDICT;
             }
@@ -175,7 +175,7 @@ public final class CustomPayloadFilter {
    }
 
    private static void warnOnce(Connection connection, String detail) {
-      if (LateRegisterSynthesizer.init_Z(connection)) {
+      if (LateRegisterSynthesizer.shouldWarnOnce(connection)) {
          AutismClientAddon.LOG.warn("[AutismProtector] Register fallback engaged ({}); passing by whitelist verdict only.", detail);
       }
    }

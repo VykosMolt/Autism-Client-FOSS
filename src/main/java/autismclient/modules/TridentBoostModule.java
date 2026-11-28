@@ -17,7 +17,7 @@ public final class TridentBoostModule extends Module {
       this.add(new DoubleSetting("cooldown", "Dry Boost Cooldown", 10.0, 0.0, 20.0, 0.1).unit("s").visibleWhen(() -> this.bool("allow-dry")).build());
    }
 
-   public static boolean init_Z(Player player) {
+   public static boolean canBoost(Player player) {
       TridentBoostModule module = activeFor(player);
       if (module != null && !player.isPassenger()) {
          synchronized (module.lastBoost) {
@@ -29,7 +29,7 @@ public final class TridentBoostModule extends Module {
       }
    }
 
-   public static void init_V(Player player) {
+   public static void markBoosted(Player player) {
       TridentBoostModule module = activeFor(player);
       if (module != null) {
          synchronized (module.lastBoost) {

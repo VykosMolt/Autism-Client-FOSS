@@ -36,17 +36,17 @@ public final class AiRoutePolicy {
    private AiRoutePolicy() {
    }
 
-   public static void putAt(LongPredicate var0) {
+   public static void blockCellsTemporarily(LongPredicate var0) {
       putAt_LongPredicate = var0;
       blockedPredicateUntil = System.nanoTime() + 3000000000L;
    }
 
-   public static void putAt_V() {
+   public static void clearBlockedCells() {
       putAt_LongPredicate = var0 -> false;
       blockedPredicateUntil = 0L;
    }
 
-   static boolean putAt(BlockPos var0) {
+   static boolean isCellBlocked(BlockPos var0) {
       return System.nanoTime() < blockedPredicateUntil && putAt_LongPredicate.test(var0.asLong());
    }
 
@@ -487,7 +487,7 @@ public final class AiRoutePolicy {
          || var0 == AiPathfinder.MoveType.PILLAR;
    }
 
-   static boolean putAt_Z(AiPathfinder.PathStep var0) {
+   static boolean isPlainFlatStep(AiPathfinder.PathStep var0) {
       if (var0.to().getY() == var0.from().getY() && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
          boolean var10000;
          switch (var0.type()) {
@@ -585,7 +585,7 @@ public final class AiRoutePolicy {
       return var0 && var1 <= 0;
    }
 
-   static boolean putAt(List<AABB> var0, Vec3 var1, AABB var2, int var3, int var4, double var5) {
+   static boolean hasClearedBoxes(List<AABB> var0, Vec3 var1, AABB var2, int var3, int var4, double var5) {
       for (AABB var8 : var0) {
          AABB var9 = var8.move(var1.x, var1.y, var1.z);
          boolean var10 = var3 > 0
@@ -614,12 +614,12 @@ public final class AiRoutePolicy {
       return var3 != null ? var3.getCenter().add(var1) : var1.add(0.5, 0.5, 0.5);
    }
 
-   static boolean putAt_Z_D(double var0, double var2, boolean var4, boolean var5, boolean var6) {
+   static boolean canReachStepHeight(double var0, double var2, boolean var4, boolean var5, boolean var6) {
       double var7 = var0 - var2;
       return var7 >= -1.0 && var7 <= 1.35 && (var5 || var6 || var4 && var7 <= 0.6);
    }
 
-   static boolean putAt(int var0, double var1, int var3, boolean var4, int var5, int var6, int var7, int var8, double var9) {
+   static boolean hasReachedStepTarget(int var0, double var1, int var3, boolean var4, int var5, int var6, int var7, int var8, double var9) {
       if (var4 && !(var1 < var9 - 0.001)) {
          int var11 = Integer.signum(var6 - var5);
          int var12 = Integer.signum(var8 - var7);
@@ -651,7 +651,7 @@ public final class AiRoutePolicy {
       }
    }
 
-   static boolean putAt_Z_D(double var0, int var2, boolean var3) {
+   static boolean isAtFloorHeight(double var0, int var2, boolean var3) {
       return var0 >= var2 - (var3 ? 0.0625 : 0.0) - 0.01;
    }
 
@@ -683,7 +683,7 @@ public final class AiRoutePolicy {
       return var0.add(-Math.sin(var3) * var7, -Math.sin(var5) * 4.0, Math.cos(var3) * var7);
    }
 
-   static boolean putAt_Z_D(double var0, double var2, boolean var4, boolean var5) {
+   static boolean shouldSwimUp(double var0, double var2, boolean var4, boolean var5) {
       return var5 || !var4 && var0 < var2 + 0.05 || var2 - var0 > 0.6;
    }
 
@@ -696,7 +696,7 @@ public final class AiRoutePolicy {
             return Math.max(var2, var5.to().getY());
          }
 
-         if (!putAt_Z(var5) || !var5.cellsToBreak().isEmpty() || !var5.cellsToPlace().isEmpty() || var5.to().getY() != var2) {
+         if (!isPlainFlatStep(var5) || !var5.cellsToBreak().isEmpty() || !var5.cellsToPlace().isEmpty() || var5.to().getY() != var2) {
             break;
          }
       }
@@ -727,7 +727,7 @@ public final class AiRoutePolicy {
    static final class LoopDetector {
       private final ArrayDeque<long[]> recentSteps = new ArrayDeque<>();
 
-      boolean putAt(AiPathfinder.PathStep var1, long var2) {
+      boolean isLooping(AiPathfinder.PathStep var1, long var2) {
          while (!this.recentSteps.isEmpty() && var2 - ((long[])this.recentSteps.peekFirst())[1] > 45000000000L) {
             this.recentSteps.pollFirst();
          }
@@ -763,7 +763,7 @@ public final class AiRoutePolicy {
          return var9 >= 3;
       }
 
-      void putAt() {
+      void reset() {
          this.recentSteps.clear();
       }
    }
@@ -773,7 +773,7 @@ public final class AiRoutePolicy {
 
       boolean shouldRecordPlaced(BlockPos var1);
 
-      default boolean fill(BlockPos var1) {
+      default boolean allowsPlacementAt(BlockPos var1) {
          return true;
       }
    }

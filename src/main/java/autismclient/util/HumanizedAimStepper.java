@@ -111,7 +111,7 @@ public final class HumanizedAimStepper {
             this.advanceStroke();
          } else {
             this.aimYaw = this.aimYaw + this.hand.push() * errYaw;
-            this.aimPitch = this.aimPitch + this.hand.push() * errPitch * this.hand.set();
+            this.aimPitch = this.aimPitch + this.hand.push() * errPitch * this.hand.pitchGainScale();
          }
       }
 
@@ -139,7 +139,7 @@ public final class HumanizedAimStepper {
    }
 
    private double settleTolerance(double tolerance) {
-      return Math.max(this.hand.pop(), 0.35 * tolerance);
+      return Math.max(this.hand.minSettleTolerance(), 0.35 * tolerance);
    }
 
    private void trackGoalVelocity(double goalYaw, double goalPitch) {
@@ -167,14 +167,14 @@ public final class HumanizedAimStepper {
          : clamp(this.hand.firstPhaseWeight() + this.hand.firstPhaseJitter() * this.clampedGaussian(), 0.8, 1.06);
       double ny = -errPitch / distance;
       double np = errYaw / distance;
-      double lateral = this.hand.update() * distance * this.clampedGaussian();
+      double lateral = this.hand.lateralJitter() * distance * this.clampedGaussian();
       this.strokeYaw = errYaw * gain + ny * lateral;
-      this.strokePitch = errPitch * gain * this.hand.set() + np * lateral;
+      this.strokePitch = errPitch * gain * this.hand.pitchGainScale() + np * lateral;
       double length = Math.hypot(this.strokeYaw, this.strokePitch);
       this.perpYaw = length > 1.0E-9 ? -this.strokePitch / length : 0.0;
       this.perpPitch = length > 1.0E-9 ? this.strokeYaw / length : 0.0;
-      this.strokeCurve = (this.hand.sync() + this.hand.flush() * clamp(this.clampedGaussian(), -2.5, 2.5)) * length;
-      this.strokeEase = clamp(this.hand.close() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
+      this.strokeCurve = (this.hand.curvature() + this.hand.curvatureJitter() * clamp(this.clampedGaussian(), -2.5, 2.5)) * length;
+      this.strokeEase = clamp(this.hand.strokeEase() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
       double width = Math.max(1.0, 2.0 * tolerance);
       double fittsMs = this.hand.fittsIntercept() + this.hand.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
       double ticks = this.handBack ? 0.0 : fittsMs / 50.0 * Math.exp(this.hand.open() * this.clampedGaussian());
@@ -210,7 +210,7 @@ public final class HumanizedAimStepper {
          this.stroking = false;
          this.pauseTicks = this.handBack
             ? this.random.nextInt(2)
-            : this.hand.init_I() + this.random.nextInt(Math.max(1, this.hand.load_I() - this.hand.init_I() + 1));
+            : this.hand.minPauseTicks() + this.random.nextInt(Math.max(1, this.hand.maxPauseTicks() - this.hand.minPauseTicks() + 1));
       }
    }
 

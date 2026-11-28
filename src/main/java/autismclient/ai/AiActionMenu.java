@@ -1347,7 +1347,7 @@ final class AiActionMenu {
       }
    }
 
-   void update_V() {
+   void tickReview() {
       this.pollReview();
    }
 
@@ -1617,7 +1617,7 @@ final class AiActionMenu {
                   boolean route = craft.contains(shortId)
                      || smelt.contains(shortId)
                      || !AiItems.sourceEntitiesFor(item).isEmpty()
-                     || mined.contains(id.toString()) && AiItems.sourceBlocksFor(item).stream().anyMatch(AiToolsSuggest::init);
+                     || mined.contains(id.toString()) && AiItems.sourceBlocksFor(item).stream().anyMatch(AiToolsSuggest::isPlaceable);
                   if (route) {
                      out.add(itemCandidate("get", item, "item"));
                   }
@@ -1637,7 +1637,7 @@ final class AiActionMenu {
          case MINE:
             List<AiActionMenu.TargetCandidate> familiesMine = new ArrayList<>();
 
-            for (String id : AiToolsSuggest.write()) {
+            for (String id : AiToolsSuggest.mineTargetIds()) {
                Block block = blockById(id);
                if (block != null) {
                   out.add(blockCandidate("mine", block));
@@ -1663,7 +1663,7 @@ final class AiActionMenu {
                )
             );
 
-            for (String id : AiToolsSuggest.update()) {
+            for (String id : AiToolsSuggest.logIds()) {
                Block block = id.endsWith("_log") && !id.startsWith("stripped_") ? blockById(id) : null;
                if (block != null) {
                   Identifier key = BuiltInRegistries.BLOCK.getKey(block);
@@ -1717,7 +1717,7 @@ final class AiActionMenu {
             }
             break;
          case FIGHT:
-            for (String id : AiToolsSuggest.sync()) {
+            for (String id : AiToolsSuggest.entityIds()) {
                if (id.equals("hostiles")) {
                   out.add(
                      new AiActionMenu.TargetCandidate(

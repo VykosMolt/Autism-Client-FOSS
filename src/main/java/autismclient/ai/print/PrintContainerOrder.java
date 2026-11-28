@@ -38,7 +38,7 @@ public final class PrintContainerOrder {
       job.setOrder(this);
    }
 
-   public boolean init_Z(BlockPos at) {
+   public boolean covers(BlockPos at) {
       return this.positions.contains(at.asLong());
    }
 
@@ -50,11 +50,11 @@ public final class PrintContainerOrder {
       long key = job.position().asLong();
       this.readyJobs.remove(key);
       if (!job.isVerifiedSuccess() || !this.env.hasChunkAt(job.position()) || !job.matchesSource(this.env.getBlockState(job.position()))) {
-         this.init_V(job.position());
+         this.onJobFinished(job.position());
       } else if (this.read()) {
          PrintContainerOrder.OrderEntry previous = this.entries.get(key);
          if (previous == null || !this.matchesReceipt(previous, this.env.getBlockState(job.position()))) {
-            this.init_V(job.position());
+            this.onJobFinished(job.position());
             if (this.read()) {
                LongOpenHashSet dependencies = new LongOpenHashSet();
                if (this.init(job.position(), dependencies)) {
@@ -104,7 +104,7 @@ public final class PrintContainerOrder {
       return this.readyJobs.isEmpty() ? null : this.readyJobs.removeFirst();
    }
 
-   public void init_V(BlockPos at) {
+   public void onJobFinished(BlockPos at) {
       long key = at.asLong();
       this.readyJobs.remove(key);
       if (this.release(key, false) || this.dependents.containsKey(key)) {

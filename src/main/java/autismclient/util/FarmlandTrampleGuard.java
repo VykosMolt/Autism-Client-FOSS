@@ -8,7 +8,7 @@ public final class FarmlandTrampleGuard {
    private FarmlandTrampleGuard() {
    }
 
-   public static boolean init(BlockGetter world, int ax, int ay, int az, int bx, int by, int bz, boolean jump, double rise) {
+   public static boolean isSafeFromTrample(BlockGetter world, int ax, int ay, int az, int bx, int by, int bz, boolean jump, double rise) {
       if (!jump && rise > -0.5) {
          return true;
       }

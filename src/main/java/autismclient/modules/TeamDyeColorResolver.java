@@ -72,7 +72,7 @@ final class TeamDyeColorResolver {
    }
 
    private static TeamDyeColorResolver.Inner_DataUtil init_b_DataUtil(String name, Component display) {
-      if (!PlayerDisplayNameParser.init(name, display)) {
+      if (!PlayerDisplayNameParser.displayContainsName(name, display)) {
          return null;
       }
 

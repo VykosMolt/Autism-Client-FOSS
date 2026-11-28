@@ -19,7 +19,7 @@ public final class PayloadEditorModel {
    public byte[] baselineBody = new byte[0];
    public PayloadEditorModel.PayloadProvenance provenance = PayloadEditorModel.PayloadProvenance.USER_EDITED;
    public String error = "";
-   public String close = "Binary";
+   public String bodyKind = "Binary";
    public boolean hasCommandApiValue = false;
    public boolean commandApiOverride = false;
    public int commandApiValue = 2147483639;
@@ -98,7 +98,7 @@ public final class PayloadEditorModel {
          : ("CONFIGURATION".equals(action.payloadPhase) ? "CONFIGURATION" : "");
       action.payloadClassName = this.payloadClassName == null ? "" : this.payloadClassName;
       action.payloadPacketId = this.packetId;
-      action.payloadProvenance = this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.provenance.init();
+      action.payloadProvenance = this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.id() : this.provenance.id();
       action.payloadEncodingMode = this.encodingMode();
       action.payloadFields = PayloadFieldCodec.formatFields(this.fields);
       action.payloadData = AutismPayloadSupport.toHexString(this.bodyBytes);
@@ -351,7 +351,7 @@ public final class PayloadEditorModel {
          sb.append("sourceProtocol = ").append(this.sourceProtocol).append('\n');
       }
 
-      sb.append("provenance = ").append(this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.provenance.init()).append('\n');
+      sb.append("provenance = ").append(this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.id() : this.provenance.id()).append('\n');
       sb.append("bodyBytes = ").append(this.bodyBytes == null ? 0 : this.bodyBytes.length).append('\n');
       sb.append("decoded = ").append(this.decodedSummary()).append('\n');
       sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.bodyBytes)).append('\n');
@@ -402,7 +402,7 @@ public final class PayloadEditorModel {
       this.encodingMode = template.encodingMode().name();
       this.bodyBytes = built.bytes();
       this.baselineBody = (byte[])this.bodyBytes.clone();
-      this.close = guessBodyKind(this.bodyBytes);
+      this.bodyKind = guessBodyKind(this.bodyBytes);
       this.detectCommandApi();
       this.error = "";
       this.bumpRevision();
@@ -414,7 +414,7 @@ public final class PayloadEditorModel {
       this.baselineBody = (byte[])this.bodyBytes.clone();
       this.fields = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.bodyBytes));
       this.encodingMode = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
-      this.close = guessBodyKind(this.bodyBytes);
+      this.bodyKind = guessBodyKind(this.bodyBytes);
       this.provenance = source == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED : source;
       this.detectCommandApi();
       this.error = "";
@@ -469,7 +469,7 @@ public final class PayloadEditorModel {
       this.baselineBody = other.baselineBody == null ? new byte[0] : (byte[])other.baselineBody.clone();
       this.provenance = other.provenance;
       this.error = other.error;
-      this.close = other.close;
+      this.bodyKind = other.bodyKind;
       this.hasCommandApiValue = other.hasCommandApiValue;
       this.commandApiOverride = other.commandApiOverride;
       this.commandApiValue = other.commandApiValue;
@@ -618,7 +618,7 @@ public final class PayloadEditorModel {
          this.init_Str = tag;
       }
 
-      public String init() {
+      public String id() {
          return this.init_Str;
       }
 

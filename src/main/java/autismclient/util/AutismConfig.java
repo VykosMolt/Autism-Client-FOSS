@@ -239,15 +239,15 @@ public final class AutismConfig implements Cloneable {
    }
 
    public static void enqueuePendingSaveNow() {
-      AutismConfigPersistence.init();
+      AutismConfigPersistence.flushConfig();
       if (!AutismLiteVariant.enabled()) {
-         AutismProfileManager.init_V();
+         AutismProfileManager.flushInstanceSnapshot();
       }
    }
 
    public static void flushPendingSaves(long timeoutMs) {
       enqueuePendingSaveNow();
-      AutismConfigPersistence.init(timeoutMs);
+      AutismConfigPersistence.flushAll(timeoutMs);
    }
 
    static String toJson(AutismConfig config) {

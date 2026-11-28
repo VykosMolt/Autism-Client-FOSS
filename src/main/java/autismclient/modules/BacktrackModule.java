@@ -268,7 +268,7 @@ public final class BacktrackModule extends Module {
       return false;
    }
 
-   public static void init_V_Connection_Packet(Connection connection, Packet<?> packet) {
+   public static void onPacketSent(Connection connection, Packet<?> packet) {
       BacktrackModule module = instance;
       if (module != null && packet instanceof ServerboundAttackPacket) {
          BacktrackModule.ArmContext arm;
@@ -431,7 +431,7 @@ public final class BacktrackModule extends Module {
                if (this.target != this.hitTarget || !withinHoldHorizon(sinceHit, hold, ping) && !withinHitCadence(sinceHit, this.hitInterval, hold)) {
                   int lookahead = hold + Math.min(100, ping / 2);
                   if (auraIntent && al.init_Module_Str("kill-aura") instanceof KillAuraModule aura) {
-                     if (aura.activeTarget() == this.target && aura.init_Z_I_7(lookahead)) {
+                     if (aura.activeTarget() == this.target && aura.attackReadyWithin(lookahead)) {
                         return true;
                      }
                   } else if (autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player)
@@ -462,7 +462,7 @@ public final class BacktrackModule extends Module {
       return Math.min(this.decimal("max-distance"), this.player.entityInteractionRange());
    }
 
-   public static boolean init_Z_Player_Entity(Player attacker, Entity victim) {
+   public static boolean holdAttack(Player attacker, Entity victim) {
       BacktrackModule module = instance;
       if (module != null
          && attacker == CLIENT.player
@@ -549,7 +549,7 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   public static boolean init_Z_ClientPacketListen_Packet(ClientPacketListener source, Packet<?> packet) {
+   public static boolean interceptIncoming(ClientPacketListener source, Packet<?> packet) {
       BacktrackModule module = instance;
       if (module == null || module.releasing || !CLIENT.isSameThread()) {
          return false;
@@ -837,7 +837,7 @@ public final class BacktrackModule extends Module {
          : null;
    }
 
-   static Vec3 init_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 eyes) {
+   static Vec3 heldPoseFor(LivingEntity entity, Vec3 eyes) {
       BacktrackModule module = instance;
       if (module != null && module.target == entity && module.packetQueue.size() != 0 && module.isSameSession()) {
          Vec3 received = module.positionTracker.position();
@@ -854,7 +854,7 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   public static boolean init_Z_AABB_2(AABB space) {
+   public static boolean intersectsHeldTarget(AABB space) {
       BacktrackModule module = instance;
       return module != null
             && module.target != null

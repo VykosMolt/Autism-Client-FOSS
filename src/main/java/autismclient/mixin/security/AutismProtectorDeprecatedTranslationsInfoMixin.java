@@ -21,7 +21,7 @@ public abstract class AutismProtectorDeprecatedTranslationsInfoMixin {
 
    @Inject(method = "applyToMap", at = @At("HEAD"))
    private void autism$trackDeprecatedTranslations(Map<String, String> translations, CallbackInfo ci) {
-      ModNamespaceCatalog.init(this.removed(), this.renamed());
+      ModNamespaceCatalog.applyDeprecations(this.removed(), this.renamed());
       TranslationSnapshot.SnapshotBuilder builder = TranslationSnapshot.SnapshotBuilder.current();
       if (builder != null) {
          builder.applyDeprecations(this.removed(), this.renamed());

@@ -389,7 +389,7 @@ final class AiSmelt {
                               }
                            }
 
-                           this.furnaceSession = AiGameplay.update(
+                           this.furnaceSession = AiGameplay.smeltSession(
                               AiJson.objectOf(
                                  "input",
                                  BuiltInRegistries.ITEM.getKey(resolved.input()).toString(),
@@ -951,7 +951,7 @@ final class AiSmelt {
          Inner_StreamUtil richest = null;
 
          for (Inner_StreamUtil held : fuels) {
-            if (init_I(held.stack()) == tier) {
+            if (fuelTier(held.stack()) == tier) {
                if ((long)held.burn() * held.count() >= needed && (cover == null || held.burn() < cover.burn())) {
                   cover = held;
                }
@@ -992,7 +992,7 @@ final class AiSmelt {
       }
    }
 
-   static int init_I(ItemStack stack) {
+   static int fuelTier(ItemStack stack) {
       if (stack.is(ItemTags.LOGS)) {
          return 3;
       } else if (stack.is(ItemTags.PLANKS)) {

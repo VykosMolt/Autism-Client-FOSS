@@ -58,7 +58,7 @@ public final class CombatAimSpeedController {
       this.boost(enemy, tick, LatencyTickWindow.windowTicks(latencyMs) + 2);
    }
 
-   public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
+   public void steer(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
       if (!owner.equals(SilentRotationManager.getActiveOwnerId()) || SilentRotationManager.isReturningToPlayer()) {
          this.reset();
       }
@@ -78,7 +78,7 @@ public final class CombatAimSpeedController {
       }
    }
 
-   public boolean init(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Rotation wire) {
+   public boolean holdWireRotation(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Rotation wire) {
       if (wire != null && this.isBoosted(enemy, AutismSessionState.getInstance().getClientTick()) && owner.equals(SilentRotationManager.getActiveOwnerId()) && !SilentRotationManager.isReturningToPlayer()) {
          RotationMath.Rotation current = SilentRotationManager.getCurrentRotation();
          if (current == null || !SilentRotationManager.isVisibleAimActive() || player.getYRot() == current.yaw() && player.getXRot() == current.pitch()) {

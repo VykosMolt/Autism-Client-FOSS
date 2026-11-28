@@ -26,7 +26,7 @@ public final class AiSeek {
    private AiSeek() {
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation surfaceSeek(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
@@ -36,7 +36,7 @@ public final class AiSeek {
       }
    }
 
-   public static AiOperation load(JsonObject args) {
+   public static AiOperation caveSeek(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));

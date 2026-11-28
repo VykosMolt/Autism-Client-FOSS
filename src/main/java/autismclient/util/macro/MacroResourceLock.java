@@ -36,7 +36,7 @@ public final class MacroResourceLock {
       };
    }
 
-   public synchronized boolean init(MacroResourceClassifier.MacroResource resource) {
+   public synchronized boolean isLocked(MacroResourceClassifier.MacroResource resource) {
       return this.owners.containsKey(resource);
    }
 }

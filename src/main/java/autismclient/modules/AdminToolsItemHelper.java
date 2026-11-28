@@ -22,7 +22,7 @@ public final class AdminToolsItemHelper {
          OverlayManager manager = OverlayManager.getInstance();
          manager.register(overlay);
          overlay.setVisible(true);
-         overlay.read_V_2();
+         overlay.openItemEditor();
          manager.bringToFront(overlay);
       } catch (Throwable var3) {
       }

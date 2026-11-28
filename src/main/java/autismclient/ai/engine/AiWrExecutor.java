@@ -382,19 +382,19 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return this.lastFailureReason;
    }
 
-   public int readEx_I() {
+   public int getBlocksBroken() {
       return this.blocksBroken;
    }
 
-   public int value_I() {
+   public int getPillarBlocksPlaced() {
       return this.pillarBlocksPlaced;
    }
 
-   public int prevEx_I() {
+   public int getBridgeBlocksPlaced() {
       return this.bridgeBlocksPlaced;
    }
 
-   public int prev_I() {
+   public int getRestockCount() {
       return this.restockCount;
    }
 
@@ -433,7 +433,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.prev_FileStore_PacketHe = var1;
    }
 
-   public void value(boolean var1) {
+   public void setAllowHops(boolean var1) {
       this.allowHops = var1;
    }
 
@@ -469,11 +469,11 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    public void readEx_V() {
-      this.putAt_ValueSink_CacheHel.putAt();
+      this.putAt_ValueSink_CacheHel.reset();
    }
 
    public void value_V() {
-      this.putAt_ValueSink_CacheHel.putAt();
+      this.putAt_ValueSink_CacheHel.reset();
    }
 
    public void prevEx_V() {
@@ -512,7 +512,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   public boolean value_Z() {
+   public boolean ensureSafeMotion() {
       if (this.client.player != null && this.client.level != null) {
          LocalPlayer var1 = this.client.player;
          if (!var1.isInWater() && (!var1.onGround() || !(var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4))) {
@@ -532,7 +532,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   public int chunkAt_I() {
+   public int remainingMovesToGoal() {
       return this.putAt_RingCache_TableCac == AiWrExecutor.RunState.fill && this.endsAtGoal && this.moves != null
          ? Math.max(0, this.moves.size() - this.moveIndex)
          : -1;
@@ -544,19 +544,19 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          : -1;
    }
 
-   public BlockPos readEx_BlockPos() {
+   public BlockPos pathEndOrNull() {
       return this.putAt_RingCache_TableCac == AiWrExecutor.RunState.fill && this.moves != null && !this.moves.isEmpty()
          ? this.moves.get(this.moves.size() - 1).to()
          : null;
    }
 
-   public BlockPos value_BlockPos() {
+   public BlockPos currentPathEnd() {
       return !this.moves.isEmpty() && this.putAt_RingCache_TableCac == AiWrExecutor.RunState.fill
          ? this.moves.get(this.moves.size() - 1).to()
          : null;
    }
 
-   public Set<BlockPos> putAt_Set() {
+   public Set<BlockPos> remainingPathSupportCells() {
       if (this.putAt_RingCache_TableCac == AiWrExecutor.RunState.fill && this.moves != null && !this.moves.isEmpty()) {
          HashSet<BlockPos> var1 = new HashSet<>();
 
@@ -596,8 +596,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return var2;
    }
 
-   int closeOf_I() {
-      if (this.chunkAt_I() < 0) {
+   int pathProgressPercent() {
+      if (this.remainingMovesToGoal() < 0) {
          return -1;
       }
 
@@ -611,7 +611,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return var5 > 0.0 ? Math.clamp((int)(100.0 * this.elapsedCostTicks / var5), 0, 99) : 0;
    }
 
-   public boolean prevEx_Z() {
+   public boolean canStopNow() {
       if (this.client.player != null && !isPlayerSupported()) {
          return false;
       } else if (this.putAt_RingCache_TableCac != AiWrExecutor.RunState.fill) {
@@ -626,18 +626,18 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   public boolean prev_Z() {
+   public boolean hasPendingActions() {
       return this.pendingPlacePos != null && (this.client.level == null || !this.isPlacementConfirmed(this.pendingPlacePos))
          || this.restock != null && this.restock.isRunning()
          || this.plankCraftOp != null
          || this.nextBy_I > 0;
    }
 
-   public boolean chunkAt_Z() {
+   public boolean hasDoorToClose() {
       return this.doorToClose != null;
    }
 
-   public boolean state_Z() {
+   public boolean awaitingSupportPlacement() {
       return this.currentMove != null && !this.currentMove.cellsToPlace().isEmpty() && !this.supportPlaced;
    }
 
@@ -656,8 +656,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   public boolean pollAt_Z() {
-      if (!this.prevEx_Z()) {
+   public boolean tryStop() {
+      if (!this.canStopNow()) {
          return false;
       }
 
@@ -825,7 +825,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
                      AiPathfinder.PathStep var10 = this.moves.get(this.moveIndex);
                      if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var10, this.replacedStep)
-                        && this.putAt_ValueSink_CacheHel.putAt(var10, System.nanoTime())) {
+                        && this.putAt_ValueSink_CacheHel.isLooping(var10, System.nanoTime())) {
                         this.syncAt_Z = true;
                         this.lastFailureReason = "looping on " + var10.type() + " " + var10.from().toShortString() + " -> " + var10.to().toShortString();
                         this.putAt_V_BlockPos_FileStore_PacketHe(var10.to(), var10);
@@ -1454,7 +1454,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                ? AiAim.AimProfile.FAST
                : AiAim.AimProfile.EXACT
          );
-      if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var1, this.replacedStep) && this.putAt_ValueSink_CacheHel.putAt(var1, System.nanoTime())) {
+      if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var1, this.replacedStep) && this.putAt_ValueSink_CacheHel.isLooping(var1, System.nanoTime())) {
          this.syncAt_Z = true;
          this.lastFailureReason = "looping on " + var1.type() + " " + var1.from().toShortString() + " -> " + var1.to().toShortString();
          this.putAt_V_BlockPos_FileStore_PacketHe(var1.to(), var1);
@@ -1632,7 +1632,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          AutismClientAddon.LOG.info("[AI] capping the shaft at {}: {} deep{}", var4.toShortString(), var5, var6 ? ", a hostile after the player" : "");
          this.shaftCapPos = var4;
          this.shaftCapTicks = 0;
-         AiEditLedger.read_V(var4);
+         AiEditLedger.capCell(var4);
          return this.putAt_Z_LocalPlayer_FileStore_PacketHe(var1, var2);
       } else {
          return false;
@@ -1890,7 +1890,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          BlockState var6 = this.client.level.getBlockState(var5);
          if (!var6.isAir() && var6.getFluidState().isEmpty() && !var6.hasBlockEntity() && !(var6.getDestroySpeed(this.client.level, var5) < 0.0F)) {
             Block var7 = var6.getBlock();
-            if (!AiRoutePolicy.putAt(var5)
+            if (!AiRoutePolicy.isCellBlocked(var5)
                && (var6.canBeReplaced() || var7 instanceof VegetationBlock || var7 instanceof LeafLitterBlock || var7 instanceof SnowLayerBlock)) {
                return var6.getCollisionShape(this.client.level, var5).isEmpty() ? var5 : null;
             } else {
@@ -2074,8 +2074,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                return;
             }
 
-            if (!AiRoutePolicy.putAt_Z_D(var1.getY(), var3.getY(), var2.repairFarmland())
-               && (!this.isOnSoulSand(var1) || !AiRoutePolicy.putAt_Z_D(var1.getY() + 0.125, var3.getY(), false))) {
+            if (!AiRoutePolicy.isAtFloorHeight(var1.getY(), var3.getY(), var2.repairFarmland())
+               && (!this.isOnSoulSand(var1) || !AiRoutePolicy.isAtFloorHeight(var1.getY() + 0.125, var3.getY(), false))) {
                this.putAt_V_Str("pillar takeoff is below the new support");
                return;
             }
@@ -2365,7 +2365,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private static boolean putAt_Z_FileStore_PacketHe_LocalPlayer(AiPathfinder.PathStep var0, LocalPlayer var1) {
-      if (AiRoutePolicy.putAt_Z(var0) && !(Math.abs(var1.getY() - var0.to().getY()) > 0.6)) {
+      if (AiRoutePolicy.isPlainFlatStep(var0) && !(Math.abs(var1.getY() - var0.to().getY()) > 0.6)) {
          double var2 = var0.to().getX() - var0.from().getX();
          double var4 = var0.to().getZ() - var0.from().getZ();
          double var6 = Math.hypot(var2, var4);
@@ -2522,7 +2522,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             && this.isOpenDoorAt(var1)
             && ++this.store_I <= 24
             && !(this.client.player.blockPosition().distSqr(var1) > 36.0)) {
-            if (AiRoutePolicy.putAt(
+            if (AiRoutePolicy.hasClearedBoxes(
                this.putAt_List_BlockPos(var1), Vec3.atLowerCornerOf(var1), this.client.player.getBoundingBox(), this.dataEx_I, this.frameOf_I, 0.05
             )) {
                AABB var2 = new AABB(var1);
@@ -2750,7 +2750,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          var9 = AiRoutePolicy.putAt_D_List_I(this.moves, this.moveIndex);
       }
 
-      boolean var11 = var1.isInWater() && AiRoutePolicy.putAt_Z_D(var1.getY(), var9, var1.onGround(), var1.isUnderWater());
+      boolean var11 = var1.isInWater() && AiRoutePolicy.shouldSwimUp(var1.getY(), var9, var1.onGround(), var1.isUnderWater());
       this.client.options.keyJump.setDown(var4 || var11);
       this.client.options.keyShift.setDown(false);
    }
@@ -2759,7 +2759,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       LocalPlayer var2 = this.client.player;
       if (!var1.cellsToPlace().isEmpty()
          && !this.supportPlaced
-         && !AiRoutePolicy.putAt(
+         && !AiRoutePolicy.hasReachedStepTarget(
             var2.blockPosition().getX(),
             var2.getY(),
             var2.blockPosition().getZ(),
@@ -2775,7 +2775,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          int var6 = Integer.signum(var1.to().getX() - var1.from().getX());
          int var4 = Integer.signum(var1.to().getZ() - var1.from().getZ());
          return !this.isClosedDoorAt(var1.to())
-            && AiRoutePolicy.putAt(this.putAt_List_BlockPos(var1.to()), Vec3.atLowerCornerOf(var1.to()), var2.getBoundingBox(), var6, var4, 0.05);
+            && AiRoutePolicy.hasClearedBoxes(this.putAt_List_BlockPos(var1.to()), Vec3.atLowerCornerOf(var1.to()), var2.getBoundingBox(), var6, var4, 0.05);
       } else if (var1.type() == AiPathfinder.MoveType.CLIMB_1) {
          boolean var5 = var1.to().getY() > var1.from().getY();
          return (var5 ? var2.getY() >= var1.to().getY() + 0.1 : var2.getY() < var1.to().getY() + 0.9 && var2.getY() > var1.to().getY() - 0.5)
@@ -2791,7 +2791,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             var1, var2.blockPosition().getX(), var2.blockPosition().getZ(), var2.getY(), var2.onGround() || var2.isInWater() || var2.onClimbable()
          );
       } else if (var1.type() == AiPathfinder.MoveType.DESCEND_SOFT) {
-         return AiRoutePolicy.putAt_Z_D(var2.getY(), var1.to().getY(), var2.onGround(), var2.isInWater(), var2.onClimbable())
+         return AiRoutePolicy.canReachStepHeight(var2.getY(), var1.to().getY(), var2.onGround(), var2.isInWater(), var2.onClimbable())
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4;
       } else if (var2.isInWater()
@@ -2893,7 +2893,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private int placeSlotFor(BlockPos var1) {
       AiRoutePolicy.PlacementPolicy var2 = AiRoutePolicy.putAt_ValueSink_TableCac();
       if (var2 != null && var1 != null && this.client.player != null) {
-         if (!var2.fill(var1)) {
+         if (!var2.allowsPlacementAt(var1)) {
             return -1;
          }
 

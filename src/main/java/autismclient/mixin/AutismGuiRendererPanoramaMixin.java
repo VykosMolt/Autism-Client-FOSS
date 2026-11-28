@@ -25,7 +25,7 @@ public abstract class AutismGuiRendererPanoramaMixin {
 
    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/CubeMap;render(FF)V"))
    private void autism$renderPanorama(CubeMap vanillaCubeMap, float rotX, float rotY) {
-      boolean custom = !CustomMainMenuGuard.load() && ThemeTextureRecolorer.isPanoramaLoaded();
+      boolean custom = !CustomMainMenuGuard.isSuppressed() && ThemeTextureRecolorer.isPanoramaLoaded();
       CubeMap target = custom ? this.autism$customCubeMap : vanillaCubeMap;
       target.render(rotX, rotY);
    }

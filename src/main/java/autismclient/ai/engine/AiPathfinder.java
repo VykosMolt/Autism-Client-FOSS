@@ -2878,9 +2878,9 @@ public final class AiPathfinder {
          List var8 = var7 ? var0.slimeBounceCache.get(var3) : null;
          if (var8 == null) {
             AiPlannerWorld var9 = var0.plannerWorld();
-            long var10 = var9.putAt_J;
+            long var10 = var9.pendingCellsMet;
             var8 = solveSlimeBounces(var0, var1, var3, var4);
-            if (var7 && var9.putAt_J == var10 && (var0.queryFlags & 1) == 0) {
+            if (var7 && var9.pendingCellsMet == var10 && (var0.queryFlags & 1) == 0) {
                var0.slimeBounceCache.put(var3, var8);
             }
          }
@@ -3235,7 +3235,7 @@ public final class AiPathfinder {
                   }
 
                   if (var14.size() != 1) {
-                     AiJumpSolver.JumpPlan var17 = AiWallJump.putAt(var0.plannerWorld(), var2, var3, var14);
+                     AiJumpSolver.JumpPlan var17 = AiWallJump.planWallJump(var0.plannerWorld(), var2, var3, var14);
                      if (var17 != null && !(var17.maneuver().replay(var0.plannerWorld(), var17.maneuver().start(), 0, var13, var3) < -0.04)) {
                         var5.add(AiPathfinder.PathStep.jump(var2, var13, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
                      }
@@ -3346,7 +3346,7 @@ public final class AiPathfinder {
          boolean var9 = var25 != null;
          boolean var10 = false;
          if (var0.fullPhysicsParkour && !var0.fastPassMode && var2.sprint() && Math.abs(var2.sourceY() - var5) <= 1.0E-6 && isNeoWallCandidate(var0, var3, var4)) {
-            AiJumpSolver.JumpPlan var11 = AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.plannerWorld(), var3, var5, var4, var2.approach());
+            AiJumpSolver.JumpPlan var11 = AiWallJump.planWallJumpBetween(var0.plannerWorld(), var3, var5, var4, var2.approach());
             if (var11 != null
                && (var25 == null || var11.ticks() <= var25.ticks() + 4)
                && var11.maneuver().replay(var0.plannerWorld(), var11.maneuver().start(), 0, var4, var5) >= -0.04) {
@@ -3422,7 +3422,7 @@ public final class AiPathfinder {
                   && Math.abs(surfaceY(var4.getY(), var0.probePos(var4.offset(0, -1, var2.dz()))) - var5) < 1.0E-6;
             if (var15 && !var1.contains(var28.asLong()) && isFlatWalkableCell(var0, var28, var5) && Math.abs(surfaceY(var28.getY(), var31) - var5) < 1.0E-6) {
                AiJumpSolver.JumpPlan var34 = var10
-                  ? AiWallJump.putAt_IoUtil_TextState_TokenCore_TaskStat_3(var0.plannerWorld(), var3, var5, var28, var2.approach())
+                  ? AiWallJump.planWallJumpBetween(var0.plannerWorld(), var3, var5, var28, var2.approach())
                   : var0.solveJumpCached(var3, var2.sourceY(), var28, var5, var25.approach(), var2.sprint());
                if (var34 != null && var34.margin() > var25.margin()) {
                   var25 = var34;
@@ -4521,7 +4521,7 @@ public final class AiPathfinder {
             }
 
             AiPlannerWorld var9 = this.plannerWorld();
-            long var10 = var9.putAt_J;
+            long var10 = var9.pendingCellsMet;
             BlockPos var12 = this.traceStepOffLanding(var9, var1, var2, (float)Math.toDegrees(Math.atan2(-var4, var5)), null);
             BlockPos var13 = null;
             if (var12 != null) {
@@ -4545,7 +4545,7 @@ public final class AiPathfinder {
                }
             }
 
-            if (var9.putAt_J == var10) {
+            if (var9.pendingCellsMet == var10) {
                this.fallLandingCache.put(var6, var13 == null ? NULL_SENTINEL : var13);
             }
 
@@ -4628,9 +4628,9 @@ public final class AiPathfinder {
             }
 
             AiPlannerWorld var9 = this.plannerWorld();
-            long var10 = var9.putAt_J;
+            long var10 = var9.pendingCellsMet;
             AiJumpSolver.JumpPlan var12 = (AiJumpSolver.JumpPlan)var6.get();
-            if (var9.putAt_J == var10 && !this.hasActiveEdits()) {
+            if (var9.pendingCellsMet == var10 && !this.hasActiveEdits()) {
                this.localJumpCache.put(var7, var12 == null ? NULL_SENTINEL : var12);
             }
 
@@ -4651,7 +4651,7 @@ public final class AiPathfinder {
             if (this.fullPhysicsParkour || (var14 ? this.tightJumpBudgetSpentNanos < 200000000L : this.normalJumpBudgetSpentNanos < 65000000L)) {
                long var15 = System.nanoTime();
                AiPlannerWorld var17 = this.plannerWorld();
-               long var18 = var17.putAt_J;
+               long var18 = var17.pendingCellsMet;
                boolean var20 = this.fullPhysicsParkour && this.fallPolicy == AiPathfinder.FallPolicy.PARKOUR_SAFE && this.hasTwoHighWallOnDrop(var1, var2, var4, var5);
                boolean var21 = this.fullPhysicsParkour
                   && Math.abs(var4.getX() - var1.getX()) == 1
@@ -4696,7 +4696,7 @@ public final class AiPathfinder {
                      }
                   }
 
-                  if (var17.putAt_J == var18) {
+                  if (var17.pendingCellsMet == var18) {
                      this.localJumpCache.put(var12, var37 == null ? NULL_SENTINEL : var37);
                   }
 
@@ -4748,7 +4748,7 @@ public final class AiPathfinder {
                   }
 
                   AiJumpSolver.JumpPlan var41;
-                  if (var42 != null && var17.putAt_J == var18) {
+                  if (var42 != null && var17.pendingCellsMet == var18) {
                      this.jumpCacheHits++;
                      var41 = var42 == NULL_SENTINEL
                         ? null
@@ -4769,7 +4769,7 @@ public final class AiPathfinder {
                   if (var42 == null) {
                      this.jumpSolves++;
                      var41 = AiJumpSolver.solve(var17, var1, var2, var4, var5, var7, var9, var22, this.fullPhysicsParkour, var38, this.quickJumpMode);
-                     if ((var41 != null || !var22) && var17.putAt_J == var18) {
+                     if ((var41 != null || !var22) && var17.pendingCellsMet == var18) {
                         synchronized (GLOBAL_JUMP_CACHE) {
                            if (GLOBAL_JUMP_CACHE.size() >= 65536) {
                               GLOBAL_JUMP_CACHE.clear();
@@ -4785,7 +4785,7 @@ public final class AiPathfinder {
                      }
                   }
 
-                  if (var17.putAt_J == var18) {
+                  if (var17.pendingCellsMet == var18) {
                      this.localJumpCache.put(var12, var41 == null ? NULL_SENTINEL : var41);
                   }
 
@@ -4833,7 +4833,7 @@ public final class AiPathfinder {
                var17 = GLOBAL_JUMP_CACHE.get(var15);
             }
 
-            if (var17 != null && var1.putAt_J == var13) {
+            if (var17 != null && var1.pendingCellsMet == var13) {
                this.jumpCacheHits++;
                return var17 == NULL_SENTINEL
                   ? null
@@ -4848,7 +4848,7 @@ public final class AiPathfinder {
 
             this.jumpSolves++;
             AiJumpSolver.JumpPlan var25 = AiJumpSolver.solve(var1, var2, var3, var5, var6, var8, var12, false, false, false, this.quickJumpMode);
-            if (var1.putAt_J == var13) {
+            if (var1.pendingCellsMet == var13) {
                synchronized (GLOBAL_JUMP_CACHE) {
                   if (GLOBAL_JUMP_CACHE.size() >= 65536) {
                      GLOBAL_JUMP_CACHE.clear();
@@ -5753,7 +5753,7 @@ public final class AiPathfinder {
                      }
 
                      for (BlockPos var25 : var2.cellsToBreak()) {
-                        if (AiEditLedger.load_Z(var25)) {
+                        if (AiEditLedger.isRecentPlacement(var25)) {
                            var9 += 60.0;
                         }
 
@@ -6966,7 +6966,7 @@ public final class AiPathfinder {
             while (this.savingYOffset < var3) {
                int var7 = (var5 * 16 + var6) * var3 + this.savingYOffset;
                short var8 = this.savingFlags[var7];
-               if ((var8 & 1) != 0 && AiChunkMemory.init_I(var8) == 1) {
+               if ((var8 & 1) != 0 && AiChunkMemory.packClassFor(var8) == 1) {
                   var4.set((this.savingChunkX << 4) + var5, this.minY + this.savingYOffset, (this.savingChunkZ << 4) + var6);
                   String var9 = BuiltInRegistries.BLOCK.getKey(this.level.getBlockState(var4).getBlock()).getPath();
                   if (AiChunkMemory.isNotableBlock(var9)) {

@@ -195,7 +195,7 @@ final class VanishActivityDetector {
       }
    }
 
-   boolean init_Z_Packet_J(Packet<?> packet, long at) {
+   boolean observePacket(Packet<?> packet, long at) {
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunk) {
          this.tracker.suppress(new BlockPos(chunk.x() << 4, 0, chunk.z() << 4), at + 3000L);
          return true;
@@ -351,7 +351,7 @@ final class VanishActivityDetector {
       }
 
       this.tracker
-         .init(
+         .sweep(
             at,
             (posx, after) -> isChunkLoaded(posx) && blockId(MINECRAFT.level.getBlockState(posx)).equals(after),
             posx -> this.isExplained(posx, at)

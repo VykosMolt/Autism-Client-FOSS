@@ -303,7 +303,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
       this.hitBoxes.add(new StringListEditorScreen.HitBox(type, x, y, w, h, index));
    }
 

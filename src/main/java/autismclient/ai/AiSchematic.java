@@ -306,11 +306,11 @@ final class AiSchematic {
 
    static AiSchematic.LoadedSchematic load(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
       AiSchematic.LoadedSchematic loaded = loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
-      init(loaded.blueprint().cells());
+      validateBounds(loaded.blueprint().cells());
       return loaded;
    }
 
-   static void init(List<AiBuilder.CellSpec> cells) {
+   static void validateBounds(List<AiBuilder.CellSpec> cells) {
       if (!cells.isEmpty()) {
          int minX = 2147483647;
          int minY = minX;

@@ -28,7 +28,7 @@ final class ClutchBlockPlanner {
    private static final double load_D = 0.3;
    private static final double read_D = 0.03;
    private static final int GOAL_CANDIDATES = 6;
-   static final double[] init_DArr = new double[]{0.5, 0.15, 0.85, 0.92, 0.03, 0.97};
+   static final double[] FACE_SAMPLE_FRACTIONS = new double[]{0.5, 0.15, 0.85, 0.92, 0.03, 0.97};
    static final double init_D = 0.02;
    private static final long NO_POS = -9223372036854775808L;
    private static final int read_I = 3;
@@ -40,7 +40,7 @@ final class ClutchBlockPlanner {
 
    private static boolean nothingPlaceableNear(ClutchBlockPlanner.PlacementWorld world, Vec3 eye, double cellReach, LongOpenHashSet linkable) {
       double distance = Math.sqrt(cellReach) + 1.0 + 1.0E-6;
-      if (!world.init(eye, distance)) {
+      if (!world.openAirWithin(eye, distance)) {
          return false;
       }
 
@@ -215,7 +215,7 @@ final class ClutchBlockPlanner {
       ClutchBlockPlanner.ClutchPlan result = planSearch(
          bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, damage, 0.0, uncaught, writtenEyes, marginal, true
       );
-      return result == null ? null : new ClutchBlockPlanner.ClutchPlan(result.init_List(), result.init_BlockPos(), result.init_I(), result.init_D(), result.load(), true);
+      return result == null ? null : new ClutchBlockPlanner.ClutchPlan(result.links(), result.landing(), result.landingTick(), result.fall(), result.load(), true);
    }
 
    private static ClutchBlockPlanner.ClutchPlan planSearch(
@@ -291,13 +291,13 @@ final class ClutchBlockPlanner {
          : null;
    }
 
-   static ClutchBlockPlanner.ClutchPlan load(List<AABB> bodies, double eyeHeight, double reach, final ClutchBlockPlanner.PlacementWorld world, int firstTick, List<Vec3> eyes) {
+   static ClutchBlockPlanner.ClutchPlan planTowerOrReach(List<AABB> bodies, double eyeHeight, double reach, final ClutchBlockPlanner.PlacementWorld world, int firstTick, List<Vec3> eyes) {
       ClutchBlockPlanner.PlacementLink tower = towerLink(bodies, eyeHeight, reach, world, firstTick, eyes);
-      ClutchBlockPlanner.ClutchPlan nearby = tower != null && tower.init_I() <= firstTick + 1
+      ClutchBlockPlanner.ClutchPlan nearby = tower != null && tower.earliestTick() <= firstTick + 1
          ? null
          : nearestReachPlan(bodies, eyeHeight, reach, world, firstTick, eyes);
-      ClutchBlockPlanner.ClutchPlan first = nearby == null || tower != null && nearby.firstLink().init_I() >= tower.init_I()
-         ? (tower == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(tower), tower.init_BlockPos(), tower.load_I() + 1, 0.0, false))
+      ClutchBlockPlanner.ClutchPlan first = nearby == null || tower != null && nearby.firstLink().earliestTick() >= tower.earliestTick()
+         ? (tower == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(tower), tower.pos(), tower.latestTick() + 1, 0.0, false))
          : nearby;
       if (first == null) {
          return null;
@@ -307,12 +307,12 @@ final class ClutchBlockPlanner {
       ClutchBlockPlanner.PlacementWorld withRoot = new ClutchBlockPlanner.PlacementWorld() {
          @Override
          public boolean supportAt(int x, int y, int z) {
-            return x == root.init_BlockPos().getX() && y == root.init_BlockPos().getY() && z == root.init_BlockPos().getZ() || world.supportAt(x, y, z);
+            return x == root.pos().getX() && y == root.pos().getY() && z == root.pos().getZ() || world.supportAt(x, y, z);
          }
 
          @Override
          public boolean canPlaceAt(int x, int y, int z) {
-            return (x != root.init_BlockPos().getX() || y != root.init_BlockPos().getY() || z != root.init_BlockPos().getZ()) && world.canPlaceAt(x, y, z);
+            return (x != root.pos().getX() || y != root.pos().getY() || z != root.pos().getZ()) && world.canPlaceAt(x, y, z);
          }
 
          @Override
@@ -321,27 +321,27 @@ final class ClutchBlockPlanner {
          }
 
          @Override
-         public boolean init(Vec3 eye, double distance) {
-            return eye.distanceToSqr(Vec3.atCenterOf(root.init_BlockPos())) > distance * distance && world.init(eye, distance);
+         public boolean openAirWithin(Vec3 eye, double distance) {
+            return eye.distanceToSqr(Vec3.atCenterOf(root.pos())) > distance * distance && world.openAirWithin(eye, distance);
          }
       };
-      int after = root.init_I() + 1;
+      int after = root.earliestTick() + 1;
       ClutchBlockPlanner.PlacementLink next = towerLink(bodies, eyeHeight, reach, withRoot, after, eyes);
-      ClutchBlockPlanner.ClutchPlan extra = next != null && next.init_I() <= after ? null : nearestReachPlan(bodies, eyeHeight, reach, withRoot, after, eyes);
-      if (extra != null && (next == null || extra.firstLink().init_I() < next.init_I())) {
+      ClutchBlockPlanner.ClutchPlan extra = next != null && next.earliestTick() <= after ? null : nearestReachPlan(bodies, eyeHeight, reach, withRoot, after, eyes);
+      if (extra != null && (next == null || extra.firstLink().earliestTick() < next.earliestTick())) {
          next = extra.firstLink();
       }
 
-      return next != null && next.init_I() == after && next.load_BlockPos().equals(root.init_BlockPos())
-         ? new ClutchBlockPlanner.ClutchPlan(List.of(root, next), first.init_BlockPos(), first.init_I(), first.init_D(), first.load())
+      return next != null && next.earliestTick() == after && next.support().equals(root.pos())
+         ? new ClutchBlockPlanner.ClutchPlan(List.of(root, next), first.landing(), first.landingTick(), first.fall(), first.load())
          : first;
    }
 
    static List<ClutchBlockPlanner.PlacementLink> unusedCandidateLinks(List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, int limit) {
-      return init_List_List(bodies, eyeHeight, reach, world, firstTick, limit, List.of());
+      return candidateLinks(bodies, eyeHeight, reach, world, firstTick, limit, List.of());
    }
 
-   static List<ClutchBlockPlanner.PlacementLink> init_List_List(
+   static List<ClutchBlockPlanner.PlacementLink> candidateLinks(
       List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, int limit, List<Vec3> writtenEyes
    ) {
       if (bodies != null && bodies.size() >= 2 && world != null && limit > 0) {
@@ -383,7 +383,7 @@ final class ClutchBlockPlanner {
                                     int sy = y + direction.getStepY();
                                     int sz = z + direction.getStepZ();
                                     if (flight.cells.isSupport(BlockPos.asLong(sx, sy, sz), sx, sy, sz)
-                                       && (k != 0 || world.init(sx, sy, sz, direction.getOpposite()))
+                                       && (k != 0 || world.matchesWrittenHit(sx, sy, sz, direction.getOpposite()))
                                        && canReachFace(eye, sx, sy, sz, direction.getOpposite(), reach)) {
                                        seen.add(key);
                                        found.add(new long[]{key, direction.getOpposite().ordinal(), k, hit});
@@ -443,7 +443,7 @@ final class ClutchBlockPlanner {
                               int sy = y + toward.getStepY();
                               int sz = z + toward.getStepZ();
                               if (world.supportAt(sx, sy, sz)
-                                 && (k != 0 || world.init(sx, sy, sz, toward.getOpposite()))
+                                 && (k != 0 || world.matchesWrittenHit(sx, sy, sz, toward.getOpposite()))
                                  && canReachFace(eye, sx, sy, sz, toward.getOpposite(), reach)) {
                                  cell = new BlockPos(x, y, z);
                                  support = new BlockPos(sx, sy, sz);
@@ -506,8 +506,8 @@ final class ClutchBlockPlanner {
    static boolean init(Vec3 clickEye, Vec3 nextEye, BlockPos support, Direction face, BlockPos placed, double reach, Direction nextFace, double margin) {
       double plane = facePlane(support.getX(), support.getY(), support.getZ(), face);
 
-      for (double a : init_DArr) {
-         for (double b : init_DArr) {
+      for (double a : FACE_SAMPLE_FRACTIONS) {
+         for (double b : FACE_SAMPLE_FRACTIONS) {
             Vec3 var10000;
             switch (face.getAxis()) {
                case X:
@@ -525,17 +525,17 @@ final class ClutchBlockPlanner {
 
             Vec3 point = var10000;
             Vec3 look = point.subtract(clickEye);
-            if (!(look.lengthSqr() > reach * reach) && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)) {
+            if (!(look.lengthSqr() > reach * reach) && rayHitsCell(nextEye, look, placed, nextFace, reach)) {
                return true;
             }
          }
       }
 
       if (nextFace != null) {
-         for (Vec3 point : init_List_Vec3(clickEye, nextEye, faceBox(support, face), placed, nextFace, margin)) {
+         for (Vec3 point : faceAimPoints(clickEye, nextEye, faceBox(support, face), placed, nextFace, margin)) {
             Vec3 look = point.subtract(clickEye);
             if (look.lengthSqr() <= reach * reach
-               && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)
+               && rayHitsCell(nextEye, look, placed, nextFace, reach)
                && ClutchFallPhysics.matchesPlacementHit(AABB.clip(UNIT_CUBE, clickEye, clickEye.add(look.normalize().scale(reach)), support), support, face)) {
                return true;
             }
@@ -566,10 +566,10 @@ final class ClutchBlockPlanner {
    }
 
    static List<Vec3> unusedChainAimPoints(Vec3 eye, Vec3 nextEye, AABB rect, BlockPos placed, Direction nextFace) {
-      return init_List_Vec3(eye, nextEye, rect, placed, nextFace, 0.02);
+      return faceAimPoints(eye, nextEye, rect, placed, nextFace, 0.02);
    }
 
-   static List<Vec3> init_List_Vec3(Vec3 eye, Vec3 nextEye, AABB rect, BlockPos placed, Direction nextFace, double margin) {
+   static List<Vec3> faceAimPoints(Vec3 eye, Vec3 nextEye, AABB rect, BlockPos placed, Direction nextFace, double margin) {
       List<Vec3> polygon = facePolygon(eye, nextEye, rect, placed, nextFace, margin);
       if (polygon.isEmpty()) {
          return List.of();
@@ -646,7 +646,7 @@ final class ClutchBlockPlanner {
       return polygon;
    }
 
-   static List<ClutchBlockPlanner.AimAngles> init_List_Vec3_2(
+   static List<ClutchBlockPlanner.AimAngles> placementAimAngles(
       Vec3 eye,
       Vec3 nextEye,
       AABB rect,
@@ -728,7 +728,7 @@ final class ClutchBlockPlanner {
                            BlockHitResult hit = AABB.clip(UNIT_CUBE, eye, eye.add(look.scale(reach)), support);
                            if (ClutchFallPhysics.matchesPlacementHit(hit, support, face)
                               && autismclient.util.BlockPlacementPlanner.isPointInsideFace(rect, face, hit.getLocation(), margin)
-                              && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)) {
+                              && rayHitsCell(nextEye, look, placed, nextFace, reach)) {
                               ClutchBlockPlanner.AimAngles found = new ClutchBlockPlanner.AimAngles(yaw, pitch);
                               if (!result.contains(found)) {
                                  BlockHitResult following = AABB.clip(UNIT_CUBE, nextEye, nextEye.add(look.scale(reach)), placed);
@@ -777,7 +777,7 @@ final class ClutchBlockPlanner {
       }
    }
 
-   static List<ClutchBlockPlanner.AimAngles> init_List_Vec3(
+   static List<ClutchBlockPlanner.AimAngles> placementAimAnglesNearEye(
       Vec3 approximateEye,
       AABB rect,
       BlockPos support,
@@ -993,7 +993,7 @@ final class ClutchBlockPlanner {
       return var10000;
    }
 
-   static boolean init_Z_Vec3_2(Vec3 eye, Vec3 look, BlockPos cell, Direction face, double reach) {
+   static boolean rayHitsCell(Vec3 eye, Vec3 look, BlockPos cell, Direction face, double reach) {
       Vec3 end = eye.add(look.normalize().scale(reach));
       return face == null ? new AABB(cell).deflate(0.05).clip(eye, end).isPresent() : ClutchFallPhysics.matchesPlacementHit(AABB.clip(UNIT_CUBE, eye, end, cell), cell, face);
    }
@@ -1038,7 +1038,7 @@ final class ClutchBlockPlanner {
       return past >= 0.02;
    }
 
-   static Vec3 init_Vec3_Vec3(Vec3 eye, int sx, int sy, int sz, Direction face) {
+   static Vec3 aimPointOnFace(Vec3 eye, int sx, int sy, int sz, Direction face) {
       return closestFacePoint(eye, sx, sy, sz, face, 0.3);
    }
 
@@ -1340,34 +1340,34 @@ final class ClutchBlockPlanner {
 
       boolean canPlaceAt(int var1, int var2, int var3);
 
-      default boolean write(int x, int y, int z) {
+      default boolean isWrittenRayBlock(int x, int y, int z) {
          return false;
       }
 
-      default boolean init(int x, int y, int z, Direction face) {
-         return this.write(x, y, z);
+      default boolean matchesWrittenHit(int x, int y, int z, Direction face) {
+         return this.isWrittenRayBlock(x, y, z);
       }
 
       default boolean allowedStart(int x, int y, int z) {
          return true;
       }
 
-      default boolean init(Vec3 eye, double distance) {
+      default boolean openAirWithin(Vec3 eye, double distance) {
          return false;
       }
    }
 
-   record ClutchPlan(List<ClutchBlockPlanner.PlacementLink> init_List, BlockPos init_BlockPos, int init_I, double init_D, boolean init_Z, boolean load) {
+   record ClutchPlan(List<ClutchBlockPlanner.PlacementLink> links, BlockPos landing, int landingTick, double fall, boolean init_Z, boolean load) {
       ClutchPlan(List<ClutchBlockPlanner.PlacementLink> links, BlockPos landing, int landingTick, double fall, boolean reachOut) {
          this(links, landing, landingTick, fall, reachOut, false);
       }
 
       ClutchBlockPlanner.PlacementLink firstLink() {
-         return this.init_List.getFirst();
+         return this.links.getFirst();
       }
 
-      boolean init_Z_2() {
-         return this.init_Z && Double.isNaN(this.init_D);
+      boolean isReachWithoutLanding() {
+         return this.init_Z && Double.isNaN(this.fall);
       }
 
       public boolean load() {
@@ -1379,7 +1379,7 @@ final class ClutchBlockPlanner {
       }
    }
 
-   record PlacementLink(BlockPos init_BlockPos, BlockPos load_BlockPos, Direction init_Direction, int init_I, int load_I) {
+   record PlacementLink(BlockPos pos, BlockPos support, Direction face, int earliestTick, int latestTick) {
    }
 
    private record LinkSearch(
@@ -1391,7 +1391,7 @@ final class ClutchBlockPlanner {
    ) {
    }
 
-   record AimAngles(float init, float load) {
+   record AimAngles(float yaw, float pitch) {
    }
 
    private static final class FallFlight {
@@ -1515,7 +1515,7 @@ final class ClutchBlockPlanner {
                                     int placed = best.get(at);
                                     boolean existing = placed < 0 && this.cells.isSupport(at, sx, sy, sz);
                                     if ((existing || placed >= 0 && placed < k && linkable.contains(at))
-                                       && (k != 0 || existing && (this.immediate || this.world.init(sx, sy, sz, direction.getOpposite())))) {
+                                       && (k != 0 || existing && (this.immediate || this.world.matchesWrittenHit(sx, sy, sz, direction.getOpposite())))) {
                                        Direction face = direction.getOpposite();
                                        if ((!existing || this.world.allowedStart(x, y, z))
                                           && autismclient.modules.ClutchBlockPlanner.canReachFace(eye, sx, sy, sz, face, reach, carried ? 0.3 : 0.03)) {
@@ -1620,7 +1620,7 @@ final class ClutchBlockPlanner {
                                  int sy = y + direction.getStepY();
                                  int sz = z + direction.getStepZ();
                                  if (this.cells.isSupport(BlockPos.asLong(sx, sy, sz), sx, sy, sz)
-                                    && (k != 0 || this.world.init(sx, sy, sz, direction.getOpposite()))) {
+                                    && (k != 0 || this.world.matchesWrittenHit(sx, sy, sz, direction.getOpposite()))) {
                                     Direction outward = direction.getOpposite();
                                     if (autismclient.modules.ClutchBlockPlanner.canReachFace(eye, sx, sy, sz, outward, reach, 0.03)) {
                                        face = outward;
@@ -1655,7 +1655,7 @@ final class ClutchBlockPlanner {
             }
          }
 
-         return chosen == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(chosen), chosen.init_BlockPos(), this.bodies.size() - 1, 0.0 / 0.0, true);
+         return chosen == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(chosen), chosen.pos(), this.bodies.size() - 1, 0.0 / 0.0, true);
       }
    }
 }

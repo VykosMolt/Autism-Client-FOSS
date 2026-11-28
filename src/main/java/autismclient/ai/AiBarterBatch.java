@@ -311,7 +311,7 @@ final class AiBarterBatch {
 
                            return this.running("Waiting on " + this.pendingTrades.size() + " genuine barters");
                         } else {
-                           this.subOperation = AiGameplay.write(
+                           this.subOperation = AiGameplay.pickupItems(
                               AiJson.objectOf("item", collect, "count", 1, "additional", true, "radius", 12, "timeoutSeconds", 12)
                            );
                            return this.running("Collecting observed barter output " + collect);

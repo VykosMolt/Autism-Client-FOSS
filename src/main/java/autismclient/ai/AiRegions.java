@@ -122,7 +122,7 @@ final class AiRegions {
       return Math.floorDiv(x, 32) + "," + Math.floorDiv(z, 32);
    }
 
-   static List<AiRegions.Region> init(List<AiRegions.Region> observations, int x, int z, int goalX, int goalZ) {
+   static List<AiRegions.Region> regionRoute(List<AiRegions.Region> observations, int x, int z, int goalX, int goalZ) {
       if (observations.size() < 2) {
          return List.of();
       }

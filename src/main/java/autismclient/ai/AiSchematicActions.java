@@ -91,7 +91,7 @@ final class AiSchematicActions {
       return seen;
    }
 
-   static BlockPos init(LevelReader world, BlockPos ceiling, Map<Long, AiBuilder.CellSpec> source) {
+   static BlockPos bedFootUnderCeiling(LevelReader world, BlockPos ceiling, Map<Long, AiBuilder.CellSpec> source) {
       BlockPos below = ceiling.below();
       AiBuilder.CellSpec cell = source.get(below.asLong());
       if (cell != null && AiBuilder.toBlockState(cell).getBlock() instanceof BedBlock && !AiBuilder.matchesIgnoringUnpairedChest(cell, world.getBlockState(below))) {
@@ -179,7 +179,7 @@ final class AiSchematicActions {
       }
    }
 
-   static boolean init(LevelReader world, BlockPos bottom, int topY) {
+   static boolean isShaftClearable(LevelReader world, BlockPos bottom, int topY) {
       for (int y = bottom.getY() - 1; y <= topY; y++) {
          BlockPos pos = new BlockPos(bottom.getX(), y, bottom.getZ());
          BlockState state = world.getBlockState(pos);
@@ -194,11 +194,11 @@ final class AiSchematicActions {
       return true;
    }
 
-   static boolean init(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world) {
-      return init_Z_BlockPos(candidate, source, world, null);
+   static boolean isPermanentFloor(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world) {
+      return isPermanentFloor(candidate, source, world, null);
    }
 
-   static boolean init_Z_BlockPos(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world, BlockPos ignore) {
+   static boolean isPermanentFloor(BlockPos candidate, Map<Long, AiBuilder.CellSpec> source, LevelReader world, BlockPos ignore) {
       LevelReader removed = null;
 
       for (Direction direction : Direction.values()) {
@@ -282,7 +282,7 @@ final class AiSchematicActions {
                      || floor.getY() >= top.getY()
                      || protectedCells.contains(floor.asLong())) {
                      return this.finish(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
-                  } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.isSafeToBreakSupport(floor)) {
+                  } else if (AiSchematicActions.isShaftClearable(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.isSafeToBreakSupport(floor)) {
                      this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
@@ -330,7 +330,7 @@ final class AiSchematicActions {
       };
    }
 
-   static AiOperation init(final AiBuilder.CellSpec cell, final BlockPos target, final autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint) {
+   static AiOperation exposeFloorSide(final AiBuilder.CellSpec cell, final BlockPos target, final autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player.onGround()
          && !(Math.abs(mc.player.getY() - target.getY() - 1.0) > 1.0E-5)
@@ -413,11 +413,11 @@ final class AiSchematicActions {
       }
    }
 
-   static List<BlockPos> init(AiBuilder.Blueprint blueprint) {
-      return init(blueprint, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0));
+   static List<BlockPos> accessStairSteps(AiBuilder.Blueprint blueprint) {
+      return accessStairSteps(blueprint, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0));
    }
 
-   static List<BlockPos> init(AiBuilder.Blueprint blueprint, int highestWorkDy) {
+   static List<BlockPos> accessStairSteps(AiBuilder.Blueprint blueprint, int highestWorkDy) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
       if (cells.isEmpty()) {
          return List.of();
@@ -467,16 +467,16 @@ final class AiSchematicActions {
    }
 
    static AiOperation buildAccessStairs(AiBuilder.Blueprint blueprint, Set<Long> protectedCells, Set<Long> owned) {
-      return init_AiOperation_TableIndex_DataUti(
+      return buildAccessStairs(
          blueprint, protectedCells, owned, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0)
       );
    }
 
-   static AiOperation init_AiOperation_TableIndex_DataUti(
+   static AiOperation buildAccessStairs(
       final AiBuilder.Blueprint blueprint, final Set<Long> protectedCells, final Set<Long> owned, int highestWorkDy
    ) {
       final Minecraft mc = Minecraft.getInstance();
-      final List<BlockPos> steps = init(blueprint, highestWorkDy);
+      final List<BlockPos> steps = accessStairSteps(blueprint, highestWorkDy);
       return !steps.isEmpty()
             && steps.stream()
                .skip(1L)
@@ -741,7 +741,7 @@ final class AiSchematicActions {
          };
    }
 
-   static String init(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {
+   static String spillReason(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {
       HashSet<Long> seen = new HashSet<>();
       ArrayDeque<long[]> queue = new ArrayDeque<>();
       seen.add(target.asLong());
@@ -760,7 +760,7 @@ final class AiSchematicActions {
                   AiBuilder.CellSpec cell = wanted.get(next.asLong());
                   if (cell != null) {
                      BlockState live = world.getBlockState(next);
-                     if (!read(live)) {
+                     if (!keepsWaterOut(live)) {
                         if (AiBuilder.fluidOfCell(cell) == null && !"true".equals(cell.properties().get("waterlogged"))) {
                            return "waiting for " + next.toShortString() + " to hold the fluid in";
                         }
@@ -776,7 +776,7 @@ final class AiSchematicActions {
       return null;
    }
 
-   static boolean init(BlockState s) {
+   static boolean isNaturalTerrain(BlockState s) {
       if (!s.isAir() && s.getFluidState().isEmpty() && !s.hasBlockEntity()) {
          return !s.canBeReplaced() && !s.is(BlockTags.FLOWERS) && !s.is(BlockItemTags.SAPLINGS.block())
             ? s.is(BlockTags.DIRT)
@@ -827,7 +827,7 @@ final class AiSchematicActions {
       }
    }
 
-   static boolean init(BlockGetter world, BlockPos p) {
+   static boolean isOpeningFluidSafe(BlockGetter world, BlockPos p) {
       for (Direction d : Direction.values()) {
          FluidState fluid = world.getFluidState(p.relative(d));
          if (!fluid.isEmpty()) {
@@ -845,10 +845,10 @@ final class AiSchematicActions {
    }
 
    static List<BlockPos> cellsToClear(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
-      return cellsToClear(blueprint, wanted, world, AiSchematicActions::init);
+      return cellsToClear(blueprint, wanted, world, AiSchematicActions::isNaturalTerrain);
    }
 
-   static List<BlockPos> load(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
+   static List<BlockPos> wallConnectionLeftovers(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
       LinkedHashSet<BlockPos> out = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
@@ -858,7 +858,7 @@ final class AiSchematicActions {
 
             for (Direction direction : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP)) {
                BlockPos next = at.relative(direction);
-               if (!wanted.containsKey(next.asLong()) && load(world.getBlockState(next))) {
+               if (!wanted.containsKey(next.asLong()) && isTerrainOrStock(world.getBlockState(next))) {
                   out.add(next);
                }
             }
@@ -870,8 +870,8 @@ final class AiSchematicActions {
       return sorted;
    }
 
-   static boolean load(BlockState s) {
-      if (init(s)) {
+   static boolean isTerrainOrStock(BlockState s) {
+      if (isNaturalTerrain(s)) {
          return true;
       } else {
          return !s.isAir() && s.getFluidState().isEmpty() && !s.hasBlockEntity()
@@ -929,7 +929,7 @@ final class AiSchematicActions {
       return out;
    }
 
-   static boolean read(BlockState state) {
+   static boolean keepsWaterOut(BlockState state) {
       if (state.getFluidState().isSource()) {
          return true;
       } else {
@@ -1075,7 +1075,7 @@ final class AiSchematicActions {
       return null;
    }
 
-   static AiOperation init(final AiBuilder.CellSpec cell, final BlockPos target, final Set<Long> protectedCells) {
+   static AiOperation interactionStateOp(final AiBuilder.CellSpec cell, final BlockPos target, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          AiOperation child;
@@ -1192,7 +1192,7 @@ final class AiSchematicActions {
       return requirements.stream().map(AiCellMaterials.MaterialRequirement::item).distinct().toList();
    }
 
-   static AiOperation load(final AiBuilder.CellSpec cell, final BlockPos target, Set<Long> shared) {
+   static AiOperation specialPlacementOp(final AiBuilder.CellSpec cell, final BlockPos target, Set<Long> shared) {
       final Minecraft mc = Minecraft.getInstance();
       final HashSet<Long> protectedCells = new HashSet<>(shared);
       return new AiOperation() {
@@ -1357,7 +1357,7 @@ final class AiSchematicActions {
                      }
 
                      if (live.isAir() || live.canBeReplaced() || !live.getFluidState().isEmpty()) {
-                        if (AiBucket.init(mc, target, false, fluid.equals("water")) == null) {
+                        if (AiBucket.emptyHitFor(mc, target, false, fluid.equals("water")) == null) {
                            this.child = AiGoto.approachBlockToInteractCompat(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
                            return this.running("Approaching a visible receiving face for the water cell");
                         } else {
@@ -1594,7 +1594,7 @@ final class AiSchematicActions {
       }
    }
 
-   static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
+   static AiOperation scaffoldColumnOp(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
       autismclient.ai.engine.AiPathfinder.PathGoal goal = AiGoto.protectingCellsBelowYCompat(
          autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(support.above(), 0.6), protectedCells, minimumDigY

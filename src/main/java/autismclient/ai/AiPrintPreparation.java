@@ -102,8 +102,8 @@ final class AiPrintPreparation implements AiOperation {
          : loaded.blueprint();
       requireBuildableCells(blueprint);
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.collectLeafNeighborPositions(blueprint));
-      neighbors.addAll(AiSchematicReadiness.read(blueprint));
-      neighbors.addAll(AiSchematicReadiness.load(blueprint));
+      neighbors.addAll(AiSchematicReadiness.requiredCounterpartCells(blueprint));
+      neighbors.addAll(AiSchematicReadiness.sourcelessFluidEdges(blueprint));
       if (!stamp.equals(AiPrintPreparation.FileStamp.of(this.schematicPath))) {
          throw new IOException("Schematic changed while it was being read; start the build again");
       } else {

@@ -301,7 +301,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
 
    private int unusedAutoToggleButton(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 24, 96);
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, this.font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
       this.setTooltipIfHovered(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
@@ -309,7 +309,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
 
    private int ghostToolbarButton(GuiGraphicsExtractor context, int x, int y, int h, String label, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 24, 96);
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
          context, this.font, x, y, width, h, label, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY
       );
       this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
@@ -319,7 +319,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
 
    private int unusedStatusToggleButton(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 24, 112);
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, this.font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
       this.setTooltipIfHovered(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
@@ -345,7 +345,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       String tip,
       Runnable action
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, variant, active, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(context, this.font, x, y, w, h, label, variant, active, mouseX, mouseY);
       if (active) {
          this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, w, h, action));
       }
@@ -360,7 +360,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private void drawEnabledButton(
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean enabled, int mouseX, int mouseY, String tip, Runnable action
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, enabled, "queue:state:" + label + ":" + x + ":" + y, mouseX, mouseY);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(context, this.font, x, y, w, h, label, enabled, "queue:state:" + label + ":" + x + ":" + y, mouseX, mouseY);
       this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, w, h, action));
       this.setTooltipIfHovered(x, y, w, h, mouseX, mouseY, tip);
    }
@@ -882,7 +882,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                         int modeBtnW = 14;
                         int modeBtnX = delayBtnX - modeBtnW - 2;
                         boolean exact = packet.isExactReplay();
-                        autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                        autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                            context,
                            this.font,
                            modeBtnX,
@@ -895,7 +895,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                            mouseX,
                            mouseY
                         );
-                        autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                        autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                            context,
                            this.font,
                            delayBtnX,

@@ -247,7 +247,7 @@ public final class PkgCls_a {
    public static void init_V_Minecraft(Minecraft mc) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
       boolean settling = job != null && job.close != 0L;
-      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && mc != null && !settling && TpClickModule.init_Z_30();
+      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && mc != null && !settling && TpClickModule.blocksMovement();
       if (blockInput) {
          load(mc);
          init_Z = true;

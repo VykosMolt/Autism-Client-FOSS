@@ -112,7 +112,7 @@ final class AiPortalCast {
       }
    }
 
-   static boolean init_Z(ClientLevel level, BlockPos anchor) {
+   static boolean canCastPortalNear(ClientLevel level, BlockPos anchor) {
       AiPortalCast.CellLookup lookup = pos -> classify(level, pos);
       List<BlockPos> sources = new ArrayList<>();
 

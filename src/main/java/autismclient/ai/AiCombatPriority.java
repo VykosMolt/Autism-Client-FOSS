@@ -66,11 +66,11 @@ final class AiCombatPriority {
       return var10000;
    }
 
-   static boolean init_Z_X_DataUtil(AiGuard.GuardAction active, AiGuard.GuardAction next, int hostiles) {
+   static boolean shouldPreempt(AiGuard.GuardAction active, AiGuard.GuardAction next, int hostiles) {
       return isLowPriority(active) && hostiles > 0 || active == AiGuard.GuardAction.FIGHT && next == AiGuard.GuardAction.FLEE;
    }
 
-   static float init_F_F(float current, Float preferred, List<Float> shots, double halfCone) {
+   static float coveringYaw(float current, Float preferred, List<Float> shots, double halfCone) {
       if (shots.isEmpty()) {
          return preferred == null ? current : preferred;
       }

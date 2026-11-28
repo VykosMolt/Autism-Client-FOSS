@@ -67,7 +67,7 @@ final class BedCoverPathSolver {
 
       List<Vec3> targets = new ArrayList<>();
 
-      for (int bed : g.init_List) {
+      for (int bed : g.bedCells) {
          targets.addAll(bedAimPoints(g.posAt(bed)));
       }
 
@@ -155,13 +155,13 @@ final class BedCoverPathSolver {
       }
 
       if (winner == null) {
-         return new BedCoverPathSolver.CoverPlan(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
+         return new BedCoverPathSolver.CoverPlan(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.layers, null, null);
       }
 
       double ticks = winner.breakBlocks.stream().mapToDouble(p -> g.nodeAt(g.indexOf(p)).breakCost).sum()
          + Math.max(0, winner.breakBlocks.size() - 1) * 5;
       return new BedCoverPathSolver.CoverPlan(
-         cover.cells, List.copyOf(winner.breakBlocks), List.copyOf(winner.route), ticks, true, cover.init_I, winnerEye, winnerAim
+         cover.cells, List.copyOf(winner.breakBlocks), List.copyOf(winner.route), ticks, true, cover.layers, winnerEye, winnerAim
       );
    }
 
@@ -536,7 +536,7 @@ final class BedCoverPathSolver {
       }
    }
 
-   record MinimalCover(Set<BlockPos> cells, int init_I) {
+   record MinimalCover(Set<BlockPos> cells, int layers) {
    }
 
    static final class CellGrid {
@@ -546,7 +546,7 @@ final class BedCoverPathSolver {
       final int sizeZ;
       final int cellCount;
       final BedCoverPathSolver.GridNode[] nodes;
-      final List<Integer> init_List = new ArrayList<>();
+      final List<Integer> bedCells = new ArrayList<>();
 
       CellGrid(BlockPos origin, int sx, int sy, int sz) {
          this.origin = origin;
@@ -621,13 +621,13 @@ final class BedCoverPathSolver {
    }
 
    record CoverPlan(
-      Set<BlockPos> init_Set, List<BlockPos> path, List<BlockPos> load_List, double breakTicks, boolean init_Z, int coverCut, Vec3 init_Vec3, Vec3 load_Vec3
+      Set<BlockPos> cover, List<BlockPos> path, List<BlockPos> route, double breakTicks, boolean init_Z, int coverCut, Vec3 fromEye, Vec3 routeEye
    ) {
       boolean init_Z_2() {
          return this.init_Z && this.coverCut > 1 && this.path.size() > 1;
       }
 
-      public boolean load_Z() {
+      public boolean hasRoute() {
          return this.init_Z;
       }
    }

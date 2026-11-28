@@ -100,7 +100,7 @@ public final class ContainerPickUpAllHelper {
       }
    }
 
-   public static void init(
+   public static void afterClick(
       Minecraft mc, AbstractContainerMenu handler, int slotId, int button, ContainerInput input, ItemStack beforeCarried, ItemStack beforeSlot
    ) {
       if (mc != null && mc.player != null && handler != null && input != null) {

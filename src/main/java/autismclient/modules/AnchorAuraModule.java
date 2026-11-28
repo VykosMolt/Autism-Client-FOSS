@@ -303,7 +303,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.aimSpeed.reset();
       this.sessionWatcher.clear();
       this.stickySelector.clear();
-      autismclient.util.QueuedCombatAction.init("anchor-aura");
+      autismclient.util.QueuedCombatAction.clearIfOwnedBy("anchor-aura");
       this.aimedCell = null;
       this.profileNanosTotal = 0L;
       this.profileNanosMax = 0L;
@@ -443,7 +443,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.switchBackSlot >= 0 && aura.switchedToSlot == slot : false;
    }
 
-   public static boolean init_Z_BlockPos(BlockPos cell) {
+   public static boolean isPlannedCell(BlockPos cell) {
       if (cell == null) {
          return false;
       } else {
@@ -515,11 +515,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20();
+         && !AutoArmorModule.isClickPending();
    }
 
    private static boolean higherPriorityActive() {
-      return BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.flush() && CrystalAuraModule.isRecentlyActive();
+      return BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.activeHasPriority() && CrystalAuraModule.isRecentlyActive();
    }
 
    private boolean isFinishingStep(AnchorAuraModule.AnchorPlan plan) {
@@ -592,7 +592,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(48);
          this.refreshSimOptions();
          boolean higherRung = higherPriorityActive();
-         boolean caPrime = CrystalAuraModule.flush();
+         boolean caPrime = CrystalAuraModule.activeHasPriority();
          boolean caCommitted = caPrime && CrystalAuraModule.hasPlannedSupport();
          if (caPrime) {
             this.clearPlan();
@@ -609,9 +609,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          if (plan == null) {
             if (!higherRung
                && !caPrime
-               && !CrystalAuraModule.close()
+               && !CrystalAuraModule.defendedRecently()
                && (this.activeAnchor != null || this.bool("repeat"))
-               && this.aimSpeed.init("anchor-aura", 20, MC.player, this.aimSubject(), this.wireRotation())) {
+               && this.aimSpeed.holdWireRotation("anchor-aura", 20, MC.player, this.aimSubject(), this.wireRotation())) {
                this.statusText = "waiting";
                return;
             }
@@ -627,7 +627,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             this.mayActTick = tick;
          }
 
-         boolean releasedToDefend = mayAct && !finishing && !this.stepReady(plan.step()) && CrystalAuraModule.close();
+         boolean releasedToDefend = mayAct && !finishing && !this.stepReady(plan.step()) && CrystalAuraModule.defendedRecently();
          if (mayAct && !releasedToDefend) {
             this.engagedTick = tick;
          }
@@ -645,7 +645,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             boolean pinCommittedFire = hit != null && (higherRung || caCommitted);
             boolean pin = hit != null || alignedUse != null;
             this.aimSpeed
-               .init(
+               .steer(
                   "anchor-aura",
                   pinCommittedFire ? 30 : 20,
                   MC.player,
@@ -1513,7 +1513,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                || plan.step() == AnchorAuraModule.AnchorStep.PLACE
                || plan.step() == AnchorAuraModule.AnchorStep.SHIELD
          )
-         && BacktrackModule.init_Z_AABB_2(new AABB(plan.cell()))) {
+         && BacktrackModule.intersectsHeldTarget(new AABB(plan.cell()))) {
          return false;
       }
 
@@ -1583,7 +1583,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    public static void onBlockUpdate(BlockPos cell, BlockState state) {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() && cell.equals(aura.activeAnchor)) {
-         aura.sequenceSync.init(MC.level, state.getBlock() instanceof RespawnAnchorBlock);
+         aura.sequenceSync.confirmExpected(MC.level, state.getBlock() instanceof RespawnAnchorBlock);
       }
    }
 
@@ -2009,7 +2009,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                enemy, centre, 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.leadBox(enemy)
             );
             if (!autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
-               && autismclient.util.BlastShieldPosFinder.init(before.load(), before.selfDamage(), rank.load(), rank.selfDamage(), damageFloor, selfCeiling, this.bool("efficient"))
+               && autismclient.util.BlastShieldPosFinder.isShieldWorthIt(before.load(), before.selfDamage(), rank.load(), rank.selfDamage(), damageFloor, selfCeiling, this.bool("efficient"))
                && (!this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(centre, 5.0F, verify, this.decimal("max-friend-damage")))) {
                double value = rank.load() - rank.selfDamage();
                if (value > bestValue) {
@@ -2112,21 +2112,21 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private boolean canPlaceAnchorAt(BlockPos cell, AABB nextBox) {
-      if (CrystalAuraModule.init_Z_BlockPos_6(cell) || CrystalAuraModule.load_Z_BlockPos_3(cell)) {
+      if (CrystalAuraModule.isReservedCrystalCell(cell) || CrystalAuraModule.isPlannedPlacementCell(cell)) {
          return false;
       } else if (!MC.level.getBlockState(cell).canBeReplaced()) {
          return false;
       } else if (!MC.level.isUnobstructed(Blocks.RESPAWN_ANCHOR.defaultBlockState(), cell, CollisionContext.placementContext(MC.player))) {
          return false;
       } else {
-         return !AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(new AABB(cell)) ? false : !nextBox.intersects(new AABB(cell));
+         return !AutismLiteVariant.enabled() && BacktrackModule.intersectsHeldTarget(new AABB(cell)) ? false : !nextBox.intersects(new AABB(cell));
       }
    }
 
    private boolean canPlaceBlockAt(BlockState anchor, BlockPos cell, AABB nextBox) {
-      if (CrystalAuraModule.init_Z_BlockPos_6(cell)) {
+      if (CrystalAuraModule.isReservedCrystalCell(cell)) {
          return false;
-      } else if (CrystalAuraModule.load_Z_BlockPos_3(cell)) {
+      } else if (CrystalAuraModule.isPlannedPlacementCell(cell)) {
          return false;
       } else if (!MC.level.getBlockState(cell).canBeReplaced()) {
          return false;
@@ -2263,7 +2263,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private boolean switchToSlot(int slot, boolean finishingWork) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27()) {
-         if (finishingWork || !CrystalAuraModule.flush() || !CrystalAuraModule.isRecentlyActive() && !CrystalAuraModule.hasPlannedSupport()) {
+         if (finishingWork || !CrystalAuraModule.activeHasPriority() || !CrystalAuraModule.isRecentlyActive() && !CrystalAuraModule.hasPlannedSupport()) {
             int tick = AutismSessionState.getInstance().getClientTick();
             if (tick == this.lastSlotSwitchTick) {
                return false;
@@ -2314,7 +2314,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       if (this.switchBackSlot >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
          if (this.switchedToSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.switchedToSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!CrystalAuraModule.hasBorrowedSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+            if (!CrystalAuraModule.hasBorrowedSlot(selected) && !KillAuraModule.hasBorrowedSlot(selected)) {
                this.switchBackSlot = -1;
                this.switchedToSlot = -1;
                this.switchBackDelayTicks = 0;

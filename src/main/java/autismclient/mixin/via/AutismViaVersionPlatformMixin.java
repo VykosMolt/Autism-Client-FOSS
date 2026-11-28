@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismViaVersionPlatformMixin {
    @Inject(method = "sendCustomPayload", at = @At("HEAD"), cancellable = true, remap = false)
    private void autism$filterViaCustomPayload(@Coerce Object userConnection, String channel, byte[] data, CallbackInfo ci) {
-      if (!ViaFabricPlusBridge.init(userConnection, channel, data)) {
+      if (!ViaFabricPlusBridge.allowsViaPayload(userConnection, channel, data)) {
          ci.cancel();
       }
    }

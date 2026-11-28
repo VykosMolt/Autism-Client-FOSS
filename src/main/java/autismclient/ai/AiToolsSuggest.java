@@ -194,19 +194,19 @@ public final class AiToolsSuggest {
             var10000 = position == 0 ? smeltableIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "mine":
-            var10000 = position == 0 ? write() : (position == 1 ? COUNTS : List.of());
+            var10000 = position == 0 ? mineTargetIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "chop":
-            var10000 = position == 0 ? update() : (position == 1 ? COUNTS : List.of());
+            var10000 = position == 0 ? logIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "farm":
             var10000 = position == 0 ? List.of("wheat", "carrots", "potatoes", "beetroots") : (position == 1 ? List.of("24", "48", "80", "160") : List.of());
             break;
          case "fight":
-            var10000 = position == 0 ? sync() : (position == 1 ? COUNTS : List.of());
+            var10000 = position == 0 ? entityIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "follow":
-            var10000 = position == 0 ? sync() : List.of();
+            var10000 = position == 0 ? entityIds() : List.of();
             break;
          case "goto":
          case "parkour":
@@ -317,7 +317,7 @@ public final class AiToolsSuggest {
       return cachedMineTargets = List.copyOf(ids);
    }
 
-   static List<String> write() {
+   static List<String> mineTargetIds() {
       List<String> cached = open;
       if (cached != null) {
          return cached;
@@ -328,11 +328,11 @@ public final class AiToolsSuggest {
       return open = List.copyOf(ids);
    }
 
-   static boolean init(Block block) {
+   static boolean isPlaceable(Block block) {
       return autismclient.commands.CommandSuggestions.isPlaceableBlock(block);
    }
 
-   static List<String> update() {
+   static List<String> logIds() {
       List<String> cached = poll;
       if (cached != null) {
          return cached;
@@ -351,7 +351,7 @@ public final class AiToolsSuggest {
       return poll = List.copyOf(ids);
    }
 
-   static List<String> sync() {
+   static List<String> entityIds() {
       List<String> ids = new ArrayList<>(autismclient.commands.CommandSuggestions.entityIds().size() + 1);
       ids.add("hostiles");
       ids.addAll(autismclient.commands.CommandSuggestions.entityIds());
@@ -359,7 +359,7 @@ public final class AiToolsSuggest {
    }
 
    static List<String> commandSuggestions() {
-      return autismclient.commands.CommandSuggestions.load();
+      return autismclient.commands.CommandSuggestions.placeableBlockIds();
    }
 
    private static List<String> directionWords(boolean suggestTo) {

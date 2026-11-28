@@ -48,7 +48,7 @@ public final class ManualInteractionYield {
       return yielding;
    }
 
-   public static boolean load() {
+   public static boolean isYieldingRotation() {
       refresh(Minecraft.getInstance());
       return yielding && isRotationReturning() && yieldTicks < 25;
    }
@@ -66,7 +66,7 @@ public final class ManualInteractionYield {
             pendingUseClicks = 0;
          }
 
-         if (load()) {
+         if (isYieldingRotation()) {
             yieldTicks++;
             pendingAttackClicks = Math.min(2, pendingAttackClicks + takeClicks(attack));
             if (!auraUse) {

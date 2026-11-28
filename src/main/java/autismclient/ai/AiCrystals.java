@@ -73,7 +73,7 @@ final class AiCrystals {
       return settling || legPending || guardPending;
    }
 
-   static boolean init(Minecraft mc, BlockPos cell) {
+   static boolean isCaged(Minecraft mc, BlockPos cell) {
       List<String> nearby = new ArrayList<>(32);
 
       for (int dx = -2; dx <= 2; dx++) {
@@ -916,7 +916,7 @@ final class AiCrystals {
             }
 
             boolean isCaged(BlockPos cell) {
-               return AiCrystals.init(mc, cell);
+               return AiCrystals.isCaged(mc, cell);
             }
 
             boolean hasIronBarsNear(BlockPos cell) {

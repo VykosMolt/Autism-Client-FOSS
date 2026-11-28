@@ -24,11 +24,11 @@ public abstract class AutismItemPropertiesMixin {
       try {
          return original.call(context, valueKey);
       } catch (RuntimeException error) {
-         if (RegistryCompatGuard.init(valueKey, error)) {
-            RegistryCompatGuard.init(valueKey);
+         if (RegistryCompatGuard.isMissingTrimMaterial(valueKey, error)) {
+            RegistryCompatGuard.warnMissingTrimMaterial(valueKey);
             return null;
          } else if (RegistryCompatGuard.init_Z(error)) {
-            RegistryCompatGuard.init_V(error);
+            RegistryCompatGuard.warnMissingDelayedComponent(error);
             return null;
          } else {
             throw error;

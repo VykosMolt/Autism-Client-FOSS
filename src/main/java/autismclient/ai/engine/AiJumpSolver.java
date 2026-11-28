@@ -1157,7 +1157,7 @@ public final class AiJumpSolver {
    }
 
    public static boolean isFullFlatSupport(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {
-      return var0 instanceof AiPlannerWorld var5 ? var5.putAt_Z_I(var1, var2, var3) : computeFullFlatSupport(var0, var1, var2, var3);
+      return var0 instanceof AiPlannerWorld var5 ? var5.hasFullFlatSupport(var1, var2, var3) : computeFullFlatSupport(var0, var1, var2, var3);
    }
 
    static boolean computeFullFlatSupport(AiPhysics.PhysicsWorld var0, int var1, int var2, double var3) {

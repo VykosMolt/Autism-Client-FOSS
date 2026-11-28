@@ -66,7 +66,7 @@ final class AiPrintSupply {
    int terrainCleared;
    private int neededStock = 1;
 
-   int init_I() {
+   int neededStock() {
       return this.neededStock;
    }
 
@@ -132,7 +132,7 @@ final class AiPrintSupply {
       return this.prep.status();
    }
 
-   void load(BlockPos pos) {
+   void noteChange(BlockPos pos) {
       this.prep.noteChange(pos);
    }
 
@@ -140,11 +140,11 @@ final class AiPrintSupply {
       this.prep.noteChunkChanged(key);
    }
 
-   static int init(Inventory inventory, Item item) {
-      return load(inventory, item);
+   static int countCarried(Inventory inventory, Item item) {
+      return countInInventory(inventory, item);
    }
 
-   static int load(Inventory inventory, Item item) {
+   static int countInInventory(Inventory inventory, Item item) {
       int count = 0;
 
       for (int slot = 0; slot < 36; slot++) {
@@ -159,7 +159,7 @@ final class AiPrintSupply {
    }
 
    boolean canSupply(Item item) {
-      return this.shortage.noteShortage(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
+      return this.shortage.noteShortage(item, item == null ? 0 : countInInventory(this.mc.player.getInventory(), item));
    }
 
    Item getMissingItem() {
@@ -224,7 +224,7 @@ final class AiPrintSupply {
       }
    }
 
-   boolean load(int workBudget) {
+   boolean advanceStockScan(int workBudget) {
       if (!this.isPrepared()) {
          return false;
       }
@@ -356,10 +356,10 @@ final class AiPrintSupply {
             throw new IllegalStateException("Terrain is not loaded at " + p.toShortString());
          }
 
-         if (AiSchematicActions.init(this.mc.level.getBlockState(p))
+         if (AiSchematicActions.isNaturalTerrain(this.mc.level.getBlockState(p))
             && !this.prep.ownedCells.contains(p.asLong())
             && !this.prep.init_Z_BlockPos(p)) {
-            if (!AiSchematicActions.init(this.mc.level, p)) {
+            if (!AiSchematicActions.isOpeningFluidSafe(this.mc.level, p)) {
                throw new IllegalStateException("Clearing terrain would release fluid at " + p.toShortString());
             }
 
@@ -731,7 +731,7 @@ final class AiPrintSupply {
             }
 
             BlockState state = this.readState(p);
-            if (AiSchematicActions.init(state)
+            if (AiSchematicActions.isNaturalTerrain(state)
                && (
                   !state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
                      || state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) != DoubleBlockHalf.UPPER
@@ -861,7 +861,7 @@ final class AiPrintSupply {
          );
 
          try {
-            return AiSchematicActions.init(candidate, this.cells, metered);
+            return AiSchematicActions.isPermanentFloor(candidate, this.cells, metered);
          } catch (AiPrintSupply.SupplyPreparation.IncompleteRead incomplete) {
             return true;
          } finally {

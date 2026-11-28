@@ -207,7 +207,7 @@ final class AiBurrow {
       return best;
    }
 
-   static boolean init() {
+   static boolean hasBurrowBlocks() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return false;
@@ -297,7 +297,7 @@ final class AiBurrow {
                         autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         AiBurrow.isSealed(feet, this::isSolidFloor) && this.isInteriorClear(feet),
                         this.hasHostileInside(feet),
-                        mc.player.isInWater() || mc.player.isInLava() || AiEndRun.init_Z(mc)
+                        mc.player.isInWater() || mc.player.isInLava() || AiEndRun.isInFire(mc)
                      )) {
                      this.shelterFeet = feet.immutable();
                      this.currentCell = AiBurrow.roofOf(this.shelterFeet);
@@ -339,7 +339,7 @@ final class AiBurrow {
                            autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                            this.stage == AiBurrow.Inner_DataUtil.WAIT && this.isShelterSealed(),
                            this.stage == AiBurrow.Inner_DataUtil.WAIT && this.hasHostileInside(this.shelterFeet),
-                           mc.player.isInLava() || AiEndRun.init_Z(mc)
+                           mc.player.isInLava() || AiEndRun.isInFire(mc)
                         );
                      if (hurt && !exiting && (!(healTo > 0.0F) || !building) && !residualBurn) {
                         return this.finish(

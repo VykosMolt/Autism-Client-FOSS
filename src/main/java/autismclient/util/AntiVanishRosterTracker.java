@@ -29,7 +29,7 @@ public final class AntiVanishRosterTracker {
    private Map<UUID, AntiVanishRosterTracker.RosterProfile> liveProfiles = Map.of();
    private Map<String, UUID> uuidByName = Map.of();
 
-   public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
+   public void updateRoster(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
       if (profiles.size() > 4096) {
          this.reset();
       } else {
@@ -110,7 +110,7 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long requestedAt, long now) {
+   public void onProfileReply(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long requestedAt, long now) {
       if (requestedAt <= now && now - requestedAt <= 4000L && profiles.size() <= 4096) {
          Set<UUID> ids = new HashSet<>();
          Set<String> names = new HashSet<>();
@@ -148,7 +148,7 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void init(Set<UUID> unknown, long now) {
+   public void observeUnknownIds(Set<UUID> unknown, long now) {
       if (unknown.size() <= 4096) {
          Set<UUID> accepted = new HashSet<>();
 
@@ -168,7 +168,7 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void init(AntiVanishRosterTracker.ActorInfo actor, String action, long now) {
+   public void observeAction(AntiVanishRosterTracker.ActorInfo actor, String action, long now) {
       if (actor != null && actor.init_Z && !actor.npc && action != null && !action.isBlank()) {
          AntiVanishRosterTracker.RosterMember m = this.members.get(actor.id);
          if (m != null && m.name.equals(actor.name) && m.isRecentlyGone(now)) {
@@ -185,7 +185,7 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void load(Collection<String> names, long requestedAt, long now) {
+   public void onCompletionReply(Collection<String> names, long requestedAt, long now) {
       if (now >= requestedAt && now - requestedAt <= 4000L) {
          Set<String> offered = new HashSet<>();
 
@@ -248,7 +248,7 @@ public final class AntiVanishRosterTracker {
       return List.copyOf(out);
    }
 
-   public boolean init(UUID id, long now) {
+   public boolean isSuspectedVanished(UUID id, long now) {
       AntiVanishRosterTracker.PendingRequest fact = this.pendingRequests.get(id);
       if (fact != null && fact.init_I >= 2 && now - fact.observedAt <= 20000L) {
          return true;
@@ -275,7 +275,7 @@ public final class AntiVanishRosterTracker {
       return this.pendingRequests.values().stream().anyMatch(fact -> fact.init_I < 2);
    }
 
-   public void init(String systemMessage, long now) {
+   public void onSystemMessage(String systemMessage, long now) {
       for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
          if (NormalizedTextMatcher.matchesLeave(systemMessage, m.name)) {
             m.resetEvidence();

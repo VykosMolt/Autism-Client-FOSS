@@ -119,7 +119,7 @@ public final class PacketDetailFormatter {
       if (snapshot != null && snapshot.plaintext().length != 0) {
          try {
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.packetClass;
-            PacketStreamCodecDecoder.DecodedFrame decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.load());
+            PacketStreamCodecDecoder.DecodedFrame decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.protocol());
             return PacketDetailFormatter.Inner_CachePool.ofDecoded(decoded.packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
          } catch (Throwable t) {
             return PacketDetailFormatter.Inner_CachePool.ofFailure("captured plaintext was kept, but STREAM_CODEC decode failed: " + describeValue(t));
@@ -683,14 +683,14 @@ public final class PacketDetailFormatter {
       if (entry != null && entry.packet != null) {
          PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
          if (snapshot != null) {
-            out.addWire("Protocol: " + snapshot.load(), UiColorPalette.textBody());
+            out.addWire("Protocol: " + snapshot.protocol(), UiColorPalette.textBody());
             out.addWire("Direction: " + snapshot.direction(), "C2S".equalsIgnoreCase(snapshot.direction()) ? UiColorPalette.amber() : UiColorPalette.cyan());
             if (snapshot.packetId() >= 0) {
                out.addWire("Packet ID: " + snapshot.packetId(), UiColorPalette.textBody());
             }
 
-            if (snapshot.write() != null && !snapshot.write().isBlank()) {
-               out.addWire("Packet Type: " + snapshot.write(), UiColorPalette.textBody());
+            if (snapshot.packetType() != null && !snapshot.packetType().isBlank()) {
+               out.addWire("Packet Type: " + snapshot.packetType(), UiColorPalette.textBody());
             }
 
             byte[] bytes = snapshot.plaintext();

@@ -85,7 +85,7 @@ public final class CommandSuggestions {
       return suggest(builder, "15", "30", "45", "60", "90", "120");
    }
 
-   public static <S> CompletableFuture<Suggestions> push(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestCounts(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "5", "10", "20", "50");
    }
 
@@ -150,7 +150,7 @@ public final class CommandSuggestions {
       return blockIdsCache = List.copyOf(ids);
    }
 
-   public static List<String> load() {
+   public static List<String> placeableBlockIds() {
       List<String> cached = placeableBlockIdsCache;
       if (cached != null) {
          return cached;
@@ -188,7 +188,7 @@ public final class CommandSuggestions {
    public static <S> CompletableFuture<Suggestions> suggestBlockId(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (String id : load()) {
+      for (String id : placeableBlockIds()) {
          if (id.startsWith(remaining)) {
             builder.suggest(id);
          }

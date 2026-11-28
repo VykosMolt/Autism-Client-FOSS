@@ -211,7 +211,7 @@ public final class InventoryTweaksModule extends Module {
       return module != null && module.isEnabled() && module.bool("map-preview");
    }
 
-   public static boolean write_Z_3() {
+   public static boolean autoStealOrDump() {
       InventoryTweaksModule module = instance();
       return module != null && module.isEnabled() && (module.bool("auto-steal") || module.bool("auto-dump"));
    }
@@ -226,7 +226,7 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   public static void init_V_I_5(int containerId) {
+   public static void onContainerOpen(int containerId) {
       InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled()) {
          module.handleContainerOpen(containerId);

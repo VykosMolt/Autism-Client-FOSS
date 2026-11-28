@@ -29,7 +29,7 @@ public final class AirStuckModule extends Module {
       return this.isEnabled() && MC.player != null && MC.player.isAlive() && !MC.player.isPassenger() && !MC.player.isSpectator() && !aD.read_Z();
    }
 
-   public static void init_V() {
+   public static void onPositionCorrection() {
       if (al.init_Module_Str("air-stuck") instanceof AirStuckModule module && module.isEnabled()) {
          module.disableWithToggleMessage("AirStuck disabled after a server position correction.");
       }

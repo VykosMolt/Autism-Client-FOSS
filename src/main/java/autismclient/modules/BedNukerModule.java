@@ -84,7 +84,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       BedNukerModule m = active();
       if (m != null && m.route != null && m.targetBed != null && MC.level != null && MC.player != null) {
          BedEspModule.EspPolicy policy = BedEspModule.policy();
-         if (!policy.load() && !policy.read()) {
+         if (!policy.path() && !policy.tags()) {
             return null;
          }
 
@@ -97,7 +97,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             }
 
             box = box.setMaxY(m.targetBed.getY() + 0.5625);
-            List<BlockPos> cuts = m.route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+            List<BlockPos> cuts = m.route.cells().stream().filter(c -> !c.bed()).map(BedBreachRouteSolver.BreachCell::pos).toList();
             return new BedEspModule.BedInfo(
                m.targetBed,
                var7,
@@ -266,7 +266,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && MC.gui.overlay() == null
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
-         && !ClutchModule.init_Z_49()
+         && !ClutchModule.isClutchEngaged()
          && !DangerModule.sync_Z_12()
          && !BedDefenderModule.init_Z_10()
          && !SurroundModule.init_Z_27()
@@ -274,7 +274,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !CrystalAuraModule.isRecentlyActive()
          && !"auto-trap".equals(autismclient.util.SilentRotationManager.getActiveOwnerId())
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20()
+         && !AutoArmorModule.isClickPending()
          && !BlinkPacketManager.isHoldingActionsOnly()
          && !autismclient.util.ManualInteractionYield.isYielding();
    }
@@ -337,7 +337,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                            cell.boxes(),
                            BedMiningEstimator.breakTicks(state, cell.pos(), MC.player.getInventory().getItem(cell.slot())),
                            cell.slot(),
-                           cell.init_Z()
+                           cell.bed()
                         )
                      );
                   }
@@ -398,8 +398,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                if (candidate != null
                   && (
                      best == null
-                        || candidate.init_Z() && !best.init_Z()
-                        || candidate.init_Z() == best.init_Z()
+                        || candidate.inReach() && !best.inReach()
+                        || candidate.inReach() == best.inReach()
                            && (candidate.ticks() < best.ticks() - 0.5 || candidate.ticks() <= best.ticks() + 0.5 && p.equals(this.targetBed))
                   )) {
                   best = candidate;
@@ -413,7 +413,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          if (this.route == null) {
             this.stopWithReason("No reachable bed", true);
          } else {
-            double budget = KillAuraModule.init_D_9();
+            double budget = KillAuraModule.bedBreakBudget();
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
             RotationMath.Rotation at = autismclient.util.SilentRotationManager.getCurrentRotation();
             BedMiningEstimator.Inner_StreamUtil follow = tracking == null
@@ -429,9 +429,9 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                finish += 2.0;
             }
 
-            if (!Double.isFinite(budget) || this.route.init_Z() && BedBreachRouteSolver.fitsBudget(finish, budget, critical)) {
+            if (!Double.isFinite(budget) || this.route.inReach() && BedBreachRouteSolver.fitsBudget(finish, budget, critical)) {
                this.routeTick = this.clientTick();
-               this.statusText = this.route.first().init_Z() ? "Breaking bed" : "Opening bed";
+               this.statusText = this.route.first().bed() ? "Breaking bed" : "Opening bed";
                autismclient.util.SilentRotationManager.requestRotation(this.id(), 12, goal);
                if (!this.ownsRotation()) {
                   this.stopMining();
@@ -549,7 +549,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          if (this.load_Z) {
             autismclient.util.SilentMiningCoordinator.init(this.miningPos);
          } else {
-            autismclient.util.SilentMiningCoordinator.load(this.miningPos);
+            autismclient.util.SilentMiningCoordinator.scheduleStop(this.miningPos);
          }
       }
 

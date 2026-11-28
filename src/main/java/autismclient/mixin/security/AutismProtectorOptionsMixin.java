@@ -19,7 +19,7 @@ public class AutismProtectorOptionsMixin {
       at = @At(value = "NEW", target = "(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)Lnet/minecraft/client/KeyMapping;")
    )
    private KeyMapping autism$keyMapping(String name, int key, Category category, Operation<KeyMapping> original) {
-      ModNamespaceCatalog.load_V(name);
+      ModNamespaceCatalog.addVanillaKeybind(name);
       return original.call(name, key, category);
    }
 
@@ -31,7 +31,7 @@ public class AutismProtectorOptionsMixin {
       )
    )
    private KeyMapping autism$keyMapping(String name, Type type, int key, Category category, Operation<KeyMapping> original) {
-      ModNamespaceCatalog.load_V(name);
+      ModNamespaceCatalog.addVanillaKeybind(name);
       return original.call(name, type, key, category);
    }
 
@@ -43,7 +43,7 @@ public class AutismProtectorOptionsMixin {
       )
    )
    private KeyMapping autism$keyMapping(String name, Type type, int key, Category category, int order, Operation<KeyMapping> original) {
-      ModNamespaceCatalog.load_V(name);
+      ModNamespaceCatalog.addVanillaKeybind(name);
       return original.call(name, type, key, category, order);
    }
 
@@ -57,7 +57,7 @@ public class AutismProtectorOptionsMixin {
    private ToggleKeyMapping autism$toggleKeyMapping(
       String name, int key, Category category, BooleanSupplier needsToggle, boolean shouldRestore, Operation<ToggleKeyMapping> original
    ) {
-      ModNamespaceCatalog.load_V(name);
+      ModNamespaceCatalog.addVanillaKeybind(name);
       return original.call(name, key, category, needsToggle, shouldRestore);
    }
 
@@ -71,7 +71,7 @@ public class AutismProtectorOptionsMixin {
    private ToggleKeyMapping autism$toggleKeyMapping(
       String name, Type type, int key, Category category, BooleanSupplier needsToggle, boolean shouldRestore, Operation<ToggleKeyMapping> original
    ) {
-      ModNamespaceCatalog.load_V(name);
+      ModNamespaceCatalog.addVanillaKeybind(name);
       return original.call(name, type, key, category, needsToggle, shouldRestore);
    }
 }

@@ -9,7 +9,7 @@ public final class ButtonDrawHelper {
    private ButtonDrawHelper() {
    }
 
-   public static void init(
+   public static void drawButton(
       GuiGraphicsExtractor graphics,
       Font font,
       int x,
@@ -22,10 +22,10 @@ public final class ButtonDrawHelper {
       int mouseX,
       int mouseY
    ) {
-      init(graphics, font, x, y, width, height, label, variant, enabled, l.read, mouseX, mouseY);
+      drawButton(graphics, font, x, y, width, height, label, variant, enabled, l.read, mouseX, mouseY);
    }
 
-   public static void init(
+   public static void drawButton(
       GuiGraphicsExtractor graphics,
       Font font,
       int x,
@@ -47,13 +47,13 @@ public final class ButtonDrawHelper {
       OverlayActionButton.render(graphics, font, button, mouseX, mouseY);
    }
 
-   public static void init(
+   public static void drawToggle(
       GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height, String label, boolean state, String animationKey, int mouseX, int mouseY
    ) {
-      init(graphics, font, x, y, width, height, label, state, animationKey, true, mouseX, mouseY);
+      drawToggle(graphics, font, x, y, width, height, label, state, animationKey, true, mouseX, mouseY);
    }
 
-   public static void init(
+   public static void drawToggle(
       GuiGraphicsExtractor graphics,
       Font font,
       int x,
@@ -75,9 +75,9 @@ public final class ButtonDrawHelper {
       OverlayActionButton.render(graphics, font, button, mouseX, mouseY);
    }
 
-   public static void init(
+   public static void drawSelectable(
       GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height, String label, boolean selected, int mouseX, int mouseY
    ) {
-      init(graphics, font, x, y, width, height, label, selected ? OverlayActionButton.ButtonTone.PRIMARY : OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY);
+      drawButton(graphics, font, x, y, width, height, label, selected ? OverlayActionButton.ButtonTone.PRIMARY : OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY);
    }
 }

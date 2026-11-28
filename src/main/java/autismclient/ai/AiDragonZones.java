@@ -132,7 +132,7 @@ public final class AiDragonZones {
       return breath != null && Math.hypot(cx - breath[0], cz - breath[1]) < breath[2] + 1.0 ? false : AiDragon.isClearOfClouds(cx, cz, clouds, 0.5);
    }
 
-   static AiOperation init_AiOperation(final Minecraft mc) {
+   static AiOperation dropOffPillar(final Minecraft mc) {
       if (mc.player != null && mc.player.onGround() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
          List<double[]> clouds = AiDragon.breathClouds(mc);
          if (clouds.isEmpty()) {
@@ -229,11 +229,11 @@ public final class AiDragonZones {
       };
    }
 
-   static AiOperation load(Minecraft mc) {
-      return init(mc, 2.0);
+   static AiOperation leave(Minecraft mc) {
+      return leave(mc, 2.0);
    }
 
-   static AiOperation init(Minecraft mc, double clearance) {
+   static AiOperation leave(Minecraft mc, double clearance) {
       AiDragonZones.DangerZones zones = zones(mc);
       if (!zones.isEmpty() && zones.hits(mc.player.getBoundingBox(), 0.6)) {
          List<double[]> clouds = AiDragon.breathClouds(mc);

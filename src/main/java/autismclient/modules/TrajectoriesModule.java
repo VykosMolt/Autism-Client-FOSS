@@ -106,7 +106,7 @@ public final class TrajectoriesModule extends Module {
       if (al.init_Module_Str("trajectories") instanceof TrajectoriesModule trajectories && trajectories.isEnabled()) {
          trajectories.trajectories = trajectories.computeTrajectories(partialTick);
          if (!AutismLiteVariant.enabled()) {
-            TrajectoryStateCache.init(MC, trajectories.trajectories);
+            TrajectoryStateCache.refresh(MC, trajectories.trajectories);
          }
 
          ar.init_V_List(trajectories.trajectories);

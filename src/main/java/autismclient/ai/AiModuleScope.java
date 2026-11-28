@@ -57,7 +57,7 @@ final class AiModuleScope implements AiOperation {
       return register(module.borrowEnabled(enabled));
    }
 
-   static void init() {
+   static void borrowConflicting() {
       for (String id : List.of("scaffold", "kill-aura", "auto-armor", "inventory-tweaks", "auto-farm", "auto-tool")) {
          Module module = autismclient.modules.al.init_Module_Str(id);
          if (module != null && module.isEnabled()) {

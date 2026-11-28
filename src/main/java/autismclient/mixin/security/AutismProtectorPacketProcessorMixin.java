@@ -18,7 +18,7 @@ public class AutismProtectorPacketProcessorMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V")
    )
    private <T extends PacketListener> void autism$wrapHandle(Packet<?> instance, T listener, Operation<Void> original) {
-      if (!(instance instanceof ClientboundLevelParticlesPacket particles && ModdedParticleGuard.init(particles))) {
+      if (!(instance instanceof ClientboundLevelParticlesPacket particles && ModdedParticleGuard.isPlaceholder(particles))) {
          if (!PacketDecodeOriginStack.tracks(instance)) {
             original.call(instance, listener);
          } else {
@@ -27,7 +27,7 @@ public class AutismProtectorPacketProcessorMixin {
             try {
                original.call(instance, listener);
             } finally {
-               PacketDecodeOriginStack.init(false);
+               PacketDecodeOriginStack.pushOrPop(false);
             }
          }
       }

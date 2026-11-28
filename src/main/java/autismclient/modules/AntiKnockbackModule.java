@@ -102,7 +102,7 @@ public final class AntiKnockbackModule extends Module {
       }
    }
 
-   public static void init_V_I_7(int entityId) {
+   public static void onEntityMotion(int entityId) {
       AntiKnockbackModule m = activeInstance();
       if (m != null && m.canAct() && entityId == MC.player.getId()) {
          m.motionTick = m.clientTick();
@@ -135,7 +135,7 @@ public final class AntiKnockbackModule extends Module {
          return original;
       }
 
-      if (m.canAct() && !ClutchModule.read_Z_20() && !DangerModule.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20()) {
+      if (m.canAct() && !ClutchModule.isSteering() && !DangerModule.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !AutoArmorModule.isClickPending()) {
          int age = m.clientTick() - m.counterStartTick;
          if (m.counterStartTick != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;
@@ -175,7 +175,7 @@ public final class AntiKnockbackModule extends Module {
       this.actOnHit = this.counterMovement = this.awaitingMotion = false;
    }
 
-   public static void init_V_16() {
+   public static void onPositionCorrection() {
       AntiKnockbackModule m = activeInstance();
       if (m != null) {
          m.resetState();

@@ -52,9 +52,9 @@ final class AiPlanMesh implements AutoCloseable {
    private final List<AiPlanMesh.MeshSection> sections = new ArrayList<>();
    private int scanCursor;
    private int lastAlpha = -1;
-   int write_I;
-   int update;
-   int sync;
+   int greenCells;
+   int blueCells;
+   int orangeCells;
    int cellCount;
    int quadCount;
    private boolean closed;
@@ -80,7 +80,7 @@ final class AiPlanMesh implements AutoCloseable {
       this.solid = new boolean[n];
       this.colors = new int[n];
       this.colorRevisions = new long[n];
-      this.update = n;
+      this.blueCells = n;
       this.cellIndexByPos = new AiPrintSupply.SectionedCellMap<>();
       this.pendingBuild = new AiPlanMesh.SectionBuild();
    }
@@ -134,8 +134,8 @@ final class AiPlanMesh implements AutoCloseable {
          this.invalidateNearest();
          if (value) {
             this.colorRevision++;
-            this.write_I = this.sync = 0;
-            this.update = this.colors.length;
+            this.greenCells = this.orangeCells = 0;
+            this.blueCells = this.colors.length;
          }
       }
    }
@@ -164,21 +164,21 @@ final class AiPlanMesh implements AutoCloseable {
       }
 
       if (previous == -12067963) {
-         this.write_I--;
+         this.greenCells--;
       } else if (previous == -11093505) {
-         this.update--;
+         this.blueCells--;
       } else if (previous == -20923) {
-         this.sync--;
+         this.orangeCells--;
       }
 
       this.colors[i] = value;
       this.colorRevisions[i] = this.colorRevision;
       if (value == -12067963) {
-         this.write_I++;
+         this.greenCells++;
       } else if (value == -11093505) {
-         this.update++;
+         this.blueCells++;
       } else if (value == -20923) {
-         this.sync++;
+         this.orangeCells++;
       }
    }
 
@@ -242,7 +242,7 @@ final class AiPlanMesh implements AutoCloseable {
                if (loaded
                   && !satisfied
                   && !live.isAir()
-                  && (live.hasBlockEntity() || live.getDestroySpeed(world, at) < 0.0F || !live.getFluidState().isEmpty() || !AiSchematicActions.init(live))) {
+                  && (live.hasBlockEntity() || live.getDestroySpeed(world, at) < 0.0F || !live.getFluidState().isEmpty() || !AiSchematicActions.isNaturalTerrain(live))) {
                   color = -885830;
                }
 

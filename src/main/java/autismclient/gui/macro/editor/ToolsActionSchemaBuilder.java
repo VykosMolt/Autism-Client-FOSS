@@ -18,7 +18,7 @@ public final class ToolsActionSchemaBuilder {
 
    public static ActionFieldSchema build(ToolsAction action) {
       ActionFieldSchema.Builder builder = ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME");
-      List<String> ids = new ArrayList<>(MacroToolBridge.listTools().stream().map(MacroToolBridge.ToolInfo::init).toList());
+      List<String> ids = new ArrayList<>(MacroToolBridge.listTools().stream().map(MacroToolBridge.ToolInfo::id).toList());
       if (!ids.contains(action.toolId)) {
          ids.addFirst(action.toolId);
       }
@@ -29,7 +29,7 @@ public final class ToolsActionSchemaBuilder {
          .showWhenEnum("operation", "RUN")
          .enumField("scope", "Target", "THIS_MACRO", "ANY_TOOL")
          .hideWhenEnum("operation", "RUN");
-      if (action.init()) {
+      if (action.hasCoordinateInput()) {
          builder.enumField(
                "destination", "Destination", action.isNavigationTool() ? new String[]{"CURRENT", "CUSTOM", "WAYPOINT", "OFFSET"} : new String[]{"CURRENT", "CUSTOM"}
             )
@@ -58,7 +58,7 @@ public final class ToolsActionSchemaBuilder {
          if (properties != null) {
             for (Entry<String, JsonElement> entry : properties.entrySet()) {
                String name = entry.getKey();
-               if ((!action.init() || !Set.of("x", "y", "z").contains(name))
+               if ((!action.hasCoordinateInput() || !Set.of("x", "y", "z").contains(name))
                   && (!action.isNavigationTool() || !Set.of("waypoint", "dx", "dy", "dz", "entity", "player", "direction", "distance").contains(name))) {
                   JsonObject property = entry.getValue().getAsJsonObject();
                   String type = property.has("type") && property.get("type").isJsonPrimitive() ? property.get("type").getAsString() : "string";

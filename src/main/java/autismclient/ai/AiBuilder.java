@@ -3034,7 +3034,7 @@ final class AiBuilder {
                return new AiDeferredControls(
                   construction,
                   controls,
-                  cellx -> AiSchematicActions.init(cellx, blueprint.origin().offset(cellx.dx(), cellx.dy(), cellx.dz()), keep),
+                  cellx -> AiSchematicActions.interactionStateOp(cellx, blueprint.origin().offset(cellx.dx(), cellx.dy(), cellx.dz()), keep),
                   deadline,
                   System::nanoTime,
                   owner -> {
@@ -3277,7 +3277,7 @@ final class AiBuilder {
                this.terrainCleared = !this.ownsScaffolding || !power.clearTerrain();
                this.scaffoldTracker = this.ownsScaffolding ? AiScaffold.openScope(AiBuilder.checkpointPath(blueprint), List.of()) : null;
                if (this.scaffoldTracker != null) {
-                  for (BlockPos step : AiSchematicActions.init(blueprint)) {
+                  for (BlockPos step : AiSchematicActions.accessStairSteps(blueprint)) {
                      for (BlockPos support : List.of(step, step.below())) {
                         if (AiScaffold.matches(this.scaffoldTracker.recorded(support), mc.level.getBlockState(support).getBlock())) {
                            this.scaffoldSupportKeys.add(support.asLong());
@@ -3315,7 +3315,7 @@ final class AiBuilder {
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(0L);
                if (schematic) {
-                  autismclient.ai.engine.AiRoutePolicy.putAt_V();
+                  autismclient.ai.engine.AiRoutePolicy.clearBlockedCells();
                }
 
                autismclient.ai.engine.AiPathfinder.MoveCosts.setAvoidPlacementCellsCompat(Set.of());
@@ -3370,7 +3370,7 @@ final class AiBuilder {
                }
 
                if (schematic) {
-                  autismclient.ai.engine.AiRoutePolicy.putAt(this.close_Set::contains);
+                  autismclient.ai.engine.AiRoutePolicy.blockCellsTemporarily(this.close_Set::contains);
                }
 
                if (schematic && this.avoidPlacementCells != null) {
@@ -3527,7 +3527,7 @@ final class AiBuilder {
 
                   if (!this.accessStairsReady) {
                      if (this.accessStairsOp == null) {
-                        this.accessStairsOp = AiSchematicActions.init_AiOperation_TableIndex_DataUti(blueprint, this.cachedProtectedCells(), this.scaffoldSupportKeys, this.stairLayerY);
+                        this.accessStairsOp = AiSchematicActions.buildAccessStairs(blueprint, this.cachedProtectedCells(), this.scaffoldSupportKeys, this.stairLayerY);
                      }
 
                      AiOperation.Result accessResult = this.accessStairsOp.tick();
@@ -3928,7 +3928,7 @@ final class AiBuilder {
                               }
 
                               if (schematic && !AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
-                                 BlockPos interior = AiSchematicActions.init(mc.level, pos, this.load_Map);
+                                 BlockPos interior = AiSchematicActions.bedFootUnderCeiling(mc.level, pos, this.load_Map);
                                  if (interior != null) {
                                     this.holdDependency = interior;
                                     if (this.holdCounts.getOrDefault(cell, 0) >= 4
@@ -4029,7 +4029,7 @@ final class AiBuilder {
                                        continue;
                                     }
 
-                                    String leak = AiSchematicActions.init(pos, mc.level, this.load_Map);
+                                    String leak = AiSchematicActions.spillReason(pos, mc.level, this.load_Map);
                                     if (leak != null) {
                                        this.deferCurrentCell(leak);
                                        continue;
@@ -4046,7 +4046,7 @@ final class AiBuilder {
                                        return this.running("Opening access to the buried interaction cell");
                                     }
 
-                                    this.cellConstructionOp = AiSchematicActions.load(cell, pos, this.cachedProtectedCells());
+                                    this.cellConstructionOp = AiSchematicActions.specialPlacementOp(cell, pos, this.cachedProtectedCells());
                                     return this.running("Constructing a survival interaction cell");
                                  }
 
@@ -4079,7 +4079,7 @@ final class AiBuilder {
 
                                  if (schematic && live.getBlock() == AiBuilder.resolveBlock(cell) && !live.canBeReplaced()) {
                                     if (AiBuilder.needsWaterlogToggleOnly(cell, live)) {
-                                       this.cellConstructionOp = AiSchematicActions.init(cell, pos, this.cachedProtectedCells());
+                                       this.cellConstructionOp = AiSchematicActions.interactionStateOp(cell, pos, this.cachedProtectedCells());
                                        return this.running("Restoring the placed block's waterlogging");
                                     }
 
@@ -4098,7 +4098,7 @@ final class AiBuilder {
                                     }
 
                                     if (toggleOnly) {
-                                       this.cellConstructionOp = AiSchematicActions.init(cell, pos, this.cachedProtectedCells());
+                                       this.cellConstructionOp = AiSchematicActions.interactionStateOp(cell, pos, this.cachedProtectedCells());
                                        return this.running("Restoring the placed block's interaction state");
                                     }
 
@@ -4743,7 +4743,7 @@ final class AiBuilder {
                                           && live.hasProperty(BlockStateProperties.OPEN)
                                           && live.getValue(BlockStateProperties.OPEN)
                                           && this.openablesClosed.add(pos.asLong())) {
-                                          this.auditRepairOp = AiSchematicActions.init(cell, pos, this.cachedProtectedCells());
+                                          this.auditRepairOp = AiSchematicActions.interactionStateOp(cell, pos, this.cachedProtectedCells());
                                           return this.running(
                                              "Closing " + BuiltInRegistries.BLOCK.getKey(live.getBlock()).getPath() + " at " + pos.toShortString()
                                           );
@@ -4905,7 +4905,7 @@ final class AiBuilder {
 
                   while (!this.outerScaffoldCells.isEmpty()) {
                      BlockPos candidate = this.outerScaffoldCells.remove(0);
-                     if (!this.existingSupportKeys.contains(candidate.asLong()) && !AiSchematicActions.init(candidate, this.load_Map, mc.level)) {
+                     if (!this.existingSupportKeys.contains(candidate.asLong()) && !AiSchematicActions.isPermanentFloor(candidate, this.load_Map, mc.level)) {
                         if (!(candidate.getX() >= Math.floor(playerBox.minX))
                            || !(candidate.getX() <= Math.floor(playerBox.maxX))
                            || !(candidate.getZ() >= Math.floor(playerBox.minZ))
@@ -5122,7 +5122,7 @@ final class AiBuilder {
                                  .info("[AI] build: drain support retired at {} reason=step-off-cap (attempts 3/3); forcing removal", candidate.toShortString());
                            }
 
-                           if (AiSchematicActions.init(candidate, this.load_Map, mc.level)) {
+                           if (AiSchematicActions.isPermanentFloor(candidate, this.load_Map, mc.level)) {
                               this.foundationKeys.add(candidate.asLong());
                               AiScaffold.forget(candidate);
                               continue;
@@ -5425,7 +5425,7 @@ final class AiBuilder {
                         && AiScaffold.matches(this.scaffoldBlockAt(p), mc.level.getBlockState(p).getBlock())
                   )
                   .filter(p -> {
-                     if (!AiSchematicActions.init(p, this.load_Map, mc.level)) {
+                     if (!AiSchematicActions.isPermanentFloor(p, this.load_Map, mc.level)) {
                         return true;
                      }
 
@@ -5553,10 +5553,10 @@ final class AiBuilder {
                }
 
                if (this.terrainToClear == null) {
-                  this.terrainToClear = new ArrayList<>(AiSchematicActions.cellsToClear(blueprint, this.load_Map, mc.level, this.sweepActive ? AiSchematicActions::load : AiSchematicActions::init));
+                  this.terrainToClear = new ArrayList<>(AiSchematicActions.cellsToClear(blueprint, this.load_Map, mc.level, this.sweepActive ? AiSchematicActions::isTerrainOrStock : AiSchematicActions::isNaturalTerrain));
                   this.terrainToClear.removeIf(px -> this.existingSupportKeys.contains(px.asLong()));
                   if (this.sweepActive) {
-                     for (BlockPos stray : AiSchematicActions.load(blueprint, this.load_Map, mc.level)) {
+                     for (BlockPos stray : AiSchematicActions.wallConnectionLeftovers(blueprint, this.load_Map, mc.level)) {
                         if (!this.existingSupportKeys.contains(stray.asLong()) && !this.terrainToClear.contains(stray)) {
                            this.terrainToClear.add(stray);
                         }
@@ -5584,10 +5584,10 @@ final class AiBuilder {
                   Collections.swap(this.terrainToClear, this.terrainClearIndex, best);
                   BlockPos p = this.terrainToClear.get(this.terrainClearIndex);
                   BlockState state = mc.level.getBlockState(p);
-                  if (this.sweepActive ? !AiSchematicActions.load(state) : !AiSchematicActions.init(state)) {
+                  if (this.sweepActive ? !AiSchematicActions.isTerrainOrStock(state) : !AiSchematicActions.isNaturalTerrain(state)) {
                      this.terrainClearIndex++;
                   } else {
-                     if (AiSchematicActions.init(mc.level, p)) {
+                     if (AiSchematicActions.isOpeningFluidSafe(mc.level, p)) {
                         HashSet<Long> keep = new HashSet<>(this.cachedProtectedCells());
                         if (this.sweepActive) {
                            keep.addAll(this.close_Set);
@@ -5900,7 +5900,7 @@ final class AiBuilder {
                   for (BlockPos support : this.scaffoldTracker.ownedCells()) {
                      if (!this.close_Set.contains(support.asLong())
                         && AiScaffold.matches(this.scaffoldTracker.recorded(support), mc.level.getBlockState(support).getBlock())
-                        && AiSchematicActions.init(support, this.load_Map, mc.level)) {
+                        && AiSchematicActions.isPermanentFloor(support, this.load_Map, mc.level)) {
                         keep.add(support.asLong());
                      }
                   }
@@ -5919,7 +5919,7 @@ final class AiBuilder {
                      Integer opening = this.columnCeilingY.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
                      if (!AiBuilder.canClearDuringRecovery(recovery, this.breachCells.contains(key), opening, pos.getY(), live)) {
                         AiBuilder.CellSpec wantedHere = this.load_Map.get(key);
-                        boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.matchesIgnoringUnpairedChest(wantedHere, live);
+                        boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.isTerrainOrStock(live) && !AiBuilder.matchesIgnoringUnpairedChest(wantedHere, live);
                         if (AiBuilder.isOccupiedOrMatchedScaffold(this.load_Map.get(key), live, stray || AiScaffold.matches(this.scaffoldBlockAt(pos), live.getBlock()))) {
                            keep.add(key);
                         }
@@ -5929,7 +5929,7 @@ final class AiBuilder {
 
                for (long key : this.existingSupportKeys) {
                   BlockPos pos = BlockPos.of(key);
-                  if ((ignore == null || !pos.equals(ignore.below()) || AiSchematicActions.init_Z_BlockPos(pos, this.load_Map, mc.level, ignore))
+                  if ((ignore == null || !pos.equals(ignore.below()) || AiSchematicActions.isPermanentFloor(pos, this.load_Map, mc.level, ignore))
                      && !mc.level.getBlockState(pos).isAir()) {
                      keep.add(key);
                   }
@@ -6105,7 +6105,7 @@ final class AiBuilder {
                      VoxelShape shape = state.getCollisionShape(mc.level, cell);
                      if (!shape.isEmpty() && shape.bounds().move(cell).intersects(body)) {
                         AiBuilder.CellSpec wanted = this.load_Map.get(cell.asLong());
-                        if ((wanted == null || !AiBuilder.matchesIgnoringUnpairedChest(wanted, state)) && (AiSchematicActions.load(state) || wanted != null)) {
+                        if ((wanted == null || !AiBuilder.matchesIgnoringUnpairedChest(wanted, state)) && (AiSchematicActions.isTerrainOrStock(state) || wanted != null)) {
                            return cell.immutable();
                         }
                      }
@@ -6368,7 +6368,7 @@ final class AiBuilder {
                         && !live.hasBlockEntity()
                         && live.getFluidState().isEmpty()
                         && Block.isShapeFullBlock(AiBuilder.toBlockState(wanted).getCollisionShape(mc.level, candidate))
-                        && AiSchematicActions.init(mc.level, candidate, (int)Math.ceil(mc.player.getY()) + 1)) {
+                        && AiSchematicActions.isShaftClearable(mc.level, candidate, (int)Math.ceil(mc.player.getY()) + 1)) {
                         double d = mc.player.position().distanceToSqr(Vec3.atCenterOf(candidate));
                         if (d < nearest) {
                            column = candidate;
@@ -6440,7 +6440,7 @@ final class AiBuilder {
                         && state.getFluidState().isEmpty()) {
                         this.supportCellsTried.add(support.asLong());
                         this.scaffoldSubtaskActive = true;
-                        this.activeSubtask = AiSchematicActions.init_AiOperation_BlockPos(support, pos, protectedNow, blueprint.origin().getY());
+                        this.activeSubtask = AiSchematicActions.scaffoldColumnOp(support, pos, protectedNow, blueprint.origin().getY());
                         return true;
                      }
                   }
@@ -6476,7 +6476,7 @@ final class AiBuilder {
                   AutismClientAddon.LOG
                      .info("[AI] build: temporary ceiling at {} for the upward-facing {} at {}", ceiling.toShortString(), cell.block(), pos.toShortString());
                   this.scaffoldSubtaskActive = true;
-                  this.activeSubtask = AiSchematicActions.init_AiOperation_BlockPos(ceiling, pos, protectedNow, blueprint.origin().getY());
+                  this.activeSubtask = AiSchematicActions.scaffoldColumnOp(ceiling, pos, protectedNow, blueprint.origin().getY());
                   return true;
                } else {
                   return false;
@@ -6613,7 +6613,7 @@ final class AiBuilder {
                            && this.canPlaceDirectly(candidate, pos)
                            && !AiBuilder.isCellSatisfied(candidate, mc.level.getBlockState(pos), power.substitutes(), true)
                            && !this.placementOverlapsPlayer(candidate, pos)
-                           && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
+                           && AiSchematicActions.bedFootUnderCeiling(mc.level, pos, this.load_Map) == null) {
                            BlockPos above = pos.above();
                            if (mc.level
                               .noCollision(
@@ -6659,7 +6659,7 @@ final class AiBuilder {
 
                if (this.ownsScaffolding && cell.dy() > this.stairLayerY) {
                   this.stairLayerY = cell.dy();
-                  if (AiSchematicActions.init(blueprint, this.stairLayerY).isEmpty()) {
+                  if (AiSchematicActions.accessStairSteps(blueprint, this.stairLayerY).isEmpty()) {
                      return false;
                   }
 
@@ -6869,7 +6869,7 @@ final class AiBuilder {
                   this.pendingAimPoint = null;
                   this.pendingPlaceCell = null;
                   this.matchedConfirmations = this.verifyTicks = 0;
-                  this.cellConstructionOp = AiSchematicActions.init(cell, pos, this.cachedProtectedCells());
+                  this.cellConstructionOp = AiSchematicActions.interactionStateOp(cell, pos, this.cachedProtectedCells());
                   return false;
                }
 
@@ -7089,7 +7089,7 @@ final class AiBuilder {
                   && mc.level.getBlockState(pos).canBeReplaced()
                   && mc.level.getBlockState(pos).getFluidState().isEmpty()
                   && AiBuilder.toBlockState(cell).canSurvive(mc.level, pos)
-                  && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
+                  && AiSchematicActions.bedFootUnderCeiling(mc.level, pos, this.load_Map) == null) {
                   Item item = AiBuilder.resolveBlock(cell).asItem();
                   if (this.countInInventory(item) != 0
                      && !autismclient.ai.engine.PlacementGoal.canPlace(mc, pos, item, this.constraintFor(cell, AiBuilder.resolveBlock(cell)))) {
@@ -7552,7 +7552,7 @@ final class AiBuilder {
 
             boolean startLeanPlacement(AiBuilder.CellSpec cell, BlockPos pos) {
                if (schematic && !this.leanUsed) {
-                  AiOperation lean = AiSchematicActions.init(cell, pos, this.constraintFor(cell, AiBuilder.resolveBlock(cell)));
+                  AiOperation lean = AiSchematicActions.exposeFloorSide(cell, pos, this.constraintFor(cell, AiBuilder.resolveBlock(cell)));
                   if (lean == null) {
                      return false;
                   }
@@ -7581,7 +7581,7 @@ final class AiBuilder {
                         && floor.getFluidState().isEmpty()
                         && !floor.is(Blocks.MAGMA_BLOCK)
                         && !floor.is(Blocks.CACTUS)
-                        && AiSchematicActions.init(mc.level, candidate, (int)Math.ceil(mc.player.getY()) + 1)) {
+                        && AiSchematicActions.isShaftClearable(mc.level, candidate, (int)Math.ceil(mc.player.getY()) + 1)) {
                         double d = mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(candidate));
                         if (d < distance) {
                            distance = d;

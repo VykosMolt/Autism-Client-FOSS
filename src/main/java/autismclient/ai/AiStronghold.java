@@ -440,7 +440,7 @@ final class AiStronghold {
                   }
 
                   if (!this.seesSkyNearby(5)) {
-                     return this.startChild("up to the surface for travel food", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
+                     return this.startChild("up to the surface for travel food", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 120)));
                   }
 
                   long dayTime = mc.level.getOverworldClockTime() % 24000L;
@@ -593,7 +593,7 @@ final class AiStronghold {
                         }
 
                         if (!this.seesSkyNearby(5)) {
-                           return this.startChild("up to the surface for the End kit", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
+                           return this.startChild("up to the surface for the End kit", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 120)));
                         }
 
                         double a = this.kitSearchLeg++ * 2.399;
@@ -722,7 +722,7 @@ final class AiStronghold {
                               if (AiCraft.countItem("minecraft:blaze_powder") + AiCraft.countItem("minecraft:blaze_rod") > 0
                                  && this.endermanHuntFailures < 8
                                  && AiForage.findEntity(mc, "minecraft:enderman", 48.0) != null) {
-                                 return this.startChild("hunt an enderman for a pearl (" + empty.size() + " frames empty, " + eyes + " eyes)", AiForage.load(48.0));
+                                 return this.startChild("hunt an enderman for a pearl (" + empty.size() + " frames empty, " + eyes + " eyes)", AiForage.pearlHuntOp(48.0));
                               }
 
                               if (AiCraft.countItem("minecraft:blaze_powder") + AiCraft.countItem("minecraft:blaze_rod") <= 0 || this.pearlSearch.darkSearchExceeded(600000000000L)) {
@@ -730,7 +730,7 @@ final class AiStronghold {
                               }
 
                               if (!this.seesSkyNearby(5)) {
-                                 return this.startChild("up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
+                                 return this.startChild("up to the surface for endermen", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 120)));
                               }
 
                               double a = this.endermanSearchLeg++ * 2.399;
@@ -849,7 +849,7 @@ final class AiStronghold {
                            && AiCraft.countItem("minecraft:ender_eye") + AiCraft.countItem("minecraft:ender_pearl") < 13
                            && this.endermanHuntFailures < 6
                            && AiForage.findEntity(mc, "minecraft:enderman", 40.0) != null) {
-                           return this.startChild("hunt an enderman for a pearl", AiForage.load(40.0));
+                           return this.startChild("hunt an enderman for a pearl", AiForage.pearlHuntOp(40.0));
                         }
 
                         if (this.forageFailures >= 4 && System.nanoTime() > this.forageRetryAfter) {
@@ -887,7 +887,7 @@ final class AiStronghold {
                                     if (!this.pearlSearch.darkSearchExceeded(600000000000L)) {
                                        if (!this.seesSkyNearby(5)) {
                                           return this.startChild(
-                                             "up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120))
+                                             "up to the surface for endermen", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 120))
                                           );
                                        }
 
@@ -926,7 +926,7 @@ final class AiStronghold {
                            } else {
                               this.pearlHunting = false;
                               if (!mc.level.canSeeSky(BlockPos.containing(mc.player.getEyePosition())) && this.skyClimbs < 2 && this.isNearSurface(24)) {
-                                 return this.startChild("up to the sky for a throw", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 120)));
+                                 return this.startChild("up to the sky for a throw", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 120)));
                               } else if (this.blockedThrowViews >= 3 && this.bearing != null) {
                                  this.blockedThrowViews = 0;
                                  Vec3 at = mc.player.position();
@@ -934,7 +934,7 @@ final class AiStronghold {
                                  int tz = (int)Math.floor(at.z + this.bearing.z * 12.0);
                                  return this.startChild(
                                     "step out from under the trees",
-                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 3), 30))
+                                    AiNetherRun.arriveOp(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 3), 30))
                                  );
                               } else {
                                  return !this.isHolding("minecraft:ender_eye")
@@ -945,7 +945,7 @@ final class AiStronghold {
                         } else {
                            if (!this.isNearSurface(12) && this.surfaceClimbs < 3) {
                               this.surfaceClimbs++;
-                              return this.startChild("up to the surface for the walk", autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", 180)));
+                              return this.startChild("up to the surface for the walk", autismclient.ai.engine.AiSeek.surfaceSeek(AiJson.objectOf("timeoutSeconds", 180)));
                            }
 
                            Vec3 at = mc.player.position();
@@ -958,7 +958,7 @@ final class AiStronghold {
                                  int sz = (int)Math.floor(side.z);
                                  return this.startChild(
                                     "establish a lateral Eye baseline",
-                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.RadiusGoal(sx, sz, 8), 90))
+                                    AiNetherRun.arriveOp(AiGoto.createPersistentOpCompat(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.RadiusGoal(sx, sz, 8), 90))
                                  );
                               }
                            }
@@ -990,7 +990,7 @@ final class AiStronghold {
                            this.bearingLegFailed = false;
                            return this.startChild(
                               "follow the bearing toward " + tx + ", " + tz,
-                              AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 12), 120, dry))
+                              AiNetherRun.arriveOp(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 12), 120, dry))
                            );
                         }
                      }
@@ -1270,7 +1270,7 @@ final class AiStronghold {
                               );
                            }
 
-                           this.pickupOp = AiGameplay.write(
+                           this.pickupOp = AiGameplay.pickupItems(
                               AiJson.objectOf("item", "minecraft:ender_eye", "count", before + 1, "radius", 24, "timeoutSeconds", 20)
                            );
                         }
@@ -1397,7 +1397,7 @@ final class AiStronghold {
                   AiOperation.Status.FAILED, "The bounded dark-time pearl search is exhausted; change the pearl acquisition route"
                );
                JsonObject evidence = AiRunResources.parseEvidenceJson(stopped.dataJson());
-               evidence.addProperty("pearlRouteChange", AiRunResources.isCampaignActive() && AiNetherRun.load_Z());
+               evidence.addProperty("pearlRouteChange", AiRunResources.isCampaignActive() && AiNetherRun.isNetherRouteReady());
                evidence.addProperty("pearlsNeeded", missing);
                return new AiOperation.Result(stopped.status(), stopped.message(), evidence.toString(), stopped.evidence(), AiFailure.MISSING_MATERIALS);
             }

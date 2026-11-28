@@ -198,7 +198,7 @@ public final class AiGoto {
 
    public static void attachWalkingWork(AiGoto.GotoOp var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
       if (!AutismLiteVariant.enabled()) {
-         AiWalkingWork.putAt(var0, var1, var2);
+         AiWalkingWork.forwardLookAndClick(var0, var1, var2);
       }
    }
 
@@ -1257,7 +1257,7 @@ public final class AiGoto {
                this.putAt_RingCache.putAt_V_Predicate(var1x -> this.putAt_FileStore_TokenCod.cellAllowed(var1x));
                this.putAt_RingCache.putAt_V_Z(var8);
                this.putAt_RingCache.putAt_V_PacketHelper(AiChunkMemory.getInstance());
-               this.putAt_RingCache.value(var12 == null || var12.bunnyhop());
+               this.putAt_RingCache.setAllowHops(var12 == null || var12.bunnyhop());
                this.putAt_RingCache.prevEx_V_Z(var12 == null || var12.sprint());
                this.putAt_RingCache.fill(var20);
                if (var15 && var18 != null && var17 + 1 < this.flowState) {
@@ -1343,7 +1343,7 @@ public final class AiGoto {
                         var1x.setFocus(this.stateOf_Z ? this.putAt_FileStore_TaskStat.activeOrigin() : this.putAt_Minecraft.player.blockPosition());
                         var1x.scanBudget(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.RunState.fill ? 750000L : 4000000L);
                      } else {
-                        AiLiveGrid.putAt(this.putAt_Minecraft, AiChunkMemory.getInstance());
+                        AiLiveGrid.scanNearbyChunks(this.putAt_Minecraft, AiChunkMemory.getInstance());
                      }
 
                      long var13x = System.nanoTime();
@@ -1369,7 +1369,7 @@ public final class AiGoto {
 
                         return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, "No progress toward the target in 30 s");
                      } else if (this.readEx_Z) {
-                        if (this.putAt_RingCache.isFollowing() && !this.putAt_RingCache.pollAt_Z()) {
+                        if (this.putAt_RingCache.isFollowing() && !this.putAt_RingCache.tryStop()) {
                            this.putAt_RingCache.fill_RingCache_TableCac();
                            return this.fill("Pausing");
                         } else {
@@ -1377,7 +1377,7 @@ public final class AiGoto {
                            return this.fill("Paused");
                         }
                      } else {
-                        if (this.fill_Z && this.stateOf_Z && this.putAt_RingCache.pollAt_Z()) {
+                        if (this.fill_Z && this.stateOf_Z && this.putAt_RingCache.tryStop()) {
                            this.fill_Z = false;
                            this.putAt_FileStore_TaskStat
                               .startSearch(this.putAt_RingCache.currentPos(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
@@ -1392,7 +1392,7 @@ public final class AiGoto {
                         BlockPos var4x = this.putAt_RingCache.currentPos();
                         if (!this.chunkAt_Z_6()
                            && !this.putAt_RingCache.isFollowing()
-                           && !this.putAt_RingCache.state_Z()
+                           && !this.putAt_RingCache.awaitingSupportPlacement()
                            && this.putAt_FileStore_TokenCod.isInGoal(var4x.getX(), var4x.getY(), var4x.getZ())) {
                            this.putAt_RingCache.prev_V();
                            return this.fill("Waiting for endpoint landing");
@@ -1414,7 +1414,7 @@ public final class AiGoto {
                            this.readEx_V_13();
                         }
 
-                        if ((var18 == null || this.stateOf_Z) && this.prev_Z_8() && !this.putAt_RingCache.chunkAt_Z()) {
+                        if ((var18 == null || this.stateOf_Z) && this.prev_Z_8() && !this.putAt_RingCache.hasDoorToClose()) {
                            return this.putAt_AiOperation_Result_Str_26("Arrived at target");
                         }
 
@@ -1608,7 +1608,7 @@ public final class AiGoto {
                                  return this.fill("Escape complete; resuming the placement route");
                               }
 
-                              if (this.prev_Z_8() && !this.putAt_RingCache.chunkAt_Z()) {
+                              if (this.prev_Z_8() && !this.putAt_RingCache.hasDoorToClose()) {
                                  return this.putAt_AiOperation_Result_Str_26("Arrived at target");
                               }
 
@@ -1638,7 +1638,7 @@ public final class AiGoto {
                                  && var20x.movements().isEmpty()
                                  && var20x.reachesGoal()
                                  && this.prev_Z_8()
-                                 && !this.putAt_RingCache.chunkAt_Z()) {
+                                 && !this.putAt_RingCache.hasDoorToClose()) {
                                  return this.putAt_AiOperation_Result_Str_26("Arrived at target");
                               }
 
@@ -2109,7 +2109,7 @@ public final class AiGoto {
             }
 
             AiOperation.Result putAt_AiOperation_Result_Str_26(String var1) {
-               if (!this.putAt_RingCache.value_Z()) {
+               if (!this.putAt_RingCache.ensureSafeMotion()) {
                   return this.fill("Braking before arrival beside lava");
                }
 
@@ -2121,7 +2121,7 @@ public final class AiGoto {
                   return this.putAt(AiOperation.Status.SUCCEEDED, var1);
                } else {
                   this.value_Z = true;
-                  this.putAt_RingCache.pollAt_Z();
+                  this.putAt_RingCache.tryStop();
                   this.putAt_RingCache.prev_V();
                   return this.fill("At the goal");
                }
@@ -2144,7 +2144,7 @@ public final class AiGoto {
                this.fill_Set.clear();
                this.putAt_FileStore_SyncPool = null;
                this.prev_BlockPos = null;
-               BlockPos var3x = this.putAt_RingCache.value_BlockPos();
+               BlockPos var3x = this.putAt_RingCache.currentPathEnd();
                if (var3x == null || !var2.isInGoal(var3x.getX(), var3x.getY(), var3x.getZ())) {
                   if (var3x != null && this.putAt_Minecraft.player != null) {
                      BlockPos var4x = this.putAt_Minecraft.player.blockPosition();
@@ -2175,7 +2175,7 @@ public final class AiGoto {
 
             @Override
             public int putAt_I_43() {
-               return this.putAt_RingCache.chunkAt_I();
+               return this.putAt_RingCache.remainingMovesToGoal();
             }
 
             @Override
@@ -2185,17 +2185,17 @@ public final class AiGoto {
 
             @Override
             public boolean fill_Z_18() {
-               return this.putAt_RingCache.prevEx_Z();
+               return this.putAt_RingCache.canStopNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.putAt_RingCache.prev_Z() || this.putAt_FilePool.needsReconciliation();
+               return this.putAt_RingCache.hasPendingActions() || this.putAt_FilePool.needsReconciliation();
             }
 
             @Override
             public BlockPos putAt_BlockPos_23() {
-               return this.putAt_RingCache.readEx_BlockPos();
+               return this.putAt_RingCache.pathEndOrNull();
             }
 
             @Override
@@ -2205,7 +2205,7 @@ public final class AiGoto {
 
             @Override
             public Set<BlockPos> fill_Set_4() {
-               return this.putAt_RingCache.putAt_Set();
+               return this.putAt_RingCache.remainingPathSupportCells();
             }
 
             @Override
@@ -2243,7 +2243,7 @@ public final class AiGoto {
                if (var1 != this.readEx_Z) {
                   this.readEx_Z = var1;
                   if (var1) {
-                     this.putAt_RingCache.pollAt_Z();
+                     this.putAt_RingCache.tryStop();
                      this.putAt_RingCache.value_V();
                      if (var14 && !AutismLiteVariant.enabled()) {
                         AiVisualization.clearOwner(this.fill_Obj);
@@ -2259,7 +2259,7 @@ public final class AiGoto {
             AiOperation.Result fill_AiOperation_Result_23() {
                if (this.closeOf_I < 2 && this.pollAt_Z_4()) {
                   this.closeOf_I++;
-                  this.putAt_RingCache.pollAt_Z();
+                  this.putAt_RingCache.tryStop();
                   return this.fill("Stepping clear of a partial block before replanning");
                } else {
                   return !var3
@@ -2281,7 +2281,7 @@ public final class AiGoto {
             AiOperation.Result readEx_AiOperation_Result_16() {
                if (this.closeOf_I < 2 && this.pollAt_Z_4()) {
                   this.closeOf_I++;
-                  this.putAt_RingCache.pollAt_Z();
+                  this.putAt_RingCache.tryStop();
                   return this.fill("Stepping onto a full floor before replanning");
                } else {
                   return var14 && !var3
@@ -2317,7 +2317,7 @@ public final class AiGoto {
                   )
                 {
                   this.closeOf_I++;
-                  this.putAt_RingCache.pollAt_Z();
+                  this.putAt_RingCache.tryStop();
                   return this.fill("Leaving the partial construction footing before replanning");
                }
 
@@ -2568,7 +2568,7 @@ public final class AiGoto {
                   this.tick_I++;
                   this.state_BlockPos = var2;
                   this.flushOf_I = 0;
-                  this.putAt_RingCache.pollAt_Z();
+                  this.putAt_RingCache.tryStop();
                   this.putAt_FilePool.start(var2, var11x);
                   AutismClientAddon.LOG.info("[AI] travel: no way out of {} beside water; blocking the water at {}", var1x.toShortString(), var2.toShortString());
                   return this.fill("Blocking the water at " + var2.toShortString());
@@ -2835,7 +2835,7 @@ public final class AiGoto {
                   }
 
                   if (this.chunkAt_D >= 0.0) {
-                     this.putAt_RingCache.pollAt_Z();
+                     this.putAt_RingCache.tryStop();
                   }
 
                   this.putAt_FileStore_TaskStat.startSearch(this.readEx_BlockPos_5(), this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
@@ -2864,7 +2864,7 @@ public final class AiGoto {
                      && this.closeOf_I < 2
                      && this.pollAt_Z_4()) {
                      this.closeOf_I++;
-                     this.putAt_RingCache.pollAt_Z();
+                     this.putAt_RingCache.tryStop();
                      return this.fill("Leaving the partial construction footing before replanning");
                   }
 
@@ -2894,11 +2894,11 @@ public final class AiGoto {
             }
 
             String putAt_Str_Vec3_2(Vec3 var1) {
-               BlockPos var2 = var13 && this.putAt_RingCache.value_BlockPos() != null ? this.putAt_RingCache.value_BlockPos() : var0;
+               BlockPos var2 = var13 && this.putAt_RingCache.currentPathEnd() != null ? this.putAt_RingCache.currentPathEnd() : var0;
                int var3x = (int)Math.round(Math.sqrt(var1.distanceToSqr(Vec3.atBottomCenterOf(var2))));
                if (!AutismLiteVariant.enabled() && var14 && !var13 && this.putAt_J != this.putAt_Minecraft.level.getGameTime()) {
                   this.putAt_J = this.putAt_Minecraft.level.getGameTime();
-                  int var4x = this.putAt_RingCache.closeOf_I();
+                  int var4x = this.putAt_RingCache.pathProgressPercent();
                   if (var4x < 0) {
                      var4x = Math.clamp((int)(100.0 * (1.0 - var3x / Math.max(1.0, this.value_D))), 0, 99);
                   }
@@ -3257,7 +3257,7 @@ public final class AiGoto {
             boolean prev_Z_8() {
                AiPathfinder.PathGoal var1x = AiGoto.unwrapGoal(this.putAt_FileStore_TokenCod);
                if ((this.chunkAt_Z_6() || var1x instanceof AiGoto.MultiTargetGoal var2 && var2.putAt_Z && this.putAt_Minecraft.player.isInWater())
-                  && !this.putAt_RingCache.state_Z()
+                  && !this.putAt_RingCache.awaitingSupportPlacement()
                   && !this.putAt_RingCache.closeOf_Z()) {
                   BlockPos var5x = this.putAt_RingCache.currentPos();
                   if (!this.putAt_FileStore_TokenCod.cellAllowed(var5x)) {
@@ -3636,13 +3636,13 @@ public final class AiGoto {
                   "pathTicks",
                   Math.round(this.putAt_RingCache.elapsedCostTicks()),
                   "blocksDug",
-                  this.putAt_RingCache.readEx_I(),
+                  this.putAt_RingCache.getBlocksBroken(),
                   "pillarsPlaced",
-                  this.putAt_RingCache.value_I(),
+                  this.putAt_RingCache.getPillarBlocksPlaced(),
                   "bridgesPlaced",
-                  this.putAt_RingCache.prevEx_I(),
+                  this.putAt_RingCache.getBridgeBlocksPlaced(),
                   "restocks",
-                  this.putAt_RingCache.prev_I(),
+                  this.putAt_RingCache.getRestockCount(),
                   "distanceTravelled",
                   Math.round(this.prev_D * 10.0) / 10.0,
                   "replans",

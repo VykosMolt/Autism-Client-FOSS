@@ -117,7 +117,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   static List<RecipeCatalogLoader.CraftingEntry> read(Minecraft mc) {
+   static List<RecipeCatalogLoader.CraftingEntry> craftingRecipesIfReady(Minecraft mc) {
       if (mc != null && mc.level != null) {
          RecipeCatalogLoader.CatalogSnapshot server = serverCatalog(mc);
          if (server != null && !server.craftingRecipes().isEmpty()) {

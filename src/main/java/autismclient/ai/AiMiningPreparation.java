@@ -36,7 +36,7 @@ public final class AiMiningPreparation {
       return blocks > materialBlocks && afterTicks < beforeTicks && (blocks - materialBlocks) * (beforeTicks - afterTicks) > setupTicks;
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation investmentOp(JsonObject args) {
       if (!AiJson.getBoolean(args, "toolPrepared", false)
          && !AiJson.getBoolean(args, "dropsOnly", false)
          && !AiJson.getBoolean(args, "approach", false)
@@ -75,18 +75,18 @@ public final class AiMiningPreparation {
       }
    }
 
-   public static AiOperation.Result init(AiOperation.Result result, boolean pending, AiOperation.Result child) {
+   public static AiOperation.Result preserveBoundaryResult(AiOperation.Result result, boolean pending, AiOperation.Result child) {
       if (child == result) {
          return AiGuardLayer.wrapPendingTermination(pending, result);
       }
 
-      AiOperation.Result captured = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
+      AiOperation.Result captured = AiNetherRun.phaseResult(
          result.status(), result.message(), AiRunResources.parseEvidenceJson(result.dataJson()), pending, child
       );
       return new AiOperation.Result(captured.status(), captured.message(), captured.dataJson(), result.evidence(), result.failure());
    }
 
-   public static AiOperation load(final JsonObject args) {
+   public static AiOperation preparationOp(final JsonObject args) {
       if (!AiJson.getBoolean(args, "toolPrepared", false)
          && !AiJson.getBoolean(args, "dropsOnly", false)
          && !AiJson.getBoolean(args, "approach", false)
@@ -196,7 +196,7 @@ public final class AiMiningPreparation {
                         int cobble = 0;
 
                         while (logs <= (wood == null ? 0 : 3)) {
-                           plan = init(graph, toolId, tableHeld, logId, logs);
+                           plan = toolAndTablePlan(graph, toolId, tableHeld, logId, logs);
                            cobble = plan.missing().getOrDefault("minecraft:cobblestone", 0);
                            if (plan.complete() || plan.missing().size() == 1 && cobble > 0 && cobble <= 3) {
                               break;
@@ -392,7 +392,7 @@ public final class AiMiningPreparation {
       AiMiningPreparation.CraftOption best = null;
       if (remaining > 0 && !(after >= before) && axeUses > 0 && Double.isFinite(before)) {
          for (int extra = 0; extra <= Math.min(3, Math.max(0, nearbyLogs)) && (extra <= 0 || !log.isEmpty()); extra++) {
-            AiCraftPlanner.CraftPlan plan = init(graph, "minecraft:wooden_axe", tableHeld, log, extra);
+            AiCraftPlanner.CraftPlan plan = toolAndTablePlan(graph, "minecraft:wooden_axe", tableHeld, log, extra);
             if (plan.complete()
                && !plan.steps()
                   .stream()
@@ -648,7 +648,7 @@ public final class AiMiningPreparation {
                AiOperation.Result refused = AiOperation.Result.failed(
                   AiFailure.UNREACHABLE, "Optional wood stock is no longer nearby", this.refusedResult == null ? "{}" : this.refusedResult.dataJson()
                );
-               refused = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.childOp, refused);
+               refused = AiNetherRun.finishChild(this.childOp, refused);
                this.childOp = null;
                this.refusedResult = refused;
                if (refused.status() == AiOperation.Status.UNCERTAIN) {
@@ -673,7 +673,7 @@ public final class AiMiningPreparation {
                return result;
             }
 
-            result = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.childOp, result);
+            result = AiNetherRun.finishChild(this.childOp, result);
             this.childOp = null;
             this.refusedResult = result;
             if (result.status() == AiOperation.Status.UNCERTAIN || result.status() == AiOperation.Status.CANCELLED) {
@@ -693,7 +693,7 @@ public final class AiMiningPreparation {
 
          AiOperation.Result finish(AiOperation.Status status, String message) {
             this.pendingReconciliation = this.pendingReconciliation | this.requiresReconciliationAfterEmergency();
-            this.finalResult = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
+            this.finalResult = AiNetherRun.phaseResult(
                status,
                message,
                AiJson.objectOf("investment", "minecraft:wooden_axe", "stage", this.stage),
@@ -760,7 +760,7 @@ public final class AiMiningPreparation {
       return true;
    }
 
-   static AiCraftPlanner.CraftPlan init(final AiCraftPlanner.RecipeGraph graph, final String tool, final boolean tableHeld, final String log, final int extraLogs) {
+   static AiCraftPlanner.CraftPlan toolAndTablePlan(final AiCraftPlanner.RecipeGraph graph, final String tool, final boolean tableHeld, final String log, final int extraLogs) {
       String root = "autism:prepared_mining_tool";
       return AiCraftPlanner.plan(
          new AiCraftPlanner.RecipeGraph() {
@@ -785,13 +785,13 @@ public final class AiMiningPreparation {
             }
 
             @Override
-            public int load_I(String id) {
-               return graph.load_I(id);
+            public int acquisitionRank(String id) {
+               return graph.acquisitionRank(id);
             }
 
             @Override
-            public double init_D(String id) {
-               return id.equals("minecraft:cobblestone") ? 0.0 : graph.init_D(id);
+            public double acquisitionEffort(String id) {
+               return id.equals("minecraft:cobblestone") ? 0.0 : graph.acquisitionEffort(id);
             }
 
             @Override

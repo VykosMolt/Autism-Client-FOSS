@@ -28,7 +28,7 @@ public final class VanillaKnownPacksManager extends KnownPacksManager {
       this.knownPackIds = knownPacks.build();
    }
 
-   public static boolean init(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static boolean useVanillaPacks(ConnectionPrivacyRegistry.ConnectionSession context) {
       return context == null || context.privacyMode() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.isActive(context);
    }
 

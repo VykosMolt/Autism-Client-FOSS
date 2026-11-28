@@ -61,7 +61,7 @@ final class AiFarmBuild {
       if (width > 0 && length > 0) {
          int w = Math.max(1, Math.min(27, width));
          int l = Math.max(1, Math.min(27, length));
-         return new AiFarmBuild.FarmLayout(w, l, init(w, l));
+         return new AiFarmBuild.FarmLayout(w, l, waterCenters(w, l));
       }
 
       int n = Math.max(1, Math.min(320, plots));
@@ -69,7 +69,7 @@ final class AiFarmBuild {
          int tiles = (n + 81 - 2) / 80;
          int w = tiles >= 4 ? 18 : 9;
          int l = tiles >= 4 ? 18 : tiles * 9;
-         return new AiFarmBuild.FarmLayout(w, l, init(w, l));
+         return new AiFarmBuild.FarmLayout(w, l, waterCenters(w, l));
       }
 
       int bestW = 9;
@@ -89,10 +89,10 @@ final class AiFarmBuild {
          }
       }
 
-      return new AiFarmBuild.FarmLayout(bestW, bestL, init(bestW, bestL));
+      return new AiFarmBuild.FarmLayout(bestW, bestL, waterCenters(bestW, bestL));
    }
 
-   static List<int[]> init(int width, int length) {
+   static List<int[]> waterCenters(int width, int length) {
       List<int[]> out = new ArrayList<>();
 
       for (int x0 = 0; x0 < width; x0 += 9) {
@@ -616,7 +616,7 @@ final class AiFarmBuild {
                   this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.SITE : AiFarmBuild.BuildPhase.HOE;
                   break;
                case HOE:
-                  if (!AiFarmPlant.init(mc)) {
+                  if (!AiFarmPlant.hasHoe(mc)) {
                      return this.finish(AiOperation.Status.FAILED, "No hoe to till with: " + r.message());
                   }
 
@@ -749,7 +749,7 @@ final class AiFarmBuild {
          }
 
          AiOperation.Result tickHoePhase() {
-            if (AiFarmPlant.init(mc)) {
+            if (AiFarmPlant.hasHoe(mc)) {
                this.phase = AiFarmBuild.BuildPhase.SITE;
                return this.running("Hoe in the bag");
             } else {
@@ -1001,7 +1001,7 @@ final class AiFarmBuild {
 
          void addFoundationCell(Map<Long, AiBuilder.CellSpec> out, BlockPos p, boolean below) {
             BlockState state = mc.level.getBlockState(p);
-            if ((!AiSchematicActions.read(state) || state.getFluidState().isSource())
+            if ((!AiSchematicActions.keepsWaterOut(state) || state.getFluidState().isSource())
                && (state.getCollisionShape(mc.level, p).isEmpty() || !state.getFluidState().isEmpty())
                && (!below || this.isCoveredAbove(p))) {
                out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.levelingBlock(this.substrateId)));
@@ -1091,7 +1091,7 @@ final class AiFarmBuild {
             for (List<BlockPos> pours = this.farmPlan.poolPours(); this.poolIndex < pours.size(); this.poolIndex++) {
                BlockPos p = pours.get(this.poolIndex);
                if (!AiFarmBuild.isWaterSource(mc.level.getBlockState(p))) {
-                  String leak = AiSchematicActions.init(p, mc.level, this.poolShape());
+                  String leak = AiSchematicActions.spillReason(p, mc.level, this.poolShape());
                   if (leak != null) {
                      return this.finish(AiOperation.Status.FAILED, "The pool would spill: " + leak);
                   }
@@ -1194,7 +1194,7 @@ final class AiFarmBuild {
                shape.put(c.relative(d).asLong(), new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"));
             }
 
-            String leak = AiSchematicActions.init(c, mc.level, shape);
+            String leak = AiSchematicActions.spillReason(c, mc.level, shape);
             if (leak != null) {
                return this.finish(AiOperation.Status.FAILED, "The field's water would spill: " + leak);
             }

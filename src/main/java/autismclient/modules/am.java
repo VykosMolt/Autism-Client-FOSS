@@ -640,7 +640,7 @@ public final class am {
    }
 
    public static boolean put() {
-      if (FrameEspCatalog.init_Z()) {
+      if (FrameEspCatalog.usesShader()) {
          return true;
       }
 
@@ -1365,7 +1365,7 @@ public final class am {
          return am.Inner_JsonUtil.init(revision, false);
       }
 
-      if (!OreSimEspScanner.update(module)) {
+      if (!OreSimEspScanner.isXrayStyle(module)) {
          return am.Inner_JsonUtil.init(revision, false);
       }
 

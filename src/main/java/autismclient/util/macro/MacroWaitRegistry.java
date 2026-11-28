@@ -586,7 +586,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static void update() {
+   public static void pollWaits() {
       if (!PENDING_WAITS.isEmpty()) {
          List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (PENDING_WAITS) {

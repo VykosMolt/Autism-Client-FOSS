@@ -8,7 +8,7 @@ import autismclient.gui.f.b.CachePool;
 public final class ConnectedButtonRenderer {
    public static final ConnectedButtonRenderer.ConnectedEdges init = new ConnectedButtonRenderer.ConnectedEdges(true, true, true, true);
    public static final ConnectedButtonRenderer.ConnectedEdges load = new ConnectedButtonRenderer.ConnectedEdges(true, true, false, true);
-   public static final ConnectedButtonRenderer.ConnectedEdges read = new ConnectedButtonRenderer.ConnectedEdges(false, true, true, true);
+   public static final ConnectedButtonRenderer.ConnectedEdges JOINED_LEFT = new ConnectedButtonRenderer.ConnectedEdges(false, true, true, true);
    public static final ConnectedButtonRenderer.ConnectedEdges write = new ConnectedButtonRenderer.ConnectedEdges(false, false, false, false, true);
 
    public static ConnectedButtonRenderer.ConnectedEdges edges(boolean left, boolean right) {

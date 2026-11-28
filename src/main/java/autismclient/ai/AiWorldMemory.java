@@ -157,7 +157,7 @@ final class AiWorldMemory {
       }
    }
 
-   static void init(BlockPos pos) {
+   static void observeChange(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == trackedLevel && mc.getConnection() == trackedConnection && AiTerrain.isLoaded(mc.level, pos)) {
          AiWorldMemory.ChunkScan chunk = chunkScans.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));

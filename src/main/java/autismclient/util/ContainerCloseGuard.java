@@ -69,7 +69,7 @@ public final class ContainerCloseGuard {
       lastTouched.clear();
    }
 
-   public static void init(ClientPacketListener conn) {
+   public static void flushDeferredCloses(ClientPacketListener conn) {
       holdCounts.clear();
       lastTouched.clear();
       if (conn != null && !autismclient.modules.aD.read_Z()) {

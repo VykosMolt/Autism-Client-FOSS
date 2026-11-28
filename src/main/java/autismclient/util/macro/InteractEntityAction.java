@@ -92,7 +92,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
    }
 
-   public boolean load(Minecraft mc) {
+   public boolean hasTargets(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
       }

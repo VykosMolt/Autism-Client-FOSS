@@ -205,7 +205,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       generation++;
    }
 
-   public static void sync() {
+   public static void releaseStale() {
       synchronized (OUTPUTS) {
          for (KeyClickOutput output : OUTPUTS) {
             if (output.pressed && (!canClick() || output.activeGeneration != generation)) {

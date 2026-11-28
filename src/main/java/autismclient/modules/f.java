@@ -923,7 +923,7 @@ public final class f {
          if ("trigger-mode".equals(optionId) || "sounds".equals(optionId) || "click-mode".equals(optionId)) {
             this.read_V_17();
             if ("trigger-mode".equals(optionId)) {
-               this.init_BitSetUtil.read();
+               this.init_BitSetUtil.reset();
             }
          }
 
@@ -990,7 +990,7 @@ public final class f {
                               this.read_Z,
                               () -> this.init_I("recast-delay", "recast-min", "recast-max")
                            );
-                        if (this.init_BitSetUtil.load_Z()) {
+                        if (this.init_BitSetUtil.consumeCatchCompleted()) {
                            this.sync();
                         }
 
@@ -1023,7 +1023,7 @@ public final class f {
       @Override
       public void onRenderLevel(float partialTick) {
          if (this.read_Z) {
-            if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.read()) {
+            if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.canRoute()) {
                this.init_V_Z_9(false);
             } else if (autismclient.util.MouseDeltaAccumulator.movedWithin(0, AutismSessionState.getInstance().getClientTick())) {
                this.init_V_Z_9(true);
@@ -1054,7 +1054,7 @@ public final class f {
                }
             }
 
-            this.init_BitSetUtil.init_Z_I_J(this.init_I("catch-delay", "catch-min", "catch-max"), AutismSessionState.getInstance().getClientTick());
+            this.init_BitSetUtil.onBite(this.init_I("catch-delay", "catch-min", "catch-max"), AutismSessionState.getInstance().getClientTick());
          }
       }
 
@@ -1115,7 +1115,7 @@ public final class f {
       }
 
       private void init_V_35() {
-         this.init_BitSetUtil.init_Z(this.init_I("catch-delay", "catch-min", "catch-max"));
+         this.init_BitSetUtil.scheduleCatch(this.init_I("catch-delay", "catch-min", "catch-max"));
       }
 
       private int init_I(String fixedOption, String minOption, String maxOption) {
@@ -1248,7 +1248,7 @@ public final class f {
          }
 
          if (!"Interaction API".equals(this.choice("click-mode"))) {
-            return autismclient.util.VirtualInputDispatcher.init(this.id(), this::read_Z_16, sent -> this.init(use, sent));
+            return autismclient.util.VirtualInputDispatcher.requestGuardedUse(this.id(), this::read_Z_16, sent -> this.init(use, sent));
          }
 
          if (!al.init_Z_HitResult(MC.hitResult, this.init_InteractionHand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
@@ -1277,7 +1277,7 @@ public final class f {
       private void init(AutoFishStateMachine.PendingAction use, boolean dispatched) {
          this.init_BitSetUtil.init(use, dispatched, this.init_I_25());
          if (!dispatched && !this.load_Z_17()) {
-            this.init_BitSetUtil.load_V();
+            this.init_BitSetUtil.cancelPendingCatch();
          }
 
          if (use.equals(this.init_BitSetUtil_CachePo)) {
@@ -1300,9 +1300,9 @@ public final class f {
          if (MC != null && MC.player != null && MC.level != null) {
             this.read_V_17();
             if ("Sound".equals(this.choice("trigger-mode"))) {
-               this.init_BitSetUtil.init_V();
+               this.init_BitSetUtil.onRodUsed();
             } else {
-               this.init_BitSetUtil.init_V(this.init_I_25());
+               this.init_BitSetUtil.onRodUsed(this.init_I_25());
             }
 
             this.sync_I = Math.max(this.sync_I, 3);
@@ -1315,8 +1315,8 @@ public final class f {
       }
 
       private void read_V_17() {
-         autismclient.util.VirtualInputDispatcher.load(this.id());
-         this.init_BitSetUtil.load_V();
+         autismclient.util.VirtualInputDispatcher.cancelPendingFor(this.id());
+         this.init_BitSetUtil.cancelPendingCatch();
          this.init_BitSetUtil_CachePo = null;
          this.init_InteractionHand = null;
          this.init_ItemStack = ItemStack.EMPTY;
@@ -1372,7 +1372,7 @@ public final class f {
 
       private void sync() {
          int steps = this.integer("movement-steps");
-         if (steps > 0 && MC.player != null && autismclient.util.MouseMovementRouter.read()) {
+         if (steps > 0 && MC.player != null && autismclient.util.MouseMovementRouter.canRoute()) {
             if (!this.write_Z) {
                this.init_F = MC.player.getYRot();
                this.write_Z = true;
@@ -1405,13 +1405,13 @@ public final class f {
                );
             this.read_Z = this.init_cM.isActive();
             this.load_I = 0;
-            autismclient.util.MouseMovementRouter.init(this.read_Z);
+            autismclient.util.MouseMovementRouter.setActive(this.read_Z);
          }
       }
 
       private void flush() {
          if (this.read_Z && MC.player != null) {
-            if (autismclient.util.MouseMovementRouter.read() && !(this.load_I > Math.ceil(this.init_cM.duration()) + 20.0)) {
+            if (autismclient.util.MouseMovementRouter.canRoute() && !(this.load_I > Math.ceil(this.init_cM.duration()) + 20.0)) {
                this.init_V_D(this.load_I);
                if (this.read_Z) {
                   this.load_I++;
@@ -1450,7 +1450,7 @@ public final class f {
 
       private void close() {
          this.read_V_17();
-         this.init_BitSetUtil.read();
+         this.init_BitSetUtil.reset();
          this.sync_I = 0;
          this.flush = false;
          this.init_Z = false;
@@ -1750,7 +1750,7 @@ public final class f {
             boolean injectStop = trigger != f.Inner_BufferHelper.Inner_StreamUtil.RUN_STEPS_ONLY;
             boolean skipImmediateDuplicateDisable = injectStop
                && conditionIndex + 1 < runtime.actions.size()
-               && AutoFishMacroPresets.load(runtime.actions.get(conditionIndex + 1));
+               && AutoFishMacroPresets.isPresetToggle(runtime.actions.get(conditionIndex + 1));
             boolean injectResume = trigger == f.Inner_BufferHelper.Inner_StreamUtil.STOP_RUN_RESUME
                && !this.init(runtime.actions, conditionIndex, skipImmediateDuplicateDisable);
             ArrayList<MacroAction> rebuilt = new ArrayList<>();
@@ -2280,7 +2280,7 @@ public final class f {
             boolean listed = false;
 
             for (String entry : entries) {
-               if (RegistryIdValidator.init(id, entry)) {
+               if (RegistryIdValidator.matchesEntry(id, entry)) {
                   listed = true;
                   break;
                }
@@ -3272,7 +3272,7 @@ public final class f {
             }
 
             this.setValue("nbt-command", embeddedCommand);
-            String imported = autismclient.util.ItemSnbtCodec.write(stack);
+            String imported = autismclient.util.ItemSnbtCodec.componentsSnbt(stack);
             this.setValue("nbt-imported-components", imported);
             this.setValue("nbt-imported-signature", this.read_Str_3());
             this.setValue("nbt-item-components", imported);
@@ -5633,7 +5633,7 @@ public final class f {
       @Override
       public void onGameLeft() {
          autismclient.util.oresim.OreSimEngine.reset();
-         autismclient.util.oresim.OreSimEngine.write_V();
+         autismclient.util.oresim.OreSimEngine.clearDisproven();
          autismclient.util.oresim.OreGhostModelCache.init();
       }
 
@@ -7216,7 +7216,7 @@ public final class f {
             && SilentMovementCoordinator.activeRotation() == null
             && !ScaffoldModule.flush_Z_5()
             && !AutoTotemModule.init_Z_6()
-            && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
+            && (AutismLiteVariant.enabled() || !ClutchModule.isClutchEngaged())
             && !autismclient.util.ManualInteractionYield.isYielding()
             && this.init_O.accepts(MC.player.getMainHandItem())
             && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.movedWithin(4, AutismSessionState.getInstance().getClientTick()))) {
@@ -7282,7 +7282,7 @@ public final class f {
          this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.AimFrame.computeAnchorAtHeight(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.clampInsideBox = true;
          this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.isTracking(target)
-            ? this.init_cj.init(eyes, this.init_q_DataUtil.targetYaw, AutismSessionState.getInstance().getClientTick())
+            ? this.init_cj.serverYawOffset(eyes, this.init_q_DataUtil.targetYaw, AutismSessionState.getInstance().getClientTick())
             : 0.0;
          if (noCooldown) {
             this.init_q_DataUtil.ticksUntilAttack = Math.max(2.0, target.hurtTime - 1);
@@ -7315,7 +7315,7 @@ public final class f {
          double vertical = "Horizontal".equals(axis) ? 0.0 : this.init("vertical-speed", 0.2);
          double yaw = want[0] * horizontal;
          double pitch = init_D_D(want[1], vertical, yaw, realized, current.pitch(), this.init_q_DataUtil);
-         double[] own = autismclient.util.MouseDeltaAccumulator.init(gcd, MC.options.invertMouseX().get(), MC.options.invertMouseY().get());
+         double[] own = autismclient.util.MouseDeltaAccumulator.drainRotation(gcd, MC.options.invertMouseX().get(), MC.options.invertMouseY().get());
          double[] pull = init_DArr_D(yaw, pitch, own[0], own[1], horizontal, vertical);
          yaw = pull[0];
          pitch = pull[1];
@@ -7411,7 +7411,7 @@ public final class f {
       }
 
       private void init_V_46() {
-         autismclient.util.MouseDeltaAccumulator.init(0.0, false, false);
+         autismclient.util.MouseDeltaAccumulator.drainRotation(0.0, false, false);
          if (this.init_q != null) {
             this.init_q.reset();
          }

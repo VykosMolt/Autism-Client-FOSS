@@ -58,7 +58,7 @@ public final class ResourcePackSessionTracker {
    private ResourcePackSessionTracker() {
    }
 
-   public static ResourcePackSessionTracker.PackSession init(ConnectionPrivacyRegistry.ConnectionSession context, Object source, Object manager, Runnable disconnectHandler) {
+   public static ResourcePackSessionTracker.PackSession openSession(ConnectionPrivacyRegistry.ConnectionSession context, Object source, Object manager, Runnable disconnectHandler) {
       if (context == null) {
          return null;
       }
@@ -123,7 +123,7 @@ public final class ResourcePackSessionTracker {
 
    private static void closeReplaced(List<ResourcePackSessionTracker.PackSession> replaced) {
       for (ResourcePackSessionTracker.PackSession session : replaced) {
-         load_V(session);
+         closeSession(session);
       }
    }
 
@@ -138,7 +138,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static ResourcePackSessionTracker.PackSession init(Object source) {
+   public static ResourcePackSessionTracker.PackSession sessionForSource(Object source) {
       if (source == null) {
          return null;
       }
@@ -179,7 +179,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean load_Z(ResourcePackSessionTracker.PackSession session) {
+   public static boolean hasFilteredPack(ResourcePackSessionTracker.PackSession session) {
       if (session == null) {
          return false;
       }
@@ -195,11 +195,11 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static long init(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId, ResourcePackSessionTracker.PackPolicy policy) {
+   public static long registerPack(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId, ResourcePackSessionTracker.PackPolicy policy) {
       if (context != null && packId != null && policy != null) {
          ResourcePackSessionTracker.PackSession session = sessionFor(context);
          if (session == null) {
-            session = init(context, null, null, null);
+            session = openSession(context, null, null, null);
          }
 
          boolean tracked = true;
@@ -227,7 +227,7 @@ public final class ResourcePackSessionTracker {
 
          cancelWaits(waits);
          ServerPackSelectionRegistry.init_V(session, packId);
-         IsolatedPackDownloader.init_V(session, packId);
+         IsolatedPackDownloader.dropSnapshots(session, packId);
          return tracked ? generation : -1L;
       } else {
          return -1L;
@@ -297,7 +297,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean init_Z(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   public static boolean hasFilteredPackFor(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          synchronized (LOCK) {
             return session.hasFilteredPack;
@@ -307,7 +307,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static long load(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   public static long claimDownload(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          boolean progress = false;
          long generation;
@@ -344,11 +344,11 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean load(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
+   public static boolean isClaimCurrent(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
       return isCurrent(session, packId, generation);
    }
 
-   public static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, Update update, PackLoadFeedback vanilla) {
+   public static boolean onPackUpdate(ResourcePackSessionTracker.PackSession session, UUID packId, Update update, PackLoadFeedback vanilla) {
       if (session != null && packId != null && update != null && vanilla != null) {
          boolean progress = false;
          synchronized (LOCK) {
@@ -383,7 +383,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static boolean init(ResourcePackSessionTracker.PackSession session, UUID packId, FinalResult result, PackLoadFeedback vanilla) {
+   public static boolean onPackResult(ResourcePackSessionTracker.PackSession session, UUID packId, FinalResult result, PackLoadFeedback vanilla) {
       if (session != null && packId != null && result != null && vanilla != null) {
          boolean progress = false;
          synchronized (LOCK) {
@@ -434,7 +434,7 @@ public final class ResourcePackSessionTracker {
             }
          }
 
-         IsolatedPackDownloader.init_V(session, packId);
+         IsolatedPackDownloader.dropSnapshots(session, packId);
          if (progress) {
             requestSessionDrain(session);
          }
@@ -453,7 +453,7 @@ public final class ResourcePackSessionTracker {
       requestDrain(false);
    }
 
-   public static void read() {
+   public static void drainIfRequested() {
       synchronized (LOCK) {
          if (!write) {
             return;
@@ -736,7 +736,7 @@ public final class ResourcePackSessionTracker {
       pruneTerminalPacks(session);
    }
 
-   public static void init(ResourcePackSessionTracker.PackSession session, UUID packId, long generation, CompletableFuture<?> future, Runnable restore) {
+   public static void addPendingWait(ResourcePackSessionTracker.PackSession session, UUID packId, long generation, CompletableFuture<?> future, Runnable restore) {
       if (session != null && packId != null && future != null && restore != null) {
          boolean current;
          synchronized (LOCK) {
@@ -753,7 +753,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
+   public static void cancelWait(ResourcePackSessionTracker.PackSession session, UUID packId, long generation) {
       if (session != null && packId != null) {
          synchronized (LOCK) {
             session.waits.removeIf(wait -> wait.session == session && wait.packId.equals(packId) && wait.generation == generation);
@@ -761,7 +761,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static void init_V(ResourcePackSessionTracker.PackSession session) {
+   public static void cancelAllWaits(ResourcePackSessionTracker.PackSession session) {
       if (session != null) {
          List<ResourcePackSessionTracker.PendingWait> waits;
          synchronized (LOCK) {
@@ -796,7 +796,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static void init(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId) {
+   public static void removePackFor(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId) {
       ResourcePackSessionTracker.PackSession session = sessionFor(context);
       if (session != null) {
          removePack(session, packId);
@@ -825,15 +825,15 @@ public final class ResourcePackSessionTracker {
 
          cancelWaits(waits);
          ServerPackSelectionRegistry.init_V(session, packId);
-         IsolatedPackDownloader.init_V(session, packId);
+         IsolatedPackDownloader.dropSnapshots(session, packId);
       }
    }
 
-   public static void init_V(ConnectionPrivacyRegistry.ConnectionSession context) {
-      load_V(sessionFor(context));
+   public static void closeSessionFor(ConnectionPrivacyRegistry.ConnectionSession context) {
+      closeSession(sessionFor(context));
    }
 
-   public static void load_V(ResourcePackSessionTracker.PackSession session) {
+   public static void closeSession(ResourcePackSessionTracker.PackSession session) {
       if (session != null) {
          Runnable handler;
          List<ResourcePackSessionTracker.PendingWait> waits;
@@ -854,7 +854,7 @@ public final class ResourcePackSessionTracker {
 
          cancelWaits(waits);
          ServerPackSelectionRegistry.forget(session);
-         IsolatedPackDownloader.init_V(session, null);
+         IsolatedPackDownloader.dropSnapshots(session, null);
          if (handler != null) {
             try {
                handler.run();
@@ -871,7 +871,7 @@ public final class ResourcePackSessionTracker {
       }
 
       for (ResourcePackSessionTracker.PackSession session : sessions) {
-         load_V(session);
+         closeSession(session);
       }
    }
 

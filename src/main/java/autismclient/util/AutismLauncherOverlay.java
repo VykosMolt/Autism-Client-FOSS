@@ -286,7 +286,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.addSectionLabel("SCREEN", autismclient.gui.f.a.DataUtil.run);
          this.addButtonPair(
             this.mainSection.getContent(),
-            this.createButton("Close", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this.closeAction != null ? this.closeAction : LauncherQuickActions::update),
+            this.createButton("Close", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this.closeAction != null ? this.closeAction : LauncherQuickActions::closeScreen),
             this.createButton("De-sync", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.desyncAction != null ? this.desyncAction : this::desync)
          );
          this.addButtonPair(
@@ -948,7 +948,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void saveGui() {
-      LauncherQuickActions.flush();
+      LauncherQuickActions.saveGui();
    }
 
    private void restoreGui() {
@@ -956,11 +956,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void disconnectAndSend() {
-      LauncherQuickActions.poll();
+      LauncherQuickActions.disconnect();
    }
 
    private void sendChatInput(String raw) {
-      String sent = LauncherQuickActions.init(raw);
+      String sent = LauncherQuickActions.sendChat(raw);
       if (sent != null && this.chatInput != null) {
          if (!sent.isEmpty()) {
             this.chatInput.pushHistoryEntry(sent);

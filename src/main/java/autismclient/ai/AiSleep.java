@@ -62,7 +62,7 @@ final class AiSleep {
                   if (mc.player.isSleeping()) {
                      this.slept = true;
                      this.sleepTicks++;
-                     if (!AiSleep.load()) {
+                     if (!AiSleep.canSleepNow()) {
                         mc.player.stopSleeping();
                         return this.finish(AiOperation.Status.SUCCEEDED, "Slept through; day time is now " + AiSleep.dayTime());
                      } else if (this.sleepTicks > 300) {
@@ -76,8 +76,8 @@ final class AiSleep {
                   } else {
                      if (this.slept) {
                         return this.finish(
-                           AiSleep.load() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
-                           AiSleep.load() ? "Woke early and it is still dark; the sleep did not complete" : "Woke up; day time is now " + AiSleep.dayTime()
+                           AiSleep.canSleepNow() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
+                           AiSleep.canSleepNow() ? "Woke early and it is still dark; the sleep did not complete" : "Woke up; day time is now " + AiSleep.dayTime()
                         );
                      }
 
@@ -88,7 +88,7 @@ final class AiSleep {
                         );
                      }
 
-                     if (requireNight && !AiSleep.load()) {
+                     if (requireNight && !AiSleep.canSleepNow()) {
                         return this.finish(
                            AiOperation.Status.FAILED,
                            "It is not dark enough to sleep (day time "
@@ -253,7 +253,7 @@ final class AiSleep {
                   "night",
                   AiSleep.isNight(),
                   "canSleep",
-                  AiSleep.load(),
+                  AiSleep.canSleepNow(),
                   "startDayTime",
                   this.startDayTime,
                   "slept",
@@ -316,7 +316,7 @@ final class AiSleep {
       return time >= 12542L && time <= 23460L;
    }
 
-   static boolean load() {
+   static boolean canSleepNow() {
       Minecraft mc = Minecraft.getInstance();
       return mc.level == null ? false : mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).canSleep(mc.level);
    }

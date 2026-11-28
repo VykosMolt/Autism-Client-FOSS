@@ -56,7 +56,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
             .map(
                e -> new autismclient.util.macro.MacroToolBridge.ToolInfo(e.contract().id(), toolLabel(e.contract().id()), withStrategyEnum(e.contract().inputSchema()))
             )
-            .sorted(Comparator.comparing(autismclient.util.macro.MacroToolBridge.ToolInfo::load).thenComparing(autismclient.util.macro.MacroToolBridge.ToolInfo::init))
+            .sorted(Comparator.comparing(autismclient.util.macro.MacroToolBridge.ToolInfo::name).thenComparing(autismclient.util.macro.MacroToolBridge.ToolInfo::id))
             .toList();
          this.catalogRevision = snapshot.revision();
       }

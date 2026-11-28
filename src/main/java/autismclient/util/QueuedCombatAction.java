@@ -49,12 +49,12 @@ public final class QueuedCombatAction {
       }
    }
 
-   static void init_V() {
+   static void promoteQueued() {
       active = queued;
       queued = null;
    }
 
-   static boolean init_Z() {
+   static boolean isActiveReady() {
       return active == null || active.isReady();
    }
 
@@ -67,7 +67,7 @@ public final class QueuedCombatAction {
          && active.isStillValid();
    }
 
-   static void load() {
+   static void cancelAll() {
       if (queued != null) {
          queued.gate.cancel();
       }
@@ -80,13 +80,13 @@ public final class QueuedCombatAction {
       queued = null;
    }
 
-   public static void init(String owner) {
+   public static void clearIfOwnedBy(String owner) {
       if (queued != null && queued.owner.equals(owner) || active != null && active.owner.equals(owner)) {
          ClientInteractionOverride.clearAll();
       }
    }
 
-   public static void init(Packet<?> packet) {
+   public static void onPacketSent(Packet<?> packet) {
       QueuedCombatAction.PendingAction action = active;
       if (action != null) {
          if (packet instanceof ServerboundUseItemOnPacket use

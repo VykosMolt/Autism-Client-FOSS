@@ -14,7 +14,7 @@ final class TargetHurtWindowTracker {
    private int ringCount;
    private int ringIndex;
 
-   int init_I(int fallback) {
+   int medianHurtDelay(int fallback) {
       if (this.ringCount == 0) {
          return Math.max(0, Math.min(40, fallback));
       }
@@ -24,7 +24,7 @@ final class TargetHurtWindowTracker {
       return sorted[this.ringCount / 2];
    }
 
-   boolean init_Z(int target, int tick, int fallback) {
+   boolean isInHurtWindow(int target, int tick, int fallback) {
       TargetHurtWindowTracker.HurtWindow w = this.windows.get(target);
       if (w == null) {
          return false;
@@ -34,7 +34,7 @@ final class TargetHurtWindowTracker {
       return tick < this.windowEnd(w);
    }
 
-   void init_V(int target, int tick, int fallback) {
+   void onAttackSent(int target, int tick, int fallback) {
       TargetHurtWindowTracker.HurtWindow w = this.windowFor(target, tick);
       this.expireIfLate(w, tick, fallback);
       if (tick >= this.windowEnd(w)) {
@@ -42,7 +42,7 @@ final class TargetHurtWindowTracker {
       }
    }
 
-   void init(int target, int tick, boolean ours, int fallback) {
+   void onHurt(int target, int tick, boolean ours, int fallback) {
       TargetHurtWindowTracker.HurtWindow w = this.windowFor(target, tick);
       this.expireIfLate(w, tick, fallback);
       if (ours && w.pendingAttackTick != -2147483648 && tick >= w.pendingAttackTick) {
@@ -50,7 +50,7 @@ final class TargetHurtWindowTracker {
          w.ownHurtEndTick = w.pendingAttackTick + 10;
          w.pendingAttackTick = -2147483648;
       } else {
-         int started = tick - this.init_I(fallback);
+         int started = tick - this.medianHurtDelay(fallback);
          if (started >= Math.max(w.ownHurtEndTick, w.inferredHurtEndTick)) {
             w.inferredHurtEndTick = started + 10;
             if (w.pendingAttackTick != -2147483648 && w.pendingAttackTick >= started && w.pendingAttackTick < w.inferredHurtEndTick) {
@@ -85,7 +85,7 @@ final class TargetHurtWindowTracker {
    }
 
    private void expireIfLate(TargetHurtWindowTracker.HurtWindow w, int tick, int fallback) {
-      if (w.pendingAttackTick != -2147483648 && tick > w.pendingAttackTick + Math.max(1, this.init_I(fallback)) + 3) {
+      if (w.pendingAttackTick != -2147483648 && tick > w.pendingAttackTick + Math.max(1, this.medianHurtDelay(fallback)) + 3) {
          w.pendingAttackTick = -2147483648;
       }
    }

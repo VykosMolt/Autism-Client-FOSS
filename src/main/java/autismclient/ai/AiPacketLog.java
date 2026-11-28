@@ -280,7 +280,7 @@ public final class AiPacketLog {
                   "numericPacketId",
                   snapshot.packetId(),
                   "protocolPhase",
-                  snapshot.load(),
+                  snapshot.protocol(),
                   "plaintextLength",
                   plaintext.length,
                   "hexPrefix",

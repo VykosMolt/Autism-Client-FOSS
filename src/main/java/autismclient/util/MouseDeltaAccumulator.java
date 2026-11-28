@@ -23,7 +23,7 @@ public final class MouseDeltaAccumulator {
       return lastTick != -2147483648 && clientTick - lastTick <= withinTicks;
    }
 
-   public static double[] init(double degreesPerCount, boolean invertX, boolean invertY) {
+   public static double[] drainRotation(double degreesPerCount, boolean invertX, boolean invertY) {
       double yaw = (invertX ? -pendingDx : pendingDx) * degreesPerCount;
       double pitch = (invertY ? -pendingDy : pendingDy) * degreesPerCount;
       pendingDx = 0.0;

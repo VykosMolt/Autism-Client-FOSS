@@ -181,7 +181,7 @@ public final class AiRunResources {
       if (mc.player != null) {
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
-            if (AiTidy.init_Z(stack)) {
+            if (AiTidy.isFillerBlock(stack)) {
                amounts.merge(stack.getItem(), stack.getCount(), Integer::sum);
             }
          }
@@ -226,7 +226,7 @@ public final class AiRunResources {
          out.addProperty("buildingBlocks", 32 - spareBuildingBlockCount());
       }
 
-      if (!AiForage.load()) {
+      if (!AiForage.hasFightPlan()) {
          out.addProperty("fightSupplies", "four beds or a usable bow with twelve arrows");
       }
 
@@ -322,7 +322,7 @@ public final class AiRunResources {
 
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
-            if (AiTidy.init_Z(stack)) {
+            if (AiTidy.isFillerBlock(stack)) {
                building.merge(itemIdOf(stack), stack.getCount(), Integer::sum);
             }
          }

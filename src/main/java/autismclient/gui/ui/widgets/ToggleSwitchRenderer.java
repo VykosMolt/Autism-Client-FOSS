@@ -40,7 +40,7 @@ public final class ToggleSwitchRenderer {
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(graphics, cx, bounds.write() + bounds.sync() / 2.0F, r, -1447444);
    }
 
-   public static void init(
+   public static void drawToggle(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();

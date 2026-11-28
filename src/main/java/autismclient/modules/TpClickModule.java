@@ -42,7 +42,7 @@ public final class TpClickModule extends Module {
       this.wasDown = false;
    }
 
-   public static boolean init_Z_30() {
+   public static boolean blocksMovement() {
       return al.init_Module_Str("tp-click") instanceof TpClickModule tpClick && tpClick.isEnabled() && tpClick.bool("block-movement");
    }
 

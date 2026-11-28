@@ -7,11 +7,11 @@ final class AiPlacementInput {
    private boolean active;
    private final Set<Integer> pressedKeys = new HashSet<>();
 
-   void init_V() {
+   void activate() {
       this.active = true;
    }
 
-   void load_V() {
+   void deactivate() {
       this.active = false;
    }
 
@@ -19,7 +19,7 @@ final class AiPlacementInput {
       return this.active;
    }
 
-   boolean load_Z() {
+   boolean ownsInput() {
       return this.active || !this.pressedKeys.isEmpty();
    }
 
@@ -31,7 +31,7 @@ final class AiPlacementInput {
       return Set.copyOf(this.pressedKeys);
    }
 
-   boolean init(int key, boolean down) {
+   boolean trackKey(int key, boolean down) {
       boolean owned = this.active || this.pressedKeys.contains(key);
       if (down && this.active) {
          this.pressedKeys.add(key);

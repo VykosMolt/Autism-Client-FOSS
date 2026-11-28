@@ -41,13 +41,13 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "jumpFromGround", at = @At("HEAD"))
    private void autism$airJumpConsume(CallbackInfo ci) {
-      AirJumpModule.init((LivingEntity)(Object)this);
+      AirJumpModule.onJump((LivingEntity)(Object)this);
    }
 
    @Inject(method = "jumpFromGround", at = @At("RETURN"))
    private void autism$clutchOwnJump(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ClutchModule.init_V_LivingEntity_5((LivingEntity)(Object)this);
+         ClutchModule.onOwnJump((LivingEntity)(Object)this);
       }
    }
 

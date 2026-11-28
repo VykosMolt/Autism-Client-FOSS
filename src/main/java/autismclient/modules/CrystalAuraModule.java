@@ -440,7 +440,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private void resetState() {
       this.aimSpeed.reset();
-      autismclient.util.QueuedCombatAction.init("crystal-aura");
+      autismclient.util.QueuedCombatAction.clearIfOwnedBy("crystal-aura");
       this.sessionWatcher.clear();
       this.switchDeadline = 0L;
       this.auditHasUpdateDeadline = false;
@@ -604,7 +604,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return isRecentlyActive() && "crystal-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
-   public static boolean init_Z_BlockPos_6(BlockPos cell) {
+   public static boolean isReservedCrystalCell(BlockPos cell) {
       if (cell == null) {
          return false;
       } else if (!(al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled())) {
@@ -632,16 +632,16 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.plannedObsidianPos != null || aura.plannedSupportPos != null : false;
    }
 
-   public static boolean flush() {
+   public static boolean activeHasPriority() {
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.hasEngagementPriority() : false;
    }
 
-   public static boolean close() {
+   public static boolean defendedRecently() {
       int age = AutismSessionState.getInstance().getClientTick() - lastDefenseTick;
       return age >= 0 && age <= 1;
    }
 
-   public static boolean load_Z_BlockPos_3(BlockPos cell) {
+   public static boolean isPlannedPlacementCell(BlockPos cell) {
       if (cell == null) {
          return false;
       }
@@ -756,7 +756,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20();
+         && !AutoArmorModule.isClickPending();
    }
 
    @Override
@@ -965,7 +965,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             boolean fire = ready
                && (destroy != null ? destroyHit != null : (place != null ? placeHit != null : (obsidian != null ? obsidianHit != null : defendHit != null)));
             fire = fire && !BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27();
-            this.aimSpeed.init("crystal-aura", 18, MC.player, enemy, this.decimal("rotation-speed-multiplier"), fire ? wire : goal, fire);
+            this.aimSpeed.steer("crystal-aura", 18, MC.player, enemy, this.decimal("rotation-speed-multiplier"), fire ? wire : goal, fire);
             if (!fire) {
                return;
             }
@@ -1017,7 +1017,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return !SurroundModule.init_Z_27()
          && !BedDefenderModule.init_Z_10()
          && (this.hasEngagementPriority() || !AnchorAuraModule.isRecentlyActive())
-         && this.aimSpeed.init("crystal-aura", 18, MC.player, enemy, this.serverRotation());
+         && this.aimSpeed.holdWireRotation("crystal-aura", 18, MC.player, enemy, this.serverRotation());
    }
 
    private void releaseClaims() {
@@ -1669,7 +1669,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return false;
       }
 
-      if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(box)) {
+      if (!AutismLiteVariant.enabled() && BacktrackModule.intersectsHeldTarget(box)) {
          return false;
       }
 
@@ -1704,7 +1704,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private void recordPlacement(BlockPos cell) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      this.pendingAttacks.init(cell, tick);
+      this.pendingAttacks.markHit(cell, tick);
       this.recentPlacements.mark(cell, tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
    }
 
@@ -1877,10 +1877,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                   }
                }
             } else if (MC.level.getBlockState(cursor).canBeReplaced()
-               && !AnchorAuraModule.init_Z_BlockPos(cursor)
+               && !AnchorAuraModule.isPlannedCell(cursor)
                && MC.level.isUnobstructed(obsidianState, cursor, CollisionContext.empty())
                && !solidNextBox.intersects(new AABB(cursor))
-               && (AutismLiteVariant.enabled() || !BacktrackModule.init_Z_AABB_2(new AABB(cursor)))) {
+               && (AutismLiteVariant.enabled() || !BacktrackModule.intersectsHeldTarget(new AABB(cursor)))) {
                double distanceSq = eye.distanceToSqr(source);
                if (!(distanceSq > rangeSq)) {
                   double bound = autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, source, 6.0F, targetOptions);
@@ -1975,7 +1975,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private BlockHitResult builderHit(CrystalAuraModule.BlockPlaceAction plan, RotationMath.Rotation wire) {
-      if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(new AABB(plan.cell()))) {
+      if (!AutismLiteVariant.enabled() && BacktrackModule.intersectsHeldTarget(new AABB(plan.cell()))) {
          return null;
       }
 
@@ -2272,7 +2272,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                   autismclient.util.ExplosionDamageCalculator.SimOptions covered = this.simOptions.withPlacedObsidian(cell);
                   autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, covered, targetBox);
                   if (this.meetsDamageThresholds(enemy, rank)
-                     && autismclient.util.BlastShieldPosFinder.init(
+                     && autismclient.util.BlastShieldPosFinder.isShieldWorthIt(
                         support.rank().load(),
                         support.rank().selfDamage(),
                         rank.load(),
@@ -2297,10 +2297,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private boolean canPlaceObsidian(BlockPos cell, Vec3 eye, double rangeSq) {
       if (MC.level.getBlockState(cell).canBeReplaced()
-         && !AnchorAuraModule.init_Z_BlockPos(cell)
+         && !AnchorAuraModule.isPlannedCell(cell)
          && MC.level.isUnobstructed(Blocks.OBSIDIAN.defaultBlockState(), cell, CollisionContext.empty())
          && !(eye.distanceToSqr(Vec3.atCenterOf(cell)) > rangeSq)) {
-         if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(new AABB(cell))) {
+         if (!AutismLiteVariant.enabled() && BacktrackModule.intersectsHeldTarget(new AABB(cell))) {
             return false;
          }
 
@@ -2391,7 +2391,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
          BlockState state = MC.level.getBlockState(cursor);
-         if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0 && !AnchorAuraModule.init_Z_BlockPos(cursor)) {
+         if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0 && !AnchorAuraModule.isPlannedCell(cursor)) {
             Boolean works = MC.level.environmentAttributes().getValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, cursor);
             if (!Boolean.TRUE.equals(works)) {
                BlockPos cell = cursor.immutable();
@@ -2798,7 +2798,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       if (this.stop >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
          if (this.borrowedSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.borrowedSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+            if (!AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.hasBorrowedSlot(selected)) {
                this.stop = -1;
                this.borrowedSlot = -1;
                this.switchBackDelay = 0;

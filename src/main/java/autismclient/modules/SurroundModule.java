@@ -212,7 +212,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          && !SilentMovementCoordinator.isSafeWalkActive()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
-         && !AutoArmorModule.init_Z_20();
+         && !AutoArmorModule.isClickPending();
    }
 
    private boolean sync_Z_7() {
@@ -222,7 +222,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private boolean flush_Z_6() {
       if (MC != null && MC.player != null) {
          ItemStack mainHand = MC.player.getMainHandItem();
-         return KillAuraModule.init_Z_ItemStack_6(mainHand) ? true : mainHand.isEmpty() && KillAuraModule.init_Z_ItemStack_6(MC.player.getOffhandItem());
+         return KillAuraModule.isThrowable(mainHand) ? true : mainHand.isEmpty() && KillAuraModule.isThrowable(MC.player.getOffhandItem());
       } else {
          return false;
       }

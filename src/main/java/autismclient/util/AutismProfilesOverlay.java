@@ -153,7 +153,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       this.windowX = (sw - this.windowWidth) / 2;
       this.windowY = (availableHeight - this.windowHeight) / 2;
       autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(ctx, this.font, mx, my).init_SyncManager();
-      autismclient.gui.ui.widgets.WindowFrameRenderer.init(
+      autismclient.gui.ui.widgets.WindowFrameRenderer.drawFrame(
          context,
          autismclient.gui.f.NetHelper.init(this.windowX, this.windowY, this.windowWidth, this.windowHeight),
          "Profiles Library",

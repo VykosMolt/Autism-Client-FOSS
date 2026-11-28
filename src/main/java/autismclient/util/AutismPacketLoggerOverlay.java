@@ -1137,7 +1137,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       for (AutismPacketLoggerOverlay.LogCategory cat : AutismPacketLoggerOverlay.LogCategory.values()) {
          int w = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, this.tabRowHeight(), cat.init_Str, this.category == cat, mx, my);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(ctx, this.font, x, y, w, this.tabRowHeight(), cat.init_Str, this.category == cat, mx, my);
          x += w + 2;
       }
 
@@ -1260,14 +1260,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       for (int d = 0; d < 3; d++) {
          int bw = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, row2Y, bw, this.toolbarButtonHeight(), dirLabels[d], this.directionFilter == d, mx, my);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(ctx, this.font, x, row2Y, bw, this.toolbarButtonHeight(), dirLabels[d], this.directionFilter == d, mx, my);
          x += bw + gap;
       }
 
       if (this.category == AutismPacketLoggerOverlay.LogCategory.PAYLOAD) {
          String listenLabel = this.payloadFilteredOnly ? "Filtered" : "All";
          int listenW = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.styleTheme, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, row2Y, listenW, this.toolbarButtonHeight(), listenLabel, this.payloadFilteredOnly, mx, my);
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(ctx, this.font, x, row2Y, listenW, this.toolbarButtonHeight(), listenLabel, this.payloadFilteredOnly, mx, my);
       }
    }
 
@@ -1283,13 +1283,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int mx,
       int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, h, label, variant, active, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(ctx, this.font, x, y, w, h, label, variant, active, mx, my);
    }
 
    private void renderToggleButton(
       GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled, String animationKey, int mx, int my
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.font, x, y, w, h, label, enabled, animationKey, mx, my);
+      autismclient.gui.ui.widgets.ButtonDrawHelper.drawToggle(ctx, this.font, x, y, w, h, label, enabled, animationKey, mx, my);
    }
 
    private void renderGroupRow(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.DisplayRow row, int y, int mx, int my) {
@@ -1454,7 +1454,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      if (this.contextMenu.init(mouseX, mouseY, button, (entry, action, index) -> this.onContextAction(action, entry))) {
+      if (this.contextMenu.handleClick(mouseX, mouseY, button, (entry, action, index) -> this.onContextAction(action, entry))) {
          return true;
       }
 
@@ -2212,11 +2212,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.searchField.render(ctx, mx, my, delta);
                   y = this.toggleRowY();
                   int bx = x;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(
                      ctx, AutismPacketLoggerOverlay.this.font, bx, y, this.blockedButtonWidth(), rowH, "Blocked", this.blockedOnly, mx, my
                   );
                   int clearX = bx + this.blockedButtonWidth() + 2;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      clearX,
@@ -2230,7 +2230,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   int resetX = clearX + this.clearButtonWidth() + 2;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      resetX,
@@ -2986,7 +2986,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.patternField.render(ctx, mx, my, delta);
                   int addW = this.addButtonWidth();
                   int addX = x + customW + 2;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      addX,
@@ -3001,7 +3001,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   );
                   if (this.isEditing()) {
                      int cancelX = addX + addW + 2;
-                     autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                     autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                         ctx,
                         AutismPacketLoggerOverlay.this.font,
                         cancelX,
@@ -3019,7 +3019,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   y = this.toolbarRowY();
                   AutismPacketLoggerOverlay.PacketColumnLayout controls = this.toolbarLayout();
                   int cx = x;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3035,7 +3035,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[0] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3049,7 +3049,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[1] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3063,7 +3063,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[2] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3077,7 +3077,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[3] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3091,7 +3091,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[4] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3105,7 +3105,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      my
                   );
                   cx += controls.widths[5] + controls.gap;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      cx,
@@ -3127,7 +3127,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   boolean registrationUnlocked = PayloadSubscriptionManager.isRegistrationUnlocked();
                   int lockW = this.registrationButtonWidth();
                   int lockX = this.windowX + this.windowWidth - 8 - lockW;
-                  autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                  autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                      ctx,
                      AutismPacketLoggerOverlay.this.font,
                      lockX,
@@ -3226,7 +3226,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int buttonsW = cancelW + 6 + acceptW;
          int cancelX = x + (w - buttonsW) / 2;
          int acceptX = cancelX + cancelW + 6;
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
             ctx,
             AutismPacketLoggerOverlay.this.font,
             cancelX,
@@ -3240,7 +3240,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             my
          );
          boolean ready = this.lockNoticeRemainingMs() <= 0;
-         autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+         autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
             ctx,
             AutismPacketLoggerOverlay.this.font,
             acceptX,
@@ -3287,7 +3287,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          }
 
          this.lockNoticeVisible = false;
-         PayloadSubscriptionManager.read();
+         PayloadSubscriptionManager.unlockRegistration();
          this.rebuildRows();
          bi.init("Payload registration unlocked. Press Apply.");
          return true;
@@ -5027,7 +5027,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             PayloadSubscriptionManager.requestSync();
             PayloadSubscriptionManager.tick(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.status();
-            if (skipped > 0 || status != null && status.read() > 0) {
+            if (skipped > 0 || status != null && status.skipped() > 0) {
                int count = status == null ? 0 : status.registered();
                int limit = status == null ? 96 : status.limit();
                bi.write("Payload channel cap: registered " + count + "/" + limit + ".");
@@ -5336,7 +5336,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             PayloadSubscriptionManager.requestSync();
             PayloadSubscriptionManager.tick(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.status();
-            if (status != null && status.read() > 0) {
+            if (status != null && status.skipped() > 0) {
                bi.write("Payload channel cap reached: " + status.registered() + "/" + status.limit());
             } else {
                bi.init("Payload channels applied.");

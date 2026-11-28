@@ -167,7 +167,7 @@ public final class FrameEspCatalog {
       }
    }
 
-   public static boolean init_Z() {
+   public static boolean usesShader() {
       FrameEspCatalog.CatalogSnapshot current = snapshot();
       return current.load_Z() && current.shader();
    }

@@ -42,13 +42,13 @@ public class DropCommand extends Command {
                .executes(ctx -> dropHeld(IntegerArgumentType.getInteger(ctx, "amount"))))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
-                  .suggests(autismclient.commands.RegistrySuggestions::init)
+                  .suggests(autismclient.commands.RegistrySuggestions::suggestInventoryItems)
                   .executes(ctx -> dropItemId(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [amount]", StringArgumentType.greedyString())
-            .suggests(autismclient.commands.RegistrySuggestions::init)
+            .suggests(autismclient.commands.RegistrySuggestions::suggestInventoryItems)
             .executes(ctx -> runLine(StringArgumentType.getString(ctx, "item [amount]")))
       );
    }

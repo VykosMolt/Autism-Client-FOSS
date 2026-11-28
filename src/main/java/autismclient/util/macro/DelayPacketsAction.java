@@ -53,7 +53,7 @@ public class DelayPacketsAction implements MacroAction {
       }
    }
 
-   public void write() {
+   public void syncPacketNames() {
       this.c2sPacketNames.clear();
       this.s2cPacketNames.clear();
       AutismSessionState shared = AutismSessionState.getInstance();

@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.phys.Vec3;
 
 final class AiTelly {
-   static int init_I_I_List(int held, List<AiTelly.HotbarEntry> hotbar) {
+   static int constructionSlot(int held, List<AiTelly.HotbarEntry> hotbar) {
       if (held >= 0 && held < hotbar.size()) {
          AiTelly.HotbarEntry entry = hotbar.get(held);
          if (entry.construction() && entry.count() > 0) {
@@ -192,7 +192,7 @@ final class AiTelly {
                         return this.finish(AiOperation.Status.FAILED, "Refusing to bridge over lava at " + support.toShortString());
                      }
 
-                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), AiTelly.hotbarBlocks(mc));
+                     int slot = AiTelly.constructionSlot(mc.player.getInventory().getSelectedSlot(), AiTelly.hotbarBlocks(mc));
                      if (slot < 0 && support != null) {
                         autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);

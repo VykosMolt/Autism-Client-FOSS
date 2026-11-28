@@ -33,12 +33,12 @@ public final class MacroToolBridge {
    }
 
    public static MacroToolBridge.ToolInfo findTool(String id) {
-      return listTools().stream().filter(t -> t.init().equals(id)).findFirst().orElse(null);
+      return listTools().stream().filter(t -> t.id().equals(id)).findFirst().orElse(null);
    }
 
    public static String toolLabel(String id) {
       MacroToolBridge.ToolInfo t = findTool(id);
-      return t == null ? id : t.load();
+      return t == null ? id : t.name();
    }
 
    public static MacroToolBridge.ToolJob startTool(long owner, String tool, String argumentsJson) {
@@ -81,7 +81,7 @@ public final class MacroToolBridge {
       }
    }
 
-   public static boolean init(long owner, String scope, String filter, String state) {
+   public static boolean matchesJobState(long owner, String scope, String filter, String state) {
       if (!isAvailable()) {
          return false;
       }
@@ -244,6 +244,6 @@ public final class MacroToolBridge {
       }
    }
 
-   public record ToolInfo(String init, String load, String inputSchema) {
+   public record ToolInfo(String id, String name, String inputSchema) {
    }
 }

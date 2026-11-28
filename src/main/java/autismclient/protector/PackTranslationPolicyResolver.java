@@ -111,7 +111,7 @@ public final class PackTranslationPolicyResolver {
       }
    }
 
-   public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId) {
+   public static boolean policyAllows(ResourceManager resourceManager, PackResources pack, String sourcePackId) {
       if (resourceManager != null && pack != null && sourcePackId != null) {
          PackTranslationPolicyResolver.TranslationPolicy current = POLICY.get();
          if (current == null) {
@@ -132,10 +132,10 @@ public final class PackTranslationPolicyResolver {
       }
    }
 
-   public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.ConnectionSession origin) {
+   public static boolean policyAllows(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.ConnectionSession origin) {
       PackTranslationPolicyResolver.TranslationPolicy current = POLICY.get();
       return origin != null && current instanceof PackTranslationPolicyResolver.PolicyScope scope && scope.capturedContext == origin
-         ? init(resourceManager, pack, sourcePackId) && POLICY.get() == current
+         ? policyAllows(resourceManager, pack, sourcePackId) && POLICY.get() == current
          : false;
    }
 

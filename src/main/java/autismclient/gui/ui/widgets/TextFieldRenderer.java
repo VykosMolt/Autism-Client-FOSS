@@ -52,7 +52,7 @@ public final class TextFieldRenderer {
       try {
          if (focused && selectionStart >= 0 && selectionEnd > selectionStart) {
             int start = Utf16TextCursor.clampIndex(value, selectionStart);
-            int end = Utf16TextCursor.load(value, selectionEnd);
+            int end = Utf16TextCursor.nextBoundary(value, selectionEnd);
             int selectX = textX + widths.applyAsInt(value.substring(0, start));
             int selectW = Math.max(1, widths.applyAsInt(value.substring(0, end)) - widths.applyAsInt(value.substring(0, start)));
             autismclient.gui.f.PacketUtil.init(

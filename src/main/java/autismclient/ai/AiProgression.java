@@ -210,7 +210,7 @@ final class AiProgression {
       return Math.max(1, (drops + ore.yieldPerOre() - 1) / ore.yieldPerOre());
    }
 
-   static boolean init_Z(String itemId, int goal) {
+   static boolean needsToolTier(String itemId, int goal) {
       if (PICKAXES.contains(itemId) && pickaxeTier(itemId).ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
          return true;
       }
@@ -249,8 +249,8 @@ final class AiProgression {
          }
 
          @Override
-         public int load_I(String id) {
-            return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.load_I(id);
+         public int acquisitionRank(String id) {
+            return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.acquisitionRank(id);
          }
 
          @Override
@@ -306,8 +306,8 @@ final class AiProgression {
          }
 
          @Override
-         public int load_I(String id) {
-            return this.treatAsLeaf(id) ? 0 : live.load_I(id);
+         public int acquisitionRank(String id) {
+            return this.treatAsLeaf(id) ? 0 : live.acquisitionRank(id);
          }
 
          @Override
@@ -365,8 +365,8 @@ final class AiProgression {
             }
 
             @Override
-            public int load_I(String id) {
-               return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.load_I(id);
+            public int acquisitionRank(String id) {
+               return AiProgression.KEEP_ITEMS.contains(id) ? 0 : live.acquisitionRank(id);
             }
 
             @Override
@@ -1455,7 +1455,7 @@ final class AiProgression {
                }
 
                boolean table = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0;
-               AiCraftPlanner.CraftPlan plan = AiMiningPreparation.init(AiCraft.buildRecipeGraph(), itemId, table, "", 0);
+               AiCraftPlanner.CraftPlan plan = AiMiningPreparation.toolAndTablePlan(AiCraft.buildRecipeGraph(), itemId, table, "", 0);
                int firstPick = Math.max(0, 3 - AiCraft.countItem("minecraft:diamond"));
                boolean affordable = plan.complete()
                   || plan.missing().size() == 1
@@ -2437,7 +2437,7 @@ final class AiProgression {
          }
 
          if (observed != null && dropCost <= 3.5) {
-            return AiGameplay.write(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(90, seconds)));
+            return AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(90, seconds)));
          } else {
             BlockPos feet = mc.player.blockPosition();
             List<BlockPos> tables = AiWorldScan.findBlocks(s -> s.is(Blocks.CRAFTING_TABLE), 4, 4, 32)
@@ -2450,7 +2450,7 @@ final class AiProgression {
                || best != null && !(dropCost < 3.0 + travelSeconds(best.getX() - feet.getX(), best.getY() - feet.getY(), best.getZ() - feet.getZ()))) {
                return best == null ? null : reclaimStation(best, "minecraft:crafting_table", Math.min(90, seconds));
             } else {
-               return AiGameplay.write(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(90, seconds)));
+               return AiGameplay.pickupItems(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(90, seconds)));
             }
          }
       } else {
@@ -2564,7 +2564,7 @@ final class AiProgression {
                   }
 
                   int remaining = (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
-                  this.pickupOp = AiGameplay.write(AiJson.objectOf("item", item, "count", this.heldAtStart + 1, "timeoutSeconds", Math.min(15, remaining)));
+                  this.pickupOp = AiGameplay.pickupItems(AiJson.objectOf("item", item, "count", this.heldAtStart + 1, "timeoutSeconds", Math.min(15, remaining)));
                }
 
                AiOperation.Result result = this.receipt.tickChild(this.pickupOp);

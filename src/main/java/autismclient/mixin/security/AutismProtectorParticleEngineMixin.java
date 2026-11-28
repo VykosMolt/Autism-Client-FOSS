@@ -37,6 +37,6 @@ public class AutismProtectorParticleEngineMixin {
       Operation<Particle> original
    ) {
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(Minecraft.getInstance().getConnection());
-      return ModdedParticleGuard.init(provider, context, () -> original.call(provider, options, level, x, y, z, xSpeed, ySpeed, zSpeed, random));
+      return ModdedParticleGuard.guardCreate(provider, context, () -> original.call(provider, options, level, x, y, z, xSpeed, ySpeed, zSpeed, random));
    }
 }

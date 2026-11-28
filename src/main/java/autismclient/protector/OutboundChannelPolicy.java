@@ -106,7 +106,7 @@ public final class OutboundChannelPolicy {
             OutboundPacketFilterHandler.forget(context.connection());
          }
 
-         ResourcePackSessionTracker.init_V(context);
+         ResourcePackSessionTracker.closeSessionFor(context);
          if (current) {
             LateRegisterSynthesizer.forget(context.connection());
          }

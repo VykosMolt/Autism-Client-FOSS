@@ -18,6 +18,6 @@ abstract class AuditKeyboardReleaseMixin {
       require = 1
    )
    private boolean audit$containerKeyReleased(Screen var1, KeyEvent var2) {
-      return var1 instanceof AbstractContainerScreen && AuditClientFixes.isAutismActive() && GuiMovementPassThrough.init(var2, false) ? true : var1.keyReleased(var2);
+      return var1 instanceof AbstractContainerScreen && AuditClientFixes.isAutismActive() && GuiMovementPassThrough.handleKey(var2, false) ? true : var1.keyReleased(var2);
    }
 }

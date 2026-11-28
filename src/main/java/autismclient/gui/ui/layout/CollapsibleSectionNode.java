@@ -130,7 +130,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
          float shown = this.expandAnimator.animateTo(this.expandedState ? 1.0F : 0.0F);
          int drawH = drawHeaderH + Math.round(this.contentHeight * shown);
          this.content.setVisible(this.expandedState || shown > 0.0F);
-         WindowFrameRenderer.init(
+         WindowFrameRenderer.drawFrame(
             autismclient.gui.f.UiHelper.init(context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())),
             autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH),
             this.title,

@@ -34,7 +34,7 @@ public final class ViaFabricPlusBridge {
    public static void init_V(Connection connection) {
    }
 
-   public static boolean init_Z(Connection connection) {
+   public static boolean isOlderProtocol(Connection connection) {
       if (connection != null && !connection.isMemoryConnection()) {
          try {
             Object target = connection.getClass().getMethod("viaFabricPlus$getTargetVersion").invoke(connection);
@@ -253,7 +253,7 @@ public final class ViaFabricPlusBridge {
       }
    }
 
-   public static boolean init(Object userConnection, String channel, byte[] data) {
+   public static boolean allowsViaPayload(Object userConnection, String channel, byte[] data) {
       Connection owner = connectionOf(userConnection);
       autismclient.protector.ConnectionPrivacyRegistry.ConnectionSession context = autismclient.protector.ConnectionPrivacyRegistry.getActive(owner);
       return context != null && context.privacyMode() != autismclient.protector.ConnectionPrivacyRegistry.PrivacyMode.VANILLA

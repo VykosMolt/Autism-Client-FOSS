@@ -191,7 +191,7 @@ final class AiUiKit {
    }
 
    void drawToggleSwitch(autismclient.gui.f.NetHelper bounds, String label, boolean value, String key, Runnable action) {
-      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.renderContext, bounds, label, value, this.isHovered(bounds), "ai:" + key);
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.drawToggle(this.renderContext, bounds, label, value, this.isHovered(bounds), "ai:" + key);
       this.addClickRegion(bounds, action);
    }
 

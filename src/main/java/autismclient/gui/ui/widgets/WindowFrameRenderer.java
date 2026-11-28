@@ -53,10 +53,10 @@ public final class WindowFrameRenderer {
       int titleLeftInset,
       int titleRightInset
    ) {
-      init(context, bounds, title, collapsed, collapse, close, headerHovered, active, titleLeftInset, titleRightInset, 14);
+      drawFrame(context, bounds, title, collapsed, collapse, close, headerHovered, active, titleLeftInset, titleRightInset, 14);
    }
 
-   public static void init(
+   public static void drawFrame(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String title,

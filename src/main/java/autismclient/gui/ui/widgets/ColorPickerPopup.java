@@ -85,7 +85,7 @@ public final class ColorPickerPopup {
          autismclient.gui.f.PacketUtil.init(
             context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(0, 0, context.init_I(), context.load_I()), -1728053248
          );
-         WindowFrameRenderer.init(
+         WindowFrameRenderer.drawFrame(
             context, this.bounds, "Color", false, false, true, this.headerBounds().init_Z(context.read(), context.write()), true, 5, 5, 14
          );
          autismclient.gui.f.NetHelper close = TitleBarRenderer.closeButton(this.headerBounds());

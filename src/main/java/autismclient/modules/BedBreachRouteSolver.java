@@ -25,13 +25,13 @@ final class BedBreachRouteSolver {
       ArrayList<AABB> hard = new ArrayList<>();
 
       for (BedBreachRouteSolver.BreachCell cell : cells) {
-         if (!cell.init_Z && !Double.isFinite(cell.ticks)) {
+         if (!cell.bed && !Double.isFinite(cell.ticks)) {
             hard.addAll(cell.boxes);
          }
       }
 
       for (BedBreachRouteSolver.BreachCell bed : cells) {
-         if (bed.init_Z) {
+         if (bed.bed) {
             for (AABB box : bed.boxes) {
                ArrayList<AABB> blockers = new ArrayList<>();
 
@@ -49,7 +49,7 @@ final class BedBreachRouteSolver {
                   points.addAll(face.visiblePoints(List.of(), preferred));
 
                   for (BedBreachRouteSolver.BreachCell cover : cells) {
-                     if (!cover.init_Z && Double.isFinite(cover.ticks)) {
+                     if (!cover.bed && Double.isFinite(cover.ticks)) {
                         points.addAll(face.visiblePoints(cover.boxes, preferred));
                      }
                   }
@@ -61,8 +61,8 @@ final class BedBreachRouteSolver {
                   if (route != null) {
                      BedBreachRouteSolver.BreachRoute previous = routes.get(route.cells);
                      if (previous == null
-                        || route.init_Z && !previous.init_Z
-                        || route.init_Z == previous.init_Z && point.distanceToSqr(preferred) < previous.eye.distanceToSqr(preferred)) {
+                        || route.inReach && !previous.inReach
+                        || route.inReach == previous.inReach && point.distanceToSqr(preferred) < previous.eye.distanceToSqr(preferred)) {
                         routes.put(route.cells, route);
                      }
                   }
@@ -111,7 +111,7 @@ final class BedBreachRouteSolver {
 
          blocks.add(hit.init_DataPipe_DataUtil);
          ticks += hit.init_DataPipe_DataUtil.ticks;
-         if (hit.init_DataPipe_DataUtil.init_Z) {
+         if (hit.init_DataPipe_DataUtil.bed) {
             return new BedBreachRouteSolver.BreachRoute(List.copyOf(blocks), end, ticks, hit.closest <= reach * reach);
          }
       }
@@ -123,7 +123,7 @@ final class BedBreachRouteSolver {
       return !criticalHealth && Double.isFinite(remainingTicks) && remainingTicks <= Math.min(6.0, combatBudget);
    }
 
-   record BreachRoute(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double ticks, boolean init_Z) {
+   record BreachRoute(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double ticks, boolean inReach) {
       BreachRoute(List<BedBreachRouteSolver.BreachCell> blocks, Vec3 aim, double ticks) {
          this(blocks, aim, ticks, true);
       }
@@ -147,7 +147,7 @@ final class BedBreachRouteSolver {
                      double remaining = Math.max(1.0, Math.ceil(cell.ticks * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
                      ticks += remaining - cell.ticks;
                      ArrayList<BedBreachRouteSolver.BreachCell> changed = new ArrayList<>(blocks);
-                     changed.set(i, new BedBreachRouteSolver.BreachCell(cell.pos, cell.boxes, remaining, cell.slot, cell.init_Z));
+                     changed.set(i, new BedBreachRouteSolver.BreachCell(cell.pos, cell.boxes, remaining, cell.slot, cell.bed));
                      blocks = List.copyOf(changed);
                      break;
                   }
@@ -156,10 +156,10 @@ final class BedBreachRouteSolver {
 
             BedBreachRouteSolver.BreachRoute route = blocks == original.cells
                ? original
-               : new BedBreachRouteSolver.BreachRoute(blocks, original.eye, ticks, original.init_Z);
+               : new BedBreachRouteSolver.BreachRoute(blocks, original.eye, ticks, original.inReach);
             if (best == null
-               || route.init_Z && !best.init_Z
-               || route.init_Z == best.init_Z
+               || route.inReach && !best.inReach
+               || route.inReach == best.inReach
                   && (
                      ticks < best.ticks - 1.0E-7
                         || Math.abs(ticks - best.ticks) < 1.0E-7 && route.eye.distanceToSqr(preferred) < best.eye.distanceToSqr(preferred)
@@ -172,7 +172,7 @@ final class BedBreachRouteSolver {
       }
    }
 
-   record BreachCell(BlockPos pos, List<AABB> boxes, double ticks, int slot, boolean init_Z) {
+   record BreachCell(BlockPos pos, List<AABB> boxes, double ticks, int slot, boolean bed) {
       BreachCell {
          pos = pos.immutable();
          boxes = List.copyOf(boxes);

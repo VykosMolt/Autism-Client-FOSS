@@ -53,7 +53,7 @@ final class AiDimension {
    private static final int sync = 48;
    static final int[] FRAME_DY_ORDER = new int[]{1, 0, 2, -1};
    static volatile BlockPos frameOrigin;
-   static volatile BlockPos load_BlockPos;
+   static volatile BlockPos lastPortalSite;
    static volatile Direction frameAxis;
    static volatile String frameWorldKey = "";
    static volatile String frameDimension = "";
@@ -75,7 +75,7 @@ final class AiDimension {
       if (!frameWorldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || !frameDimension.equals(currentDimension()) || frameConnection != mc.getConnection()) {
          frameOrigin = null;
          frameAxis = null;
-         load_BlockPos = null;
+         lastPortalSite = null;
          REJECTED_FRAME_SITES.clear();
       }
    }
@@ -894,7 +894,7 @@ final class AiDimension {
                         this.building = false;
                         this.portalLit = true;
                         this.portalPos = this.site;
-                        AiDimension.load_BlockPos = this.site.immutable();
+                        AiDimension.lastPortalSite = this.site.immutable();
                         return this.running("Portal lit");
                      }
                   }
@@ -1894,7 +1894,7 @@ final class AiDimension {
          JsonObject data = AiRunResources.parseEvidenceJson(boundary.dataJson());
          this.addChildEvidence(data);
          AiOperation.Result actual = this.actual != null ? this.actual : this.unresolvedResult;
-         AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
+         AiOperation.Result result = AiNetherRun.phaseResult(
             boundary.status(), boundary.message(), data, this.unresolved || interactionPending, actual
          );
          return new AiOperation.Result(

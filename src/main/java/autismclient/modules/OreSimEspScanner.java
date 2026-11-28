@@ -109,11 +109,11 @@ public final class OreSimEspScanner {
       return xray != null && xray.isEnabled() && isOreSimMode(xray) && !isEspStyle(xray);
    }
 
-   static boolean update(Module xray) {
+   static boolean isXrayStyle(Module xray) {
       return xray != null && xray.isEnabled() && !isEspStyle(xray);
    }
 
-   static float init_F(Module xray) {
+   static float xrayOpacity(Module xray) {
       return 0.3F;
    }
 
@@ -235,7 +235,7 @@ public final class OreSimEspScanner {
       return selection(xray).blocks().size();
    }
 
-   public static int read_I(Module xray) {
+   public static int familyMask(Module xray) {
       return selectionMask(xray);
    }
 
@@ -256,7 +256,7 @@ public final class OreSimEspScanner {
             nextRescanAt = now + 400000000L;
             autismclient.util.oresim.OreSimEngine.reset();
          } else if (parsedSeed != null && mask != 0 && now >= nextRescanAt) {
-            autismclient.util.oresim.OreSimEngine.init(level, player.blockPosition(), parsedSeed, radius(xray), mask);
+            autismclient.util.oresim.OreSimEngine.requestScan(level, player.blockPosition(), parsedSeed, radius(xray), mask);
             if (++predictionScanCounter >= 4) {
                predictionScanCounter = 0;
                checkNearbyPredictions(xray, level, player);
@@ -269,7 +269,7 @@ public final class OreSimEspScanner {
       }
    }
 
-   public static void init_V() {
+   public static void resetIfPaused() {
       if (autismclient.util.oresim.OreSimEngine.pausedLongerThan(PAUSE_RESET_NANOS)) {
          seedParsed = false;
          lastSeed = null;

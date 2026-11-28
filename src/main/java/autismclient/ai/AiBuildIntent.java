@@ -210,7 +210,7 @@ final class AiBuildIntent {
 
          if (AiBuilder.fluidOfCell(cell) != null && !AiBuilder.isFlowingFluidCell(cell)) {
             try {
-               return AiSchematicActions.init(target, world, wanted) == null;
+               return AiSchematicActions.spillReason(target, world, wanted) == null;
             } catch (RuntimeException unknown) {
                return false;
             }

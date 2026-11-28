@@ -5281,7 +5281,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       String target = channel == null ? "" : channel.trim();
       if (!target.isBlank()) {
          ActionEditorOverlay existing = ActionEditorOverlay.getExisting();
-         if (existing == null || !existing.init_Z_Str(target)) {
+         if (existing == null || !existing.applyPayloadChannel(target)) {
             autismclient.util.macro.PayloadAction action = new autismclient.util.macro.PayloadAction();
             action.channel = target;
             action.payloadDirection = "C2S";

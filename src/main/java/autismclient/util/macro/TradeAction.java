@@ -95,7 +95,7 @@ public final class TradeAction implements ContextMacroAction {
             ctx.setVariable("trade_status", "NO_MENU");
             ctx.runOnClientThread(() -> AutismClientMessaging.sendPrefixed("Trade: no reachable merchant opened"));
          } finally {
-            ctx.runOnClientThread(() -> session.init_V_Minecraft(ctx.mc()));
+            ctx.runOnClientThread(() -> session.abortSession(ctx.mc()));
          }
       } else {
          ctx.setVariable("trade_count", 0);

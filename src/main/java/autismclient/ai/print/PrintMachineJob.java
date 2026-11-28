@@ -29,7 +29,7 @@ public interface PrintMachineJob {
 
    void cancel();
 
-   default boolean c_() {
+   default boolean hasFurtherSteps() {
       return false;
    }
 
@@ -37,7 +37,7 @@ public interface PrintMachineJob {
       return this;
    }
 
-   default boolean sync() {
+   default boolean canFillEarly() {
       return false;
    }
 
@@ -45,7 +45,7 @@ public interface PrintMachineJob {
       return true;
    }
 
-   default boolean b_() {
+   default boolean hasSkippableContents() {
       return false;
    }
 
@@ -92,7 +92,7 @@ public interface PrintMachineJob {
    default void setGuard(Supplier<String> guard) {
    }
 
-   default void init(Map<Item, Integer> removed) {
+   default void acceptRecoveredMaterial(Map<Item, Integer> removed) {
    }
 
    default void setOrder(PrintContainerOrder order) {

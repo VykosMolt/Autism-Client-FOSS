@@ -158,7 +158,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   int tabY = this.tabY();
 
                   for (AutismItemNbtInspectOverlay.TabButton tab : this.tabs(tabY)) {
-                     autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                     autismclient.gui.ui.widgets.ButtonDrawHelper.drawSelectable(
                         context,
                         this.font,
                         tab.init_I(),
@@ -217,7 +217,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   );
 
                   for (AutismItemNbtInspectOverlay.TabButton button : this.footerButtons(footerY)) {
-                     autismclient.gui.ui.widgets.ButtonDrawHelper.init(
+                     autismclient.gui.ui.widgets.ButtonDrawHelper.drawButton(
                         context,
                         this.font,
                         button.init_I(),

@@ -47,7 +47,7 @@ public abstract class AutismGifCapeLayerMixin {
          if (name != null && !name.isEmpty()) {
             String path = GifOverlayState.capePath(name);
             if (path != null) {
-               Identifier texture = GifTextureManager.textureKeepAspect(path, GifOverlayState.init_D(), GifOverlayState.read_Z(), GifOverlayState.read_D());
+               Identifier texture = GifTextureManager.textureKeepAspect(path, GifOverlayState.capeFps(), GifOverlayState.capeKeepAspect(), GifOverlayState.capeQuality());
                if (texture != null) {
                   ci.cancel();
                   if (!state.isInvisible && !this.hasLayer(state.chestEquipment, LayerType.WINGS)) {

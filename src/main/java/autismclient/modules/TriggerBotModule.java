@@ -136,7 +136,7 @@ final class TriggerBotModule extends Module {
             .unit("ms")
             .group("1.8 Combat")
             .description("Delay on a new target")
-            .visibleWhen(() -> this.combatClicker.technique().init_Z())
+            .visibleWhen(() -> this.combatClicker.technique().isHumanized())
             .build()
       );
       this.add(
@@ -379,7 +379,7 @@ final class TriggerBotModule extends Module {
             boolean lastChance = MC.player.getAttackStrengthScale(0.5F) > 0.9F
                && MC.hitResult instanceof EntityHitResult hit
                && hit.getEntity() == target
-               && autismclient.util.AttackReachHelper.init(
+               && autismclient.util.AttackReachHelper.leavesReachNextTick(
                   MC.player.getEyePosition(),
                   target.getBoundingBox(),
                   ShieldHitWindowHelper.sanitizeMotion(MC.player.getDeltaMovement()),

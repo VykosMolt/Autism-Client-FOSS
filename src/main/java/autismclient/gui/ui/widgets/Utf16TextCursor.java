@@ -33,7 +33,7 @@ public final class Utf16TextCursor {
          : clamped;
    }
 
-   public static int load(String text, int index) {
+   public static int nextBoundary(String text, int index) {
       String value = text == null ? "" : text;
       int clamped = Math.max(0, Math.min(index, value.length()));
       return clamped > 0 && clamped < value.length() && Character.isHighSurrogate(value.charAt(clamped - 1)) && Character.isLowSurrogate(value.charAt(clamped))
@@ -49,15 +49,15 @@ public final class Utf16TextCursor {
 
    public static int next(String text, int index) {
       String value = text == null ? "" : text;
-      int boundary = load(value, index);
+      int boundary = nextBoundary(value, index);
       return boundary >= value.length() ? value.length() : value.offsetByCodePoints(boundary, 1);
    }
 
-   static int init(String text, int[] widths, int candidate, int targetWidth) {
+   static int nearestBoundary(String text, int[] widths, int candidate, int targetWidth) {
       String value = text == null ? "" : text;
       int clamped = Math.max(0, Math.min(candidate, value.length()));
       int left = clampIndex(value, clamped);
-      int right = load(value, clamped);
+      int right = nextBoundary(value, clamped);
       if (left == right) {
          return left;
       } else {

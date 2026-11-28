@@ -461,7 +461,7 @@ public final class VillagerTradeSession {
       return -1;
    }
 
-   public void init_V_Minecraft(Minecraft mc) {
+   public void abortSession(Minecraft mc) {
       this.abort();
    }
 

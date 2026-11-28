@@ -79,7 +79,7 @@ final class AiChatMode {
          Collections.reverse(oldestFirst);
 
          for (AiChatLedger.ChatEntry entry : oldestFirst) {
-            AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, this.host.playerName());
+            AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.incomingLine(entry, this.host.playerName());
             if (line != null) {
                this.history.addLast(line);
             }

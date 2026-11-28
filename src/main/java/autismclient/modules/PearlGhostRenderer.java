@@ -63,7 +63,7 @@ public final class PearlGhostRenderer {
             for (IncomingProjectileScanner.ProjectileWarning warning : danger.incoming()) {
                if (!warning.entity().isRemoved()) {
                   int color = danger.warningColor(warning);
-                  List<Vec3> points = warning.init_A_DataUtil().points();
+                  List<Vec3> points = warning.flight().points();
                   if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && points.size() > 1) {
                      Entity source = warning.entity();
                      Vec3 offset = new Vec3(
@@ -87,10 +87,10 @@ public final class PearlGhostRenderer {
                      }
                   }
 
-                  if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && warning.init_A_DataUtil().init_Vec3() != null) {
+                  if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && warning.flight().init_Vec3() != null) {
                      Vec3 at = warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
-                        ? warning.init_A_DataUtil().load()
-                        : warning.init_A_DataUtil().init_Vec3();
+                        ? warning.flight().load()
+                        : warning.flight().init_Vec3();
                      drawCircle(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL ? 0.48 : 0.24, camera, color);
                   }
                }
@@ -105,12 +105,12 @@ public final class PearlGhostRenderer {
             if (danger.isKindEnabled(IncomingProjectileScanner.ProjectileKind.PEARL) && danger.bool("pearl-ghost")) {
                ArrayList<IncomingProjectileScanner.ProjectileWarning> ghosts = new ArrayList<>(danger.write_List());
                ghosts.removeIf(
-                  warningx -> warningx.init_A_DataUtil().load() == null
+                  warningx -> warningx.flight().load() == null
                      || !(warningx.shooter() instanceof AbstractClientPlayer)
                      || !warningx.shooter().isAlive()
                      || warningx.entity().isRemoved()
                );
-               ghosts.sort(Comparator.<IncomingProjectileScanner.ProjectileWarning>comparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(camera)).reversed());
+               ghosts.sort(Comparator.<IncomingProjectileScanner.ProjectileWarning>comparingDouble(warningx -> warningx.flight().load().distanceToSqr(camera)).reversed());
 
                for (IncomingProjectileScanner.ProjectileWarning warning : ghosts) {
                   init_V_Minecraft(mc, pose, buffers, warning, camera, partial, danger.decimal("ghost-opacity"));
@@ -130,7 +130,7 @@ public final class PearlGhostRenderer {
          pose,
          buffers,
          (AbstractClientPlayer)warning.shooter(),
-         warning.init_A_DataUtil().load(),
+         warning.flight().load(),
          camera,
          partial,
          warning.init_I(),
@@ -142,7 +142,7 @@ public final class PearlGhostRenderer {
    static void drawBlastOutlines(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.002).move(camera.scale(-1.0));
-         int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
+         int alpha = (int)Math.round(90.0 + 125.0 * block.risk());
          WorldLineRenderer.box(pose, lines, box, 16729413 | alpha << 24, 1.5F);
       }
    }
@@ -150,7 +150,7 @@ public final class PearlGhostRenderer {
    static void drawBlastFills(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.001).move(camera.scale(-1.0));
-         int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
+         int alpha = (int)Math.round(14.0 + 35.0 * block.risk());
          WorldLineRenderer.box(pose, fill, box, 16729413 | alpha << 24);
       }
    }

@@ -32,7 +32,7 @@ public final class AiEditLedger {
       expectedTeardown.add(cell.asLong());
    }
 
-   public static synchronized void read_V(BlockPos cell) {
+   public static synchronized void capCell(BlockPos cell) {
       cappedCells.add(cell.asLong());
       breakTimes.remove(cell.asLong());
    }
@@ -93,7 +93,7 @@ public final class AiEditLedger {
       return at != null && System.nanoTime() - at < 120000000000L;
    }
 
-   public static synchronized boolean load_Z(BlockPos cell) {
+   public static synchronized boolean isRecentPlacement(BlockPos cell) {
       Long at = placeTimes.get(cell.asLong());
       return at != null && System.nanoTime() - at < 120000000000L && !cappedCells.contains(cell.asLong());
    }

@@ -73,7 +73,7 @@ public final class PacketUtil {
 
    public static void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor graphics, NetHelper bounds, int fill, int border, int accent) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.sdf.SdfShapeRenderer.load(
+         autismclient.gui.sdf.SdfShapeRenderer.drawShadow(
             graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), 5.0F, init(1073741824, (fill >>> 24) / 255.0F)
          );
          read(graphics, bounds, 5, fill, border);
@@ -143,7 +143,7 @@ public final class PacketUtil {
 
    public static void read(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int color) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.sdf.SdfShapeRenderer.read(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
+         autismclient.gui.sdf.SdfShapeRenderer.drawRoundRect(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
       }
    }
 

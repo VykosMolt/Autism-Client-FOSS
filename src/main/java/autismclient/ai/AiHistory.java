@@ -487,7 +487,7 @@ final class AiHistory {
       long[] suffix = new long[history.size() + 1];
 
       for (int i = history.size() - 1; i >= 0; i--) {
-         suffix[i] = suffix[i + 1] + AiContext.init(history.get(i));
+         suffix[i] = suffix[i + 1] + AiContext.measureChars(history.get(i));
       }
 
       int cut = -1;

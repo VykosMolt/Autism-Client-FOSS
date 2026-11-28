@@ -54,7 +54,7 @@ public final class AuditDeathWaypoints {
       return var2 + var10;
    }
 
-   static AutismWaypoints.Waypoint kw_record_AutismWaypoints_Wa(
+   static AutismWaypoints.Waypoint recordDeath(
       Map<String, List<AutismWaypoints.Waypoint>> var0, String var1, int var2, int var3, int var4, int var5, long var6, int var8
    ) {
       synchronized (var0) {

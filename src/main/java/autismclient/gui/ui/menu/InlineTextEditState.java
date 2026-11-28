@@ -171,7 +171,7 @@ final class InlineTextEditState {
 
    private void replaceRange(int start, int end, String insert) {
       start = Utf16TextCursor.clampIndex(this.text, start);
-      end = Utf16TextCursor.load(this.text, end);
+      end = Utf16TextCursor.nextBoundary(this.text, end);
       this.text = this.text.substring(0, start) + insert + this.text.substring(end);
       this.cursor = start + insert.length();
       this.anchor = this.cursor;

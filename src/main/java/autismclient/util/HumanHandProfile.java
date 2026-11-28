@@ -12,20 +12,20 @@ public record HumanHandProfile(
    double fittsSlope,
    double firstPhaseWeight,
    double firstPhaseJitter,
-   double update,
-   double sync,
-   double flush,
-   double close,
+   double lateralJitter,
+   double curvature,
+   double curvatureJitter,
+   double strokeEase,
    double open,
    double pursuitGain,
    double push,
-   double pop,
-   int init_I,
-   int load_I,
+   double minSettleTolerance,
+   int minPauseTicks,
+   int maxPauseTicks,
    double tick,
    double driftNoise,
    double driftDecay,
-   double set
+   double pitchGainScale
 ) {
    private static final String SEED_FILE = "hand.seed";
    private static volatile HumanHandProfile instance;
@@ -77,20 +77,20 @@ public record HumanHandProfile(
          this.fittsSlope * tempo,
          this.firstPhaseWeight,
          this.firstPhaseJitter,
-         this.update,
-         this.sync,
-         this.flush,
-         this.close,
+         this.lateralJitter,
+         this.curvature,
+         this.curvatureJitter,
+         this.strokeEase,
          this.open,
          this.pursuitGain,
          this.push,
-         this.pop,
-         this.init_I,
-         this.load_I,
+         this.minSettleTolerance,
+         this.minPauseTicks,
+         this.maxPauseTicks,
          this.tick * (1.0 + 0.05 * clampedGaussian(session)),
          this.driftNoise,
          this.driftDecay,
-         this.set
+         this.pitchGainScale
       );
    }
 

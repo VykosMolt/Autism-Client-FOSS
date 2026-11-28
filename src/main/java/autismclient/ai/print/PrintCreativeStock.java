@@ -30,7 +30,7 @@ final class PrintCreativeStock {
       return main >= 0 ? main : (inventory.apply(40).isEmpty() ? 40 : -1);
    }
 
-   int load(IntFunction<ItemStack> inventory) {
+   int stockedHotbarSlot(IntFunction<ItemStack> inventory) {
       int main = this.stockedSlot(inventory);
       if (main >= 0 && main < 9) {
          return main;

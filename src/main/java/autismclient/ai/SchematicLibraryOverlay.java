@@ -774,7 +774,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private void drawToggle(
       autismclient.gui.f.SyncManager ui, autismclient.gui.f.NetHelper bounds, String text, boolean value, boolean enabled, Runnable run
    ) {
-      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(ui, bounds, text, value, enabled && bounds.init_Z(ui.read(), ui.write()), "schematic/" + text);
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.drawToggle(ui, bounds, text, value, enabled && bounds.init_Z(ui.read(), ui.write()), "schematic/" + text);
       if (enabled) {
          this.clickRegions.add(new SchematicLibraryOverlay.ClickRegion(bounds, run));
       }

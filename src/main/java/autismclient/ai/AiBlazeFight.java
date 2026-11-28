@@ -468,7 +468,7 @@ final class AiBlazeFight {
                         || (this.child == null || this.child.canInterruptNow())
                            && (this.arena == null || this.arena.canInterruptNow())
                   )
-                  && (this.fireControl.hasPendingFire() || AiEndRun.init_Z(mc))
+                  && (this.fireControl.hasPendingFire() || AiEndRun.isInFire(mc))
                   && this.fireControl.init(false, null)) {
                   if (this.child != null && this.child.canInterruptNow()) {
                      this.cancelChild();
@@ -710,7 +710,7 @@ final class AiBlazeFight {
                               boolean swingSoon = inReach && charge >= 0.85F && swingFirst;
                               Vec3 look = autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target);
                               if (blockNow && !swingSoon) {
-                                 look = AiCombat.init_Vec3_Minecraft_Vec3(mc, look);
+                                 look = AiCombat.shieldAimPoint(mc, look);
                               }
 
                               this.aim.aimAt(look);
@@ -779,7 +779,7 @@ final class AiBlazeFight {
                                  }
                               }
 
-                              if (dodge != null && mc.player.onGround() && (!blockNow || !AiCombat.init_Z_Minecraft(mc, dodge, mc.player.getYRot()))) {
+                              if (dodge != null && mc.player.onGround() && (!blockNow || !AiCombat.isShotInFront(mc, dodge, mc.player.getYRot()))) {
                                  int away = this.strafeSideFor(dodge);
                                  if (this.init_Z_I_I(forward, away)) {
                                     this.strafeDirection = away;
@@ -807,7 +807,7 @@ final class AiBlazeFight {
                                  }
                               }
 
-                              if (AiEndRun.init_Z(mc)) {
+                              if (AiEndRun.isInFire(mc)) {
                                  if (this.init_Z_I_I(-1, this.strafeDirection)) {
                                     forward = -1;
                                  } else if (this.init_Z_I_I(0, -this.strafeDirection)) {
@@ -1105,7 +1105,7 @@ final class AiBlazeFight {
                                  this.cancelChild();
                                  this.releaseMovementKeys();
                                  this.aim
-                                    .aimAt(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target)));
+                                    .aimAt(AiCombat.shieldAimPoint(mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target)));
                                  this.aim.tick();
                                  if (!this.init_Z) {
                                     this.update_I++;

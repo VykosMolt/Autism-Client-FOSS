@@ -63,7 +63,7 @@ public final class PayloadSubscriptionManager {
       return config != null && config.payloadRegistrationUnlocked && config.payloadRegistrationWarningAcceptedVersion >= 1;
    }
 
-   public static synchronized void read() {
+   public static synchronized void unlockRegistration() {
       if (!autismclient.modules.aD.read_Z()) {
          AutismConfig config = AutismConfig.getGlobal();
          config.payloadRegistrationUnlocked = true;
@@ -218,7 +218,7 @@ public final class PayloadSubscriptionManager {
                            "[Autism Payload] registered {} / {} plugin channels, skipped {}, unregistered {}, sent={}, sample={}",
                            newStatus.registered(),
                            newStatus.limit(),
-                           newStatus.read(),
+                           newStatus.skipped(),
                            unregister.init_I(),
                            sent,
                            newStatus.appliedSummary()
@@ -441,7 +441,7 @@ public final class PayloadSubscriptionManager {
    }
 
    public record RegistrationStatus(
-      int registered, int limit, int read, boolean sent, long init_J, List<String> applied, List<String> load_List, int write, boolean locked
+      int registered, int limit, int skipped, boolean sent, long init_J, List<String> applied, List<String> load_List, int write, boolean locked
    ) {
       private static PayloadSubscriptionManager.RegistrationStatus idle(int limit) {
          return new PayloadSubscriptionManager.RegistrationStatus(0, limit, 0, false, 0L, List.of(), List.of(), 0, false);
@@ -461,7 +461,7 @@ public final class PayloadSubscriptionManager {
             base = base + " -" + this.write;
          }
 
-         return this.read > 0 ? base + " +" + this.read : base;
+         return this.skipped > 0 ? base + " +" + this.skipped : base;
       }
 
       public String appliedSummary() {

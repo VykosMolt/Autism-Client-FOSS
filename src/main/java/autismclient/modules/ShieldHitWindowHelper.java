@@ -18,7 +18,7 @@ final class ShieldHitWindowHelper {
       return Math.min(10.0, 1.0 + Math.max(0.0, raiseTicks));
    }
 
-   static ShieldHitWindowHelper.ShieldAction init_l_CachePool_Z(boolean threat, boolean raised, int ownHurtTime, int raiseTicks, int ticksUntilOwnHit) {
+   static ShieldHitWindowHelper.ShieldAction chooseShieldAction(boolean threat, boolean raised, int ownHurtTime, int raiseTicks, int ticksUntilOwnHit) {
       if (threat && ticksUntilOwnHit > 0) {
          int raise = Math.max(0, raiseTicks);
          if (raised) {
@@ -31,10 +31,10 @@ final class ShieldHitWindowHelper {
       }
    }
 
-   static ShieldHitWindowHelper.ShieldAction init(boolean threat, boolean raised, int raiseTicks, int ticksUntilClick) {
+   static ShieldHitWindowHelper.ShieldAction chooseShieldAction(boolean threat, boolean raised, int raiseTicks, int ticksUntilClick) {
       return !raised && threat && raiseTicks == 0 && ticksUntilClick == 1
          ? ShieldHitWindowHelper.ShieldAction.RAISE
-         : init_l_CachePool_Z(threat, raised, 0, raiseTicks, ticksUntilClick);
+         : chooseShieldAction(threat, raised, 0, raiseTicks, ticksUntilClick);
    }
 
    static double tickScale(double clientTickMs) {
@@ -130,7 +130,7 @@ final class ShieldHitWindowHelper {
       private final Map<UUID, ShieldHitWindowHelper.HitWindowTracker.HitWindow> windows = new HashMap<>();
       private double timeScale = 1.0;
 
-      boolean init_Z(UUID id, int hurt, int tick, boolean afterFirstHit) {
+      boolean checkAfterHitWindow(UUID id, int hurt, int tick, boolean afterFirstHit) {
          if (!afterFirstHit) {
             return true;
          } else {
@@ -149,13 +149,13 @@ final class ShieldHitWindowHelper {
          }
       }
 
-      void init() {
+      void clearAfterHitWindows() {
          for (ShieldHitWindowHelper.HitWindowTracker.HitWindow w : this.windows.values()) {
             w.poll = -2147483648;
          }
       }
 
-      void init_V_UUID_I(UUID id, int tick) {
+      void openAfterHitWindow(UUID id, int tick) {
          ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
          if (w != null) {
             w.poll = tick;
@@ -187,7 +187,7 @@ final class ShieldHitWindowHelper {
          }
       }
 
-      boolean load(UUID id, int hurt, int tick, double damage) {
+      boolean canAttackNow(UUID id, int hurt, int tick, double damage) {
          ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          if (tick == w.lastAttackTick) {
@@ -201,7 +201,7 @@ final class ShieldHitWindowHelper {
          return this.ticksUntilOpenFor(id, hurt, tick, strict, false);
       }
 
-      int init_I(UUID id, int hurt, int tick, double damage) {
+      int ticksUntilDamageOpens(UUID id, int hurt, int tick, double damage) {
          int ready = this.ticksUntilOpen(id, hurt, tick, false);
          ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
          return w.ownWindow && damage > w.windowDamage + 0.01 ? (tick == w.lastAttackTick ? 1 : 0) : ready;
@@ -242,7 +242,7 @@ final class ShieldHitWindowHelper {
          }
       }
 
-      void init_V(UUID id, int hurt, int tick, double damage) {
+      void recordAttack(UUID id, int hurt, int tick, double damage) {
          ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          w.lastAttackTick = tick;

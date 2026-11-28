@@ -46,9 +46,9 @@ public final class HumanizedTurnPlanner {
          this.firstPhaseEnd = 0.8 + 0.06 * this.random.nextDouble();
          this.finishPhaseStart = this.firstPhaseEnd - 0.12 - 0.05 * this.random.nextDouble();
          this.firstPhaseWeight = clamp(this.hand.firstPhaseWeight() + this.hand.firstPhaseJitter() * 0.35 * this.gaussianJitter(), 0.9, 0.98);
-         this.firstPhaseExponent = clamp(this.hand.close() + 0.025 * this.gaussianJitter(), 0.78, 1.0);
+         this.firstPhaseExponent = clamp(this.hand.strokeEase() + 0.025 * this.gaussianJitter(), 0.78, 1.0);
          this.timeWobble = 0.07 * this.gaussianJitter();
-         this.pitchArcOffset = clamp((this.hand.sync() + this.hand.flush() * this.gaussianJitter()) * distance * 0.35, -0.28, 0.28);
+         this.pitchArcOffset = clamp((this.hand.curvature() + this.hand.curvatureJitter() * this.gaussianJitter()) * distance * 0.35, -0.28, 0.28);
          this.pitchArcWave = Math.min(distance * 0.006, this.hand.tick() * 0.55);
          this.pitchArcPhase = this.random.nextDouble() * 3.141592653589793 * 2.0;
          this.init_Z = true;

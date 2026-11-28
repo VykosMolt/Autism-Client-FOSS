@@ -374,7 +374,7 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   public static boolean init_Z_20() {
+   public static boolean isClickPending() {
       int until = nextClickAt;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-armor");
@@ -386,16 +386,16 @@ public final class AutoArmorModule extends Module {
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return init_Z_20();
+      return isClickPending();
    }
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return init_Z_20();
+      return isClickPending();
    }
 
-   public static boolean load_Z_9() {
-      if (init_Z_20()) {
+   public static boolean isBusy() {
+      if (isClickPending()) {
          return true;
       }
 
@@ -416,7 +416,7 @@ public final class AutoArmorModule extends Module {
    public static Input overrideInput(ClientInput source, Input original) {
       if (original == null || MC == null || MC.player == null || MC.player.input != source) {
          return original;
-      } else if (init_Z_20()) {
+      } else if (isClickPending()) {
          return new Input(false, false, false, false, false, false, false);
       } else {
          Module module = al.init_Module_Str("auto-armor");

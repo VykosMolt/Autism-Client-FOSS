@@ -52,7 +52,7 @@ public abstract class AutismRegistryDataCollectorMixin {
       }
 
       ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.current();
-      TimelineTagCompatFix.apply(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.connection()));
+      TimelineTagCompatFix.apply(entries, connection != null && ViaFabricPlusBridge.isOlderProtocol(connection.connection()));
       if (connection == null) {
          return entries;
       }
@@ -99,12 +99,12 @@ public abstract class AutismRegistryDataCollectorMixin {
       DataComponentInitializers initializers, Provider context, Operation<List<PendingComponents<?>>> original
    ) {
       ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.current();
-      RegistryCompatGuard.load(connection);
+      RegistryCompatGuard.beginGuard(connection);
 
       try {
          return original.call(initializers, context);
       } finally {
-         RegistryCompatGuard.load();
+         RegistryCompatGuard.endGuard();
       }
    }
 }

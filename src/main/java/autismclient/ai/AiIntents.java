@@ -930,10 +930,10 @@ final class AiIntents {
          args.addProperty("count", 80);
       }
 
-      return new AiIntents.IntentStep(raw, "game:farm", args, init(args), asks);
+      return new AiIntents.IntentStep(raw, "game:farm", args, farmSummary(args), asks);
    }
 
-   static String init(JsonObject args) {
+   static String farmSummary(JsonObject args) {
       String crop = AiJson.getString(args, "crop", "");
       String name = crop.isEmpty() ? "" : crop.substring(crop.indexOf(58) + 1) + " ";
       int count = AiJson.getInt(args, "count", 80);

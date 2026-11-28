@@ -423,7 +423,7 @@ public class MacroLibraryManager {
 
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.getInstance();
       if (editor != null && editor.isEditing(macro)) {
-         editor.update_V_10();
+         editor.closeEditor();
       }
 
       if (!this.suppressLanBroadcast && LanSyncManager.getInstance().isInSession()) {

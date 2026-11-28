@@ -13,8 +13,8 @@ import net.minecraft.world.phys.HitResult.Type;
 final class SchematicSelection extends AiPlacementSession {
    private final Object level;
    BlockPos cornerA;
-   BlockPos load;
-   BlockPos read;
+   BlockPos cornerB;
+   BlockPos aimPos;
    private double distance = 2.0;
 
    void adjustDistance(double scroll) {
@@ -35,22 +35,22 @@ final class SchematicSelection extends AiPlacementSession {
 
    void pickCorner(boolean left) {
       this.moveToAim(true);
-      if (this.read != null) {
+      if (this.aimPos != null) {
          if (left) {
-            this.cornerA = this.read;
+            this.cornerA = this.aimPos;
          } else {
-            this.load = this.read;
+            this.cornerB = this.aimPos;
          }
       }
    }
 
    SchematicCapture.Inner_DataUtil getArea() {
-      return this.isReadyToConfirm() ? SchematicCapture.Inner_DataUtil.between(this.cornerA, this.load) : null;
+      return this.isReadyToConfirm() ? SchematicCapture.Inner_DataUtil.between(this.cornerA, this.cornerB) : null;
    }
 
    @Override
    boolean isReadyToConfirm() {
-      return this.cornerA != null && this.load != null;
+      return this.cornerA != null && this.cornerB != null;
    }
 
    @Override
@@ -63,15 +63,15 @@ final class SchematicSelection extends AiPlacementSession {
    void moveToAim(boolean surface) {
       Minecraft mc = Minecraft.getInstance();
       if (!this.isActive()) {
-         this.read = null;
+         this.aimPos = null;
       } else {
          Vec3 eye = eyePosition(mc);
          Vec3 direction = lookDirection(mc);
          BlockHitResult hit = mc.level.clip(new ClipContext(eye, eye.add(direction.scale(this.distance)), Block.OUTLINE, Fluid.NONE, mc.player));
          if (hit.getType() == Type.BLOCK) {
-            this.read = hit.getBlockPos().immutable();
+            this.aimPos = hit.getBlockPos().immutable();
          } else {
-            this.read = BlockPos.containing(eye.add(direction.scale(this.distance)));
+            this.aimPos = BlockPos.containing(eye.add(direction.scale(this.distance)));
          }
       }
    }

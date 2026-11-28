@@ -16,7 +16,7 @@ public final class AiWallJump {
    private AiWallJump() {
    }
 
-   static AiJumpSolver.JumpPlan putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, List<BlockPos> var4) {
+   static AiJumpSolver.JumpPlan planWallJump(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, List<BlockPos> var4) {
       return planWithDefaults(var0, AiPhysics.MotionState.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5), var1, var4);
    }
 
@@ -24,13 +24,13 @@ public final class AiWallJump {
       return planVariants(var0, var1, var2, var3, false, 0.0F / 0.0F, 180.0F);
    }
 
-   static AiJumpSolver.JumpPlan putAt(
+   static AiJumpSolver.JumpPlan planWallJump(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3, float var4, float var5
    ) {
       return planVariants(var0, var1, var2, var3, false, var4, var5);
    }
 
-   static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_3(
+   static AiJumpSolver.JumpPlan planWallJumpBetween(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5
    ) {
       AiJumpSolver.JumpPlan var7 = planVariants(

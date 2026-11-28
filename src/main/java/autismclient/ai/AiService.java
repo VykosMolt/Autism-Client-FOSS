@@ -1253,7 +1253,7 @@ public final class AiService {
          AiChatPolicy.Inner_DataUtil base = AiChatPolicy.Inner_DataUtil.defaults(text);
          AiChatPolicy.Inner_DataUtil config = new AiChatPolicy.Inner_DataUtil(
             base.instructions(),
-            AiChatPolicy.init_List(text),
+            AiChatPolicy.chatPartners(text),
             base.onlyMentions(),
             base.includeServerChat(),
             base.maxRepliesPerMinute(),
@@ -1278,7 +1278,7 @@ public final class AiService {
          AiChatPolicy.Inner_DataUtil base = AiChatPolicy.Inner_DataUtil.defaults(objective);
          AiChatPolicy.Inner_DataUtil config = new AiChatPolicy.Inner_DataUtil(
             base.instructions(),
-            AiChatPolicy.init_List(objective),
+            AiChatPolicy.chatPartners(objective),
             base.onlyMentions(),
             base.includeServerChat(),
             base.maxRepliesPerMinute(),
@@ -2265,7 +2265,7 @@ public final class AiService {
                      && this.tickCounter % 20 == 0
                      && mc.player != null
                      && mc.player.isAlive()
-                     && shouldSleepNow(AiSleep.load(), isInOverworld(mc), false, isBusyState(this.runState), this.settings.planMode)) {
+                     && shouldSleepNow(AiSleep.canSleepNow(), isInOverworld(mc), false, isBusyState(this.runState), this.settings.planMode)) {
                      long dayIndex = mc.level.getOverworldClockTime() / 24000L;
                      long nowMs = System.currentTimeMillis();
                      if (dayIndex != this.lastSleepDay
@@ -2639,7 +2639,7 @@ public final class AiService {
       if (entry != null && this.activeOperation == null) {
          LocalPlayer rider = mc.player;
          if (rider != null && !rider.isPassenger() && !rider.isFallFlying()) {
-            AiAssistant.getInstance().pop();
+            AiAssistant.getInstance().closeScreen();
             AutoCloseable lease = MacroExecutor.acquireExternalResources(entry.contract().resources());
             if (lease == null) {
                return false;
@@ -2648,7 +2648,7 @@ public final class AiService {
             AiOperation inner;
             try {
                inner = AiModuleScope.scoped(() -> {
-                  AiModuleScope.init();
+                  AiModuleScope.borrowConflicting();
                   return AiGuard.allowDuringLowHealth(Objects.requireNonNull(AiTools.operation(id, args)));
                });
             } catch (Exception e) {
@@ -2829,7 +2829,7 @@ public final class AiService {
 
             if (fresh.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE
                && (id.startsWith("game:") || id.startsWith("macro:") || id.equals("client:run_macro"))) {
-               AiAssistant.getInstance().pop();
+               AiAssistant.getInstance().closeScreen();
             }
 
             AutoCloseable lease = () -> {};
@@ -2846,7 +2846,7 @@ public final class AiService {
                this.operationDataJson = "{}";
                AiOperation operation = AiModuleScope.scoped(() -> {
                   if (id.startsWith("game:") && fresh.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE) {
-                     AiModuleScope.init();
+                     AiModuleScope.borrowConflicting();
                   }
 
                   return factory.get();
@@ -3213,11 +3213,11 @@ public final class AiService {
    }
 
    private static long estimatePromptTokens(AiService.PromptContextBundle epoch, List<JsonObject> history) {
-      return AiContext.estimateTokens(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history)));
+      return AiContext.estimateTokens(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.measureChars(AiJson.GSON.toJsonTree(history)));
    }
 
    private boolean compactHistoryIfNeeded(AiService.SessionState s, String sid, List<JsonObject> history, AiProvider transport, long budgetTokens, boolean forced) {
-      long total = AiContext.init(AiJson.GSON.toJsonTree(history));
+      long total = AiContext.measureChars(AiJson.GSON.toJsonTree(history));
       boolean keepLastThinking = transport.provider() == AiSettings.Provider.ANTHROPIC
          && AiSettings.anthropicThinking(transport.model()) == AiSettings.Thinking.BUDGET;
       AiHistory.Inner_StreamUtil cut = AiHistory.compactionCut(
@@ -3231,7 +3231,7 @@ public final class AiService {
          return false;
       }
 
-      if (!forced && AiContext.init(AiJson.GSON.toJsonTree(cut.dropped())) < total / 10L) {
+      if (!forced && AiContext.measureChars(AiJson.GSON.toJsonTree(cut.dropped())) < total / 10L) {
          return false;
       }
 
@@ -3367,7 +3367,7 @@ public final class AiService {
                String revision = this.getCatalogSnapshot().revision();
                transport.appendUserText(
                   history,
-                  AiContext.init(
+                  AiContext.observationTurn(
                      epoch.host(),
                      s.taskState,
                      s.structuredTask,
@@ -3439,7 +3439,7 @@ public final class AiService {
                contextRecoveries = 0;
                streamRecoveries = 0;
                AiProvider.Inner_TaskQueue usage = reply.usage();
-               long sent = epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history));
+               long sent = epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.measureChars(AiJson.GSON.toJsonTree(history));
                long transcriptChars = sent + reply.wireMessage().toString().length();
                long estTokens = reply.tokens() > 0L ? reply.tokens() : Math.max(1L, (transcriptChars - s.unusedResetTime) / 2L);
                s.tokens += estTokens;
@@ -4059,7 +4059,7 @@ public final class AiService {
 
       String tool = AiJson.getString(data, "neededTool", "");
       if (tool.isBlank()) {
-         tool = Objects.toString(AiObtain.init_Str(data.toString()), "");
+         tool = Objects.toString(AiObtain.missingToolId(data.toString()), "");
       }
 
       if (tool.isBlank()) {
@@ -4152,7 +4152,7 @@ public final class AiService {
       if (step.capability().equals("game:farm") && "plant".equals(AiJson.getString(step.arguments(), "action", ""))) {
          String seed = AiFarm.seedFor(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
          int want = Math.max(1, AiJson.getInt(step.arguments(), "count", 9));
-         int[] have = this.onClientThread(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
+         int[] have = this.onClientThread(g, () -> new int[]{AiFarmPlant.hasHoe(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
          List<AiIntents.IntentStep> out = new ArrayList<>();
          if (have[0] == 0) {
             out.add(
@@ -4190,7 +4190,7 @@ public final class AiService {
 
    static String describeFarmRequest(JsonObject args) {
       if ("build".equals(AiJson.getString(args, "action", ""))) {
-         return AiIntents.init(args);
+         return AiIntents.farmSummary(args);
       }
 
       String crop = AiJson.getString(args, "crop", "minecraft:wheat").replace("minecraft:", "");

@@ -137,7 +137,7 @@ public final class ResourcePackDownloadScope {
    }
 
    static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.PackRoute route) {
-      if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.init_Z()) {
+      if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.viaProxy()) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = PROXY_AUTH.get();
          return authentication != null
                && authentication.active

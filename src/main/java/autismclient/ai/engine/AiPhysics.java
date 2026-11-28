@@ -157,7 +157,7 @@ public final class AiPhysics {
       int var24 = (int)Math.floor(var14 - 1.0E-5);
       int var25 = (int)Math.floor(var17);
       int var26 = (int)Math.floor(var19 - 1.0E-5);
-      if (var0.putAt(var21, var23, var25, var22, var24, var26, var16)) {
+      if (var0.isRegionPassable(var21, var23, var25, var22, var24, var26, var16)) {
          return false;
       }
 
@@ -432,7 +432,7 @@ public final class AiPhysics {
          double var99 = var13 + Math.min(0.0, var68) + 1.0E-5;
          double var101 = var19 + Math.max(0.0, var68) - 1.0E-5;
          var123 = (byte)(var115 != null
-            ? var115.putAt_I_D(var91, var95, var99, var93, var97, var101)
+            ? var115.strongestHold(var91, var95, var99, var93, var97, var101)
             : var2.putAt_I_AABB(new AABB(var91, var95, var99, var93, var97, var101)));
       }
 
@@ -1385,7 +1385,7 @@ public final class AiPhysics {
          return this.isPressurePlate(var1, var2, var3);
       }
 
-      default boolean putAt(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+      default boolean isRegionPassable(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
          return false;
       }
    }

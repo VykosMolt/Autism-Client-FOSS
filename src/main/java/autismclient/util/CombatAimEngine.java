@@ -136,7 +136,7 @@ public final class CombatAimEngine {
    }
 
    public double getPreferredAimHeightOffset() {
-      return 1.22 + 0.2 * extractTraitFraction(this.handProfile.update());
+      return 1.22 + 0.2 * extractTraitFraction(this.handProfile.lateralJitter());
    }
 
    public double[] computeStep(CombatAimEngine.AimFrame f, double atYaw, double atPitch, double maxYaw, double maxPitch) {
@@ -701,7 +701,7 @@ public final class CombatAimEngine {
       next.pitchTravel = dPitch;
       next.durationTicks = duration;
       next.isExcursion = excursion;
-      next.arcAmplitude = (this.handProfile.sync() + this.handProfile.flush() * clamp(this.nextClampedGaussian(), -2.0, 2.0)) * Math.abs(travel);
+      next.arcAmplitude = (this.handProfile.curvature() + this.handProfile.curvatureJitter() * clamp(this.nextClampedGaussian(), -2.0, 2.0)) * Math.abs(travel);
       this.activeMove = next;
    }
 
@@ -885,7 +885,7 @@ public final class CombatAimEngine {
             double ticks = distance < 18.0 ? this.aimEngine.computeShortMoveTicks(distance) : this.aimEngine.computeFittsFlickTicks(distance, 2.0);
             double preferred = CombatAimEngine.scaleTicksBySpeed(ticks, scale);
             this.durationTicks = Math.max(CombatAimEngine.fitMoveDurationTicks(dy, preferred, 18.0, maxYaw), CombatAimEngine.fitMoveDurationTicks(dp, preferred, 18.0, maxPitch));
-            this.arcAmplitude = (this.aimEngine.handProfile.sync() + this.aimEngine.handProfile.flush() * CombatAimEngine.clamp(this.aimEngine.nextClampedGaussian(), -2.0, 2.0)) * dy;
+            this.arcAmplitude = (this.aimEngine.handProfile.curvature() + this.aimEngine.handProfile.curvatureJitter() * CombatAimEngine.clamp(this.aimEngine.nextClampedGaussian(), -2.0, 2.0)) * dy;
          }
 
          this.elapsedTicks = Math.min(this.durationTicks, this.elapsedTicks + 1.0);

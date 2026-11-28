@@ -62,7 +62,7 @@ public final class EditorListRowHelper {
       }
    }
 
-   public static void init(
+   public static void drawRow(
       GuiGraphicsExtractor graphics,
       Font font,
       Component label,
@@ -111,7 +111,7 @@ public final class EditorListRowHelper {
       );
    }
 
-   public static void init(
+   public static void drawRow(
       GuiGraphicsExtractor graphics,
       Font font,
       Component label,
@@ -121,23 +121,23 @@ public final class EditorListRowHelper {
       ListRowRenderer.RowTone tone,
       boolean minecraftText
    ) {
-      init(graphics, font, label, ItemStack.EMPTY, bounds, hovered, selected, tone, minecraftText);
+      drawRow(graphics, font, label, ItemStack.EMPTY, bounds, hovered, selected, tone, minecraftText);
    }
 
-   public static void init(
+   public static void drawColoredRow(
       GuiGraphicsExtractor graphics, Font font, Component label, NetHelper bounds, boolean hovered, boolean selected, int textColor, boolean minecraftText
    ) {
       ListRowRenderer.drawColoredRow(graphics, font, label, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), hovered, selected, textColor, minecraftText);
    }
 
-   public static void init(GuiGraphicsExtractor graphics, NetHelper bounds, boolean hovered) {
+   public static void drawDeleteButton(GuiGraphicsExtractor graphics, NetHelper bounds, boolean hovered) {
       ListRowRenderer.drawDeleteButton(graphics, bounds.read(), bounds.write() + 1, bounds.update(), Math.max(1, bounds.sync() - 2), hovered);
    }
 
-   public static void init(GuiGraphicsExtractor graphics, NetHelper bounds, String symbol, boolean hovered, boolean danger) {
+   public static void drawSymbolButton(GuiGraphicsExtractor graphics, NetHelper bounds, String symbol, boolean hovered, boolean danger) {
       ListRowRenderer.drawSymbolButtonSquare(graphics, bounds.read(), bounds.write(), bounds.update(), symbol, hovered, danger);
    }
 
-   public record RowLayout(NetHelper init, NetHelper slotBounds, NetHelper addBounds, NetHelper captureBounds) {
+   public record RowLayout(NetHelper rowBounds, NetHelper slotBounds, NetHelper addBounds, NetHelper captureBounds) {
    }
 }

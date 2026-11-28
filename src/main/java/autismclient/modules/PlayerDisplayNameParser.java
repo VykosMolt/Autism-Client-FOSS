@@ -19,7 +19,7 @@ final class PlayerDisplayNameParser {
    private PlayerDisplayNameParser() {
    }
 
-   static boolean init(String accountName, Component display) {
+   static boolean displayContainsName(String accountName, Component display) {
       if (!isPlausibleAccountName(accountName)) {
          return false;
       }

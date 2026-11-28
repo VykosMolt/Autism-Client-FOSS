@@ -103,8 +103,8 @@ public final class AiToolsScreen extends Screen {
             y += rowStep;
          }
 
-         ToggleSwitchRenderer.init(ctx, this.toggleRows[0], TOGGLE_LABELS[0], this.settings.allowDig, this.toggleRows[0].init_Z(mx, my), "aitools:allowDig");
-         ToggleSwitchRenderer.init(
+         ToggleSwitchRenderer.drawToggle(ctx, this.toggleRows[0], TOGGLE_LABELS[0], this.settings.allowDig, this.toggleRows[0].init_Z(mx, my), "aitools:allowDig");
+         ToggleSwitchRenderer.drawToggle(
             ctx,
             this.toggleRows[1],
             TOGGLE_LABELS[1],
@@ -112,7 +112,7 @@ public final class AiToolsScreen extends Screen {
             this.toggleRows[1].init_Z(mx, my),
             "aitools:allowPillar"
          );
-         ToggleSwitchRenderer.init(
+         ToggleSwitchRenderer.drawToggle(
             ctx,
             this.toggleRows[2],
             TOGGLE_LABELS[2],
@@ -120,7 +120,7 @@ public final class AiToolsScreen extends Screen {
             this.toggleRows[2].init_Z(mx, my),
             "aitools:allowBridge"
          );
-         ToggleSwitchRenderer.init(
+         ToggleSwitchRenderer.drawToggle(
             ctx,
             this.toggleRows[3],
             TOGGLE_LABELS[3],
@@ -148,8 +148,8 @@ public final class AiToolsScreen extends Screen {
          y += rowStep;
          this.toggleRows[5] = autismclient.gui.f.NetHelper.init(x, y, w, rowH);
          y += rowStep;
-         ToggleSwitchRenderer.init(ctx, this.toggleRows[4], TOGGLE_LABELS[4], this.silentAim, this.toggleRows[4].init_Z(mx, my), "aitools:silentAim");
-         ToggleSwitchRenderer.init(
+         ToggleSwitchRenderer.drawToggle(ctx, this.toggleRows[4], TOGGLE_LABELS[4], this.silentAim, this.toggleRows[4].init_Z(mx, my), "aitools:silentAim");
+         ToggleSwitchRenderer.drawToggle(
             ctx, this.toggleRows[5], TOGGLE_LABELS[5], this.settings.useShield, this.toggleRows[5].init_Z(mx, my), "aitools:useShield"
          );
          y += sectionGap;

@@ -1214,7 +1214,7 @@ public class LanSyncManager {
          AutismClientAddon.LOG.info("[Heartbeat] Peer timed out: {}", dead);
          this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
          this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
-         MacroWaitRegistry.update();
+         MacroWaitRegistry.pollWaits();
       }
 
       if (this.isHost && !deadPeers.isEmpty()) {
@@ -1353,7 +1353,7 @@ public class LanSyncManager {
 
                      this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
                      this.dispatchCallbackOnClientThread(this.onPeerStateChangedCallback);
-                     MacroWaitRegistry.update();
+                     MacroWaitRegistry.pollWaits();
                   }
                }
                break;
@@ -1603,7 +1603,7 @@ public class LanSyncManager {
                   AutismClientAddon.LOG.info("[TCP] Client disconnected: {}", disconnectedUser);
                   this.broadcastClientList();
                   this.dispatchCallbackOnClientThread(this.onClientLeftCallback);
-                  MacroWaitRegistry.update();
+                  MacroWaitRegistry.pollWaits();
                }
             }
          }
@@ -2355,7 +2355,7 @@ public class LanSyncManager {
             this.peerMacroStepProgress.put(senderUsername, completedStep);
          }
 
-         MacroWaitRegistry.update();
+         MacroWaitRegistry.pollWaits();
          Runnable listener = this.onStepProgressChangedCallback;
          if (listener != null) {
             listener.run();
@@ -2579,7 +2579,7 @@ public class LanSyncManager {
          }
 
          this.sendPacket(new autismclient.util.sync.LanSyncPacket.MacroStepProgressPacket(this.sessionId, this.localUsername, completedStep, totalSteps, macroName != null ? macroName : ""));
-         MacroWaitRegistry.update();
+         MacroWaitRegistry.pollWaits();
       }
    }
 

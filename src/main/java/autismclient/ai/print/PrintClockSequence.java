@@ -209,7 +209,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       }
 
       if (this.stage == PrintClockSequence.Inner_StreamUtil.HOLD
-         && this.actions.init_I(this.spec.material()) < this.spec.quantity()) {
+         && this.actions.countHeld(this.spec.material()) < this.spec.quantity()) {
          this.stage = PrintClockSequence.Inner_StreamUtil.STOCK;
          this.currentJob = null;
          this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
@@ -328,7 +328,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          return this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
       }
 
-      int available = this.actions.init_I(this.spec.material());
+      int available = this.actions.countHeld(this.spec.material());
       int missing = this.spec.quantity() - available;
       if (missing <= 0) {
          this.stage = PrintClockSequence.Inner_StreamUtil.HOLD;
@@ -341,7 +341,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          if (available != this.write_I
             && ++this.read_I <= 128
             && this.actions
-               .init_Z(this.spec.material().copyWithCount(Math.min(missing, this.spec.material().getMaxStackSize())))) {
+               .giveCreativeStack(this.spec.material().copyWithCount(Math.min(missing, this.spec.material().getMaxStackSize())))) {
             this.write_I = available;
             this.detail = "Preparing the complete exact clock stock";
             return this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
@@ -579,11 +579,11 @@ public final class PrintClockSequence implements PrintMachineJob {
 
       PrintMachineJob filledContainerJob(BlockPos var1, BlockState var2, Map<Integer, ItemStack> var3);
 
-      int init_I(ItemStack var1);
+      int countHeld(ItemStack var1);
 
       boolean creative();
 
-      boolean init_Z(ItemStack var1);
+      boolean giveCreativeStack(ItemStack var1);
 
       boolean canFetch(ItemStack var1);
 

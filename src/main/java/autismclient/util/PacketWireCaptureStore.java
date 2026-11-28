@@ -218,7 +218,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public record PacketCapture(String direction, String load, String packetClassName, String write, int packetId, byte[] plaintext, long init_J) {
+   public record PacketCapture(String direction, String protocol, String packetClassName, String packetType, int packetId, byte[] plaintext, long init_J) {
       public byte[] plaintext() {
          return this.plaintext == null ? new byte[0] : (byte[])this.plaintext.clone();
       }
