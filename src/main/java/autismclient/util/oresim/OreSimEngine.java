@@ -272,7 +272,7 @@ public final class OreSimEngine {
                trackedCenterX = playerPos.getX();
                trackedCenterZ = playerPos.getZ();
                requestedRadius = Math.max(1, Math.min(radius, 8));
-               flush();
+               pruneFarChunks();
                promoteReadyPending();
                if (worldgenContext != null && !generating && !verificationRunning && (!auditHasWriteDeadline || System.nanoTime() - auditWriteDeadline >= 0L)) {
                   verifyWorldgenAsync(worldgenContext, generation);
@@ -717,7 +717,7 @@ public final class OreSimEngine {
       );
    }
 
-   private static void flush() {
+   private static void pruneFarChunks() {
       int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
       int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
       int keep = requestedRadius + 4;

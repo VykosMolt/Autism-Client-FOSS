@@ -77,9 +77,9 @@ final class AiOreRoute {
          return new AiOperation() {
             final long deadline = System.nanoTime() + Math.max(30, seconds) * 1000000000L;
             final Direction heading = Direction.fromYRot(mc.player.getYRot());
-            AiOreRoute.RouteMode init_aH_DataUtil = !nearOnly && AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.NEAR;
+            AiOreRoute.RouteMode mode = !nearOnly && AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.NEAR;
             AiOperation child;
-            int init_I;
+            int branchTurn;
             int branchIndex;
             int descentStartY;
             boolean init_Z;
@@ -120,7 +120,7 @@ final class AiOreRoute {
                         .info(
                            "[AI] ore route {} {}: {} {} at y {} ({}/{})",
                            family,
-                           this.init_aH_DataUtil,
+                           this.mode,
                            r.status(),
                            AiProgression.clip(r.message()),
                            mc.player.getBlockY(),
@@ -132,17 +132,17 @@ final class AiOreRoute {
                      this.child = AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.keepItems()));
                      return this.running("Making room in the bag");
                   } else {
-                     return this.init_AiOperation_Result_18();
+                     return this.tickBranchTunnel();
                   }
                } else {
                   return this.finish(AiOperation.Status.CANCELLED, "Cancelled");
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_18() {
+            AiOperation.Result tickBranchTunnel() {
                int missingBlocks = Math.max(1, blocks - Math.max(0, AiCraft.countItem(drop) - (targetHeld - blocks)));
                int legSeconds = (int)Math.max(20L, Math.min(300L, (this.deadline - System.nanoTime()) / 1000000000L));
-               switch (this.init_aH_DataUtil) {
+               switch (this.mode) {
                   case NEAR:
                   case DEEP:
                   case MINE_BRANCH:
@@ -153,12 +153,12 @@ final class AiOreRoute {
                            "count",
                            missingBlocks,
                            "radius",
-                           this.init_aH_DataUtil == AiOreRoute.RouteMode.MINE_BRANCH ? 32 : 48,
+                           this.mode == AiOreRoute.RouteMode.MINE_BRANCH ? 32 : 48,
                            "timeoutSeconds",
                            Math.min(120, legSeconds)
                         )
                      );
-                     return this.running("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.RouteMode.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
+                     return this.running("Mining " + family + (this.mode == AiOreRoute.RouteMode.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
                   case DESCEND: {
                      this.descentStartY = mc.player.getBlockY();
                      Direction d = AiOreRoute.rotateClockwise(this.heading, this.branchIndex);
@@ -170,11 +170,11 @@ final class AiOreRoute {
                      return this.running("Digging down " + d.getName() + " to y " + bestY + " for " + family);
                   }
                   case BRANCH: {
-                     Direction d = AiOreRoute.rotateClockwise(this.heading, this.init_I);
+                     Direction d = AiOreRoute.rotateClockwise(this.heading, this.branchTurn);
                      this.child = autismclient.ai.engine.AiExcavate.dig(
                         AiJson.objectOf("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
                      );
-                     return this.running("Branch tunnel " + (this.init_I + 1) + " " + d.getName() + " looking for " + family);
+                     return this.running("Branch tunnel " + (this.branchTurn + 1) + " " + d.getName() + " looking for " + family);
                   }
                   default:
                      return this.finish(AiOperation.Status.FAILED, "Unknown phase");
@@ -182,43 +182,43 @@ final class AiOreRoute {
             }
 
             AiOperation.Result afterChild(AiOperation.Result r) {
-               switch (this.init_aH_DataUtil) {
+               switch (this.mode) {
                   case NEAR:
                      if (nearOnly) {
                         return this.finish(AiOperation.Status.FAILED, "No " + family + " in loaded terrain nearby (" + r.message() + ")");
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.DEEP;
+                     this.mode = AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.DEEP;
                      break;
                   case DESCEND:
                      boolean arrived = !AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY);
                      boolean progressed = this.descentStartY - mc.player.getBlockY() >= 6;
                      if (!arrived && (!progressed || ++this.branchIndex < 4)) {
                         if (!progressed && ++this.branchIndex >= 4) {
-                           this.init_aH_DataUtil = AiOreRoute.RouteMode.DEEP;
+                           this.mode = AiOreRoute.RouteMode.DEEP;
                         }
                      } else {
-                        this.init_aH_DataUtil = AiOreRoute.RouteMode.DEEP;
+                        this.mode = AiOreRoute.RouteMode.DEEP;
                      }
                      break;
                   case DEEP:
-                     this.init_aH_DataUtil = AiOreRoute.RouteMode.BRANCH;
+                     this.mode = AiOreRoute.RouteMode.BRANCH;
                      break;
                   case BRANCH:
-                     this.init_aH_DataUtil = AiOreRoute.RouteMode.MINE_BRANCH;
+                     this.mode = AiOreRoute.RouteMode.MINE_BRANCH;
                      break;
                   case MINE_BRANCH:
-                     if (++this.init_I >= 8) {
+                     if (++this.branchTurn >= 8) {
                         return this.finish(
                            AiOperation.Status.FAILED,
                            "No " + family + " after 8 branch tunnels at y " + mc.player.getBlockY() + " (" + AiCraft.countItem(drop) + "/" + targetHeld + ")"
                         );
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.RouteMode.BRANCH;
+                     this.mode = AiOreRoute.RouteMode.BRANCH;
                }
 
-               return this.running("Next: " + this.init_aH_DataUtil.name().toLowerCase(Locale.ROOT).replace('_', ' '));
+               return this.running("Next: " + this.mode.name().toLowerCase(Locale.ROOT).replace('_', ' '));
             }
 
             JsonArray keepItems() {
@@ -257,9 +257,9 @@ final class AiOreRoute {
                   "target",
                   targetHeld,
                   "phase",
-                  this.init_aH_DataUtil.name(),
+                  this.mode.name(),
                   "branches",
-                  this.init_I,
+                  this.branchTurn,
                   "y",
                   mc.player == null ? 0 : mc.player.getBlockY()
                );

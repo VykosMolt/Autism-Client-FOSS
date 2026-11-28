@@ -102,7 +102,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          }
 
          for (MacroExecutor.LoggedChatMessage chat : messages) {
-            CaptureValueAction.CaptureResult candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.captureFromChat(chat));
+            CaptureValueAction.CaptureResult candidate = this.buildCaptureResult(this.captureFromChat(chat));
             if (candidate.success()) {
                return candidate;
             }
@@ -118,7 +118,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          List<MacroExecutor.ChatHistoryEntry> titles = MacroExecutor.getRecentGuiTitles();
 
          for (MacroExecutor.ChatHistoryEntry title : titles) {
-            CaptureValueAction.CaptureResult candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.captureFromGuiTitle(title));
+            CaptureValueAction.CaptureResult candidate = this.buildCaptureResult(this.captureFromGuiTitle(title));
             if (candidate.success()) {
                return candidate;
             }
@@ -135,7 +135,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          return CaptureValueAction.CaptureResult.failure("Game unavailable");
       }
 
-      if (this.init_Z_6()) {
+      if (this.isListSource()) {
          String filterError = CandidatePoolSelector.init(this.listFilter, this.listFilterText);
          if (!filterError.isBlank()) {
             return CaptureValueAction.CaptureResult.failure(filterError);
@@ -147,7 +147,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       CaptureValueAction.CapturedValue captured = this.captureFromSource(mc);
-      return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(captured);
+      return this.buildCaptureResult(captured);
    }
 
    public CaptureValueAction.CaptureResult previewSuggestions(List<String> suggestions, String query) {
@@ -158,21 +158,21 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          captured = new CaptureValueAction.CapturedValue(captured.text(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, captured.value().asString(), props));
       }
 
-      return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(captured);
+      return this.buildCaptureResult(captured);
    }
 
-   private boolean init_Z_6() {
+   private boolean isListSource() {
       return this.source == CaptureValueAction.CaptureSource.COMMAND_AUTOFILL
          || this.source == CaptureValueAction.CaptureSource.TABLIST
          || this.source == CaptureValueAction.CaptureSource.NAMESCRAPE;
    }
 
    public CaptureValueAction.CaptureResult previewChat(MacroExecutor.LoggedChatMessage chat) {
-      return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.captureFromChat(chat));
+      return this.buildCaptureResult(this.captureFromChat(chat));
    }
 
    public CaptureValueAction.CaptureResult previewSidebarLine(CaptureValueAction.SidebarLine line) {
-      return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.captureFromScoreboardLine(line));
+      return this.buildCaptureResult(this.captureFromScoreboardLine(line));
    }
 
    public CaptureValueAction.SidebarLine selectedScoreboardLine(Minecraft mc) {
@@ -206,11 +206,11 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          return rowCandidate;
       }
 
-      CaptureValueAction.SidebarLine best = this.init(lines, preferredRow, preferredObjective, true);
-      return best != null ? best : this.init(lines, preferredRow, preferredObjective, false);
+      CaptureValueAction.SidebarLine best = this.pickSidebarLine(lines, preferredRow, preferredObjective, true);
+      return best != null ? best : this.pickSidebarLine(lines, preferredRow, preferredObjective, false);
    }
 
-   private CaptureValueAction.SidebarLine init(List<CaptureValueAction.SidebarLine> lines, int preferredRow, String preferredObjective, boolean requireObjective) {
+   private CaptureValueAction.SidebarLine pickSidebarLine(List<CaptureValueAction.SidebarLine> lines, int preferredRow, String preferredObjective, boolean requireObjective) {
       CaptureValueAction.SidebarLine best = null;
       int bestDistance = 2147483647;
 
@@ -286,15 +286,15 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    public CaptureValueAction.CaptureResult previewExample() {
       return this.exampleText != null && !this.exampleText.isBlank()
-         ? this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(new CaptureValueAction.CapturedValue(this.exampleText, MacroVarValue.ofText(this.exampleText)))
+         ? this.buildCaptureResult(new CaptureValueAction.CapturedValue(this.exampleText, MacroVarValue.ofText(this.exampleText)))
          : CaptureValueAction.CaptureResult.failure("Enter an example message");
    }
 
-   private CaptureValueAction.CaptureResult init_TaskQueue_NetHelpe_TaskQueue_DataUtil(CaptureValueAction.CapturedValue captured) {
+   private CaptureValueAction.CaptureResult buildCaptureResult(CaptureValueAction.CapturedValue captured) {
       if (captured != null && captured.value != null) {
          Map<String, MacroVarValue> additions = new LinkedHashMap<>();
-         if (this.init_Z_6()) {
-            additions = new LinkedHashMap<>(init(additions, this.saveAs, captured.value));
+         if (this.isListSource()) {
+            additions = new LinkedHashMap<>(withOutput(additions, this.saveAs, captured.value));
             return additions.isEmpty()
                ? CaptureValueAction.CaptureResult.failure("Enter a variable name")
                : new CaptureValueAction.CaptureResult(true, captured.text, additions, "Ready");
@@ -313,12 +313,12 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             return CaptureValueAction.CaptureResult.failure("Text does not match");
          }
 
-         additions = new LinkedHashMap<>(init(additions, this.saveAs, captured.value));
+         additions = new LinkedHashMap<>(withOutput(additions, this.saveAs, captured.value));
          if (this.effectiveNumberMode() != CaptureValueAction.NumberMode.OFF) {
-            additions = new LinkedHashMap<>(init(additions, this.saveAs, this.effectiveNumberMode()));
+            additions = new LinkedHashMap<>(normalizeNumbers(additions, this.saveAs, this.effectiveNumberMode()));
          }
 
-         CaptureValueAction.ModifierResult modification = this.init_TaskQueue_ConfigSt_Map(additions);
+         CaptureValueAction.ModifierResult modification = this.applyNumberModifier(additions);
          if (!modification.ok()) {
             return CaptureValueAction.CaptureResult.failure(modification.error());
          }
@@ -337,7 +337,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    public String numberModifierError() {
-      if (this.init_Z_6()) {
+      if (this.isListSource()) {
          return "";
       } else {
          CaptureValueAction.NumberModifier modifier = this.numberModifier == null ? CaptureValueAction.NumberModifier.NONE : this.numberModifier;
@@ -359,7 +359,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return this.effectiveNumberMode() == CaptureValueAction.NumberMode.DROP_CENTS ? MacroTemplateResolver.ResolveMode.WHOLE : MacroTemplateResolver.ResolveMode.AUTO;
    }
 
-   private CaptureValueAction.ModifierResult init_TaskQueue_ConfigSt_Map(Map<String, MacroVarValue> values) {
+   private CaptureValueAction.ModifierResult applyNumberModifier(Map<String, MacroVarValue> values) {
       String error = this.numberModifierError();
       if (!error.isBlank()) {
          return CaptureValueAction.ModifierResult.failure(error);
@@ -376,7 +376,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          for (Entry<String, MacroVarValue> entry : values.entrySet()) {
             boolean target = targetTracked && entry.getKey().equals(outputName);
             MacroVarValue original = entry.getValue();
-            MacroVarValue result = init(original, modifier, operand, target, this.numberResolveMode());
+            MacroVarValue result = modifyValue(original, modifier, operand, target, this.numberResolveMode());
             modified.put(entry.getKey(), result);
             if (result != original && (target || !targetTracked)) {
                ok = true;
@@ -389,8 +389,8 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   private static MacroVarValue init(MacroVarValue value, CaptureValueAction.NumberModifier modifier, BigDecimal operand, boolean embedded, MacroTemplateResolver.ResolveMode style) {
-      BigDecimal number = init_BigDecimal(value, embedded, style);
+   private static MacroVarValue modifyValue(MacroVarValue value, CaptureValueAction.NumberModifier modifier, BigDecimal operand, boolean embedded, MacroTemplateResolver.ResolveMode style) {
+      BigDecimal number = parseNumber(value, embedded, style);
       if (number == null) {
          return value;
       }
@@ -411,13 +411,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
                var10000 = number.multiply(operand);
                break;
             case DIVIDE:
-               var10000 = init_BigDecimal_BigDecimal_BigDecimal(number, operand);
+               var10000 = divideNumber(number, operand);
                break;
             case PLUS_PERCENT:
-               var10000 = load(number, BigDecimal.ONE.add(percentToFraction(operand)));
+               var10000 = multiplyNumber(number, BigDecimal.ONE.add(percentToFraction(operand)));
                break;
             case MINUS_PERCENT:
-               var10000 = load(number, BigDecimal.ONE.subtract(percentToFraction(operand)));
+               var10000 = multiplyNumber(number, BigDecimal.ONE.subtract(percentToFraction(operand)));
                break;
             default:
                throw new MatchException(null, null);
@@ -430,20 +430,20 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   private static BigDecimal init_BigDecimal_BigDecimal_BigDecimal(BigDecimal number, BigDecimal operand) {
+   private static BigDecimal divideNumber(BigDecimal number, BigDecimal operand) {
       BigDecimal exact = number.divide(operand, new MathContext(Math.max(16, number.precision() + 8), RoundingMode.HALF_UP));
-      return read(exact, number);
+      return rescale(exact, number);
    }
 
    public static BigDecimal percentToFraction(BigDecimal percent) {
       return percent.divide(HUNDRED, new MathContext(34, RoundingMode.HALF_UP));
    }
 
-   private static BigDecimal load(BigDecimal number, BigDecimal factor) {
-      return read(number.multiply(factor), number);
+   private static BigDecimal multiplyNumber(BigDecimal number, BigDecimal factor) {
+      return rescale(number.multiply(factor), number);
    }
 
-   private static BigDecimal read(BigDecimal result, BigDecimal source) {
+   private static BigDecimal rescale(BigDecimal result, BigDecimal source) {
       int scale = Math.max(2, source.scale() + 2);
       int adjustedExponent = result.precision() - result.scale() - 1;
       if (result.signum() != 0 && adjustedExponent < 0) {
@@ -453,7 +453,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return result.setScale(scale, RoundingMode.HALF_UP);
    }
 
-   private static BigDecimal init_BigDecimal(MacroVarValue value, boolean embedded, MacroTemplateResolver.ResolveMode style) {
+   private static BigDecimal parseNumber(MacroVarValue value, boolean embedded, MacroTemplateResolver.ResolveMode style) {
       if (value != null && value.getType() != MacroVarValue.ValueType.SLOT && value.getType() != MacroVarValue.ValueType.IDENTIFIER) {
          try {
             return new BigDecimal(embedded ? MacroTemplateResolver.extractNormalizedNumber(value.asString(), style) : MacroTemplateResolver.parseNormalizedNumber(value.asString(), style));
@@ -465,7 +465,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   static Map<String, MacroVarValue> init(Map<String, MacroVarValue> patternValues, String saveAs, MacroVarValue sourceValue) {
+   static Map<String, MacroVarValue> withOutput(Map<String, MacroVarValue> patternValues, String saveAs, MacroVarValue sourceValue) {
       Map<String, MacroVarValue> outputs = new LinkedHashMap<>();
       if (patternValues != null) {
          outputs.putAll(patternValues);
@@ -479,28 +479,28 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return outputs;
    }
 
-   static Map<String, MacroVarValue> init_Map_Map(Map<String, MacroVarValue> values) {
-      return init(values, "", CaptureValueAction.NumberMode.SUFFIX_KMB);
+   static Map<String, MacroVarValue> normalizeNumbers(Map<String, MacroVarValue> values) {
+      return normalizeNumbers(values, "", CaptureValueAction.NumberMode.SUFFIX_KMB);
    }
 
-   static Map<String, MacroVarValue> init_Map_Map_Str(Map<String, MacroVarValue> values, String saveAs) {
-      return init(values, saveAs, CaptureValueAction.NumberMode.SUFFIX_KMB);
+   static Map<String, MacroVarValue> normalizeNumbers(Map<String, MacroVarValue> values, String saveAs) {
+      return normalizeNumbers(values, saveAs, CaptureValueAction.NumberMode.SUFFIX_KMB);
    }
 
-   static Map<String, MacroVarValue> init(Map<String, MacroVarValue> values, String saveAs, CaptureValueAction.NumberMode mode) {
+   static Map<String, MacroVarValue> normalizeNumbers(Map<String, MacroVarValue> values, String saveAs, CaptureValueAction.NumberMode mode) {
       if (values != null && !values.isEmpty()) {
          MacroTemplateResolver.ResolveMode style = mode == CaptureValueAction.NumberMode.DROP_CENTS ? MacroTemplateResolver.ResolveMode.WHOLE : MacroTemplateResolver.ResolveMode.AUTO;
          String outputName = MacroVariableStore.rootKey(saveAs);
          Map<String, MacroVarValue> normalized = new LinkedHashMap<>();
-         values.forEach((name, value) -> normalized.put(name, init_l(value, !outputName.isBlank() && outputName.equals(name), style)));
+         values.forEach((name, value) -> normalized.put(name, normalizeNumber(value, !outputName.isBlank() && outputName.equals(name), style)));
          return normalized;
       } else {
          return Map.of();
       }
    }
 
-   private static MacroVarValue init_l(MacroVarValue value, boolean embedded, MacroTemplateResolver.ResolveMode style) {
-      BigDecimal number = init_BigDecimal(value, embedded, style);
+   private static MacroVarValue normalizeNumber(MacroVarValue value, boolean embedded, MacroTemplateResolver.ResolveMode style) {
+      BigDecimal number = parseNumber(value, embedded, style);
       return number == null ? value : withNumber(value, number);
    }
 
@@ -541,7 +541,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             var10000 = this.captureFromContainer(mc, false);
             break;
          case PLAYER_ITEM:
-            var10000 = this.read_TaskQueue_DataUtil(mc);
+            var10000 = this.captureItem(mc);
             break;
          case CURSOR_ITEM:
             var10000 = mc.player != null && mc.player.containerMenu != null
@@ -691,7 +691,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   private CaptureValueAction.CapturedValue read_TaskQueue_DataUtil(Minecraft mc) {
+   private CaptureValueAction.CapturedValue captureItem(Minecraft mc) {
       CaptureValueAction.CapturedValue menu = this.captureFromContainer(mc, true);
       if (menu == null && mc.player != null) {
          CaptureValueAction.ItemFilterResolution filterResolution = this.resolveItemFilter(mc);

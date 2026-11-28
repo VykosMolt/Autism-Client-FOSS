@@ -282,7 +282,7 @@ final class AiPlan {
             String id = capability.equals(AiJson.getString(entry, "id", "")) ? "step" + index : AiJson.getString(entry, "id", "step" + index);
             AiPlanRunner.requireGameCapability(capability);
             JsonObject arguments = entry.has("arguments") && entry.get("arguments").isJsonObject() ? entry.getAsJsonObject("arguments") : new JsonObject();
-            init(id, capability, arguments);
+            validateArgs(id, capability, arguments);
             List<String> needs = new ArrayList<>();
             if (entry.has("needs") && entry.get("needs").isJsonArray()) {
                for (JsonElement need : entry.getAsJsonArray("needs")) {
@@ -326,7 +326,7 @@ final class AiPlan {
       );
    }
 
-   private static void init(String id, String capability, JsonObject arguments) {
+   private static void validateArgs(String id, String capability, JsonObject arguments) {
       AiCatalog.Entry entry = AiDirectOps.catalogSnapshot().get(capability);
       if (entry != null) {
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());

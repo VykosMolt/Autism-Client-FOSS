@@ -22,7 +22,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiStandingTarget {
    private static final double init_D = 1.0E-6;
-   private static final List<BlockPos> init_List = searchOffsets();
+   private static final List<BlockPos> SEARCH_OFFSETS = searchOffsets();
 
    private AiStandingTarget() {
    }
@@ -45,7 +45,7 @@ public final class AiStandingTarget {
          }
       }
 
-      for (BlockPos offset : init_List) {
+      for (BlockPos offset : SEARCH_OFFSETS) {
          AiStandingTarget.StandingSpot target = targetAt(mc, clicked.offset(offset), hit.getLocation(), water, true);
          if (target != null) {
             return target;
@@ -143,34 +143,34 @@ public final class AiStandingTarget {
    }
 
    public static final class TargetCache {
-      private Object init_Obj;
-      private BlockHitResult init_BlockHitResult;
-      private AiStandingTarget.StandingSpot init_j_StreamUtil;
-      private long init_J;
+      private Object cachedLevel;
+      private BlockHitResult cachedHit;
+      private AiStandingTarget.StandingSpot cachedSpot;
+      private long expiresAt;
 
       public AiStandingTarget.StandingSpot resolve(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water, boolean fresh) {
          BlockHitResult hit = AiStandingTarget.raycast(mc, eye, direction, reach, water);
          long now = System.nanoTime();
          if (fresh
-            || this.init_Obj != mc.level
-            || this.init_BlockHitResult == null
-            || hit.getType() != this.init_BlockHitResult.getType()
-            || !hit.getBlockPos().equals(this.init_BlockHitResult.getBlockPos())
-            || hit.getLocation().distanceToSqr(this.init_BlockHitResult.getLocation()) > 0.0225
-            || now >= this.init_J) {
-            this.init_j_StreamUtil = AiStandingTarget.standingTarget(mc, hit, water);
-            this.init_Obj = mc.level;
-            this.init_BlockHitResult = hit;
-            this.init_J = now + 170000000L;
+            || this.cachedLevel != mc.level
+            || this.cachedHit == null
+            || hit.getType() != this.cachedHit.getType()
+            || !hit.getBlockPos().equals(this.cachedHit.getBlockPos())
+            || hit.getLocation().distanceToSqr(this.cachedHit.getLocation()) > 0.0225
+            || now >= this.expiresAt) {
+            this.cachedSpot = AiStandingTarget.standingTarget(mc, hit, water);
+            this.cachedLevel = mc.level;
+            this.cachedHit = hit;
+            this.expiresAt = now + 170000000L;
          }
 
-         return this.init_j_StreamUtil;
+         return this.cachedSpot;
       }
 
       public void invalidate() {
-         this.init_Obj = null;
-         this.init_BlockHitResult = null;
-         this.init_j_StreamUtil = null;
+         this.cachedLevel = null;
+         this.cachedHit = null;
+         this.cachedSpot = null;
       }
    }
 

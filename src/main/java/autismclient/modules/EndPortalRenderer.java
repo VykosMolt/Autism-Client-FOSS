@@ -46,10 +46,10 @@ public final class EndPortalRenderer {
       }
 
       Vec3 target = m.target();
-      return !m.frames().isEmpty() || m.showsTracer() && target != null || init(m, target, WorldProjectionHelper.cameraPosition());
+      return !m.frames().isEmpty() || m.showsTracer() && target != null || shouldRenderTarget(m, target, WorldProjectionHelper.cameraPosition());
    }
 
-   private static boolean init(EndPortalModule module, Vec3 target, Vec3 camera) {
+   private static boolean shouldRenderTarget(EndPortalModule module, Vec3 target, Vec3 camera) {
       if (module.sync() && EndPortalDisplayHelper.init(camera, target, am.init_I())) {
          int x = (int)Math.floor(target.x) >> 4;
          int z = (int)Math.floor(target.z) >> 4;
@@ -79,10 +79,10 @@ public final class EndPortalRenderer {
             }
          }
 
-         if (init(module, target, camera)) {
+         if (shouldRenderTarget(module, target, camera)) {
             EndPortalDisplayHelper.BeamColumn column = EndPortalDisplayHelper.beam(camera, target, MINECRAFT.level.getMinY(), MINECRAFT.level.getMaxY() + 1.0);
             if (column != null) {
-               init(matrices, source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
+               drawBeam(matrices, source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
             }
          }
 
@@ -111,11 +111,11 @@ public final class EndPortalRenderer {
       }
    }
 
-   private static void init(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, int color) {
-      init(matrices, fill, column, column.minY(), column.maxY(), color, 10, 28, 88);
+   private static void drawBeam(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, int color) {
+      drawBeamRange(matrices, fill, column, column.minY(), column.maxY(), color, 10, 28, 88);
    }
 
-   private static void init(
+   private static void drawBeamRange(
       PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, double minY, double maxY, int color, int outer, int middle, int core
    ) {
       WorldLineRenderer.box(matrices.last(), fill, column.box(column.outerWidth(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, outer));

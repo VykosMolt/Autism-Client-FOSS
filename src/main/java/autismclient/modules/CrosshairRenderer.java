@@ -35,8 +35,8 @@ public final class CrosshairRenderer {
    private static final int read = 2;
    private static final int write = 3;
    private static final int BYTES_PER_PIXEL = 4;
-   private static final CrosshairRenderer.TextureCache init_o_BufferHelper = new CrosshairRenderer.TextureCache("hud", 0L);
-   private static final CrosshairRenderer.TextureCache load_o_BufferHelper = new CrosshairRenderer.TextureCache("preview", 80L);
+   private static final CrosshairRenderer.TextureCache HUD_CACHE = new CrosshairRenderer.TextureCache("hud", 0L);
+   private static final CrosshairRenderer.TextureCache PREVIEW_CACHE = new CrosshairRenderer.TextureCache("preview", 80L);
    private static int textureCounter;
 
    private CrosshairRenderer() {
@@ -54,7 +54,7 @@ public final class CrosshairRenderer {
 
          try {
             graphics.pose().scale(1.0F / guiScale, 1.0F / guiScale);
-            if (CrosshairVectorPipeline.init(graphics, look, MINECRAFT.getWindow().getWidth() / 2.0F, MINECRAFT.getWindow().getHeight() / 2.0F, guiScale, 0, init(look))) {
+            if (CrosshairVectorPipeline.init(graphics, look, MINECRAFT.getWindow().getWidth() / 2.0F, MINECRAFT.getWindow().getHeight() / 2.0F, guiScale, 0, aimedTargetType(look))) {
                return true;
             }
          } finally {
@@ -62,7 +62,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      CrosshairRenderer.TextureEntry entry = init_o_BufferHelper.entryFor(look, guiScale, 0);
+      CrosshairRenderer.TextureEntry entry = HUD_CACHE.entryFor(look, guiScale, 0);
       if (entry == null) {
          return false;
       }
@@ -73,7 +73,7 @@ public final class CrosshairRenderer {
 
       try {
          graphics.pose().scale(1.0F / guiScale, 1.0F / guiScale);
-         init_V_GuiGraphicsExtract(graphics, entry, look, x, y, init(look));
+         drawTexture(graphics, entry, look, x, y, aimedTargetType(look));
       } finally {
          graphics.pose().popMatrix();
       }
@@ -103,7 +103,7 @@ public final class CrosshairRenderer {
             }
          }
 
-         CrosshairRenderer.TextureEntry entry = load_o_BufferHelper.entryFor(look, guiScale, maxPixels);
+         CrosshairRenderer.TextureEntry entry = PREVIEW_CACHE.entryFor(look, guiScale, maxPixels);
          if (entry != null) {
             int x = (int)Math.round(centerX * pixelsPerUnit - entry.width() / 2.0);
             int y = (int)Math.round(centerY * pixelsPerUnit - entry.width() / 2.0);
@@ -113,7 +113,7 @@ public final class CrosshairRenderer {
                graphics.pose().scale(1.0F / pixelsPerUnit, 1.0F / pixelsPerUnit);
                Matrix3x2fStack pose = graphics.pose();
                pose.translate(CrosshairVectorPipeline.snapToPixel(x, pose.m00(), pose.m20(), guiScale, 0) - x, CrosshairVectorPipeline.snapToPixel(y, pose.m11(), pose.m21(), guiScale, 0) - y);
-               init_V_GuiGraphicsExtract(graphics, entry, look, x, y, 0);
+               drawTexture(graphics, entry, look, x, y, 0);
             } finally {
                graphics.pose().popMatrix();
             }
@@ -121,7 +121,7 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, CrosshairRenderer.TextureEntry entry, CrosshairRenderState.Inner_DataUtil look, int x, int y, int target) {
+   private static void drawTexture(GuiGraphicsExtractor graphics, CrosshairRenderer.TextureEntry entry, CrosshairRenderState.Inner_DataUtil look, int x, int y, int target) {
       float opacity = look.init_F();
       boolean invert = target == 0 && look.init_Z();
       if (invert) {
@@ -162,7 +162,7 @@ public final class CrosshairRenderer {
       return alpha << 24 | argb & 16777215;
    }
 
-   private static int init(CrosshairRenderState.Inner_DataUtil look) {
+   private static int aimedTargetType(CrosshairRenderState.Inner_DataUtil look) {
       if (look.read_Z() && MINECRAFT.player != null && MINECRAFT.level != null) {
          Camera camera = MINECRAFT.gameRenderer.mainCamera();
          if (camera != null && camera.isInitialized()) {

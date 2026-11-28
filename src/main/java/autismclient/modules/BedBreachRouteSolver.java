@@ -12,7 +12,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class BedBreachRouteSolver {
-   static BedBreachRouteSolver.BreachRoute init_DataPipe_BufferHel(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double reach, Vec3 preferred) {
+   static BedBreachRouteSolver.BreachRoute bestRoute(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double reach, Vec3 preferred) {
       return solve(cells, eye, reach, preferred).bestRoute(null, 0.0F, preferred);
    }
 
@@ -57,7 +57,7 @@ final class BedBreachRouteSolver {
 
                for (Vec3 point : points) {
                   Vec3 end = point.add(point.subtract(eye).normalize().scale(1.0E-5));
-                  BedBreachRouteSolver.BreachRoute route = init(cells, eye, end, reach);
+                  BedBreachRouteSolver.BreachRoute route = routeAlong(cells, eye, end, reach);
                   if (route != null) {
                      BedBreachRouteSolver.BreachRoute previous = routes.get(route.cells);
                      if (previous == null
@@ -74,7 +74,7 @@ final class BedBreachRouteSolver {
       return new BedBreachRouteSolver.RouteSet(List.copyOf(routes.values()));
    }
 
-   static BedBreachRouteSolver.BreachRoute init(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, Vec3 end, double reach) {
+   static BedBreachRouteSolver.BreachRoute routeAlong(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, Vec3 end, double reach) {
       ArrayList<BedBreachRouteSolver.RayCrossing> crossings = new ArrayList<>();
 
       for (BedBreachRouteSolver.BreachCell cell : cells) {

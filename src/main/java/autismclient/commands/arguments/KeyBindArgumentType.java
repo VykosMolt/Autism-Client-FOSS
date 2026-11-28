@@ -44,10 +44,10 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
    }
 
    public Integer parse(StringReader reader) throws CommandSyntaxException {
-      return this.init_Integer_StringReader(reader);
+      return this.parseKey(reader);
    }
 
-   public Integer init_Integer_StringReader(StringReader reader) throws CommandSyntaxException {
+   public Integer parseKey(StringReader reader) throws CommandSyntaxException {
       String raw = reader.readUnquotedString();
       String upper = raw.toUpperCase(Locale.ROOT);
       Integer code = KEYS.get(upper);

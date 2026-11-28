@@ -369,7 +369,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                ScopedHttpUrlConnection.ResponseHead response = this.readResponseHead(this.socketInputFor(socket));
                String location = this.instanceFollowRedirects ? this.redirectLocation(response) : null;
                if (!isRedirectStatus(response.code) || location == null) {
-                  this.response = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
+                  this.response = this.applyTransferEncoding(response);
                   this.responseCode = response.code;
                   this.responseMessage = response.message;
                   this.url = target.uri().toURL();
@@ -833,7 +833,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private ScopedHttpUrlConnection.ResponseHead init_RenderState_JsonUt_RenderState_JsonUt(ScopedHttpUrlConnection.ResponseHead response) throws IOException {
+   private ScopedHttpUrlConnection.ResponseHead applyTransferEncoding(ScopedHttpUrlConnection.ResponseHead response) throws IOException {
       List<String> transfer = response.header("Transfer-Encoding");
       List<String> lengths = response.header("Content-Length");
       if (!transfer.isEmpty() && !lengths.isEmpty()) {

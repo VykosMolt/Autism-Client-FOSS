@@ -24,7 +24,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public final class JoinMacroScreen extends VirtualScaledScreen {
-   private static final int init_I = 382;
+   private static final int MAX_CONTENT_WIDTH = 382;
    private static final int load_I = 3;
    private static final String[] ACTION_BUTTON_LABELS = new String[]{"Edit", "Create", "Password"};
    private final Screen parent;
@@ -37,7 +37,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private boolean rowsDirty = true;
    private final List<autismclient.gui.ui.widgets.DropdownWidget> dropdowns = new ArrayList<>();
    private autismclient.gui.ui.widgets.DropdownWidget methodDropdown;
-   private autismclient.gui.ui.widgets.DropdownWidget load_SyncManager;
+   private autismclient.gui.ui.widgets.DropdownWidget triggerDropdown;
    private boolean scrollbarDragging;
    private int scrollbarGrabOffset;
 
@@ -119,7 +119,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          autismclient.gui.f.b.k.init(
             graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, GuiColorPalette.flush, titleX, this.centeredTextY(this.titleY(), ctl), false
          );
-         this.renderSelectedInfo(graphics, this.contentX(), this.tick_I_3(), this.contentWidth());
+         this.renderSelectedInfo(graphics, this.contentX(), this.selectedInfoY(), this.contentWidth());
          boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns);
          int hoverX = menuOpen ? -2147483648 : virtualMouseX;
          int hoverY = menuOpen ? -2147483648 : virtualMouseY;
@@ -169,9 +169,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
 
       int methodSel = JoinMacroController.timing().ordinal();
-      int dropdownX = x + this.read_I_2() + 8;
+      int dropdownX = x + this.labelColumnWidth() + 8;
       int dropdownW = this.widestOption(methodOptions);
-      this.methodDropdown = this.init_SyncManager_SyncManager(
+      this.methodDropdown = this.reuseDropdown(
          this.methodDropdown, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> JoinMacroController.setTiming(timings[Math.max(0, Math.min(idx, timings.length - 1))])
       );
       this.dropdowns.add(this.methodDropdown);
@@ -190,19 +190,19 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(
          graphics, this.font, keep ? "Repeat On" : "Run On", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.centeredTextY(triggerRowY, ctl), false
       );
-      JoinMacroController.JoinTrigger[] triggerOpts = this.init_aA_CachePoolArr();
+      JoinMacroController.JoinTrigger[] triggerOpts = this.triggerOptions();
       List<String> triggerLabels = new ArrayList<>();
       int triggerSel = 0;
 
       for (int i = 0; i < triggerOpts.length; i++) {
-         triggerLabels.add(this.init_Str_aA_CachePool(triggerOpts[i]));
+         triggerLabels.add(this.triggerLabel(triggerOpts[i]));
          if (triggerOpts[i] == JoinMacroController.trigger()) {
             triggerSel = i;
          }
       }
 
-      this.load_SyncManager = this.init_SyncManager_SyncManager(
-         this.load_SyncManager,
+      this.triggerDropdown = this.reuseDropdown(
+         this.triggerDropdown,
          dropdownX,
          triggerRowY,
          this.widestOption(triggerLabels),
@@ -211,7 +211,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          triggerSel,
          idx -> JoinMacroController.setTrigger(triggerOpts[Math.max(0, Math.min(idx, triggerOpts.length - 1))])
       );
-      this.dropdowns.add(this.load_SyncManager);
+      this.dropdowns.add(this.triggerDropdown);
    }
 
    private int widestOption(List<String> options) {
@@ -224,7 +224,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return Math.max(56, widest + 26);
    }
 
-   private autismclient.gui.ui.widgets.DropdownWidget init_SyncManager_SyncManager(
+   private autismclient.gui.ui.widgets.DropdownWidget reuseDropdown(
       autismclient.gui.ui.widgets.DropdownWidget existing, int x, int y, int w, int h, List<String> options, int selected, IntConsumer onSelect
    ) {
       if (existing == null) {
@@ -245,7 +245,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       } else {
          String selectedLine = "Selected: " + selected;
          String modeLine = JoinMacroController.summary();
-         if (!this.init_Z_I(maxWidth)) {
+         if (!this.selectedInfoWraps(maxWidth)) {
             autismclient.gui.f.b.k.init(
                graphics, this.font, selectedLine + "  " + modeLine, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.open, x, this.centeredTextY(y, line), false
             );
@@ -274,7 +274,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private boolean init_Z_I(int maxWidth) {
+   private boolean selectedInfoWraps(int maxWidth) {
       String selected = JoinMacroController.macroName();
       if (selected.isBlank()) {
          return false;
@@ -289,8 +289,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       int listW = this.listWidth();
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics();
       int rowX = this.rowX();
-      int rowRight = this.init_I_PoolEntry_DataUtil(scrollbar);
-      int rowH = this.update_I_2();
+      int rowRight = this.rowRightEdge(scrollbar);
+      int rowH = this.rowBodyHeight();
       int pitch = this.rowPitch();
       int visibleRows = this.visibleRows();
       String title = this.rows.size() <= visibleRows
@@ -435,7 +435,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             }
          }
 
-         int rowIndex = this.init_I_D_D(event.x(), event.y());
+         int rowIndex = this.rowIndexAt(event.x(), event.y());
          if (rowIndex >= 0) {
             JoinMacroScreen.MacroRow row = this.rows.get(rowIndex);
             if (row.folderRow.init_Z()) {
@@ -589,13 +589,13 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private int init_I_D_D(double mouseX, double mouseY) {
+   private int rowIndexAt(double mouseX, double mouseY) {
       int y = this.listBodyY();
       int pitch = this.rowPitch();
       int h = this.visibleRows() * pitch;
-      if (!(mouseX < this.rowX()) && !(mouseX >= this.init_I_PoolEntry_DataUtil(this.scrollbarMetrics())) && !(mouseY < y) && !(mouseY >= y + h)) {
+      if (!(mouseX < this.rowX()) && !(mouseX >= this.rowRightEdge(this.scrollbarMetrics())) && !(mouseY < y) && !(mouseY >= y + h)) {
          int local = (int)mouseY - y;
-         if (local % pitch >= this.update_I_2()) {
+         if (local % pitch >= this.rowBodyHeight()) {
             return -1;
          }
 
@@ -623,7 +623,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
-   private int read_I_2() {
+   private int labelColumnWidth() {
       int w = 0;
 
       for (String label : new String[]{"Execution Method", "Run On", "Repeat On"}) {
@@ -637,12 +637,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int update_I_2() {
+   private int rowBodyHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
    private int rowPitch() {
-      return this.update_I_2() + 2;
+      return this.rowBodyHeight() + 2;
    }
 
    private int panelX() {
@@ -669,16 +669,16 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return this.panelTop() + 4;
    }
 
-   private int tick_I_3() {
+   private int selectedInfoY() {
       return this.titleY() + this.controlHeight() + 2;
    }
 
    private int selectedInfoHeight() {
-      return (this.init_Z_I(this.contentWidth()) ? 2 : 1) * 12;
+      return (this.selectedInfoWraps(this.contentWidth()) ? 2 : 1) * 12;
    }
 
    private int searchY() {
-      return this.tick_I_3() + this.selectedInfoHeight() + 2;
+      return this.selectedInfoY() + this.selectedInfoHeight() + 2;
    }
 
    private int searchX() {
@@ -724,7 +724,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int listHeight() {
-      int available = Math.max(this.listHeaderHeight() + this.update_I_2() + 4, this.virtualHeight() - 6 - this.listY());
+      int available = Math.max(this.listHeaderHeight() + this.rowBodyHeight() + 4, this.virtualHeight() - 6 - this.listY());
       int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int shown = Math.max(3, Math.min(cap, this.rows.size()));
       return Math.min(available, this.listHeaderHeight() + shown * this.rowPitch() - 2 + 4);
@@ -742,7 +742,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return this.listX() + 4;
    }
 
-   private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar) {
+   private int rowRightEdge(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar) {
       int right = this.listX() + this.listWidth() - 4;
       return scrollbar.isScrollable() ? this.rowRight() - 2 : right;
    }
@@ -765,7 +765,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       this.scrollRow = Math.max(0, Math.min(maxScrollRows, Math.round((float)scrollPixels / this.rowPitch())));
    }
 
-   private JoinMacroController.JoinTrigger[] init_aA_CachePoolArr() {
+   private JoinMacroController.JoinTrigger[] triggerOptions() {
       return JoinMacroController.keepEnabled()
          ? new JoinMacroController.JoinTrigger[]{
             JoinMacroController.JoinTrigger.ANY,
@@ -785,7 +785,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          };
    }
 
-   private String init_Str_aA_CachePool(JoinMacroController.JoinTrigger triggerJoin) {
+   private String triggerLabel(JoinMacroController.JoinTrigger triggerJoin) {
       return triggerJoin.label(JoinMacroController.keepEnabled());
    }
 

@@ -14,34 +14,34 @@ import net.minecraft.client.Minecraft;
 public final class PayloadSubscriptionManager {
    private static final boolean TRACE = Boolean.getBoolean("autism.payload.trace");
    public static final int init_I = 1;
-   private static final int load_I = 96;
+   private static final int DEFAULT_CHANNEL_LIMIT = 96;
    private static final int read_I = 120;
    private static final int write = 64;
-   private static volatile boolean load_Z = true;
-   private static int update;
-   private static String init_Str = "";
-   private static long init_J;
+   private static volatile boolean syncRequested = true;
+   private static int syncDelay;
+   private static String lastSentKey = "";
+   private static long lastSentAt;
    private static PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.RegistrationStatus.idle(96);
-   private static final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
-   private static final LinkedHashSet<String> load_LinkedHashSet = new LinkedHashSet<>();
-   private static final LinkedHashSet<String> read_LinkedHashSet = new LinkedHashSet<>();
+   private static final LinkedHashSet<String> registeredChannels = new LinkedHashSet<>();
+   private static final LinkedHashSet<String> codecChannels = new LinkedHashSet<>();
+   private static final LinkedHashSet<String> observedChannels = new LinkedHashSet<>();
 
    private PayloadSubscriptionManager() {
    }
 
    public static synchronized void requestSync() {
-      load_Z = true;
-      update = 0;
+      syncRequested = true;
+      syncDelay = 0;
    }
 
    public static synchronized void reset() {
-      load_Z = true;
-      update = 0;
-      init_Str = "";
-      init_J = 0L;
-      load_LinkedHashSet.clear();
-      read_LinkedHashSet.clear();
-      init_LinkedHashSet.clear();
+      syncRequested = true;
+      syncDelay = 0;
+      lastSentKey = "";
+      lastSentAt = 0L;
+      codecChannels.clear();
+      observedChannels.clear();
+      registeredChannels.clear();
       status = PayloadSubscriptionManager.RegistrationStatus.idle(96);
    }
 
@@ -80,29 +80,29 @@ public final class PayloadSubscriptionManager {
             AutismConfig config = AutismConfig.getGlobal();
             config.payloadRegistrationUnlocked = false;
             config.save();
-            load_Z = false;
-            update = 0;
-            init_Str = "";
-            init_J = 0L;
-            init_LinkedHashSet.clear();
+            syncRequested = false;
+            syncDelay = 0;
+            lastSentKey = "";
+            lastSentAt = 0L;
+            registeredChannels.clear();
             status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), 0);
          }
       } else {
          PayloadSubscriptionManager.UnregisterResult unregister = new PayloadSubscriptionManager.UnregisterResult(0, true);
          if (isConnected(mc)) {
-            unregister = init_bD_TaskQueue(List.of());
+            unregister = unregisterRemoved(List.of());
          }
 
          synchronized (PayloadSubscriptionManager.class) {
             AutismConfig config = AutismConfig.getGlobal();
             config.payloadRegistrationUnlocked = false;
             config.save();
-            load_Z = false;
-            update = 0;
-            init_Str = "";
-            init_J = System.currentTimeMillis();
+            syncRequested = false;
+            syncDelay = 0;
+            lastSentKey = "";
+            lastSentAt = System.currentTimeMillis();
             if (unregister.init_Z()) {
-               init_LinkedHashSet.clear();
+               registeredChannels.clear();
             }
 
             status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), unregister.init_I());
@@ -112,15 +112,15 @@ public final class PayloadSubscriptionManager {
 
    public static synchronized void learnCodecChannel(String channel) {
       String normalized = normalize(channel);
-      if (isRegisterable(normalized) && !load_Z(normalized)) {
-         moveToEnd(load_LinkedHashSet, normalized);
+      if (isRegisterable(normalized) && !isTestChannel(normalized)) {
+         moveToEnd(codecChannels, normalized);
       }
    }
 
    public static synchronized void learnObservedChannel(String channel) {
       String normalized = normalize(channel);
-      if (isRegisterable(normalized) && !load_Z(normalized)) {
-         moveToEnd(read_LinkedHashSet, normalized);
+      if (isRegisterable(normalized) && !isTestChannel(normalized)) {
+         moveToEnd(observedChannels, normalized);
       }
    }
 
@@ -130,8 +130,8 @@ public final class PayloadSubscriptionManager {
 
          for (String channel : AutismPayloadSupport.extractRegisteredChannels(snapshot.channel(), snapshot.rawBytes())) {
             String normalized = normalize(channel);
-            if (isRegisterable(normalized) && !load_Z(normalized)) {
-               moveToEnd(read_LinkedHashSet, normalized);
+            if (isRegisterable(normalized) && !isTestChannel(normalized)) {
+               moveToEnd(observedChannels, normalized);
             }
          }
       }
@@ -139,39 +139,39 @@ public final class PayloadSubscriptionManager {
 
    public static synchronized List<String> learnedChannels() {
       LinkedHashSet<String> channels = new LinkedHashSet<>();
-      channels.addAll(load_LinkedHashSet);
-      channels.addAll(read_LinkedHashSet);
+      channels.addAll(codecChannels);
+      channels.addAll(observedChannels);
       return List.copyOf(channels);
    }
 
    public static void tick(Minecraft mc, boolean packetLoggerCapturing) {
-      if (load_Z && !autismclient.modules.aD.read_Z() && isConnected(mc)) {
+      if (syncRequested && !autismclient.modules.aD.read_Z() && isConnected(mc)) {
          synchronized (PayloadSubscriptionManager.class) {
-            if (update > 0) {
-               update--;
+            if (syncDelay > 0) {
+               syncDelay--;
                return;
             }
 
-            if (!load_Z) {
+            if (!syncRequested) {
                return;
             }
          }
 
          if (!isRegistrationUnlocked()) {
             synchronized (PayloadSubscriptionManager.class) {
-               load_Z = false;
-               init_Str = "";
-               init_J = 0L;
+               syncRequested = false;
+               lastSentKey = "";
+               lastSentAt = 0L;
                status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), 0);
             }
          } else {
             PayloadSubscriptionManager.RegistrationPlan plan = plan(packetLoggerCapturing);
             if (plan.channels().isEmpty()) {
-               PayloadSubscriptionManager.UnregisterResult unregister = init_bD_TaskQueue(List.of());
+               PayloadSubscriptionManager.UnregisterResult unregister = unregisterRemoved(List.of());
                synchronized (PayloadSubscriptionManager.class) {
-                  load_Z = false;
-                  init_Str = "";
-                  init_J = 0L;
+                  syncRequested = false;
+                  lastSentKey = "";
+                  lastSentAt = 0L;
                   status = new PayloadSubscriptionManager.RegistrationStatus(
                      0, plan.init_I(), plan.load_I(), unregister.init_Z(), System.currentTimeMillis(), List.of(), plan.load_List(), unregister.init_I(), false
                   );
@@ -180,18 +180,18 @@ public final class PayloadSubscriptionManager {
                String key = String.join("\n", plan.channels());
                synchronized (PayloadSubscriptionManager.class) {
                   long now = System.currentTimeMillis();
-                  if (!load_Z && key.equals(init_Str)) {
+                  if (!syncRequested && key.equals(lastSentKey)) {
                      return;
                   }
 
-                  init_Str = key;
-                  init_J = now;
-                  load_Z = false;
+                  lastSentKey = key;
+                  lastSentAt = now;
+                  syncRequested = false;
                }
 
                byte[] body = encodeChannels(plan.channels());
                if (body.length != 0) {
-                  PayloadSubscriptionManager.UnregisterResult unregister = init_bD_TaskQueue(plan.channels());
+                  PayloadSubscriptionManager.UnregisterResult unregister = unregisterRemoved(plan.channels());
                   boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:register", body, "play");
                   PayloadSubscriptionManager.RegistrationStatus newStatus = new PayloadSubscriptionManager.RegistrationStatus(
                      plan.channels().size(),
@@ -207,8 +207,8 @@ public final class PayloadSubscriptionManager {
                   synchronized (PayloadSubscriptionManager.class) {
                      status = newStatus;
                      if (sent) {
-                        init_LinkedHashSet.clear();
-                        init_LinkedHashSet.addAll(plan.channels());
+                        registeredChannels.clear();
+                        registeredChannels.addAll(plan.channels());
                      }
                   }
 
@@ -242,16 +242,16 @@ public final class PayloadSubscriptionManager {
       return collector.build();
    }
 
-   private static PayloadSubscriptionManager.UnregisterResult init_bD_TaskQueue(List<String> nextChannels) {
+   private static PayloadSubscriptionManager.UnregisterResult unregisterRemoved(List<String> nextChannels) {
       LinkedHashSet<String> removed = new LinkedHashSet<>();
       synchronized (PayloadSubscriptionManager.class) {
-         if (init_LinkedHashSet.isEmpty()) {
+         if (registeredChannels.isEmpty()) {
             return new PayloadSubscriptionManager.UnregisterResult(0, true);
          }
 
          Set<String> next = new LinkedHashSet<>(nextChannels == null ? List.of() : nextChannels);
 
-         for (String channel : init_LinkedHashSet) {
+         for (String channel : registeredChannels) {
             if (!next.contains(channel)) {
                removed.add(channel);
             }
@@ -265,7 +265,7 @@ public final class PayloadSubscriptionManager {
       boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:unregister", encodeChannels(List.copyOf(removed)), "play");
       if (sent) {
          synchronized (PayloadSubscriptionManager.class) {
-            init_LinkedHashSet.removeAll(removed);
+            registeredChannels.removeAll(removed);
          }
       }
 
@@ -355,7 +355,7 @@ public final class PayloadSubscriptionManager {
       return PayloadRegistrationManager.isExactChannel(channel);
    }
 
-   private static boolean load_Z(String channel) {
+   private static boolean isTestChannel(String channel) {
       if (TRACE) {
          return false;
       }

@@ -1500,7 +1500,7 @@ final class AiObtain {
          final Object startLevel = mc.level;
          AiOperation legOp;
          int legCount;
-         int load;
+         int seekRetries;
          boolean cancelled;
 
          boolean wantedEntityNearby() {
@@ -1552,8 +1552,8 @@ final class AiObtain {
                return this.finish(AiOperation.Status.FAILED, "No " + what + " found in " + this.legCount + " legs");
             }
 
-            if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.load < 2) {
-               this.load++;
+            if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.seekRetries < 2) {
+               this.seekRetries++;
                this.legOp = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", (int)Math.min(120L, left)));
                return this.finish(AiOperation.Status.RUNNING, "Up to open sky to look for " + what);
             }

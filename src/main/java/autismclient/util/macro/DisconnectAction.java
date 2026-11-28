@@ -50,26 +50,26 @@ public class DisconnectAction implements MacroAction {
    public void execute(Minecraft mc) {
       switch (this.mode) {
          case DISCONNECT:
-            this.init_V(mc);
+            this.disconnectNow(mc);
             break;
          case KICK:
-            this.read_V(mc);
+            this.performKick(mc);
             break;
          case KICK_DUPE:
             this.write(mc);
             break;
          case AUTO_DISCONNECT:
-            this.load_V(mc);
+            this.monitorTrigger(mc);
       }
    }
 
-   private void init_V(Minecraft mc) {
+   private void disconnectNow(Minecraft mc) {
       if (mc.level != null && mc.getConnection() != null) {
          mc.getConnection().getConnection().disconnect(Component.literal("Disconnected by Macro"));
       }
    }
 
-   private void load_V(Minecraft mc) {
+   private void monitorTrigger(Minecraft mc) {
       if (mc.player != null && mc.getConnection() != null) {
          AutismClientMessaging.sendPrefixed("§eAuto Disconnect: Monitoring for " + this.trigger.name() + "...");
          String initialWorld = mc.level != null ? mc.level.dimension().identifier().toString() : "";
@@ -78,7 +78,7 @@ public class DisconnectAction implements MacroAction {
          double initialZ = mc.player.getZ();
          Screen initialScreen = mc.gui.screen();
          boolean initialScreenOpen = mc.gui.screen() != null;
-         boolean initialInventoryEmpty = this.init_Z_2(mc);
+         boolean initialInventoryEmpty = this.isInventoryEmpty(mc);
          long startTime = System.currentTimeMillis();
          boolean triggered = false;
          long lastPositionCheck = startTime;
@@ -151,7 +151,7 @@ public class DisconnectAction implements MacroAction {
                   prevScreen = curScreen;
                   break;
                case INVENTORY_CLEAR:
-                  if (!initialInventoryEmpty && this.init_Z_2(mc)) {
+                  if (!initialInventoryEmpty && this.isInventoryEmpty(mc)) {
                      AutismClientMessaging.sendPrefixed("§aInventory clear detected!");
                      triggered = true;
                   }
@@ -184,14 +184,14 @@ public class DisconnectAction implements MacroAction {
          }
 
          AutismClientMessaging.sendPrefixed("§cExecuting disconnect!");
-         this.init_V(mc);
+         this.disconnectNow(mc);
          return;
       } else {
          AutismClientMessaging.sendPrefixed("§cNo player or network connection!");
       }
    }
 
-   private boolean init_Z_2(Minecraft mc) {
+   private boolean isInventoryEmpty(Minecraft mc) {
       if (mc.player == null) {
          return true;
       }
@@ -205,10 +205,10 @@ public class DisconnectAction implements MacroAction {
       return true;
    }
 
-   private void read_V(Minecraft mc) {
+   private void performKick(Minecraft mc) {
       if (mc.player == null || mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo player or network connection!");
-      } else if (this.read_Z(mc)) {
+      } else if (this.checkLagPrerequisites(mc)) {
          this.sendLagPackets(mc);
          this.sendKickPackets(mc);
          this.sendLagPackets(mc);
@@ -223,7 +223,7 @@ public class DisconnectAction implements MacroAction {
    private void write(Minecraft mc) {
       if (mc.player == null || mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo player or network connection!");
-      } else if (this.read_Z(mc)) {
+      } else if (this.checkLagPrerequisites(mc)) {
          if (this.useNextAction) {
             List<MacroAction> actions = this.pendingActions;
             this.pendingActions = null;
@@ -321,7 +321,7 @@ public class DisconnectAction implements MacroAction {
       return true;
    }
 
-   private boolean read_Z(Minecraft mc) {
+   private boolean checkLagPrerequisites(Minecraft mc) {
       switch (this.lagMethod) {
          case BOAT_NBT:
             Entity vehicle = mc.player.getVehicle();

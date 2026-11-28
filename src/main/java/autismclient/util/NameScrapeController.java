@@ -15,8 +15,8 @@ public final class NameScrapeController {
    private static final int load_I = 150000;
    private static final char[] SPINNER = new char[]{'|', '/', '-', '\\'};
    private static volatile boolean scraping;
-   private static volatile boolean load_Z;
-   private static volatile boolean read_Z;
+   private static volatile boolean paused;
+   private static volatile boolean stopped;
    private static volatile int namesFound;
    private static volatile int queriesSent;
    private static volatile int targetLimit;
@@ -25,15 +25,15 @@ public final class NameScrapeController {
    private static volatile int onlineCount;
    private static volatile String statusText = "";
    private static volatile ClientPacketListener activeConnection;
-   private static final CommandTabNameProber.ProbeControl init_be_DataUtil = new CommandTabNameProber.ProbeControl() {
+   private static final CommandTabNameProber.ProbeControl PROBE_CONTROL = new CommandTabNameProber.ProbeControl() {
       @Override
       public boolean isCancelled() {
-         return NameScrapeController.read_Z();
+         return NameScrapeController.shouldStop();
       }
 
       @Override
       public boolean isPaused() {
-         return NameScrapeController.load_Z && NameScrapeController.scraping;
+         return NameScrapeController.paused && NameScrapeController.scraping;
       }
 
       @Override
@@ -67,7 +67,7 @@ public final class NameScrapeController {
    }
 
    public static boolean load_Z() {
-      return scraping && load_Z;
+      return scraping && paused;
    }
 
    public static void start(int requestedLimit) {
@@ -82,8 +82,8 @@ public final class NameScrapeController {
          AutismClientMessaging.sendPrefixed("Namescrape: already running. Use stop / pause / resume.");
       } else {
          scraping = true;
-         load_Z = false;
-         read_Z = false;
+         paused = false;
+         stopped = false;
          deepScan = deep;
          namesFound = 0;
          queriesSent = 0;
@@ -105,7 +105,7 @@ public final class NameScrapeController {
       if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to pause.");
       } else {
-         load_Z = true;
+         paused = true;
          AutismClientMessaging.sendPrefixed("Namescrape: paused (" + namesFound + " so far). Use resume.");
       }
    }
@@ -114,7 +114,7 @@ public final class NameScrapeController {
       if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to resume.");
       } else {
-         load_Z = false;
+         paused = false;
          AutismClientMessaging.sendPrefixed("Namescrape: resumed.");
       }
    }
@@ -123,8 +123,8 @@ public final class NameScrapeController {
       if (!scraping) {
          AutismClientMessaging.sendPrefixed("Namescrape: nothing to stop.");
       } else {
-         read_Z = true;
-         load_Z = false;
+         stopped = true;
+         paused = false;
          scraping = false;
          AutismClientMessaging.sendPrefixed("Namescrape: stopping, copying " + namesFound + " so far...");
       }
@@ -132,7 +132,7 @@ public final class NameScrapeController {
 
    private static void runProbe(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.ProbeVector> vectors) {
       try {
-         CommandTabNameProber.init(connection, names, self, vectors, init_be_DataUtil);
+         CommandTabNameProber.init(connection, names, self, vectors, PROBE_CONTROL);
          List<String> result = new ArrayList<>(names.values());
          if (hasLimit && result.size() > targetLimit) {
             result = new ArrayList<>(result.subList(0, targetLimit));
@@ -144,7 +144,7 @@ public final class NameScrapeController {
       }
    }
 
-   private static boolean read_Z() {
+   private static boolean shouldStop() {
       if (scraping && !autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
          return mc == null || mc.getConnection() != activeConnection;
@@ -161,7 +161,7 @@ public final class NameScrapeController {
          finishScrape("Namescrape: no names found.", "", 0);
       } else {
          finishScrape(
-            (read_Z ? "Namescrape stopped: " : "Namescrape: ") + String.format(Locale.US, "%,d", result.size()) + " names (" + kb + " KB) copied.",
+            (stopped ? "Namescrape stopped: " : "Namescrape: ") + String.format(Locale.US, "%,d", result.size()) + " names (" + kb + " KB) copied.",
             joined,
             result.size()
          );
@@ -172,7 +172,7 @@ public final class NameScrapeController {
       Minecraft mc = Minecraft.getInstance();
       Runnable done = () -> {
          scraping = false;
-         load_Z = false;
+         paused = false;
          activeConnection = null;
          if (!autismclient.modules.aD.write_Z()) {
             if (count > 0 && mc != null && mc.keyboardHandler != null && !clipboard.isEmpty()) {
@@ -203,7 +203,7 @@ public final class NameScrapeController {
             int x = Math.max(4, (cA.init_I() - width) / 2);
             int y = 6;
             autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, width, height), colors.popupSurface, colors.borderStrong);
-            String title = (load_Z ? "|| " : spin + " ") + (load_Z ? "Namescrape paused" : "Scraping names");
+            String title = (paused ? "|| " : spin + " ") + (paused ? "Namescrape paused" : "Scraping names");
             int target = target();
             String count = formatCount(names) + (target > 0 ? " / " + formatCount(target) : "");
             ctx.init_PoolEntry().draw(graphics, title, x + pad, y + 6, colors.textPrimary);

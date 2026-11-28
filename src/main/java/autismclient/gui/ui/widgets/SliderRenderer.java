@@ -30,7 +30,7 @@ public final class SliderRenderer {
       float knobR = Math.max(1.5F, bounds.sync() / 2.0F - 2.0F);
       float knobCx = Math.max(bounds.read() + 2 + knobR, Math.min(bounds.init() - 2 - knobR, track.read() + fillW));
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(
-         context.init_GuiGraphicsExtract(), knobCx, bounds.write() + bounds.sync() / 2.0F, knobR, init_I_I(colors.textSecondary, colors.textPrimary, hoverT)
+         context.init_GuiGraphicsExtract(), knobCx, bounds.write() + bounds.sync() / 2.0F, knobR, lerpColor(colors.textSecondary, colors.textPrimary, hoverT)
       );
    }
 
@@ -45,7 +45,7 @@ public final class SliderRenderer {
       return min + Math.round((value - min) / safeStep) * safeStep;
    }
 
-   private static int init_I_I(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
       int ab = from & 0xFF;

@@ -40,7 +40,7 @@ public final class RotationStreamPlanner {
    }
 
    public static boolean isActive(RotationStreamPlanner.StreamState s) {
-      return s != null && s.init_Z;
+      return s != null && s.seeded;
    }
 
    public static RotationMath.Rotation currentRotation(RotationStreamPlanner.StreamState s) {
@@ -56,26 +56,26 @@ public final class RotationStreamPlanner {
       s.lastPitchStep = 0.0;
       s.kYaw = 0;
       s.kPitch = 0;
-      s.read_F = 0.0F;
-      s.init_ap_BufferHelper = null;
-      s.load_ap_BufferHelper = null;
+      s.lastYawDelta = 0.0F;
+      s.activeOffsets = null;
+      s.pendingOffsets = null;
       s.goalYaw = from.yaw();
       s.goalPitch = from.pitch();
-      s.init_Z = true;
+      s.seeded = true;
    }
 
    public static void reset(RotationStreamPlanner.StreamState s) {
       Objects.requireNonNull(s, "stream");
-      s.init_Z = false;
+      s.seeded = false;
       s.yaw = 0.0;
       s.pitch = 0.0;
       s.lastYawStep = 0.0;
       s.lastPitchStep = 0.0;
       s.kYaw = 0;
       s.kPitch = 0;
-      s.read_F = 0.0F;
-      s.init_ap_BufferHelper = null;
-      s.load_ap_BufferHelper = null;
+      s.lastYawDelta = 0.0F;
+      s.activeOffsets = null;
+      s.pendingOffsets = null;
       s.goalYaw = 0.0;
       s.goalPitch = 0.0;
    }
@@ -90,44 +90,44 @@ public final class RotationStreamPlanner {
       s.lastPitchStep = Math.abs(lastStepPitch);
       s.kYaw = (int)Math.round(s.lastYawStep / g);
       s.kPitch = (int)Math.round(s.lastPitchStep / g);
-      s.read_F = (float)s.lastYawStep;
-      s.init_ap_BufferHelper = null;
-      s.load_ap_BufferHelper = null;
+      s.lastYawDelta = (float)s.lastYawStep;
+      s.activeOffsets = null;
+      s.pendingOffsets = null;
       s.goalYaw = at.yaw();
       s.goalPitch = at.pitch();
-      s.init_Z = true;
+      s.seeded = true;
    }
 
    public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
       RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd
    ) {
-      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, true);
+      return planStep(s, goal, maxYawStep, maxPitchStep, gcd, true);
    }
 
-   public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
+   public static RotationStreamPlanner.StepResult planStep(
       RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
    ) {
-      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.MotionProfile.STANDARD);
+      return planStep(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.MotionProfile.STANDARD);
    }
 
-   public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
+   public static RotationStreamPlanner.StepResult planStep(
       RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset, RotationStreamPlanner.MotionProfile profile
    ) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(goal, "goal");
       Objects.requireNonNull(profile, "profile");
-      if (!s.init_Z) {
+      if (!s.seeded) {
          throw new IllegalStateException("stream is not seeded; seed() from the current server rotation first");
       }
 
       double g = gcd > 0.0 ? gcd : 0.15;
       RotationStreamPlanner.RolledOffsets rolls;
-      if (init_Z_ap_TaskQueue(s, goal, profile)) {
-         s.load_ap_BufferHelper = init_ap_BufferHelper_Random(s.random, goal, profile);
-         rolls = s.load_ap_BufferHelper;
+      if (needsReroll(s, goal, profile)) {
+         s.pendingOffsets = rollOffsets(s.random, goal, profile);
+         rolls = s.pendingOffsets;
       } else {
-         s.load_ap_BufferHelper = null;
-         rolls = s.init_ap_BufferHelper;
+         s.pendingOffsets = null;
+         rolls = s.activeOffsets;
       }
 
       s.goalYaw = goal.yaw();
@@ -139,23 +139,23 @@ public final class RotationStreamPlanner {
       double effectivePitch = clampPitch(goal.pitch() + (applyGoalOffset ? rolls.pitchGoalOffset : 0.0));
       RotationStreamPlanner.AxisApproach yawAxis = new RotationStreamPlanner.AxisApproach(wrapDegrees(effectiveYaw - s.yaw), maxYawStep, g, s.lastYawStep, rolls.accelRoll, 0.0 / 0.0);
       RotationStreamPlanner.AxisApproach pitchAxis = new RotationStreamPlanner.AxisApproach(effectivePitch - s.pitch, maxPitchStep, g, s.lastPitchStep, rolls.accelRoll, s.pitch);
-      int kYaw = init_I_ap_DataUtil(yawAxis, s.kYaw, rolls.init_D, rolls.stepScaleRoll * s.wanderWeight, s.random, s.yawDither);
-      int kPitch = init_I_ap_DataUtil(pitchAxis, s.kPitch, rolls.pitchRoll, rolls.stepScaleRoll * s.wanderWeight, s.random, s.pitchDither);
+      int kYaw = chooseStepCount(yawAxis, s.kYaw, rolls.yawRoll, rolls.stepScaleRoll * s.wanderWeight, s.random, s.yawDither);
+      int kPitch = chooseStepCount(pitchAxis, s.kPitch, rolls.pitchRoll, rolls.stepScaleRoll * s.wanderWeight, s.random, s.pitchDither);
       if (kYaw == 0 && Math.abs(kPitch * g) > 2.75 && yawAxis.isSettled() && s.random.nextDouble() < 0.5) {
-         kYaw = init_I_ap_DataUtil_Random(yawAxis, s.random);
+         kYaw = randomNudge(yawAxis, s.random);
       }
 
       if (kPitch == 0 && Math.abs(kYaw * g) > 2.75 && pitchAxis.isSettled() && s.random.nextDouble() < 0.5) {
-         kPitch = init_I_ap_DataUtil_Random(pitchAxis, s.random);
+         kPitch = randomNudge(pitchAxis, s.random);
       }
 
       return new RotationStreamPlanner.StepResult(s, kYaw, kPitch, g);
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_ap_TaskQueue_ap_ConfigStore(RotationStreamPlanner.StreamState s, RotationStreamPlanner.StepResult step) {
+   public static RotationMath.Rotation applyStep(RotationStreamPlanner.StreamState s, RotationStreamPlanner.StepResult step) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(step, "step");
-      if (!s.init_Z) {
+      if (!s.seeded) {
          throw new IllegalStateException("stream is not seeded; seed() first");
       }
 
@@ -163,9 +163,9 @@ public final class RotationStreamPlanner {
          throw new IllegalArgumentException("step was computed on a different stream");
       }
 
-      if (s.load_ap_BufferHelper != null) {
-         s.init_ap_BufferHelper = s.load_ap_BufferHelper;
-         s.load_ap_BufferHelper = null;
+      if (s.pendingOffsets != null) {
+         s.activeOffsets = s.pendingOffsets;
+         s.pendingOffsets = null;
       }
 
       float yawBeforeTick = (float)s.yaw;
@@ -175,7 +175,7 @@ public final class RotationStreamPlanner {
       s.lastPitchStep = Math.abs(step.pitchSteps * step.gcd);
       s.kYaw = step.kYaw;
       s.kPitch = step.pitchSteps;
-      init_V_ap_TaskQueue_F(s, yawBeforeTick);
+      recordYawDelta(s, yawBeforeTick);
       return currentRotation(s);
    }
 
@@ -195,12 +195,12 @@ public final class RotationStreamPlanner {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(goal, "goal");
       Objects.requireNonNull(profile, "profile");
-      if (!s.init_Z) {
+      if (!s.seeded) {
          begin(s, goal);
          return currentRotation(s);
       } else {
-         return init_ce_DataUtil_ap_TaskQueue_ap_ConfigStore(
-            s, init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, profile)
+         return applyStep(
+            s, planStep(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, profile)
          );
       }
    }
@@ -244,13 +244,13 @@ public final class RotationStreamPlanner {
       boolean naturalMouseAngles
    ) {
       Objects.requireNonNull(s, "stream");
-      if (!s.init_Z) {
+      if (!s.seeded) {
          throw new IllegalStateException("stream is not seeded; seed() from the current server rotation first");
       }
 
       double g = gcd > 0.0 ? gcd : 0.15;
       RotationStreamPlanner.AxisQuantizer yaw = new RotationStreamPlanner.AxisQuantizer(
-         maxYawStep, g, s.lastYawStep, s.kYaw, s.lastYawStep > 0.0 ? accelUp : accelDown, accelDown, 0.0 / 0.0, Math.abs(s.read_F)
+         maxYawStep, g, s.lastYawStep, s.kYaw, s.lastYawStep > 0.0 ? accelUp : accelDown, accelDown, 0.0 / 0.0, Math.abs(s.lastYawDelta)
       );
       RotationStreamPlanner.AxisQuantizer pitch = new RotationStreamPlanner.AxisQuantizer(maxPitchStep, g, s.lastPitchStep, s.kPitch, s.lastPitchStep > 0.0 ? accelUp : accelDown, accelDown, s.pitch);
       int kYaw = yaw.quantizeDelta(yawDelta, s.random);
@@ -263,8 +263,8 @@ public final class RotationStreamPlanner {
          kPitch = pitch.randomMinimalStep(s.random);
       }
 
-      s.init_ap_BufferHelper = null;
-      s.load_ap_BufferHelper = null;
+      s.activeOffsets = null;
+      s.pendingOffsets = null;
       float yawBeforeTick = (float)s.yaw;
       float pitchBeforeTick = (float)s.pitch;
       s.yaw = applyGcdSteps(s.yaw, kYaw, g);
@@ -274,16 +274,16 @@ public final class RotationStreamPlanner {
       s.kYaw = kYaw;
       s.kPitch = kPitch;
       boolean moving = Math.abs((float)s.yaw - yawBeforeTick) + Math.abs((float)s.pitch - pitchBeforeTick) > 0.75F;
-      init_V_ap_TaskQueue_2(s, g, yawBeforeTick, yaw, naturalMouseAngles && moving);
+      quantizeYaw(s, g, yawBeforeTick, yaw, naturalMouseAngles && moving);
       if (naturalMouseAngles) {
-         init_V_ap_TaskQueue(s, g, pitchBeforeTick, yawBeforeTick, pitch);
+         quantizePitch(s, g, pitchBeforeTick, yawBeforeTick, pitch);
       }
 
-      init_V_ap_TaskQueue_F(s, yawBeforeTick);
+      recordYawDelta(s, yawBeforeTick);
       return currentRotation(s);
    }
 
-   private static void init_V_ap_TaskQueue_2(RotationStreamPlanner.StreamState s, double gcd, float before, RotationStreamPlanner.AxisQuantizer axis, boolean naturalMouseAngles) {
+   private static void quantizeYaw(RotationStreamPlanner.StreamState s, double gcd, float before, RotationStreamPlanner.AxisQuantizer axis, boolean naturalMouseAngles) {
       float emitted = (float)s.yaw;
       float wrapped = wrapFloatDegrees(emitted);
       boolean forbidden = isQuarterTurn(wrapped);
@@ -306,14 +306,14 @@ public final class RotationStreamPlanner {
             for (int direction : new int[]{step, -step}) {
                int offset = distance * direction;
                int candidate = s.kYaw + offset;
-               if (axis.isAcceptableStep(candidate) && (!naturalMouseAngles || !init_Z_D(Math.abs(candidate * gcd)))) {
+               if (axis.isAcceptableStep(candidate) && (!naturalMouseAngles || !isQuarterMultiple(Math.abs(candidate * gcd)))) {
                   double corrected = applyGcdSteps(before, candidate, gcd);
                   float next = wrapFloatDegrees((float)corrected);
                   if (!isQuarterTurn(next)
                      && (Float.isNaN(s.exactYaw) || Float.compare(next, wrapFloatDegrees(s.exactYaw)) != 0)
                      && (Float.isNaN(s.exactClosestYaw) || Float.compare(next, wrapFloatDegrees(s.exactClosestYaw)) != 0)) {
                      float delta = Math.abs((float)corrected - before);
-                     if ((!naturalMouseAngles || !isGcdAligned((float)corrected, gcd)) && (!(delta > 1.25) || !(Math.abs(delta - Math.abs(s.read_F)) < 1.0E-4F))) {
+                     if ((!naturalMouseAngles || !isGcdAligned((float)corrected, gcd)) && (!(delta > 1.25) || !(Math.abs(delta - Math.abs(s.lastYawDelta)) < 1.0E-4F))) {
                         s.yaw = corrected;
                         s.kYaw = candidate;
                         s.lastYawStep = Math.abs(candidate * gcd);
@@ -332,7 +332,7 @@ public final class RotationStreamPlanner {
       return quantum > 0.0F && Math.abs(angle - (angle - angle % quantum)) == 0.0F;
    }
 
-   private static void init_V_ap_TaskQueue(RotationStreamPlanner.StreamState s, double gcd, float before, float yawBefore, RotationStreamPlanner.AxisQuantizer axis) {
+   private static void quantizePitch(RotationStreamPlanner.StreamState s, double gcd, float before, float yawBefore, RotationStreamPlanner.AxisQuantizer axis) {
       float delta = (float)s.pitch - before;
       float yawDelta = (float)s.yaw - yawBefore;
       if (!(Math.abs(yawDelta) + Math.abs(delta) <= 0.75F) && isGcdAligned((float)s.pitch, gcd)) {
@@ -341,7 +341,7 @@ public final class RotationStreamPlanner {
          for (int distance = 1; distance <= 8; distance++) {
             for (int direction : new int[]{sign, -sign}) {
                int candidate = s.kPitch + distance * direction;
-               if (Integer.signum(candidate) == sign && axis.isAcceptableStep(candidate) && !init_Z_D(Math.abs(candidate * gcd))) {
+               if (Integer.signum(candidate) == sign && axis.isAcceptableStep(candidate) && !isQuarterMultiple(Math.abs(candidate * gcd))) {
                   double corrected = applyGcdSteps(before, candidate, gcd);
                   if (!isGcdAligned((float)corrected, gcd)) {
                      s.pitch = corrected;
@@ -359,8 +359,8 @@ public final class RotationStreamPlanner {
       return counts == 0 ? angle : (float)angle + (float)(counts * (gcd / 0.15)) * 0.15F;
    }
 
-   private static void init_V_ap_TaskQueue_F(RotationStreamPlanner.StreamState s, float before) {
-      s.read_F = (float)s.yaw - before;
+   private static void recordYawDelta(RotationStreamPlanner.StreamState s, float before) {
+      s.lastYawDelta = (float)s.yaw - before;
    }
 
    private static boolean isQuarterTurn(float wrappedYaw) {
@@ -387,16 +387,16 @@ public final class RotationStreamPlanner {
       s.exactClosestYaw = exactClosestYaw;
    }
 
-   static double[] load(RotationStreamPlanner.StreamState s) {
-      return isActive(s) && s.init_ap_BufferHelper != null
-         ? new double[]{s.goalYaw + s.init_ap_BufferHelper.yawGoalOffset, clampPitch(s.goalPitch + s.init_ap_BufferHelper.pitchGoalOffset)}
+   static double[] offsetGoal(RotationStreamPlanner.StreamState s) {
+      return isActive(s) && s.activeOffsets != null
+         ? new double[]{s.goalYaw + s.activeOffsets.yawGoalOffset, clampPitch(s.goalPitch + s.activeOffsets.pitchGoalOffset)}
          : null;
    }
 
-   private static RotationStreamPlanner.RolledOffsets init_ap_BufferHelper_Random(Random random, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
+   private static RotationStreamPlanner.RolledOffsets rollOffsets(Random random, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
       RotationStreamPlanner.RolledOffsets rolls = new RotationStreamPlanner.RolledOffsets();
       rolls.profile = profile;
-      rolls.init_D = profile.init_D + profile.load_D * random.nextDouble();
+      rolls.yawRoll = profile.init_D + profile.load_D * random.nextDouble();
       rolls.pitchRoll = profile.init_D + profile.load_D * random.nextDouble();
       rolls.stepScaleRoll = profile.read_D + profile.write_D * random.nextDouble();
       rolls.accelRoll = profile.update_D + profile.sync_D * random.nextDouble();
@@ -412,21 +412,21 @@ public final class RotationStreamPlanner {
       return random.nextBoolean() ? magnitude : -magnitude;
    }
 
-   private static boolean init_Z_ap_TaskQueue(RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
-      if (s.init_ap_BufferHelper == null) {
+   private static boolean needsReroll(RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
+      if (s.activeOffsets == null) {
          return true;
       }
 
-      if (s.init_ap_BufferHelper.profile != profile) {
+      if (s.activeOffsets.profile != profile) {
          return true;
       }
 
-      double dYaw = wrapDegrees(goal.yaw() - s.init_ap_BufferHelper.rolledGoalYaw);
-      double dPitch = goal.pitch() - s.init_ap_BufferHelper.rolledGoalPitch;
+      double dYaw = wrapDegrees(goal.yaw() - s.activeOffsets.rolledGoalYaw);
+      double dPitch = goal.pitch() - s.activeOffsets.rolledGoalPitch;
       return Math.max(Math.abs(dYaw), Math.abs(dPitch)) > 4.0;
    }
 
-   private static int init_I_ap_DataUtil(RotationStreamPlanner.AxisApproach axis, int lastK, double peak, double ease, Random random, int dither) {
+   private static int chooseStepCount(RotationStreamPlanner.AxisApproach axis, int lastK, double peak, double ease, Random random, int dither) {
       double desired = axis.remainingAbs <= 3.0 ? axis.remainingAbs : Math.min(Math.min(axis.remainingAbs * ease, axis.maxStep * peak), axis.accelCap);
       int k = axis.sign * (int)Math.round(desired / axis.stepUnit);
       if (!axis.isSettled() && (k == 0 || Integer.signum(k) != axis.sign)) {
@@ -446,15 +446,15 @@ public final class RotationStreamPlanner {
          }
       }
 
-      if (dither != 0 && axis.acceptsStep(k + dither) && init_Z_I(k + dither, lastK, axis.stepUnit)) {
+      if (dither != 0 && axis.acceptsStep(k + dither) && isNonRepeatingStep(k + dither, lastK, axis.stepUnit)) {
          k += dither;
       }
 
-      if (k != 0 && load_Z(Math.abs(k * axis.stepUnit))) {
+      if (k != 0 && isRoundStep(Math.abs(k * axis.stepUnit))) {
          int first = random.nextBoolean() ? 1 : -1;
-         if (axis.acceptsStep(k + first) && init_Z_I(k + first, lastK, axis.stepUnit) && !load_Z(Math.abs((k + first) * axis.stepUnit))) {
+         if (axis.acceptsStep(k + first) && isNonRepeatingStep(k + first, lastK, axis.stepUnit) && !isRoundStep(Math.abs((k + first) * axis.stepUnit))) {
             k += first;
-         } else if (axis.acceptsStep(k - first) && init_Z_I(k - first, lastK, axis.stepUnit) && !load_Z(Math.abs((k - first) * axis.stepUnit))) {
+         } else if (axis.acceptsStep(k - first) && isNonRepeatingStep(k - first, lastK, axis.stepUnit) && !isRoundStep(Math.abs((k - first) * axis.stepUnit))) {
             k -= first;
          }
       }
@@ -462,11 +462,11 @@ public final class RotationStreamPlanner {
       return k;
    }
 
-   private static boolean init_Z_I(int k, int lastK, double gcd) {
+   private static boolean isNonRepeatingStep(int k, int lastK, double gcd) {
       return k != lastK || Math.abs(k * gcd) <= 1.25;
    }
 
-   private static int init_I_ap_DataUtil_Random(RotationStreamPlanner.AxisApproach axis, Random random) {
+   private static int randomNudge(RotationStreamPlanner.AxisApproach axis, Random random) {
       int sign = random.nextBoolean() ? 1 : -1;
       if (axis.acceptsStep(sign)) {
          return sign;
@@ -491,11 +491,11 @@ public final class RotationStreamPlanner {
       return Math.max(0.9, Math.min(1.1, w));
    }
 
-   private static boolean init_Z_D(double absDelta) {
+   private static boolean isQuarterMultiple(double absDelta) {
       return Math.abs(absDelta - 0.25 * Math.round(absDelta / 0.25)) <= 2.0E-5;
    }
 
-   private static boolean load_Z(double absDelta) {
+   private static boolean isRoundStep(double absDelta) {
       return Math.abs(absDelta - 0.1 * Math.round(absDelta / 0.1)) <= 1.0E-6 || Math.abs(absDelta - 0.25 * Math.round(absDelta / 0.25)) <= 1.0E-6;
    }
 
@@ -518,7 +518,7 @@ public final class RotationStreamPlanner {
 
    private static final class RolledOffsets {
       RotationStreamPlanner.MotionProfile profile;
-      double init_D;
+      double yawRoll;
       double pitchRoll;
       double stepScaleRoll;
       double accelRoll;
@@ -569,11 +569,11 @@ public final class RotationStreamPlanner {
             k -= Integer.signum(k);
          }
 
-         if (k != 0 && RotationStreamPlanner.init_Z_D(Math.abs(k * this.gcd))) {
+         if (k != 0 && RotationStreamPlanner.isQuarterMultiple(Math.abs(k * this.gcd))) {
             int first = random.nextBoolean() ? 1 : -1;
-            if (this.withinStepBounds(k + first) && !RotationStreamPlanner.init_Z_D(Math.abs((k + first) * this.gcd))) {
+            if (this.withinStepBounds(k + first) && !RotationStreamPlanner.isQuarterMultiple(Math.abs((k + first) * this.gcd))) {
                k += first;
-            } else if (this.withinStepBounds(k - first) && !RotationStreamPlanner.init_Z_D(Math.abs((k - first) * this.gcd))) {
+            } else if (this.withinStepBounds(k - first) && !RotationStreamPlanner.isQuarterMultiple(Math.abs((k - first) * this.gcd))) {
                k -= first;
             }
          }
@@ -655,7 +655,7 @@ public final class RotationStreamPlanner {
       final double stepUnit;
       final double accelCap;
       final double currentPitch;
-      final boolean init_Z;
+      final boolean settled;
 
       AxisApproach(double remaining, float cap, double gcd, double lastStep, double accel, double pitchAcc) {
          this.remainingAbs = Math.abs(remaining);
@@ -664,14 +664,14 @@ public final class RotationStreamPlanner {
          this.stepUnit = gcd;
          this.accelCap = lastStep + accel;
          this.currentPitch = pitchAcc;
-         this.init_Z = !Double.isNaN(pitchAcc)
+         this.settled = !Double.isNaN(pitchAcc)
             && this.sign != 0
             && Math.abs(pitchAcc) <= 89.90000000100001
             && Math.abs(pitchAcc + this.sign * gcd) > 89.90000000100001;
       }
 
       boolean isSettled() {
-         return this.remainingAbs <= 0.5 || this.init_Z;
+         return this.remainingAbs <= 0.5 || this.settled;
       }
 
       boolean acceptsStep(int k) {
@@ -720,20 +720,20 @@ public final class RotationStreamPlanner {
 
    public static final class StreamState {
       private final Random random;
-      private boolean init_Z;
+      private boolean seeded;
       private double yaw;
       private double pitch;
       private double lastYawStep;
       private double lastPitchStep;
       private int kYaw;
       private int kPitch;
-      private RotationStreamPlanner.RolledOffsets init_ap_BufferHelper;
-      private RotationStreamPlanner.RolledOffsets load_ap_BufferHelper;
+      private RotationStreamPlanner.RolledOffsets activeOffsets;
+      private RotationStreamPlanner.RolledOffsets pendingOffsets;
       private int yawDither;
       private int pitchDither;
       private float exactYaw = 0.0F / 0.0F;
       private float exactClosestYaw = 0.0F / 0.0F;
-      private float read_F;
+      private float lastYawDelta;
       private double wanderWeight = 1.0;
       private double goalYaw;
       private double goalPitch;

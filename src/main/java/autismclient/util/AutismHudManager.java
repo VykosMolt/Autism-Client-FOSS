@@ -1157,7 +1157,7 @@ public final class AutismHudManager {
             lines.add(labeledLine(id, "Pos", formatBlockCoords(p[0], p[1], p[2])));
             break;
          case "nether_coords":
-            lines.add(init_al_NetHelper());
+            lines.add(coordinatesLine());
             break;
          case "fps":
             lines.add(fpsLine());
@@ -1257,7 +1257,7 @@ public final class AutismHudManager {
          Map<Module, Integer> plainWidths = new IdentityHashMap<>(modules.size() * 2);
 
          for (Module module : modules) {
-            plainWidths.put(module, init_I_Module_2(module, showInfo, showKeybind));
+            plainWidths.put(module, moduleLabelWidth(module, showInfo, showKeybind));
          }
 
          modules.sort((a, b) -> {
@@ -1372,7 +1372,7 @@ public final class AutismHudManager {
       return line.toString();
    }
 
-   private static int init_I_Module_2(Module module, boolean showInfo, boolean showKeybind) {
+   private static int moduleLabelWidth(Module module, boolean showInfo, boolean showKeybind) {
       return autismclient.gui.f.b.k.init(
          MC.font,
          moduleLabel(module, showInfo, showKeybind),
@@ -1381,7 +1381,7 @@ public final class AutismHudManager {
       );
    }
 
-   private static AutismHudManager.ColoredTextLine init_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine coordinatesLine() {
       if (MC.level != null && MC.player != null) {
          Identifier dimension = MC.level.dimension().identifier();
          String path = dimension.getPath();
@@ -1439,7 +1439,7 @@ public final class AutismHudManager {
             if ("compass".equals(id)) {
                fillWithAlpha(context, rect.read(), rect.write(), rect.width(), rect.height(), alpha, style.backgroundColor());
             } else {
-               init_V_GuiGraphicsExtract_3(context, font, id, rect, withAlpha(style.backgroundColor(), alpha), blockers);
+               fillElementBackground(context, font, id, rect, withAlpha(style.backgroundColor(), alpha), blockers);
             }
          } else if (editor) {
             autismclient.gui.f.b.k.init(context, rect.read(), rect.write(), rect.right(), rect.bottom(), editorBackdropColor(selected));
@@ -1505,7 +1505,7 @@ public final class AutismHudManager {
          if (!rectOverlapsOccluder(rect)) {
             List<AutismHudManager.LayoutRect> blockers = !background && !drawOutline ? null : outlineBlockers(font, id, rect);
             if (background) {
-               init_V_GuiGraphicsExtract_3(context, font, id, rect, backgroundColor, blockers);
+               fillElementBackground(context, font, id, rect, backgroundColor, blockers);
             } else if (editor) {
                autismclient.gui.f.b.k.init(context, rect.read(), rect.write(), rect.right(), rect.bottom(), editorColor);
             }
@@ -1644,7 +1644,7 @@ public final class AutismHudManager {
          for (int i = 0; i < slots.length; i++) {
             int sx = x + i * 18;
             if (!flat) {
-               init_V_GuiGraphicsExtract(context, sx, y);
+               drawBevelBox(context, sx, y);
             }
 
             ItemStack stack = MC.player.getItemBySlot(slots[i]);
@@ -1665,7 +1665,7 @@ public final class AutismHudManager {
                int sx = x + col * 18;
                int sy = y + row * 18;
                if (!flat) {
-                  init_V_GuiGraphicsExtract(context, sx, sy);
+                  drawBevelBox(context, sx, sy);
                }
 
                ItemStack stack = MC.player.getInventory().getItem(9 + row * 9 + col);
@@ -1708,7 +1708,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y) {
+   private static void drawBevelBox(GuiGraphicsExtractor context, int x, int y) {
       int fill = ThemePaletteManager.recolor(538579477, ThemePaletteManager.ColorRole.BACKDROP);
       int lit = ThemePaletteManager.recolor(1435577909, ThemePaletteManager.ColorRole.OUTLINE);
       int shade = ThemePaletteManager.recolor(1427835662, ThemePaletteManager.ColorRole.BACKDROP);
@@ -2767,21 +2767,21 @@ public final class AutismHudManager {
          compass.f_y_I = newLogoBottom + rowH * 2;
       }
 
-      if (init_Z_AutismConfig_HudEl(antiVanish)) {
+      if (isAtLegacyTopSlot(antiVanish)) {
          applyPosition(antiVanish, "TOP_LEFT", 0, newLogoBottom + rowH * 2);
       }
 
       int rightStackX = -1;
       int rightStackBottom = -2;
-      if (init_Z_AutismConfig_HudEl_2(coordinates, nether, rotation)
-         || init_Z_AutismConfig_HudEl_2(coordinates, nether, rotation, 0, oldRowH)
-         || init_Z_AutismConfig_HudEl_2(coordinates, nether, rotation, 0, rowH)) {
+      if (isLegacyTopLeftStack(coordinates, nether, rotation)
+         || isLegacyBottomRightStack(coordinates, nether, rotation, 0, oldRowH)
+         || isLegacyBottomRightStack(coordinates, nether, rotation, 0, rowH)) {
          applyPosition(coordinates, "BOTTOM_RIGHT", rightStackX, rightStackBottom - rowH * 2);
          applyPosition(nether, "BOTTOM_RIGHT", rightStackX, rightStackBottom - rowH);
          applyPosition(rotation, "BOTTOM_RIGHT", rightStackX, rightStackBottom);
       }
 
-      if (init_Z_AutismConfig_HudEl(compass, oldLogoBottom, oldSpacedLogoBottom, newLogoBottom, rowH)) {
+      if (isLegacyCompassSlot(compass, oldLogoBottom, oldSpacedLogoBottom, newLogoBottom, rowH)) {
          applyPosition(compass, "TOP_CENTER", 0, 2);
       }
    }
@@ -2790,11 +2790,11 @@ public final class AutismHudManager {
       return state != null && "TOP_LEFT".equals(state.anchor) && state.f_x_I == x && state.f_y_I == y;
    }
 
-   private static boolean init_Z_AutismConfig_HudEl(AutismConfig.HudElementState state) {
+   private static boolean isAtLegacyTopSlot(AutismConfig.HudElementState state) {
       return isAt(state, "TOP_RIGHT", 0, 72) || isAt(state, "TOP_LEFT", 0, 72);
    }
 
-   private static boolean init_Z_AutismConfig_HudEl_2(
+   private static boolean isLegacyTopLeftStack(
       AutismConfig.HudElementState coordinates, AutismConfig.HudElementState nether, AutismConfig.HudElementState rotation
    ) {
       int legacy = 0;
@@ -2824,7 +2824,7 @@ public final class AutismHudManager {
          : true;
    }
 
-   private static boolean init_Z_AutismConfig_HudEl_2(
+   private static boolean isLegacyBottomRightStack(
       AutismConfig.HudElementState coordinates, AutismConfig.HudElementState nether, AutismConfig.HudElementState rotation, int bottomOffset, int rowH
    ) {
       return isAt(coordinates, "BOTTOM_RIGHT", bottomOffset, -rowH * 2)
@@ -2836,7 +2836,7 @@ public final class AutismHudManager {
       return state != null && anchor.equals(state.anchor) && state.f_x_I == x && state.f_y_I == y;
    }
 
-   private static boolean init_Z_AutismConfig_HudEl(AutismConfig.HudElementState state, int oldLogoBottom, int oldSpacedLogoBottom, int newLogoBottom, int rowH) {
+   private static boolean isLegacyCompassSlot(AutismConfig.HudElementState state, int oldLogoBottom, int oldSpacedLogoBottom, int newLogoBottom, int rowH) {
       if (state == null) {
          return false;
       } else {
@@ -3470,7 +3470,7 @@ public final class AutismHudManager {
       return heldWidth;
    }
 
-   private static void init_V_GuiGraphicsExtract_3(
+   private static void fillElementBackground(
       GuiGraphicsExtractor context, Font font, String id, AutismHudManager.LayoutRect rect, int color, List<AutismHudManager.LayoutRect> blockers
    ) {
       List<AutismHudManager.LayoutRect> occluders = occludersFor(font, id, rect);
@@ -3572,7 +3572,7 @@ public final class AutismHudManager {
          if (cached != null) {
             AutismHudManager.ElementStyle style = cached.style();
             if (style.background() || style.outline()) {
-               for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
+               for (AutismHudManager.LayoutRect rect : occluderRects(other, font)) {
                   entries.add(new AutismHudManager.PlacedHudItem(other, i, rect, style.background()));
                }
             }
@@ -3622,7 +3622,7 @@ public final class AutismHudManager {
             if (!isShownInFpsElement(other) && getState(other).enabled && boolSetting(other, "background")) {
                int otherOrder = BUILTIN_ELEMENT_IDS.indexOf(other);
                if (otherOrder <= selfOrder) {
-                  for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
+                  for (AutismHudManager.LayoutRect rect : occluderRects(other, font)) {
                      if (!rect.sameRect(self) && (otherOrder != selfOrder || sortsBefore(rect, self)) && rect.intersects(self)) {
                         occluders.add(rect);
                      }
@@ -3807,7 +3807,7 @@ public final class AutismHudManager {
       } else {
          for (String other : BUILTIN_ELEMENT_IDS) {
             if (!isShownInFpsElement(other) && getState(other).enabled && hasBackgroundOrOutline(other) && (!other.equals(id) || "active_modules".equals(other))) {
-               for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
+               for (AutismHudManager.LayoutRect rect : occluderRects(other, font)) {
                   if (self == null || !rect.sameRect(self)) {
                      blockers.add(rect);
                   }
@@ -3819,7 +3819,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static List<AutismHudManager.LayoutRect> init_List_Str_Font(String id, Font font) {
+   private static List<AutismHudManager.LayoutRect> occluderRects(String id, Font font) {
       AutismHudManager.CachedElementLayout cached = cachedLayout(id, font);
       if ("active_modules".equals(id)) {
          List<AutismHudManager.LayoutRect> rects = visualRects(id, cached);

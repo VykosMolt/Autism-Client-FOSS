@@ -30,8 +30,8 @@ public final class ColorPickerPopup {
    private static final int run = 360;
    private static final int BACKDROP_COLOR = -1728053248;
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
-   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt;
-   private static ColorPickerPopup.PickerTexture load_NetHelper_StreamUt;
+   private static ColorPickerPopup.PickerTexture hueTexture;
+   private static ColorPickerPopup.PickerTexture saturationValueTexture;
    private static int svTextureHueBucket = -2147483648;
    private final Consumer<Integer> onSave;
    private final int initialArgb;
@@ -86,9 +86,9 @@ public final class ColorPickerPopup {
             context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(0, 0, context.init_I(), context.load_I()), -1728053248
          );
          WindowFrameRenderer.init(
-            context, this.bounds, "Color", false, false, true, this.init_NetHelper().init_Z(context.read(), context.write()), true, 5, 5, 14
+            context, this.bounds, "Color", false, false, true, this.headerBounds().init_Z(context.read(), context.write()), true, 5, 5, 14
          );
-         autismclient.gui.f.NetHelper close = TitleBarRenderer.closeButton(this.init_NetHelper());
+         autismclient.gui.f.NetHelper close = TitleBarRenderer.closeButton(this.headerBounds());
          boolean closeHover = close.init_Z(context.read(), context.write());
          float closeFade = autismclient.gui.ui.HoverTransitionCache.sample("colorpicker-close:" + autismclient.gui.ui.HoverTransitionCache.boundsKey(close), closeHover);
          if (closeFade > 0.001F) {
@@ -107,7 +107,7 @@ public final class ColorPickerPopup {
          autismclient.gui.f.NetHelper current = autismclient.gui.f.NetHelper.init(this.bounds.read() + 135, this.bounds.write() + 19, 38, 20);
          autismclient.gui.f.NetHelper draft = autismclient.gui.f.NetHelper.init(this.bounds.read() + 135 + 44, this.bounds.write() + 19, 38, 20);
          this.renderSwatch(context, current, this.initialArgb);
-         this.renderSwatch(context, draft, this.read_I());
+         this.renderSwatch(context, draft, this.currentArgb());
          context.init_PoolEntry()
             .drawCentered(
                context.init_GuiGraphicsExtract(),
@@ -151,14 +151,14 @@ public final class ColorPickerPopup {
          return true;
       }
 
-      if (TitleBarRenderer.closeButton(this.init_NetHelper()).init_Z(mouseX, mouseY) || this.cancelButton().init_Z(mouseX, mouseY)) {
+      if (TitleBarRenderer.closeButton(this.headerBounds()).init_Z(mouseX, mouseY) || this.cancelButton().init_Z(mouseX, mouseY)) {
          this.dismiss();
          return true;
       }
 
       if (this.saveButton().init_Z(mouseX, mouseY)) {
          if (this.onSave != null) {
-            this.onSave.accept(this.read_I());
+            this.onSave.accept(this.currentArgb());
          }
 
          this.shown = false;
@@ -300,7 +300,7 @@ public final class ColorPickerPopup {
          }
 
          if (this.onSave != null) {
-            this.onSave.accept(this.read_I());
+            this.onSave.accept(this.currentArgb());
          }
 
          this.shown = false;
@@ -476,12 +476,12 @@ public final class ColorPickerPopup {
 
    private void renderSaturationValue(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
       this.drawFrame(context, area);
-      init_NetHelper_StreamUt_F(this.hue).draw(context, area);
+      getSaturationValueTexture(this.hue).draw(context, area);
    }
 
    private void drawHueStrip(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
       this.drawFrame(context, area);
-      init_NetHelper_StreamUt().draw(context, area);
+      getHueTexture().draw(context, area);
    }
 
    private void drawFrame(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper area) {
@@ -587,7 +587,7 @@ public final class ColorPickerPopup {
       this.clearSelection();
    }
 
-   private int read_I() {
+   private int currentArgb() {
       return this.argb;
    }
 
@@ -603,7 +603,7 @@ public final class ColorPickerPopup {
       return this.blue;
    }
 
-   private autismclient.gui.f.NetHelper init_NetHelper() {
+   private autismclient.gui.f.NetHelper headerBounds() {
       return autismclient.gui.f.NetHelper.init(this.bounds.read(), this.bounds.write(), this.bounds.update(), 14);
    }
 
@@ -635,7 +635,7 @@ public final class ColorPickerPopup {
       return autismclient.gui.f.NetHelper.init(this.bounds.read() + 135 + 12, this.bounds.write() + 19 + 36, 70, 13);
    }
 
-   private autismclient.gui.f.NetHelper load_NetHelper_I(int index) {
+   private autismclient.gui.f.NetHelper buttonBounds(int index) {
       int inner = this.bounds.update() - 12;
       int w = (inner - 4) / 3;
       int x = this.bounds.read() + 6 + index * (w + 2);
@@ -644,15 +644,15 @@ public final class ColorPickerPopup {
    }
 
    private autismclient.gui.f.NetHelper saveButton() {
-      return this.load_NetHelper_I(0);
+      return this.buttonBounds(0);
    }
 
    private autismclient.gui.f.NetHelper resetButton() {
-      return this.load_NetHelper_I(1);
+      return this.buttonBounds(1);
    }
 
    private autismclient.gui.f.NetHelper cancelButton() {
-      return this.load_NetHelper_I(2);
+      return this.buttonBounds(2);
    }
 
    private static boolean isHexDigit(char chr) {
@@ -663,28 +663,28 @@ public final class ColorPickerPopup {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
-   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt() {
-      if (init_NetHelper_StreamUt == null) {
-         init_NetHelper_StreamUt = ColorPickerPopup.PickerTexture.create("color_picker_hue", 13, 82);
-         init_NetHelper_StreamUt.paintHue();
+   private static ColorPickerPopup.PickerTexture getHueTexture() {
+      if (hueTexture == null) {
+         hueTexture = ColorPickerPopup.PickerTexture.create("color_picker_hue", 13, 82);
+         hueTexture.paintHue();
       }
 
-      return init_NetHelper_StreamUt;
+      return hueTexture;
    }
 
-   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt_F(float hue) {
+   private static ColorPickerPopup.PickerTexture getSaturationValueTexture(float hue) {
       int bucket = Math.round(clamp01(hue) * 360.0F);
-      if (load_NetHelper_StreamUt == null) {
-         load_NetHelper_StreamUt = ColorPickerPopup.PickerTexture.create("color_picker_sv", 102, 82);
+      if (saturationValueTexture == null) {
+         saturationValueTexture = ColorPickerPopup.PickerTexture.create("color_picker_sv", 102, 82);
          svTextureHueBucket = -2147483648;
       }
 
       if (svTextureHueBucket != bucket) {
-         load_NetHelper_StreamUt.paintSaturationValue(bucket / 360.0F);
+         saturationValueTexture.paintSaturationValue(bucket / 360.0F);
          svTextureHueBucket = bucket;
       }
 
-      return load_NetHelper_StreamUt;
+      return saturationValueTexture;
    }
 
    private enum DragTarget {

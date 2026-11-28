@@ -63,7 +63,7 @@ public final class CallerModInspector {
             if (!optional.isEmpty()) {
                ModContainer container = optional.get();
                String id = container.getMetadata().getId();
-               if (!init_Z(id)) {
+               if (!isPlatformMod(id)) {
                   if (!id.equals(modId)) {
                      dependencies.add(id);
                   }
@@ -100,7 +100,7 @@ public final class CallerModInspector {
             URI uri = type.getProtectionDomain().getCodeSource().getLocation().toURI();
             Path path = Path.of(uri);
             String modId = modIdAt(path);
-            return init_Str(modId);
+            return modDisplayName(modId);
          } catch (Throwable ignored) {
             return null;
          }
@@ -163,7 +163,7 @@ public final class CallerModInspector {
       }
    }
 
-   private static String init_Str(String modId) {
+   private static String modDisplayName(String modId) {
       if (modId != null && !modId.isBlank()) {
          Optional<ModContainer> optional = FabricLoader.getInstance().getModContainer(modId);
          if (optional.isEmpty()) {
@@ -182,7 +182,7 @@ public final class CallerModInspector {
       }
    }
 
-   private static boolean init_Z(String modId) {
+   private static boolean isPlatformMod(String modId) {
       return "minecraft".equals(modId) || "java".equals(modId) || "fabricloader".equals(modId) || "fabric-loader".equals(modId);
    }
 }

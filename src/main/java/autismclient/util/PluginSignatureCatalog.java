@@ -465,7 +465,7 @@ public final class PluginSignatureCatalog {
       }
 
       String alias = NAMESPACE_ALIASES.get(clean);
-      return alias != null ? flush(alias) : flush(clean);
+      return alias != null ? normalizeKey(alias) : normalizeKey(clean);
    }
 
    public static List<String> namespacesFor(String pluginName) {
@@ -490,7 +490,7 @@ public final class PluginSignatureCatalog {
       return List.copyOf(namespaces);
    }
 
-   private static String flush(String value) {
+   private static String normalizeKey(String value) {
       String text = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
       StringBuilder out = new StringBuilder(text.length());
 

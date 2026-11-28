@@ -53,9 +53,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private boolean loading = true;
    private boolean closed;
    private boolean failed;
-   private boolean update_Z;
-   private boolean sync = true;
-   private boolean flush;
+   private boolean loadPending;
+   private boolean clearTerrain = true;
+   private boolean assumeFly;
    private long fileSize;
    private long fileModified;
    private long searchStartedAt;
@@ -63,10 +63,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private AiPlacementSearch.CandidateScore bestCandidate;
    private AABB bounds;
    private Path path;
-   private List<String> read_List;
-   private boolean close;
-   private double init_D = 6.0;
-   private Vec3 init_Vec3;
+   private List<String> cachedIssues;
+   private boolean cachedForCreative;
+   private double placeDistance = 6.0;
+   private Vec3 lockedDirection;
    private List<AiBuilder.CellSpec> sizedCells;
    private int sizeX;
    private int sizeY;
@@ -92,7 +92,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             AiSchematicPlacement preview = active;
             if (preview != null) {
                if (mc.level == preview.level && mc.player != null && AiAssistant.getInstance().isShown()) {
-                  preview.poll();
+                  preview.tickPreview();
                } else {
                   AiAssistant.getInstance().push();
                   preview.cancel();
@@ -152,7 +152,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                         AutismClientAddon.LOG.info("[AI] schematic preview \"{}\": {}", name, this.impossibleReason);
                      }
 
-                     this.close();
+                     this.resubmitTransform();
                   }
                }
             }));
@@ -171,18 +171,18 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
    @Override
    void cancel() {
-      this.write(false);
+      this.shutdown(false);
    }
 
    void handOff() {
-      this.write(true);
+      this.shutdown(true);
    }
 
-   private void write(boolean handoff) {
+   private void shutdown(boolean handoff) {
       this.closed = true;
       this.loadToken++;
       this.search = null;
-      this.update_Z = false;
+      this.loadPending = false;
       this.transformWorker.close();
       if (!handoff) {
          AiVisualization.clearOwner(this);
@@ -205,7 +205,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    boolean isSearching() {
-      return this.update_Z || this.search != null;
+      return this.loadPending || this.search != null;
    }
 
    String getError() {
@@ -228,24 +228,24 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    boolean isClearTerrain() {
-      return this.sync;
+      return this.clearTerrain;
    }
 
    boolean isAssumeFly() {
-      return this.flush;
+      return this.assumeFly;
    }
 
    String getFlyHint() {
       Minecraft mc = Minecraft.getInstance();
-      return init_Str_Z(
-         this.flush,
+      return flightNote(
+         this.assumeFly,
          mc.gameMode == null ? null : mc.gameMode.getPlayerMode(),
          mc.player != null && mc.player.getAbilities().mayfly,
          mc.player != null && mc.player.getAbilities().instabuild
       );
    }
 
-   static String init_Str_Z(boolean assumeFly, GameType mode, boolean mayfly, boolean instabuild) {
+   static String flightNote(boolean assumeFly, GameType mode, boolean mayfly, boolean instabuild) {
       String choice = "Assume Fly " + (assumeFly ? "on" : "off");
       if (mode == null) {
          return choice + ": flight state unavailable.";
@@ -276,7 +276,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          return this.loadError;
       } else if (this.transformWorker.isUpdating()) {
          return "Updating schematic orientation...";
-      } else if (this.update_Z) {
+      } else if (this.loadPending) {
          return "Preparing nearby placement comparison...";
       } else if (this.search != null) {
          return "Comparing nearby sites: " + this.search.comparedCount() + "/" + this.search.candidateCount();
@@ -309,7 +309,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          "rotation",
          this.rotation,
          "assumeFly",
-         this.flush,
+         this.assumeFly,
          "cells",
          this.survivalCells.size(),
          "placedEstimate",
@@ -329,8 +329,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void init(int x, int y, int z) {
       if (this.isActive()) {
          this.origin = this.origin.offset(x, y, z);
-         this.init_Vec3 = null;
-         this.open();
+         this.lockedDirection = null;
+         this.reloadCells();
       }
    }
 
@@ -342,7 +342,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void rotate(int steps) {
       if (this.isActive()) {
          this.rotation = AiPlacementControls.rotateBy(this.rotation, steps);
-         this.close();
+         this.resubmitTransform();
       }
    }
 
@@ -350,7 +350,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void cycleMirror() {
       if (this.isActive()) {
          this.mirror = this.mirror.equals("none") ? "x" : (this.mirror.equals("x") ? "z" : "none");
-         this.close();
+         this.resubmitTransform();
       }
    }
 
@@ -358,20 +358,20 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void init(BlockPos position, int turn, String mirroring) {
       if (this.isActive()) {
          this.origin = position;
-         this.init_Vec3 = null;
+         this.lockedDirection = null;
          this.rotation = turn;
          this.mirror = mirroring;
-         this.close();
+         this.resubmitTransform();
       }
    }
 
    void setClearTerrain(boolean value) {
-      this.sync = value;
-      this.open();
+      this.clearTerrain = value;
+      this.reloadCells();
    }
 
    void setAssumeFly(boolean value) {
-      this.flush = value;
+      this.assumeFly = value;
    }
 
    @Override
@@ -382,12 +382,12 @@ final class AiSchematicPlacement extends AiPlacementSession {
             this.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, this.origin.getX(), this.origin.getZ()),
             this.origin.getZ()
          );
-         this.init_Vec3 = null;
-         this.open();
+         this.lockedDirection = null;
+         this.reloadCells();
       }
    }
 
-   private Vec3 init_Vec3_D(double screenX, double screenY, double screenWidth, double screenHeight) {
+   private Vec3 screenRay(double screenX, double screenY, double screenWidth, double screenHeight) {
       if (!(screenWidth <= 0.0) && !(screenHeight <= 0.0)) {
          Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
          float f = (float)Math.tan(Math.toRadians(camera.getFov()) / 2.0);
@@ -401,11 +401,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   void init_V_D(double screenX, double screenY, double screenWidth, double screenHeight) {
+   void moveToScreenPoint(double screenX, double screenY, double screenWidth, double screenHeight) {
       if (this.isActive()) {
          Minecraft mc = Minecraft.getInstance();
          Camera camera = mc.gameRenderer.mainCamera();
-         Vec3 direction = this.init_Vec3_D(screenX, screenY, screenWidth, screenHeight);
+         Vec3 direction = this.screenRay(screenX, screenY, screenWidth, screenHeight);
          if (!(direction.lengthSqr() < 0.5)) {
             double loadedReach = (mc.options.getEffectiveRenderDistance() + 2) * 16.0;
             Vec3 eye = camera.position();
@@ -414,15 +414,15 @@ final class AiSchematicPlacement extends AiPlacementSession {
             BlockPos before = this.origin;
             if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.level, hit.getBlockPos())) {
                this.origin = hit.getBlockPos().relative(hit.getDirection());
-               this.init_D = Vec3.atCenterOf(this.origin).distanceTo(eye);
+               this.placeDistance = Vec3.atCenterOf(this.origin).distanceTo(eye);
             } else {
-               this.init_D = AiPlacementControls.distanceToY(eye, direction, this.origin.getY() + 0.5, this.init_D);
-               this.init_V_Vec3(AiPlacementControls.pointAlong(eye, direction, this.init_D));
+               this.placeDistance = AiPlacementControls.distanceToY(eye, direction, this.origin.getY() + 0.5, this.placeDistance);
+               this.setOriginAt(AiPlacementControls.pointAlong(eye, direction, this.placeDistance));
             }
 
-            this.init_Vec3 = direction;
+            this.lockedDirection = direction;
             if (!this.origin.equals(before)) {
-               this.open();
+               this.reloadCells();
             }
          }
       }
@@ -432,14 +432,14 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void moveToAim(boolean surface) {
       if (this.isActive()) {
          if (surface) {
-            this.init_V_D(0.5, 0.5, 1.0, 1.0);
+            this.moveToScreenPoint(0.5, 0.5, 1.0, 1.0);
          } else {
             BlockPos before = this.origin;
             Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
-            this.init_Vec3 = this.init_Vec3_D(0.5, 0.5, 1.0, 1.0);
-            this.init_V_Vec3(AiPlacementControls.pointAlong(eye, this.init_Vec3, this.init_D));
+            this.lockedDirection = this.screenRay(0.5, 0.5, 1.0, 1.0);
+            this.setOriginAt(AiPlacementControls.pointAlong(eye, this.lockedDirection, this.placeDistance));
             if (!this.origin.equals(before)) {
-               this.open();
+               this.reloadCells();
             }
          }
       }
@@ -449,22 +449,22 @@ final class AiSchematicPlacement extends AiPlacementSession {
    void init(double scroll, double screenX, double screenY, double width, double height) {
       if (this.isActive()) {
          Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
-         if (this.init_Vec3 == null) {
+         if (this.lockedDirection == null) {
             Vec3 fromEye = Vec3.atCenterOf(this.origin).subtract(eye);
-            this.init_Vec3 = fromEye.lengthSqr() < 0.01 ? this.init_Vec3_D(screenX, screenY, width, height) : fromEye.normalize();
-            this.init_D = Math.max(0.5, fromEye.length());
+            this.lockedDirection = fromEye.lengthSqr() < 0.01 ? this.screenRay(screenX, screenY, width, height) : fromEye.normalize();
+            this.placeDistance = Math.max(0.5, fromEye.length());
          }
 
-         Vec3 direction = this.init_Vec3;
+         Vec3 direction = this.lockedDirection;
          if (!(direction.lengthSqr() < 0.5)) {
-            this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
-            this.init_V_Vec3(AiPlacementControls.pointAlong(eye, direction, this.init_D));
-            this.open();
+            this.placeDistance = AiPlacementControls.adjustDistance(this.placeDistance, scroll);
+            this.setOriginAt(AiPlacementControls.pointAlong(eye, direction, this.placeDistance));
+            this.reloadCells();
          }
       }
    }
 
-   private void init_V_Vec3(Vec3 point) {
+   private void setOriginAt(Vec3 point) {
       if (Double.isFinite(point.x) && Double.isFinite(point.y) && Double.isFinite(point.z)) {
          WorldBorder border = this.level.getWorldBorder();
          this.origin = BlockPos.containing(
@@ -475,9 +475,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   private void close() {
+   private void resubmitTransform() {
       this.loadToken++;
-      this.update_Z = false;
+      this.loadPending = false;
       this.search = null;
       this.bestCandidate = null;
       this.transformWorker.submit(new AiSchematicPlacement.TransformRequest(this.decodedCells, this.rotation, this.mirror));
@@ -497,7 +497,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             } else {
                boolean first = this.survivalCells.isEmpty();
                this.survivalCells = result;
-               this.open();
+               this.reloadCells();
                if (first) {
                   this.snapToGround();
                }
@@ -506,10 +506,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   private void open() {
+   private void reloadCells() {
       this.loadToken++;
-      this.update_Z = false;
-      this.read_List = null;
+      this.loadPending = false;
+      this.cachedIssues = null;
       this.search = null;
       this.bestCandidate = null;
       if (!this.failed) {
@@ -554,7 +554,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             this.loadError = "";
             this.bestCandidate = null;
             this.search = null;
-            this.update_Z = true;
+            this.loadPending = true;
             CompletableFuture.<List<List<AiBuilder.CellSpec>>>supplyAsync(
                   () -> {
                      List<List<AiBuilder.CellSpec>> variants = new ArrayList<>();
@@ -575,11 +575,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
                )
                .whenComplete((variants, failure) -> mc.execute(() -> {
                   if (!this.closed && token == this.loadToken && mc.level == this.level) {
-                     this.update_Z = false;
+                     this.loadPending = false;
                      if (failure != null) {
                         this.loadError = describeFailure(failure);
                      } else {
-                        this.init_V_BlockPos_List(player, variants);
+                        this.startPlacementSearch(player, variants);
                      }
                   }
                }));
@@ -587,7 +587,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   private void init_V_BlockPos_List(BlockPos player, List<List<AiBuilder.CellSpec>> variants) {
+   private void startPlacementSearch(BlockPos player, List<List<AiBuilder.CellSpec>> variants) {
       List<AiPlacementSearch.PlacementCandidate> sites = new ArrayList<>();
 
       for (int turn = 0; turn < 360; turn += 90) {
@@ -618,10 +618,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.loadError = "";
       this.bestCandidate = null;
       this.searchStartedAt = System.nanoTime();
-      this.search = new AiPlacementSearch(sites, this.init_aQ_ConfigStore(), this.sync);
+      this.search = new AiPlacementSearch(sites, this.worldProbe(), this.clearTerrain);
    }
 
-   private void poll() {
+   private void tickPreview() {
       if (this.isActive()) {
          AiVisualization.showPlan(this, this.origin, this.survivalCells, 0, true);
       }
@@ -637,16 +637,16 @@ final class AiSchematicPlacement extends AiPlacementSession {
             }
 
             this.origin = found.candidate().origin();
-            this.init_Vec3 = null;
+            this.lockedDirection = null;
             this.rotation = found.candidate().rotation();
             this.survivalCells = found.candidate().cells();
-            this.open();
+            this.reloadCells();
             this.bestCandidate = found;
          }
       }
    }
 
-   private AiPlacementSearch.WorldProbe init_aQ_ConfigStore() {
+   private AiPlacementSearch.WorldProbe worldProbe() {
       return new AiPlacementSearch.WorldProbe() {
          @Override
          public AiPlacementSearch.CellEdit classify(BlockPos p, AiBuilder.CellSpec cell) {
@@ -656,7 +656,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                BlockState live = AiSchematicPlacement.this.level.getBlockState(p);
                if (cell != null && AiBuilder.matchesSchematicCell(cell, live)) {
                   return AiPlacementSearch.CellEdit.MATCH;
-               } else if (cell == null && !AiSchematicPlacement.this.sync) {
+               } else if (cell == null && !AiSchematicPlacement.this.clearTerrain) {
                   return AiPlacementSearch.CellEdit.MATCH;
                } else if (live.isAir()) {
                   return cell == null ? AiPlacementSearch.CellEdit.MATCH : AiPlacementSearch.CellEdit.PLACE;
@@ -700,7 +700,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       try {
          AiSchematic.init(this.survivalCells);
          if (Files.size(this.path) == this.fileSize && Files.getLastModifiedTime(this.path).toMillis() == this.fileModified) {
-            AiPlacementSearch.WorldProbe view = this.init_aQ_ConfigStore();
+            AiPlacementSearch.WorldProbe view = this.worldProbe();
 
             for (AiBuilder.CellSpec cell : this.survivalCells) {
                if (view.classify(this.origin.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.CellEdit.UNSAFE) {
@@ -718,10 +718,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    JsonObject buildArguments() {
-      return init(this.name, this.origin, this.rotation, this.mirror, this.sync, this.flush, this.survivalCells.size());
+      return placementJson(this.name, this.origin, this.rotation, this.mirror, this.clearTerrain, this.assumeFly, this.survivalCells.size());
    }
 
-   static JsonObject init(String name, BlockPos origin, int rotation, String mirror, boolean clearTerrain, boolean assumeFly, int cellCount) {
+   static JsonObject placementJson(String name, BlockPos origin, int rotation, String mirror, boolean clearTerrain, boolean assumeFly, int cellCount) {
       return AiJson.objectOf(
          "schematic",
          name,
@@ -747,8 +747,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
    List<String> missingMaterialLines() {
       Minecraft mc = Minecraft.getInstance();
       boolean creative = mc.player != null && mc.gameMode != null && mc.player.getAbilities().instabuild && mc.gameMode.getPlayerMode() == GameType.CREATIVE;
-      if (this.read_List != null && this.close == creative) {
-         return this.read_List;
+      if (this.cachedIssues != null && this.cachedForCreative == creative) {
+         return this.cachedIssues;
       }
 
       if (!this.isReadyToConfirm()) {
@@ -823,9 +823,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
          out.add("Rail-backed minecarts use supplied minecart items; minecart contents are not restored.");
       }
 
-      this.close = creative;
-      this.read_List = List.copyOf(out);
-      return this.read_List;
+      this.cachedForCreative = creative;
+      this.cachedIssues = List.copyOf(out);
+      return this.cachedIssues;
    }
 
    static int countItem(Inventory inventory, String itemSpec) {

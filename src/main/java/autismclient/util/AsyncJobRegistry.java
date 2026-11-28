@@ -51,14 +51,14 @@ public final class AsyncJobRegistry {
       if (state != null && !state.init_Z() && completion != null && completion != AsyncJobRegistry.JobStatus.PENDING) {
          this.jobs.put(id, new AsyncJobRegistry.JobState(state.id(), state.label(), completion, false, false, state.deadline()));
          this.terminalCount++;
-         this.init_V();
+         this.pruneTerminal();
          return true;
       } else {
          return false;
       }
    }
 
-   private void init_V() {
+   private void pruneTerminal() {
       Iterator<Entry<Long, AsyncJobRegistry.JobState>> iterator = this.jobs.entrySet().iterator();
 
       while (this.terminalCount > this.retention && iterator.hasNext()) {

@@ -76,7 +76,7 @@ final class AiRecover {
                      this.read = true;
                   }
 
-                  AiOperation.Result guarded = this.init_AiOperation_Result_23();
+                  AiOperation.Result guarded = this.tickGuard();
                   if (guarded != null) {
                      return guarded;
                   }
@@ -147,7 +147,7 @@ final class AiRecover {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_23() {
+            AiOperation.Result tickGuard() {
                if (this.guardOp != null) {
                   AiOperation.Result result = this.guardOp.tick();
                   if (!result.terminal()) {

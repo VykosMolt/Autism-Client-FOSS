@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = -1442840576;
-   private static final int load_I = THEME.poll();
+   private static final int unusedThemeColor = THEME.poll();
    private static final int read = THEME.set();
    private static final int write = THEME.run();
    private static final int update = THEME.load(l.read);
@@ -26,9 +26,9 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private static final int open = 2;
    private final Screen parent;
    private final String[] passwords;
-   private final List<String> init_List;
+   private final List<String> passwordList;
    private int scrollOffset = 0;
-   private boolean init_Z = false;
+   private boolean scrollbarDragging = false;
    private double dragOffset = 0.0;
    private final List<ForceOpPreviewScreen.HitRegion> hitRegions = new ArrayList<>();
 
@@ -36,11 +36,11 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       super(Component.literal("ForceOp Preview"));
       this.parent = parent;
       this.passwords = passwords;
-      this.init_List = new ArrayList<>();
+      this.passwordList = new ArrayList<>();
       int limit = Math.min(passwords.length, 500);
 
       for (int i = 0; i < limit; i++) {
-         this.init_List.add(passwords[i]);
+         this.passwordList.add(passwords[i]);
       }
    }
 
@@ -56,7 +56,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private int panelHeight() {
       int rowH = this.rowHeight();
       int maxRows = Math.max(3, (int)(this.virtualHeight() * 0.65F) / rowH);
-      int rows = Math.max(3, Math.min(maxRows, this.init_List.size()));
+      int rows = Math.max(3, Math.min(maxRows, this.passwordList.size()));
       int chrome = this.headerHeight() + 8 + 4;
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + rows * rowH);
    }
@@ -70,7 +70,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    }
 
    private int contentHeight() {
-      return this.init_List.size() * this.rowHeight();
+      return this.passwordList.size() * this.rowHeight();
    }
 
    private autismclient.gui.f.NetHelper listBounds() {
@@ -103,7 +103,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          int y = this.panelY();
          int w = this.panelWidth();
          int h = this.panelHeight();
-         this.drawFrame(graphics, x, y, w, h, "Password Preview (First " + this.init_List.size() + ")", mx, my);
+         this.drawFrame(graphics, x, y, w, h, "Password Preview (First " + this.passwordList.size() + ")", mx, my);
          if (w < 100 || h < this.headerHeight() + 8 + 4 + this.rowHeight()) {
             return;
          }
@@ -124,12 +124,12 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          try {
             int contentY = innerY - this.scrollOffset;
 
-            for (int i = 0; i < this.init_List.size(); i++) {
+            for (int i = 0; i < this.passwordList.size(); i++) {
                int rowY = contentY + i * rowH;
                if (rowY + rowH > innerY && rowY < innerY + innerH) {
                   int color = i % 2 == 0 ? -10046721 : -24474;
                   autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(graphics, innerX, rowY, innerW - 8, rowH, false, false);
-                  String text = k.init(this.font, this.init_List.get(i), innerW - 8 - 8, THEME.init_Identifier_l(l.read), color);
+                  String text = k.init(this.font, this.passwordList.get(i), innerW - 8 - 8, THEME.init_Identifier_l(l.read), color);
                   this.drawText(graphics, text, innerX + 4, UiLayoutMath.centerTextY(rowY, rowH, THEME.init_I_l(l.read), THEME.flush()), color, innerW - 8 - 8);
                }
             }
@@ -140,7 +140,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          if (maxScroll > 0) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
             boolean overBar = metrics.containsTrack(mx, my);
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, overBar, this.init_Z);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, overBar, this.scrollbarDragging);
             this.hitRegions.add(new ForceOpPreviewScreen.HitRegion(ForceOpPreviewScreen.HitKind.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
          }
       } finally {
@@ -193,7 +193,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
             if (hit.kind == ForceOpPreviewScreen.HitKind.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
                autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
                if (metrics.containsThumb(mx, my)) {
-                  this.init_Z = true;
+                  this.scrollbarDragging = true;
                   this.dragOffset = my - metrics.thumbY();
                } else {
                   this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, metrics.thumbHeight() / 2);
@@ -214,7 +214,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      this.init_Z = false;
+      this.scrollbarDragging = false;
       return super.mouseReleased(event);
    }
 
@@ -222,7 +222,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
-      if (this.init_Z) {
+      if (this.scrollbarDragging) {
          this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), my, (int)this.dragOffset);
          return true;
       } else {

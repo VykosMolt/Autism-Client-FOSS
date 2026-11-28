@@ -28,7 +28,7 @@ public final class RegistryCompatGuard {
          return null;
       }
 
-      if (init_Z(context)) {
+      if (shouldGuard(context)) {
          return context;
       }
 
@@ -37,18 +37,18 @@ public final class RegistryCompatGuard {
    }
 
    public static void load(ConnectionPrivacyRegistry.ConnectionSession context) {
-      if (init_Z(context)) {
+      if (shouldGuard(context)) {
          RegistryCompatGuard.GuardState state = STATE.get();
          if (state == null) {
             state = new RegistryCompatGuard.GuardState();
             STATE.set(state);
          }
 
-         state.init_I++;
+         state.depth++;
       }
    }
 
-   private static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
+   private static boolean shouldGuard(ConnectionPrivacyRegistry.ConnectionSession context) {
       return context != null
          && !context.isLocalOrMemory()
          && ConnectionPrivacyRegistry.isActive(context)
@@ -58,15 +58,15 @@ public final class RegistryCompatGuard {
    public static void load() {
       RegistryCompatGuard.GuardState state = STATE.get();
       if (state != null) {
-         state.init_I--;
-         if (state.init_I <= 0) {
+         state.depth--;
+         if (state.depth <= 0) {
             STATE.remove();
          }
       }
    }
 
    public static boolean init(ResourceKey<?> valueKey, Throwable error) {
-      if (valueKey == null || error == null || init_TaskTimer_DataUtil() == null) {
+      if (valueKey == null || error == null || activeState() == null) {
          return false;
       }
 
@@ -79,10 +79,10 @@ public final class RegistryCompatGuard {
    }
 
    public static void init(ResourceKey<?> valueKey) {
-      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
+      RegistryCompatGuard.GuardState state = activeState();
       if (valueKey != null && state != null) {
          String id = valueKey.identifier().toString();
-         if (addWarning(state.init_Set, id)) {
+         if (addWarning(state.warnedIds, id)) {
             AutismClientAddon.LOG
                .warn("[Autism] Server registry is missing trim material '{}'; omitted that item component so configuration can continue.", id);
          }
@@ -90,7 +90,7 @@ public final class RegistryCompatGuard {
    }
 
    public static boolean init_Z(Throwable error) {
-      if (error == null || init_TaskTimer_DataUtil() == null) {
+      if (error == null || activeState() == null) {
          return false;
       }
 
@@ -103,10 +103,10 @@ public final class RegistryCompatGuard {
    }
 
    public static void init_V(Throwable error) {
-      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
+      RegistryCompatGuard.GuardState state = activeState();
       if (state != null) {
          String message = error != null && error.getMessage() != null ? error.getMessage() : "unknown";
-         if (addWarning(state.load, message)) {
+         if (addWarning(state.warnedMessages, message)) {
             AutismClientAddon.LOG
                .warn(
                   "[Autism] Server registry is missing data for a delayed item component ({}); omitted that component so configuration can continue.", message
@@ -115,14 +115,14 @@ public final class RegistryCompatGuard {
       }
    }
 
-   static int init_I() {
-      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
-      return state == null ? 0 : state.init_Set.size() + state.load.size();
+   static int warningCount() {
+      RegistryCompatGuard.GuardState state = activeState();
+      return state == null ? 0 : state.warnedIds.size() + state.warnedMessages.size();
    }
 
-   private static RegistryCompatGuard.GuardState init_TaskTimer_DataUtil() {
+   private static RegistryCompatGuard.GuardState activeState() {
       RegistryCompatGuard.GuardState state = STATE.get();
-      return state != null && state.init_I > 0 ? state : null;
+      return state != null && state.depth > 0 ? state : null;
    }
 
    private static boolean addWarning(Set<String> warnings, String warning) {
@@ -135,8 +135,8 @@ public final class RegistryCompatGuard {
    }
 
    private static final class GuardState {
-      private int init_I;
-      private final Set<String> init_Set = new HashSet<>();
-      private final Set<String> load = new HashSet<>();
+      private int depth;
+      private final Set<String> warnedIds = new HashSet<>();
+      private final Set<String> warnedMessages = new HashSet<>();
    }
 }

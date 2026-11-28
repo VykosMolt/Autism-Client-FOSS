@@ -124,7 +124,7 @@ public final class InteractionTargetRef {
          return false;
       } else if (this.kind != InteractionTargetRef.TargetKind.BLOCK) {
          Entity entity = this.lookupEntity(mc);
-         return init(mc, entity);
+         return isEntityInReach(mc, entity);
       } else {
          return this.blockPos != null && isInReach(mc, this.blockPos) && this.blockHit(mc) != null;
       }
@@ -175,7 +175,7 @@ public final class InteractionTargetRef {
       }
    }
 
-   public static boolean init(Minecraft mc, Entity entity) {
+   public static boolean isEntityInReach(Minecraft mc, Entity entity) {
       if (mc != null && mc.player != null && entity != null && entity != mc.player) {
          double reach = Math.max(4.5, mc.player.blockInteractionRange());
          return entity.distanceToSqr(mc.player) <= reach * reach;

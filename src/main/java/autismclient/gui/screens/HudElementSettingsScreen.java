@@ -42,15 +42,15 @@ public class HudElementSettingsScreen extends Screen {
    private final Screen parent;
    private final String id;
    private int scrollOffset;
-   private boolean init_Z;
+   private boolean scrollbarDragging;
    private int scrollGrabOffset;
-   private String load_Str;
+   private String editingKey;
    private ThemedTextInputBox textInput;
-   private String read_Str;
+   private String unusedColorPickerKey;
    private autismclient.gui.ui.widgets.ColorPickerPopup colorPicker;
    private final List<autismclient.gui.ui.widgets.DropdownWidget> dropdowns = new ArrayList<>();
    private final Map<String, autismclient.gui.ui.widgets.DropdownWidget> dropdownsByKey = new HashMap<>();
-   private boolean load_Z;
+   private boolean modulePickerOpen;
    private int pickerScroll;
    private HudElementSettingsScreen.SettingRow row;
    private static final Map<String, HudElementSettingsScreen.CachedRows> rowsCache = new HashMap<>();
@@ -93,7 +93,7 @@ public class HudElementSettingsScreen extends Screen {
          int h = panel[3];
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), 1711276032);
          this.drawWindow(graphics, x, y, w, h, this.headerHeight(), AutismHudManager.displayName(this.id), mx, my);
-         if (this.init_Z_I_I(w, h)) {
+         if (this.isTooSmall(w, h)) {
             return;
          }
 
@@ -120,7 +120,7 @@ public class HudElementSettingsScreen extends Screen {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
             contentH, viewH, x + w - 6, bodyTop, 4, viewH, this.scrollOffset
          );
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(hoverX, hoverY), this.init_Z);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(hoverX, hoverY), this.scrollbarDragging);
          int footerY = this.footerY(panel);
          int ctrlH = this.controlHeight();
          this.drawButton(graphics, "Back", x + 4, footerY, this.labelWidth("Back"), ctrlH, hoverX, hoverY, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
@@ -130,10 +130,10 @@ public class HudElementSettingsScreen extends Screen {
          boolean enabled = AutismHudManager.getState(this.id).enabled;
          int switchX = x + w - 4 - 20;
          int labelW = autismclient.gui.f.b.k.init(this.font, "Enabled", THEME.init_Identifier_l(l.read), -791321);
-         this.drawTrimmedText(graphics, "Enabled", this.init_I_IArr(panel), this.centeredTextY(footerY, ctrlH), enabled ? -791321 : labelTextColor(), labelW + 2);
+         this.drawTrimmedText(graphics, "Enabled", this.enabledLabelX(panel), this.centeredTextY(footerY, ctrlH), enabled ? -791321 : labelTextColor(), labelW + 2);
          this.drawToggle(graphics, enabled, switchX, footerY, ctrlH, "hud-elem-settings:" + this.id + ":enabled");
          autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.dropdowns, mx, my);
-         if (this.load_Z) {
+         if (this.modulePickerOpen) {
             this.drawModulePicker(graphics, sw, sh, mx, my);
          }
 
@@ -195,7 +195,7 @@ public class HudElementSettingsScreen extends Screen {
          boolean on = this.isSettingEnabled(row.key);
          this.drawToggle(graphics, on, x + w - 4 - 20, y, rowH, "hud-elem-settings:" + this.id + ":" + row.key);
       } else if (row.type == HudElementSettingsScreen.RowType.ENUM) {
-         this.init(row, valueX, ctrlY, valueW, ctrlH);
+         this.renderChoiceRow(row, valueX, ctrlY, valueW, ctrlH);
       } else if (row.type == HudElementSettingsScreen.RowType.COLOR) {
          int pickW = this.textButtonWidth("Pick");
          int color = AutismHudManager.parseColor(AutismHudManager.setting(this.id, row.key), this.defaultColor(row.key));
@@ -221,7 +221,7 @@ public class HudElementSettingsScreen extends Screen {
             valueW,
             ctrlH,
             value,
-            row.key != null && row.key.equals(this.load_Str) || row == this.row,
+            row.key != null && row.key.equals(this.editingKey) || row == this.row,
             mx,
             my
          );
@@ -239,7 +239,7 @@ public class HudElementSettingsScreen extends Screen {
       }
    }
 
-   private void init(HudElementSettingsScreen.SettingRow row, int x, int y, int w, int h) {
+   private void renderChoiceRow(HudElementSettingsScreen.SettingRow row, int x, int y, int w, int h) {
       List<String> choices = row.choices;
       String current = AutismHudManager.setting(this.id, row.key);
       int selected = Math.max(0, choices.indexOf(current));
@@ -289,7 +289,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private void beginTextEdit(String key, String value) {
-      this.load_Str = key;
+      this.editingKey = key;
       if (this.textInput == null) {
          this.textInput = new ThemedTextInputBox(Minecraft.getInstance(), this.font, 0, 0, 20, this.inputHeight(), false);
       }
@@ -331,7 +331,7 @@ public class HudElementSettingsScreen extends Screen {
       return panelX + 4 + this.labelWidth("Back") + 2;
    }
 
-   private int init_I_IArr(int[] panel) {
+   private int enabledLabelX(int[] panel) {
       int labelW = autismclient.gui.f.b.k.init(this.font, "Enabled", THEME.init_Identifier_l(l.read), -791321);
       return panel[0] + panel[2] - 4 - 20 - 4 - labelW;
    }
@@ -396,7 +396,7 @@ public class HudElementSettingsScreen extends Screen {
 
          return true;
       } else {
-         if (this.load_Z) {
+         if (this.modulePickerOpen) {
             this.handleModulePickerClick(mx, my);
             return true;
          }
@@ -415,7 +415,7 @@ public class HudElementSettingsScreen extends Screen {
             return true;
          }
 
-         if (this.load_Str != null && this.textInput != null && this.textInput.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
+         if (this.editingKey != null && this.textInput != null && this.textInput.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
             return true;
          }
 
@@ -426,7 +426,7 @@ public class HudElementSettingsScreen extends Screen {
             this.rowsHeight(this.settingRows()), viewH, x + w - 6, bodyTop, 4, viewH, this.scrollOffset
          );
          if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
-            this.init_Z = true;
+            this.scrollbarDragging = true;
             this.scrollGrabOffset = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
             this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.scrollGrabOffset);
             return true;
@@ -445,7 +445,7 @@ public class HudElementSettingsScreen extends Screen {
             return true;
          }
 
-         int toggleX = this.init_I_IArr(panel);
+         int toggleX = this.enabledLabelX(panel);
          if (this.inside(mx, my, toggleX, footerY, x + w - 4 - toggleX, ctrlH)) {
             AutismHudManager.toggleEnabled(this.id);
             return true;
@@ -474,7 +474,7 @@ public class HudElementSettingsScreen extends Screen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      this.init_Z = false;
+      this.scrollbarDragging = false;
       this.row = null;
       if (this.colorPicker != null) {
          int mx = cA.init_I_D(event.x());
@@ -527,11 +527,11 @@ public class HudElementSettingsScreen extends Screen {
             return true;
          }
 
-         if (this.load_Str != null && this.textInput != null && this.textInput.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
+         if (this.editingKey != null && this.textInput != null && this.textInput.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy)) {
             return true;
          }
 
-         if (!this.init_Z) {
+         if (!this.scrollbarDragging) {
             return true;
          }
 
@@ -555,7 +555,7 @@ public class HudElementSettingsScreen extends Screen {
          return true;
       } else if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.dropdowns, virtualX, virtualY, scrollY)) {
          return true;
-      } else if (this.load_Z) {
+      } else if (this.modulePickerOpen) {
          this.pickerScroll = this.clamp(this.pickerScroll + (scrollY < 0.0 ? this.rowStep() : -this.rowStep()), 0, this.modulePickerMaxScroll());
          return true;
       } else {
@@ -576,9 +576,9 @@ public class HudElementSettingsScreen extends Screen {
 
          return true;
       } else if (Compat263.keyEventGlfwKey(input) == 256) {
-         if (this.load_Z) {
-            this.load_Z = false;
-         } else if (this.load_Str != null) {
+         if (this.modulePickerOpen) {
+            this.modulePickerOpen = false;
+         } else if (this.editingKey != null) {
             this.cancelTextEdit();
          } else {
             this.minecraft.gui.setScreen(this.parent);
@@ -586,7 +586,7 @@ public class HudElementSettingsScreen extends Screen {
 
          return true;
       } else {
-         if (this.load_Str != null) {
+         if (this.editingKey != null) {
             if (Compat263.keyEventGlfwKey(input) == 257 || Compat263.keyEventGlfwKey(input) == 335) {
                this.commitTextEdit();
                return true;
@@ -611,7 +611,7 @@ public class HudElementSettingsScreen extends Screen {
 
          return true;
       } else {
-         if (this.load_Str != null && this.textInput != null) {
+         if (this.editingKey != null && this.textInput != null) {
             this.textInput.charTyped(input);
          }
 
@@ -628,7 +628,7 @@ public class HudElementSettingsScreen extends Screen {
          this.openColorPickerFor(row.key, autismclient.gui.f.NetHelper.init(valueX, Math.max(0, my - this.rowHeight() / 2), valueW, this.rowHeight()));
          this.cancelTextEdit();
       } else if (row.type == HudElementSettingsScreen.RowType.MODULE_LIST) {
-         this.load_Z = true;
+         this.modulePickerOpen = true;
          this.pickerScroll = 0;
          this.cancelTextEdit();
       } else if (row.type == HudElementSettingsScreen.RowType.NUMBER) {
@@ -660,8 +660,8 @@ public class HudElementSettingsScreen extends Screen {
 
    private void openColorPickerFor(String key, autismclient.gui.f.NetHelper anchor) {
       if (key != null && !key.isBlank()) {
-         this.read_Str = key;
-         this.load_Z = false;
+         this.unusedColorPickerKey = key;
+         this.modulePickerOpen = false;
          autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.dropdowns);
          this.cancelTextEdit();
          int fallback = this.defaultColor(key);
@@ -679,7 +679,7 @@ public class HudElementSettingsScreen extends Screen {
       }
 
       this.colorPicker = null;
-      this.read_Str = null;
+      this.unusedColorPickerKey = null;
    }
 
    private int defaultColor(String key) {
@@ -692,7 +692,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private void commitTextEdit() {
-      HudElementSettingsScreen.SettingRow row = this.rowForKey(this.load_Str);
+      HudElementSettingsScreen.SettingRow row = this.rowForKey(this.editingKey);
       if (row == null) {
          this.cancelTextEdit();
       } else {
@@ -709,7 +709,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private void cancelTextEdit() {
-      this.load_Str = null;
+      this.editingKey = null;
       if (this.textInput != null) {
          this.textInput.setFocused(false);
          this.textInput.setValue("");
@@ -791,7 +791,7 @@ public class HudElementSettingsScreen extends Screen {
 
       boolean customColors = isArrayList || AutismHudManager.boolSetting(this.id, "use-custom-colors");
       rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Visibility"));
-      if (!this.init_Z() && !"breaking_progress".equals(this.id)) {
+      if (!this.usesCustomLayout() && !"breaking_progress".equals(this.id)) {
          rows.add(HudElementSettingsScreen.SettingRow.enumRow("alignment", "Alignment", "Left", "Center", "Right"));
       }
 
@@ -1085,11 +1085,11 @@ public class HudElementSettingsScreen extends Screen {
             }
          }
       } else {
-         this.load_Z = false;
+         this.modulePickerOpen = false;
       }
    }
 
-   private boolean init_Z() {
+   private boolean usesCustomLayout() {
       return "armor".equals(this.id)
          || "inventory".equals(this.id)
          || "compass".equals(this.id)
@@ -1143,7 +1143,7 @@ public class HudElementSettingsScreen extends Screen {
       return new int[]{autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(sw, w, margin), autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(sh, h, margin), w, h};
    }
 
-   private boolean init_Z_I_I(int width, int height) {
+   private boolean isTooSmall(int width, int height) {
       return width < 220 || height < this.headerHeight() + this.footerHeight() + this.rowStep() * 2;
    }
 

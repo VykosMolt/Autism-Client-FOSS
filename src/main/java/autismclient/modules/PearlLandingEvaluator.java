@@ -92,7 +92,7 @@ final class PearlLandingEvaluator {
       return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.UNKNOWN, fallen, 1.0F);
    }
 
-   static int init(int rawDamage, int ticks, boolean bypassCooldown) {
+   static int applyCooldownReduction(int rawDamage, int ticks, boolean bypassCooldown) {
       return ticks < 10 && !bypassCooldown ? Math.max(0, rawDamage - 5) : rawDamage;
    }
 
@@ -182,7 +182,7 @@ final class PearlLandingEvaluator {
             AutismLivingEntityAccessor access = (AutismLivingEntityAccessor)player;
             float pearlDamage = access.autism$getDamageAfterMagicAbsorb(player.damageSources().enderPearl(), 5.0F);
             int rawFall = access.autism$calculateFallDamage(fall.init_D(), fall.init_F());
-            rawFall = init(rawFall, fall.init_I(), player.damageSources().fall().is(DamageTypeTags.BYPASSES_COOLDOWN));
+            rawFall = applyCooldownReduction(rawFall, fall.init_I(), player.damageSources().fall().is(DamageTypeTags.BYPASSES_COOLDOWN));
             float fallDamage = player.hasEffect(MobEffects.SLOW_FALLING)
                ? 0.0F
                : access.autism$getDamageAfterMagicAbsorb(player.damageSources().fall(), rawFall);

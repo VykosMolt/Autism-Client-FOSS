@@ -44,7 +44,7 @@ public final class AutismBufferSource implements AutoCloseable {
          this.stagedBuffer.upload();
 
          for (int i = 0; i < this.draws.size(); i++) {
-            this.init(this.renderTypes.get(i), this.draws.get(i));
+            this.drawStaged(this.renderTypes.get(i), this.draws.get(i));
          }
       } finally {
          this.draws.clear();
@@ -58,7 +58,7 @@ public final class AutismBufferSource implements AutoCloseable {
       this.stagedBuffer.close();
    }
 
-   private void init(RenderType type, Draw draw) {
+   private void drawStaged(RenderType type, Draw draw) {
       ExecuteInfo info = this.stagedBuffer.getExecuteInfo(draw);
       if (info != null) {
          Compat263.drawFromBuffer(type.prepare(), info);

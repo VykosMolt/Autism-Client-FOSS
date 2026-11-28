@@ -8,19 +8,19 @@ public final class FarmActionScheduler {
 
    public static <T> T choose(List<FarmActionScheduler.ActionOption<T>> options, float yaw, float pitch, int selected, T previous) {
       boolean urgent = options.stream().anyMatch(FarmActionScheduler.ActionOption::urgent);
-      boolean planting = options.stream().anyMatch(o -> init(o.kind()));
+      boolean planting = options.stream().anyMatch(o -> isPlanting(o.kind()));
       T best = null;
       double bestCost = 1.0 / 0.0;
 
       for (FarmActionScheduler.ActionOption<T> first : options) {
          if (!urgent || first.urgent()) {
-            double cost = init(yaw, pitch, selected, first) + init(first.kind(), planting);
+            double cost = turnCost(yaw, pitch, selected, first) + kindPenalty(first.kind(), planting);
             int nextSlot = first.slot() < 0 ? selected : first.slot();
             double next = 1.0 / 0.0;
 
             for (FarmActionScheduler.ActionOption<T> second : options) {
                if (first != second && !first.target().equals(second.target())) {
-                  next = Math.min(next, init(first.yaw(), first.pitch(), nextSlot, second));
+                  next = Math.min(next, turnCost(first.yaw(), first.pitch(), nextSlot, second));
                }
             }
 
@@ -42,15 +42,15 @@ public final class FarmActionScheduler {
       return best;
    }
 
-   private static boolean init(FarmActionScheduler.ActionKind kind) {
+   private static boolean isPlanting(FarmActionScheduler.ActionKind kind) {
       return kind == FarmActionScheduler.ActionKind.REPLANT || kind == FarmActionScheduler.ActionKind.REPLANT_RECENT;
    }
 
-   private static double init(FarmActionScheduler.ActionKind kind, boolean planting) {
+   private static double kindPenalty(FarmActionScheduler.ActionKind kind, boolean planting) {
       return kind == FarmActionScheduler.ActionKind.TILL ? 8.0 : (kind == FarmActionScheduler.ActionKind.BONEMEAL && planting ? 6.0 : 0.0);
    }
 
-   private static double init(float yaw, float pitch, int selected, FarmActionScheduler.ActionOption<?> next) {
+   private static double turnCost(float yaw, float pitch, int selected, FarmActionScheduler.ActionOption<?> next) {
       double yawDelta = Math.abs(Math.IEEEremainder(next.yaw() - yaw, 360.0));
       double turn = Math.hypot(yawDelta, next.pitch() - pitch) / 20.0;
       double change = next.slot() >= 0 && next.slot() != selected ? 2.0 : 0.0;

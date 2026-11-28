@@ -283,7 +283,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          && this.menu.getSlot(menuSlot).mayPickup(this.mc.player);
    }
 
-   private boolean init(ItemStack stack) {
+   private boolean fitsInInventory(ItemStack stack) {
       int remaining = stack.getCount();
       Inventory inventory = this.mc.player.getInventory();
 
@@ -694,7 +694,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      for (int index = this.slotLayout.offset(); index < this.slotLayout.offset() + this.slotLayout.savedSlots(); index++) {
                         if (this.slotMatches(index)) {
                            ItemStack stack = this.menu.getSlot(index).getItem();
-                           if (this.init(stack)) {
+                           if (this.fitsInInventory(stack)) {
                               String blocked = this.guard.get();
                               if (blocked != null && !blocked.isBlank()) {
                                  this.closeOwnMenu();

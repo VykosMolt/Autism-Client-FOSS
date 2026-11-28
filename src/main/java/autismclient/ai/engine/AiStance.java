@@ -84,7 +84,7 @@ public final class AiStance {
       Level level = mc.level;
       if (up.getY() == block.getY()) {
          if (level.getBlockState(up.below()).getCollisionShape(level, up.below()).isEmpty()) {
-            BlockPos held = init(level, player, up.getY());
+            BlockPos held = supportUnder(level, player, up.getY());
             if (held != null) {
                return held;
             }
@@ -112,7 +112,7 @@ public final class AiStance {
             level.getBlockState(low.below()).getCollisionShape(level, low.below())
          );
          if (lowOpen && player.getY() - low.getY() > 0.6) {
-            BlockPos held = init(level, player, up.getY());
+            BlockPos held = supportUnder(level, player, up.getY());
             if (held != null) {
                return held;
             }
@@ -122,7 +122,7 @@ public final class AiStance {
       }
    }
 
-   public static BlockPos init(Level level, Player player, int y) {
+   public static BlockPos supportUnder(Level level, Player player, int y) {
       AABB box = player.getBoundingBox();
       BlockPos best = null;
       double bestDistance = 1.7976931348623157E308;

@@ -13,9 +13,9 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class TpClickModule extends Module {
-   private final autismclient.ai.engine.AiStandingTarget.TargetCache init_j_DataUtil = new autismclient.ai.engine.AiStandingTarget.TargetCache();
-   private autismclient.ai.engine.AiStandingTarget.StandingSpot init_j_StreamUtil;
-   private boolean init_Z;
+   private final autismclient.ai.engine.AiStandingTarget.TargetCache targetCache = new autismclient.ai.engine.AiStandingTarget.TargetCache();
+   private autismclient.ai.engine.AiStandingTarget.StandingSpot target;
+   private boolean wasDown;
 
    TpClickModule() {
       super("tp-click", "TpClick", ae.read, "Teleport where you click.");
@@ -37,9 +37,9 @@ public final class TpClickModule extends Module {
    }
 
    private void resetState() {
-      this.init_j_DataUtil.invalidate();
-      this.init_j_StreamUtil = null;
-      this.init_Z = false;
+      this.targetCache.invalidate();
+      this.target = null;
+      this.wasDown = false;
    }
 
    public static boolean init_Z_30() {
@@ -61,24 +61,24 @@ public final class TpClickModule extends Module {
       } else if (MC != null && MC.player != null && MC.level != null && !aD.read_Z()) {
          int bind = this.clickKey();
          boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
-         boolean pressed = down && !this.init_Z;
-         this.init_Z = down;
+         boolean pressed = down && !this.wasDown;
+         this.wasDown = down;
          if (!AutismLiteVariant.enabled() && autismclient.ai.aP.load_Z()) {
-            this.init_j_StreamUtil = null;
+            this.target = null;
          } else if (MC.gui.screen() == null && !MC.options.keyShift.isDown()) {
             Vec3 eye = FreecamController.isActive() ? FreecamController.getInterpolatedEyePos(1.0F) : MC.player.getEyePosition();
             Vec3 direction = FreecamController.isActive() ? Vec3.directionFromRotation(FreecamController.getInterpolatedPitch(1.0F), FreecamController.getInterpolatedYaw(1.0F)) : MC.player.getViewVector(1.0F);
-            this.init_j_StreamUtil = this.init_j_DataUtil
+            this.target = this.targetCache
                .resolve(MC, eye, direction, Math.max(10, this.integer("reach")), MC.player.getVehicle() != null, pressed);
-            if (pressed && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid() && !AutismLiteVariant.enabled()) {
-               Vec3 destination = this.init_j_StreamUtil.feet();
+            if (pressed && this.target != null && this.target.valid() && !AutismLiteVariant.enabled()) {
+               Vec3 destination = this.target.feet();
                String result = PkgCls_a.init_Str_Str(String.format(Locale.ROOT, "%.6f %.6f %.6f", destination.x, destination.y, destination.z));
                if (result != null && !result.startsWith("TP started")) {
                   AutismClientMessaging.sendPrefixed("§e" + result);
                }
             }
          } else {
-            this.init_j_StreamUtil = null;
+            this.target = null;
          }
       } else {
          this.resetState();
@@ -97,14 +97,14 @@ public final class TpClickModule extends Module {
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
       return MC != null && MC.options != null && MC.options.keyShift.isDown()
          ? false
-         : this.clickKey() == autismclient.util.ValueSink.init_I(1) && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
+         : this.clickKey() == autismclient.util.ValueSink.init_I(1) && this.target != null && this.target.valid();
    }
 
    public AABB targetBox() {
-      return this.init_j_StreamUtil == null ? null : this.init_j_StreamUtil.box();
+      return this.target == null ? null : this.target.box();
    }
 
    public int targetColor() {
-      return this.init_j_StreamUtil == null ? 0 : this.init_j_StreamUtil.color();
+      return this.target == null ? 0 : this.target.color();
    }
 }

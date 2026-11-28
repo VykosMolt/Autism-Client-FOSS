@@ -14,7 +14,7 @@ import java.util.function.LongSupplier;
 final class AiRetryGuard {
    static final long init_J = 300000L;
    private final Map<String, ArrayDeque<Long>> dispatchTimes = new HashMap<>();
-   private final Set<String> init_Set = new HashSet<>();
+   private final Set<String> uncertainKeys = new HashSet<>();
    private final LongSupplier clock;
 
    AiRetryGuard() {
@@ -27,30 +27,30 @@ final class AiRetryGuard {
 
    synchronized void reset() {
       this.dispatchTimes.clear();
-      this.init_Set.clear();
+      this.uncertainKeys.clear();
    }
 
    synchronized void load() {
-      this.init_Set.clear();
+      this.uncertainKeys.clear();
    }
 
-   synchronized void init_V_Str(String key) {
+   synchronized void beginLatchedDispatch(String key) {
       this.beginDispatch(key, true);
    }
 
    synchronized void beginDispatch(String key, boolean latchUncertain) {
-      if (latchUncertain && this.init_Set.contains(key)) {
+      if (latchUncertain && this.uncertainKeys.contains(key)) {
          throw new IllegalStateException("Previous dispatch was uncertain; observe to see whether it took effect, then retry only if it did not");
       }
 
-      if (this.init_I_Str(key) >= 3) {
+      if (this.recentDispatchCount(key) >= 3) {
          throw new IllegalStateException("Three identical failures; choose another strategy or report the blocker");
       }
    }
 
    synchronized void recordResult(String key, String status) {
       if (status.equals("UNCERTAIN")) {
-         this.init_Set.add(key);
+         this.uncertainKeys.add(key);
       }
 
       if (Set.of("FAILED", "TIMED_OUT").contains(status)) {
@@ -62,7 +62,7 @@ final class AiRetryGuard {
       }
    }
 
-   private int init_I_Str(String key) {
+   private int recentDispatchCount(String key) {
       ArrayDeque<Long> stamps = this.dispatchTimes.get(key);
       if (stamps == null) {
          return 0;
@@ -94,15 +94,15 @@ final class AiRetryGuard {
          copy.remove("fingerprint");
       }
 
-      return tool + ":" + AiJson.sha256Hex(init_Str_JsonElement(copy));
+      return tool + ":" + AiJson.sha256Hex(canonicalJson(copy));
    }
 
-   private static String init_Str_JsonElement(JsonElement value) {
+   private static String canonicalJson(JsonElement value) {
       if (value.isJsonObject()) {
          ArrayList<String> parts = new ArrayList<>();
 
          for (String key : new TreeSet<>(value.getAsJsonObject().keySet())) {
-            parts.add(AiJson.GSON.toJson(key) + ":" + init_Str_JsonElement(value.getAsJsonObject().get(key)));
+            parts.add(AiJson.GSON.toJson(key) + ":" + canonicalJson(value.getAsJsonObject().get(key)));
          }
 
          return "{" + String.join(",", parts) + "}";
@@ -116,7 +116,7 @@ final class AiRetryGuard {
          ArrayList<String> parts = new ArrayList<>();
 
          for (JsonElement item : value.getAsJsonArray()) {
-            parts.add(init_Str_JsonElement(item));
+            parts.add(canonicalJson(item));
          }
 
          return "[" + String.join(",", parts) + "]";

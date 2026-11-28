@@ -6,7 +6,7 @@ import java.util.concurrent.BlockingQueue;
 public final class AsyncTraceLogger {
    private static final int QUEUE_CAPACITY = 4096;
    private static final BlockingQueue<String> QUEUE = new ArrayBlockingQueue<>(4096);
-   private static volatile boolean init_Z;
+   private static volatile boolean started;
    private static volatile long dropped;
 
    private AsyncTraceLogger() {
@@ -22,10 +22,10 @@ public final class AsyncTraceLogger {
    }
 
    private static void ensureWriter() {
-      if (!init_Z) {
+      if (!started) {
          synchronized (AsyncTraceLogger.class) {
-            if (!init_Z) {
-               init_Z = true;
+            if (!started) {
+               started = true;
                Thread writer = new Thread(AsyncTraceLogger::drainQueue, "autism-trace-log");
                writer.setDaemon(true);
                writer.setPriority(1);

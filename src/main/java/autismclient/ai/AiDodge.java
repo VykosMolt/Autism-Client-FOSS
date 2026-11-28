@@ -74,7 +74,7 @@ final class AiDodge {
             final Set<Integer> deflectedIds = new HashSet<>();
             final Map<Integer, UUID> threatUuids = new HashMap<>();
             boolean cancelled;
-            boolean load_Z;
+            boolean attackHeld;
             boolean shielding;
             int blockedCount;
             int shieldTicks;
@@ -137,8 +137,8 @@ final class AiDodge {
                      this.damageTaken = this.damageTaken + Math.max(0.0F, this.lastHealth - this.mc.player.getHealth());
                      this.lastHealth = this.mc.player.getHealth();
                      this.checkDeflectedFireball();
-                     if (this.load_Z) {
-                        this.read();
+                     if (this.attackHeld) {
+                        this.releaseAttack();
                      }
 
                      this.dodgedCount = 0;
@@ -499,9 +499,9 @@ final class AiDodge {
                }
             }
 
-            void read() {
-               if (this.mc.options != null && this.load_Z) {
-                  this.load_Z = false;
+            void releaseAttack() {
+               if (this.mc.options != null && this.attackHeld) {
+                  this.attackHeld = false;
                   this.mc.options.keyAttack.setDown(autismclient.util.KeyMappingControl.of(this.mc.options.keyAttack).autism$physicalForBody());
                }
             }
@@ -511,7 +511,7 @@ final class AiDodge {
                if (!this.cancelled) {
                   this.cancelled = true;
                   this.releaseKeys();
-                  this.read();
+                  this.releaseAttack();
                   this.ghastReflect.tick();
                   if (this.shielding && this.mc.options != null) {
                      this.mc.options.keyUse.setDown(false);

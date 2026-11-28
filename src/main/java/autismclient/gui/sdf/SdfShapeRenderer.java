@@ -30,7 +30,7 @@ public final class SdfShapeRenderer {
    private static final int TILE_MARGIN = 12;
    private static final int write = 20;
    private static final int[] TILE_RADII = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-   private static final int update = 64 * TILE_RADII.length;
+   private static final int ATLAS_WIDTH = 64 * TILE_RADII.length;
    private static final int sync = 128;
    private static final Identifier ATLAS_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shapes");
    private static volatile SdfShapeRenderer.ShapeAtlas atlasInstance;
@@ -97,11 +97,11 @@ public final class SdfShapeRenderer {
          if (!(r < 0.75F) && isAvailable()) {
             int tile = bestTile(r);
             if ((topFill | bottomFill) >>> 24 != 0) {
-               init(graphics, tile, x, y, w, h, r, topFill, bottomFill, false, false);
+               drawTile(graphics, tile, x, y, w, h, r, topFill, bottomFill, false, false);
             }
 
             if ((topBorder | bottomBorder) >>> 24 != 0) {
-               init(graphics, tile, x, y, w, h, r, topBorder, bottomBorder, true, false);
+               drawTile(graphics, tile, x, y, w, h, r, topBorder, bottomBorder, true, false);
             }
          } else {
             fillRoundRect(graphics, x, y, w, h, radius, bottomFill, bottomBorder);
@@ -192,7 +192,7 @@ public final class SdfShapeRenderer {
             if (equal) {
                fillRoundRect(graphics, centerX - values.getFirst() / 2.0F, y, values.getFirst(), h, r, color);
             } else if (r <= 0.0F) {
-               init(graphics, centerX, y, values, heights, color);
+               drawRows(graphics, centerX, y, values, heights, color);
             } else if (!shapeAtlasFailed && isAvailable()) {
                SdfShapeRenderer.ShapeKey key = new SdfShapeRenderer.ShapeKey(values, List.copyOf(sizes), r);
                if (!retireHookRegistered) {
@@ -209,7 +209,7 @@ public final class SdfShapeRenderer {
                   NativeImage pixels = null;
 
                   try {
-                     pixels = init(new SteppedRowContour(key.init_List, key.sizes, r));
+                     pixels = rasterize(new SteppedRowContour(key.init_List, key.sizes, r));
                      shape = new SdfShapeRenderer.ShapeAtlas(pixels);
                   } catch (Throwable error) {
                      if (pixels != null) {
@@ -217,7 +217,7 @@ public final class SdfShapeRenderer {
                      }
 
                      shapeAtlasFailed = true;
-                     init(graphics, centerX, y, values, heights, color);
+                     drawRows(graphics, centerX, y, values, heights, color);
                      return;
                   }
 
@@ -251,13 +251,13 @@ public final class SdfShapeRenderer {
                   ((AutismGuiGraphicsExtractorAccessor)graphics).autism$guiRenderState().addGuiElement(element);
                }
             } else {
-               init(graphics, centerX, y, values, heights, color);
+               drawRows(graphics, centerX, y, values, heights, color);
             }
          }
       }
    }
 
-   private static void init(GuiGraphicsExtractor graphics, float centerX, float y, List<Float> widths, float[] heights, int color) {
+   private static void drawRows(GuiGraphicsExtractor graphics, float centerX, float y, List<Float> widths, float[] heights, int color) {
       for (int i = 0; i < widths.size(); i++) {
          graphics.pose().pushMatrix();
 
@@ -273,7 +273,7 @@ public final class SdfShapeRenderer {
       }
    }
 
-   private static NativeImage init(SteppedRowContour shape) {
+   private static NativeImage rasterize(SteppedRowContour shape) {
       int width = (int)Math.ceil(shape.width) + 20;
       int height = (int)Math.ceil(shape.load) + 20;
       float[] distances = new float[width * height];
@@ -361,20 +361,20 @@ public final class SdfShapeRenderer {
    private static void drawTile(
       GuiGraphicsExtractor graphics, int tile, float x, float y, float w, float h, float r, int color, boolean outline, boolean topOnly
    ) {
-      init(graphics, tile, x, y, w, h, r, color, color, outline, topOnly);
+      drawTile(graphics, tile, x, y, w, h, r, color, color, outline, topOnly);
    }
 
-   private static void init(
+   private static void drawTile(
       GuiGraphicsExtractor graphics, int tile, float x, float y, float w, float h, float r, int topColor, int bottomColor, boolean outline, boolean topOnly
    ) {
       SdfShapeRenderer.ShapeAtlas atlas = atlas();
       if (atlas != null) {
          int rTile = TILE_RADII[tile];
          float corner = Math.min(r, Math.min(w, h) * 0.5F);
-         float[] xs = init(x, w, corner);
-         float[] ys = init(y, h, corner);
-         float tileU0 = (float)(tile * 64) / update;
-         float uStep = 64.0F / update;
+         float[] xs = sliceEdges(x, w, corner);
+         float[] ys = sliceEdges(y, h, corner);
+         float tileU0 = (float)(tile * 64) / ATLAS_WIDTH;
+         float uStep = 64.0F / ATLAS_WIDTH;
          float marginU = uStep * 0.1875F;
          float cornerU = uStep * ((12 + rTile) / 64.0F);
          float farCornerU = uStep * ((52 - rTile) / 64.0F);
@@ -414,7 +414,7 @@ public final class SdfShapeRenderer {
             quads[o + 1] = ys[1];
             quads[o + 2] = x + w;
             quads[o + 3] = y + h;
-            quads[o + 4] = quads[o + 6] = (tile * 64 + 32.0F) / update;
+            quads[o + 4] = quads[o + 6] = (tile * 64 + 32.0F) / ATLAS_WIDTH;
             quads[o + 5] = quads[o + 7] = 0.25F;
          }
 
@@ -439,7 +439,7 @@ public final class SdfShapeRenderer {
       }
    }
 
-   static float[] init(float start, float size, float corner) {
+   static float[] sliceEdges(float start, float size, float corner) {
       float end = start + size;
       float a = start + corner;
       float b = end - corner;
@@ -496,7 +496,7 @@ public final class SdfShapeRenderer {
    }
 
    private static NativeImage buildAtlasImage() {
-      NativeImage image = new NativeImage(Format.LUMINANCE, update, 128, false);
+      NativeImage image = new NativeImage(Format.LUMINANCE, ATLAS_WIDTH, 128, false);
       long base = image.getPointer();
 
       for (int t = 0; t < TILE_RADII.length; t++) {
@@ -508,9 +508,9 @@ public final class SdfShapeRenderer {
                float cy = py + 0.5F - 32.0F;
                float dist = roundedBoxDistance(cx, cy, 20.0F, 20.0F, r);
                float inner = roundedBoxDistance(cx, cy, 19.0F, 19.0F, Math.max(0.0F, r - 1.0F));
-               long offset = (long)py * update + t * 64 + px;
+               long offset = (long)py * ATLAS_WIDTH + t * 64 + px;
                MemoryUtil.memPutByte(base + offset, distanceToAlpha(dist));
-               MemoryUtil.memPutByte(base + 64L * update + offset, distanceToAlpha(Math.max(dist, -inner)));
+               MemoryUtil.memPutByte(base + 64L * ATLAS_WIDTH + offset, distanceToAlpha(Math.max(dist, -inner)));
             }
          }
       }

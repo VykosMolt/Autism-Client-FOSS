@@ -272,7 +272,7 @@ final class AiWorldReaders {
             summary.addProperty("consumable", true);
          }
 
-         init_V(summary);
+         trimSummary(summary);
       } catch (Throwable var13) {
       }
 
@@ -304,12 +304,12 @@ final class AiWorldReaders {
          pages = paginate(base, sections);
       } catch (Throwable t) {
          pages = new ArrayList<>();
-         pages.add(init_JsonObject(base));
+         pages.add(copyObject(base));
       }
 
       int total = pages.size();
       int requested = Math.max(0, page);
-      JsonObject out = requested < total ? pages.get(requested) : init_JsonObject(base);
+      JsonObject out = requested < total ? pages.get(requested) : copyObject(base);
       out.addProperty("page", requested);
       out.addProperty("pages", total);
       return out;
@@ -587,7 +587,7 @@ final class AiWorldReaders {
       return count;
    }
 
-   private static void init_V(JsonObject summary) {
+   private static void trimSummary(JsonObject summary) {
       boolean halved = true;
 
       while (jsonLength(summary) > 512 && halved) {
@@ -621,7 +621,7 @@ final class AiWorldReaders {
 
    private static List<JsonObject> paginate(JsonObject base, List<Entry<String, JsonElement>> sections) {
       List<JsonObject> pages = new ArrayList<>();
-      JsonObject current = init_JsonObject(base);
+      JsonObject current = copyObject(base);
 
       for (Entry<String, JsonElement> section : sections) {
          String key = section.getKey();
@@ -639,13 +639,13 @@ final class AiWorldReaders {
                   if (slice.size() > 0) {
                      addSlice(current, key, slice, sliceStart);
                      pages.add(current);
-                     current = init_JsonObject(base);
+                     current = copyObject(base);
                      slice = new JsonArray();
                      sliceSize = 0;
                      sliceStart = i;
                   } else {
                      pages.add(current);
-                     current = init_JsonObject(base);
+                     current = copyObject(base);
                   }
                }
 
@@ -659,7 +659,7 @@ final class AiWorldReaders {
          } else {
             if (jsonLength(current) + key.length() + 4 + jsonLength(value) > 5700 && current.size() > base.size()) {
                pages.add(current);
-               current = init_JsonObject(base);
+               current = copyObject(base);
             }
 
             current.add(key, value);
@@ -677,7 +677,7 @@ final class AiWorldReaders {
       }
    }
 
-   private static JsonObject init_JsonObject(JsonObject base) {
+   private static JsonObject copyObject(JsonObject base) {
       JsonObject page = new JsonObject();
 
       for (Entry<String, JsonElement> entry : base.entrySet()) {

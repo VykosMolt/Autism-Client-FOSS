@@ -5,50 +5,50 @@ import net.minecraft.core.Direction;
 
 final class PrintHeadWindow {
    private static final int init_I = 6;
-   private final float[] init_FArr = new float[6];
-   private final float[] load_FArr = new float[6];
-   private int load_I;
-   private int read_I;
-   private long init_J = -9223372036854775808L;
-   private long load_J = -9223372036854775808L;
-   private long read_J;
-   private Direction init_Direction;
+   private final float[] yawSamples = new float[6];
+   private final float[] pitchSamples = new float[6];
+   private int sampleCount;
+   private int sampleCursor;
+   private long lastTick = -9223372036854775808L;
+   private long lastSampleNanos = -9223372036854775808L;
+   private long facingSinceNanos;
+   private Direction lastFacing;
 
    void reset() {
-      this.load_I = this.read_I = 0;
-      this.init_J = this.load_J = -9223372036854775808L;
-      this.init_Direction = null;
+      this.sampleCount = this.sampleCursor = 0;
+      this.lastTick = this.lastSampleNanos = -9223372036854775808L;
+      this.lastFacing = null;
    }
 
    void observe(float y, float p, long atTick, long now) {
       if (!Float.isFinite(y) || !Float.isFinite(p)) {
          this.reset();
-      } else if (atTick != this.init_J) {
-         if (this.load_J != -9223372036854775808L && (now < this.load_J || now - this.load_J > 100000000L)) {
+      } else if (atTick != this.lastTick) {
+         if (this.lastSampleNanos != -9223372036854775808L && (now < this.lastSampleNanos || now - this.lastSampleNanos > 100000000L)) {
             this.reset();
          }
 
-         this.init_J = atTick;
-         this.load_J = now;
+         this.lastTick = atTick;
+         this.lastSampleNanos = now;
          Direction facing = AiPlacementContext.facingOrder(y, p)[0];
-         if (facing != this.init_Direction) {
-            this.init_Direction = facing;
-            this.read_J = now;
-            this.load_I = this.read_I = 0;
+         if (facing != this.lastFacing) {
+            this.lastFacing = facing;
+            this.facingSinceNanos = now;
+            this.sampleCount = this.sampleCursor = 0;
          }
 
-         this.init_FArr[this.read_I] = y;
-         this.load_FArr[this.read_I] = p;
-         this.read_I = (this.read_I + 1) % 6;
-         this.load_I = Math.min(6, this.load_I + 1);
+         this.yawSamples[this.sampleCursor] = y;
+         this.pitchSamples[this.sampleCursor] = p;
+         this.sampleCursor = (this.sampleCursor + 1) % 6;
+         this.sampleCount = Math.min(6, this.sampleCount + 1);
       }
    }
 
    boolean isStableFacing(Direction wanted, long now) {
-      if (this.load_I >= 6 && this.init_Direction == wanted && now - this.read_J >= 150000000L && now >= this.load_J && now - this.load_J <= 100000000L) {
-         for (int y = 0; y < this.load_I; y++) {
-            for (int p = 0; p < this.load_I; p++) {
-               if (AiPlacementContext.facingOrder(this.init_FArr[y], this.load_FArr[p])[0] != wanted) {
+      if (this.sampleCount >= 6 && this.lastFacing == wanted && now - this.facingSinceNanos >= 150000000L && now >= this.lastSampleNanos && now - this.lastSampleNanos <= 100000000L) {
+         for (int y = 0; y < this.sampleCount; y++) {
+            for (int p = 0; p < this.sampleCount; p++) {
+               if (AiPlacementContext.facingOrder(this.yawSamples[y], this.pitchSamples[p])[0] != wanted) {
                   return false;
                }
             }

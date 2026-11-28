@@ -10,20 +10,20 @@ import net.minecraft.world.phys.Vec3;
 final class TrajectoryStateCache {
    private static final FireballBlastPredictor BLAST_PREDICTOR = new FireballBlastPredictor();
    private static final ThrownPearlTracker PEARL_TRACKER = new ThrownPearlTracker();
-   private static List<TrajectoriesModule.Inner_CachePool> init_List = List.of();
+   private static List<TrajectoriesModule.Inner_CachePool> cachedPaths = List.of();
    private static List<FireballBlastPredictor.DestroyedBlock> blastPredictions = List.of();
-   private static Level init_Level;
-   private static Object init_Obj;
-   private static final Map<Vec3, Integer> init_Map = new HashMap<>();
-   private static int init_I = -2147483648;
-   private static double init_D = 0.0 / 0.0;
+   private static Level cachedLevel;
+   private static Object cachedPlayer;
+   private static final Map<Vec3, Integer> damageByPoint = new HashMap<>();
+   private static int cachedTick = -2147483648;
+   private static double cachedThreshold = 0.0 / 0.0;
 
    private TrajectoryStateCache() {
    }
 
    static void init(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
       if (ensureContext(mc)) {
-         init_List = paths;
+         cachedPaths = paths;
          Vec3 explosion = null;
 
          for (TrajectoriesModule.Inner_CachePool path : paths) {
@@ -32,17 +32,17 @@ final class TrajectoryStateCache {
             }
          }
 
-         blastPredictions = BLAST_PREDICTOR.predictAt(init_Level, explosion);
+         blastPredictions = BLAST_PREDICTOR.predictAt(cachedLevel, explosion);
          Module module = al.init_Module_Str("trajectories");
          double threshold = module == null ? 50.0 : module.integer("pearl-warning-damage");
-         if (init_I != mc.player.tickCount || init_D != threshold) {
-            init_Map.clear();
-            init_I = mc.player.tickCount;
-            init_D = threshold;
+         if (cachedTick != mc.player.tickCount || cachedThreshold != threshold) {
+            damageByPoint.clear();
+            cachedTick = mc.player.tickCount;
+            cachedThreshold = threshold;
          }
 
-         if (init_Map.size() > 4) {
-            init_Map.clear();
+         if (damageByPoint.size() > 4) {
+            damageByPoint.clear();
          }
 
          ThrownPearlTracker.Inner_DataUtil remembered = PEARL_TRACKER.remembered();
@@ -63,15 +63,15 @@ final class TrajectoryStateCache {
    }
 
    static List<FireballBlastPredictor.DestroyedBlock> blastPredictions(List<TrajectoriesModule.Inner_CachePool> paths) {
-      return init_List == paths ? blastPredictions : List.of();
+      return cachedPaths == paths ? blastPredictions : List.of();
    }
 
    static int tintFor(Vec3 destination) {
-      return init_Map.getOrDefault(destination, -12971);
+      return damageByPoint.getOrDefault(destination, -12971);
    }
 
    private static void evaluateLanding(Minecraft mc, Vec3 destination, double threshold) {
-      init_Map.computeIfAbsent(destination, at -> PearlLandingEvaluator.init(mc, at, threshold));
+      damageByPoint.computeIfAbsent(destination, at -> PearlLandingEvaluator.init(mc, at, threshold));
    }
 
    static double init_D() {
@@ -80,7 +80,7 @@ final class TrajectoryStateCache {
 
    static ThrownPearlTracker.Inner_DataUtil rememberedPearl() {
       Minecraft mc = Minecraft.getInstance();
-      return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? PEARL_TRACKER.remembered() : null;
+      return !am.init_Z() && mc.level == cachedLevel && mc.player == cachedPlayer && mc.player != null && mc.player.isAlive() ? PEARL_TRACKER.remembered() : null;
    }
 
    static void tickPearls(Minecraft mc, boolean enabled) {
@@ -91,12 +91,12 @@ final class TrajectoryStateCache {
 
    private static boolean ensureContext(Minecraft mc) {
       if (mc != null && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
-         if (mc.level != init_Level || mc.player != init_Obj) {
+         if (mc.level != cachedLevel || mc.player != cachedPlayer) {
             reset();
          }
 
-         init_Level = mc.level;
-         init_Obj = mc.player;
+         cachedLevel = mc.level;
+         cachedPlayer = mc.player;
          return true;
       } else {
          reset();
@@ -107,13 +107,13 @@ final class TrajectoryStateCache {
    static void reset() {
       BLAST_PREDICTOR.reset();
       PEARL_TRACKER.reset();
-      init_List = List.of();
+      cachedPaths = List.of();
       blastPredictions = List.of();
-      init_Level = null;
-      init_Obj = null;
-      init_Map.clear();
-      init_I = -2147483648;
-      init_D = 0.0 / 0.0;
+      cachedLevel = null;
+      cachedPlayer = null;
+      damageByPoint.clear();
+      cachedTick = -2147483648;
+      cachedThreshold = 0.0 / 0.0;
       TrajectoryWorldRenderer.resetCounters();
       TrajectoryOffscreenIndicator.reset();
    }

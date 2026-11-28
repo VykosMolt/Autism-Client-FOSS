@@ -12,7 +12,7 @@ public final class MouseMovementRouter {
    private static final TimedMouseSmoother SMOOTHER = new TimedMouseSmoother();
    private static volatile MouseMovementRouter.MovementSource exclusiveSource;
    private static boolean init_Z;
-   private static long init_J;
+   private static long lastDrainNanos;
 
    private MouseMovementRouter() {
    }
@@ -49,7 +49,7 @@ public final class MouseMovementRouter {
                rawY = -rawY;
             }
 
-            init_V_ba_StreamUtil(source, rawX, rawY);
+            submitRaw(source, rawX, rawY);
          }
       }
    }
@@ -68,15 +68,15 @@ public final class MouseMovementRouter {
             rawY = -rawY;
          }
 
-         init_V_ba_StreamUtil(source, rawX, rawY);
+         submitRaw(source, rawX, rawY);
       }
    }
 
    public static void init_V_D_D(double deltaX, double deltaY) {
-      init_V_ba_StreamUtil(MouseMovementRouter.MovementSource.GENERIC, deltaX, deltaY);
+      submitRaw(MouseMovementRouter.MovementSource.GENERIC, deltaX, deltaY);
    }
 
-   public static void init_V_ba_StreamUtil(MouseMovementRouter.MovementSource source, double deltaX, double deltaY) {
+   public static void submitRaw(MouseMovementRouter.MovementSource source, double deltaX, double deltaY) {
       if (!read()) {
          release(source);
       } else if (Double.isFinite(deltaX) && Double.isFinite(deltaY)) {
@@ -99,12 +99,12 @@ public final class MouseMovementRouter {
       }
 
       long now = System.nanoTime();
-      double elapsedSeconds = init_J == 0L ? 0.016666666666666666 : Math.clamp((now - init_J) / 1.0E9, 0.001, 0.05);
-      init_J = now;
+      double elapsedSeconds = lastDrainNanos == 0L ? 0.016666666666666666 : Math.clamp((now - lastDrainNanos) / 1.0E9, 0.001, 0.05);
+      lastDrainNanos = now;
       MouseMovementRouter.MovementSource exclusive = exclusiveSource;
       if (exclusive != null) {
-         load(exclusive);
-         FractionalCountAccumulator.WholeCounts counts = init_dh_DataUtil_ba_StreamUtil_D(exclusive, elapsedSeconds);
+         resetAccumulatorsExcept(exclusive);
+         FractionalCountAccumulator.WholeCounts counts = drainCounts(exclusive, elapsedSeconds);
          return new MouseMovementRouter.MouseDelta(counts.x(), counts.y());
       }
 
@@ -143,7 +143,7 @@ public final class MouseMovementRouter {
       SMOOTHER.reset();
       exclusiveSource = null;
       init_Z = false;
-      init_J = 0L;
+      lastDrainNanos = 0L;
    }
 
    public static void release(MouseMovementRouter.MovementSource source) {
@@ -173,7 +173,7 @@ public final class MouseMovementRouter {
       if (exclusive) {
          if (source != null) {
             exclusiveSource = source;
-            load(source);
+            resetAccumulatorsExcept(source);
          }
       } else if (source == null || exclusiveSource == source) {
          exclusiveSource = null;
@@ -208,7 +208,7 @@ public final class MouseMovementRouter {
       return ACCUMULATORS.get(source == null ? MouseMovementRouter.MovementSource.GENERIC : source);
    }
 
-   private static FractionalCountAccumulator.WholeCounts init_dh_DataUtil_ba_StreamUtil_D(MouseMovementRouter.MovementSource source, double elapsedSeconds) {
+   private static FractionalCountAccumulator.WholeCounts drainCounts(MouseMovementRouter.MovementSource source, double elapsedSeconds) {
       if (source == MouseMovementRouter.MovementSource.AIM_ASSIST) {
          return SMOOTHER.drain(elapsedSeconds);
       } else {
@@ -216,7 +216,7 @@ public final class MouseMovementRouter {
       }
    }
 
-   private static void load(MouseMovementRouter.MovementSource retained) {
+   private static void resetAccumulatorsExcept(MouseMovementRouter.MovementSource retained) {
       if (retained != MouseMovementRouter.MovementSource.AUTO_FISH) {
          init_Z = false;
       }

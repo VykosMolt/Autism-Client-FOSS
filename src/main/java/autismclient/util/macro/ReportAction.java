@@ -49,7 +49,7 @@ public class ReportAction implements MacroAction {
                   AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": no time left after start event");
                } else {
                   int remainingTimeout = (int)Math.min(Integer.MAX_VALUE, remainingMs);
-                  MacroAction condition = this.write_MacroAction();
+                  MacroAction condition = this.buildEndCondition();
 
                   boolean fired;
                   try {
@@ -72,16 +72,16 @@ public class ReportAction implements MacroAction {
                   }
 
                   if (!fired) {
-                     AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": timeout waiting for " + this.read_Str());
+                     AutismClientMessaging.sendPrefixed("§eReport \"" + this.displayLabel() + "\": timeout waiting for " + this.endLabel());
                   } else {
                      long deltaMs = (System.nanoTime() - startNanos) / 1000000L;
                      AutismClientMessaging.sendPrefixed(
-                        "§b" + this.displayLabel() + ": " + deltaMs + " ms (" + this.load_Str_2() + " -> " + this.read_Str() + ")"
+                        "§b" + this.displayLabel() + ": " + deltaMs + " ms (" + this.startLabel() + " -> " + this.endLabel() + ")"
                      );
                      if (this.stashToSharedState) {
                         AutismSessionState.getInstance()
                            .recordTimingMeasurement(
-                              new AutismSessionState.TimingMeasurement(this.displayLabel(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
+                              new AutismSessionState.TimingMeasurement(this.displayLabel(), deltaMs, this.startLabel(), this.endLabel(), System.currentTimeMillis())
                            );
                      }
                   }
@@ -102,7 +102,7 @@ public class ReportAction implements MacroAction {
 
          try {
             if (this.startEvent == ReportAction.StartEvent.COMMAND_SENT) {
-               String command = init_Str_Str_2(this.commandText);
+               String command = stripSlash(this.commandText);
                if (command.isBlank()) {
                   sendListener.cancel();
                   AutismClientMessaging.sendPrefixed("Report \"" + this.displayLabel() + "\": set a command for COMMAND_SENT.");
@@ -132,7 +132,7 @@ public class ReportAction implements MacroAction {
       }
    }
 
-   private MacroAction write_MacroAction() {
+   private MacroAction buildEndCondition() {
       MacroAction var10000;
       switch (this.endCondition) {
          case GUI_OPEN: {
@@ -182,7 +182,7 @@ public class ReportAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("startEvent", this.startEvent.name());
-      tag.putString("endEvent", this.init_O_StreamUtil().name());
+      tag.putString("endEvent", this.endEventOf().name());
       tag.putString("endCondition", this.endCondition.name());
       tag.putString("startConditionType", this.startConditionType == null ? RaceAction.Inner_DataUtil.DELAY.name() : this.startConditionType);
       tag.putString("startActionType", this.startActionType == null ? MacroActionType.ITEM.name() : this.startActionType);
@@ -233,7 +233,7 @@ public class ReportAction implements MacroAction {
          this.endDistance = tag.getDoubleOr("endDistance", this.positionTolerance);
          this.endHorizontalOnly = tag.getBooleanOr("endHorizontalOnly", false);
          if (this.endConditionType == null || this.endConditionType.isBlank()) {
-            this.endConditionType = this.write_Str();
+            this.endConditionType = this.endConditionTypeFor();
          }
       } else {
          try {
@@ -242,11 +242,11 @@ public class ReportAction implements MacroAction {
             this.endEvent = ReportAction.EndEvent.GUI_OPEN;
          }
 
-         this.init_V_6();
+         this.migrateEndEvent();
       }
    }
 
-   private void init_V_6() {
+   private void migrateEndEvent() {
       switch (this.endEvent) {
          case GUI_OPEN:
             this.endCondition = ReportAction.EndCondition.GUI_OPEN;
@@ -269,10 +269,10 @@ public class ReportAction implements MacroAction {
             this.endHorizontalOnly = false;
       }
 
-      this.endConditionType = this.write_Str();
+      this.endConditionType = this.endConditionTypeFor();
    }
 
-   private ReportAction.EndEvent init_O_StreamUtil() {
+   private ReportAction.EndEvent endEventOf() {
       ReportAction.EndEvent var10000;
       switch (this.endCondition) {
          case GUI_OPEN:
@@ -305,7 +305,7 @@ public class ReportAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Report \"" + this.displayLabel() + "\" [" + this.load_Str_2() + " -> " + this.read_Str() + "]";
+      return "Report \"" + this.displayLabel() + "\" [" + this.startLabel() + " -> " + this.endLabel() + "]";
    }
 
    @Override
@@ -317,7 +317,7 @@ public class ReportAction implements MacroAction {
       return this.reportLabel != null && !this.reportLabel.isBlank() ? this.reportLabel.trim() : "Report";
    }
 
-   private String load_Str_2() {
+   private String startLabel() {
       return this.startActionType != null && !this.startActionType.isBlank()
          ? this.startActionType
          : (
@@ -327,7 +327,7 @@ public class ReportAction implements MacroAction {
          );
    }
 
-   private String read_Str() {
+   private String endLabel() {
       return this.endConditionType != null && !this.endConditionType.isBlank()
          ? this.endConditionType
          : (this.endCondition == null ? ReportAction.EndCondition.GUI_OPEN.name() : this.endCondition.name());
@@ -365,7 +365,7 @@ public class ReportAction implements MacroAction {
       }
    }
 
-   private String write_Str() {
+   private String endConditionTypeFor() {
       String var10000;
       switch (this.endCondition) {
          case GUI_OPEN:
@@ -391,7 +391,7 @@ public class ReportAction implements MacroAction {
       return var10000;
    }
 
-   private static String init_Str_Str_2(String command) {
+   private static String stripSlash(String command) {
       if (command == null) {
          return "";
       }

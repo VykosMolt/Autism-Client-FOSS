@@ -129,7 +129,7 @@ public final class QueuedCombatAction {
          this.hit = hit;
          this.hand = hand;
          this.entity = entity;
-         this.gate = new QueuedCombatAction.DispatchGate(this::isStillValid, () -> this.read() && legal.getAsBoolean(), dispatched);
+         this.gate = new QueuedCombatAction.DispatchGate(this::isStillValid, () -> this.stillHolding() && legal.getAsBoolean(), dispatched);
       }
 
       boolean isStillValid() {
@@ -149,7 +149,7 @@ public final class QueuedCombatAction {
          return this.gate.checkReady();
       }
 
-      boolean read() {
+      boolean stillHolding() {
          return !this.client.player.isDeadOrDying()
             && !this.client.player.isUsingItem()
             && this.selectedSlot == this.client.player.getInventory().getSelectedSlot()

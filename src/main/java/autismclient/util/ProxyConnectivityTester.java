@@ -17,15 +17,15 @@ public final class ProxyConnectivityTester {
    public static ProxyConnectivityTester.TestResult init(bW proxy, String destHost, int destPort, int timeoutMs) {
       if (proxy != null && proxy.init_bZ != null && proxy.init_Z()) {
          String host = destHost == null ? "" : destHost.trim();
-         if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !init(proxy)) {
+         if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !hasValidAuth(proxy)) {
             int timeout = Math.max(1, timeoutMs);
             ProxyProtocolType primary = proxy.init_bZ == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             ProxyProtocolType secondary = primary == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks5 : ProxyProtocolType.Socks4;
-            ProxyConnectivityTester.TestResult first = init(proxy, primary, host, destPort, timeout);
+            ProxyConnectivityTester.TestResult first = runTest(proxy, primary, host, destPort, timeout);
             if (first.success()) {
                return first;
             } else {
-               ProxyConnectivityTester.TestResult second = init(proxy, secondary, host, destPort, timeout);
+               ProxyConnectivityTester.TestResult second = runTest(proxy, secondary, host, destPort, timeout);
                if (second.success()) {
                   return second;
                } else {
@@ -43,7 +43,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static boolean init(bW proxy) {
+   private static boolean hasValidAuth(bW proxy) {
       if (proxy.write != null && !proxy.write.isBlank()) {
          byte[] user = proxy.write.getBytes(StandardCharsets.UTF_8);
          byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);
@@ -53,7 +53,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static ProxyConnectivityTester.TestResult init(bW proxy, ProxyProtocolType type, String host, int port, int timeout) {
+   private static ProxyConnectivityTester.TestResult runTest(bW proxy, ProxyProtocolType type, String host, int port, int timeout) {
       long started = System.nanoTime();
 
       try (Socket socket = new Socket()) {
@@ -61,7 +61,7 @@ public final class ProxyConnectivityTester {
          socket.connect(new InetSocketAddress(proxy.read, proxy.init_I), timeout);
          OutputStream out = socket.getOutputStream();
          InputStream in = socket.getInputStream();
-         ProxyConnectivityTester.TestOutcome state = type == ProxyProtocolType.Socks4 ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
+         ProxyConnectivityTester.TestOutcome state = type == ProxyProtocolType.Socks4 ? socks4Handshake(out, in, proxy, host, port) : socks5Handshake(out, in, proxy, host, port);
          if (state != ProxyConnectivityTester.TestOutcome.VERIFIED) {
             return ProxyConnectivityTester.TestResult.of(state);
          }
@@ -77,7 +77,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static ProxyConnectivityTester.TestOutcome init(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome socks5Handshake(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
       boolean hasAuth = proxy.write != null && !proxy.write.isBlank();
       if (hasAuth) {
          out.write(new byte[]{5, 2, 0, 2});
@@ -98,7 +98,7 @@ public final class ProxyConnectivityTester {
                return ProxyConnectivityTester.TestOutcome.OFFLINE;
             }
 
-            ProxyConnectivityTester.TestOutcome authenticated = init(out, in, proxy);
+            ProxyConnectivityTester.TestOutcome authenticated = socks5Auth(out, in, proxy);
             if (authenticated != ProxyConnectivityTester.TestOutcome.VERIFIED) {
                return authenticated;
             }
@@ -151,7 +151,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static ProxyConnectivityTester.TestOutcome init(OutputStream out, InputStream in, bW proxy) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome socks5Auth(OutputStream out, InputStream in, bW proxy) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream auth = new ByteArrayOutputStream(3 + user.length + pass.length);
@@ -170,14 +170,14 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static ProxyConnectivityTester.TestOutcome load(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome socks4Handshake(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream request = new ByteArrayOutputStream();
       request.write(4);
       request.write(1);
       request.write(port >> 8 & 0xFF);
       request.write(port & 0xFF);
-      byte[] ipv4 = init(host);
+      byte[] ipv4 = parseIpv4(host);
       if (ipv4 != null) {
          request.write(ipv4, 0, 4);
          request.write(user, 0, user.length);
@@ -205,7 +205,7 @@ public final class ProxyConnectivityTester {
       return in.readNBytes(count);
    }
 
-   private static byte[] init(String value) {
+   private static byte[] parseIpv4(String value) {
       if (value == null) {
          return null;
       }

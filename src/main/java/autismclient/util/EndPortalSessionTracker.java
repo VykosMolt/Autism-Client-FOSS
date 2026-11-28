@@ -4,11 +4,11 @@ import java.util.Objects;
 
 public final class EndPortalSessionTracker {
    private final EndPortalMemoryCache cache;
-   private Object init_Obj;
-   private Object load_Obj;
-   private String init_Str;
-   private String load_Str;
-   private EndPortalMemoryCache.DimensionMemory init_cR_DataUtil;
+   private Object world;
+   private Object connection;
+   private String server;
+   private String dimension;
+   private EndPortalMemoryCache.DimensionMemory memory;
 
    public EndPortalSessionTracker(EndPortalMemoryCache memory) {
       this.cache = Objects.requireNonNull(memory);
@@ -19,30 +19,30 @@ public final class EndPortalSessionTracker {
       Objects.requireNonNull(connection);
       Objects.requireNonNull(server);
       Objects.requireNonNull(dimension);
-      if (this.init_Obj == world && this.load_Obj == connection && server.equals(this.init_Str) && dimension.equals(this.load_Str)) {
+      if (this.world == world && this.connection == connection && server.equals(this.server) && dimension.equals(this.dimension)) {
          return false;
       }
 
-      this.init_Obj = world;
-      this.load_Obj = connection;
-      this.init_Str = server;
-      this.load_Str = dimension;
-      this.init_cR_DataUtil = this.cache.memoryFor(server, dimension);
+      this.world = world;
+      this.connection = connection;
+      this.server = server;
+      this.dimension = dimension;
+      this.memory = this.cache.memoryFor(server, dimension);
       return true;
    }
 
    public boolean isSameSession(Object world, Object connection) {
-      return world != null && connection != null && this.init_Obj == world && this.load_Obj == connection;
+      return world != null && connection != null && this.world == world && this.connection == connection;
    }
 
    public EndPortalMemoryCache.DimensionMemory getMemory() {
-      return this.init_cR_DataUtil;
+      return this.memory;
    }
 
    public void reset() {
-      this.init_Obj = this.load_Obj = null;
-      this.init_Str = this.load_Str = null;
-      this.init_cR_DataUtil = null;
+      this.world = this.connection = null;
+      this.server = this.dimension = null;
+      this.memory = null;
    }
 
    public static boolean isStrongholdDimension(boolean skylight, boolean dragonFight) {

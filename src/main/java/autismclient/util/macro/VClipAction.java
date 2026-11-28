@@ -100,7 +100,7 @@ public class VClipAction implements MacroAction {
             boolean horizontalCollision = player.horizontalCollision;
             if (blocks < -3.0) {
                int padding = options.segmented ? Math.max(0, packetsRequired - 1) : 0;
-               packetsRequired = init(mc, player, x, y, z, blocks, padding, options.updateLocalPosition);
+               packetsRequired = sendClipPackets(mc, player, x, y, z, blocks, padding, options.updateLocalPosition);
             } else {
                player.resetFallDistance();
 
@@ -138,7 +138,7 @@ public class VClipAction implements MacroAction {
       if (mode == VClipAction.ClipMode.TOP) {
          return findTarget(player);
       } else {
-         return mode == VClipAction.ClipMode.BOTTOM ? load(player) : new VClipAction.ClipTarget(true, 0.0, "manual");
+         return mode == VClipAction.ClipMode.BOTTOM ? findBottomTarget(player) : new VClipAction.ClipTarget(true, 0.0, "manual");
       }
    }
 
@@ -148,12 +148,12 @@ public class VClipAction implements MacroAction {
       return candidate != null ? new VClipAction.ClipTarget(true, candidate.y - start.y, "top") : new VClipAction.ClipTarget(false, 0.0, "no direct safe top target");
    }
 
-   private static VClipAction.ClipTarget load(LocalPlayer player) {
+   private static VClipAction.ClipTarget findBottomTarget(LocalPlayer player) {
       Vec3 start = player.position();
 
       for (double offset = 0.5; offset <= 128.0; offset += 0.5) {
          Vec3 candidate = new Vec3(start.x, start.y - offset, start.z);
-         if (isLoaded(player, candidate) && fitsAt(player, candidate) && read(player, candidate)) {
+         if (isLoaded(player, candidate) && fitsAt(player, candidate) && hasGroundBelow(player, candidate)) {
             return new VClipAction.ClipTarget(true, candidate.y - start.y, "bottom");
          }
       }
@@ -170,13 +170,13 @@ public class VClipAction implements MacroAction {
       return player.level().noCollision(player, player.getBoundingBox().move(delta));
    }
 
-   private static boolean read(LocalPlayer player, Vec3 pos) {
+   private static boolean hasGroundBelow(LocalPlayer player, Vec3 pos) {
       Vec3 delta = pos.subtract(player.position());
       AABB moved = player.getBoundingBox().move(delta);
       return !player.level().noCollision(player, moved.move(0.0, -0.0625, 0.0));
    }
 
-   private static int init(Minecraft mc, LocalPlayer player, double x, double y, double z, double blocks, int paddingPackets, boolean updateLocalPosition) {
+   private static int sendClipPackets(Minecraft mc, LocalPlayer player, double x, double y, double z, double blocks, int paddingPackets, boolean updateLocalPosition) {
       double targetY = y + blocks;
       resetFall(player);
       int sent = 0;

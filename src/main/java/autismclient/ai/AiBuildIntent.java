@@ -110,7 +110,7 @@ final class AiBuildIntent {
       } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
          return AiBuilder.isFlowingFluidCell(cell) ? List.of() : NEIGHBOR_OFFSETS;
       } else if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
-         Direction provider = init_Direction(cell);
+         Direction provider = supportProviderFace(cell);
          return provider == null ? List.of() : List.of(offsetOf(provider));
       } else if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
          return List.of();
@@ -135,7 +135,7 @@ final class AiBuildIntent {
       }
    }
 
-   static Float init_Float(AiBuilder.CellSpec cell) {
+   static Float requiredYaw(AiBuilder.CellSpec cell) {
       AiBuildSite.Inner_CachePool kind = kindOf(cell);
       if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
@@ -145,12 +145,12 @@ final class AiBuildIntent {
       return constraint == null ? null : constraint.clickYaw();
    }
 
-   static double init_D(AiBuilder.CellSpec cell) {
+   static double yawTolerance(AiBuilder.CellSpec cell) {
       autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, BlockPos.ZERO);
       return constraint == null ? 35.0 : constraint.yawTolerance();
    }
 
-   static Predicate<Direction> init_Predicate(AiBuilder.CellSpec cell, BlockPos target) {
+   static Predicate<Direction> allowedFaces(AiBuilder.CellSpec cell, BlockPos target) {
       AiBuildSite.Inner_CachePool kind = kindOf(cell);
       if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
@@ -166,7 +166,7 @@ final class AiBuildIntent {
       }
    }
 
-   static Boolean init_Boolean(AiBuilder.CellSpec cell) {
+   static Boolean needsUpperHalfClick(AiBuilder.CellSpec cell) {
       AiBuildSite.Inner_CachePool kind = kindOf(cell);
       return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, blockOf(cell));
    }
@@ -187,16 +187,16 @@ final class AiBuildIntent {
       }
    }
 
-   static Float load_Float(AiBuilder.CellSpec cell) {
-      return init_Float(cell);
+   static Float unusedRequiredYaw(AiBuilder.CellSpec cell) {
+      return requiredYaw(cell);
    }
 
-   static Direction init_Direction(AiBuilder.CellSpec cell, BlockPos target) {
+   static Direction constraintClickFace(AiBuilder.CellSpec cell, BlockPos target) {
       autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, target == null ? BlockPos.ZERO : target);
       return constraint == null ? null : constraint.clickFace();
    }
 
-   static boolean init_Z(AiBuilder.CellSpec cell) {
+   static boolean isPlainOrInteract(AiBuilder.CellSpec cell) {
       AiBuildSite.Inner_CachePool kind = kindOf(cell);
       return kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT;
    }
@@ -260,7 +260,7 @@ final class AiBuildIntent {
       return AiBuilder.stripPoweredLevers(blueprint);
    }
 
-   static List<AiBuilder.CellSpec> init_List(AiBuilder.Blueprint blueprint) {
+   static List<AiBuilder.CellSpec> poweredLevers(AiBuilder.Blueprint blueprint) {
       ArrayList<AiBuilder.CellSpec> controls = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
@@ -274,13 +274,13 @@ final class AiBuildIntent {
 
    static autismclient.ai.engine.PlacementGoal.PlaceConstraint placeConstraint(AiBuilder.CellSpec cell, BlockPos target) {
       try {
-         return AiBuilder.buildPlaceConstraint(cell, blockOf(cell), target, init_BlockGetter(cell));
+         return AiBuilder.buildPlaceConstraint(cell, blockOf(cell), target, constraintLevel(cell));
       } catch (RuntimeException e) {
          return null;
       }
    }
 
-   private static BlockGetter init_BlockGetter(AiBuilder.CellSpec cell) {
+   private static BlockGetter constraintLevel(AiBuilder.CellSpec cell) {
       if (!isDoubleChestCell(cell)) {
          return EmptyBlockGetter.INSTANCE;
       }
@@ -313,7 +313,7 @@ final class AiBuildIntent {
       return AiBuilder.toBlockState(cell).getBlock();
    }
 
-   private static Direction init_Direction(AiBuilder.CellSpec cell) {
+   private static Direction supportProviderFace(AiBuilder.CellSpec cell) {
       if (!AiSchematicActions.isBedHead(cell)) {
          return Direction.DOWN;
       }
@@ -412,7 +412,7 @@ final class AiBuildIntent {
       });
    }
 
-   static List<String> read_List(AiBuilder.CellSpec cell) {
+   static List<String> orientationProperties(AiBuilder.CellSpec cell) {
       Block block = blockOf(cell);
       ArrayList<String> out = new ArrayList<>(2);
 
@@ -432,7 +432,7 @@ final class AiBuildIntent {
    }
 
    private static boolean needsInteraction(AiBuilder.CellSpec cell) {
-      return !read_List(cell).isEmpty();
+      return !orientationProperties(cell).isEmpty();
    }
 
    private static boolean defaultPropertyIs(Block block, String propertyName, String requested) {

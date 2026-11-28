@@ -82,7 +82,7 @@ public class WaitForGuiAction implements MacroAction {
 
    public Optional<Map<String, MacroVarValue>> capture(Screen screen) {
       if (screen == null) {
-         return this.init();
+         return this.matchCustomMenu();
       }
 
       if (!GuiScreenMatcher.matches(screen, this.guiType, "")) {
@@ -97,15 +97,15 @@ public class WaitForGuiAction implements MacroAction {
          } else {
             return !resolved.value().isBlank() && !GuiScreenMatcher.matches(screen, this.guiType, resolved.value())
                ? Optional.empty()
-               : Optional.of(this.init(screen, title, Map.of()));
+               : Optional.of(this.captureValues(screen, title, Map.of()));
          }
       } else {
          Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.match(this.matchMode, this.guiTitle, title);
-         return matched.isEmpty() ? Optional.empty() : Optional.of(this.init(screen, title, matched.get().variables()));
+         return matched.isEmpty() ? Optional.empty() : Optional.of(this.captureValues(screen, title, matched.get().variables()));
       }
    }
 
-   private Optional<Map<String, MacroVarValue>> init() {
+   private Optional<Map<String, MacroVarValue>> matchCustomMenu() {
       CustomMenuSnapshot snapshot = autismclient.util.custommenu.CustomMenuTracker.snapshot();
       boolean anyType = this.guiType == null || this.guiType.isBlank() || "ANY".equalsIgnoreCase(this.guiType);
       if (snapshot != null && (anyType || GuiScreenMatcher.isCustomMenuType(this.guiType))) {
@@ -136,7 +136,7 @@ public class WaitForGuiAction implements MacroAction {
       }
    }
 
-   private Map<String, MacroVarValue> init(Screen screen, String title, Map<String, MacroVarValue> captures) {
+   private Map<String, MacroVarValue> captureValues(Screen screen, String title, Map<String, MacroVarValue> captures) {
       Map<String, MacroVarValue> values = new LinkedHashMap<>(captures);
       if (this.saveAs != null && !this.saveAs.isBlank()) {
          Map<String, MacroVarValue> properties = new LinkedHashMap<>();

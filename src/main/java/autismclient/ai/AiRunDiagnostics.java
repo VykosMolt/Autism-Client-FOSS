@@ -32,8 +32,8 @@ final class AiRunDiagnostics {
    private final Map<Long, JsonObject> openOperations = new LinkedHashMap<>();
    private final ArrayDeque<JsonObject> recentMotion = new ArrayDeque<>();
    private long nextOperationId;
-   private long load;
-   private long read;
+   private long currentOperationId;
+   private long throttleUntil;
    private long nextMotionSampleMs;
    private float lastHealth = -1.0F;
    private boolean stopped;
@@ -77,7 +77,7 @@ final class AiRunDiagnostics {
                   "operationId",
                   this.operationId,
                   "parentOperationId",
-                  AiRunDiagnostics.this.load,
+                  AiRunDiagnostics.this.currentOperationId,
                   "controller",
                   controller,
                   "decision",
@@ -98,8 +98,8 @@ final class AiRunDiagnostics {
                AiRunDiagnostics.this.emit("speedrun_diagnostic_error", AiJson.objectOf("message", AiRunDiagnostics.truncate(failure.toString())));
             }
 
-            long previous = AiRunDiagnostics.this.load;
-            AiRunDiagnostics.this.load = this.operationId;
+            long previous = AiRunDiagnostics.this.currentOperationId;
+            AiRunDiagnostics.this.currentOperationId = this.operationId;
 
             try {
                AiOperation.Result result = delegate.tick();
@@ -181,7 +181,7 @@ final class AiRunDiagnostics {
                AiRunDiagnostics.this.emit("speedrun_operation_exception", event);
                throw failure;
             } finally {
-               AiRunDiagnostics.this.load = previous;
+               AiRunDiagnostics.this.currentOperationId = previous;
             }
          }
 
@@ -259,11 +259,11 @@ final class AiRunDiagnostics {
 
             boolean hurt = this.lastHealth >= 0.0F && mc.player.getHealth() < this.lastHealth - 0.01F;
             this.lastHealth = mc.player.getHealth();
-            if (now < this.read && !hurt) {
+            if (now < this.throttleUntil && !hurt) {
                return;
             }
 
-            this.read = now + 5000L;
+            this.throttleUntil = now + 5000L;
             JsonObject snapshot = this.buildSnapshot(phase, message, false);
             if (hurt) {
                DamageSource damage = mc.player.getLastDamageSource();

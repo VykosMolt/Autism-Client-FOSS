@@ -105,7 +105,7 @@ final class AiSchematicReadiness {
       }
    }
 
-   static List<AiSchematicReadiness.ReadinessIssue> init(AiBuilder.Blueprint blueprint) {
+   static List<AiSchematicReadiness.ReadinessIssue> issuesOf(AiBuilder.Blueprint blueprint) {
       return assessBlueprint(blueprint, 2147483647).issues();
    }
 
@@ -114,7 +114,7 @@ final class AiSchematicReadiness {
    }
 
    static AiSchematicReadiness.ReadinessReport assess(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
-      return init(blueprint, exampleLimit, context, null);
+      return assess(blueprint, exampleLimit, context, null);
    }
 
    static AiSchematicReadiness.BuildableAssessment assessBuildable(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
@@ -129,7 +129,7 @@ final class AiSchematicReadiness {
       do {
          AiBuilder.checkNotCancelled();
          omitted.clear();
-         AiSchematicReadiness.ReadinessReport audit = init(blueprint, exampleLimit - examples.size(), observed, omitted);
+         AiSchematicReadiness.ReadinessReport audit = assess(blueprint, exampleLimit - examples.size(), observed, omitted);
          issueCount += audit.issueCount();
          distinctStates = Math.max(distinctStates, audit.distinctStates());
          examples.addAll(audit.issues());
@@ -161,7 +161,7 @@ final class AiSchematicReadiness {
       return new AiSchematicReadiness.BuildableAssessment(blueprint, requested.cells().size() - blueprint.cells().size(), new AiSchematicReadiness.ReadinessReport(issueCount, examples, distinctStates));
    }
 
-   private static AiSchematicReadiness.ReadinessReport init(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
+   private static AiSchematicReadiness.ReadinessReport assess(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
       if (exampleLimit < 0) {
          throw new IllegalArgumentException("negative readiness example limit");
       }
@@ -169,7 +169,7 @@ final class AiSchematicReadiness {
       ArrayList<AiSchematicReadiness.ReadinessIssue> issues = new ArrayList<>();
       HashMap<AiSchematicReadiness.BlockStateKey, List<AiSchematicReadiness.StateProblem>> states = new HashMap<>();
       HashMap<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> pairPlans = new HashMap<>();
-      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, pairPlans);
+      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = requiredPairCells(blueprint, pairPlans);
       long issueCount = 0L;
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
@@ -188,14 +188,14 @@ final class AiSchematicReadiness {
             issues.add(new AiSchematicReadiness.ReadinessIssue(problem.kind(), cell, problem.detail()));
          }
 
-         AiSchematicReadiness.PairPlan pair = init(cell, pairPlans);
+         AiSchematicReadiness.PairPlan pair = pairPlanFor(cell, pairPlans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             AiBuilder.CellSpec partner = partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()));
             BlockState actual = partner == null
                ? (context == null ? null : context.get(blueprint.origin().offset(at).asLong()))
                : AiBuilder.toBlockState(partner);
-            if ((partner != null || pair.needsExisting() && context != null) && (actual == null || !init(pair.wanted(), actual))) {
+            if ((partner != null || pair.needsExisting() && context != null) && (actual == null || !isPairPartner(pair.wanted(), actual))) {
                issueCount++;
                if (omitted != null) {
                   omitted.add(packKey(cell.dx(), cell.dy(), cell.dz()));
@@ -259,7 +259,7 @@ final class AiSchematicReadiness {
          maxY = Math.max(maxY, cell.dy());
          minZ = Math.min(minZ, cell.dz());
          maxZ = Math.max(maxZ, cell.dz());
-         if (needs.computeIfAbsent(state, AiSchematicReadiness::init)) {
+         if (needs.computeIfAbsent(state, AiSchematicReadiness::needsSupport)) {
             checked.add(cell);
          }
       }
@@ -306,12 +306,12 @@ final class AiSchematicReadiness {
             }
          }
       };
-      LevelReader reader = init(finished);
+      LevelReader reader = levelReaderOf(finished);
       long count = 0L;
 
       for (AiBuilder.CellSpec cell : checked) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.PairPlan plan = init(cell, pairPlans);
+         AiSchematicReadiness.PairPlan plan = pairPlanFor(cell, pairPlans);
          if (plan == null || !plan.needsExisting()) {
             BlockState state = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()));
             BlockPos pos = origin.offset(cell.dx(), cell.dy(), cell.dz());
@@ -327,7 +327,7 @@ final class AiSchematicReadiness {
                   }
                } else if (!state.canSurvive(reader, pos)) {
                   problem = new AiSchematicReadiness.StateProblem(
-                     AiSchematicReadiness.IssueKind.NO_SUPPORT, init(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
+                     AiSchematicReadiness.IssueKind.NO_SUPPORT, supportProblem(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
                   );
                }
             } catch (AiSchematicReadiness.InconclusiveCheck inconclusive) {
@@ -526,7 +526,7 @@ final class AiSchematicReadiness {
       return List.copyOf(out);
    }
 
-   private static String init(BlockState state, BlockPos pos, BlockPos origin, Function<BlockPos, BlockState> finished) {
+   private static String supportProblem(BlockState state, BlockPos pos, BlockPos origin, Function<BlockPos, BlockState> finished) {
       BlockPos at = pos.below();
       String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
       if (state.hasProperty(BlockStateProperties.ATTACH_FACE)) {
@@ -567,19 +567,19 @@ final class AiSchematicReadiness {
       return (at.equals(pos.below()) ? "stands on " : "hangs on ") + support + " at " + relative.getX() + "," + relative.getY() + "," + relative.getZ();
    }
 
-   private static boolean init(BlockState state) {
+   private static boolean needsSupport(BlockState state) {
       if (state.getBlock() instanceof FallingBlock) {
          return true;
       }
 
       try {
-         return !state.canSurvive(init(pos -> Blocks.AIR.defaultBlockState()), BlockPos.ZERO);
+         return !state.canSurvive(levelReaderOf(pos -> Blocks.AIR.defaultBlockState()), BlockPos.ZERO);
       } catch (RuntimeException unavailable) {
          return true;
       }
    }
 
-   private static LevelReader init(Function<BlockPos, BlockState> states) {
+   private static LevelReader levelReaderOf(Function<BlockPos, BlockState> states) {
       return (LevelReader)Proxy.newProxyInstance(LevelReader.class.getClassLoader(), new Class[]{LevelReader.class}, (proxy, method, args) -> {
          Object var10000;
          switch (method.getName()) {
@@ -630,14 +630,14 @@ final class AiSchematicReadiness {
       });
    }
 
-   private static Long2ObjectOpenHashMap<AiBuilder.CellSpec> init(
+   private static Long2ObjectOpenHashMap<AiBuilder.CellSpec> requiredPairCells(
       AiBuilder.Blueprint blueprint, Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans
    ) {
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> required = new Long2ObjectOpenHashMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.PairPlan pair = init(cell, plans);
+         AiSchematicReadiness.PairPlan pair = pairPlanFor(cell, plans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             required.put(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()), null);
@@ -659,12 +659,12 @@ final class AiSchematicReadiness {
 
    static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
       HashMap<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans = new HashMap<>();
-      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, plans);
+      Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = requiredPairCells(blueprint, plans);
       LinkedHashSet<BlockPos> positions = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.PairPlan pair = init(cell, plans);
+         AiSchematicReadiness.PairPlan pair = pairPlanFor(cell, plans);
          if (pair != null && pair.needsExisting()) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             if (partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ())) == null) {
@@ -676,7 +676,7 @@ final class AiSchematicReadiness {
       return List.copyOf(positions);
    }
 
-   private static AiSchematicReadiness.PairPlan init(AiBuilder.CellSpec cell, Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans) {
+   private static AiSchematicReadiness.PairPlan pairPlanFor(AiBuilder.CellSpec cell, Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans) {
       return plans.computeIfAbsent(
             new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()),
             ignored -> {
@@ -701,7 +701,7 @@ final class AiSchematicReadiness {
          .orElse(null);
    }
 
-   private static boolean init(BlockState wanted, BlockState other) {
+   private static boolean isPairPartner(BlockState wanted, BlockState other) {
       if (other.getBlock() != wanted.getBlock()) {
          return false;
       } else if (wanted.getBlock() instanceof BedBlock) {

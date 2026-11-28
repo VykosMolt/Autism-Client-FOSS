@@ -17,9 +17,9 @@ final class AiFurnaceReturn implements AiOperation {
    private final BlockPos home;
    private final long deadline = System.nanoTime() + 45000000000L;
    private AiOperation travel;
-   private boolean init_Z;
+   private boolean recovered;
    private boolean load_Z;
-   private boolean read_Z;
+   private boolean travelled;
    private int attempts;
    private String reason;
    private JsonObject evidence = new JsonObject();
@@ -110,10 +110,10 @@ final class AiFurnaceReturn implements AiOperation {
       if ((this.travel == null || this.travel.canInterruptNow())
          && this.mc.player.onGround()
          && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, this.station) != null) {
-         this.read_Z = this.travel != null;
+         this.travelled = this.travel != null;
          return this.finish(
             AiOperation.Status.SUCCEEDED,
-            this.init_Z ? "Recovered a legal furnace stance after the return route changed" : "Returned to a legal furnace stance over existing terrain"
+            this.recovered ? "Recovered a legal furnace stance after the return route changed" : "Returned to a legal furnace stance over existing terrain"
          );
       }
 
@@ -131,14 +131,14 @@ final class AiFurnaceReturn implements AiOperation {
          this.travel = AiGoto.travelToCompat(
             this.station,
             0.6,
-            this.init_Z,
-            this.init_Z,
-            this.init_Z,
-            this.init_Z ? 25 : 12,
+            this.recovered,
+            this.recovered,
+            this.recovered,
+            this.recovered ? 25 : 12,
             autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
             true,
             2.0,
-            returnGoal(interaction, this.station, this.home, this.init_Z),
+            returnGoal(interaction, this.station, this.home, this.recovered),
             new AiGoto.GotoOptions(false, false, 1, true, true, true)
          );
          this.attempts++;
@@ -149,7 +149,7 @@ final class AiFurnaceReturn implements AiOperation {
       if (!r.terminal()) {
          return AiGameOperations.result(
             AiOperation.Status.RUNNING,
-            (this.init_Z ? "Repairing a changed furnace return route: " : "Replanning a walk back to the furnace: ") + r.message(),
+            (this.recovered ? "Repairing a changed furnace return route: " : "Replanning a walk back to the furnace: ") + r.message(),
             this.json()
          );
       } else {
@@ -160,8 +160,8 @@ final class AiFurnaceReturn implements AiOperation {
             return this.finish(AiOperation.Status.UNCERTAIN, "Furnace return has an unsettled action: " + r.message());
          } else if (r.status() == AiOperation.Status.SUCCEEDED && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, this.station) != null) {
             return this.finish(AiOperation.Status.SUCCEEDED, "Returned to the furnace using a newly verified stance");
-         } else if (r.status() != AiOperation.Status.CANCELLED && !this.init_Z) {
-            this.init_Z = true;
+         } else if (r.status() != AiOperation.Status.CANCELLED && !this.recovered) {
+            this.recovered = true;
             this.reason = "Existing walking return unavailable: " + r.message();
             return AiGameOperations.result(
                AiOperation.Status.RUNNING, "Walking route changed; allow bounded repairs without digging straight down", this.json()
@@ -175,17 +175,17 @@ final class AiFurnaceReturn implements AiOperation {
    JsonObject json() {
       return AiJson.objectOf(
          "returnMode",
-         this.init_Z ? "repair_changed_route" : "walk_existing_terrain",
+         this.recovered ? "repair_changed_route" : "walk_existing_terrain",
          "returnReason",
          this.reason,
          "returnEditsAllowed",
-         this.init_Z,
+         this.recovered,
          "returnAttempts",
          this.attempts,
          "station",
          this.station.toShortString(),
          "arrivalBeforeRouteCompletion",
-         this.read_Z,
+         this.travelled,
          "arrivalProof",
          "live_station_ray_on_supported_ground",
          "returnNavigation",

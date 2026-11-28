@@ -97,7 +97,7 @@ public final class PayloadJsonCodec {
       return encode("", channel, payload);
    }
 
-   public static String init_Str(autismclient.util.macro.PayloadAction action) {
+   public static String actionToJson(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          return emptyJson("", "");
       }
@@ -136,7 +136,7 @@ public final class PayloadJsonCodec {
          throw new IllegalArgumentException("Missing payload action");
       }
 
-      String jsonText = action.payloadJson != null && !action.payloadJson.isBlank() ? action.payloadJson : init_Str(action);
+      String jsonText = action.payloadJson != null && !action.payloadJson.isBlank() ? action.payloadJson : actionToJson(action);
 
       JsonObject root;
       try {
@@ -183,12 +183,12 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static boolean init_Z(String name) {
+   private static boolean isMinecraftClass(String name) {
       return name != null && (name.startsWith("net.minecraft.") || name.startsWith("autismclient."));
    }
 
    private static PayloadJsonCodec.EncodedPayload encodeTyped(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
-      if (!init_Z(action.payloadClassName)) {
+      if (!isMinecraftClass(action.payloadClassName)) {
          return encodeRaw(action, root, channel, rawFallbackBytes);
       }
 
@@ -350,7 +350,7 @@ public final class PayloadJsonCodec {
          return null;
       }
 
-      if (!init_Z(payloadClassName)) {
+      if (!isMinecraftClass(payloadClassName)) {
          return null;
       }
 

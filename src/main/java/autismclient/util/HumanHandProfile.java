@@ -71,7 +71,7 @@ public record HumanHandProfile(
    }
 
    public HumanHandProfile forSession(Random session) {
-      double tempo = 1.0 + 0.03 * init_D_Random(session);
+      double tempo = 1.0 + 0.03 * clampedGaussian(session);
       return new HumanHandProfile(
          this.fittsIntercept * tempo,
          this.fittsSlope * tempo,
@@ -87,14 +87,14 @@ public record HumanHandProfile(
          this.pop,
          this.init_I,
          this.load_I,
-         this.tick * (1.0 + 0.05 * init_D_Random(session)),
+         this.tick * (1.0 + 0.05 * clampedGaussian(session)),
          this.driftNoise,
          this.driftDecay,
          this.set
       );
    }
 
-   private static double init_D_Random(Random random) {
+   private static double clampedGaussian(Random random) {
       return Math.max(-2.5, Math.min(2.5, random.nextGaussian()));
    }
 

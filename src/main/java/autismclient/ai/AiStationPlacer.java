@@ -102,7 +102,7 @@ final class AiStationPlacer {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null
                && mc.level != null
-               && init(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
+               && hasOpenSide(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
                && this.digOutSpot()) {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
@@ -149,7 +149,7 @@ final class AiStationPlacer {
       }
    }
 
-   static boolean init(BlockPos feet, Predicate<BlockPos> collision) {
+   static boolean hasOpenSide(BlockPos feet, Predicate<BlockPos> collision) {
       for (Direction side : Plane.HORIZONTAL) {
          BlockPos beside = feet.relative(side);
          if (!collision.test(beside) && !collision.test(beside.above())) {
@@ -237,10 +237,10 @@ final class AiStationPlacer {
          for (Direction side : Plane.HORIZONTAL) {
             BlockPos cell = feet.relative(side);
             BlockState state = mc.level.getBlockState(cell);
-            if (init(mc, cell) && mc.level.getBlockState(cell.below()).isCollisionShapeFullBlock(mc.level, cell.below())) {
+            if (isBreakable(mc, cell) && mc.level.getBlockState(cell.below()).isCollisionShapeFullBlock(mc.level, cell.below())) {
                BlockPos above = cell.above();
                boolean clearHead = !mc.level.getBlockState(above).getCollisionShape(mc.level, above).isEmpty();
-               if (!clearHead || init(mc, above)) {
+               if (!clearHead || isBreakable(mc, above)) {
                   AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.name, cell.toShortString());
                   this.clearOp = clearHead ? breakUpperThenLower(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
                   this.clearedCell = cell.immutable();
@@ -256,7 +256,7 @@ final class AiStationPlacer {
       }
    }
 
-   private static boolean init(Minecraft mc, BlockPos cell) {
+   private static boolean isBreakable(Minecraft mc, BlockPos cell) {
       BlockState state = mc.level.getBlockState(cell);
       if (!state.isAir() && !state.hasBlockEntity() && !(state.getDestroySpeed(mc.level, cell) < 0.0F) && state.getFluidState().isEmpty()) {
          if (BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().endsWith("_ore")) {

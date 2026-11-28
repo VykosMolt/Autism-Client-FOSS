@@ -46,9 +46,9 @@ final class AiScaffoldWalk {
             BlockPos pendingCell;
             long pendingRevision;
             int verifyWaitTicks;
-            boolean init_Z;
+            boolean replaceTried;
             boolean load_Z;
-            boolean read_Z;
+            boolean placedThisTick;
             boolean write_Z;
             boolean cleanedUp;
             int legIndex;
@@ -188,13 +188,13 @@ final class AiScaffoldWalk {
 
                   this.write_Z = false;
                   Vec3 pos = mc.player.position();
-                  this.read_Z = false;
+                  this.placedThisTick = false;
                   if (this.pendingCell != null) {
                      if (this.isSolidLoaded(this.pendingCell)) {
                         if (!this.load_Z) {
                            this.placedCount++;
                            this.legPlaced++;
-                           this.read_Z = true;
+                           this.placedThisTick = true;
                         }
 
                         if (plan.verify() && AiServerEvidence.blockRevision(this.pendingCell) <= this.pendingRevision) {
@@ -205,8 +205,8 @@ final class AiScaffoldWalk {
                            this.pendingCell = null;
                         }
                      } else if (++this.verifyWaitTicks > 5) {
-                        if (!this.init_Z) {
-                           this.init_Z = true;
+                        if (!this.replaceTried) {
+                           this.replaceTried = true;
                            if (!this.selectBuildBlock()) {
                               return this.finish(AiOperation.Status.FAILED, "Out of blocks");
                            }
@@ -218,7 +218,7 @@ final class AiScaffoldWalk {
                      }
                   }
 
-                  if (!this.read_Z
+                  if (!this.placedThisTick
                      && Double.compare(this.stuckX, pos.x) == 0
                      && Double.compare(this.stuckY, pos.y) == 0
                      && Double.compare(this.stuckZ, pos.z) == 0) {
@@ -303,7 +303,7 @@ final class AiScaffoldWalk {
                         autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.bridgeDriver.step(slot, this::selectSlot, cell -> {
                            this.placedCount++;
                            this.legPlaced++;
-                           this.read_Z = true;
+                           this.placedThisTick = true;
                         });
                         if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.INVALID_FOOTING) {
                            return this.finish(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
@@ -382,13 +382,13 @@ final class AiScaffoldWalk {
                            this.pendingCell = this.towerPlaceCell;
                            this.pendingRevision = AiServerEvidence.blockRevision(this.towerPlaceCell);
                            this.verifyWaitTicks = 0;
-                           this.init_Z = false;
+                           this.replaceTried = false;
                            this.load_Z = false;
                            if (this.isSolidLoaded(this.towerPlaceCell)) {
                               this.placedCount++;
                               this.legPlaced++;
                               this.load_Z = true;
-                              this.read_Z = true;
+                              this.placedThisTick = true;
                               if (!plan.verify()) {
                                  this.pendingCell = null;
                               }

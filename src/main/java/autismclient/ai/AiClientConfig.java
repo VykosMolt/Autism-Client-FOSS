@@ -425,9 +425,9 @@ final class AiClientConfig {
 
                   return AiJson.objectOf("elements", elements, "revision", autismclient.util.AutismHudManager.revision());
                case "get":
-                  return hudElementJson(init_Str(args), true);
+                  return hudElementJson(hudElementId(args), true);
                case "set": {
-                  String id = init_Str(args);
+                  String id = hudElementId(args);
                   AutismConfig.HudElementState state = autismclient.util.AutismHudManager.getState(id);
                   if (args.has("enabled")) {
                      autismclient.util.AutismHudManager.setEnabled(id, AiJson.getBoolean(args, "enabled", state.enabled));
@@ -470,7 +470,7 @@ final class AiClientConfig {
                   return hudElementJson(id, true);
                }
                case "reset": {
-                  String id = init_Str(args);
+                  String id = hudElementId(args);
                   autismclient.util.AutismHudManager.resetElement(id);
                   return hudElementJson(id, true);
                }
@@ -481,7 +481,7 @@ final class AiClientConfig {
       );
    }
 
-   private static String init_Str(JsonObject args) {
+   private static String hudElementId(JsonObject args) {
       String id = requireString(args, "id");
 
       for (String known : autismclient.util.AutismHudManager.elementIds()) {

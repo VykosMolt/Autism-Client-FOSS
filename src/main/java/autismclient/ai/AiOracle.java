@@ -1265,7 +1265,7 @@ final class AiOracle {
                   if (chunk != null) {
                      int centerX = chunk.getPos().getMinBlockX() + 8;
                      int centerZ = chunk.getPos().getMinBlockZ() + 8;
-                     if (AiOracle.init(chunk, mask, centerX, centerZ)) {
+                     if (AiOracle.chunkHasTargets(chunk, mask, centerX, centerZ)) {
                         double dx = centerX + 0.5 - eye.x;
                         double dz = centerZ + 0.5 - eye.z;
                         this.found.add(new AiOracle.BlockHit(centerX, 0, centerZ, dx * dx + dz * dz));
@@ -1346,7 +1346,7 @@ final class AiOracle {
       };
    }
 
-   private static boolean init(LevelChunk chunk, long mask, int centerX, int centerZ) {
+   private static boolean chunkHasTargets(LevelChunk chunk, long mask, int centerX, int centerZ) {
       Map<Integer, Long> sectionCache = new HashMap<>();
       LevelChunkSection[] sections = chunk.getSections();
 

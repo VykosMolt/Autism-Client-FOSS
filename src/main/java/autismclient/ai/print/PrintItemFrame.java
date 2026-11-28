@@ -21,10 +21,10 @@ public final class PrintItemFrame implements PrintMachineJob {
    private PrintItemFrame.FrameStage stage = PrintItemFrame.FrameStage.HANG;
    private PrintMachineJob.JobStatus status = PrintMachineJob.JobStatus.PREPARING;
    private UUID frameId;
-   private Set<UUID> init_Set = Set.of();
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
+   private Set<UUID> knownFrames = Set.of();
+   private ItemStack unusedHeldCopy = ItemStack.EMPTY;
    private int rotation;
-   private long init_J;
+   private long lastAttemptNanos;
    private String message = "Waiting for the frame's block and loaded entities";
 
    public PrintItemFrame(PrintEnv env, PrintItemFrame.FrameSpec spec) {
@@ -207,10 +207,10 @@ public final class PrintItemFrame implements PrintMachineJob {
          }
       }
 
-      this.init_Set = Set.copyOf(ids);
+      this.knownFrames = Set.copyOf(ids);
       this.rotation = rotation;
-      this.init_ItemStack = held.copy();
-      this.init_J = this.env.nanoTime();
+      this.unusedHeldCopy = held.copy();
+      this.lastAttemptNanos = this.env.nanoTime();
       this.message = this.stage == PrintItemFrame.FrameStage.HANG
          ? "Waiting for the hung frame"
          : (this.stage == PrintItemFrame.FrameStage.FILL ? "Waiting for the frame to take its item" : "Waiting for the frame's item to turn");
@@ -235,7 +235,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          boolean var10000;
          switch (this.stage) {
             case HANG:
-               var10000 = ours != null && !this.init_Set.contains(ours.uuid());
+               var10000 = ours != null && !this.knownFrames.contains(ours.uuid());
                break;
             case FILL:
                var10000 = ours != null && ours.uuid().equals(this.frameId) && !ours.item().isEmpty();
@@ -260,7 +260,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          }
       }
 
-      if (this.env.nanoTime() - this.init_J >= 5000000000L) {
+      if (this.env.nanoTime() - this.lastAttemptNanos >= 5000000000L) {
          this.message = "No receipt for the frame click at " + this.spec.cell().toShortString() + "; not repeating it";
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       } else {

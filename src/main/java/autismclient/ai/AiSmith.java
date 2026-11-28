@@ -115,7 +115,7 @@ final class AiSmith {
                         this.menuId = menu.containerId;
                      }
 
-                     AiOperation.Result missing = this.init(menu);
+                     AiOperation.Result missing = this.missingInputs(menu);
                      if (missing != null) {
                         return missing;
                      }
@@ -175,7 +175,7 @@ final class AiSmith {
                }
             }
 
-            AiOperation.Result init(SmithingMenu menu) {
+            AiOperation.Result missingInputs(SmithingMenu menu) {
                if (this.write <= 0 && menu.getSlot(3).getItem().isEmpty()) {
                   JsonObject missing = new JsonObject();
                   if (menu.getSlot(0).getItem().isEmpty() && AiGameState.countMainInventoryItem(templateId) < 1) {

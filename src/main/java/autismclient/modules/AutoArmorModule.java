@@ -236,7 +236,7 @@ public final class AutoArmorModule extends Module {
             if (move == null) {
                this.closePending = true;
                this.closeAt = now + this.randomDelay("close-delay", 3, 5);
-            } else if (!this.init(move.slot(), move.candidate(), move.stack())) {
+            } else if (!this.equip(move.slot(), move.candidate(), move.stack())) {
                this.closeAt = now + 1;
             } else {
                this.sync++;
@@ -268,7 +268,7 @@ public final class AutoArmorModule extends Module {
       int threshold = this.bool("save-armor") ? this.integer("durability-threshold") : -2147483648;
       Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = this.bestByThreshold(threshold);
       if (this.bool("prefer-elytra")) {
-         autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytra = this.init_TaskTimer_DataUtil();
+         autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytra = this.elytraCandidate();
          if (elytra != null) {
             best.put(EquipmentSlot.CHEST, elytra);
          }
@@ -300,7 +300,7 @@ public final class AutoArmorModule extends Module {
 
    private void tryEquipBest() {
       AutoArmorModule.ArmorMove move = this.findBestMove();
-      if (move != null && this.init(move.slot(), move.candidate(), move.stack())) {
+      if (move != null && this.equip(move.slot(), move.candidate(), move.stack())) {
          this.cooldownTicks = 1;
       } else {
          if (this.openedInventory) {
@@ -311,7 +311,7 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private boolean init(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate, ItemStack worn) {
+   private boolean equip(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate, ItemStack worn) {
       boolean occupied = !worn.isEmpty();
       int armorMenuSlot = ARMOR_MENU_SLOTS.get(slot);
       boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR && this.bool("hotbar");
@@ -431,7 +431,7 @@ public final class AutoArmorModule extends Module {
       return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.inventorySlot());
    }
 
-   private autismclient.util.ArmorEvaluationHelper.ArmorCandidate init_TaskTimer_DataUtil() {
+   private autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytraCandidate() {
       ItemStack worn = MC.player.getItemBySlot(EquipmentSlot.CHEST);
       if (worn.is(Items.ELYTRA)) {
          return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(worn, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.SourceKind.ARMOR, -1);

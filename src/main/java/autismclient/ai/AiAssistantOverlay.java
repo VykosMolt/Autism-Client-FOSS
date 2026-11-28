@@ -32,8 +32,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private AiAssistantOverlay.OverlayTab tab = AiAssistantOverlay.OverlayTab.CHAT;
    private boolean pinned;
    private boolean renaming;
-   private boolean sync_Z;
-   private boolean flush_Z;
+   private boolean windowDragging;
+   private boolean keyboardFocus;
    private double dragOffsetX;
    private double dragOffsetY;
    private int contextMenuX;
@@ -293,7 +293,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.windowY = bounds.y;
          this.windowWidth = bounds.width;
          this.windowHeight = bounds.height;
-         this.renderWindowFrame(graphics, mx, my, this.getBounds(), "AI Assistant", this.windowCollapsed, this.sync_Z);
+         this.renderWindowFrame(graphics, mx, my, this.getBounds(), "AI Assistant", this.windowCollapsed, this.windowDragging);
          if (!this.isVisuallyCollapsed(this.windowCollapsed)) {
             long now = System.currentTimeMillis();
             this.viewState.refresh(now, this.sessionsDrawer.open);
@@ -446,14 +446,14 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          }
 
          if (this.isOverHeader(x, y)) {
-            this.sync_Z = true;
+            this.windowDragging = true;
             this.dragOffsetX = x - this.windowX;
             this.dragOffsetY = y - this.windowY;
             return true;
          }
 
          if (!this.windowCollapsed && this.ui.isInitialized()) {
-            this.flush_Z = true;
+            this.keyboardFocus = true;
             if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.clickPopup(x, y, button)) {
                return true;
             } else if (this.tab == AiAssistantOverlay.OverlayTab.CHAT
@@ -476,8 +476,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public boolean mouseReleased(double x, double y, int button) {
-      boolean moved = this.sync_Z;
-      this.sync_Z = false;
+      boolean moved = this.windowDragging;
+      this.windowDragging = false;
       if (moved) {
          this.saveBounds();
       }
@@ -497,7 +497,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
-      if (this.sync_Z) {
+      if (this.windowDragging) {
          this.windowX = (int)(x - this.dragOffsetX);
          this.windowY = (int)(y - this.dragOffsetY);
          return true;
@@ -542,7 +542,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       if (key == 256) {
-         return this.poll_Z();
+         return this.handleEscape();
       }
 
       if (key == 258
@@ -567,7 +567,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          : focused != null && focused.keyPressed(this.ui.layoutContext, key, scan, mods);
    }
 
-   private boolean poll_Z() {
+   private boolean handleEscape() {
       if (this.contextMenu.isOpen()) {
          this.contextMenu.close();
          return true;
@@ -626,8 +626,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       return null;
    }
 
-   private boolean push_Z() {
-      return this.flush_Z
+   private boolean wantsKeyboard() {
+      return this.keyboardFocus
             && (
                this.tab != AiAssistantOverlay.OverlayTab.CHAT
                   || this.sessionsDrawer.open
@@ -641,7 +641,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public boolean hasFocusedTextInput() {
-      return this.focusedInput() != null || this.push_Z();
+      return this.focusedInput() != null || this.wantsKeyboard();
    }
 
    @Override
@@ -650,7 +650,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          field.setFocused(false);
       }
 
-      this.flush_Z = false;
+      this.keyboardFocus = false;
       this.settingsView.cancelKeyCapture();
    }
 

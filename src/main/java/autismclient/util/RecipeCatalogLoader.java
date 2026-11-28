@@ -68,8 +68,8 @@ final class RecipeCatalogLoader {
    private static FeatureFlagSet cachedFeatures;
    private static RecipeCatalogLoader.CatalogSnapshot cachedSnapshot;
    private static CompletableFuture<RecipeCatalogLoader.CatalogSnapshot> pendingLoad;
-   private static Object load_Obj;
-   private static RecipeCatalogLoader.CatalogSnapshot load_aK_CachePool;
+   private static Object cachedManager;
+   private static RecipeCatalogLoader.CatalogSnapshot cachedServerCatalog;
 
    private RecipeCatalogLoader() {
    }
@@ -84,7 +84,7 @@ final class RecipeCatalogLoader {
 
    static RecipeCatalogLoader.CatalogSnapshot catalog(Minecraft mc) {
       if (mc != null && mc.level != null) {
-         RecipeCatalogLoader.CatalogSnapshot server = load_aK_CachePool(mc);
+         RecipeCatalogLoader.CatalogSnapshot server = serverCatalog(mc);
          return server != null && !server.craftingRecipes().isEmpty()
             ? server
             : loadForClient(registryAccess(mc), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level), mc);
@@ -98,7 +98,7 @@ final class RecipeCatalogLoader {
          if (mc.getSingleplayerServer() != null) {
             Thread thread = new Thread(() -> {
                try {
-                  load_aK_CachePool(mc);
+                  serverCatalog(mc);
                } catch (RuntimeException var2x) {
                }
             }, "Autism-Recipes");
@@ -119,7 +119,7 @@ final class RecipeCatalogLoader {
 
    static List<RecipeCatalogLoader.CraftingEntry> read(Minecraft mc) {
       if (mc != null && mc.level != null) {
-         RecipeCatalogLoader.CatalogSnapshot server = load_aK_CachePool(mc);
+         RecipeCatalogLoader.CatalogSnapshot server = serverCatalog(mc);
          if (server != null && !server.craftingRecipes().isEmpty()) {
             return server.craftingRecipes();
          }
@@ -290,7 +290,7 @@ final class RecipeCatalogLoader {
       return files.isEmpty() ? RecipeCatalogLoader.CatalogSnapshot.EMPTY : loadFromFiles(files, access, features, slotContext, "client resources");
    }
 
-   private static RecipeCatalogLoader.CatalogSnapshot load_aK_CachePool(Minecraft mc) {
+   private static RecipeCatalogLoader.CatalogSnapshot serverCatalog(Minecraft mc) {
       IntegratedServer server = mc.getSingleplayerServer();
       if (server == null) {
          return null;
@@ -308,18 +308,18 @@ final class RecipeCatalogLoader {
       }
 
       synchronized (LOCK) {
-         if (load_Obj == manager && load_aK_CachePool != null) {
-            return load_aK_CachePool;
+         if (cachedManager == manager && cachedServerCatalog != null) {
+            return cachedServerCatalog;
          }
 
          try {
-            load_aK_CachePool = buildCatalog(manager.getRecipes(), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level));
-            load_Obj = manager;
+            cachedServerCatalog = buildCatalog(manager.getRecipes(), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level));
+            cachedManager = manager;
          } catch (RuntimeException e) {
             return null;
          }
 
-         return load_aK_CachePool;
+         return cachedServerCatalog;
       }
    }
 
@@ -636,10 +636,10 @@ final class RecipeCatalogLoader {
    }
 
    private static String ingredientKey(Ingredient ingredient, ContextMap slotContext) {
-      return ingredient != null && !ingredient.isEmpty() ? init_Str(ingredient.display().resolveForStacks(slotContext)) : "_";
+      return ingredient != null && !ingredient.isEmpty() ? ingredientKey(ingredient.display().resolveForStacks(slotContext)) : "_";
    }
 
-   private static String init_Str(List<ItemStack> stacks) {
+   private static String ingredientKey(List<ItemStack> stacks) {
       if (stacks != null && !stacks.isEmpty()) {
          Set<String> ids = new HashSet<>();
 

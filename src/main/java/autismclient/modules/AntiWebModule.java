@@ -22,18 +22,18 @@ public final class AntiWebModule extends Module {
       this.add(new DoubleSetting("vertical-speed", "Vertical Speed", 0.64, 0.1, 2.0, 0.01).visibleWhen(() -> "Flight".equals(this.choice("mode"))).build());
    }
 
-   private static AntiWebModule init_RenderState(Entity entity) {
+   private static AntiWebModule activeFor(Entity entity) {
       return entity != null && entity == MC.player && !aD.read_Z() && al.init_Module_Str("anti-web") instanceof AntiWebModule module && module.isEnabled()
          ? module
          : null;
    }
 
    public static boolean isActiveFor(Entity entity) {
-      return init_RenderState(entity) != null;
+      return activeFor(entity) != null;
    }
 
    public static boolean isSolidMode(Entity entity) {
-      AntiWebModule module = init_RenderState(entity);
+      AntiWebModule module = activeFor(entity);
       return module != null && "Solid".equals(module.choice("mode"));
    }
 

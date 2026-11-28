@@ -424,7 +424,7 @@ final class AiFarmBuild {
          int centerIndex;
          int poolIndex;
          int settleTicks;
-         int update_I;
+         int unusedTicks;
          int missingRefillRetries;
          int flush;
          int close;
@@ -668,7 +668,7 @@ final class AiFarmBuild {
                         return this.running("Getting more " + missing);
                      }
 
-                     if (this.phase == AiFarmBuild.BuildPhase.FIELD && this.load_Z_2()) {
+                     if (this.phase == AiFarmBuild.BuildPhase.FIELD && this.fieldSoilReady()) {
                         this.phase = AiFarmBuild.BuildPhase.VERIFY;
                         return this.running("Field done");
                      }
@@ -1003,12 +1003,12 @@ final class AiFarmBuild {
             BlockState state = mc.level.getBlockState(p);
             if ((!AiSchematicActions.read(state) || state.getFluidState().isSource())
                && (state.getCollisionShape(mc.level, p).isEmpty() || !state.getFluidState().isEmpty())
-               && (!below || this.init_Z_2(p))) {
+               && (!below || this.isCoveredAbove(p))) {
                out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.levelingBlock(this.substrateId)));
             }
          }
 
-         boolean init_Z_2(BlockPos p) {
+         boolean isCoveredAbove(BlockPos p) {
             for (int y = p.getY() + 1; y < this.farmPlan.ground(); y++) {
                BlockPos q = new BlockPos(p.getX(), y, p.getZ());
                BlockState s = mc.level.getBlockState(q);
@@ -1282,7 +1282,7 @@ final class AiFarmBuild {
             return uses;
          }
 
-         boolean load_Z_2() {
+         boolean fieldSoilReady() {
             Block soil = BuiltInRegistries.BLOCK.getValue(Identifier.parse(AiFarmArea.soilBlock(this.substrateId)));
 
             for (BlockPos p : this.farmPlan.interior()) {

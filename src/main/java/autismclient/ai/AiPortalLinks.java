@@ -23,43 +23,43 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 final class AiPortalLinks {
-   private static String init_Str = "";
-   private static Object init_Obj;
-   private static boolean init_Z;
-   private static long init_J;
-   private static final List<AiPortalLinks.PortalLink> init_List = new ArrayList<>();
-   private static final Map<String, Double> init_Map = new HashMap<>();
+   private static String loadedWorldKey = "";
+   private static Object loadedConnection;
+   private static boolean memoryLoadStarted;
+   private static long generation;
+   private static final List<AiPortalLinks.PortalLink> links = new ArrayList<>();
+   private static final Map<String, Double> coordinateScales = new HashMap<>();
 
    private AiPortalLinks() {
    }
 
-   private static void init_V() {
+   private static void ensureLoaded() {
       String current = AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
-      if (!init_Str.equals(current) || init_Obj != Minecraft.getInstance().getConnection()) {
-         init_Str = current;
-         init_Obj = Minecraft.getInstance().getConnection();
-         init_List.clear();
-         init_Map.clear();
-         init_Z = false;
-         init_J++;
+      if (!loadedWorldKey.equals(current) || loadedConnection != Minecraft.getInstance().getConnection()) {
+         loadedWorldKey = current;
+         loadedConnection = Minecraft.getInstance().getConnection();
+         links.clear();
+         coordinateScales.clear();
+         memoryLoadStarted = false;
+         generation++;
       }
 
       ClientLevel level = Minecraft.getInstance().level;
       if (level != null) {
-         init_Map.put(AiWorldIdentity.currentDimensionId(Minecraft.getInstance()), level.dimensionType().coordinateScale());
+         coordinateScales.put(AiWorldIdentity.currentDimensionId(Minecraft.getInstance()), level.dimensionType().coordinateScale());
       }
 
       AiService service = AiService.getExistingInstance();
-      if (!init_Z && service != null && init_Obj != null) {
-         String requestedWorld = init_Str;
-         Object requestedConnection = init_Obj;
-         long requestedGeneration = init_J;
-         init_Z = service.loadPortalMemory(
-            init_Str,
+      if (!memoryLoadStarted && service != null && loadedConnection != null) {
+         String requestedWorld = loadedWorldKey;
+         Object requestedConnection = loadedConnection;
+         long requestedGeneration = generation;
+         memoryLoadStarted = service.loadPortalMemory(
+            loadedWorldKey,
             stored -> {
-               if (init_J == requestedGeneration
-                  && init_Str.equals(requestedWorld)
-                  && init_Obj == requestedConnection
+               if (generation == requestedGeneration
+                  && loadedWorldKey.equals(requestedWorld)
+                  && loadedConnection == requestedConnection
                   && Minecraft.getInstance().getConnection() == requestedConnection
                   && AiWorldIdentity.currentWorldKey(Minecraft.getInstance()).equals(requestedWorld)) {
                   for (JsonElement entry : stored) {
@@ -67,16 +67,16 @@ final class AiPortalLinks {
                         JsonObject saved = entry.getAsJsonObject();
                         String from = AiJson.getString(saved, "fromDimension", "");
                         String to = AiJson.getString(saved, "toDimension", "");
-                        BlockPos entrance = init_BlockPos(AiJson.getString(saved, "entrance", ""));
-                        BlockPos arrival = init_BlockPos(AiJson.getString(saved, "arrival", ""));
+                        BlockPos entrance = parsePos(AiJson.getString(saved, "entrance", ""));
+                        BlockPos arrival = parsePos(AiJson.getString(saved, "arrival", ""));
                         if (entrance != null
                            && arrival != null
                            && !from.isEmpty()
                            && !to.isEmpty()
                            && !from.equals(to)
-                           && !init_List.stream()
+                           && !links.stream()
                               .anyMatch(link -> link.fromDimension.equals(from) && link.toDimension.equals(to) && link.entrance.distSqr(entrance) < 16.0)) {
-                           if (init_List.size() >= 64) {
+                           if (links.size() >= 64) {
                               break;
                            }
 
@@ -86,7 +86,7 @@ final class AiPortalLinks {
                            JsonObject after = saved.has("arrivalEvidence") && saved.get("arrivalEvidence").isJsonObject()
                               ? saved.getAsJsonObject("arrivalEvidence")
                               : new JsonObject();
-                           init_List.add(
+                           links.add(
                               new AiPortalLinks.PortalLink(
                                  from,
                                  entrance,
@@ -105,15 +105,15 @@ final class AiPortalLinks {
                      }
                   }
 
-                  init_List.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
-                  service.savePortalMemory(init_Str, toJson());
+                  links.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
+                  service.savePortalMemory(loadedWorldKey, toJson());
                }
             }
          );
       }
    }
 
-   private static BlockPos init_BlockPos(String text) {
+   private static BlockPos parsePos(String text) {
       try {
          String[] xyz = text.split(",");
          if (xyz.length != 3) {
@@ -130,10 +130,10 @@ final class AiPortalLinks {
    }
 
    static void recordLink(String from, BlockPos entrance, String to, BlockPos arrival, boolean safe, JsonObject entranceEvidence) {
-      init_V();
+      ensureLoaded();
       if (entrance != null && arrival != null && from != null && to != null && !from.equals(to)) {
-         init_List.removeIf(link -> link.fromDimension.equals(from) && link.entrance.distSqr(entrance) < 16.0 && link.toDimension.equals(to));
-         init_List.add(
+         links.removeIf(link -> link.fromDimension.equals(from) && link.entrance.distSqr(entrance) < 16.0 && link.toDimension.equals(to));
+         links.add(
             new AiPortalLinks.PortalLink(
                from,
                entrance.immutable(),
@@ -151,15 +151,15 @@ final class AiPortalLinks {
             "portal_link",
             AiJson.objectOf("from", from, "entrance", entrance.toShortString(), "to", to, "arrival", arrival.toShortString(), "safe", safe)
          );
-         init_List.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
+         links.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
 
-         while (init_List.size() > 64) {
-            init_List.remove(0);
+         while (links.size() > 64) {
+            links.remove(0);
          }
 
          AiService service = AiService.getExistingInstance();
          if (service != null) {
-            service.savePortalMemory(init_Str, toJson());
+            service.savePortalMemory(loadedWorldKey, toJson());
          }
       }
    }
@@ -305,10 +305,10 @@ final class AiPortalLinks {
    }
 
    static void reset(String resetWorld) {
-      if (resetWorld == null || resetWorld.equals(init_Str)) {
-         init_List.clear();
-         init_Z = true;
-         init_J++;
+      if (resetWorld == null || resetWorld.equals(loadedWorldKey)) {
+         links.clear();
+         memoryLoadStarted = true;
+         generation++;
       }
    }
 
@@ -334,9 +334,9 @@ final class AiPortalLinks {
    }
 
    static JsonObject predictArrival(Vec3 position, String from, String to) {
-      init_V();
-      Double sourceScale = init_Map.get(from);
-      Double targetScale = init_Map.get(to);
+      ensureLoaded();
+      Double sourceScale = coordinateScales.get(from);
+      Double targetScale = coordinateScales.get(to);
       if (sourceScale != null && targetScale != null && Double.isFinite(sourceScale) && Double.isFinite(targetScale) && !(targetScale <= 0.0)) {
          double factor = sourceScale / targetScale;
          return AiJson.objectOf(
@@ -376,12 +376,12 @@ final class AiPortalLinks {
    }
 
    static JsonArray snapshotJson() {
-      init_V();
+      ensureLoaded();
       return toJson();
    }
 
    static BlockPos nearestKnownPortal(int radius) {
-      init_V();
+      ensureLoaded();
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && mc.level != null
          ? nearestLinkMatching(toJson(), AiWorldIdentity.currentDimensionId(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
@@ -409,7 +409,7 @@ final class AiPortalLinks {
                      && AiJson.getBoolean(evidence, "interiorRectangle", false)
                      && AiJson.getInt(evidence, "activeCells", 0) >= 6
                      && !AiJson.getBoolean(evidence, "partialCoverage", true)) {
-                     BlockPos at = init_BlockPos(AiJson.getString(evidence, "interiorMin", ""));
+                     BlockPos at = parsePos(AiJson.getString(evidence, "interiorMin", ""));
                      if (at != null && at.distSqr(origin) <= distance && accepted.test(at)) {
                         best = at;
                         distance = at.distSqr(origin);
@@ -427,7 +427,7 @@ final class AiPortalLinks {
    private static JsonArray toJson() {
       JsonArray out = new JsonArray();
 
-      for (AiPortalLinks.PortalLink link : init_List) {
+      for (AiPortalLinks.PortalLink link : links) {
          out.add(
             AiJson.objectOf(
                "fromDimension",

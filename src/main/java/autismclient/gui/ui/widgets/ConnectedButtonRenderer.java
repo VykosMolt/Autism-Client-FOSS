@@ -67,7 +67,7 @@ public final class ConnectedButtonRenderer {
       }
 
       int border = var10000;
-      init(context, bounds, label, icon, hovered, fill, border, edges);
+      drawButton(context, bounds, label, icon, hovered, fill, border, edges);
    }
 
    public static void init(
@@ -81,8 +81,8 @@ public final class ConnectedButtonRenderer {
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float progress = clamp01(enabledProgress);
-      init(context, bounds, -1156179423, colors.borderControl, edges);
-      init(context, bounds, hovered, edges);
+      drawShape(context, bounds, -1156179423, colors.borderControl, edges);
+      drawHoverGlow(context, bounds, hovered, edges);
       int pillH = Math.min(12, Math.max(9, bounds.sync() - 6));
       int pillW = Math.min(26, Math.max(20, pillH * 2 - 2));
       autismclient.gui.f.NetHelper pill = autismclient.gui.f.NetHelper.init(
@@ -121,10 +121,10 @@ public final class ConnectedButtonRenderer {
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(
          context.init_GuiGraphicsExtract(), bounds.read(), bounds.load() - 1, bounds.update(), colors.divider
       );
-      init(context, bounds, label, icon, colors.textSecondary);
+      drawLabel(context, bounds, label, icon, colors.textSecondary);
    }
 
-   private static void init(
+   private static void drawButton(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String label,
@@ -134,12 +134,12 @@ public final class ConnectedButtonRenderer {
       int border,
       ConnectedButtonRenderer.ConnectedEdges edges
    ) {
-      init(context, bounds, fill, border, edges);
-      init(context, bounds, hovered, edges);
-      load(context, bounds, label, icon);
+      drawShape(context, bounds, fill, border, edges);
+      drawHoverGlow(context, bounds, hovered, edges);
+      drawLabel(context, bounds, label, icon);
    }
 
-   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill, int border, ConnectedButtonRenderer.ConnectedEdges edges) {
+   private static void drawShape(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill, int border, ConnectedButtonRenderer.ConnectedEdges edges) {
       int radius = edges.update ? Math.max(1, 7) : 3;
       if (edges.allConnected()) {
          if (edges.update) {
@@ -148,7 +148,7 @@ public final class ConnectedButtonRenderer {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, border);
          }
       } else {
-         autismclient.gui.f.NetHelper grown = init_NetHelper_NetHelper(bounds, edges, radius + 1);
+         autismclient.gui.f.NetHelper grown = inset(bounds, edges, radius + 1);
          context.init_GuiGraphicsExtract().enableScissor(bounds.read(), bounds.write(), bounds.init(), bounds.load());
 
          try {
@@ -169,7 +169,7 @@ public final class ConnectedButtonRenderer {
       }
    }
 
-   private static autismclient.gui.f.NetHelper init_NetHelper_NetHelper(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges, int by) {
+   private static autismclient.gui.f.NetHelper inset(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges, int by) {
       int left = edges.init ? 0 : by;
       int top = edges.load ? 0 : by;
       int right = edges.read ? 0 : by;
@@ -177,19 +177,19 @@ public final class ConnectedButtonRenderer {
       return autismclient.gui.f.NetHelper.init(bounds.read() - left, bounds.write() - top, bounds.update() + left + right, bounds.sync() + top + bottom);
    }
 
-   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered, ConnectedButtonRenderer.ConnectedEdges edges) {
+   private static void drawHoverGlow(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered, ConnectedButtonRenderer.ConnectedEdges edges) {
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       if (!(hoverT <= 0.001F)) {
          int color = Math.round(20.0F * hoverT) << 24 | 16777215;
          int radius = Math.max(1, (edges.update ? 7 : 3) - 1);
-         autismclient.gui.f.NetHelper content = init(bounds, edges);
+         autismclient.gui.f.NetHelper content = trimSeams(bounds, edges);
          if (edges.allConnected()) {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), content, radius, color);
          } else {
             context.init_GuiGraphicsExtract().enableScissor(bounds.read(), bounds.write(), bounds.init(), bounds.load());
 
             try {
-               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), init_NetHelper_NetHelper(content, edges, radius + 1), radius, color);
+               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), inset(content, edges, radius + 1), radius, color);
             } finally {
                context.init_GuiGraphicsExtract().disableScissor();
             }
@@ -197,11 +197,11 @@ public final class ConnectedButtonRenderer {
       }
    }
 
-   private static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon) {
-      init(context, bounds, label, icon, context.init_TableIndex().colors().textPrimary);
+   private static void drawLabel(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon) {
+      drawLabel(context, bounds, label, icon, context.init_TableIndex().colors().textPrimary);
    }
 
-   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon, int color) {
+   private static void drawLabel(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon, int color) {
       if (icon == null) {
          context.init_PoolEntry().drawCentered(context.init_GuiGraphicsExtract(), label, bounds, color);
       } else {
@@ -236,7 +236,7 @@ public final class ConnectedButtonRenderer {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), x, y, Math.max(0, height - 1), color);
    }
 
-   private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges) {
+   private static autismclient.gui.f.NetHelper trimSeams(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges) {
       return bounds.load(edges.init ? 1 : 0, edges.load ? 1 : 0, edges.read ? 1 : 0, edges.write ? 1 : 0);
    }
 

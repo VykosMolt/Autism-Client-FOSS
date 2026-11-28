@@ -20,14 +20,14 @@ public final class MiningTargetSearch {
       long deadline
    ) {
       List<MiningTargetSearch.Candidate> ordered = new ArrayList<>(candidates);
-      ordered.sort(Comparator.<MiningTargetSearch.Candidate>comparingDouble(c -> init(start, c, reach, eyeHeight)).thenComparingLong(c -> c.cell.asLong()));
+      ordered.sort(Comparator.<MiningTargetSearch.Candidate>comparingDouble(c -> cost(start, c, reach, eyeHeight)).thenComparingLong(c -> c.cell.asLong()));
       BlockPos best = null;
       double bestCost = 1.0 / 0.0;
       boolean pending = false;
 
       label74:
       for (MiningTargetSearch.Candidate candidate : ordered) {
-         if (!(init(start, candidate, reach, eyeHeight) >= bestCost)) {
+         if (!(cost(start, candidate, reach, eyeHeight) >= bestCost)) {
             if (!Thread.currentThread().isInterrupted() && System.nanoTime() < deadline) {
                AiPathfinder.PathGoal goal = new InteractionGoal(candidate.cell, reach, eyeHeight).bindToGrid(grid);
                BlockPos from = start;
@@ -86,7 +86,7 @@ public final class MiningTargetSearch {
       return new MiningTargetSearch.SearchResult(best, bestCost, pending, false);
    }
 
-   private static double init(BlockPos start, MiningTargetSearch.Candidate candidate, double reach, double eyeHeight) {
+   private static double cost(BlockPos start, MiningTargetSearch.Candidate candidate, double reach, double eyeHeight) {
       return candidate.miningTicks + new InteractionGoal(candidate.cell, reach, eyeHeight).heuristic(start.getX(), start.getY(), start.getZ());
    }
 

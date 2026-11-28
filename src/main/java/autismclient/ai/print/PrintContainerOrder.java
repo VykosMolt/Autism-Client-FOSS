@@ -53,7 +53,7 @@ public final class PrintContainerOrder {
          this.init_V(job.position());
       } else if (this.read()) {
          PrintContainerOrder.OrderEntry previous = this.entries.get(key);
-         if (previous == null || !this.init(previous, this.env.getBlockState(job.position()))) {
+         if (previous == null || !this.matchesReceipt(previous, this.env.getBlockState(job.position()))) {
             this.init_V(job.position());
             if (this.read()) {
                LongOpenHashSet dependencies = new LongOpenHashSet();
@@ -81,7 +81,7 @@ public final class PrintContainerOrder {
       PrintContainerOrder.OrderEntry receipt = this.entries.get(key);
       if ((
             receipt == null
-               || !this.init(receipt, after)
+               || !this.matchesReceipt(receipt, after)
                || after.is(Blocks.HOPPER) && after.getValue(HopperBlock.ENABLED) && !receipt.source().getValue(HopperBlock.ENABLED)
          )
          && (
@@ -91,7 +91,7 @@ public final class PrintContainerOrder {
                || after.hasBlockEntity()
                || this.planned.apply(BlockPos.of(key)).hasBlockEntity()
          )
-         && (this.init(key, true) || this.dependents.containsKey(key))) {
+         && (this.release(key, true) || this.dependents.containsKey(key))) {
          this.recheckQueue.add(key);
       }
    }
@@ -107,12 +107,12 @@ public final class PrintContainerOrder {
    public void init_V(BlockPos at) {
       long key = at.asLong();
       this.readyJobs.remove(key);
-      if (this.init(key, false) || this.dependents.containsKey(key)) {
+      if (this.release(key, false) || this.dependents.containsKey(key)) {
          this.recheckQueue.add(key);
       }
    }
 
-   private boolean init(long key, boolean recheck) {
+   private boolean release(long key, boolean recheck) {
       PrintContainerOrder.OrderEntry receipt = this.entries.remove(key);
       if (receipt == null) {
          return false;
@@ -145,7 +145,7 @@ public final class PrintContainerOrder {
             LongOpenHashSet parents = this.dependents.remove(changed);
             if (parents != null) {
                for (long parent : parents) {
-                  if (this.init(parent, true)) {
+                  if (this.release(parent, true)) {
                      this.recheckQueue.add(parent);
                   }
                }
@@ -234,7 +234,7 @@ public final class PrintContainerOrder {
          state = receipt.source();
       }
 
-      if (!this.init(receipt, state)) {
+      if (!this.matchesReceipt(receipt, state)) {
          return false;
       }
 
@@ -245,7 +245,7 @@ public final class PrintContainerOrder {
          }
 
          PrintContainerOrder.OrderEntry other = this.entries.get(partner.asLong());
-         if (other == null || !this.init(other, this.env.hasChunkAt(partner) ? this.env.getBlockState(partner) : other.source())) {
+         if (other == null || !this.matchesReceipt(other, this.env.hasChunkAt(partner) ? this.env.getBlockState(partner) : other.source())) {
             return false;
          }
       }
@@ -253,7 +253,7 @@ public final class PrintContainerOrder {
       return true;
    }
 
-   private boolean init(PrintContainerOrder.OrderEntry receipt, BlockState state) {
+   private boolean matchesReceipt(PrintContainerOrder.OrderEntry receipt, BlockState state) {
       return receipt != null
          && PrintRules.matchesLayout(receipt.source(), state)
          && (!(state.getBlock() instanceof CrafterBlock) || !state.getValue(CrafterBlock.TRIGGERED) && !state.getValue(CrafterBlock.CRAFTING))

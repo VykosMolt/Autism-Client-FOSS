@@ -99,7 +99,7 @@ public class HClipAction implements MacroAction {
             Entity vehicle = options.tryVehicleFirst ? player.getVehicle() : null;
             int packetCount;
             if (vehicle != null) {
-               if (plan.init_Z_D(player.getY())) {
+               if (plan.isFlat(player.getY())) {
                   String message = "planned route requires vertical clipping; vehicle hclip refused";
                   if (options.chatFeedback) {
                      AutismClientMessaging.sendPrefixed("§cHClip: " + message);
@@ -148,7 +148,7 @@ public class HClipAction implements MacroAction {
                      sent += legPadding;
                   }
 
-                  sent += init_I_Minecraft(mc, current, waypoint, grounded);
+                  sent += sendSteps(mc, current, waypoint, grounded);
                   current = waypoint;
                }
 
@@ -184,7 +184,7 @@ public class HClipAction implements MacroAction {
       }
    }
 
-   private static int init_I_Minecraft(Minecraft mc, Vec3 from, Vec3 to, boolean grounded) {
+   private static int sendSteps(Minecraft mc, Vec3 from, Vec3 to, boolean grounded) {
       List<ClipCollisionHelper.ClipStep> steps = ClipCollisionHelper.steps(from, to, grounded);
 
       for (ClipCollisionHelper.ClipStep step : steps) {
@@ -275,7 +275,7 @@ public class HClipAction implements MacroAction {
 
       label63:
       while (horizontalDistance(cur, target) > 0.5 && guard++ < routeCap) {
-         Vec3 adv = init_Vec3_LocalPlayer_2(player, cur, target, searchRadius);
+         Vec3 adv = advanceToward(player, cur, target, searchRadius);
          if (horizontalDistance(adv, cur) > 0.5) {
             route.add(adv);
             cur = adv;
@@ -295,7 +295,7 @@ public class HClipAction implements MacroAction {
                      continue;
                   }
 
-                  Vec3 adv2 = init_Vec3_LocalPlayer_2(player, layer, target, searchRadius);
+                  Vec3 adv2 = advanceToward(player, layer, target, searchRadius);
                   if (!(horizontalDistance(adv2, layer) > 1.0)) {
                      continue;
                   }
@@ -348,7 +348,7 @@ public class HClipAction implements MacroAction {
       return null;
    }
 
-   private static Vec3 init_Vec3_LocalPlayer_2(LocalPlayer player, Vec3 from, Vec3 target, int searchRadius) {
+   private static Vec3 advanceToward(LocalPlayer player, Vec3 from, Vec3 target, int searchRadius) {
       double dx = target.x - from.x;
       double dz = target.z - from.z;
       double dist = Math.hypot(dx, dz);
@@ -600,7 +600,7 @@ public class HClipAction implements MacroAction {
          return new HClipAction.ClipPlan(false, 0.0, List.of(), message);
       }
 
-      boolean init_Z_D(double fallbackOriginY) {
+      boolean isFlat(double fallbackOriginY) {
          if (this.waypoints.isEmpty()) {
             return false;
          }

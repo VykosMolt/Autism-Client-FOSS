@@ -22,9 +22,9 @@ public final class AiBridgeDriver {
    private final AiBridger bridger;
    private final AiAim aim;
    private AiLiveWorld liveWorld;
-   private int init_I;
-   private int load;
-   private BlockPos init_BlockPos;
+   private int stepCount;
+   private int placedCount;
+   private BlockPos pendingPlaceCell;
 
    public AiBridgeDriver(AiBridger.Inner_CachePool lane, AiBridger.Inner_ConfigStore style, AiAim aim) {
       this(lane, style, aim, false);
@@ -44,11 +44,11 @@ public final class AiBridgeDriver {
    }
 
    public int getTicks() {
-      return this.init_I;
+      return this.stepCount;
    }
 
    public int load() {
-      return this.load;
+      return this.placedCount;
    }
 
    public BlockPos nextSupport() {
@@ -88,8 +88,8 @@ public final class AiBridgeDriver {
    public AiBridgeDriver.BridgeStatus step(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
       LocalPlayer player = this.mc.player;
       AiBridger.Inner_CachePool lane = this.bridger.getLane();
-      this.init_I++;
-      if (this.init_I == 1) {
+      this.stepCount++;
+      if (this.stepCount == 1) {
          BlockPos footing = new BlockPos(lane.cellX(0), lane.floorY(), lane.cellZ(0));
          BlockState state = this.mc.level.getBlockState(footing);
          if (!Block.isShapeFullBlock(state.getCollisionShape(this.mc.level, footing))) {
@@ -133,8 +133,8 @@ public final class AiBridgeDriver {
       boolean failedPlace = false;
       if (cmd.place() > 0 && slot >= 0) {
          BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));
-         if (this.init_Z_LocalPlayer(player, cell, slot, select)) {
-            this.load++;
+         if (this.tryPlace(player, cell, slot, select)) {
+            this.placedCount++;
             onPlaced.accept(cell);
          } else {
             failedPlace = true;
@@ -147,7 +147,7 @@ public final class AiBridgeDriver {
       this.mc.options.keyLeft.setDown(cmd.left() > 0);
       this.mc.options.keyRight.setDown(cmd.left() < 0);
       this.mc.options.keyJump.setDown(cmd.jump());
-      this.mc.options.keyShift.setDown(cmd.sneak() || this.init_BlockPos != null || failedPlace && player.onGround());
+      this.mc.options.keyShift.setDown(cmd.sneak() || this.pendingPlaceCell != null || failedPlace && player.onGround());
       if (cmd.sprint()) {
          player.setSprinting(true);
          if (!this.mc.options.toggleSprint().get()) {
@@ -161,7 +161,7 @@ public final class AiBridgeDriver {
       if (AiNavDebug.isEnabled()) {
          AiNavDebug.log(
             "bridge tick="
-               + this.init_I
+               + this.stepCount
                + " position="
                + player.position()
                + " motion="
@@ -184,7 +184,7 @@ public final class AiBridgeDriver {
       return AiBridgeDriver.BridgeStatus.RUNNING;
    }
 
-   private boolean init_Z_LocalPlayer(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
+   private boolean tryPlace(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
       BlockHitResult hit = AiAim.raycastLookBlock();
       if (hit != null && hit.getBlockPos().relative(hit.getDirection()).equals(cell)) {
          BlockState face = this.mc.level.getBlockState(hit.getBlockPos());
@@ -193,7 +193,7 @@ public final class AiBridgeDriver {
          }
 
          if (BlockPlacementPlanner.requiresSneakToPlace(face, hit.getBlockPos())) {
-            this.init_BlockPos = cell;
+            this.pendingPlaceCell = cell;
             this.mc.options.keyShift.setDown(true);
             if (!player.isShiftKeyDown() || !player.getLastSentInput().shift()) {
                return false;
@@ -212,7 +212,7 @@ public final class AiBridgeDriver {
 
          boolean stands = !this.mc.level.getBlockState(cell).getCollisionShape(this.mc.level, cell).isEmpty();
          if (stands) {
-            this.init_BlockPos = null;
+            this.pendingPlaceCell = null;
          }
 
          return stands;

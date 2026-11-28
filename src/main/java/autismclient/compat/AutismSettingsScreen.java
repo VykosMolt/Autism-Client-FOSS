@@ -45,7 +45,7 @@ public class AutismSettingsScreen extends Screen {
    private final List<AutismSettingsScreen.KeybindEntry> keybinds = new ArrayList<>();
    private int listeningKeybind = -1;
    private int scrollOffset;
-   private boolean init_Z;
+   private boolean scrollbarDragging;
    private int scrollGrabOffset;
    private final List<AutismSettingsScreen.ClickRegion> clickRegions = new ArrayList<>();
    private NetHelper listBounds = NetHelper.init(0, 0, 0, 0);
@@ -147,7 +147,7 @@ public class AutismSettingsScreen extends Screen {
 
          if (needsBar) {
             ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarBounds();
-            ScrollbarRenderer.draw(this.ui, metrics, metrics.trackContains(mx, my), this.init_Z);
+            ScrollbarRenderer.draw(this.ui, metrics, metrics.trackContains(mx, my), this.scrollbarDragging);
             this.addClickRegion(metrics.track(), () -> this.init(metrics, my), null);
          }
 
@@ -199,7 +199,7 @@ public class AutismSettingsScreen extends Screen {
       out.add(this.prefixRow(module, prefixes, cur));
 
       for (int i = 0; i < this.keybinds.size(); i++) {
-         out.add(this.init_DataUtil_BufferHel(i));
+         out.add(this.keybindRow(i));
       }
 
       out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new ThemeColorScreen(this))));
@@ -269,7 +269,7 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.SettingsRow init_DataUtil_BufferHel(int idx) {
+   private AutismSettingsScreen.SettingsRow keybindRow(int idx) {
       return (g, rb, mx, my, clickable) -> {
          AutismSettingsScreen.KeybindEntry k = this.keybinds.get(idx);
          boolean hover = clickable && rb.init_Z(mx, my);
@@ -315,7 +315,7 @@ public class AutismSettingsScreen extends Screen {
    }
 
    private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
-      this.init_Z = true;
+      this.scrollbarDragging = true;
       this.scrollGrabOffset = metrics.thumbContains(metrics.track().read() + 1, my) ? my - metrics.thumb().write() : metrics.thumb().sync() / 2;
       this.scrollOffset = this.clampScroll(ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollGrabOffset));
    }
@@ -392,7 +392,7 @@ public class AutismSettingsScreen extends Screen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      this.init_Z = false;
+      this.scrollbarDragging = false;
       if (this.dropdown != null && this.dropdown.isOpen()) {
          this.dropdown.onMouseReleased(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event));
          return true;
@@ -403,7 +403,7 @@ public class AutismSettingsScreen extends Screen {
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      if (this.init_Z) {
+      if (this.scrollbarDragging) {
          this.scrollOffset = this.clampScroll(ScrollbarRenderer.scrollForDrag(this.scrollbarBounds(), cA.init_I_D(event.y()), this.scrollGrabOffset));
          return true;
       } else if (this.dropdown != null && this.dropdown.isOpen()) {

@@ -53,11 +53,11 @@ public final class WaypointsCommand extends Command {
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString())
-            .executes(ctx -> this.init_I_Str_3(StringArgumentType.getString(ctx, "args")))
+            .executes(ctx -> this.runArgs(StringArgumentType.getString(ctx, "args")))
       );
    }
 
-   private int init_I_Str_3(String args) {
+   private int runArgs(String args) {
       String trimmed = args == null ? "" : args.trim();
       if (trimmed.equalsIgnoreCase("gui") || trimmed.equalsIgnoreCase("list")) {
          return this.openGui();

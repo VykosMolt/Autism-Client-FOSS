@@ -75,16 +75,16 @@ final class AiBucket {
             int waitTicks;
             long inventoryRevision;
             boolean init_Z;
-            boolean load_Z;
+            boolean cancelled;
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_Z || this.load_Z;
+               return !this.init_Z || this.cancelled;
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (this.load_Z || mc.player == null || mc.level == null) {
+               if (this.cancelled || mc.player == null || mc.level == null) {
                   return this.finish(AiOperation.Status.CANCELLED, "Bucket use cancelled");
                }
 
@@ -162,7 +162,7 @@ final class AiBucket {
                      return this.running("Turning toward " + this.target.toShortString());
                   }
 
-                  if (!this.init_Z_9()) {
+                  if (!this.wireMatchesAim()) {
                      return this.running("Writing the look before using the bucket");
                   }
 
@@ -215,7 +215,7 @@ final class AiBucket {
                }
             }
 
-            boolean init_Z_9() {
+            boolean wireMatchesAim() {
                autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.getSnapshot();
                return wire.initialized() && AiBucket.wireMatchesPlayer(wire.currentYaw(), wire.currentPitch(), mc.player.getYRot(), mc.player.getXRot());
             }
@@ -356,8 +356,8 @@ final class AiBucket {
 
             @Override
             public void cancel() {
-               if (!this.load_Z) {
-                  this.load_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   this.aim.clear();
                }
             }

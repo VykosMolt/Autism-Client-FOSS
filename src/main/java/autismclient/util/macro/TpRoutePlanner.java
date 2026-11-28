@@ -98,7 +98,7 @@ public final class TpRoutePlanner {
 
                double depth = surface - feetY;
                boolean eyeSubmerged = TpRoutePlanner.isEyeSubmerged(entity, position.x, eyeY - 0.05, position.z);
-               return TpRoutePlanner.init_Z_D(bounds.getYsize(), entity.getEyeHeight(), depth, eyeSubmerged)
+               return TpRoutePlanner.isSwimDepth(bounds.getYsize(), entity.getEyeHeight(), depth, eyeSubmerged)
                   && TpRoutePlanner.isEyeSubmerged(entity, position.x, feetY + 0.1, position.z)
                   && TpRoutePlanner.isEyeSubmerged(entity, position.x, feetY + Math.min(0.8, bounds.getYsize() * 0.48), position.z);
             }
@@ -110,7 +110,7 @@ public final class TpRoutePlanner {
 
             @Override
             public double clearanceAt(Vec3 position) {
-               return position == null ? 0.0 : TpRoutePlanner.init_D_Entity(entity, bounds.move(position.subtract(origin)), 6.0, this::isLava);
+               return position == null ? 0.0 : TpRoutePlanner.lavaDistance(entity, bounds.move(position.subtract(origin)), 6.0, this::isLava);
             }
 
             @Override
@@ -128,7 +128,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   static boolean init_Z_D(double entityHeight, double eyeHeight, double waterDepth, boolean eyeSubmerged) {
+   static boolean isSwimDepth(double entityHeight, double eyeHeight, double waterDepth, boolean eyeSubmerged) {
       if (!eyeSubmerged && Double.isFinite(waterDepth)) {
          double minDepth = Math.min(0.85, Math.max(0.45, entityHeight * 0.45));
          double maxDepth = Math.max(minDepth + 0.1, Math.min(Math.max(0.0, eyeHeight - 0.3), entityHeight * 0.68));
@@ -199,7 +199,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static double init_D_Entity(Entity entity, AABB body, double scanRadius, Predicate<BlockPos> lavaAt) {
+   private static double lavaDistance(Entity entity, AABB body, double scanRadius, Predicate<BlockPos> lavaAt) {
       if (entity != null && entity.level() != null && body != null) {
          double radius = Math.max(0.0, scanRadius);
          AABB scan = new AABB(body.minX - radius, body.minY - radius, body.minZ - radius, body.maxX + radius, body.maxY + radius, body.maxZ + radius);

@@ -425,7 +425,7 @@ public final class EndPortalModule extends Module {
       return this.open() && this.memory.triangulator.ringEstimate() != null;
    }
 
-   double init_D_2() {
+   double uncertainty() {
       return this.open() ? this.memory.triangulator.estimate().uncertainty() : 0.0;
    }
 

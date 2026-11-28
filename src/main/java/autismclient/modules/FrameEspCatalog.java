@@ -112,15 +112,15 @@ public final class FrameEspCatalog {
             return current;
          }
 
-         current = init(revision, hidden);
+         current = buildSnapshot(revision, hidden);
          currentSnapshot = current;
          return current;
       }
    }
 
-   private static FrameEspCatalog.CatalogSnapshot init(int revision, boolean hidden) {
+   private static FrameEspCatalog.CatalogSnapshot buildSnapshot(int revision, boolean hidden) {
       if (hidden) {
-         return FrameEspCatalog.CatalogSnapshot.init(revision, true);
+         return FrameEspCatalog.CatalogSnapshot.hiddenSnapshot(revision, true);
       }
 
       Module module = al.init_Module_Str("frame-esp");
@@ -149,11 +149,11 @@ public final class FrameEspCatalog {
             Map.copyOf(colors)
          );
       } else {
-         return FrameEspCatalog.CatalogSnapshot.init(revision, false);
+         return FrameEspCatalog.CatalogSnapshot.hiddenSnapshot(revision, false);
       }
    }
 
-   static int init(FrameEspCatalog.CatalogSnapshot snapshot, ItemFrame frame) {
+   static int frameColor(FrameEspCatalog.CatalogSnapshot snapshot, ItemFrame frame) {
       ItemStack stack = frame.getItem();
       if (stack.isEmpty()) {
          return snapshot.emptyFrames() ? snapshot.load_I() : 0;
@@ -183,7 +183,7 @@ public final class FrameEspCatalog {
             return 0;
          }
 
-         int color = init(current, frame);
+         int color = frameColor(current, frame);
          return color == 0 ? 0 : color | 0xFF000000;
       } else {
          return 0;
@@ -208,7 +208,7 @@ public final class FrameEspCatalog {
 
          for (Entity entity : level.entitiesForRendering()) {
             if (entity instanceof ItemFrame frame && !frame.isRemoved()) {
-               int color = init(current, frame);
+               int color = frameColor(current, frame);
                if (color != 0) {
                   hits.add(new Inner_DataUtil(frame, color, frame.position().distanceToSqr(eye)));
                }
@@ -252,7 +252,7 @@ public final class FrameEspCatalog {
       }
 
       DEFAULT_IDS = def.toString();
-      currentSnapshot = FrameEspCatalog.CatalogSnapshot.init(-2147483648, false);
+      currentSnapshot = FrameEspCatalog.CatalogSnapshot.hiddenSnapshot(-2147483648, false);
    }
 
    record CatalogSnapshot(
@@ -268,7 +268,7 @@ public final class FrameEspCatalog {
       int load_I,
       Map<Item, Integer> colors
    ) {
-      static FrameEspCatalog.CatalogSnapshot init(int revision, boolean hidden) {
+      static FrameEspCatalog.CatalogSnapshot hiddenSnapshot(int revision, boolean hidden) {
          return new FrameEspCatalog.CatalogSnapshot(revision, hidden, false, false, false, false, false, false, false, 0, Map.of());
       }
    }

@@ -106,7 +106,7 @@ public final class TranslationSnapshot {
          if (source instanceof VanillaPackResources) {
             this.put(TranslationSnapshot.EntryOrigin.VANILLA, key, value);
          } else if (PackTranslationPolicyResolver.init(this.resourceManager, source, sourcePackId)) {
-            this.put(init_ClassCache_CachePo_PackResources(source), key, value, source, sourcePackId);
+            this.put(originOf(source), key, value, source, sourcePackId);
          }
       }
 
@@ -132,7 +132,7 @@ public final class TranslationSnapshot {
          this.entries.put(key, new TranslationSnapshot.SourcedEntry(new TranslationSnapshot.TranslationEntry(value, origin), source, sourcePackId));
       }
 
-      private static TranslationSnapshot.EntryOrigin init_ClassCache_CachePo_PackResources(PackResources source) {
+      private static TranslationSnapshot.EntryOrigin originOf(PackResources source) {
          if (source instanceof IsolatedResourcePack) {
             return TranslationSnapshot.EntryOrigin.OTHER;
          }

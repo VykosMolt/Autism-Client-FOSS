@@ -29,14 +29,14 @@ public final class GifOverlayState {
    }
 
    public static String capePath(String playerName) {
-      return init(current, playerName, true);
+      return overrideFor(current, playerName, true);
    }
 
    public static String shieldPath(String playerName) {
-      return init(current, playerName, false);
+      return overrideFor(current, playerName, false);
    }
 
-   private static String init(GifOverlayState.OverlaySnapshot s, String playerName, boolean cape) {
+   private static String overrideFor(GifOverlayState.OverlaySnapshot s, String playerName, boolean cape) {
       if (playerName != null && !playerName.isBlank()) {
          if (s.enabled() && (cape ? s.capeEnabled() : s.read_Z()) && renderingAllowed()) {
             String custom = (cape ? s.capeOverrides() : s.load_Map()).get(playerName.trim().toLowerCase(Locale.ROOT));

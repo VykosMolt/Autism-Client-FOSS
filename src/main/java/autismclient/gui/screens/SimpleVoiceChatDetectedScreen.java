@@ -105,7 +105,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          int innerW = cardW - 12;
          int x = cardX + 6;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(cardX, cardY, cardW, cardH), -234223092);
-         init_V_GuiGraphicsExtract(graphics, cardX, cardY, cardW, cardH, ThemePaletteManager.recolor(-46518, ThemePaletteManager.ColorRole.OUTLINE), 2);
+         drawOutline(graphics, cardX, cardY, cardW, cardH, ThemePaletteManager.recolor(-46518, ThemePaletteManager.ColorRole.OUTLINE), 2);
          int y = cardY + 6;
          this.drawCentered(
             graphics, "Simple Voice Chat detected", TITLE_FONT, ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT), x, innerW, y
@@ -293,7 +293,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color, int t) {
+   private static void drawOutline(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color, int t) {
       if (width > 0 && height > 0) {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, width, t), color);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y + height - t, width, t), color);

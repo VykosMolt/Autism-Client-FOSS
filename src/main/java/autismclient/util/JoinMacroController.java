@@ -20,10 +20,10 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 
 public final class JoinMacroController {
-   private static boolean init_Z;
-   private static boolean load;
+   private static boolean macroFired;
+   private static boolean joined;
    private static final JoinMacroController.ReadinessDetector detector = new JoinMacroController.ReadinessDetector();
-   private static int init_I;
+   private static int joinCount;
    private static volatile AutismMacro pendingMacro;
    private static volatile ClientConfigurationPacketListenerImpl configListener;
    private static volatile Thread workerThread;
@@ -58,12 +58,12 @@ public final class JoinMacroController {
    }
 
    public static JoinMacroController.JoinTrigger trigger() {
-      return init(JoinMacroController.JoinTrigger.parse(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
+      return effectiveTrigger(JoinMacroController.JoinTrigger.parse(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
    }
 
    public static void setTrigger(JoinMacroController.JoinTrigger triggerJoin) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTriggerJoin = init(triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
+      config.joinMacroTriggerJoin = effectiveTrigger(triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
       resetState();
       config.save();
    }
@@ -75,7 +75,7 @@ public final class JoinMacroController {
    public static void setKeepEnabled(boolean keepEnabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroKeepEnabled = keepEnabled;
-      config.joinMacroTriggerJoin = init(JoinMacroController.JoinTrigger.parse(config.joinMacroTriggerJoin), keepEnabled).init();
+      config.joinMacroTriggerJoin = effectiveTrigger(JoinMacroController.JoinTrigger.parse(config.joinMacroTriggerJoin), keepEnabled).init();
       resetState();
       config.save();
    }
@@ -89,15 +89,15 @@ public final class JoinMacroController {
       return macroName().length() > 0;
    }
 
-   public static void init_V() {
-      load = false;
+   public static void resetJoinState() {
+      joined = false;
       detector.reset();
    }
 
    public static void onJoin() {
-      init_V();
-      init_Z = false;
-      load = true;
+      resetJoinState();
+      macroFired = false;
+      joined = true;
       if (timing() == JoinMacroController.JoinTiming.JOINING) {
          maybeRun(JoinMacroController.JoinTiming.JOINING);
       }
@@ -110,17 +110,17 @@ public final class JoinMacroController {
    }
 
    public static void tick(Minecraft mc) {
-      if (hasMacro() && !init_Z && mc != null) {
+      if (hasMacro() && !macroFired && mc != null) {
          JoinMacroController.JoinTiming timing = timing();
-         if (detector.isReady(mc, timing, load)) {
+         if (detector.isReady(mc, timing, joined)) {
             maybeRun(timing);
          }
       }
    }
 
    public static void reset() {
-      init_V();
-      init_Z = false;
+      resetJoinState();
+      macroFired = false;
       pendingMacro = null;
       autismclient.util.custommenu.CustomMenuTracker.clear();
       configListener = null;
@@ -134,8 +134,8 @@ public final class JoinMacroController {
    public static void onConfigurationStart(ClientConfigurationPacketListenerImpl listener) {
       reset();
       configListener = listener;
-      init_I++;
-      if (hasMacro() && trigger().matches(init_I)) {
+      joinCount++;
+      if (hasMacro() && trigger().matches(joinCount)) {
          AutismMacro selected = MacroLibraryManager.getInstance().findByName(macroName());
          if (selected != null) {
             AutismMacro copy = selected.copy();
@@ -146,7 +146,7 @@ public final class JoinMacroController {
                MacroAction action = copy.actions.get(prefix);
                if (action instanceof autismclient.util.macro.CustomMenuAction) {
                   sawCustomMenu = true;
-               } else if (!init_Z(action)) {
+               } else if (!isWaitAction(action)) {
                   break;
                }
 
@@ -170,7 +170,7 @@ public final class JoinMacroController {
       }
    }
 
-   private static boolean init_Z(MacroAction action) {
+   private static boolean isWaitAction(MacroAction action) {
       return action instanceof autismclient.util.macro.WaitForGuiAction || action instanceof autismclient.util.macro.WaitGuiTypeAction || action instanceof autismclient.util.macro.DelayAction;
    }
 
@@ -214,8 +214,8 @@ public final class JoinMacroController {
    private static void runActions(List<MacroAction> actions, Connection connection) {
       for (MacroAction macroAction : actions) {
          if (macroAction != null && macroAction.isEnabled()) {
-            if (init_Z(macroAction)) {
-               init_V(macroAction);
+            if (isWaitAction(macroAction)) {
+               awaitAction(macroAction);
                if (Thread.currentThread().isInterrupted()) {
                   return;
                }
@@ -286,7 +286,7 @@ public final class JoinMacroController {
       }
    }
 
-   private static void init_V(MacroAction action) {
+   private static void awaitAction(MacroAction action) {
       long timeoutMs;
       if (action instanceof autismclient.util.macro.WaitForGuiAction w) {
          timeoutMs = w.timeoutMs > 0 ? w.timeoutMs : 30000L;
@@ -386,8 +386,8 @@ public final class JoinMacroController {
    }
 
    private static void maybeRun(JoinMacroController.JoinTiming timing) {
-      if (hasMacro() && !init_Z && trigger().matches(init_I)) {
-         init_Z = true;
+      if (hasMacro() && !macroFired && trigger().matches(joinCount)) {
+         macroFired = true;
          String macroName = macroName();
          AutismMacro macro = pendingMacro != null ? pendingMacro : MacroLibraryManager.getInstance().findByName(macroName);
          if (macro == null) {
@@ -401,7 +401,7 @@ public final class JoinMacroController {
                config.joinMacroEnabled = false;
                config.save();
             } else if (trigger() != JoinMacroController.JoinTrigger.ANY) {
-               init_I = 0;
+               joinCount = 0;
             }
 
             Minecraft mc = Minecraft.getInstance();
@@ -439,12 +439,12 @@ public final class JoinMacroController {
    }
 
    private static void resetState() {
-      init_I = 0;
-      init_Z = false;
-      init_V();
+      joinCount = 0;
+      macroFired = false;
+      resetJoinState();
    }
 
-   private static JoinMacroController.JoinTrigger init(JoinMacroController.JoinTrigger triggerJoin, boolean keepEnabled) {
+   private static JoinMacroController.JoinTrigger effectiveTrigger(JoinMacroController.JoinTrigger triggerJoin, boolean keepEnabled) {
       JoinMacroController.JoinTrigger value = triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin;
       if (keepEnabled && value == JoinMacroController.JoinTrigger.FIRST) {
          return JoinMacroController.JoinTrigger.ANY;
@@ -588,12 +588,12 @@ public final class JoinMacroController {
    }
 
    public static final class ReadinessDetector {
-      private int init;
-      private int load;
+      private int worldTicks;
+      private int playableTicks;
 
       public void reset() {
-         this.init = 0;
-         this.load = 0;
+         this.worldTicks = 0;
+         this.playableTicks = 0;
       }
 
       public boolean isReady(Minecraft mc, JoinMacroController.JoinTiming timing, boolean joined) {
@@ -602,7 +602,7 @@ public final class JoinMacroController {
             return false;
          }
 
-         this.init++;
+         this.worldTicks++;
          boolean var10000;
          switch (timing) {
             case JOINING:
@@ -612,7 +612,7 @@ public final class JoinMacroController {
                var10000 = true;
                break;
             case FIRST_TICK:
-               var10000 = this.init >= 1;
+               var10000 = this.worldTicks >= 1;
                break;
             case INVENTORY_READY:
                var10000 = mc.player != null && mc.player.inventoryMenu != null && mc.player.getInventory() != null;
@@ -622,10 +622,10 @@ public final class JoinMacroController {
                break;
             case FULLY_READY:
                if (JoinMacroController.isPlayable(mc)) {
-                  this.load++;
-                  var10000 = this.load >= 2;
+                  this.playableTicks++;
+                  var10000 = this.playableTicks >= 2;
                } else {
-                  this.load = 0;
+                  this.playableTicks = 0;
                   var10000 = false;
                }
                break;

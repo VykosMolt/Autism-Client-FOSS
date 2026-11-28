@@ -47,9 +47,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private ProxiesScreen.ProxyFilter filter = ProxiesScreen.ProxyFilter.ALL;
    private bW editingProxy;
    private String searchQuery = "";
-   private int update_I;
-   private boolean init_Z;
-   private int sync_I;
+   private int scrollOffset;
+   private boolean scrollbarDragging;
+   private int thumbGrabOffset;
    private long seenRefreshRevision = -9223372036854775808L;
    private long seenImportRevision = -9223372036854775808L;
    private boolean importMenuOpen;
@@ -90,7 +90,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.searchField.setHint(Component.literal("Search name/address..."));
       this.searchField.setResponder(value -> {
          this.searchQuery = trim(value);
-         this.update_I = 0;
+         this.scrollOffset = 0;
          this.scroll.jumpTo(0, 0);
          this.rebuildButtons();
       });
@@ -174,7 +174,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          actionX += actionWidths[4] + actionGap;
          this.buttons
             .add(
-               autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[5], ctl, Component.literal(importLabel), b -> this.open_V())
+               autismclient.gui.ui.widgets.OverlayActionButton.create(actionX, actionY, actionWidths[5], ctl, Component.literal(importLabel), b -> this.toggleImport())
                   .setTone(
                      importRunning ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
                   )
@@ -217,14 +217,14 @@ public class ProxiesScreen extends VirtualScaledScreen {
          List<bW> proxies = this.orderedProxies();
          boolean hasActiveSection = proxies.size() > this.filteredProxies().size();
          int maxScroll = this.maxScroll(proxies.size());
-         this.update_I = clampScroll(this.update_I, maxScroll);
-         this.scroll.jumpTo(this.update_I, maxScroll);
+         this.scrollOffset = clampScroll(this.scrollOffset, maxScroll);
+         this.scroll.jumpTo(this.scrollOffset, maxScroll);
          int pitch = this.rowPitch();
          int rowH = this.rowHeight();
          int top = this.listTop();
          int bottom = this.listBottom();
-         int firstVisible = this.update_I / pitch;
-         int rowY = top - this.update_I % pitch;
+         int firstVisible = this.scrollOffset / pitch;
+         int rowY = top - this.scrollOffset % pitch;
 
          for (int i = firstVisible; i < proxies.size() && rowY + rowH <= bottom; i++) {
             bW proxy = proxies.get(i);
@@ -266,7 +266,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void addFilterButton(int x, int y, int width, ProxiesScreen.ProxyFilter value, String label) {
       autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.create(x, y, width, this.controlHeight(), Component.literal(label), b -> {
          this.filter = value;
-         this.update_I = 0;
+         this.scrollOffset = 0;
          this.scroll.jumpTo(0, 0);
          this.rebuildButtons();
       });
@@ -280,8 +280,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
    public void tick() {
       super.tick();
       int maxScroll = this.maxScroll(this.orderedProxies().size());
-      this.update_I = clampScroll(this.update_I, maxScroll);
-      this.scroll.jumpTo(this.update_I, maxScroll);
+      this.scrollOffset = clampScroll(this.scrollOffset, maxScroll);
+      this.scroll.jumpTo(this.scrollOffset, maxScroll);
       ProxyListManager.RefreshStatus status = ProxyListManager.getInstance().getRefreshStatus();
       if (status.revision() != this.seenRefreshRevision) {
          this.seenRefreshRevision = status.revision();
@@ -330,18 +330,18 @@ public class ProxiesScreen extends VirtualScaledScreen {
       if (proxy != null) {
          int sectionsBefore = this.orderedProxies().size() - this.filteredProxies().size();
          ProxyListManager.getInstance().setProxyEnabled(proxy, !proxy.init_Z);
-         this.init_V_I(sectionsBefore);
+         this.keepScrollAnchor(sectionsBefore);
          this.toast(proxy.init_Z ? "Enabled " + proxy.init_Str() + "." : "Disabled proxy.", proxy.init_Z ? GuiColorPalette.open : GuiColorPalette.close);
          this.rebuildButtons();
       }
    }
 
-   private void init_V_I(int sectionsBefore) {
+   private void keepScrollAnchor(int sectionsBefore) {
       int sectionsAfter = this.orderedProxies().size() - this.filteredProxies().size();
       if (sectionsAfter != sectionsBefore) {
          int maxScroll = this.maxScroll(this.orderedProxies().size());
-         this.update_I = clampScroll(this.update_I + (sectionsAfter - sectionsBefore) * this.rowPitch(), maxScroll);
-         this.scroll.jumpTo(this.update_I, maxScroll);
+         this.scrollOffset = clampScroll(this.scrollOffset + (sectionsAfter - sectionsBefore) * this.rowPitch(), maxScroll);
+         this.scroll.jumpTo(this.scrollOffset, maxScroll);
       }
    }
 
@@ -453,14 +453,14 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int removed = manager.clearAllProxies();
          this.editingProxy = null;
          this.clearFields();
-         this.update_I = 0;
+         this.scrollOffset = 0;
          this.scroll.jumpTo(0, 0);
          this.toast(removed == 0 ? "Proxy list is already empty." : "Cleared " + removed + " proxies.", removed == 0 ? GuiColorPalette.close : GuiColorPalette.open);
          this.rebuildButtons();
       }
    }
 
-   private void open_V() {
+   private void toggleImport() {
       ProxyListManager manager = ProxyListManager.getInstance();
       ProxyListManager.ImportStatus status = manager.getImportStatus();
       if (status.running()) {
@@ -519,7 +519,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
                ProxyListManager.ImportStatus finished = manager.getImportStatus();
                if (finished.generation() == generation && !finished.canceled()) {
                   this.toast("Imported " + finished.addedCount() + " proxies.", finished.addedCount() > 0 ? GuiColorPalette.open : -14249);
-                  this.update_I = 0;
+                  this.scrollOffset = 0;
                   this.scroll.jumpTo(0, 0);
                }
 
@@ -575,7 +575,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       autismclient.gui.f.NetHelper card = rects[0];
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -939524096);
       autismclient.gui.f.PacketUtil.load(graphics, card, 5, -401402080, outlineColor(GuiColorPalette.update));
-      this.init_V_GuiGraphicsExtract(
+      this.drawText(
          graphics, "Import proxies from", card.read() + card.update() / 2, this.centeredTextY(card.write() + 4, 12), GuiColorPalette.flush, true
       );
       autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, this.fromFileButton, mouseX, mouseY);
@@ -636,9 +636,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
          this.drawCard(graphics, panelX, this.panelY(), this.panelWidth(), this.headerCardHeight(), -401402080);
          this.drawCard(graphics, this.listCardX(), this.listCardY(), this.listCardWidth(), this.listCardHeight(), -1206840035);
          int headerTextY = this.centeredTextY(this.searchY(), this.controlHeight());
-         this.init_V_GuiGraphicsExtract(graphics, "Proxies", this.titleX(), headerTextY, GuiColorPalette.flush, false);
+         this.drawText(graphics, "Proxies", this.titleX(), headerTextY, GuiColorPalette.flush, false);
          if (this.isCompact()) {
-            this.init_V_GuiGraphicsExtract(
+            this.drawText(
                graphics, "Window too small.", this.inputX(), this.centeredTextY(this.firstInputY(), 12), GuiColorPalette.close, false, this.inputWidth()
             );
          }
@@ -660,9 +660,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int listInnerW = this.listCardWidth() - 8;
          int workLabelW = workLabel.isBlank() ? 0 : Math.min(160, listInnerW / 2);
          int listHeaderY = this.centeredTextY(this.listCardY() + 4, 12);
-         this.init_V_GuiGraphicsExtract(graphics, summary, this.listCardX() + 4, listHeaderY, GuiColorPalette.flush, false, listInnerW - workLabelW - 4);
+         this.drawText(graphics, summary, this.listCardX() + 4, listHeaderY, GuiColorPalette.flush, false, listInnerW - workLabelW - 4);
          if (!workLabel.isBlank()) {
-            this.init_V_GuiGraphicsExtract(graphics, workLabel, this.listCardX() + this.listCardWidth() - 4 - workLabelW, listHeaderY, workColor, false, workLabelW);
+            this.drawText(graphics, workLabel, this.listCardX() + this.listCardWidth() - 4 - workLabelW, listHeaderY, workColor, false, workLabelW);
          }
 
          this.renderWorkStatus(graphics, refreshStatus, importStatus);
@@ -681,7 +681,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
 
          if (total == 0) {
-            this.init_V_GuiGraphicsExtract(
+            this.drawText(
                graphics,
                "No proxies saved yet. Add one manually or import a .txt list.",
                this.rowLeft() + 4,
@@ -691,7 +691,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
                this.rowWidth() - 4
             );
          } else if (proxies.isEmpty()) {
-            this.init_V_GuiGraphicsExtract(
+            this.drawText(
                graphics,
                "No proxies match the current search or filter.",
                this.rowLeft() + 4,
@@ -708,7 +708,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
          if (!this.isCompact()) {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.orderedProxies().size());
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, scrollbar, scrollbar.containsTrack(virtualMouseX, virtualMouseY), this.init_Z);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, scrollbar, scrollbar.containsTrack(virtualMouseX, virtualMouseY), this.scrollbarDragging);
          }
 
          super.extractRenderState(graphics, virtualMouseX, virtualMouseY, delta);
@@ -759,15 +759,15 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int regionX = statusX - 4 - regionW;
       int textW = Math.max(20, regionX - 4 - nameX);
       int nameW = Math.min(this.textWidth(name), textW);
-      this.init_V_GuiGraphicsExtract(graphics, name, nameX, ty, proxy.init_Z ? GuiColorPalette.open : GuiColorPalette.flush, false, nameW);
+      this.drawText(graphics, name, nameX, ty, proxy.init_Z ? GuiColorPalette.open : GuiColorPalette.flush, false, nameW);
       int addressX = nameX + nameW + 8;
       int addressW = nameX + textW - addressX;
       if (addressW > 12) {
-         this.init_V_GuiGraphicsExtract(graphics, address, addressX, ty, GuiColorPalette.close, false, addressW);
+         this.drawText(graphics, address, addressX, ty, GuiColorPalette.close, false, addressW);
       }
 
-      this.init_V_GuiGraphicsExtract(graphics, region, regionX, ty, proxy.init_I(), false, regionW);
-      this.init_V_GuiGraphicsExtract(graphics, status, statusX, ty, proxy.init_bW_CachePool.init_I(), false, statusW);
+      this.drawText(graphics, region, regionX, ty, proxy.init_I(), false, regionW);
+      this.drawText(graphics, status, statusX, ty, proxy.init_bW_CachePool.init_I(), false, statusW);
       autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.toggleButton, mouseX, mouseY);
       autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.checkButton, mouseX, mouseY);
       autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.deleteButton, mouseX, mouseY);
@@ -816,12 +816,12 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.orderedProxies().size());
          if (scrollbar.isScrollable() && scrollbar.containsTrack(virtualEvent.x(), virtualEvent.y())) {
-            this.init_Z = true;
-            this.sync_I = scrollbar.containsThumb(virtualEvent.x(), virtualEvent.y())
+            this.scrollbarDragging = true;
+            this.thumbGrabOffset = scrollbar.containsThumb(virtualEvent.x(), virtualEvent.y())
                ? Math.max(0, (int)Math.round(virtualEvent.y()) - scrollbar.thumbY())
                : scrollbar.thumbHeight() / 2;
-            this.update_I = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
-            this.scroll.jumpTo(this.update_I, scrollbar.maxScroll());
+            this.scrollOffset = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.thumbGrabOffset), scrollbar.maxScroll());
+            this.scroll.jumpTo(this.scrollOffset, scrollbar.maxScroll());
             this.rebuildButtons();
             this.unfocusFields();
             return true;
@@ -875,8 +875,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      if (this.init_Z) {
-         this.init_Z = false;
+      if (this.scrollbarDragging) {
+         this.scrollbarDragging = false;
          return true;
       } else {
          return super.mouseReleased(toVirtual(event));
@@ -886,10 +886,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       MouseButtonEvent virtualEvent = toVirtual(event);
-      if (this.init_Z) {
+      if (this.scrollbarDragging) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.orderedProxies().size());
-         this.update_I = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
-         this.scroll.jumpTo(this.update_I, scrollbar.maxScroll());
+         this.scrollOffset = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.thumbGrabOffset), scrollbar.maxScroll());
+         this.scroll.jumpTo(this.scrollOffset, scrollbar.maxScroll());
          this.rebuildButtons();
          return true;
       } else {
@@ -911,9 +911,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
             return true;
          }
 
-         int next = this.update_I - (int)Math.signum(scrollY) * this.rowPitch();
-         this.update_I = clampScroll(next, maxScroll);
-         this.scroll.setOffset(this.update_I, maxScroll);
+         int next = this.scrollOffset - (int)Math.signum(scrollY) * this.rowPitch();
+         this.scrollOffset = clampScroll(next, maxScroll);
+         this.scroll.setOffset(this.scrollOffset, maxScroll);
          this.rebuildButtons();
          return true;
       } else {
@@ -1244,9 +1244,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int trackY = this.listTop();
       int trackHeight = this.listViewportHeight();
       int maxScroll = this.maxScroll(rows);
-      this.update_I = clampScroll(this.update_I, maxScroll);
-      this.scroll.jumpTo(this.update_I, maxScroll);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.listViewportHeight(), this.scrollbarX(), trackY, 6, trackHeight, this.update_I);
+      this.scrollOffset = clampScroll(this.scrollOffset, maxScroll);
+      this.scroll.jumpTo(this.scrollOffset, maxScroll);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.listViewportHeight(), this.scrollbarX(), trackY, 6, trackHeight, this.scrollOffset);
    }
 
    private int scrollbarX() {
@@ -1361,11 +1361,11 @@ public class ProxiesScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, THEME.init_Identifier_l(l.read), 0));
    }
 
-   private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center) {
-      this.init_V_GuiGraphicsExtract(graphics, text, x, y, color, center, 2147483647);
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center) {
+      this.drawText(graphics, text, x, y, color, center, 2147483647);
    }
 
-   private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center, int maxWidth) {
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center, int maxWidth) {
       Font renderer = this.font;
       Identifier font = THEME.init_Identifier_l(l.read);
       String value = text == null ? "" : text;

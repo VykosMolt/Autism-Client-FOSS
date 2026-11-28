@@ -22,7 +22,7 @@ public final class GuiScreenMatcher {
       if (screen != null && !isClientScreen(screen)) {
          String trimmed = query == null ? "" : query.trim();
          if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("any")) {
-            GuiScreenMatcher.GuiType type = init_f_DataUtil(trimmed);
+            GuiScreenMatcher.GuiType type = parseGuiType(trimmed);
             if (type != null && screenMatches(screen, type)) {
                return true;
             }
@@ -40,7 +40,7 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean matches(Screen screen, String guiType, String titleFilter) {
-      GuiScreenMatcher.GuiType type = init_f_DataUtil(guiType);
+      GuiScreenMatcher.GuiType type = parseGuiType(guiType);
       if (type == null) {
          type = GuiScreenMatcher.GuiType.ANY;
       }
@@ -123,7 +123,7 @@ public final class GuiScreenMatcher {
       return screen != null && screen.getClass().getName().startsWith("autismclient.");
    }
 
-   private static GuiScreenMatcher.GuiType init_f_DataUtil(String raw) {
+   private static GuiScreenMatcher.GuiType parseGuiType(String raw) {
       if (raw != null && !raw.isBlank()) {
          String key = raw.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
          GuiScreenMatcher.GuiType var10000;
@@ -188,7 +188,7 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean isCustomMenuType(String raw) {
-      return init_f_DataUtil(raw) == GuiScreenMatcher.GuiType.CUSTOM_MENU;
+      return parseGuiType(raw) == GuiScreenMatcher.GuiType.CUSTOM_MENU;
    }
 
    public enum GuiType {

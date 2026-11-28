@@ -121,7 +121,7 @@ final class AiHttp {
          .replaceAll("(?i)([?&](?:key|api_key|access_token)=)[^\\s&\\\"'<>]+", "$1[redacted]");
    }
 
-   static boolean load(String text) {
+   static boolean isQuotaError(String text) {
       String m = text == null ? "" : text.toLowerCase(Locale.ROOT);
 
       for (String needle : List.of(
@@ -148,7 +148,7 @@ final class AiHttp {
       return false;
    }
 
-   static boolean read(String text) {
+   static boolean isLowCredit(String text) {
       String m = text == null ? "" : text.toLowerCase(Locale.ROOT);
       boolean credit = m.contains("credit");
       boolean low = m.contains("too low") || m.contains("to low") || m.contains("is low") || m.contains("insufficient");
@@ -164,7 +164,7 @@ final class AiHttp {
       String lower = detail.toLowerCase(Locale.ROOT);
       boolean gemini = provider == AiSettings.Provider.GEMINI;
       String advice;
-      if (status == 402 || status != 401 && status != 403 && (load(lower) || read(lower))) {
+      if (status == 402 || status != 401 && status != 403 && (isQuotaError(lower) || isLowCredit(lower))) {
          advice = gemini && status == 429
             ? "The key is valid but this model is not in its current quota (free tier); pick a Flash model or enable billing in AI Studio."
             : "The key is valid but the account has no credit or quota left; top up or raise the limit at the provider, then retry.";

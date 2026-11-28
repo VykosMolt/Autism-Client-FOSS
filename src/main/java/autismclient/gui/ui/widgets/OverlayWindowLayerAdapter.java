@@ -11,11 +11,11 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLayerComponent {
    private final AutismOverlay overlay;
    private final autismclient.gui.ui.VisibilityTransition visibility;
-   private boolean init_Z;
+   private boolean renderSuppressed;
    private boolean hoverBlocked;
    private boolean inputSuppressed;
    private boolean zoomEnabled = true;
-   private static long init_J;
+   private static long lastWarnMs;
 
    public OverlayWindowLayerAdapter(AutismOverlay overlay) {
       this.overlay = overlay;
@@ -27,7 +27,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    public void setRenderSuppressed(boolean renderSuppressed) {
-      this.init_Z = renderSuppressed;
+      this.renderSuppressed = renderSuppressed;
    }
 
    public void animateVisibility() {
@@ -79,7 +79,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
 
    @Override
    public void render(autismclient.gui.f.SyncManager context) {
-      if (!this.init_Z) {
+      if (!this.renderSuppressed) {
          boolean visible = this.overlay.isVisible();
          if (this.visibility.shouldRender(visible)) {
             boolean block = !visible || this.hoverBlocked;
@@ -92,8 +92,8 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
                this.visibility.render(graphics, b, this.zoomEnabled, () -> this.renderContent(context, block));
             } catch (Throwable t) {
                long nowMs = System.currentTimeMillis();
-               if (nowMs - init_J > 5000L) {
-                  init_J = nowMs;
+               if (nowMs - lastWarnMs > 5000L) {
+                  lastWarnMs = nowMs;
                   AutismClientAddon.LOG.warn("[Overlay] {} failed to draw (visible={})", this.overlay.getOverlayId(), visible, t);
                }
             } finally {
@@ -126,10 +126,10 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
          }
       }
 
-      this.init_V_SyncManager(context, mouseX, mouseY);
+      this.renderResizeHandle(context, mouseX, mouseY);
    }
 
-   private void init_V_SyncManager(autismclient.gui.f.SyncManager context, int mouseX, int mouseY) {
+   private void renderResizeHandle(autismclient.gui.f.SyncManager context, int mouseX, int mouseY) {
       if (this.overlay.isResizable() && this.overlay.isVisible() && !this.overlay.isCollapsed() && !(this.overlay instanceof OverlayLayoutBase window && window.isCollapseAnimating())) {
          OverlayBounds bounds = this.overlay.getBounds();
          boolean active = OverlayManager.getInstance().isResizing(this.overlay);

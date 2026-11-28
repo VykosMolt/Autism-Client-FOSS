@@ -70,7 +70,7 @@ public final class AiParkourFallWarning {
       return Math.abs(var2 - Math.rint(var2)) < 0.0010000000474974513 ? Integer.toString(Math.round(var2)) : String.format(Locale.ROOT, "%.1f", var2);
    }
 
-   static boolean putAt(boolean var0, boolean var1, boolean var2, boolean var3, boolean var4, boolean var5) {
+   static boolean anyTrue(boolean var0, boolean var1, boolean var2, boolean var3, boolean var4, boolean var5) {
       return var0 || var1 || var2 || var3 || var4 || var5;
    }
 
@@ -101,7 +101,7 @@ public final class AiParkourFallWarning {
                BlockState var12 = var0.level.getBlockState(var10.to());
                boolean var13 = var12.is(BlockTags.CLIMBABLE)
                   || var12.getBlock() instanceof TrapDoorBlock && AiPathfinder.LiveGridView.isClimbableTrapdoor(var12, var11);
-               if (!putAt(
+               if (!anyTrue(
                   var13,
                   !var12.getFluidState().isEmpty(),
                   var12.is(Blocks.COBWEB),

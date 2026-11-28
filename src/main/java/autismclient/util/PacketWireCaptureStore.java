@@ -58,7 +58,7 @@ public final class PacketWireCaptureStore {
    public static void markEncrypted(Channel channel) {
       if (channel != null) {
          PacketWireCaptureStore.ChannelCapture previous = channelStates.get(channel);
-         channelStates.put(channel, previous == null ? PacketWireCaptureStore.ChannelCapture.init_bn_DataUtil() : previous.withEnabled(true));
+         channelStates.put(channel, previous == null ? PacketWireCaptureStore.ChannelCapture.emptyCapture() : previous.withEnabled(true));
       }
    }
 
@@ -66,7 +66,7 @@ public final class PacketWireCaptureStore {
       if (channel != null && source != null) {
          PacketWireCaptureStore.ChannelCapture previous = channelStates.get(channel);
          if (previous == null) {
-            previous = PacketWireCaptureStore.ChannelCapture.init_bn_DataUtil();
+            previous = PacketWireCaptureStore.ChannelCapture.emptyCapture();
          }
 
          channelStates.put(channel, previous.withCapture(direction, copyBytes(source)));
@@ -192,7 +192,7 @@ public final class PacketWireCaptureStore {
    }
 
    public record ChannelCapture(boolean init_Z, long init_J, byte[] init_BArr, byte[] load_BArr, long load_J, long read) {
-      static PacketWireCaptureStore.ChannelCapture init_bn_DataUtil() {
+      static PacketWireCaptureStore.ChannelCapture emptyCapture() {
          return new PacketWireCaptureStore.ChannelCapture(true, System.currentTimeMillis(), new byte[0], new byte[0], 0L, 0L);
       }
 

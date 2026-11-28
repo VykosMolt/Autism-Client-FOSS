@@ -24,7 +24,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
    public boolean waitForGuiAfter = false;
    public String guiName = "";
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private transient List<MacroAction> init_List = null;
+   private transient List<MacroAction> nextActions = null;
    private transient boolean init_Z = false;
    private boolean enabled = true;
    public boolean raycast = false;
@@ -118,12 +118,12 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    public void setNextActions(List<MacroAction> nextActions) {
-      this.init_List = nextActions;
+      this.nextActions = nextActions;
       this.init_Z = false;
    }
 
    public List<MacroAction> getNextActions() {
-      return this.init_List;
+      return this.nextActions;
    }
 
    public void markNextActionsFired() {

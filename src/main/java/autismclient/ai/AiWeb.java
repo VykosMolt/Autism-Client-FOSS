@@ -364,7 +364,7 @@ final class AiWeb {
                      return new AiWeb.HttpResult(status, headers, body.toByteArray());
                   }
 
-                  init(reader, body, size);
+                  readExactly(reader, body, size);
                   reader.readLine(8192);
                }
             }
@@ -382,7 +382,7 @@ final class AiWeb {
                   throw new IOException("HTTP body exceeds 1000000 bytes");
                }
 
-               init(reader, body, (int)length);
+               readExactly(reader, body, (int)length);
             } else {
                while ((c = reader.read()) != -1) {
                   body.write(c);
@@ -397,7 +397,7 @@ final class AiWeb {
       }
    }
 
-   private static void init(AiWeb.DeadlineReader reader, ByteArrayOutputStream body, int count) throws IOException {
+   private static void readExactly(AiWeb.DeadlineReader reader, ByteArrayOutputStream body, int count) throws IOException {
       byte[] chunk = new byte[8192];
       int remaining = count;
 

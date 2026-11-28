@@ -158,7 +158,7 @@ final class AiPortalCast {
 
                         for (BlockPos cell : need) {
                            if (classify(level, cell) == AiPortalCast.CellKind.SOLID) {
-                              if (!read(level, cell)) {
+                              if (!isClearable(level, cell)) {
                                  ok = false;
                                  break;
                               }
@@ -191,7 +191,7 @@ final class AiPortalCast {
       return false;
    }
 
-   static boolean load(ClientLevel level, BlockPos cell) {
+   static boolean isFluidAdjacent(ClientLevel level, BlockPos cell) {
       for (Direction d : Direction.values()) {
          FluidState fluid = level.getFluidState(cell.relative(d));
          if (fluid.is(FluidTags.LAVA)) {
@@ -206,10 +206,10 @@ final class AiPortalCast {
       return false;
    }
 
-   static boolean read(ClientLevel level, BlockPos cell) {
+   static boolean isClearable(ClientLevel level, BlockPos cell) {
       if (!AiTerrain.isLoaded(level, cell)) {
          return false;
-      } else if (load(level, cell)) {
+      } else if (isFluidAdjacent(level, cell)) {
          return false;
       } else {
          BlockState state = level.getBlockState(cell);
@@ -487,8 +487,8 @@ final class AiPortalCast {
                int tick;
                int castCellCount;
                int lavaPouredCount;
-               int set;
-               int put;
+               int moldCursor;
+               int guardDecisions;
                int lightWaitTicks;
                int clear;
                long stepCellRevision;
@@ -629,7 +629,7 @@ final class AiPortalCast {
                   }
 
                   if (this.mc.player.blockPosition().distSqr(this.pool) > 16.0) {
-                     AiOperation.Result moved = this.tickMove(() -> this.init(this.pool, 3.0, 60), "Travelling to the lava pool");
+                     AiOperation.Result moved = this.tickMove(() -> this.travelWithWidening(this.pool, 3.0, 60), "Travelling to the lava pool");
                      if (moved != null) {
                         return moved;
                      }
@@ -735,7 +735,7 @@ final class AiPortalCast {
                      }
 
                      if (this.mc.player.blockPosition().distSqr(source) > 9.0) {
-                        AiOperation.Result moved = this.tickMove(() -> this.init(source, 2.0, 45), "Travelling to water");
+                        AiOperation.Result moved = this.tickMove(() -> this.travelWithWidening(source, 2.0, 45), "Travelling to water");
                         if (moved != null) {
                            return moved;
                         }
@@ -817,7 +817,7 @@ final class AiPortalCast {
                   this.pop = 0;
                   double reach = Math.max(4.5, this.mc.player.blockInteractionRange()) - 0.6;
                   if (this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(step.cell())) > reach * reach) {
-                     AiOperation.Result moved = this.tickMove(() -> this.init(step.cell(), 2.2, 45), "Moving to frame cell " + step.cell().toShortString());
+                     AiOperation.Result moved = this.tickMove(() -> this.travelWithWidening(step.cell(), 2.2, 45), "Moving to frame cell " + step.cell().toShortString());
                      if (moved != null) {
                         return moved;
                      }
@@ -841,7 +841,7 @@ final class AiPortalCast {
                   }
 
                   this.molds = queue;
-                  this.set = 0;
+                  this.moldCursor = 0;
                   this.preexistingObsidian = new HashSet<>();
 
                   for (BlockPos zone : AiPortalCast.spreadZone(step.waterCell())) {
@@ -903,8 +903,8 @@ final class AiPortalCast {
                      this.approachingMold = false;
                   }
 
-                  while (this.set < this.molds.size()) {
-                     BlockPos mold = this.molds.get(this.set);
+                  while (this.moldCursor < this.molds.size()) {
+                     BlockPos mold = this.molds.get(this.moldCursor);
                      AiPortalCast.CellKind there = this.classify(mold);
                      if (there != AiPortalCast.CellKind.SOLID && there != AiPortalCast.CellKind.OBSIDIAN) {
                         Item item = this.firstPlaceable(AiPortalCast.THROWAWAY_BLOCKS);
@@ -916,7 +916,7 @@ final class AiPortalCast {
                            BlockPos support = this.init(mold, step);
                            if (support != null && this.supports.add(support)) {
                               List<BlockPos> withSupport = new ArrayList<>(this.molds);
-                              withSupport.add(this.set, support);
+                              withSupport.add(this.moldCursor, support);
                               this.molds = withSupport;
                               AutismClientAddon.LOG.info("[AI] portal cast: a support at {} for the mold at {}", support.toShortString(), mold.toShortString());
                               continue;
@@ -946,9 +946,9 @@ final class AiPortalCast {
                            return this.running("Placing the mold at " + mold.toShortString());
                         }
 
-                        this.set++;
+                        this.moldCursor++;
                      } else {
-                        this.set++;
+                        this.moldCursor++;
                      }
                   }
 
@@ -983,7 +983,7 @@ final class AiPortalCast {
                      }
 
                      if (this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(refill)) > 12.0) {
-                        AiOperation.Result moved = this.tickMove(() -> this.init(refill, 2.0, 45), "Moving to the pool for a lava refill");
+                        AiOperation.Result moved = this.tickMove(() -> this.travelWithWidening(refill, 2.0, 45), "Moving to the pool for a lava refill");
                         if (moved != null) {
                            return moved;
                         }
@@ -1040,7 +1040,7 @@ final class AiPortalCast {
                         this.mc.player.closeContainer();
                         return this.running("Closing a screen before pouring");
                      } else {
-                        AiOperation.Result poured = this.init(this.lavaFace);
+                        AiOperation.Result poured = this.tickPour(this.lavaFace);
                         return poured != null ? poured : this.running("Pouring lava into " + step.cell().toShortString());
                      }
                   }
@@ -1053,7 +1053,7 @@ final class AiPortalCast {
                      return this.running("Obsidian confirmed at " + step.cell().toShortString());
                   }
 
-                  AiOperation.Result stray = this.flush(step);
+                  AiOperation.Result stray = this.checkPourSpread(step);
                   if (stray != null) {
                      return stray;
                   }
@@ -1086,7 +1086,7 @@ final class AiPortalCast {
 
                      int filledBefore = AiGameState.countInventoryItem("minecraft:water_bucket");
                      boolean alreadyClicked = this.pourClicked;
-                     AiOperation.Result poured = this.init(step.face());
+                     AiOperation.Result poured = this.tickPour(step.face());
                      if (!alreadyClicked && this.pourClicked) {
                         this.waterRecovery.beginWaterRecovery(step.waterCell(), filledBefore);
                      }
@@ -1307,7 +1307,7 @@ final class AiPortalCast {
                            this.mc.player.closeContainer();
                            return this.running("Closing a screen before pouring");
                         } else {
-                           AiOperation.Result poured = this.init(this.fireSpreadFace);
+                           AiOperation.Result poured = this.tickPour(this.fireSpreadFace);
                            return poured != null ? poured : this.running("Pouring lava beside the doorway");
                         }
                      } else {
@@ -1408,7 +1408,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result init(AiPortalCast.PourFace face) {
+               AiOperation.Result tickPour(AiPortalCast.PourFace face) {
                   if (!this.pourClicked && !this.pourAck.isPending() && face != null) {
                      BlockPos pourCell = face.support().relative(face.face());
                      String bucket = BuiltInRegistries.ITEM.getKey(this.mc.player.getMainHandItem().getItem()).toString();
@@ -1450,7 +1450,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result flush(AiPortalCast.CastStep step) {
+               AiOperation.Result checkPourSpread(AiPortalCast.CastStep step) {
                   for (BlockPos zone : AiPortalCast.spreadZone(step.waterCell())) {
                      if (!this.frameCells.contains(zone) && !this.preexistingObsidian.contains(zone) && this.mc.level.getBlockState(zone).is(Blocks.OBSIDIAN)) {
                         return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
@@ -1546,7 +1546,7 @@ final class AiPortalCast {
                      }
 
                      this.guardReason = AiGuard.decisionReason(this.guardPolicy, this.vitals);
-                     this.put++;
+                     this.guardDecisions++;
                      if (this.moveOp != null) {
                         this.moveOp.cancel();
                         this.moveOp = null;
@@ -1574,7 +1574,7 @@ final class AiPortalCast {
                   this.pop = 0;
                   this.tick = 0;
                   this.molds = List.of();
-                  this.set = 0;
+                  this.moldCursor = 0;
                   this.lavaFace = null;
                   this.pourClicked = false;
                }
@@ -1696,7 +1696,7 @@ final class AiPortalCast {
 
                               for (BlockPos cell : need) {
                                  if (this.classify(cell) == AiPortalCast.CellKind.SOLID) {
-                                    if (!this.load(cell)) {
+                                    if (!this.canClearCell(cell)) {
                                        ok = false;
                                        break;
                                     }
@@ -1737,10 +1737,10 @@ final class AiPortalCast {
                   return best;
                }
 
-               boolean load(BlockPos cell) {
+               boolean canClearCell(BlockPos cell) {
                   if (!AiTerrain.isLoaded(this.mc.level, cell)) {
                      return false;
-                  } else if (AiPortalCast.load(this.mc.level, cell)) {
+                  } else if (AiPortalCast.isFluidAdjacent(this.mc.level, cell)) {
                      return false;
                   } else {
                      BlockState state = this.mc.level.getBlockState(cell);
@@ -1757,7 +1757,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation init(final BlockPos target, double radius, final int seconds) {
+               AiOperation travelWithWidening(final BlockPos target, double radius, final int seconds) {
                   final AiOperation first = this.load(target, radius, seconds);
                   return radius >= 3.0 ? first : new AiOperation() {
                      AiOperation stanceOp = first;
@@ -1930,8 +1930,8 @@ final class AiPortalCast {
                      );
                   }
 
-                  if (this.put > 0) {
-                     out.add("guard", AiGuard.statusToJson(this.vitals, this.put, this.guardReason));
+                  if (this.guardDecisions > 0) {
+                     out.add("guard", AiGuard.statusToJson(this.vitals, this.guardDecisions, this.guardReason));
                   }
 
                   if (this.faceApproach != null && this.faceApproach.lastResult() != null) {

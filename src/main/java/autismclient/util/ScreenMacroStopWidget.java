@@ -36,7 +36,7 @@ public final class ScreenMacroStopWidget {
       if (panelH > 0) {
          int x = Math.max(0, cA.init_I() - 172);
          int h = panelH + 3 + 16;
-         int y = init_I_Screen(screen, avoid, x, 172, h);
+         int y = freeY(screen, avoid, x, 172, h);
          if (y + h > cA.load_I()) {
             y = 0;
          }
@@ -71,7 +71,7 @@ public final class ScreenMacroStopWidget {
       return bounds;
    }
 
-   private static int init_I_Screen(Screen screen, autismclient.gui.f.NetHelper[] avoid, int x, int w, int h) {
+   private static int freeY(Screen screen, autismclient.gui.f.NetHelper[] avoid, int x, int w, int h) {
       int y = 0;
 
       for (int pass = 0; pass < 8; pass++) {

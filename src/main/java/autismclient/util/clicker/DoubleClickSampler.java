@@ -4,13 +4,13 @@ import java.util.Random;
 
 public final class DoubleClickSampler {
    private static final double init_D = 0.08;
-   private final Random init_Random;
+   private final Random random;
 
    public DoubleClickSampler(Random rng) {
-      this.init_Random = rng == null ? new Random() : rng;
+      this.random = rng == null ? new Random() : rng;
    }
 
    public int sampleFollowUps() {
-      return this.init_Random.nextDouble() < 0.08 ? 1 : 0;
+      return this.random.nextDouble() < 0.08 ? 1 : 0;
    }
 }

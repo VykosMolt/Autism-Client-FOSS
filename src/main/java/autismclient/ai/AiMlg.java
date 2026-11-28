@@ -118,7 +118,7 @@ final class AiMlg {
       return multiplier <= 0.2F;
    }
 
-   static int init_I_D(double naturalX, double naturalZ, List<double[]> targets) {
+   static int nearestTarget(double naturalX, double naturalZ, List<double[]> targets) {
       int best = -1;
       double bestDistance = 0.0;
 
@@ -160,12 +160,12 @@ final class AiMlg {
             boolean cancelled;
             boolean clutchPlaced;
             boolean waterCollected;
-            boolean write_Z;
+            boolean unableToCollect;
             boolean update_Z;
             String clutchMethod;
             int graceTicks;
             int landedTicks;
-            int update_I;
+            int pickupAttempts;
             int collectTicks;
             int switchedSlot = -1;
             double maxFallDistance;
@@ -177,7 +177,7 @@ final class AiMlg {
             BlockPos redirectTarget;
             BlockPos forecastSupport;
             AiMlg.LandingForecast forecast;
-            int close;
+            int bucketMoves;
 
             @Override
             public AiOperation.Result tick() {
@@ -266,7 +266,7 @@ final class AiMlg {
                   }
 
                   if (this.clutchMethod == null) {
-                     AiOperation.Result failure = this.init(player, level, forecast);
+                     AiOperation.Result failure = this.ensureWaterInHotbar(player, level, forecast);
                      if (failure != null) {
                         return failure;
                      }
@@ -289,7 +289,7 @@ final class AiMlg {
                      if (!this.clutchPlaced) {
                         this.clutchPlaced = this.isClutchInPlace(level);
                         if (!this.clutchPlaced && AiMlg.isInPlacementWindow(this.clutchMethod, forecast.ticksToLand(), this.pingMillis)) {
-                           AiOperation.Result failure = this.load(player, level, forecast);
+                           AiOperation.Result failure = this.selectClutchItem(player, level, forecast);
                            if (failure != null) {
                               return failure;
                            }
@@ -309,14 +309,14 @@ final class AiMlg {
                }
             }
 
-            AiOperation.Result init(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
+            AiOperation.Result ensureWaterInHotbar(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
                List<String> hotbar = AiMlg.hotbarItemPaths(player);
                if (waterUsable
                   && !"cobweb".equals(requested)
                   && AiMlg.hotbarSlotOf(hotbar, "water_bucket") < 0
-                  && this.close < 3
-                  && this.init(player, Items.WATER_BUCKET)) {
-                  this.close++;
+                  && this.bucketMoves < 3
+                  && this.moveToHotbar(player, Items.WATER_BUCKET)) {
+                  this.bucketMoves++;
                   return this.running("Moving the water bucket to the hotbar");
                }
 
@@ -345,7 +345,7 @@ final class AiMlg {
                }
             }
 
-            AiOperation.Result load(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
+            AiOperation.Result selectClutchItem(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
                List<String> hotbar = AiMlg.hotbarItemPaths(player);
                String item = "water".equals(this.clutchMethod) ? "water_bucket" : "cobweb";
                int slot = AiMlg.hotbarSlotOf(hotbar, item);
@@ -428,16 +428,16 @@ final class AiMlg {
                boolean sourceGone = cell != null && !level.getFluidState(cell).is(FluidTags.WATER);
                boolean bucketFilled = "water_bucket"
                   .equals(BuiltInRegistries.ITEM.getKey(player.getInventory().getItem(player.getInventory().getSelectedSlot()).getItem()).getPath());
-               if (this.update_I <= 0 || !sourceGone && !bucketFilled) {
+               if (this.pickupAttempts <= 0 || !sourceGone && !bucketFilled) {
                   if (!AiMlg.hasAirToSpare(player.isUnderWater(), player.getAirSupply())) {
                      if (++this.collectTicks > 60) {
-                        this.write_Z = true;
+                        this.unableToCollect = true;
                         return this.finish(this.update_Z ? AiOperation.Status.FAILED : AiOperation.Status.SUCCEEDED, "Water clutch landed; water left in place");
                      } else {
                         this.client.options.keyJump.setDown(true);
                         return this.running("Surfacing before collecting the water");
                      }
-                  } else if (cell != null && this.update_I < 3) {
+                  } else if (cell != null && this.pickupAttempts < 3) {
                      int slot = AiMlg.hotbarSlotOf(AiMlg.hotbarItemPaths(player), "bucket");
                      if (slot < 0) {
                         return this.finish(
@@ -448,7 +448,7 @@ final class AiMlg {
                      this.selectSlot(player, slot);
                      AiGameOperations.snapLookAt(Vec3.atCenterOf(cell));
                      this.client.gameMode.useItem(player, InteractionHand.MAIN_HAND);
-                     this.update_I++;
+                     this.pickupAttempts++;
                      return this.running("Collecting the placed water");
                   } else {
                      return this.finish(this.update_Z ? AiOperation.Status.FAILED : AiOperation.Status.SUCCEEDED, "Water clutch landed; water left in place");
@@ -506,7 +506,7 @@ final class AiMlg {
                   out.addProperty("collected", this.waterCollected);
                }
 
-               if (this.write_Z) {
+               if (this.unableToCollect) {
                   out.addProperty("unableToCollectSafely", true);
                }
 
@@ -517,7 +517,7 @@ final class AiMlg {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.statusData());
             }
 
-            boolean init(LocalPlayer player, Item item) {
+            boolean moveToHotbar(LocalPlayer player, Item item) {
                return AiMlg.init(player, item);
             }
 
@@ -682,7 +682,7 @@ final class AiMlg {
          }
       }
 
-      int pick = init_I_D(naturalFeet.getX() + 0.5, naturalFeet.getZ() + 0.5, targets);
+      int pick = nearestTarget(naturalFeet.getX() + 0.5, naturalFeet.getZ() + 0.5, targets);
       return pick < 0 ? null : feetCells.get(pick);
    }
 

@@ -24,7 +24,7 @@ public final class TextFieldRenderer {
       int selectionEnd
    ) {
       String value = text == null ? "" : text;
-      int scroll = focused ? init(value, cursor, bounds.update() - 8, fragment -> context.init_PoolEntry().measureFragmentWidth(value, fragment)) : 0;
+      int scroll = focused ? scrollFor(value, cursor, bounds.update() - 8, fragment -> context.init_PoolEntry().measureFragmentWidth(value, fragment)) : 0;
       init(context, bounds, value, placeholder, focused, cursor, selectionStart, selectionEnd, scroll);
    }
 
@@ -76,7 +76,7 @@ public final class TextFieldRenderer {
       }
    }
 
-   public static int init(String text, int cursor, int availableWidth, ToIntFunction<String> widths) {
+   public static int scrollFor(String text, int cursor, int availableWidth, ToIntFunction<String> widths) {
       return scrollFor(text, cursor, availableWidth, widths, 0);
    }
 

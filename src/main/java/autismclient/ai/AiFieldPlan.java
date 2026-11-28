@@ -22,8 +22,8 @@ final class AiFieldPlan {
          return List.of();
       }
 
-      AiFieldPlan.FieldRoute x = init(cells, Axis.X, band, near);
-      AiFieldPlan.FieldRoute z = init(cells, Axis.Z, band, near);
+      AiFieldPlan.FieldRoute x = planRoute(cells, Axis.X, band, near);
+      AiFieldPlan.FieldRoute z = planRoute(cells, Axis.Z, band, near);
       AiFieldPlan.FieldRoute best = x.cost() <= z.cost() ? x : z;
       List<Vec3> out = new ArrayList<>();
 
@@ -35,7 +35,7 @@ final class AiFieldPlan {
       return out;
    }
 
-   private static AiFieldPlan.FieldRoute init(List<BlockPos> cells, Axis axis, int band, BlockPos near) {
+   private static AiFieldPlan.FieldRoute planRoute(List<BlockPos> cells, Axis axis, int band, BlockPos near) {
       int min = axis == Axis.X ? cells.stream().mapToInt(Vec3i::getZ).min().orElseThrow() : cells.stream().mapToInt(Vec3i::getX).min().orElseThrow();
       Map<AiFieldPlan.RowKey, List<BlockPos>> rows = new HashMap<>();
 

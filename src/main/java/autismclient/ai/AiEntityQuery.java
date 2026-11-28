@@ -68,7 +68,7 @@ final class AiEntityQuery {
       return !clean.isEmpty() && typeId.toLowerCase(Locale.ROOT).contains(clean);
    }
 
-   static JsonObject init(
+   static JsonObject entityJson(
       int id,
       String typeId,
       double x,
@@ -150,7 +150,7 @@ final class AiEntityQuery {
 
                         rows.add(
                            new Inner_DataUtil(
-                              init(
+                              entityJson(
                                  entity.getId(),
                                  typeId,
                                  pos.x,
@@ -161,7 +161,7 @@ final class AiEntityQuery {
                                  facts.enemy(),
                                  assigned,
                                  armorIds(entity),
-                                 init(mc, entity),
+                                 hasLineOfSight(mc, entity),
                                  itemId,
                                  itemCount
                               ),
@@ -227,7 +227,7 @@ final class AiEntityQuery {
       }
    }
 
-   private static boolean init(Minecraft mc, Entity entity) {
+   private static boolean hasLineOfSight(Minecraft mc, Entity entity) {
       Vec3 eye = mc.player.getEyePosition();
       Vec3 target = entity instanceof LivingEntity living ? living.getEyePosition() : entity.getBoundingBox().getCenter();
       return mc.level.clip(new ClipContext(eye, target, Block.OUTLINE, Fluid.NONE, mc.player)).getType() == Type.MISS;

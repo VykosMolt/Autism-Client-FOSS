@@ -38,7 +38,7 @@ final class AiHopperClockPlan {
    private AiHopperClockPlan() {
    }
 
-   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents) {
+   static List<autismclient.ai.print.PrintClockSpec> planAll(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents) {
       return plan(states, contents, at -> true);
    }
 
@@ -73,7 +73,7 @@ final class AiHopperClockPlan {
                         && total <= 5 * material.getMaxStackSize()
                         && !stacks.stream().anyMatch(s -> !ItemStack.isSameItemSameComponents(material, s))) {
                         for (Direction side : List.of(direction.getClockWise(), direction.getCounterClockWise())) {
-                           autismclient.ai.print.PrintClockSpec spec = init(states, a, b, direction, side, material, total, stacks.size());
+                           autismclient.ai.print.PrintClockSpec spec = specFor(states, a, b, direction, side, material, total, stacks.size());
                            if (spec != null
                               && spec.source().keySet().stream().allMatch(covered)
                               && found.stream()
@@ -97,7 +97,7 @@ final class AiHopperClockPlan {
       return List.copyOf(found);
    }
 
-   private static autismclient.ai.print.PrintClockSpec init(
+   private static autismclient.ai.print.PrintClockSpec specFor(
       Map<BlockPos, BlockState> states, BlockPos a, BlockPos b, Direction dir, Direction side, ItemStack material, int total, int slots
    ) {
       AiHopperClockPlan.SnapshotWorld world = new AiHopperClockPlan.SnapshotWorld(states);
@@ -109,10 +109,10 @@ final class AiHopperClockPlan {
       BlockPos pb = second.relative(dir);
       BlockPos mount = b.relative(dir, 2);
       BlockPos lever = mount.above();
-      if (init(world.getBlockState(ca), dir)
-         && init(world.getBlockState(cb), dir.getOpposite())
-         && load(world.getBlockState(pa), dir)
-         && load(world.getBlockState(pb), dir.getOpposite())
+      if (isComparatorFacing(world.getBlockState(ca), dir)
+         && isComparatorFacing(world.getBlockState(cb), dir.getOpposite())
+         && isStickyPistonFacing(world.getBlockState(pa), dir)
+         && isStickyPistonFacing(world.getBlockState(pb), dir.getOpposite())
          && world.getBlockState(first).is(Blocks.REDSTONE_BLOCK)
          && world.getBlockState(second).is(Blocks.PISTON_HEAD)
          && world.getBlockState(second).getValue(BlockStateProperties.FACING) == dir.getOpposite()
@@ -222,11 +222,11 @@ final class AiHopperClockPlan {
       return s.is(Blocks.COMPOSTER) && s.getValue(ComposterBlock.LEVEL) == 0;
    }
 
-   private static boolean init(BlockState s, Direction d) {
+   private static boolean isComparatorFacing(BlockState s, Direction d) {
       return s.is(Blocks.COMPARATOR) && s.getValue(ComparatorBlock.FACING) == d && s.getValue(ComparatorBlock.MODE) == ComparatorMode.COMPARE;
    }
 
-   private static boolean load(BlockState s, Direction d) {
+   private static boolean isStickyPistonFacing(BlockState s, Direction d) {
       return s.is(Blocks.STICKY_PISTON) && s.getValue(PistonBaseBlock.FACING) == d;
    }
 

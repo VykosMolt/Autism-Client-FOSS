@@ -44,13 +44,13 @@ public final class VillagerDupeAction implements ContextMacroAction {
       autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(driver::tick);
 
       while (!driver.finished && ctx.isActive()) {
-         CompletableFuture<Void> next = driver.init_CompletableFuture;
+         CompletableFuture<Void> next = driver.tickSignal;
          ctx.setStatus(driver.statusText());
          ctx.awaitCondition(next);
       }
 
       autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore last = driver.lastStatus;
-      if (driver.init_Z && ctx.isActive()) {
+      if (driver.stoppedForMissing && ctx.isActive()) {
          String why = last.detail();
          ctx.runOnClientThread(() -> AutismClientMessaging.sendPrefixed("§cVillager Dupe: " + why));
          MacroExecutor.stopCurrentRun();
@@ -139,14 +139,14 @@ public final class VillagerDupeAction implements ContextMacroAction {
       private final int passes;
       private final int limit;
       private final boolean stopWhenMissing;
-      private int write_I;
+      private int passCount;
       private int activeTicks;
-      private boolean write_Z;
+      private boolean runComplete;
       volatile int total;
       volatile autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore lastStatus = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
-      volatile boolean init_Z;
+      volatile boolean stoppedForMissing;
       volatile boolean finished;
-      volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
+      volatile CompletableFuture<Void> tickSignal = new CompletableFuture<>();
 
       DupeRun(MacroExecutionContext ctx, autismclient.util.villagerdupe.VillagerDupeDriver.CachePool opts, int passes, int limit, boolean stopWhenMissing) {
          this.ctx = ctx;
@@ -163,7 +163,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
             }
 
             return this.finish();
-         } else if (this.write_Z) {
+         } else if (this.runComplete) {
             if (this.driver.isActive() && this.activeTicks++ < 10) {
                this.driver.start(mc, this.options);
             }
@@ -181,20 +181,20 @@ public final class VillagerDupeAction implements ContextMacroAction {
          } else {
             autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = this.driver
                .step(mc, this.options);
-            this.write_I++;
+            this.passCount++;
             autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status = result.status();
             boolean change = result.count() > 0 || status != this.lastStatus;
             this.total = this.total + result.count();
             this.lastStatus = status;
             if (this.stopWhenMissing && status.init_Z()) {
-               this.init_Z = true;
-               this.write_Z = true;
-            } else if (this.limit > 0 && this.total >= this.limit || this.passes > 0 && this.write_I >= this.passes) {
-               this.write_Z = true;
+               this.stoppedForMissing = true;
+               this.runComplete = true;
+            } else if (this.limit > 0 && this.total >= this.limit || this.passes > 0 && this.passCount >= this.passes) {
+               this.runComplete = true;
             }
 
             if (change) {
-               this.init_V();
+               this.signalTick();
             }
 
             return true;
@@ -208,13 +208,13 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
       private boolean finish() {
          this.finished = true;
-         this.init_V();
+         this.signalTick();
          return false;
       }
 
-      private void init_V() {
-         CompletableFuture<Void> was = this.init_CompletableFuture;
-         this.init_CompletableFuture = new CompletableFuture<>();
+      private void signalTick() {
+         CompletableFuture<Void> was = this.tickSignal;
+         this.tickSignal = new CompletableFuture<>();
          was.complete(null);
       }
    }

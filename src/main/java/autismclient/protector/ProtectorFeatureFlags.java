@@ -12,8 +12,8 @@ import net.minecraft.network.protocol.Packet;
 public final class ProtectorFeatureFlags {
    private static final String OPSEC_ID = "opsec";
    private static final String EXPLOIT_PREVENTER_ID = "exploitpreventer";
-   private static final boolean init_Z;
-   private static final boolean load_Z;
+   private static final boolean OPSEC;
+   private static final boolean EXPLOIT_PREVENTER;
    private static final int FLAG_ENABLED = 1;
    private static final int FLAG_FILTER_CHANNELS = 4;
    private static final int FLAG_TRANSLATION_PROTECTION = 8;
@@ -26,7 +26,7 @@ public final class ProtectorFeatureFlags {
    private static final ProtectorFeatureFlags.FlagState EMPTY_STATE = new ProtectorFeatureFlags.FlagState(false, null, 0, 0);
    private static volatile ProtectorFeatureFlags.FlagState cachedState = EMPTY_STATE;
    private static final int MAX_DIRECT_PACKETS = 1024;
-   private static final Map<Object, Boolean> init_Map;
+   private static final Map<Object, Boolean> DIRECT_PACKETS;
 
    private ProtectorFeatureFlags() {
    }
@@ -36,15 +36,15 @@ public final class ProtectorFeatureFlags {
    }
 
    public static boolean hasFullExternalProtector() {
-      return init_Z;
+      return OPSEC;
    }
 
    public static boolean hasExternalProtector() {
-      return init_Z || load_Z;
+      return OPSEC || EXPLOIT_PREVENTER;
    }
 
    public static boolean hasOverlappingProtector() {
-      return load_Z && !init_Z;
+      return EXPLOIT_PREVENTER && !OPSEC;
    }
 
    public static boolean protectorEnabled() {
@@ -98,7 +98,7 @@ public final class ProtectorFeatureFlags {
          int sourceFlags = flagsOf(config);
          ProtectorFeatureFlags.FlagState current = cachedState;
          if (!current.init_Z || current.config != config || current.flags != sourceFlags) {
-            cachedState = new ProtectorFeatureFlags.FlagState(true, config, sourceFlags, init(sourceFlags, init_Z, hasExternalProtector()));
+            cachedState = new ProtectorFeatureFlags.FlagState(true, config, sourceFlags, effectiveFlags(sourceFlags, OPSEC, hasExternalProtector()));
          }
       }
    }
@@ -158,7 +158,7 @@ public final class ProtectorFeatureFlags {
       return flags;
    }
 
-   static int init(int sourceFlags, boolean fullExternalProtector, boolean overlapExternalProtector) {
+   static int effectiveFlags(int sourceFlags, boolean fullExternalProtector, boolean overlapExternalProtector) {
       if (!fullExternalProtector && (sourceFlags & 1) != 0) {
          int flags = sourceFlags;
          if (overlapExternalProtector) {
@@ -177,27 +177,27 @@ public final class ProtectorFeatureFlags {
 
    public static void markDirect(Packet<?> packet) {
       if (packet != null) {
-         synchronized (init_Map) {
-            if (init_Map.size() >= 1024) {
-               Iterator<Entry<Object, Boolean>> it = init_Map.entrySet().iterator();
+         synchronized (DIRECT_PACKETS) {
+            if (DIRECT_PACKETS.size() >= 1024) {
+               Iterator<Entry<Object, Boolean>> it = DIRECT_PACKETS.entrySet().iterator();
                if (it.hasNext()) {
                   it.next();
                   it.remove();
                }
             }
 
-            init_Map.put(packet, Boolean.TRUE);
+            DIRECT_PACKETS.put(packet, Boolean.TRUE);
          }
       }
    }
 
    public static boolean isDirect(Packet<?> packet) {
-      return packet == null ? false : init_Map.containsKey(packet);
+      return packet == null ? false : DIRECT_PACKETS.containsKey(packet);
    }
 
    public static void unmarkDirect(Packet<?> packet) {
       if (packet != null) {
-         init_Map.remove(packet);
+         DIRECT_PACKETS.remove(packet);
       }
    }
 
@@ -212,9 +212,9 @@ public final class ProtectorFeatureFlags {
       } catch (Throwable var3) {
       }
 
-      init_Z = opsec;
-      load_Z = exploitPreventer;
-      init_Map = Collections.synchronizedMap(new IdentityHashMap<>());
+      OPSEC = opsec;
+      EXPLOIT_PREVENTER = exploitPreventer;
+      DIRECT_PACKETS = Collections.synchronizedMap(new IdentityHashMap<>());
    }
 
    private record FlagState(boolean init_Z, AutismConfig config, int flags, int activeFlags) {

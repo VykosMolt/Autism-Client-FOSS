@@ -95,7 +95,7 @@ public class UseItemPhaseAction implements MacroAction {
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, h);
                } else {
-                  this.init(mc, h);
+                  this.sendUseItem(mc, h);
                }
                break;
             case RELEASE_USE:
@@ -111,7 +111,7 @@ public class UseItemPhaseAction implements MacroAction {
                } else if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, h);
                } else {
-                  this.init(mc, h);
+                  this.sendUseItem(mc, h);
                }
                break;
             case SWING:
@@ -120,7 +120,7 @@ public class UseItemPhaseAction implements MacroAction {
       }
    }
 
-   private void init(Minecraft mc, InteractionHand hand) {
+   private void sendUseItem(Minecraft mc, InteractionHand hand) {
       mc.getConnection().send(new ServerboundUseItemPacket(hand, 0, mc.player.getYRot(), mc.player.getXRot()));
    }
 

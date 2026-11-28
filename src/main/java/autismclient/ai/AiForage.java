@@ -40,7 +40,7 @@ final class AiForage {
       return AiItems.countInInventory(AiItems.resolve("bed"));
    }
 
-   static boolean init_Z() {
+   static boolean hasRangedKit() {
       boolean bow = AiRunResources.countUsableItem("minecraft:bow", 24) > 0;
       return bow && (AiRunResources.totalArrowCount() >= 24 || bedCount() >= 7 && AiRunResources.totalArrowCount() >= 12);
    }
@@ -125,7 +125,7 @@ final class AiForage {
             return water;
          }
 
-         if (init_Z()) {
+         if (hasRangedKit()) {
             return null;
          }
 
@@ -278,7 +278,7 @@ final class AiForage {
          AiOperation child;
          boolean init_Z;
          int init_I;
-         int load_I;
+         int unsafeGroundTicks;
 
          @Override
          public AiOperation.Result tick() {
@@ -294,8 +294,8 @@ final class AiForage {
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Enderman identity changed", new JsonObject());
                }
 
-               this.load_I = mc.player.onGround() && !safe.test(mc.player.blockPosition()) ? this.load_I + 1 : 0;
-               if (this.load_I > 10) {
+               this.unsafeGroundTicks = mc.player.onGround() && !safe.test(mc.player.blockPosition()) ? this.unsafeGroundTicks + 1 : 0;
+               if (this.unsafeGroundTicks > 10) {
                   this.cancel();
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Off safe ground in the hunt", new JsonObject());
                }

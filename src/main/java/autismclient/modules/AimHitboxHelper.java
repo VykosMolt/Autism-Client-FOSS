@@ -22,8 +22,8 @@ final class AimHitboxHelper {
    }
 
    static float init(float current, Vec3 eye, AABB now, Vec3 nextEye, AABB next) {
-      double[] a = init(eye, now);
-      double[] b = init(nextEye, next);
+      double[] a = pitchRange(eye, now);
+      double[] b = pitchRange(nextEye, next);
       if (a != null && b != null && Float.isFinite(current)) {
          double low = Math.max(a[0], b[0]);
          double high = Math.min(a[1], b[1]);
@@ -33,7 +33,7 @@ final class AimHitboxHelper {
       }
    }
 
-   private static double[] init(Vec3 eye, AABB box) {
+   private static double[] pitchRange(Vec3 eye, AABB box) {
       if (eye != null && box != null) {
          Vec3 centre = box.getCenter();
          double horizontal = Math.hypot(centre.x - eye.x, centre.z - eye.z);

@@ -5,37 +5,37 @@ import net.minecraft.client.Minecraft;
 public final class NoFallPauseTimer {
    private static final long init_J = 3000L;
    private static final int init_I = 4;
-   private static volatile long load_J;
-   private static volatile boolean init_Z;
-   private static int load_I;
+   private static volatile long expiresAt;
+   private static volatile boolean active;
+   private static int groundedTicks;
 
    private NoFallPauseTimer() {
    }
 
    public static void start() {
-      load_J = System.currentTimeMillis() + 3000L;
-      load_I = 0;
-      init_Z = true;
+      expiresAt = System.currentTimeMillis() + 3000L;
+      groundedTicks = 0;
+      active = true;
    }
 
    public static void reset() {
-      init_Z = false;
-      load_J = 0L;
-      load_I = 0;
+      active = false;
+      expiresAt = 0L;
+      groundedTicks = 0;
    }
 
    public static void tick() {
-      if (init_Z) {
+      if (active) {
          Minecraft mc = Minecraft.getInstance();
          boolean grounded = mc.player != null && mc.player.onGround();
-         load_I = grounded ? load_I + 1 : 0;
-         if (System.currentTimeMillis() >= load_J || load_I >= 4) {
-            init_Z = false;
+         groundedTicks = grounded ? groundedTicks + 1 : 0;
+         if (System.currentTimeMillis() >= expiresAt || groundedTicks >= 4) {
+            active = false;
          }
       }
    }
 
    public static boolean isActive() {
-      return init_Z;
+      return active;
    }
 }

@@ -41,7 +41,7 @@ final class AiPanelWrapJump {
                      AiPanelWrapJump.PanelFrame var24 = new AiPanelWrapJump.PanelFrame(
                         var12, var15, var16, var17, var20 * var15 + 0.65, var18 * var15 - 0.78, var22 - 0.06, var18 * var15 - 0.4, var22 - 0.01
                      );
-                     AiJumpSolver.JumpPlan var25 = putAt(var0, var1, var2, var4, var5, var11, var24);
+                     AiJumpSolver.JumpPlan var25 = solve(var0, var1, var2, var4, var5, var11, var24);
                      if (var25 != null) {
                         return var25;
                      }
@@ -56,11 +56,11 @@ final class AiPanelWrapJump {
       }
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan solve(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5, AABB var7, AiPanelWrapJump.PanelFrame var8
    ) {
       Long2ObjectOpenHashMap var9 = new Long2ObjectOpenHashMap();
-      List var10 = putAt(var0, var1, var7, var2, var8.alongX());
+      List var10 = candidateNodes(var0, var1, var7, var2, var8.alongX());
       int var11 = var8.alongX() ? var8.alongSign() * var8.acrossSign() : -var8.alongSign() * var8.acrossSign();
 
       for (int var12 = 0; var12 <= 11 && !var10.isEmpty(); var12++) {
@@ -81,7 +81,7 @@ final class AiPanelWrapJump {
                      AiPhysics.MoveInput var24 = new AiPhysics.MoveInput(1.0, var23, true, true, false, var19);
                      AiPhysics.MotionState var25 = AiPhysics.step(var16, var24, var0);
                      if (!var25.onGround() && !(var25.y() < var2 + 0.12) && !AiPhysics.hitsStrictHazard(var0, var16, var25)) {
-                        putAt(var9, new AiPanelWrapJump.SearchNode(var25, var24, var15, var12, var8.score(var25, var5)));
+                        keepBest(var9, new AiPanelWrapJump.SearchNode(var25, var24, var15, var12, var8.score(var25, var5)));
                      }
                   }
                }
@@ -95,7 +95,7 @@ final class AiPanelWrapJump {
                      && !(Math.abs(var27.y() - var2) > 0.02)
                      && !(var8.along(var27) > var8.launchLimit())
                      && !AiPhysics.hitsStrictHazard(var0, var16, var27)) {
-                     putAt(var13, new AiPanelWrapJump.SearchNode(var27, var26, var15, var12, 0.0));
+                     keepBest(var13, new AiPanelWrapJump.SearchNode(var27, var26, var15, var12, 0.0));
                   }
                }
             }
@@ -104,7 +104,7 @@ final class AiPanelWrapJump {
          var10 = new ArrayList<>(var13.values());
       }
 
-      List var45 = putAt(var9);
+      List var45 = bestNodes(var9);
       boolean var46 = var0.putAt_Z_AABB(new AABB(var4.getX() + 0.05, var5 + 1.5, var4.getZ() + 0.05, var4.getX() + 0.95, var5 + 1.8 + 0.35, var4.getZ() + 0.95));
       AiJumpSolver.JumpPlan var47 = null;
 
@@ -138,9 +138,9 @@ final class AiPanelWrapJump {
                                     var39, var38, var52, var52.run(), var8.score(var39, var5) + Math.abs(var65) * 4.0E-4
                                  );
                                  if (var39.onGround() && Math.abs(var39.y() - var5) <= 0.02) {
-                                    double var42 = Math.min(AiJumpSolver.settledLandingMargin(var0, var39, var4, var5, var37), putAt(var0, var39, var5));
+                                    double var42 = Math.min(AiJumpSolver.settledLandingMargin(var0, var39, var4, var5, var37), floorHeight(var0, var39, var5));
                                     if (var42 >= -0.04 && (var47 == null || var42 > var47.margin())) {
-                                       AiJumpSolver.JumpPlan var44 = putAt(var1, var41, var42, var8.yaw());
+                                       AiJumpSolver.JumpPlan var44 = buildPlan(var1, var41, var42, var8.yaw());
                                        if (var44.maneuver().replay(var0, var44.maneuver().start(), 0, var4, var5) >= -0.04) {
                                           if (var42 >= 0.03) {
                                              return var44;
@@ -151,7 +151,7 @@ final class AiPanelWrapJump {
                                     }
                                  }
 
-                                 putAt(var49, var41);
+                                 keepBest(var49, var41);
                               }
                            }
                         }
@@ -161,13 +161,13 @@ final class AiPanelWrapJump {
             }
          }
 
-         var45 = putAt(var49);
+         var45 = bestNodes(var49);
       }
 
       return var47;
    }
 
-   private static double putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
+   private static double floorHeight(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
       double var4 = 0.3;
       AABB var6 = new AABB(var1.x() - var4, var2 - 0.02, var1.z() - var4, var1.x() + var4, var2 - 0.001, var1.z() + var4);
       double var7 = -1.0;
@@ -183,7 +183,7 @@ final class AiPanelWrapJump {
       return var7;
    }
 
-   private static List<AiPanelWrapJump.SearchNode> putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, AABB var2, double var3, boolean var5) {
+   private static List<AiPanelWrapJump.SearchNode> candidateNodes(AiPhysics.PhysicsWorld var0, BlockPos var1, AABB var2, double var3, boolean var5) {
       ArrayList<AiPanelWrapJump.SearchNode> var6 = new ArrayList<>();
       int var7 = var5 ? var1.getX() : var1.getZ();
       int var8 = var5 ? var1.getZ() : var1.getX();
@@ -207,7 +207,7 @@ final class AiPanelWrapJump {
       return var6;
    }
 
-   private static void putAt(Long2ObjectOpenHashMap<AiPanelWrapJump.SearchNode> var0, AiPanelWrapJump.SearchNode var1) {
+   private static void keepBest(Long2ObjectOpenHashMap<AiPanelWrapJump.SearchNode> var0, AiPanelWrapJump.SearchNode var1) {
       AiPhysics.MotionState var2 = var1.state();
       long var3 = Math.round(var2.x() * 32.0) & 511L
          | (Math.round(var2.z() * 32.0) & 511L) << 9
@@ -225,13 +225,13 @@ final class AiPanelWrapJump {
       }
    }
 
-   private static List<AiPanelWrapJump.SearchNode> putAt(Long2ObjectOpenHashMap<AiPanelWrapJump.SearchNode> var0) {
+   private static List<AiPanelWrapJump.SearchNode> bestNodes(Long2ObjectOpenHashMap<AiPanelWrapJump.SearchNode> var0) {
       var var1 = new ArrayList<>(var0.values());
       var1.sort(Comparator.comparingDouble(AiPanelWrapJump.SearchNode::score));
       return var1.subList(0, Math.min(720, var1.size()));
    }
 
-   private static AiJumpSolver.JumpPlan putAt(BlockPos var0, AiPanelWrapJump.SearchNode var1, double var2, float var4) {
+   private static AiJumpSolver.JumpPlan buildPlan(BlockPos var0, AiPanelWrapJump.SearchNode var1, double var2, float var4) {
       ArrayDeque var5 = new ArrayDeque();
 
       AiPanelWrapJump.SearchNode var6;

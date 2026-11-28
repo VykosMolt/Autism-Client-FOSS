@@ -25,9 +25,9 @@ public final class AntiVanishRosterTracker {
    private final Map<UUID, AntiVanishRosterTracker.RosterMember> members = new HashMap<>();
    private final Map<UUID, AntiVanishRosterTracker.PendingRequest> pendingRequests = new HashMap<>();
    private final Map<UUID, AntiVanishRosterTracker.LastSeen> lastSeen = new HashMap<>();
-   private final Map<UUID, Long> write_Map = new HashMap<>();
-   private Map<UUID, AntiVanishRosterTracker.RosterProfile> update_Map = Map.of();
-   private Map<String, UUID> sync_Map = Map.of();
+   private final Map<UUID, Long> lastRequestAt = new HashMap<>();
+   private Map<UUID, AntiVanishRosterTracker.RosterProfile> liveProfiles = Map.of();
+   private Map<String, UUID> uuidByName = Map.of();
 
    public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
       if (profiles.size() > 4096) {
@@ -46,14 +46,14 @@ public final class AntiVanishRosterTracker {
             }
          }
 
-         this.update_Map = Map.copyOf(live);
+         this.liveProfiles = Map.copyOf(live);
          Map<String, UUID> byName = new HashMap<>();
 
          for (AntiVanishRosterTracker.RosterProfile p : live.values()) {
             byName.put(normalizeName(p.name), p.uuid);
          }
 
-         this.sync_Map = Map.copyOf(byName);
+         this.uuidByName = Map.copyOf(byName);
          this.lastSeen.keySet().removeIf(live::containsKey);
          this.pendingRequests
             .entrySet()
@@ -84,8 +84,8 @@ public final class AntiVanishRosterTracker {
                   this.members.put(p.uuid, m);
                }
 
-               m.write_Z = true;
-               m.read_J = now;
+               m.listed = true;
+               m.lastSeenAt = now;
                if (p.listed) {
                   m.markPresent(now);
                } else {
@@ -98,12 +98,12 @@ public final class AntiVanishRosterTracker {
 
          for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
             if (!live.containsKey(m.id)) {
-               m.write_Z = false;
+               m.listed = false;
                m.markAbsent(now, departures >= 4);
             }
          }
 
-         this.members.values().removeIf(mx -> now - mx.read_J > 30000L);
+         this.members.values().removeIf(mx -> now - mx.lastSeenAt > 30000L);
          if (this.members.size() > 4096) {
             this.reset();
          }
@@ -125,9 +125,9 @@ public final class AntiVanishRosterTracker {
 
          for (AntiVanishRosterTracker.RosterProfile p : profiles) {
             if (p.uuid != null && p.name != null && p.tracked && !p.listed && p.name.matches("[A-Za-z0-9_]{1,16}")) {
-               AntiVanishRosterTracker.RosterProfile client = this.update_Map.get(p.uuid);
+               AntiVanishRosterTracker.RosterProfile client = this.liveProfiles.get(p.uuid);
                if (client == null || !client.listed && client.tracked && client.name.equals(p.name)) {
-                  UUID other = this.sync_Map.get(normalizeName(p.name));
+                  UUID other = this.uuidByName.get(normalizeName(p.name));
                   if (other == null || other.equals(p.uuid)) {
                      if (!seen.add(p.uuid)) {
                         this.pendingRequests.remove(p.uuid);
@@ -153,7 +153,7 @@ public final class AntiVanishRosterTracker {
          Set<UUID> accepted = new HashSet<>();
 
          for (UUID id : unknown) {
-            if (id != null && id.variant() == 2 && id.version() >= 3 && id.version() <= 5 && !this.update_Map.containsKey(id)) {
+            if (id != null && id.variant() == 2 && id.version() >= 3 && id.version() <= 5 && !this.liveProfiles.containsKey(id)) {
                accepted.add(id);
                AntiVanishRosterTracker.LastSeen before = this.lastSeen.get(id);
                if (before == null || now - before.seenAt > 75000L) {
@@ -173,13 +173,13 @@ public final class AntiVanishRosterTracker {
          AntiVanishRosterTracker.RosterMember m = this.members.get(actor.id);
          if (m != null && m.name.equals(actor.name) && m.isRecentlyGone(now)) {
             m.expireStale(now);
-            if (m.update < 0L || now - m.update >= 250L) {
-               m.update = now;
-               if (m.write_J < 0L) {
-                  m.write_J = now;
+            if (m.lastActionAt < 0L || now - m.lastActionAt >= 250L) {
+               m.lastActionAt = now;
+               if (m.actionStreakStart < 0L) {
+                  m.actionStreakStart = now;
                }
 
-               m.init_I = Math.min(2, m.init_I + 1);
+               m.actionHits = Math.min(2, m.actionHits + 1);
             }
          }
       }
@@ -198,13 +198,13 @@ public final class AntiVanishRosterTracker {
          for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
             if (m.isRecentlyGone(now) && requestedAt >= m.leftAt + 2000L) {
                if (!offered.contains(normalizeName(m.name))) {
-                  m.load_I = 0;
-                  m.sync = -1L;
+                  m.completionHits = 0;
+                  m.lastCompletionRequestAt = -1L;
                } else {
                   m.expireStale(now);
-                  if (m.sync < 0L || requestedAt - m.sync >= 1000L) {
-                     m.sync = requestedAt;
-                     m.load_I = Math.min(2, m.load_I + 1);
+                  if (m.lastCompletionRequestAt < 0L || requestedAt - m.lastCompletionRequestAt >= 1000L) {
+                     m.lastCompletionRequestAt = requestedAt;
+                     m.completionHits = Math.min(2, m.completionHits + 1);
                   }
                }
             }
@@ -239,7 +239,7 @@ public final class AntiVanishRosterTracker {
          if (m.isLikelyVanished(now) && this.tryRequest(m.id, now)) {
             out.add(
                new AntiVanishRosterTracker.VanishAlert(
-                  m.id, m.name, m.init_I >= 2 ? "repeated player actions outside TAB" : "player action + repeated online completion"
+                  m.id, m.name, m.actionHits >= 2 ? "repeated player actions outside TAB" : "player action + repeated online completion"
                )
             );
          }
@@ -268,7 +268,7 @@ public final class AntiVanishRosterTracker {
    }
 
    public boolean hasRecentHiddenAction(long now) {
-      return this.members.values().stream().anyMatch(m -> m.isRecentlyGone(now) && m.update >= 0L && now - m.update <= 4000L);
+      return this.members.values().stream().anyMatch(m -> m.isRecentlyGone(now) && m.lastActionAt >= 0L && now - m.lastActionAt <= 4000L);
    }
 
    public boolean needsRecheck() {
@@ -283,7 +283,7 @@ public final class AntiVanishRosterTracker {
                m.leftAt = now;
             }
 
-            this.write_Map.remove(m.id);
+            this.lastRequestAt.remove(m.id);
          }
       }
 
@@ -310,9 +310,9 @@ public final class AntiVanishRosterTracker {
       this.members.clear();
       this.pendingRequests.clear();
       this.lastSeen.clear();
-      this.write_Map.clear();
-      this.update_Map = Map.of();
-      this.sync_Map = Map.of();
+      this.lastRequestAt.clear();
+      this.liveProfiles = Map.of();
+      this.uuidByName = Map.of();
    }
 
    private static String normalizeName(String name) {
@@ -320,13 +320,13 @@ public final class AntiVanishRosterTracker {
    }
 
    private boolean tryRequest(UUID id, long now) {
-      Long last = this.write_Map.get(id);
+      Long last = this.lastRequestAt.get(id);
       if (last != null && now - last < 12000L) {
          return false;
       }
 
-      this.write_Map.put(id, now);
-      this.write_Map.entrySet().removeIf(entry -> now - entry.getValue() > 30000L);
+      this.lastRequestAt.put(id, now);
+      this.lastRequestAt.entrySet().removeIf(entry -> now - entry.getValue() > 30000L);
       return true;
    }
 
@@ -338,16 +338,16 @@ public final class AntiVanishRosterTracker {
       final String name;
       long presentSince = -1L;
       long leftAt = -1L;
-      long read_J;
-      long write_J = -1L;
-      long update = -1L;
-      long sync = -1L;
+      long lastSeenAt;
+      long actionStreakStart = -1L;
+      long lastActionAt = -1L;
+      long lastCompletionRequestAt = -1L;
       boolean present;
       boolean settled;
       boolean bulk;
-      boolean write_Z;
-      int init_I;
-      int load_I;
+      boolean listed;
+      int actionHits;
+      int completionHits;
 
       RosterMember(UUID id, String name) {
          this.id = id;
@@ -377,27 +377,27 @@ public final class AntiVanishRosterTracker {
       }
 
       boolean isRecentlyGone(long now) {
-         return this.settled && !this.present && !this.bulk && this.leftAt >= 0L && now - this.leftAt >= 2000L && now - this.read_J <= 30000L;
+         return this.settled && !this.present && !this.bulk && this.leftAt >= 0L && now - this.leftAt >= 2000L && now - this.lastSeenAt <= 30000L;
       }
 
       boolean isLikelyVanished(long now) {
-         return this.isRecentlyGone(now) && this.init_I > 0 && (this.init_I >= 2 || this.load_I >= 2) && (this.write_Z || this.load_I >= 2);
+         return this.isRecentlyGone(now) && this.actionHits > 0 && (this.actionHits >= 2 || this.completionHits >= 2) && (this.listed || this.completionHits >= 2);
       }
 
       void resetEvidence() {
-         this.init_I = this.load_I = 0;
-         this.write_J = this.update = this.sync = -1L;
+         this.actionHits = this.completionHits = 0;
+         this.actionStreakStart = this.lastActionAt = this.lastCompletionRequestAt = -1L;
       }
 
       void expireStale(long now) {
-         if (this.update >= 0L && now - this.update > 4000L || this.write_J >= 0L && now - this.write_J > 4000L) {
-            this.init_I = 0;
-            this.write_J = this.update = -1L;
+         if (this.lastActionAt >= 0L && now - this.lastActionAt > 4000L || this.actionStreakStart >= 0L && now - this.actionStreakStart > 4000L) {
+            this.actionHits = 0;
+            this.actionStreakStart = this.lastActionAt = -1L;
          }
 
-         if (this.sync >= 0L && now - this.sync > 4000L) {
-            this.load_I = 0;
-            this.sync = -1L;
+         if (this.lastCompletionRequestAt >= 0L && now - this.lastCompletionRequestAt > 4000L) {
+            this.completionHits = 0;
+            this.lastCompletionRequestAt = -1L;
          }
       }
    }
