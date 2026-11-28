@@ -84,7 +84,7 @@ final class AiWorldCreate {
          boolean load;
          String error = "";
 
-         void init() {
+         void createWorld() {
             this.init_Z = true;
 
             try {
@@ -116,7 +116,7 @@ final class AiWorldCreate {
             if (this.load) {
                return AiGameOperations.result(AiOperation.Status.FAILED, this.error, AiJson.objectOf("name", name));
             } else if (!this.init_Z) {
-               this.init();
+               this.createWorld();
                return AiGameOperations.result(AiOperation.Status.RUNNING, "Creating world " + name, new JsonObject());
             } else if (mc.player != null && mc.level != null && mc.level != initialLevel) {
                return AiGameOperations.result(

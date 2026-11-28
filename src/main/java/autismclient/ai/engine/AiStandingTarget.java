@@ -22,16 +22,16 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiStandingTarget {
    private static final double init_D = 1.0E-6;
-   private static final List<BlockPos> init_List = init();
+   private static final List<BlockPos> init_List = searchOffsets();
 
    private AiStandingTarget() {
    }
 
-   public static BlockHitResult init(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water) {
+   public static BlockHitResult raycast(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water) {
       return mc.level.clip(new ClipContext(eye, eye.add(direction.scale(reach)), Block.OUTLINE, water ? Fluid.ANY : Fluid.NONE, mc.player));
    }
 
-   public static AiStandingTarget.Inner_StreamUtil init(Minecraft mc, BlockHitResult hit, boolean water) {
+   public static AiStandingTarget.Inner_StreamUtil standingTarget(Minecraft mc, BlockHitResult hit, boolean water) {
       if (hit.getType() == Type.MISS) {
          return null;
       }
@@ -39,14 +39,14 @@ public final class AiStandingTarget {
       BlockPos clicked = hit.getBlockPos();
 
       for (int dy : new int[]{0, -1, 1, 2, 3}) {
-         AiStandingTarget.Inner_StreamUtil target = init(mc, clicked.offset(0, dy, 0), hit.getLocation(), water, dy != 0);
+         AiStandingTarget.Inner_StreamUtil target = targetAt(mc, clicked.offset(0, dy, 0), hit.getLocation(), water, dy != 0);
          if (target != null) {
             return target;
          }
       }
 
       for (BlockPos offset : init_List) {
-         AiStandingTarget.Inner_StreamUtil target = init(mc, clicked.offset(offset), hit.getLocation(), water, true);
+         AiStandingTarget.Inner_StreamUtil target = targetAt(mc, clicked.offset(offset), hit.getLocation(), water, true);
          if (target != null) {
             return target;
          }
@@ -55,7 +55,7 @@ public final class AiStandingTarget {
       return new AiStandingTarget.Inner_StreamUtil(null, null, new AABB(clicked).inflate(0.002), false);
    }
 
-   private static AiStandingTarget.Inner_StreamUtil init(Minecraft mc, BlockPos pos, Vec3 hit, boolean water, boolean adjusted) {
+   private static AiStandingTarget.Inner_StreamUtil targetAt(Minecraft mc, BlockPos pos, Vec3 hit, boolean water, boolean adjusted) {
       ClientLevel level = mc.level;
       if (!level.isOutsideBuildHeight(pos) && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
          BlockState state = level.getBlockState(pos);
@@ -68,7 +68,7 @@ public final class AiStandingTarget {
             FluidState fluid = state.getFluidState();
             if (water && fluid.is(FluidTags.WATER)) {
                Vec3 feet = Vec3.atBottomCenterOf(pos).add(0.0, fluid.getHeight(level, pos), 0.0);
-               return init(mc, feet) ? new AiStandingTarget.Inner_StreamUtil(feet, pos.above(), new AABB(pos).inflate(0.002), adjusted) : null;
+               return canStandAt(mc, feet) ? new AiStandingTarget.Inner_StreamUtil(feet, pos.above(), new AABB(pos).inflate(0.002), adjusted) : null;
             } else {
                return null;
             }
@@ -89,7 +89,7 @@ public final class AiStandingTarget {
                   new Vec3(Math.clamp(hit.x, box.minX + 1.0E-6, box.maxX - 1.0E-6), box.maxY, Math.clamp(hit.z, box.minZ + 1.0E-6, box.maxZ - 1.0E-6))
                )) {
                   double score = feet.distanceToSqr(hit);
-                  if (!(score >= distance) && init(mc, feet)) {
+                  if (!(score >= distance) && canStandAt(mc, feet)) {
                      best = new AiStandingTarget.Inner_StreamUtil(feet, pos.above(), box.inflate(0.002), adjusted);
                      distance = score;
                   }
@@ -103,7 +103,7 @@ public final class AiStandingTarget {
       }
    }
 
-   private static boolean init(Minecraft mc, Vec3 feet) {
+   private static boolean canStandAt(Minecraft mc, Vec3 feet) {
       ClientLevel level = mc.level;
       AABB body = mc.player.getDimensions(Pose.STANDING).makeBoundingBox(feet).deflate(1.0E-6);
       if (!level.getWorldBorder().isWithinBounds(body)
@@ -125,7 +125,7 @@ public final class AiStandingTarget {
       return true;
    }
 
-   private static List<BlockPos> init() {
+   private static List<BlockPos> searchOffsets() {
       List<BlockPos> offsets = new ArrayList<>();
 
       for (int dy = -2; dy <= 6; dy++) {
@@ -149,7 +149,7 @@ public final class AiStandingTarget {
       private long init_J;
 
       public AiStandingTarget.Inner_StreamUtil init(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water, boolean fresh) {
-         BlockHitResult hit = AiStandingTarget.init(mc, eye, direction, reach, water);
+         BlockHitResult hit = AiStandingTarget.raycast(mc, eye, direction, reach, water);
          long now = System.nanoTime();
          if (fresh
             || this.init_Obj != mc.level
@@ -158,7 +158,7 @@ public final class AiStandingTarget {
             || !hit.getBlockPos().equals(this.init_BlockHitResult.getBlockPos())
             || hit.getLocation().distanceToSqr(this.init_BlockHitResult.getLocation()) > 0.0225
             || now >= this.init_J) {
-            this.init_j_StreamUtil = AiStandingTarget.init(mc, hit, water);
+            this.init_j_StreamUtil = AiStandingTarget.standingTarget(mc, hit, water);
             this.init_Obj = mc.level;
             this.init_BlockHitResult = hit;
             this.init_J = now + 170000000L;

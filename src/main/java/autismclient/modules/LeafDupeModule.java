@@ -64,7 +64,7 @@ public final class LeafDupeModule extends Module {
    private static boolean rotationRequested;
    private static float requestedYaw;
    private static float requestedPitch;
-   private static int sync = -2147483648;
+   private static int rotationPriority = -2147483648;
    private static boolean rotationOverrideActive;
    private static float appliedYaw;
    private static float appliedPitch;
@@ -90,8 +90,8 @@ public final class LeafDupeModule extends Module {
    private volatile LeafDupeModule.Inner_DataUtil breakAttempt;
    private boolean breakStartPending;
    private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil cycleReceipt;
-   private int close;
-   private int open;
+   private int cycleDelayTicks;
+   private int cycleCount;
    private final autismclient.util.leafdupe.LeafDupeRateLimiter rateLimiter = new autismclient.util.leafdupe.LeafDupeRateLimiter();
    private boolean boneMealPending;
    private boolean cycleLimitReached;
@@ -211,9 +211,9 @@ public final class LeafDupeModule extends Module {
 
    @Override
    protected void onOptionValueChanged(String settingId) {
-      this.sync();
+      this.cancelBreakAttempt();
       this.flush = 0;
-      flush();
+      releaseRotation();
       this.boneMealPending = false;
       if (this.pendingResetClick != null) {
          this.pendingResetClick.detach();
@@ -235,12 +235,12 @@ public final class LeafDupeModule extends Module {
 
    @Override
    public void onEnable() {
-      this.close = this.cycleDelay.get();
-      this.open = 0;
+      this.cycleDelayTicks = this.cycleDelay.get();
+      this.cycleCount = 0;
       this.cycleLimitReached = false;
       this.boneMealPending = false;
       this.status = "";
-      this.sync();
+      this.cancelBreakAttempt();
       this.flush = 0;
       this.candidatePage = 0L;
       this.leafPos = null;
@@ -250,7 +250,7 @@ public final class LeafDupeModule extends Module {
          this.pendingResetClick.detach();
       }
 
-      flush();
+      releaseRotation();
       this.sessionLevel = MC == null ? null : MC.level;
       this.sessionPlayer = MC == null ? null : MC.player;
       if (!inWorld()) {
@@ -263,16 +263,16 @@ public final class LeafDupeModule extends Module {
 
    @Override
    public void onDisable() {
-      this.sync();
+      this.cancelBreakAttempt();
       this.boneMealPending = false;
       this.cycleLimitReached = false;
-      flush();
+      releaseRotation();
       this.status = "";
       if (this.pendingResetClick != null) {
          this.pendingResetClick.detach();
       }
 
-      if (this.open != 0 && inWorld() && MC.level == this.sessionLevel && MC.player == this.sessionPlayer && this.pauseReason() == null) {
+      if (this.cycleCount != 0 && inWorld() && MC.level == this.sessionLevel && MC.player == this.sessionPlayer && this.pauseReason() == null) {
          BlockPos reset = this.resetPos;
          if (reset != null && this.resetProblem(reset) == null) {
             int slot = this.boneMealSlot();
@@ -285,8 +285,8 @@ public final class LeafDupeModule extends Module {
 
    @Override
    public void onGameLeft() {
-      flush();
-      this.close();
+      releaseRotation();
+      this.endSession();
       if (this.isEnabled()) {
          this.setEnabledSilently(false);
       }
@@ -296,7 +296,7 @@ public final class LeafDupeModule extends Module {
    public void preMovementTick() {
       this.breakStartPending = false;
       this.boneMealPending = false;
-      flush();
+      releaseRotation();
       if (this.isEnabled()) {
          if (!inWorld()) {
             this.status = "No world";
@@ -305,9 +305,9 @@ public final class LeafDupeModule extends Module {
                this.sessionLevel = MC.level;
                this.sessionPlayer = MC.player;
                this.leafPos = this.targetPos = this.resetPos = null;
-               this.sync();
+               this.cancelBreakAttempt();
                this.flush = 0;
-               this.open = 0;
+               this.cycleCount = 0;
                this.candidatePage = 0L;
                this.rateLimiter.init();
                autismclient.util.leafdupe.LeafDupePacketTracker.load();
@@ -320,15 +320,15 @@ public final class LeafDupeModule extends Module {
                      return;
                   }
 
-                  this.sync();
+                  this.cancelBreakAttempt();
                   this.status = "Packets blocked";
                   return;
                }
 
-               this.open++;
-               this.close = 0;
+               this.cycleCount++;
+               this.cycleDelayTicks = 0;
                this.cycleReceipt = null;
-               if (this.cycleLimit.get() > 0 && this.open >= this.cycleLimit.get()) {
+               if (this.cycleLimit.get() > 0 && this.cycleCount >= this.cycleLimit.get()) {
                   this.cycleLimitReached = true;
                   return;
                }
@@ -336,19 +336,19 @@ public final class LeafDupeModule extends Module {
 
             String paused = this.pauseReason();
             if (paused != null) {
-               this.sync();
+               this.cancelBreakAttempt();
                this.status = paused;
             } else {
                autismclient.util.leafdupe.LeafDupePacketTracker.read();
                this.refreshPositions(false);
                String blocked = this.computeStatus();
                if (blocked != null) {
-                  this.sync();
+                  this.cancelBreakAttempt();
                }
 
                if (blocked != null || this.prepareTargetBreak()) {
-                  if (blocked == null && this.close < this.cycleDelay.get()) {
-                     this.close++;
+                  if (blocked == null && this.cycleDelayTicks < this.cycleDelay.get()) {
+                     this.cycleDelayTicks++;
                      this.status = "";
                   } else {
                      if (blocked == null) {
@@ -357,7 +357,7 @@ public final class LeafDupeModule extends Module {
 
                      this.status = visibleStatus(blocked);
                      if (blocked != null) {
-                        this.update();
+                        this.cancelIfReceiptLost();
                         this.debugLog("Waiting: %s.", blocked);
                      } else {
                         int slot = this.boneMealSlot();
@@ -431,8 +431,8 @@ public final class LeafDupeModule extends Module {
          if (this.isEnabled() && inWorld() && MC.level == this.sessionLevel) {
             String blocked = this.computeStatus();
             if (blocked != null) {
-               this.sync();
-               flush();
+               this.cancelBreakAttempt();
+               releaseRotation();
             }
 
             if (blocked == null) {
@@ -492,7 +492,7 @@ public final class LeafDupeModule extends Module {
                || System.nanoTime() - current.createdNanos > 500000000L
                || current.breakReceipt != null && current.breakReceipt.isSent()
          )) {
-         this.sync();
+         this.cancelBreakAttempt();
          current = null;
       }
 
@@ -524,13 +524,13 @@ public final class LeafDupeModule extends Module {
       double damage = state.getDestroyProgress(MC.player, MC.level, current.pos);
       if (!isPartialDamage(damage)) {
          this.status = damage >= 1.0 ? "Target breaks instantly" : "Cannot mine target";
-         this.sync();
+         this.cancelBreakAttempt();
          return false;
       } else {
          BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, current.pos, this.eyePosition());
          if (hit == null) {
             this.status = "Target obstructed";
-            this.update();
+            this.cancelIfReceiptLost();
             return false;
          } else {
             Vec3 point = hit.getLocation().add(hit.getLocation().subtract(this.eyePosition()).normalize().scale(0.01));
@@ -555,7 +555,7 @@ public final class LeafDupeModule extends Module {
                   double damage = current.state.getDestroyProgress(MC.player, MC.level, current.pos);
                   if (!isPartialDamage(damage) || MC.player.blockActionRestricted(MC.level, current.pos, MC.gameMode.getPlayerMode())) {
                      this.status = "Cannot mine target";
-                     this.sync();
+                     this.cancelBreakAttempt();
                   } else if (autismclient.util.InventorySlotArbiter.beginActionGroup("leaf-dupe")) {
                      try (BlockStatePredictionHandler prediction = this.predictionHandler().startPredicting()) {
                         ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(
@@ -571,7 +571,7 @@ public final class LeafDupeModule extends Module {
                   }
                }
             } else {
-               this.sync();
+               this.cancelBreakAttempt();
             }
          } else {
             if (autismclient.util.InventorySlotArbiter.beginActionGroup("leaf-dupe")) {
@@ -658,14 +658,14 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private void update() {
+   private void cancelIfReceiptLost() {
       if (this.breakAttempt != null
          && !autismclient.util.leafdupe.LeafDupePacketTracker.init(this.breakAttempt.breakReceipt, this.breakAttempt.pos)) {
-         this.sync();
+         this.cancelBreakAttempt();
       }
    }
 
-   private void sync() {
+   private void cancelBreakAttempt() {
       this.breakStartPending = false;
       LeafDupeModule.Inner_DataUtil current = this.breakAttempt;
       if (current != null) {
@@ -696,8 +696,8 @@ public final class LeafDupeModule extends Module {
 
       if (this.cycleReceipt != null) {
          if (this.cycleReceipt.isSent()) {
-            this.open++;
-            this.close = 0;
+            this.cycleCount++;
+            this.cycleDelayTicks = 0;
          } else {
             this.cycleReceipt.markConsumed();
          }
@@ -1280,18 +1280,18 @@ public final class LeafDupeModule extends Module {
    }
 
    private static void requestRotation(float yaw, float pitch, int priority) {
-      if (!rotationRequested || priority >= sync) {
+      if (!rotationRequested || priority >= rotationPriority) {
          requestedYaw = yaw;
          requestedPitch = pitch;
-         sync = priority;
+         rotationPriority = priority;
          rotationRequested = true;
       }
    }
 
-   private static void flush() {
+   private static void releaseRotation() {
       rotationRequested = false;
       rotationOverrideActive = false;
-      sync = -2147483648;
+      rotationPriority = -2147483648;
    }
 
    public static void beforeSendPosition(LocalPlayer player) {
@@ -1301,7 +1301,7 @@ public final class LeafDupeModule extends Module {
             rotationOverrideActive = false;
          } else if (inWorld() && MC.level == module.sessionLevel && MC.player == module.sessionPlayer && module.pauseReason() == null) {
             if (module.pendingResetClick != null) {
-               module.pendingResetClick.load();
+               module.pendingResetClick.tickRetry();
             }
 
             rotationOverrideActive = rotationRequested;
@@ -1311,9 +1311,9 @@ public final class LeafDupeModule extends Module {
             }
 
             rotationRequested = false;
-            sync = -2147483648;
+            rotationPriority = -2147483648;
             if (module.pendingResetClick != null) {
-               module.pendingResetClick.read();
+               module.pendingResetClick.trySend();
             }
 
             if (module.breakStartPending) {
@@ -1322,9 +1322,9 @@ public final class LeafDupeModule extends Module {
                module.sendBoneMealCycle();
             }
          } else {
-            flush();
+            releaseRotation();
             module.boneMealPending = false;
-            module.sync();
+            module.cancelBreakAttempt();
             if (module.pendingResetClick != null) {
                module.pendingResetClick.detach();
             }
@@ -1345,15 +1345,15 @@ public final class LeafDupeModule extends Module {
       LeafDupeModule module = instance;
       if (module != null && player == MC.player && module.cycleLimitReached) {
          module.cycleLimitReached = false;
-         module.chatInfo("Finished %d cycle(s).", module.open);
+         module.chatInfo("Finished %d cycle(s).", module.cycleCount);
          module.setEnabled(false);
       }
    }
 
    public static void onLogin() {
-      flush();
+      releaseRotation();
       if (instance != null) {
-         instance.close();
+         instance.endSession();
       }
 
       autismclient.util.leafdupe.LeafDupePacketTracker.reset();
@@ -1361,16 +1361,16 @@ public final class LeafDupeModule extends Module {
    }
 
    public static void onDisconnect() {
-      flush();
+      releaseRotation();
       if (instance != null) {
-         instance.close();
+         instance.endSession();
       }
 
       autismclient.util.leafdupe.LeafDupePacketTracker.reset();
    }
 
-   private void close() {
-      this.sync();
+   private void endSession() {
+      this.cancelBreakAttempt();
       if (this.pendingResetClick != null) {
          this.pendingResetClick.detach();
       }
@@ -1382,7 +1382,7 @@ public final class LeafDupeModule extends Module {
       this.leafPos = this.targetPos = this.resetPos = null;
       this.flush = 0;
       this.candidatePage = 0L;
-      this.open = 0;
+      this.cycleCount = 0;
       this.rateLimiter.init();
    }
 
@@ -1398,8 +1398,8 @@ public final class LeafDupeModule extends Module {
       private final LocalPlayer player = Module.MC.player;
       private final ClientPacketListener connection = Module.MC.getConnection();
       private final BlockPos resetPos = LeafDupeModule.this.resetPos;
-      private final int load = Module.MC.player.getInventory().getSelectedSlot();
-      private int read = 20;
+      private final int originalSlot = Module.MC.player.getInventory().getSelectedSlot();
+      private int retriesLeft = 20;
 
       private Inner_CachePool(int mealSlot) {
          this.mealSlot = mealSlot;
@@ -1412,10 +1412,10 @@ public final class LeafDupeModule extends Module {
          }
       }
 
-      private void load() {
+      private void tickRetry() {
          if (!this.isSameSession()) {
             this.detach();
-         } else if (this.read-- <= 0) {
+         } else if (this.retriesLeft-- <= 0) {
             LeafDupeModule.this.chatWarn("Grim: could not send the last reset click (rotation or packet window), skipped it.");
             this.detach();
          } else if (this.hand != InteractionHand.MAIN_HAND || LeafDupeModule.this.isSlotSelected(this.mealSlot)) {
@@ -1434,7 +1434,7 @@ public final class LeafDupeModule extends Module {
          }
       }
 
-      private void read() {
+      private void trySend() {
          if (LeafDupeModule.this.pendingResetClick == this) {
             if (!this.isSameSession()) {
                this.detach();
@@ -1480,7 +1480,7 @@ public final class LeafDupeModule extends Module {
                && Module.MC.player.getInventory().getItem(this.mealSlot).is(Items.BONE_MEAL)
                && (
                   this.hand != InteractionHand.MAIN_HAND
-                     || Module.MC.player.getInventory().getSelectedSlot() == this.load
+                     || Module.MC.player.getInventory().getSelectedSlot() == this.originalSlot
                      || Module.MC.player.getInventory().getSelectedSlot() == this.mealSlot
                )
                && (this.hand != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("leaf-dupe"))

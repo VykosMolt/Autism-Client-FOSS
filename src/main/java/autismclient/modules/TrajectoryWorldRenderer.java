@@ -19,71 +19,71 @@ import org.joml.Vector3f;
 public final class TrajectoryWorldRenderer {
    private static final int init_I = -44976;
    private static final long[] frameNanos = new long[64];
-   private static int load;
-   private static int read;
-   private static int write;
-   private static int update;
-   private static int sync;
-   private static int flush;
-   private static int close;
-   private static int open;
-   private static int poll = -1;
-   private static int push;
+   private static int frameCursor;
+   private static int frameSamples;
+   private static int segmentCount;
+   private static int markerCount;
+   private static int ghostCount;
+   private static int blastBlockCount;
+   private static int hitTargetCount;
+   private static int rememberedGhostShown;
+   private static int rememberedPearlId = -1;
+   private static int heldGhostTint;
 
    public static int init_I() {
-      return push;
+      return heldGhostTint;
    }
 
    private TrajectoryWorldRenderer() {
    }
 
    public static void resetStats() {
-      open = 0;
-      close = 0;
-      flush = 0;
-      sync = 0;
-      update = 0;
-      write = 0;
-      read = 0;
-      load = 0;
+      rememberedGhostShown = 0;
+      hitTargetCount = 0;
+      blastBlockCount = 0;
+      ghostCount = 0;
+      markerCount = 0;
+      segmentCount = 0;
+      frameSamples = 0;
+      frameCursor = 0;
    }
 
    public static double averageFrameMs() {
       long sum = 0L;
 
-      for (int i = 0; i < read; i++) {
+      for (int i = 0; i < frameSamples; i++) {
          sum += frameNanos[i];
       }
 
-      return read == 0 ? 0.0 : sum / (read * 1000000.0);
+      return frameSamples == 0 ? 0.0 : sum / (frameSamples * 1000000.0);
    }
 
    public static int load_I() {
-      return write;
+      return segmentCount;
    }
 
-   public static int read() {
-      return update;
+   public static int lastMarkerCount() {
+      return markerCount;
    }
 
-   public static int write() {
-      return sync;
+   public static int lastGhostCount() {
+      return ghostCount;
    }
 
-   public static int update() {
-      return flush;
+   public static int lastBlastBlockCount() {
+      return blastBlockCount;
    }
 
-   public static int sync() {
-      return close;
+   public static int lastHitTargetCount() {
+      return hitTargetCount;
    }
 
-   public static int flush() {
-      return open;
+   public static int lastRememberedGhostShown() {
+      return rememberedGhostShown;
    }
 
-   public static int close() {
-      return poll;
+   public static int lastRememberedPearlId() {
+      return rememberedPearlId;
    }
 
    public static double load_D() {
@@ -91,14 +91,14 @@ public final class TrajectoryWorldRenderer {
    }
 
    public static void resetCounters() {
-      push = 0;
-      open = 0;
-      close = 0;
-      flush = 0;
-      sync = 0;
-      update = 0;
-      write = 0;
-      poll = -1;
+      heldGhostTint = 0;
+      rememberedGhostShown = 0;
+      hitTargetCount = 0;
+      blastBlockCount = 0;
+      ghostCount = 0;
+      markerCount = 0;
+      segmentCount = 0;
+      rememberedPearlId = -1;
    }
 
    public static void init(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
@@ -112,10 +112,10 @@ public final class TrajectoryWorldRenderer {
          float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
          double near = mc.options.getCameraType().isFirstPerson() && camera.distanceToSqr(mc.player.getEyePosition(partial)) < 0.25 ? 0.75 : 0.06;
          List<FireballBlastPredictor.Inner_DataUtil> blocks = TrajectoryStateCache.init(paths);
-         flush = blocks.size();
+         blastBlockCount = blocks.size();
          ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
-            poll = remembered.init_I();
+            rememberedPearlId = remembered.init_I();
          }
 
          for (int pass = 0; pass < 2; pass++) {
@@ -135,13 +135,13 @@ public final class TrajectoryWorldRenderer {
 
             for (TrajectoriesModule.Inner_CachePool path : paths) {
                if (path.surface() != null) {
-                  init(pose, markers, path, camera, opacity);
+                  drawPath(pose, markers, path, camera, opacity);
                }
             }
 
             if (remembered != null) {
-               init(
-                  pose, markers, remembered.position().add(0.0, 0.012, 0.0), new Vec3(0.0, 1.0, 0.0), 0.35, camera, init(-8329771, (int)(245.0 * opacity)), 17
+               drawRing(
+                  pose, markers, remembered.position().add(0.0, 0.012, 0.0), new Vec3(0.0, 1.0, 0.0), 0.35, camera, withAlpha(-8329771, (int)(245.0 * opacity)), 17
                );
             }
          }
@@ -150,28 +150,28 @@ public final class TrajectoryWorldRenderer {
 
          for (TrajectoriesModule.Inner_CachePool path : paths) {
             if (path.hit() instanceof EntityHitResult hit
-               && init(path.init_aS_StreamUtil())
+               && isEntityHitItem(path.init_aS_StreamUtil())
                && hit.getEntity().isAlive()
                && !hit.getEntity().isRemoved()) {
                hitTargets.add(hit.getEntity());
             }
          }
 
-         close = hitTargets.size();
+         hitTargetCount = hitTargets.size();
          if (!hitTargets.isEmpty()) {
             VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (Entity entity : hitTargets) {
-               WorldLineRenderer.init(pose, fill, init(entity, camera, partial, 0.016), init(-44976, 72));
+               WorldLineRenderer.init(pose, fill, entityBox(entity, camera, partial, 0.016), withAlpha(-44976, 72));
             }
 
             VertexConsumer edge = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (Entity entity : hitTargets) {
-               AABB box = init(entity, camera, partial, 0.018);
-               WorldLineRenderer.init(pose, edge, box, init(-44976, 48), 7.0F);
+               AABB box = entityBox(entity, camera, partial, 0.018);
+               WorldLineRenderer.init(pose, edge, box, withAlpha(-44976, 48), 7.0F);
                WorldLineRenderer.init(pose, edge, box, -653585893, 4.8F);
-               WorldLineRenderer.init(pose, edge, box, init(-44976, 255), 3.0F);
+               WorldLineRenderer.init(pose, edge, box, withAlpha(-44976, 255), 3.0F);
             }
          }
 
@@ -194,27 +194,27 @@ public final class TrajectoryWorldRenderer {
 
          if (rememberedGhost != null) {
             int tint = TrajectoryStateCache.init(rememberedGhost);
-            sync++;
-            open = 1;
+            ghostCount++;
+            rememberedGhostShown = 1;
             PearlGhostRenderer.init(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.58, 2);
             PearlGhostRenderer.init(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.68, 1);
          }
 
          if (heldGhost != null && (rememberedGhost == null || heldGhost.distanceToSqr(rememberedGhost) > 0.25)) {
             int tint = TrajectoryStateCache.init(heldGhost);
-            push = tint;
-            sync++;
+            heldGhostTint = tint;
+            ghostCount++;
             PearlGhostRenderer.init(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.58, 2);
             PearlGhostRenderer.init(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.68, 1);
          }
 
-         frameNanos[load] = System.nanoTime() - start;
-         load = (load + 1) % frameNanos.length;
-         read = Math.min(read + 1, frameNanos.length);
+         frameNanos[frameCursor] = System.nanoTime() - start;
+         frameCursor = (frameCursor + 1) % frameNanos.length;
+         frameSamples = Math.min(frameSamples + 1, frameNanos.length);
       }
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, double opacityScale) {
+   private static void drawPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, double opacityScale) {
       TrajectoriesModule.Inner_BufferHelper surface = path.surface();
       Vec3 normal = surface.normal();
       int var10000;
@@ -252,21 +252,21 @@ public final class TrajectoryWorldRenderer {
          normal = new Vec3(0.0, 1.0, 0.0);
       }
 
-      init(pose, buffer, center, normal, surface.init_D(), camera, init(init(path), (int)(opacity * opacityScale)), style);
+      drawRing(pose, buffer, center, normal, surface.init_D(), camera, withAlpha(hitColor(path), (int)(opacity * opacityScale)), style);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, Vec3 center, Vec3 normal, double radius, Vec3 camera, int color, int style) {
+   private static void drawRing(Pose pose, VertexConsumer buffer, Vec3 center, Vec3 normal, double radius, Vec3 camera, int color, int style) {
       Vec3 tangent = Math.abs(normal.y) > 0.9 ? new Vec3(1.0, 0.0, 0.0) : normal.cross(new Vec3(0.0, 1.0, 0.0)).normalize();
       Vec3 bitangent = normal.cross(tangent).normalize();
       double extent = radius / 0.86;
       init_V_PoseStack_Pose_3(pose, buffer, center.subtract(camera), tangent.scale(extent), bitangent.scale(extent), color, style);
    }
 
-   private static int init(TrajectoriesModule.Inner_CachePool path) {
+   private static int hitColor(TrajectoriesModule.Inner_CachePool path) {
       return path.hit() != null && path.hit().getType() == Type.ENTITY ? -44976 : path.color();
    }
 
-   private static boolean init(TrajectoriesModule.Inner_StreamUtil item) {
+   private static boolean isEntityHitItem(TrajectoriesModule.Inner_StreamUtil item) {
       return item == TrajectoriesModule.Inner_StreamUtil.BOW
          || item == TrajectoriesModule.Inner_StreamUtil.CROSSBOW
          || item == TrajectoriesModule.Inner_StreamUtil.TRIDENT
@@ -274,25 +274,25 @@ public final class TrajectoryWorldRenderer {
          || item == TrajectoriesModule.Inner_StreamUtil.EGG;
    }
 
-   private static AABB init(Entity entity, Vec3 camera, float partial, double margin) {
+   private static AABB entityBox(Entity entity, Vec3 camera, float partial, double margin) {
       return entity.getBoundingBox().inflate(margin).move(entity.getPosition(partial).subtract(entity.position()).subtract(camera));
    }
 
-   private static Vec3 init(TrajectoriesModule.Inner_CachePool path, int index) {
+   private static Vec3 easedPoint(TrajectoriesModule.Inner_CachePool path, int index) {
       int ease = Math.min(2, path.points().size() - 1);
       return index < ease ? path.points().get(index).add(path.init_Vec3().scale(1.0 - (double)index / ease)) : path.points().get(index);
    }
 
    private static void init_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
       if (path.points().size() >= 2) {
-         Vec3 previous = init(path, 0).subtract(camera);
+         Vec3 previous = easedPoint(path, 0).subtract(camera);
          int count = path.points().size() - 1;
 
          for (int i = 1; i <= count; i++) {
-            Vec3 next = init(path, i).subtract(camera);
+            Vec3 next = easedPoint(path, i).subtract(camera);
             double fade = path.hit() == null ? Math.min(1.0, (count + 1 - i) / 12.0) : 1.0;
             fade *= opacity * (path.load_Z() ? 1.0 : 0.86);
-            init_V_PoseStack_Pose(pose, buffer, previous, next, forward, near, init(path), fade, (double)i / count, path.load_Z());
+            init_V_PoseStack_Pose(pose, buffer, previous, next, forward, near, hitColor(path), fade, (double)i / count, path.load_Z());
             previous = next;
          }
       }
@@ -313,7 +313,7 @@ public final class TrajectoryWorldRenderer {
          Vec3 delta = b.subtract(a);
          if (!(delta.lengthSqr() < 1.0E-10)) {
             Vector3f normal = delta.normalize().toVector3f();
-            write++;
+            segmentCount++;
             float width = primary ? 2.35F : 1.95F;
             double fadeA = Math.clamp((a.dot(forward) - near) / 0.45, 0.0, 1.0);
             double fadeB = Math.clamp((b.dot(forward) - near) / 0.45, 0.0, 1.0);
@@ -327,16 +327,16 @@ public final class TrajectoryWorldRenderer {
    private static void init_V_PoseStack_Pose_2(
       Pose pose, VertexConsumer buffer, Vec3 a, Vec3 b, Vector3f normal, int tint, double opacity, double fadeA, double fadeB, float width
    ) {
-      buffer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(init(tint, (int)(opacity * fadeA))).setNormal(pose, normal).setLineWidth(width);
-      buffer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(init(tint, (int)(opacity * fadeB))).setNormal(pose, normal).setLineWidth(width);
+      buffer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(withAlpha(tint, (int)(opacity * fadeA))).setNormal(pose, normal).setLineWidth(width);
+      buffer.addVertex(pose, (float)b.x, (float)b.y, (float)b.z).setColor(withAlpha(tint, (int)(opacity * fadeB))).setNormal(pose, normal).setLineWidth(width);
    }
 
-   private static int init(int color, int alpha) {
+   private static int withAlpha(int color, int alpha) {
       return color & 16777215 | Math.clamp(alpha, 0, 255) << 24;
    }
 
    private static void init_V_PoseStack_Pose_3(Pose pose, VertexConsumer buffer, Vec3 at, Vec3 right, Vec3 up, int color, int style) {
-      update++;
+      markerCount++;
       init_V_PoseStack_Pose_2(pose, buffer, at.subtract(right).subtract(up), 0.0F, 0.0F, color, style);
       init_V_PoseStack_Pose_2(pose, buffer, at.add(right).subtract(up), 1.0F, 0.0F, color, style);
       init_V_PoseStack_Pose_2(pose, buffer, at.add(right).add(up), 1.0F, 1.0F, color, style);

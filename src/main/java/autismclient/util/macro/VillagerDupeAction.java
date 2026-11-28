@@ -9,7 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public final class VillagerDupeAction implements ContextMacroAction {
    private static final int MAX_COUNT = 64;
-   private static final int load = 10;
+   private static final int MAX_WATCH_TICKS = 10;
    public autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.ALL;
    public VillagerDupeAction.Inner_StreamUtil targets = VillagerDupeAction.Inner_StreamUtil.ALL_IN_RANGE;
    public int count = 1;
@@ -35,13 +35,13 @@ public final class VillagerDupeAction implements ContextMacroAction {
             this.keepTotem,
             this.targets == VillagerDupeAction.Inner_StreamUtil.NEAREST,
             this.refresh,
-            init(this.intervalTicks, 1, 20)
+            clamp(this.intervalTicks, 1, 20)
          ),
-         init(this.count, 0, 64),
+         clamp(this.count, 0, 64),
          Math.max(0, this.stopAfter),
          this.stopWhenMissing
       );
-      autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(driver::init);
+      autismclient.util.villagerdupe.VillagerDupeDriver.addWatcher(driver::tick);
 
       while (!driver.finished && ctx.isActive()) {
          CompletableFuture<Void> next = driver.init_CompletableFuture;
@@ -67,8 +67,8 @@ public final class VillagerDupeAction implements ContextMacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("filter", this.filter.name());
       tag.putString("targets", this.targets.name());
-      tag.putInt("count", init(this.count, 0, 64));
-      tag.putInt("intervalTicks", init(this.intervalTicks, 1, 20));
+      tag.putInt("count", clamp(this.count, 0, 64));
+      tag.putInt("intervalTicks", clamp(this.intervalTicks, 1, 20));
       tag.putInt("stopAfter", Math.max(0, this.stopAfter));
       tag.putBoolean("refresh", this.refresh);
       tag.putBoolean("traders", this.traders);
@@ -90,8 +90,8 @@ public final class VillagerDupeAction implements ContextMacroAction {
          this.targets = VillagerDupeAction.Inner_StreamUtil.ALL_IN_RANGE;
       }
 
-      this.count = init(tag.getIntOr("count", 1), 0, 64);
-      this.intervalTicks = init(tag.getIntOr("intervalTicks", 1), 1, 20);
+      this.count = clamp(tag.getIntOr("count", 1), 0, 64);
+      this.intervalTicks = clamp(tag.getIntOr("intervalTicks", 1), 1, 20);
       this.stopAfter = Math.max(0, tag.getIntOr("stopAfter", 0));
       this.refresh = tag.getBooleanOr("refresh", true);
       this.traders = tag.getBooleanOr("traders", true);
@@ -128,7 +128,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       this.enabled = value;
    }
 
-   private static int init(int n, int min, int max) {
+   private static int clamp(int n, int min, int max) {
       return Math.max(min, Math.min(max, n));
    }
 
@@ -140,7 +140,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       private final int limit;
       private final boolean stopWhenMissing;
       private int write_I;
-      private int update;
+      private int activeTicks;
       private boolean write_Z;
       volatile int total;
       volatile autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore lastStatus = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
@@ -156,7 +156,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
          this.stopWhenMissing = stopWhenMissing;
       }
 
-      boolean init(Minecraft mc) {
+      boolean tick(Minecraft mc) {
          if (!this.ctx.isActive()) {
             if (this.driver.isActive()) {
                this.driver.restoreSelectedSlot(mc);
@@ -164,7 +164,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
             return this.finish();
          } else if (this.write_Z) {
-            if (this.driver.isActive() && this.update++ < 10) {
+            if (this.driver.isActive() && this.activeTicks++ < 10) {
                this.driver.load(mc, this.options);
             }
 
@@ -172,7 +172,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
                return this.finish();
             }
 
-            if (this.update < 10) {
+            if (this.activeTicks < 10) {
                return true;
             }
 

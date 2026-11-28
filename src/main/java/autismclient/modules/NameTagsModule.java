@@ -6,9 +6,9 @@ import autismclient.api.module.DoubleSetting;
 import autismclient.api.module.EnumSetting;
 
 public final class NameTagsModule extends Module {
-   static final int init = -1;
-   static final int load = -5592406;
-   static final int read = -1879048192;
+   static final int DEFAULT_DISTANCE_COLOR = -1;
+   static final int DEFAULT_ENCHANTMENT_COLOR = -5592406;
+   static final int DEFAULT_BACKGROUND_COLOR = -1879048192;
 
    public NameTagsModule() {
       super("nametags", "Nametags", ae.update, "Labels above entities.");

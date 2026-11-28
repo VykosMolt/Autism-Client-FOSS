@@ -34,7 +34,7 @@ final class AiRunDiagnostics {
    private long nextOperationId;
    private long load;
    private long read;
-   private long write;
+   private long nextMotionSampleMs;
    private float lastHealth = -1.0F;
    private boolean stopped;
 
@@ -58,18 +58,18 @@ final class AiRunDiagnostics {
    }
 
    static AiOperation trace(String controller, String decision, AiOperation op) {
-      return active != null && !active.stopped && op != null ? active.load(controller, decision, op) : op;
+      return active != null && !active.stopped && op != null ? active.wrap(controller, decision, op) : op;
    }
 
-   AiOperation load(final String controller, final String decision, final AiOperation delegate) {
+   AiOperation wrap(final String controller, final String decision, final AiOperation delegate) {
       return new AiOperation() {
          long operationId;
          long startedAtMs;
-         long read;
+         long nextProgressAtMs;
          boolean ended;
          boolean cancelled;
 
-         void init() {
+         void ensureStarted() {
             if (this.operationId == 0L && !AiRunDiagnostics.this.stopped) {
                this.operationId = ++AiRunDiagnostics.this.nextOperationId;
                this.startedAtMs = AiRunDiagnostics.this.clock.getAsLong();
@@ -81,21 +81,21 @@ final class AiRunDiagnostics {
                   "controller",
                   controller,
                   "decision",
-                  AiRunDiagnostics.init(decision),
+                  AiRunDiagnostics.truncate(decision),
                   "startedAtMs",
                   this.startedAtMs
                );
                AiRunDiagnostics.this.openOperations.put(this.operationId, entry);
-               AiRunDiagnostics.this.init("speedrun_operation_start", entry);
+               AiRunDiagnostics.this.emit("speedrun_operation_start", entry);
             }
          }
 
          @Override
          public AiOperation.Result tick() {
             try {
-               this.init();
+               this.ensureStarted();
             } catch (RuntimeException failure) {
-               AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.objectOf("message", AiRunDiagnostics.init(failure.toString())));
+               AiRunDiagnostics.this.emit("speedrun_diagnostic_error", AiJson.objectOf("message", AiRunDiagnostics.truncate(failure.toString())));
             }
 
             long previous = AiRunDiagnostics.this.load;
@@ -108,22 +108,22 @@ final class AiRunDiagnostics {
                   if (this.operationId != 0L && !AiRunDiagnostics.this.stopped && !this.ended) {
                      JsonObject entry = AiRunDiagnostics.this.openOperations.get(this.operationId);
                      if (entry != null) {
-                        entry.addProperty("message", AiRunDiagnostics.init(result.message()));
+                        entry.addProperty("message", AiRunDiagnostics.truncate(result.message()));
                      }
 
                      long now = AiRunDiagnostics.this.clock.getAsLong();
-                     if (result.terminal() || now >= this.read) {
+                     if (result.terminal() || now >= this.nextProgressAtMs) {
                         JsonObject event = AiJson.objectOf(
                            "operationId",
                            this.operationId,
                            "controller",
                            controller,
                            "decision",
-                           AiRunDiagnostics.init(decision),
+                           AiRunDiagnostics.truncate(decision),
                            "status",
                            result.status().name(),
                            "message",
-                           AiRunDiagnostics.init(result.message()),
+                           AiRunDiagnostics.truncate(result.message()),
                            "durationMs",
                            Math.max(0L, now - this.startedAtMs),
                            "failureCode",
@@ -134,8 +134,8 @@ final class AiRunDiagnostics {
                         if (result.terminal() && result.status() != AiOperation.Status.SUCCEEDED) {
                            Minecraft client = Minecraft.getInstance();
                            if (client != null && client.player != null && client.level != null) {
-                              event.add("body", AiRunDiagnostics.this.load(client));
-                              event.add("localTerrain", AiRunDiagnostics.init(client));
+                              event.add("body", AiRunDiagnostics.this.bodyJson(client));
+                              event.add("localTerrain", AiRunDiagnostics.localTerrainJson(client));
                            }
                         }
 
@@ -143,8 +143,8 @@ final class AiRunDiagnostics {
                            entry.add("result", event.get("result").deepCopy());
                         }
 
-                        AiRunDiagnostics.this.init(result.terminal() ? "speedrun_operation_end" : "speedrun_operation_progress", event);
-                        this.read = now + 5000L;
+                        AiRunDiagnostics.this.emit(result.terminal() ? "speedrun_operation_end" : "speedrun_operation_progress", event);
+                        this.nextProgressAtMs = now + 5000L;
                      }
 
                      if (result.terminal()) {
@@ -158,7 +158,7 @@ final class AiRunDiagnostics {
                      AiRunDiagnostics.this.openOperations.remove(this.operationId);
                   }
 
-                  AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.objectOf("operationId", this.operationId, "message", AiRunDiagnostics.init(failure.toString())));
+                  AiRunDiagnostics.this.emit("speedrun_diagnostic_error", AiJson.objectOf("operationId", this.operationId, "message", AiRunDiagnostics.truncate(failure.toString())));
                }
 
                return result;
@@ -169,16 +169,16 @@ final class AiRunDiagnostics {
                   "controller",
                   controller,
                   "decision",
-                  AiRunDiagnostics.init(decision),
+                  AiRunDiagnostics.truncate(decision),
                   "exception",
                   failure.getClass().getName(),
                   "message",
-                  AiRunDiagnostics.init(String.valueOf(failure.getMessage()))
+                  AiRunDiagnostics.truncate(String.valueOf(failure.getMessage()))
                );
                StringWriter stack = new StringWriter();
                failure.printStackTrace(new PrintWriter(stack));
-               event.addProperty("stack", AiRunDiagnostics.init(stack.toString()));
-               AiRunDiagnostics.this.init("speedrun_operation_exception", event);
+               event.addProperty("stack", AiRunDiagnostics.truncate(stack.toString()));
+               AiRunDiagnostics.this.emit("speedrun_operation_exception", event);
                throw failure;
             } finally {
                AiRunDiagnostics.this.load = previous;
@@ -205,7 +205,7 @@ final class AiRunDiagnostics {
                   if (this.cancelled) {
                      try {
                         if (this.operationId != 0L && !this.ended) {
-                           AiRunDiagnostics.this.init(
+                           AiRunDiagnostics.this.emit(
                               "speedrun_operation_cancel",
                               AiJson.objectOf(
                                  "operationId",
@@ -213,7 +213,7 @@ final class AiRunDiagnostics {
                                  "controller",
                                  controller,
                                  "decision",
-                                 AiRunDiagnostics.init(decision),
+                                 AiRunDiagnostics.truncate(decision),
                                  "durationMs",
                                  Math.max(0L, AiRunDiagnostics.this.clock.getAsLong() - this.startedAtMs)
                               )
@@ -230,7 +230,7 @@ final class AiRunDiagnostics {
       };
    }
 
-   private void init(String kind, JsonObject data) {
+   private void emit(String kind, JsonObject data) {
       if (!this.stopped) {
          try {
             this.sink.accept(kind, data.deepCopy());
@@ -248,9 +248,9 @@ final class AiRunDiagnostics {
             }
 
             long now = this.clock.getAsLong();
-            if (now >= this.write) {
-               this.write = now + 500L;
-               this.recentMotion.addLast(this.load(mc));
+            if (now >= this.nextMotionSampleMs) {
+               this.nextMotionSampleMs = now + 500L;
+               this.recentMotion.addLast(this.bodyJson(mc));
 
                while (this.recentMotion.size() > 120) {
                   this.recentMotion.removeFirst();
@@ -271,13 +271,13 @@ final class AiRunDiagnostics {
                snapshot.add("recentMotion", this.recentMotionJson());
             }
 
-            this.init(hurt ? "speedrun_damage_snapshot" : "speedrun_snapshot", snapshot);
+            this.emit(hurt ? "speedrun_damage_snapshot" : "speedrun_snapshot", snapshot);
             AiService service = AiService.getExistingInstance();
             if (service != null) {
                service.saveSpeedrunDiagnostics(snapshot);
             }
          } catch (RuntimeException failure) {
-            this.init("speedrun_diagnostic_error", AiJson.objectOf("message", init(failure.toString())));
+            this.emit("speedrun_diagnostic_error", AiJson.objectOf("message", truncate(failure.toString())));
          }
       }
    }
@@ -287,11 +287,11 @@ final class AiRunDiagnostics {
       try {
          snapshot = this.buildSnapshot(phase, message, true);
       } catch (RuntimeException failure) {
-         snapshot = AiJson.objectOf("diagnosticError", init(failure.toString()));
+         snapshot = AiJson.objectOf("diagnosticError", truncate(failure.toString()));
       }
 
       snapshot.addProperty("status", status);
-      this.init("speedrun_final_snapshot", snapshot);
+      this.emit("speedrun_final_snapshot", snapshot);
       AiService service = AiService.getExistingInstance();
       if (service != null) {
          service.saveSpeedrunDiagnostics(snapshot);
@@ -320,7 +320,7 @@ final class AiRunDiagnostics {
          "phase",
          phase,
          "message",
-         init(message),
+         truncate(message),
          "operations",
          operations,
          "navigation",
@@ -329,7 +329,7 @@ final class AiRunDiagnostics {
          AiRunResources.inventorySnapshotJson()
       );
       if (mc.player != null && mc.level != null) {
-         out.add("body", this.load(mc));
+         out.add("body", this.bodyJson(mc));
          BlockPos feet = mc.player.blockPosition();
          out.add(
             "terrain",
@@ -348,7 +348,7 @@ final class AiRunDiagnostics {
                AiServerEvidence.blockRevision(feet.below())
             )
          );
-         out.add("localTerrain", init(mc));
+         out.add("localTerrain", localTerrainJson(mc));
 
          for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
@@ -417,7 +417,7 @@ final class AiRunDiagnostics {
       return out;
    }
 
-   private static JsonObject init(Minecraft mc) {
+   private static JsonObject localTerrainJson(Minecraft mc) {
       BlockPos origin = mc.player.blockPosition();
       JsonArray cells = new JsonArray();
 
@@ -441,7 +441,7 @@ final class AiRunDiagnostics {
       return out;
    }
 
-   private JsonObject load(Minecraft mc) {
+   private JsonObject bodyJson(Minecraft mc) {
       LocalPlayer p = mc.player;
       Options keys = mc.options;
       Vec3 velocity = p.getDeltaMovement();
@@ -512,7 +512,7 @@ final class AiRunDiagnostics {
       );
    }
 
-   static String init(String value) {
+   static String truncate(String value) {
       return value.length() <= 12000 ? value : value.substring(0, 12000);
    }
 }

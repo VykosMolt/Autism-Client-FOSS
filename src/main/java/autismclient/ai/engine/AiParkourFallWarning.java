@@ -22,11 +22,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiParkourFallWarning {
-   private final Minecraft putAt_Minecraft;
+   private final Minecraft mc;
    private final autismclient.gui.screens.PromptDialogScreen putAt_RingBuffer;
 
    public AiParkourFallWarning(Minecraft var1, AiParkourFallWarning.Inner_DataUtil var2, Consumer<Boolean> var3, Runnable var4) {
-      this.putAt_Minecraft = var1;
+      this.mc = var1;
       ArrayList var5 = new ArrayList();
       var5.add(
          new autismclient.gui.screens.PromptDialogScreen.Inner_DataUtil(
@@ -79,7 +79,7 @@ public final class AiParkourFallWarning {
    }
 
    public boolean putAt_Z() {
-      return OverlayScreenController.openModalScreen(this.putAt_Minecraft, this.putAt_RingBuffer);
+      return OverlayScreenController.openModalScreen(this.mc, this.putAt_RingBuffer);
    }
 
    public void putAt_V() {

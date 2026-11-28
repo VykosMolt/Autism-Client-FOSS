@@ -146,29 +146,29 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    );
    private final Random random = new Random();
    private final autismclient.util.BoundedPositionCache<AutoFarmModule.Inner_StreamUtil> harvestedCells = new autismclient.util.BoundedPositionCache<>(4096);
-   private int start = -2147483648;
-   private int stop = -2147483648;
+   private int lastInteractTick = -2147483648;
+   private int miningStartTick = -2147483648;
    private boolean init_Z;
-   private int next = -2147483648;
-   private int prev = -1;
-   private int valid = -1;
-   private int size;
-   private int data = -2147483648;
-   private int value;
+   private int nextActionTick = -2147483648;
+   private int switchBackSlot = -1;
+   private int switchedToSlot = -1;
+   private int switchBackDelay;
+   private int lastSlotSwitchTick = -2147483648;
+   private int slotSwitchSettleTicks;
    private BlockPos walkGoal;
-   private int cache = -2147483648;
+   private int lastGoalSearchTick = -2147483648;
    private BlockPos rowEnd;
-   private int state = -2147483648;
+   private int rowEndTick = -2147483648;
    private BlockPos read_BlockPos;
    private int queue = -2147483648;
    private BlockPos targetCell;
    private autismclient.util.FarmActionScheduler.Inner_DataUtil targetKind;
-   private int buffer = -2147483648;
+   private int targetChangeTick = -2147483648;
    private final Long2IntOpenHashMap actedCells = new Long2IntOpenHashMap();
    private final Long2ObjectOpenHashMap<Block> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
    private BlockPos update_BlockPos;
    private autismclient.util.FarmActionScheduler.Inner_DataUtil load_aa_DataUtil;
-   private int entry;
+   private int sameTargetTicks;
    private BlockPos solvedCell;
    private autismclient.util.FarmActionScheduler.Inner_DataUtil solvedKind;
    private RotationMath.Rotation solvedRotation;
@@ -178,39 +178,39 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private BlockPos flush_BlockPos;
    private autismclient.util.FarmActionScheduler.Inner_DataUtil write_aa_DataUtil;
    private float write_F = 3.4028235E38F;
-   private int pool;
+   private int noProgressTicks;
    private final Long2IntOpenHashMap load_Long2IntOpenHashMa = new Long2IntOpenHashMap();
    private static final int index = 3;
    private RotationMath.Rotation lastRotation;
-   private int count = -2147483648;
-   private int flags = -2147483648;
+   private int lastRotationTick = -2147483648;
+   private int lastActionTick = -2147483648;
    private Axis rowAxis;
-   private int level = 1;
+   private int sweepSign = 1;
    private final int[] init_IArr = new int[1];
-   private int frame;
+   private int rowCropY;
    private ClientLevel trackedLevel;
    private String cropListRaw = "";
    private Set<Block> cropListCache = Set.of();
    private String status = "";
    private static int[] sphereOffsetCache = new int[0];
-   private static int block = -1;
+   private static int sphereOffsetRadius = -1;
    private String settingsKey;
-   private int chunk = -2147483648;
-   private int table;
+   private int searchRangeTick = -2147483648;
+   private int cachedSearchRange;
    private boolean load_Z;
    private static final int store = 3;
    private BlockPos repeatedCell;
-   private int drain;
-   private int fill = -2147483648;
+   private int repeatedCellCount;
+   private int grownOnlyCacheTick = -2147483648;
    private boolean grownOnlyCache;
    private final Map<IntegerProperty, Integer> maxAgeCache = new IdentityHashMap<>();
    private final Map<BlockState, Boolean> load_Map = new IdentityHashMap<>();
    private final autismclient.util.CellRetryLimiter<AutoFarmModule.Inner_DataUtil> retryLimiter = new autismclient.util.CellRetryLimiter<>();
-   private int mark = -2147483648;
-   private int scan = -2147483648;
+   private int toolScanTick = -2147483648;
+   private int wireRotationCacheTick = -2147483648;
    private RotationMath.Rotation wireRotationCache;
-   private int parse = -1;
-   private int bind = -1;
+   private int nearestHoeSlot = -1;
+   private int bestFortuneSlot = -1;
    private Item offhandItem;
    private final Map<Item, Integer> hotbarSlots = new HashMap<>();
    private Holder<Enchantment> fortune;
@@ -282,36 +282,36 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private void resetState() {
-      this.start = -2147483648;
-      this.mark = -2147483648;
-      this.scan = -2147483648;
+      this.lastInteractTick = -2147483648;
+      this.toolScanTick = -2147483648;
+      this.wireRotationCacheTick = -2147483648;
       this.wireRotationCache = null;
-      this.fill = -2147483648;
-      this.chunk = -2147483648;
+      this.grownOnlyCacheTick = -2147483648;
+      this.searchRangeTick = -2147483648;
       this.settingsKey = null;
       this.trackedLevel = null;
-      this.prev = -1;
-      this.valid = -1;
-      this.size = 0;
-      this.data = -2147483648;
+      this.switchBackSlot = -1;
+      this.switchedToSlot = -1;
+      this.switchBackDelay = 0;
+      this.lastSlotSwitchTick = -2147483648;
       this.harvestedCells.clear();
       this.retryLimiter.init();
       this.walkGoal = null;
-      this.cache = -2147483648;
+      this.lastGoalSearchTick = -2147483648;
       this.rowEnd = null;
-      this.state = -2147483648;
+      this.rowEndTick = -2147483648;
       this.read_BlockPos = null;
       this.queue = -2147483648;
       this.targetCell = null;
       this.targetKind = null;
-      this.buffer = -2147483648;
+      this.targetChangeTick = -2147483648;
       this.actedCells.clear();
       this.init_Long2ObjectOpenHas.clear();
       this.update_BlockPos = null;
       this.load_aa_DataUtil = null;
-      this.entry = 0;
+      this.sameTargetTicks = 0;
       this.repeatedCell = null;
-      this.drain = 0;
+      this.repeatedCellCount = 0;
       this.solvedCell = null;
       this.solvedKind = null;
       this.solvedRotation = null;
@@ -319,14 +319,14 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       this.flush_BlockPos = null;
       this.write_aa_DataUtil = null;
       this.write_F = 3.4028235E38F;
-      this.pool = 0;
+      this.noProgressTicks = 0;
       this.load_Long2IntOpenHashMa.clear();
       this.lastRotation = null;
-      this.count = -2147483648;
-      this.flags = -2147483648;
+      this.lastRotationTick = -2147483648;
+      this.lastActionTick = -2147483648;
       this.rowAxis = null;
-      this.level = 1;
-      this.next = -2147483648;
+      this.sweepSign = 1;
+      this.nextActionTick = -2147483648;
       this.searchActive = false;
       this.releaseMining();
       this.status = "";
@@ -365,29 +365,29 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          if (MC != null && MC.player != null && MC.level != null && MC.gameMode != null) {
             if (MC.level != this.trackedLevel) {
                this.trackedLevel = MC.level;
-               this.mark = -2147483648;
-               this.scan = -2147483648;
+               this.toolScanTick = -2147483648;
+               this.wireRotationCacheTick = -2147483648;
                this.wireRotationCache = null;
                this.settingsKey = null;
                this.harvestedCells.clear();
                this.retryLimiter.init();
                this.walkGoal = null;
                this.rowEnd = null;
-               this.state = -2147483648;
+               this.rowEndTick = -2147483648;
                this.read_BlockPos = null;
                this.queue = -2147483648;
-               this.cache = -2147483648;
+               this.lastGoalSearchTick = -2147483648;
                this.searchActive = false;
-               this.next = -2147483648;
+               this.nextActionTick = -2147483648;
                this.targetCell = null;
                this.rowAxis = null;
                this.actedCells.clear();
                this.init_Long2ObjectOpenHas.clear();
                this.update_BlockPos = null;
                this.load_aa_DataUtil = null;
-               this.entry = 0;
+               this.sameTargetTicks = 0;
                this.repeatedCell = null;
-               this.drain = 0;
+               this.repeatedCellCount = 0;
                this.solvedCell = null;
                this.solvedKind = null;
                this.solvedRotation = null;
@@ -395,10 +395,10 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                this.flush_BlockPos = null;
                this.write_aa_DataUtil = null;
                this.write_F = 3.4028235E38F;
-               this.pool = 0;
+               this.noProgressTicks = 0;
                this.load_Long2IntOpenHashMa.clear();
                this.lastRotation = null;
-               this.count = -2147483648;
+               this.lastRotationTick = -2147483648;
                GridWalkNavigator.reset();
                this.releaseMining();
             }
@@ -414,7 +414,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   this.status = this.missingItemReason();
                   this.releaseStaleMining();
                   this.update_BlockPos = null;
-                  this.entry = 0;
+                  this.sameTargetTicks = 0;
                   RotationMath.Rotation graceGoal = this.bool("movement") ? null : this.recentRotation();
                   if (this.bool("movement")) {
                      this.poll_V_2();
@@ -429,7 +429,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                      this.tickSwitchBack();
                   }
                } else {
-                  this.size = 0;
+                  this.switchBackDelay = 0;
                   boolean walkingThrough = this.bool("movement") && !this.load_Z && this.init_Z_RingBuffer_BufferH(target);
                   if (!walkingThrough) {
                      GridWalkNavigator.load();
@@ -438,13 +438,13 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   this.walkGoal = null;
                   RotationMath.Rotation acted = this.init_ce_DataUtil_RingBuffer_BufferH(target);
                   if (acted != null) {
-                     this.flags = AutismSessionState.getInstance().getClientTick();
+                     this.lastActionTick = AutismSessionState.getInstance().getClientTick();
                      this.update_BlockPos = null;
-                     this.entry = 0;
+                     this.sameTargetTicks = 0;
                      this.flush_BlockPos = null;
                      this.write_aa_DataUtil = null;
                      this.write_F = 3.4028235E38F;
-                     this.pool = 0;
+                     this.noProgressTicks = 0;
                      String var10001;
                      switch (target.kind()) {
                         case HARVEST:
@@ -462,21 +462,21 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
                      this.status = var10001;
                      this.lastRotation = acted;
-                     this.count = AutismSessionState.getInstance().getClientTick();
+                     this.lastRotationTick = AutismSessionState.getInstance().getClientTick();
                      this.requestRotation(acted, true);
                   } else {
                      this.status = "";
                      this.releaseStaleMining();
                      int tickNow = AutismSessionState.getInstance().getClientTick();
-                     int settleAge = tickNow - this.data;
-                     boolean deliberatePause = tickNow == this.start || settleAge >= 0 && settleAge <= this.value + 1 || tickNow < this.next;
+                     int settleAge = tickNow - this.lastSlotSwitchTick;
+                     boolean deliberatePause = tickNow == this.lastInteractTick || settleAge >= 0 && settleAge <= this.slotSwitchSettleTicks + 1 || tickNow < this.nextActionTick;
                      if (!deliberatePause) {
                         this.init_V_RingBuffer_BufferH_I(target, tickNow);
-                        this.load(target, tickNow);
+                        this.rotateTowardTarget(target, tickNow);
                      }
 
                      this.lastRotation = target.rotation();
-                     this.count = tickNow;
+                     this.lastRotationTick = tickNow;
                      this.requestRotation(target.rotation());
                   }
                }
@@ -513,8 +513,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          this.walkGoal = null;
          this.read_BlockPos = null;
          this.rowEnd = null;
-         this.state = -2147483648;
-         this.cache = -2147483648;
+         this.rowEndTick = -2147483648;
+         this.lastGoalSearchTick = -2147483648;
          this.queue = -2147483648;
          this.searchActive = false;
          this.targetCell = null;
@@ -523,7 +523,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          this.actedCells.clear();
          this.init_Long2ObjectOpenHas.clear();
          this.load_Long2IntOpenHashMa.clear();
-         this.fill = -2147483648;
+         this.grownOnlyCacheTick = -2147483648;
          this.load_Map.clear();
       }
    }
@@ -533,12 +533,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      int age = AutismSessionState.getInstance().getClientTick() - this.count;
+      int age = AutismSessionState.getInstance().getClientTick() - this.lastRotationTick;
       return age >= 0 && age <= 3 ? this.lastRotation : null;
    }
 
    private String missingItemReason() {
-      if (this.bool("till") && !this.pop()) {
+      if (this.bool("till") && !this.hasUsableHoe()) {
          return "No hoe";
       }
 
@@ -648,12 +648,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private int searchRange() {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick != this.chunk) {
-         this.chunk = tick;
-         this.table = this.integer("search-range");
+      if (tick != this.searchRangeTick) {
+         this.searchRangeTick = tick;
+         this.cachedSearchRange = this.integer("search-range");
       }
 
-      return this.table;
+      return this.cachedSearchRange;
    }
 
    private AutoFarmModule.Inner_BufferHelper findTarget() {
@@ -698,35 +698,35 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             if (crops.contains(block)) {
                if (this.passesGrownFilter(state)
                   && !this.init_Z_I(cx, cy, cz, tick)
-                  && !this.load(cx, cy, cz, tick)
+                  && !this.isRecentlySkipped(cx, cy, cz, tick)
                   && this.init_Z_BlockPos_MutableBl_2(cursor, cx, cy, cz, block)) {
-                  this.init(autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                  this.considerCandidate(autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                } else if (bonemealOffer
                   && !this.init_Z_I(cx, cy, cz, tick)
-                  && !this.load(cx, cy, cz, tick)
+                  && !this.isRecentlySkipped(cx, cy, cz, tick)
                   && this.isBonemealTarget(cursor.set(cx, cy, cz), state)) {
-                  this.init(autismclient.util.FarmActionScheduler.Inner_DataUtil.BONEMEAL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                  this.considerCandidate(autismclient.util.FarmActionScheduler.Inner_DataUtil.BONEMEAL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                }
             } else if ((wantReplant || wantPlant) && state.canBeReplaced()) {
-               if (!this.init_Z_I(cx, cy, cz, tick) && !this.load(cx, cy, cz, tick)) {
+               if (!this.init_Z_I(cx, cy, cz, tick) && !this.isRecentlySkipped(cx, cy, cz, tick)) {
                   BlockState below = MC.level.getBlockState(cursor.set(cx, cy - 1, cz));
-                  if (wantReplant && this.init(cx, cy, cz, below, crops, tick) != null) {
-                     this.init(autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT_RECENT, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                  if (wantReplant && this.replantSeedAt(cx, cy, cz, below, crops, tick) != null) {
+                     this.considerCandidate(autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT_RECENT, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                   }
 
                   if (wantPlant && this.init_RingBuffer_CachePo_I(cx, cy, cz, below, crops) != null) {
-                     this.init(
+                     this.considerCandidate(
                         autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances
                      );
                   }
                }
             } else if (this.bool("till")
-               && this.pop()
+               && this.hasUsableHoe()
                && TILLABLE.contains(block)
                && (block == Blocks.ROOTED_DIRT || MC.level.getBlockState(cursor.set(cx, cy + 1, cz)).isAir())
                && !this.init_Z_I(cx, cy, cz, tick)
-               && !this.load(cx, cy, cz, tick)) {
-               this.init(autismclient.util.FarmActionScheduler.Inner_DataUtil.TILL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+               && !this.isRecentlySkipped(cx, cy, cz, tick)) {
+               this.considerCandidate(autismclient.util.FarmActionScheduler.Inner_DataUtil.TILL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
             }
          }
       }
@@ -745,18 +745,18 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                break;
             }
 
-            this.read(cell, tick);
+            this.markSkipped(cell, tick);
          }
       }
 
       AutoFarmModule.Inner_BufferHelper previous = null;
-      int stickyAge = tick - this.buffer;
+      int stickyAge = tick - this.targetChangeTick;
       if (this.targetCell != null
          && stickyAge >= 0
          && stickyAge <= 8
          && distanceSqToCell(eye, this.targetCell.getX(), this.targetCell.getY(), this.targetCell.getZ()) <= cullSqr
          && !this.init_Z_I(this.targetCell.getX(), this.targetCell.getY(), this.targetCell.getZ(), tick)
-         && !this.load(this.targetCell.getX(), this.targetCell.getY(), this.targetCell.getZ(), tick)) {
+         && !this.isRecentlySkipped(this.targetCell.getX(), this.targetCell.getY(), this.targetCell.getZ(), tick)) {
          previous = this.targetForKind(this.targetCell, this.targetKind, crops, hoeSlot, tick);
          if (previous != null) {
             AutoFarmModule.Inner_BufferHelper rebuilt = previous;
@@ -782,12 +782,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       if (!chosen.cell().equals(this.targetCell) || chosen.kind() != this.targetKind) {
-         this.buffer = tick;
+         this.targetChangeTick = tick;
       }
 
       this.targetCell = chosen.cell();
       this.targetKind = chosen.kind();
-      this.state = -2147483648;
+      this.rowEndTick = -2147483648;
       if (chosen.kind() == autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST) {
          AutoFarmModule.Inner_BufferHelper solved = this.harvestTarget(chosen.cell());
          if (solved != null) {
@@ -894,20 +894,20 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private void init_V_BlockPos_I(BlockPos pos, int tick) {
       if (pos.equals(this.repeatedCell)) {
-         this.drain++;
+         this.repeatedCellCount++;
       } else {
          this.repeatedCell = pos;
-         this.drain = 1;
+         this.repeatedCellCount = 1;
       }
 
-      if (this.drain >= 3) {
-         this.load(pos, tick);
+      if (this.repeatedCellCount >= 3) {
+         this.markActed(pos, tick);
          this.repeatedCell = null;
-         this.drain = 0;
+         this.repeatedCellCount = 0;
       }
    }
 
-   private void load(BlockPos pos, int tick) {
+   private void markActed(BlockPos pos, int tick) {
       if (this.actedCells.size() >= 64) {
          this.actedCells.entrySet().removeIf(entry -> {
             int age = tick - entry.getValue();
@@ -937,31 +937,31 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          boolean arrived = Math.abs(RotationMath.angleDelta(wire.yaw(), goal.yaw())) <= 3.0F && Math.abs(wire.pitch() - goal.pitch()) <= 3.0F;
          if (!arrived) {
             this.update_BlockPos = null;
-            this.entry = 0;
+            this.sameTargetTicks = 0;
          } else {
             if (target.cell().equals(this.update_BlockPos) && target.kind() == this.load_aa_DataUtil) {
-               this.entry++;
+               this.sameTargetTicks++;
             } else {
                this.update_BlockPos = target.cell();
                this.load_aa_DataUtil = target.kind();
-               this.entry = 1;
+               this.sameTargetTicks = 1;
             }
 
-            if (this.entry >= this.actionCooldown(tick)) {
-               this.load(target.cell(), tick);
+            if (this.sameTargetTicks >= this.actionCooldown(tick)) {
+               this.markActed(target.cell(), tick);
                this.update_BlockPos = null;
-               this.entry = 0;
+               this.sameTargetTicks = 0;
             }
          }
       }
    }
 
    private int actionCooldown(int tick) {
-      int actionAge = tick - this.flags;
+      int actionAge = tick - this.lastActionTick;
       return actionAge >= 0 && actionAge <= 2 ? 2 : 6;
    }
 
-   private void load(AutoFarmModule.Inner_BufferHelper target, int tick) {
+   private void rotateTowardTarget(AutoFarmModule.Inner_BufferHelper target, int tick) {
       if (!this.rotationOwnedByOther()
          && !BedDefenderModule.init_Z_10()
          && !SurroundModule.init_Z_27()
@@ -976,29 +976,29 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             this.flush_BlockPos = target.cell();
             this.write_aa_DataUtil = target.kind();
             this.write_F = distance;
-            this.pool = 0;
+            this.noProgressTicks = 0;
          } else if (distance < this.write_F - 0.5F) {
             this.write_F = distance;
-            this.pool = 0;
+            this.noProgressTicks = 0;
          } else {
-            this.pool++;
+            this.noProgressTicks++;
          }
 
-         if (this.pool >= 20) {
-            this.read(target.cell(), tick);
+         if (this.noProgressTicks >= 20) {
+            this.markSkipped(target.cell(), tick);
             this.flush_BlockPos = null;
             this.write_aa_DataUtil = null;
             this.write_F = 3.4028235E38F;
-            this.pool = 0;
+            this.noProgressTicks = 0;
          }
       }
    }
 
-   private void read(BlockPos pos, int tick) {
+   private void markSkipped(BlockPos pos, int tick) {
       this.load_Long2IntOpenHashMa.put(pos.asLong(), tick);
    }
 
-   private boolean load(int x, int y, int z, int tick) {
+   private boolean isRecentlySkipped(int x, int y, int z, int tick) {
       long key = BlockPos.asLong(x, y, z);
       int stamp = this.load_Long2IntOpenHashMa.getOrDefault(key, -2147483648);
       if (stamp == -2147483648) {
@@ -1018,7 +1018,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return !autismclient.util.FarmCropCatalog.load(block) || MC.level.getBlockState(cursor.set(x, y - 1, z)).is(block);
    }
 
-   private void init(
+   private void considerCandidate(
       autismclient.util.FarmActionScheduler.Inner_DataUtil kind,
       int x,
       int y,
@@ -1059,21 +1059,21 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private RotationMath.Rotation wireRotation() {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick == this.scan && this.wireRotationCache != null) {
+      if (tick == this.wireRotationCacheTick && this.wireRotationCache != null) {
          return this.wireRotationCache;
       }
 
-      this.scan = tick;
+      this.wireRotationCacheTick = tick;
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       this.wireRotationCache = wire.initialized() ? new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch()) : RotationMath.ofPlayer(MC.player);
       return this.wireRotationCache;
    }
 
    private boolean passesGrownFilter(BlockState state) {
-      return !this.grownOnly() ? true : this.load(state);
+      return !this.grownOnly() ? true : this.isFullyGrown(state);
    }
 
-   private boolean load(BlockState state) {
+   private boolean isFullyGrown(BlockState state) {
       Boolean cached = this.load_Map.get(state);
       if (cached != null) {
          return cached;
@@ -1094,8 +1094,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private boolean grownOnly() {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick != this.fill) {
-         this.fill = tick;
+      if (tick != this.grownOnlyCacheTick) {
+         this.grownOnlyCacheTick = tick;
          this.grownOnlyCache = this.bool("grown-only");
       }
 
@@ -1129,7 +1129,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private AutoFarmModule.Inner_CachePool init_RingBuffer_CachePo_I(int x, int y, int z, BlockState below, Set<Block> crops) {
       AutoFarmModule.Inner_StreamUtil ownCell = this.harvestedCells.get(BlockPos.asLong(x, y, z));
       if (ownCell != null) {
-         return this.init_Z_RingBuffer_StreamU(ownCell) ? null : this.init(ownCell.block(), below, crops, x, y, z);
+         return this.init_Z_RingBuffer_StreamU(ownCell) ? null : this.replantSeedFor(ownCell.block(), below, crops, x, y, z);
       }
 
       Block preferred = null;
@@ -1150,11 +1150,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       if (preferred != null && bestDistance <= 4) {
-         return this.init(preferred, below, crops, x, y, z);
+         return this.replantSeedFor(preferred, below, crops, x, y, z);
       }
 
       for (Block crop : crops) {
-         AutoFarmModule.Inner_CachePool choice = this.init(crop, below, crops, x, y, z);
+         AutoFarmModule.Inner_CachePool choice = this.replantSeedFor(crop, below, crops, x, y, z);
          if (choice != null) {
             return choice;
          }
@@ -1163,7 +1163,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return null;
    }
 
-   private AutoFarmModule.Inner_CachePool init(Block crop, BlockState below, Set<Block> crops, int x, int y, int z) {
+   private AutoFarmModule.Inner_CachePool replantSeedFor(Block crop, BlockState below, Set<Block> crops, int x, int y, int z) {
       if (crops.contains(crop) && this.canPlantOn(crop, below, x, y, z)) {
          if (crop instanceof CropBlock && MC.level.getRawBrightness(new BlockPos(x, y, z), 0) < 8) {
             return null;
@@ -1201,9 +1201,9 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private AutoFarmModule.Inner_CachePool init(int x, int y, int z, BlockState below, Set<Block> crops, int tick) {
+   private AutoFarmModule.Inner_CachePool replantSeedAt(int x, int y, int z, BlockState below, Set<Block> crops, int tick) {
       AutoFarmModule.Inner_StreamUtil entry = this.harvestedCells.get(BlockPos.asLong(x, y, z));
-      return entry != null && !this.init_Z_RingBuffer_StreamU(entry) ? this.init(entry.block(), below, crops, x, y, z) : null;
+      return entry != null && !this.init_Z_RingBuffer_StreamU(entry) ? this.replantSeedFor(entry.block(), below, crops, x, y, z) : null;
    }
 
    private AutoFarmModule.Inner_BufferHelper harvestTarget(BlockPos cell) {
@@ -1231,7 +1231,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       Set<Block> crops = this.cropBlocks();
       BlockState below = MC.level.getBlockState(cell.below());
       AutoFarmModule.Inner_CachePool choice = recent
-         ? this.init(cell.getX(), cell.getY(), cell.getZ(), below, crops, tick)
+         ? this.replantSeedAt(cell.getX(), cell.getY(), cell.getZ(), below, crops, tick)
          : this.init_RingBuffer_CachePo_I(cell.getX(), cell.getY(), cell.getZ(), below, crops);
       if (choice == null) {
          return null;
@@ -1257,7 +1257,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private AutoFarmModule.Inner_BufferHelper tillTarget(BlockPos cell, int hoeSlot) {
-      Item hoe = hoeSlot >= 0 ? MC.player.getInventory().getItem(hoeSlot).getItem() : (this.push() ? MC.player.getOffhandItem().getItem() : null);
+      Item hoe = hoeSlot >= 0 ? MC.player.getInventory().getItem(hoeSlot).getItem() : (this.offhandHoeUsable() ? MC.player.getOffhandItem().getItem() : null);
       if (hoe == null) {
          return null;
       }
@@ -1288,11 +1288,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (!isPitchAllowed(goal.pitch())) {
          return null;
       } else {
-         return this.load(goal, eye) ? goal : null;
+         return this.rayHitsBonemealable(goal, eye) ? goal : null;
       }
    }
 
-   private boolean load(RotationMath.Rotation goal, Vec3 eye) {
+   private boolean rayHitsBonemealable(RotationMath.Rotation goal, Vec3 eye) {
       BlockHitResult ray = ScaffoldModule.raycast(eye, goal, this.reach(), MC.level, MC.player);
       return ray != null && this.isBonemealableCrop(ray.getBlockPos());
    }
@@ -1304,7 +1304,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private boolean isBonemealTarget(BlockPos pos, BlockState state) {
       Block block = state.getBlock();
-      return !autismclient.util.FarmCropCatalog.load(block) && !this.load(state)
+      return !autismclient.util.FarmCropCatalog.load(block) && !this.isFullyGrown(state)
          ? block instanceof BonemealableBlock b && Compat263.isValidBonemealTarget(b, MC.level, pos, state)
          : false;
    }
@@ -1470,7 +1470,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       int perp = axis == Axis.X ? pz : px;
       int sign;
       if (this.rowAxis == axis) {
-         sign = this.level;
+         sign = this.sweepSign;
       } else {
          sign = this.facingSign(axis);
          if (sign == 0) {
@@ -1478,28 +1478,28 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
       }
 
-      int end = this.init(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
+      int end = this.findRowEnd(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
       if (end == -2147483648 && this.rowAxis != axis) {
          sign = -sign;
-         end = this.init(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
+         end = this.findRowEnd(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
       }
 
       if (end == -2147483648) {
-         return this.init(cursor, along, perp, py, axis, sign, crops, eye);
+         return this.rowSweepRotation(cursor, along, perp, py, axis, sign, crops, eye);
       }
 
       if ((end - along) * sign <= 3) {
-         RotationMath.Rotation pivot = this.init(cursor, along, perp, py, axis, sign, crops, eye);
+         RotationMath.Rotation pivot = this.rowSweepRotation(cursor, along, perp, py, axis, sign, crops, eye);
          if (pivot != null) {
             return pivot;
          }
 
-         this.init(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
+         this.findRowEnd(cursor, along, perp, py, axis, sign, crops, this.init_IArr);
       }
 
       this.rowAxis = axis;
-      this.level = sign;
-      RotationMath.Rotation goal = this.init(along, perp, this.init_IArr[0], axis, sign, end, eye);
+      this.sweepSign = sign;
+      RotationMath.Rotation goal = this.rowAimRotation(along, perp, this.init_IArr[0], axis, sign, end, eye);
       if (goal != null && !this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
          goal = null;
       }
@@ -1511,7 +1511,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return goal;
    }
 
-   private RotationMath.Rotation init(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, Vec3 eye) {
+   private RotationMath.Rotation rowSweepRotation(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, Vec3 eye) {
       for (int offset = 1; offset <= 3; offset++) {
          for (int side = -1; side <= 1; side += 2) {
             int rowPerp = perp + side * offset;
@@ -1519,7 +1519,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             int anchorDist = 2147483647;
 
             for (int da = -2; da <= 2; da++) {
-               if (this.init(cursor, along + da, rowPerp, py, axis, crops) != -2147483648 && Math.abs(da) < anchorDist) {
+               if (this.cropYAt(cursor, along + da, rowPerp, py, axis, crops) != -2147483648 && Math.abs(da) < anchorDist) {
                   anchorDist = Math.abs(da);
                   anchor = along + da;
                }
@@ -1527,9 +1527,9 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
             if (anchor != -2147483648) {
                int newSign = -sign;
-               int end = this.init(cursor, anchor, rowPerp, py, axis, newSign, crops, this.init_IArr);
+               int end = this.findRowEnd(cursor, anchor, rowPerp, py, axis, newSign, crops, this.init_IArr);
                if (end != -2147483648) {
-                  RotationMath.Rotation goal = this.init(anchor, rowPerp, this.init_IArr[0], axis, newSign, end, eye);
+                  RotationMath.Rotation goal = this.rowAimRotation(anchor, rowPerp, this.init_IArr[0], axis, newSign, end, eye);
                   if (goal != null && !this.init_Z_ce_DataUtil_Vec3(goal, eye)) {
                      goal = null;
                   }
@@ -1539,7 +1539,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   }
 
                   this.rowAxis = axis;
-                  this.level = newSign;
+                  this.sweepSign = newSign;
                   this.markRowEnd(end, rowPerp, axis);
                   return goal;
                }
@@ -1551,25 +1551,25 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private void markRowEnd(int end, int perp, Axis axis) {
-      this.rowEnd = axis == Axis.X ? new BlockPos(end, this.frame, perp) : new BlockPos(perp, this.frame, end);
-      this.state = AutismSessionState.getInstance().getClientTick();
+      this.rowEnd = axis == Axis.X ? new BlockPos(end, this.rowCropY, perp) : new BlockPos(perp, this.rowCropY, end);
+      this.rowEndTick = AutismSessionState.getInstance().getClientTick();
    }
 
-   private int init(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, int[] nextY) {
+   private int findRowEnd(MutableBlockPos cursor, int along, int perp, int py, Axis axis, int sign, Set<Block> crops, int[] nextY) {
       int end = -2147483648;
       int gap = 0;
       boolean gapAllWater = true;
 
       for (int step = 1; step <= 8; step++) {
          int a = along + sign * step;
-         int cropY = this.init(cursor, a, perp, py, axis, crops);
+         int cropY = this.cropYAt(cursor, a, perp, py, axis, crops);
          if (cropY != -2147483648) {
             if (end == -2147483648) {
                nextY[0] = cropY;
             }
 
             end = a;
-            this.frame = cropY;
+            this.rowCropY = cropY;
             gap = 0;
             gapAllWater = true;
          } else {
@@ -1583,7 +1583,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return end;
    }
 
-   private int init(MutableBlockPos cursor, int a, int perp, int py, Axis axis, Set<Block> crops) {
+   private int cropYAt(MutableBlockPos cursor, int a, int perp, int py, Axis axis, Set<Block> crops) {
       for (int dy = -1; dy <= 1; dy++) {
          if (crops.contains(MC.level.getBlockState(setAlongAxis(cursor, a, perp, py + dy, axis)).getBlock())) {
             return py + dy;
@@ -1608,7 +1608,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return axis == Axis.X ? cursor.set(a, y, perp) : cursor.set(perp, y, a);
    }
 
-   private RotationMath.Rotation init(int along, int perp, int y, Axis axis, int sign, int end, Vec3 eye) {
+   private RotationMath.Rotation rowAimRotation(int along, int perp, int y, Axis axis, int sign, int end, Vec3 eye) {
       double goal = along + sign * 1.75;
       goal = sign > 0 ? Math.min(goal, end + 1.0) : Math.max(goal, end - 1.0);
       Vec3 point = axis == Axis.X ? new Vec3(goal + 0.5, y + 0.5, perp + 0.5) : new Vec3(perp + 0.5, y + 0.5, goal + 0.5);
@@ -1699,7 +1699,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private RotationMath.Rotation init_ce_DataUtil_RingBuffer_BufferH(AutoFarmModule.Inner_BufferHelper target) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick == this.start) {
+      if (tick == this.lastInteractTick) {
          return null;
       }
 
@@ -1723,12 +1723,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      int switchAge = tick - this.data;
-      if (switchAge >= 0 && switchAge <= this.value) {
+      int switchAge = tick - this.lastSlotSwitchTick;
+      if (switchAge >= 0 && switchAge <= this.slotSwitchSettleTicks) {
          return null;
       }
 
-      if (tick < this.next) {
+      if (tick < this.nextActionTick) {
          return null;
       }
 
@@ -1762,14 +1762,14 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             var10000 = this.init_ce_DataUtil_RingBuffer_BufferH(target, ray, wireRotation, tick);
             break;
          case BONEMEAL:
-            var10000 = this.write(target, ray, wireRotation, tick);
+            var10000 = this.bonemealRotation(target, ray, wireRotation, tick);
             break;
          case TILL:
-            var10000 = this.read(target, ray, wireRotation, tick);
+            var10000 = this.tillRotation(target, ray, wireRotation, tick);
             break;
          case REPLANT_RECENT:
          case REPLANT:
-            var10000 = this.load(target, ray, wireRotation, tick);
+            var10000 = this.replantRotation(target, ray, wireRotation, tick);
             break;
          default:
             throw new MatchException(null, null);
@@ -1808,7 +1808,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
 
          this.init_V_I_6(tick);
-         this.stop = tick;
+         this.miningStartTick = tick;
          this.init_Z = true;
          this.init_V_BlockPos_2(cell, state.getBlock(), tick);
          return wireRotation;
@@ -1817,12 +1817,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Rotation load(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
+   private RotationMath.Rotation replantRotation(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
       boolean offhand = this.init_Z_Item_BlockHitResult(target.item(), ray);
       InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
       if (!offhand && target.slot() < 0) {
          if (MC.player.getOffhandItem().is(target.item()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
-            this.write(ray);
+            this.switchToHarvestTool(ray);
          }
 
          return null;
@@ -1846,7 +1846,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
          BlockState below = MC.level.getBlockState(cell.below());
          AutoFarmModule.Inner_CachePool actualChoice = this.bool("replant")
-            ? this.init(cell.getX(), cell.getY(), cell.getZ(), below, this.cropBlocks(), tick)
+            ? this.replantSeedAt(cell.getX(), cell.getY(), cell.getZ(), below, this.cropBlocks(), tick)
             : null;
          if (actualChoice == null && this.bool("plant")) {
             actualChoice = this.init_RingBuffer_CachePo_I(cell.getX(), cell.getY(), cell.getZ(), below, this.cropBlocks());
@@ -1892,7 +1892,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                }
 
                this.init_V_I_6(tick);
-               this.stop = tick;
+               this.miningStartTick = tick;
                this.init_Z = false;
                return wireRotation;
             } else {
@@ -1967,18 +1967,18 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             || item instanceof FoodOnAStickItem) {
             return true;
          } else if (Compat263.isHoe(item)) {
-            return this.load(ray);
+            return this.hoeCanUse(ray);
          } else if (Compat263.isAxe(item)) {
             return this.read_Z(ray.getBlockPos());
          } else if (Compat263.isShovel(item)) {
-            return this.read(ray);
+            return this.shovelCanUse(ray);
          } else {
-            return item instanceof ShearsItem ? this.write(ray.getBlockPos()) : item.getClass() != Item.class && !(item instanceof MaceItem);
+            return item instanceof ShearsItem ? this.shearsCanUse(ray.getBlockPos()) : item.getClass() != Item.class && !(item instanceof MaceItem);
          }
       }
    }
 
-   private boolean load(BlockHitResult ray) {
+   private boolean hoeCanUse(BlockHitResult ray) {
       return !this.isTillable(ray.getBlockPos()) ? false : MC.level.getBlockState(ray.getBlockPos()).is(Blocks.ROOTED_DIRT) || ray.getDirection() != Direction.DOWN;
    }
 
@@ -1989,7 +1989,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          || HoneycombItem.WAX_OFF_BY_BLOCK.get().containsKey(state.getBlock());
    }
 
-   private boolean read(BlockHitResult ray) {
+   private boolean shovelCanUse(BlockHitResult ray) {
       if (ray.getDirection() == Direction.DOWN) {
          return false;
       }
@@ -2001,7 +2001,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          : load_Set.contains(state.getBlock()) && MC.level.getBlockState(pos.above()).isAir();
    }
 
-   private boolean write(BlockPos pos) {
+   private boolean shearsCanUse(BlockPos pos) {
       BlockState state = MC.level.getBlockState(pos);
       Block block = state.getBlock();
       if (block instanceof PumpkinBlock) {
@@ -2013,7 +2013,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean write(BlockHitResult ray) {
+   private boolean switchToHarvestTool(BlockHitResult ray) {
       int selected = MC.player.getInventory().getSelectedSlot();
       int fortune = this.bool("fortune") ? this.fortuneSlot() : -1;
       if (fortune >= 0 && fortune != selected && !this.init_Z_ItemStack_BlockHitResult(MC.player.getInventory().getItem(fortune), ray)) {
@@ -2021,7 +2021,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
             return false;
          }
 
-         this.valid = fortune;
+         this.switchedToSlot = fortune;
          return true;
       } else {
          for (int slot = 0; slot < 9; slot++) {
@@ -2032,7 +2032,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   return false;
                }
 
-               this.valid = slot;
+               this.switchedToSlot = slot;
                return true;
             }
          }
@@ -2041,8 +2041,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private RotationMath.Rotation read(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
-      if (!this.load(ray)) {
+   private RotationMath.Rotation tillRotation(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
+      if (!this.hoeCanUse(ray)) {
          return null;
       }
 
@@ -2051,8 +2051,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
       if (!offhand) {
          if (target.slot() < 0) {
-            if (this.push()) {
-               this.write(ray);
+            if (this.offhandHoeUsable()) {
+               this.switchToHarvestTool(ray);
             }
 
             return null;
@@ -2093,12 +2093,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       this.init_V_I_6(tick);
-      this.stop = tick;
+      this.miningStartTick = tick;
       this.init_Z = false;
       return wireRotation;
    }
 
-   private RotationMath.Rotation write(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
+   private RotationMath.Rotation bonemealRotation(AutoFarmModule.Inner_BufferHelper target, BlockHitResult ray, RotationMath.Rotation wireRotation, int tick) {
       if (!this.isBonemealableCrop(ray.getBlockPos())) {
          return null;
       }
@@ -2108,7 +2108,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (!offhand) {
          if (target.slot() < 0) {
             if (MC.player.getOffhandItem().is(Items.BONE_MEAL) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
-               this.write(ray);
+               this.switchToHarvestTool(ray);
             }
 
             return null;
@@ -2149,7 +2149,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       this.init_V_I_6(tick);
-      this.stop = tick;
+      this.miningStartTick = tick;
       this.init_Z = false;
       return wireRotation;
    }
@@ -2160,7 +2160,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private void init_V_I_6(int tick) {
-      this.start = tick;
+      this.lastInteractTick = tick;
    }
 
    private void init_V_Z_3(boolean attack) {
@@ -2171,11 +2171,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private void releaseMining() {
       autismclient.util.SilentMiningCoordinator.release(this.id());
-      this.stop = -2147483648;
+      this.miningStartTick = -2147483648;
    }
 
    private void releaseStaleMining() {
-      if (this.stop != AutismSessionState.getInstance().getClientTick()) {
+      if (this.miningStartTick != AutismSessionState.getInstance().getClientTick()) {
          this.releaseMining();
       }
    }
@@ -2210,11 +2210,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   BlockState state = MC.level.getBlockState(pos);
                   if (state.is(entry.block())) {
                      AiServerEvidence.Inner_DataUtil update = AiServerEvidence.lastBlockUpdate(pos);
-                     return !this.load(state)
+                     return !this.isFullyGrown(state)
                         && update != null
                         && update.revision() > entry.revision()
                         && update.state().is(entry.block())
-                        && !this.load(update.state());
+                        && !this.isFullyGrown(update.state());
                   }
 
                   if (!state.canBeReplaced()) {
@@ -2247,8 +2247,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return true;
       }
 
-      this.load(cell, tick);
-      this.load(target.cell(), tick);
+      this.markActed(cell, tick);
+      this.markActed(target.cell(), tick);
       this.releaseMining();
       return false;
    }
@@ -2282,9 +2282,9 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private boolean poll_Z_2() {
-      if (this.stop != -2147483648 && autismclient.util.SilentMiningCoordinator.isOwner(this.id())) {
+      if (this.miningStartTick != -2147483648 && autismclient.util.SilentMiningCoordinator.isOwner(this.id())) {
          int tick = AutismSessionState.getInstance().getClientTick();
-         int age = tick - this.stop;
+         int age = tick - this.miningStartTick;
          return age >= 0 && age <= 1;
       } else {
          return false;
@@ -2310,7 +2310,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return false;
       }
 
-      this.valid = slot;
+      this.switchedToSlot = slot;
       return false;
    }
 
@@ -2324,7 +2324,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick == this.data) {
+      if (tick == this.lastSlotSwitchTick) {
          return false;
       }
 
@@ -2333,8 +2333,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       try {
-         if (this.prev < 0) {
-            this.prev = selected;
+         if (this.switchBackSlot < 0) {
+            this.switchBackSlot = selected;
          }
 
          if (slot < 0 || slot >= MC.options.keyHotbarSlots.length || autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, this.id())) {
@@ -2349,8 +2349,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
       }
 
-      this.data = tick;
-      this.value = this.random.nextInt(3);
+      this.lastSlotSwitchTick = tick;
+      this.slotSwitchSettleTicks = this.random.nextInt(3);
       return true;
    }
 
@@ -2361,10 +2361,10 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private void scanHotbar() {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick != this.mark) {
-         this.mark = tick;
-         this.parse = -1;
-         this.bind = -1;
+      if (tick != this.toolScanTick) {
+         this.toolScanTick = tick;
+         this.nearestHoeSlot = -1;
+         this.bestFortuneSlot = -1;
          this.hotbarSlots.clear();
          int selected = MC.player.getInventory().getSelectedSlot();
          int bestFortuneDistance = 2147483647;
@@ -2380,12 +2380,12 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                         stack.getItem(), slot, (oldSlot, newSlot) -> (Integer)(Math.abs(newSlot - selected) < Math.abs(oldSlot - selected) ? newSlot : oldSlot)
                      );
                   boolean hoe = isHoe(stack);
-                  if (hoe && (this.parse < 0 || distance < Math.abs(this.parse - selected))) {
-                     this.parse = slot;
+                  if (hoe && (this.nearestHoeSlot < 0 || distance < Math.abs(this.nearestHoeSlot - selected))) {
+                     this.nearestHoeSlot = slot;
                   }
 
-                  if (this.fortuneLevel(stack) > 0 && (this.bind < 0 || hoe && !bestFortuneHoe || hoe == bestFortuneHoe && distance < bestFortuneDistance)) {
-                     this.bind = slot;
+                  if (this.fortuneLevel(stack) > 0 && (this.bestFortuneSlot < 0 || hoe && !bestFortuneHoe || hoe == bestFortuneHoe && distance < bestFortuneDistance)) {
+                     this.bestFortuneSlot = slot;
                      bestFortuneHoe = hoe;
                      bestFortuneDistance = distance;
                   }
@@ -2407,17 +2407,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return MC.player.getOffhandItem().is(item) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) && !this.init_Z_BlockHitResult(ray);
    }
 
-   private boolean push() {
+   private boolean offhandHoeUsable() {
       return !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) && isHoe(MC.player.getOffhandItem());
    }
 
-   private boolean pop() {
-      return this.load_I_6() >= 0 || this.push();
+   private boolean hasUsableHoe() {
+      return this.load_I_6() >= 0 || this.offhandHoeUsable();
    }
 
    private int load_I_6() {
       this.scanHotbar();
-      return this.parse;
+      return this.nearestHoeSlot;
    }
 
    private int boneMealSlot() {
@@ -2430,7 +2430,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private int fortuneSlot() {
       this.scanHotbar();
-      return this.bind;
+      return this.bestFortuneSlot;
    }
 
    private static boolean isHoe(ItemStack stack) {
@@ -2455,29 +2455,29 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private void scheduleSwitchBack() {
-      if (this.prev >= 0 && this.size <= 0) {
-         this.size = 2 + this.random.nextInt(3);
+      if (this.switchBackSlot >= 0 && this.switchBackDelay <= 0) {
+         this.switchBackDelay = 2 + this.random.nextInt(3);
       }
    }
 
    private void tickSwitchBack() {
-      if (this.prev >= 0) {
+      if (this.switchBackSlot >= 0) {
          if (!this.bool("switch-back")) {
-            this.prev = -1;
-            this.valid = -1;
-            this.size = 0;
+            this.switchBackSlot = -1;
+            this.switchedToSlot = -1;
+            this.switchBackDelay = 0;
          } else if (MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null) {
-            if (this.valid >= 0 && MC.player.getInventory().getSelectedSlot() != this.valid) {
-               this.prev = -1;
-               this.valid = -1;
-               this.size = 0;
-            } else if (this.size > 0 && --this.size <= 0) {
-               if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.prev, this.id()) && this.init_Z_I_I_2(this.prev, MC.player.getInventory().getSelectedSlot())) {
-                  this.value = 0;
-                  this.prev = -1;
-                  this.valid = -1;
+            if (this.switchedToSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.switchedToSlot) {
+               this.switchBackSlot = -1;
+               this.switchedToSlot = -1;
+               this.switchBackDelay = 0;
+            } else if (this.switchBackDelay > 0 && --this.switchBackDelay <= 0) {
+               if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.switchBackSlot, this.id()) && this.init_Z_I_I_2(this.switchBackSlot, MC.player.getInventory().getSelectedSlot())) {
+                  this.slotSwitchSettleTicks = 0;
+                  this.switchBackSlot = -1;
+                  this.switchedToSlot = -1;
                } else {
-                  this.size = 1;
+                  this.switchBackDelay = 1;
                }
             }
          }
@@ -2490,13 +2490,13 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (goal != null && (GridWalkNavigator.write(goal) || this.actionFor(goal, tick) == null)) {
          goal = null;
          this.walkGoal = null;
-         this.cache = tick - 20;
+         this.lastGoalSearchTick = tick - 20;
       }
 
-      if (goal == null && (this.cache == -2147483648 || tick - this.cache >= 20)) {
+      if (goal == null && (this.lastGoalSearchTick == -2147483648 || tick - this.lastGoalSearchTick >= 20)) {
          goal = this.searchGoal();
-         if (!this.run()) {
-            this.cache = tick;
+         if (!this.isSearchActive()) {
+            this.lastGoalSearchTick = tick;
          }
 
          this.walkGoal = goal;
@@ -2509,14 +2509,14 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          if (GridWalkNavigator.load(goal)) {
             this.walkGoal = null;
             GridWalkNavigator.load();
-            this.next = tick + 2 + this.random.nextInt(3);
-            this.cache = tick - 20;
+            this.nextActionTick = tick + 2 + this.random.nextInt(3);
+            this.lastGoalSearchTick = tick - 20;
             this.requestRotation(null);
          } else {
             GridWalkNavigator.load();
             GridWalkNavigator.init_V_BlockPos_I(goal, 200);
             this.walkGoal = null;
-            this.cache = tick - 20;
+            this.lastGoalSearchTick = tick - 20;
             this.requestRotation(null);
          }
       } else {
@@ -2534,7 +2534,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (goal == null) {
          return false;
       } else if (GridWalkNavigator.read(goal)) {
-         this.cache = tick - 20;
+         this.lastGoalSearchTick = tick - 20;
          return true;
       } else {
          this.read_BlockPos = null;
@@ -2551,7 +2551,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private BlockPos init_BlockPos_RingBuffer_BufferH(AutoFarmModule.Inner_BufferHelper target, Vec3 eye, double reachSqr, int tick) {
-      if (target.kind() == autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST && this.state == tick && this.rowEnd != null) {
+      if (target.kind() == autismclient.util.FarmActionScheduler.Inner_DataUtil.HARVEST && this.rowEndTick == tick && this.rowEnd != null) {
          return distanceSqToCell(eye, this.rowEnd.getX(), this.rowEnd.getY(), this.rowEnd.getZ()) > reachSqr
                && !GridWalkNavigator.write(this.rowEnd)
                && this.actionFor(this.rowEnd, tick) != null
@@ -2569,7 +2569,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       if (goal == null && (this.queue == -2147483648 || tick - this.queue >= 20)) {
          goal = this.searchGoal(reachSqr, 90.0F, Math.min(12, this.searchRange()));
-         if (!this.run()) {
+         if (!this.isSearchActive()) {
             this.queue = tick;
          }
 
@@ -2587,9 +2587,9 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
       boolean wantReplant = this.bool("replant");
       boolean wantPlant = this.bool("plant");
-      boolean wantTill = this.bool("till") && this.pop();
+      boolean wantTill = this.bool("till") && this.hasUsableHoe();
       boolean wantBonemeal = this.bool("bonemeal") && this.hasBoneMeal();
-      return this.init(
+      return this.actionAt(
          new MutableBlockPos(goal.getX(), goal.getY(), goal.getZ()),
          goal.getX(),
          goal.getY(),
@@ -2607,7 +2607,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return this.searchGoal(0.0, 360.0F, this.searchRange());
    }
 
-   private boolean run() {
+   private boolean isSearchActive() {
       return this.searchActive;
    }
 
@@ -2657,7 +2657,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       int tick = AutismSessionState.getInstance().getClientTick();
       boolean wantReplant = this.bool("replant");
       boolean wantPlant = this.bool("plant");
-      boolean wantTill = this.bool("till") && this.pop();
+      boolean wantTill = this.bool("till") && this.hasUsableHoe();
       boolean wantBonemeal = this.bool("bonemeal") && this.hasBoneMeal();
       MutableBlockPos cursor = new MutableBlockPos();
       int budget = 8000;
@@ -2729,7 +2729,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                      cursor.set(cx, cy, cz);
                      if (MC.level.hasChunkAt(cursor)
                         && !GridWalkNavigator.write(cursor)
-                        && this.init(cursor, cx, cy, cz, crops, tick, wantReplant, wantPlant, wantTill, wantBonemeal) != null
+                        && this.actionAt(cursor, cx, cy, cz, crops, tick, wantReplant, wantPlant, wantTill, wantBonemeal) != null
                         && (!(this.searchMinDistSqr > 0.0) || !(distanceSqToCell(this.searchEye, cx, cy, cz) <= this.searchMinDistSqr))) {
                         float correction = Math.abs(RotationMath.angleDelta(this.searchYaw, yawToCell(this.searchPlayerX, this.searchPlayerZ, cx, cz)));
                         if (!(correction > this.searchMaxCorrection)) {
@@ -2799,7 +2799,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       return (float)(Math.toDegrees(Math.atan2(z + 0.5 - pz, x + 0.5 - px)) - 90.0);
    }
 
-   private autismclient.util.FarmActionScheduler.Inner_DataUtil init(
+   private autismclient.util.FarmActionScheduler.Inner_DataUtil actionAt(
       MutableBlockPos cursor,
       int cx,
       int cy,
@@ -2821,7 +2821,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
       } else if ((wantReplant || wantPlant) && state.canBeReplaced()) {
          BlockState below = MC.level.getBlockState(cursor.set(cx, cy - 1, cz));
-         if (wantReplant && this.init(cx, cy, cz, below, crops, tick) != null) {
+         if (wantReplant && this.replantSeedAt(cx, cy, cz, below, crops, tick) != null) {
             return autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT_RECENT;
          } else {
             return wantPlant && this.init_RingBuffer_CachePo_I(cx, cy, cz, below, crops) != null ? autismclient.util.FarmActionScheduler.Inner_DataUtil.REPLANT : null;
@@ -2842,7 +2842,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private static int[] sphereOffsets(int radius) {
       int clamped = Mth.clamp(radius, 0, 8);
-      if (clamped == block) {
+      if (clamped == sphereOffsetRadius) {
          return sphereOffsetCache;
       }
 
@@ -2869,7 +2869,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          flat[i * 3 + 2] = cell[2];
       }
 
-      block = clamped;
+      sphereOffsetRadius = clamped;
       sphereOffsetCache = flat;
       return flat;
    }

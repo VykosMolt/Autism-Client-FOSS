@@ -97,46 +97,46 @@ public final class ModulesMenuController {
    private static final Map<String, int[]> load_Map = new HashMap<>();
    private static final Map<String, Boolean> read_Map = new HashMap<>();
    private static String selectedCategoryKey = null;
-   private static int tick = -1;
-   private static int run = -1;
+   private static int savedPanelX = -1;
+   private static int savedPanelY = -1;
    private final ModulesMenuController.Inner_BufferHelper host;
    private final ModuleSettingsView settingsView;
    private final List<ModulesMenuController.Inner_StreamUtil> hits = new ArrayList<>();
    private final Deque<NetHelper> init_Deque = new ArrayDeque<>();
    private final Map<String, Float> write_Map = new HashMap<>();
-   private int get;
-   private int set;
+   private int panelX;
+   private int panelY;
    private boolean positionInitialized;
    private final EaseOutAnimator panelHeightAnimation = new EaseOutAnimator(0.0F, 180);
-   private int put = 17;
-   private int add = 90;
-   private int clear = 14;
-   private int reset = 15;
-   private int start = 13;
-   private int stop;
-   private int next;
+   private int headerHeight = 17;
+   private int railPixelWidth = 90;
+   private int railItemHeight = 14;
+   private int rowHeight = 15;
+   private int settingsRowHeight = 13;
+   private int screenWidth;
+   private int screenHeight;
    private boolean headerPressed;
-   private int prev;
-   private int valid;
+   private int pressX;
+   private int pressY;
    private boolean headerDragged;
    private boolean panelCollapsed;
    private boolean update_Z;
    private final Map<String, EaseOutAnimator> collapseAnimations = new HashMap<>();
    private final EaseOutAnimator load_RingBuffer = new EaseOutAnimator(0.0F, 180);
    private boolean sync_Z;
-   private int size;
-   private int data;
+   private int dragOffsetX;
+   private int dragOffsetY;
    private String close_Str;
    private String open_Str;
-   private int value;
-   private int cache;
-   private int state;
+   private int unusedResizePressX;
+   private int resizePressY;
+   private int resizeStartRows;
    private String lastClickedId;
    private long lastClickTime;
    private final Map<String, NetHelper> sync_Map = new HashMap<>();
-   private int queue = -1;
-   private int buffer;
-   private int entry;
+   private int mainMenuWidth = -1;
+   private int classicGridWidth;
+   private int classicMaxBodyHeight;
    private long openedAtNanos;
    private long lastFrameNanos;
    private Module settingsModule;
@@ -162,9 +162,9 @@ public final class ModulesMenuController {
    private MacroPickerPopup macroPicker;
    private Module sliderModule;
    private Setting<?, ?> sliderSetting;
-   private int node = -1;
+   private int activeRangeHandle = -1;
    private String pop_Str;
-   private int task;
+   private int scrollbarGrabOffset;
    String tooltipText;
    private final Map<String, ScrollbarRenderer.ScrollbarBounds> scrollbarBounds = new HashMap<>();
    private Map<String, Integer> savedVisibleRows;
@@ -179,9 +179,9 @@ public final class ModulesMenuController {
 
    public void restoreState() {
       AutismConfig config = AutismConfig.getGlobal();
-      if (tick < 0 && config.menuV2X >= 0) {
-         tick = config.menuV2X;
-         run = config.menuV2Y;
+      if (savedPanelX < 0 && config.menuV2X >= 0) {
+         savedPanelX = config.menuV2X;
+         savedPanelY = config.menuV2Y;
       }
 
       if (selectedCategoryKey == null) {
@@ -209,7 +209,7 @@ public final class ModulesMenuController {
    public void onClose() {
       this.endTextEdit(true);
       if (this.searchEdit != null) {
-         this.poll();
+         this.commitSearchEdit();
       }
 
       if (this.sliderModule != null) {
@@ -223,8 +223,8 @@ public final class ModulesMenuController {
       this.open_Str = null;
       this.pop_Str = null;
       this.update_Z = true;
-      this.push();
-      this.pop();
+      this.closeDropdown();
+      this.closeColorPicker();
       this.closeMacroPicker();
    }
 
@@ -241,18 +241,18 @@ public final class ModulesMenuController {
 
    public void openCategory(String categoryKeyOrLabel) {
       if ("profiles".equalsIgnoreCase(categoryKeyOrLabel)) {
-         this.open("\u0000profiles");
+         this.selectCategory("\u0000profiles");
       } else {
          if (categoryKeyOrLabel != null) {
             for (ae category : ae.init_List()) {
                if (category.init_Str().equalsIgnoreCase(categoryKeyOrLabel) || category.load().equalsIgnoreCase(categoryKeyOrLabel)) {
-                  this.open(category.init_Str());
+                  this.selectCategory(category.init_Str());
                   return;
                }
             }
          }
 
-         this.open("\u0000general");
+         this.selectCategory("\u0000general");
       }
    }
 
@@ -286,7 +286,7 @@ public final class ModulesMenuController {
    }
 
    public void setSearchQuery(String query) {
-      this.update(query);
+      this.applySearchQuery(query);
    }
 
    public void write_V() {
@@ -430,8 +430,8 @@ public final class ModulesMenuController {
       long now = System.nanoTime();
       float frameSeconds = Math.min(0.1F, (float)(now - this.lastFrameNanos) / 1.0E9F);
       this.lastFrameNanos = now;
-      this.stop = width;
-      this.next = height;
+      this.screenWidth = width;
+      this.screenHeight = height;
       this.tooltipText = null;
       this.hits.clear();
       this.init_Deque.clear();
@@ -439,10 +439,10 @@ public final class ModulesMenuController {
       SyncManager context = this.hasPopup() ? popupContext.load_SyncManager() : popupContext;
       this.contentArea = null;
       UiTheme theme = context.init_TableIndex();
-      this.put = UiDensityMetrics.scaledHeight(14) + 3;
-      this.clear = UiDensityMetrics.scaledHeight(14);
-      this.reset = UiDensityMetrics.scaledHeight(14) + 1;
-      this.start = UiDensityMetrics.scaledHeight(13);
+      this.headerHeight = UiDensityMetrics.scaledHeight(14) + 3;
+      this.railItemHeight = UiDensityMetrics.scaledHeight(14);
+      this.rowHeight = UiDensityMetrics.scaledHeight(14) + 1;
+      this.settingsRowHeight = UiDensityMetrics.scaledHeight(13);
       this.settingsView.setClassic(this.isClassicStyle());
       float settingsProgress = this.settingsModule != null && !this.sync_Z ? 1.0F : 0.0F;
       if (this.sync_Z && settingsProgress <= 0.001F) {
@@ -459,10 +459,10 @@ public final class ModulesMenuController {
             this.profilesView = new autismclient.gui.profiles.ProfilesLibraryView(this.host.font());
          }
 
-         this.add = Math.min(this.railWidth(context), Math.max(45, width / 3));
+         this.railPixelWidth = Math.min(this.railWidth(context), Math.max(45, width / 3));
          int contentW = scaled(344 + (this.settingsModule instanceof CrosshairModule ? 140 : 0));
-         int w = Math.min(this.add + 1 + contentW + 2, Math.max(160, width - 8));
-         int contentWidth = w - this.add - 3;
+         int w = Math.min(this.railPixelWidth + 1 + contentW + 2, Math.max(160, width - 8));
+         int contentWidth = w - this.railPixelWidth - 3;
          List<Module> modules = this.settingsModule == null && this.profilesView == null && !this.isGeneralHome() ? this.visibleModules() : List.of();
          int naturalHeight = this.settingsModule != null
             ? this.settingsView.contentHeight(this.settingsModule)
@@ -471,40 +471,40 @@ public final class ModulesMenuController {
                   ? this.profilesView.init(contentWidth)
                   : (this.isGeneralHome() ? this.generalContentHeight(contentWidth) : this.gridContentHeight(modules.size(), gridColumns(contentWidth)))
             );
-         int expandedH = Math.min(Math.min(290, Math.max(1, height - 8)), this.put + Math.max(this.railContentHeight(), naturalHeight) + 1);
+         int expandedH = Math.min(Math.min(290, Math.max(1, height - 8)), this.headerHeight + Math.max(this.railContentHeight(), naturalHeight) + 1);
          if (this.panelHeightAnimation.value() <= 0.0F) {
             this.panelHeightAnimation.snapTo(expandedH);
          }
 
          int easedHeight = Math.round(this.panelHeightAnimation.animateTo(expandedH));
-         int h = this.put + this.animatedBodyHeight("single", Math.max(0, easedHeight - this.put), this.panelCollapsed);
+         int h = this.headerHeight + this.animatedBodyHeight("single", Math.max(0, easedHeight - this.headerHeight), this.panelCollapsed);
          if (!this.positionInitialized) {
-            this.get = tick >= 0 ? tick : (width - w) / 2;
-            this.set = run >= 0 ? run : (height - Math.min(290, height - 8)) / 2;
+            this.panelX = savedPanelX >= 0 ? savedPanelX : (width - w) / 2;
+            this.panelY = savedPanelY >= 0 ? savedPanelY : (height - Math.min(290, height - 8)) / 2;
             this.positionInitialized = true;
          }
 
-         this.get = clampInt(this.get, 4, Math.max(4, width - w - 4));
-         this.set = clampInt(this.set, 4, Math.max(4, height - h - 4));
-         NetHelper window = NetHelper.init(this.get, this.set, w, h);
+         this.panelX = clampInt(this.panelX, 4, Math.max(4, width - w - 4));
+         this.panelY = clampInt(this.panelY, 4, Math.max(4, height - h - 4));
+         NetHelper window = NetHelper.init(this.panelX, this.panelY, w, h);
          PacketUtil.init_V_SyncManager(context, window, 8, theme.colors().windowSurface, theme.colors().borderSubtle);
-         NetHelper header = WindowHeaderHelper.init(window, this.put);
-         TitleBarRenderer.init(context, header, h <= this.put + 1, this.headerPressed);
+         NetHelper header = WindowHeaderHelper.init(window, this.headerHeight);
+         TitleBarRenderer.init(context, header, h <= this.headerHeight + 1, this.headerPressed);
          this.addHit(
-            ModulesMenuController.Inner_CachePool.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.put), null, null, "", -1
+            ModulesMenuController.Inner_CachePool.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.headerHeight), null, null, "", -1
          );
          this.load_V_SyncManager_NetHelper(context, window);
-         if (h <= this.put) {
+         if (h <= this.headerHeight) {
             this.renderPopups(popupContext, mouseX, mouseY);
          } else {
-            NetHelper body = NetHelper.init(window.read() + 1, window.write() + this.put, window.update() - 2, window.sync() - this.put - 1);
-            int targetBodyH = Math.max(0, expandedH - this.put - 1);
-            NetHelper rail = NetHelper.init(body.read(), body.write(), this.add, targetBodyH);
-            NetHelper content = NetHelper.init(rail.init() + 1, body.write(), body.update() - this.add - 1, targetBodyH);
+            NetHelper body = NetHelper.init(window.read() + 1, window.write() + this.headerHeight, window.update() - 2, window.sync() - this.headerHeight - 1);
+            int targetBodyH = Math.max(0, expandedH - this.headerHeight - 1);
+            NetHelper rail = NetHelper.init(body.read(), body.write(), this.railPixelWidth, targetBodyH);
+            NetHelper content = NetHelper.init(rail.init() + 1, body.write(), body.update() - this.railPixelWidth - 1, targetBodyH);
             this.pushClip(context, body);
 
             try {
-               this.init(context, popupContext, rail, content, body, modules, frameSeconds, delta);
+               this.renderSidebarLayout(context, popupContext, rail, content, body, modules, frameSeconds, delta);
             } finally {
                this.popClip(context);
             }
@@ -514,10 +514,10 @@ public final class ModulesMenuController {
       }
    }
 
-   private void init(
+   private void renderSidebarLayout(
       SyncManager context, SyncManager popupContext, NetHelper rail, NetHelper content, NetHelper body, List<Module> modules, float frameSeconds, float delta
    ) {
-      this.read(context, rail);
+      this.renderRail(context, rail);
       PacketUtil.load(context.init_GuiGraphicsExtract(), rail.init(), body.write(), body.sync(), context.init_TableIndex().colors().divider);
       if (this.settingsModule != null) {
          this.pushClip(context, content);
@@ -582,11 +582,11 @@ public final class ModulesMenuController {
                ? "Profiles Library"
                : (this.isGeneralHome() ? "Main Menu" : (!this.searchQuery.isBlank() ? "Search results" : (this.selectedCategory() != null ? this.selectedCategory().load() : "Modules")))
          );
-      NetHelper bar = NetHelper.init(window.read(), window.write(), window.update(), this.put);
+      NetHelper bar = NetHelper.init(window.read(), window.write(), window.update(), this.headerHeight);
       int controlH = UiDensityMetrics.scaledHeight(13);
-      int controlY = window.write() + Math.max(1, (this.put - controlH) / 2);
+      int controlY = window.write() + Math.max(1, (this.headerHeight - controlH) / 2);
       NetHelper close = NetHelper.init(window.init() - 3 - controlH, controlY, controlH, controlH);
-      int titleX = window.read() + this.add + 4 + 2;
+      int titleX = window.read() + this.railPixelWidth + 4 + 2;
       int titleEnd = close.read() - 4;
       if (this.profilesView == null || this.settingsModule != null) {
          int searchW = Math.min(scaled(112), Math.max(44, (close.read() - titleX) / 2));
@@ -596,14 +596,14 @@ public final class ModulesMenuController {
       }
 
       int titleY = context.init_PoolEntry().centerTextY(bar);
-      context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), "AUTISM", window.read() + 4 + 3, titleY, this.add - 8, colors.textSecondary);
+      context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), "AUTISM", window.read() + 4 + 3, titleY, this.railPixelWidth - 8, colors.textSecondary);
       context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.textPrimary);
       float closeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(close), close.init_Z(context.read(), context.write()));
       PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), lerpColor(colors.textSecondary, colors.danger, closeT));
       this.addHit(ModulesMenuController.Inner_CachePool.CLOSE, close, null, null, "", -1);
    }
 
-   private void read(SyncManager context, NetHelper rail) {
+   private void renderRail(SyncManager context, NetHelper rail) {
       int y = rail.write() + 3 - this.railScroll(rail, this.railContentHeight());
       int x = rail.read() + 3;
       int w = rail.update() - 6;
@@ -612,16 +612,16 @@ public final class ModulesMenuController {
       try {
          for (ae category : ae.init_List()) {
             if (!menuModules(category).isEmpty()) {
-               this.renderRailItem(context, NetHelper.init(x, y, w, this.clear), category.load(), category.init_Str());
-               y += this.clear + 1;
+               this.renderRailItem(context, NetHelper.init(x, y, w, this.railItemHeight), category.load(), category.init_Str());
+               y += this.railItemHeight + 1;
             }
          }
 
          PacketUtil.init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), x + 2, y + 1, w - 4, context.init_TableIndex().colors().divider);
          y += 4;
-         this.renderRailItem(context, NetHelper.init(x, y, w, this.clear), "Profiles", "\u0000profiles");
-         y += this.clear + 1;
-         this.renderRailItem(context, NetHelper.init(x, y, w, this.clear), "Main Menu", "\u0000general");
+         this.renderRailItem(context, NetHelper.init(x, y, w, this.railItemHeight), "Profiles", "\u0000profiles");
+         y += this.railItemHeight + 1;
+         this.renderRailItem(context, NetHelper.init(x, y, w, this.railItemHeight), "Main Menu", "\u0000general");
       } finally {
          this.popClip(context);
       }
@@ -728,7 +728,7 @@ public final class ModulesMenuController {
                .drawCentered(
                   context.init_GuiGraphicsExtract(),
                   "No matching modules",
-                  NetHelper.init(content.read(), content.write() + 4, content.update(), this.clear),
+                  NetHelper.init(content.read(), content.write() + 4, content.update(), this.railItemHeight),
                   context.init_TableIndex().colors().textSecondary
                );
          }
@@ -744,7 +744,7 @@ public final class ModulesMenuController {
       NetHelper clip = this.init_Deque.peek();
       boolean hovered = card.init_Z(context.read(), context.write()) && (clip == null || clip.init_Z(context.read(), context.write()));
       autismclient.gui.f.b.BufferHelper.init(context, card, "mod:" + module.id(), module.isEnabled(), hovered);
-      NetHelper row = NetHelper.init(card.read(), card.write() + 1, card.update() - 2, this.reset);
+      NetHelper row = NetHelper.init(card.read(), card.write() + 1, card.update() - 2, this.rowHeight);
       String label = this.bindingModule == module ? "Press key" : module.name();
       boolean hasSettings = this.settingsView.hasVisibleSettings(module);
       int iconSize = Math.min(13, row.sync() - 2);
@@ -756,7 +756,7 @@ public final class ModulesMenuController {
       int labelMax = Math.max(1, bindButton.read() - row.read() - 9);
       int nameColor = module.isEnabled() ? theme.colors().success : theme.colors().textPrimary;
       if (!this.searchQuery.isBlank()) {
-         this.init(context, label, row.read() + 5, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.searchQuery.trim());
+         this.drawHighlightedLabel(context, label, row.read() + 5, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.searchQuery.trim());
       } else {
          context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), label, row.read() + 5, context.init_PoolEntry().centerTextY(row), labelMax, nameColor);
       }
@@ -835,7 +835,7 @@ public final class ModulesMenuController {
             this.renderPacketToggles(context, x, y, w);
          }
 
-         y += this.start;
+         y += this.settingsRowHeight;
          y = this.renderActionRow(context, ACTION_BUTTONS, x, y, w);
       }
 
@@ -844,7 +844,7 @@ public final class ModulesMenuController {
 
    private int renderToolPair(SyncManager context, ModulesMenuController.Inner_ConfigStore left, ModulesMenuController.Inner_ConfigStore right, int x, int y, int w) {
       if (context != null) {
-         NetHelper[] cells = splitCells(x, y, w, this.start);
+         NetHelper[] cells = splitCells(x, y, w, this.settingsRowHeight);
          autismclient.gui.f.b.CachePool.Inner_DataUtil leftTone = entryTone(left);
          autismclient.gui.f.b.CachePool.Inner_DataUtil rightTone = entryTone(right);
          this.renderToolButton(context, left, leftTone, cells[0], ConnectedButtonRenderer.write);
@@ -852,7 +852,7 @@ public final class ModulesMenuController {
          this.init_V_SyncManager(context, cells[1].read(), y, leftTone, rightTone);
       }
 
-      return y + this.start;
+      return y + this.settingsRowHeight;
    }
 
    private int renderToolEntry(SyncManager context, ModulesMenuController.Inner_ConfigStore entry, int x, int y, int w, boolean bottom) {
@@ -861,23 +861,23 @@ public final class ModulesMenuController {
             context,
             entry,
             entryTone(entry),
-            NetHelper.init(x, y, w, this.start),
+            NetHelper.init(x, y, w, this.settingsRowHeight),
             bottom ? ConnectedButtonRenderer.init(true, true) : ConnectedButtonRenderer.write
          );
       }
 
-      return y + this.start;
+      return y + this.settingsRowHeight;
    }
 
    private int renderActionRow(SyncManager context, ModulesMenuController.Inner_DataUtil[] row, int x, int y, int w) {
       if (context != null) {
-         NetHelper[] cells = splitCells(x, y, w, this.start);
+         NetHelper[] cells = splitCells(x, y, w, this.settingsRowHeight);
          this.renderActionButton(context, row[0], cells[0], ConnectedButtonRenderer.init(true, false));
          this.renderActionButton(context, row[1], cells[1], ConnectedButtonRenderer.init(false, true));
          this.init_V_SyncManager(context, cells[1].read(), y, row[0].style(), row[1].style());
       }
 
-      return y + this.start;
+      return y + this.settingsRowHeight;
    }
 
    private int init_I_SyncManager_3(SyncManager context, String label, Identifier icon, int x, int y, int w) {
@@ -890,7 +890,7 @@ public final class ModulesMenuController {
    }
 
    private void renderPacketToggles(SyncManager context, int x, int y, int w) {
-      NetHelper[] toggles = splitCells(x, y, w, this.start);
+      NetHelper[] toggles = splitCells(x, y, w, this.settingsRowHeight);
       float sendT = autismclient.gui.ui.ToggleTransitionCache.init("packet:send", AutismSessionState.getInstance().isSendPacketsEnabled());
       float delayT = autismclient.gui.ui.ToggleTransitionCache.init("packet:delay", AutismSessionState.getInstance().isDelayPacketsEnabled());
       ConnectedButtonRenderer.init(context, toggles[0], "Send", null, toggles[0].init_Z(context.read(), context.write()), sendT, ConnectedButtonRenderer.write);
@@ -901,7 +901,7 @@ public final class ModulesMenuController {
          context,
          toggles[1].read(),
          y,
-         this.start,
+         this.settingsRowHeight,
          ConnectedButtonRenderer.init(
             ConnectedButtonRenderer.init(context, sendT),
             ConnectedButtonRenderer.init_F_CachePool_DataUtil(autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, sendT),
@@ -918,7 +918,7 @@ public final class ModulesMenuController {
          context,
          x,
          y,
-         this.start,
+         this.settingsRowHeight,
          ConnectedButtonRenderer.init(
             ConnectedButtonRenderer.init(context, left),
             ConnectedButtonRenderer.init_F_CachePool_DataUtil(left, false, 0.0F),
@@ -1019,7 +1019,7 @@ public final class ModulesMenuController {
       if (this.dropdown != null) {
          this.dropdown.onMouseClicked(mx, my, button);
          if (!this.dropdown.isOpen()) {
-            this.push();
+            this.closeDropdown();
          }
 
          return true;
@@ -1050,7 +1050,7 @@ public final class ModulesMenuController {
          this.open_Z = false;
          if (this.searchEdit != null
             && (clicked == null || clicked.type != ModulesMenuController.Inner_CachePool.TEXT_FIELD || !"search".equals(clicked.id))) {
-            this.poll();
+            this.commitSearchEdit();
          }
 
          for (int i = this.hits.size() - 1; i >= 0; i--) {
@@ -1074,34 +1074,34 @@ public final class ModulesMenuController {
                      }
 
                      this.headerPressed = true;
-                     this.prev = mx;
-                     this.valid = my;
+                     this.pressX = mx;
+                     this.pressY = my;
                      this.headerDragged = false;
-                     this.size = mx - this.get;
-                     this.data = my - this.set;
+                     this.dragOffsetX = mx - this.panelX;
+                     this.dragOffsetY = my - this.panelY;
                      return true;
                   case WINDOW_BODY:
                      if (this.isClassicStyle()) {
-                        this.flush(hit.id);
+                        this.bringToFront(hit.id);
                      }
 
                      return true;
                   case COLLAPSE:
                      if (button == 0) {
-                        this.close(hit.id);
+                        this.toggleCollapsed(hit.id);
                      }
 
                      return true;
                   case CLOSE:
                      if ("settings-window".equals(hit.id)) {
-                        this.open();
+                        this.leaveSettings();
                      } else {
                         this.host.closeScreen();
                      }
 
                      return true;
                   case RAIL_ITEM:
-                     this.open(hit.id);
+                     this.selectCategory(hit.id);
                      return true;
                   case UTILITY:
                      if (button != 0) {
@@ -1138,7 +1138,7 @@ public final class ModulesMenuController {
 
                      return true;
                   case BACK:
-                     this.open();
+                     this.leaveSettings();
                      return true;
                   case TOGGLE_MODULE:
                      if (hit.module.hasActivationToggle()) {
@@ -1162,7 +1162,7 @@ public final class ModulesMenuController {
                      return true;
                   case MACRO_MODULE:
                      Module module = hit.module;
-                     this.open();
+                     this.leaveSettings();
                      this.host.init(module);
                      return true;
                   case GROUP:
@@ -1180,13 +1180,13 @@ public final class ModulesMenuController {
                   case SLIDER:
                      this.sliderModule = hit.module;
                      this.sliderSetting = hit.setting;
-                     this.node = -1;
+                     this.activeRangeHandle = -1;
                      this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
                      return true;
                   case RANGE_SLIDER:
                      this.sliderModule = hit.module;
                      this.sliderSetting = hit.setting;
-                     this.node = this.settingsView.init_I_ConfigStore_Stream_I(hit, mx);
+                     this.activeRangeHandle = this.settingsView.init_I_ConfigStore_Stream_I(hit, mx);
                      this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
                      return true;
                   case TEXT_FIELD:
@@ -1239,9 +1239,9 @@ public final class ModulesMenuController {
                   case SCROLLBAR:
                      ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarFor(hit.id);
                      if (metrics != null && metrics.maxScroll() > 0) {
-                        this.task = metrics.load(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+                        this.scrollbarGrabOffset = metrics.load(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
                         this.pop_Str = hit.id;
-                        this.setScroll(hit.id, ScrollbarRenderer.scrollForDrag(metrics, my, this.task));
+                        this.setScroll(hit.id, ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollbarGrabOffset));
                      }
 
                      return true;
@@ -1271,7 +1271,7 @@ public final class ModulesMenuController {
       this.pop_Str = null;
       this.sliderModule = null;
       this.sliderSetting = null;
-      this.node = -1;
+      this.activeRangeHandle = -1;
       if (releasedSlider != null) {
          releasedSlider.persistConfiguredState();
       }
@@ -1292,7 +1292,7 @@ public final class ModulesMenuController {
       } else if (this.dropdown != null) {
          this.dropdown.onMouseReleased(mx, my, button);
          if (!this.dropdown.isOpen()) {
-            this.push();
+            this.closeDropdown();
          }
 
          return true;
@@ -1308,11 +1308,11 @@ public final class ModulesMenuController {
                this.panelCollapsed = !this.panelCollapsed;
             }
 
-            tick = this.get;
-            run = this.set;
+            savedPanelX = this.panelX;
+            savedPanelY = this.panelY;
             AutismConfig config = AutismConfig.getGlobal();
-            config.menuV2X = this.get;
-            config.menuV2Y = this.set;
+            config.menuV2X = this.panelX;
+            config.menuV2Y = this.panelY;
             this.host.load();
          }
 
@@ -1320,7 +1320,7 @@ public final class ModulesMenuController {
             String releasedId = this.close_Str;
             this.close_Str = null;
             if (!this.headerDragged && this.withinClickSlop(mx, my)) {
-               this.close(releasedId);
+               this.toggleCollapsed(releasedId);
             } else if (this.headerDragged) {
                AutismConfig.getGlobal().classicMenuLayoutCustom = true;
                this.host.load();
@@ -1371,7 +1371,7 @@ public final class ModulesMenuController {
          if (this.pop_Str != null) {
             ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarFor(this.pop_Str);
             if (metrics != null) {
-               this.setScroll(this.pop_Str, ScrollbarRenderer.scrollForDrag(metrics, my, this.task));
+               this.setScroll(this.pop_Str, ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollbarGrabOffset));
             }
 
             return true;
@@ -1391,9 +1391,9 @@ public final class ModulesMenuController {
                AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(this.close_Str);
                NetHelper current = this.sync_Map.get(this.close_Str);
                int w = current != null ? current.update() : scaled(150);
-               int h = current != null ? current.sync() : this.put;
-               layout.f_x_I = clampInt(mx - this.size, 0, Math.max(0, this.stop - 4 - w));
-               layout.f_y_I = clampInt(my - this.data, 0, Math.max(0, this.next - 4 - h));
+               int h = current != null ? current.sync() : this.headerHeight;
+               layout.f_x_I = clampInt(mx - this.dragOffsetX, 0, Math.max(0, this.screenWidth - 4 - w));
+               layout.f_y_I = clampInt(my - this.dragOffsetY, 0, Math.max(0, this.screenHeight - 4 - h));
                return true;
             } else if (this.headerPressed) {
                if (!this.headerDragged && this.withinClickSlop(mx, my)) {
@@ -1401,8 +1401,8 @@ public final class ModulesMenuController {
                }
 
                this.headerDragged = true;
-               tick = this.get = mx - this.size;
-               run = this.set = my - this.data;
+               savedPanelX = this.panelX = mx - this.dragOffsetX;
+               savedPanelY = this.panelY = my - this.dragOffsetY;
                return true;
             } else if (this.sliderModule != null && this.sliderSetting != null) {
                ModulesMenuController.Inner_StreamUtil hit = this.hitFor(this.sliderModule, this.sliderSetting);
@@ -1445,7 +1445,7 @@ public final class ModulesMenuController {
             return true;
          }
 
-         if (mx < this.get + 1 + this.add) {
+         if (mx < this.panelX + 1 + this.railPixelWidth) {
             key = "rail";
          } else {
             if (this.sync_Z()) {
@@ -1463,7 +1463,7 @@ public final class ModulesMenuController {
       int[] metrics = load_Map.get(key);
       if (metrics != null && metrics[1] > 0) {
          int current = Math.round(this.scrollTarget(key));
-         int step = !this.isClassicStyle() && "modules".equals(key) ? this.cardPitch() : this.reset + 1;
+         int step = !this.isClassicStyle() && "modules".equals(key) ? this.cardPitch() : this.rowHeight + 1;
          int next = clampInt(current - (int)Math.round(scrollY * step), 0, metrics[1]);
          this.setScroll(key, next);
       }
@@ -1507,7 +1507,7 @@ public final class ModulesMenuController {
             return true;
          } else if (this.dropdown != null) {
             if (key == 256) {
-               this.push();
+               this.closeDropdown();
             }
 
             return true;
@@ -1526,7 +1526,7 @@ public final class ModulesMenuController {
          } else if (this.searchEdit == null) {
             if (key == 256) {
                if (this.settingsModule != null) {
-                  this.open();
+                  this.leaveSettings();
                } else {
                   this.host.closeScreen();
                }
@@ -1545,20 +1545,20 @@ public final class ModulesMenuController {
             }
          } else {
             if (key == 256 && this.isClassicStyle() && this.settingsModule == null) {
-               this.poll();
+               this.commitSearchEdit();
             } else if (key == 256) {
                if (!this.searchEdit.text.isEmpty()) {
                   this.searchEdit.text = "";
                   this.searchEdit.init(0, false);
-                  this.update("");
+                  this.applySearchQuery("");
                } else {
                   this.searchEdit = null;
                }
             } else if (key != 257 && key != 335) {
                this.searchEdit.init(key, modifiers);
-               this.update(this.searchEdit.text);
+               this.applySearchQuery(this.searchEdit.text);
             } else {
-               this.poll();
+               this.commitSearchEdit();
             }
 
             return true;
@@ -1609,7 +1609,7 @@ public final class ModulesMenuController {
 
       if (this.searchEdit != null) {
          this.searchEdit.typeChar(chr);
-         this.update(this.searchEdit.text);
+         this.applySearchQuery(this.searchEdit.text);
          return true;
       }
 
@@ -1618,7 +1618,7 @@ public final class ModulesMenuController {
          this.focusSearch(-1);
          if (this.searchEdit != null) {
             this.searchEdit.typeChar(chr);
-            this.update(this.searchEdit.text);
+            this.applySearchQuery(this.searchEdit.text);
          }
 
          return true;
@@ -1767,19 +1767,19 @@ public final class ModulesMenuController {
             settingsLayout.f_x_I = -1;
             settingsLayout.f_y_I = -1;
             settingsLayout.collapsed = false;
-            this.flush("settings-window");
+            this.bringToFront("settings-window");
          }
 
          this.settingsView.onModuleOpened(module);
       }
    }
 
-   private void open() {
+   private void leaveSettings() {
       this.endTextEdit(true);
       this.bindingModule = null;
       this.bindingOption = null;
       this.bindingOptionModule = null;
-      this.push();
+      this.closeDropdown();
       if (this.colorPicker != null) {
          this.colorPicker = null;
       }
@@ -1820,18 +1820,18 @@ public final class ModulesMenuController {
                this.host.load();
             }
 
-            this.flush("search");
+            this.bringToFront("search");
          }
       }
    }
 
-   private void poll() {
-      this.update(this.searchEdit == null ? "" : this.searchEdit.text);
+   private void commitSearchEdit() {
+      this.applySearchQuery(this.searchEdit == null ? "" : this.searchEdit.text);
       this.searchEdit = null;
       this.open_Z = false;
    }
 
-   private void update(String query) {
+   private void applySearchQuery(String query) {
       if (this.settingsModule != null) {
          this.settingsView.setQuery(query);
       } else {
@@ -1858,7 +1858,7 @@ public final class ModulesMenuController {
       return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "");
    }
 
-   private void init(SyncManager context, String label, int x, int y, int maxWidth, int color, String query) {
+   private void drawHighlightedLabel(SyncManager context, String label, int x, int y, int maxWidth, int color, String query) {
       String safe = label == null ? "" : label;
       String needle = query == null ? "" : query.toLowerCase(Locale.ROOT);
       int match = needle.isEmpty() ? -1 : safe.toLowerCase(Locale.ROOT).indexOf(needle);
@@ -1882,7 +1882,7 @@ public final class ModulesMenuController {
       Module module = hit.module;
       Setting<?, ?> option = hit.setting;
       if (module != null && option != null) {
-         this.pop();
+         this.closeColorPicker();
          this.closeMacroPicker();
          this.sliderModule = null;
          this.sliderSetting = null;
@@ -1896,11 +1896,11 @@ public final class ModulesMenuController {
          });
          this.dropdown.open();
       } else {
-         this.push();
+         this.closeDropdown();
       }
    }
 
-   private void push() {
+   private void closeDropdown() {
       this.dropdown = null;
       this.dropdownModule = null;
       this.dropdownSetting = null;
@@ -1908,18 +1908,18 @@ public final class ModulesMenuController {
 
    private void openColorPicker(Module module, Setting<?, ?> option, NetHelper anchor) {
       if (module != null && option != null) {
-         this.push();
+         this.closeDropdown();
          this.closeMacroPicker();
          this.endTextEdit(true);
          int fallback = parseColor(option.defaultValue(), -1);
          int initial = parseColor(module.value(option.id()), fallback);
          this.colorPicker = new autismclient.gui.ui.widgets.ColorPickerPopup(
-            anchor, initial, fallback, this.stop, this.next, argb -> this.setValue(module, option, String.format(Locale.ROOT, "%08X", argb))
+            anchor, initial, fallback, this.screenWidth, this.screenHeight, argb -> this.setValue(module, option, String.format(Locale.ROOT, "%08X", argb))
          );
       }
    }
 
-   private void pop() {
+   private void closeColorPicker() {
       if (this.colorPicker != null) {
          this.colorPicker.dismiss();
       }
@@ -1929,8 +1929,8 @@ public final class ModulesMenuController {
 
    private void openMacroPicker(Module module, Setting<?, ?> option, NetHelper anchor) {
       if (module != null && option != null) {
-         this.push();
-         this.pop();
+         this.closeDropdown();
+         this.closeColorPicker();
          this.endTextEdit(true);
          this.macroPicker = new MacroPickerPopup(this, module, option, anchor);
       }
@@ -1961,7 +1961,7 @@ public final class ModulesMenuController {
          }
       }
 
-      return 6 + rows * (this.clear + 1) + 4 - 1;
+      return 6 + rows * (this.railItemHeight + 1) + 4 - 1;
    }
 
    private int railWidth(SyncManager context) {
@@ -1996,7 +1996,7 @@ public final class ModulesMenuController {
             autismclient.gui.sdf.MsdfFontFace.BODY, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(autismclient.gui.sdf.MsdfFontFace.BODY)
          )
       );
-      return 1 + this.reset + Math.max(UiDensityMetrics.scaledHeight(12), descriptionHeight) + 4 + 4;
+      return 1 + this.rowHeight + Math.max(UiDensityMetrics.scaledHeight(12), descriptionHeight) + 4 + 4;
    }
 
    private int gridContentHeight(int count, int columns) {
@@ -2047,7 +2047,7 @@ public final class ModulesMenuController {
    }
 
    int init_I() {
-      return this.node;
+      return this.activeRangeHandle;
    }
 
    private void recordScrollbar(String key, ScrollbarRenderer.ScrollbarBounds metrics) {
@@ -2074,11 +2074,11 @@ public final class ModulesMenuController {
    private void init_V_SyncManager_2(SyncManager base, float frameSeconds, long now) {
       String hoverOwner = this.windowAt(base.read(), base.write());
       this.sync_Map.clear();
-      this.queue = this.init_I_SyncManager(base);
-      this.tick();
+      this.mainMenuWidth = this.init_I_SyncManager(base);
+      this.ensureClassicLayout();
       int rise = 0;
       if (this.settingsModule != null) {
-         PacketUtil.init(base.init_GuiGraphicsExtract(), NetHelper.init(0, 0, this.stop, this.next), base.init_TableIndex().colors().backdropScrim);
+         PacketUtil.init(base.init_GuiGraphicsExtract(), NetHelper.init(0, 0, this.screenWidth, this.screenHeight), base.init_TableIndex().colors().backdropScrim);
          this.renderSettingsWindow(base, frameSeconds, rise);
       } else {
          SyncManager blocked = null;
@@ -2115,20 +2115,20 @@ public final class ModulesMenuController {
       List<Module> modules = menuModules(category);
       if (!modules.isEmpty()) {
          AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(category.init_Str());
-         int rowStep = this.reset + 1;
+         int rowStep = this.rowHeight + 1;
          int contentH = modules.size() * rowStep + 3;
          int maxRows = layout.visibleRows > 0 ? layout.visibleRows : 14;
          int naturalBody = Math.min(contentH, maxRows * rowStep + 3);
          boolean automatic = !AutismConfig.getGlobal().classicMenuLayoutCustom;
          if (automatic) {
-            naturalBody = Math.min(naturalBody, this.entry);
+            naturalBody = Math.min(naturalBody, this.classicMaxBodyHeight);
          }
 
          int bodyH = this.animatedBodyHeight(category.init_Str(), naturalBody, layout.collapsed);
-         NetHelper bounds = this.windowBounds(category.init_Str(), layout, automatic && this.buffer > 0 ? this.buffer : scaled(150), bodyH, rise);
-         this.init(context, category.init_Str(), bounds, category.load(), layout.collapsed, true, false);
+         NetHelper bounds = this.windowBounds(category.init_Str(), layout, automatic && this.classicGridWidth > 0 ? this.classicGridWidth : scaled(150), bodyH, rise);
+         this.renderCategoryWindow(context, category.init_Str(), bounds, category.load(), layout.collapsed, true, false);
          if (bodyH > 0) {
-            NetHelper viewport = this.read(bounds, bodyH);
+            NetHelper viewport = this.windowViewport(bounds, bodyH);
             NetHelper target = this.load_NetHelper_NetHelper_I(viewport, naturalBody);
             String key = "classic:" + category.init_Str();
             int scroll = this.updateScroll(key, target, contentH, frameSeconds);
@@ -2138,7 +2138,7 @@ public final class ModulesMenuController {
 
             try {
                for (Module module : modules) {
-                  NetHelper row = NetHelper.init(viewport.read() + 2, y, viewport.update() - 4 - (scrollbar ? 6 : 0), this.reset);
+                  NetHelper row = NetHelper.init(viewport.read() + 2, y, viewport.update() - 4 - (scrollbar ? 6 : 0), this.rowHeight);
                   if (row.load() >= viewport.write() && row.write() <= viewport.load()) {
                      this.init_V_SyncManager_5(context, module, row, false);
                   }
@@ -2175,32 +2175,32 @@ public final class ModulesMenuController {
 
    private void handleHeaderClick(ModulesMenuController.Inner_StreamUtil hit, int mx, int my) {
       String id = hit.id;
-      this.flush(id);
+      this.bringToFront(id);
       long now = System.currentTimeMillis();
       if (id.equals(this.lastClickedId) && now - this.lastClickTime <= 350L) {
          this.lastClickedId = null;
-         this.sync(id);
+         this.clearVisibleRows(id);
       } else {
          this.lastClickedId = id;
          this.lastClickTime = now;
          this.open_Str = id;
-         this.value = mx;
-         this.cache = my;
-         this.state = hit.index;
+         this.unusedResizePressX = mx;
+         this.resizePressY = my;
+         this.resizeStartRows = hit.index;
       }
    }
 
    private void dragResize(int mx, int my) {
       ae category = categoryById(this.open_Str);
       if (category != null) {
-         this.setVisibleRows(category, this.state + Math.round((float)(my - this.cache) / (this.reset + 1)));
+         this.setVisibleRows(category, this.resizeStartRows + Math.round((float)(my - this.resizePressY) / (this.rowHeight + 1)));
       }
    }
 
    private void setVisibleRows(ae category, int rows) {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(category.init_Str());
-      int rowStep = this.reset + 1;
-      int fitRows = (this.next - 4 - Math.max(0, layout.f_y_I) - this.put - 1 - 3) / rowStep;
+      int rowStep = this.rowHeight + 1;
+      int fitRows = (this.screenHeight - 4 - Math.max(0, layout.f_y_I) - this.headerHeight - 1 - 3) / rowStep;
       rows = clampInt(rows, 2, Math.max(2, Math.min(menuModules(category).size(), fitRows)));
       if (rows != layout.visibleRows) {
          AutismConfig.getGlobal().classicMenuLayoutCustom = true;
@@ -2234,38 +2234,38 @@ public final class ModulesMenuController {
       }
    }
 
-   private void sync(String id) {
+   private void clearVisibleRows(String id) {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(id);
       layout.visibleRows = 0;
       this.host.load();
    }
 
    private NetHelper load_NetHelper_NetHelper_I(NetHelper viewport, int targetBody) {
-      int capped = Math.max(0, Math.min(targetBody, this.next - 4 - this.put - 1));
+      int capped = Math.max(0, Math.min(targetBody, this.screenHeight - 4 - this.headerHeight - 1));
       return NetHelper.init(viewport.read(), viewport.write(), viewport.update(), capped);
    }
 
    private void renderSearchWindow(SyncManager context, float frameSeconds, int rise) {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout("search");
       boolean automatic = !AutismConfig.getGlobal().classicMenuLayoutCustom;
-      int w = automatic && this.buffer > 0 ? this.buffer : scaled(150);
+      int w = automatic && this.classicGridWidth > 0 ? this.classicGridWidth : scaled(150);
       String query = this.searchEdit != null ? this.searchEdit.text : this.searchQuery;
       boolean hasQuery = !query.isBlank();
       List<Module> results = hasQuery ? this.searchModules(query) : List.of();
-      int rowStep = this.reset + 1;
-      int fieldH = this.reset;
+      int rowStep = this.rowHeight + 1;
+      int fieldH = this.rowHeight;
       int strip = fieldH + 6;
       int listH = hasQuery ? Math.max(1, results.size()) * rowStep + 3 : 0;
       int contentH = strip + listH;
-      int maxBody = automatic && this.entry > 0
-         ? Math.max(strip + rowStep, this.entry)
-         : Math.max(strip + rowStep, this.next - 4 - Math.max(0, layout.f_y_I) - this.put - 1);
+      int maxBody = automatic && this.classicMaxBodyHeight > 0
+         ? Math.max(strip + rowStep, this.classicMaxBodyHeight)
+         : Math.max(strip + rowStep, this.screenHeight - 4 - Math.max(0, layout.f_y_I) - this.headerHeight - 1);
       int naturalBody = Math.min(contentH, maxBody);
       int bodyH = this.animatedBodyHeight("search", naturalBody, layout.collapsed);
       NetHelper bounds = this.windowBounds("search", layout, w, bodyH, rise);
-      this.init(context, "search", bounds, "Search", layout.collapsed, true, false);
+      this.renderCategoryWindow(context, "search", bounds, "Search", layout.collapsed, true, false);
       if (bodyH > 0) {
-         NetHelper viewport = this.read(bounds, bodyH);
+         NetHelper viewport = this.windowViewport(bounds, bodyH);
          NetHelper target = this.load_NetHelper_NetHelper_I(viewport, naturalBody);
          this.pushClip(context, viewport);
 
@@ -2282,7 +2282,7 @@ public final class ModulesMenuController {
                try {
                   int y = list.write() + 2 - scroll;
                   if (results.isEmpty()) {
-                     NetHelper row = NetHelper.init(list.read() + 2, y, list.update() - 4, this.reset);
+                     NetHelper row = NetHelper.init(list.read() + 2, y, list.update() - 4, this.rowHeight);
                      context.init_PoolEntry()
                         .drawFitted(
                            context.init_GuiGraphicsExtract(),
@@ -2295,7 +2295,7 @@ public final class ModulesMenuController {
                   }
 
                   for (Module module : results) {
-                     NetHelper row = NetHelper.init(list.read() + 2, y, list.update() - 4 - (scrollbar ? 6 : 0), this.reset);
+                     NetHelper row = NetHelper.init(list.read() + 2, y, list.update() - 4 - (scrollbar ? 6 : 0), this.rowHeight);
                      if (row.load() >= list.write() && row.write() <= list.load()) {
                         this.init_V_SyncManager_5(context, module, row, true);
                      }
@@ -2337,7 +2337,7 @@ public final class ModulesMenuController {
       int labelMax = Math.max(1, (showBind ? bindButton.read() : tail) - row.read() - 9);
       int nameColor = module.isEnabled() ? theme.colors().textPrimary : theme.colors().textSecondary;
       if (highlightQuery && !this.searchQuery.isBlank()) {
-         this.init(context, label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.searchQuery.trim());
+         this.drawHighlightedLabel(context, label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor, this.searchQuery.trim());
       } else {
          context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor);
       }
@@ -2369,15 +2369,15 @@ public final class ModulesMenuController {
 
    private void renderMainMenuWindow(SyncManager context, float frameSeconds, int rise) {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout("main-menu");
-      this.queue = this.init_I_SyncManager(context);
-      int w = this.queue;
+      this.mainMenuWidth = this.init_I_SyncManager(context);
+      int w = this.mainMenuWidth;
       int contentH = this.renderToolSection(null, 0, 0, w - 2);
-      int maxBody = Math.max(40, this.next - 8 - this.put);
+      int maxBody = Math.max(40, this.screenHeight - 8 - this.headerHeight);
       int bodyH = this.animatedBodyHeight("main-menu", Math.min(contentH, maxBody), layout.collapsed);
       NetHelper bounds = this.windowBounds("main-menu", layout, w, bodyH, rise);
-      this.init(context, "main-menu", bounds, "Main Menu", layout.collapsed, true, false);
+      this.renderCategoryWindow(context, "main-menu", bounds, "Main Menu", layout.collapsed, true, false);
       if (bodyH > 0) {
-         NetHelper viewport = this.read(bounds, bodyH);
+         NetHelper viewport = this.windowViewport(bounds, bodyH);
          NetHelper target = this.load_NetHelper_NetHelper_I(viewport, Math.min(contentH, maxBody));
          String scrollKey = "classic:main-menu";
          int scroll = this.updateScroll(scrollKey, target, contentH, frameSeconds);
@@ -2398,20 +2398,20 @@ public final class ModulesMenuController {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout("settings-window");
       boolean searchable = this.settingsView.hasVisibleSettings(module);
       int searchStrip = searchable ? UiDensityMetrics.scaledHeight(13) + 8 : 0;
-      int maxW = Math.max(160, this.stop - 8);
+      int maxW = Math.max(160, this.screenWidth - 8);
       int w = Math.min(scaled((searchable ? 360 : 250) + (module instanceof CrosshairModule ? 140 : 0)), maxW);
-      int maxBody = Math.max(60, this.next - 12 - this.put);
+      int maxBody = Math.max(60, this.screenHeight - 12 - this.headerHeight);
       int expandedBodyH = Math.min(this.settingsView.contentHeight(module) + searchStrip, maxBody);
       int bodyH = Math.round(this.animatedBodyHeight("settings-window", expandedBodyH, layout.collapsed) * this.load_RingBuffer.value());
       if (layout.f_x_I < 0 || layout.f_y_I < 0) {
-         layout.f_x_I = Math.max(4, (this.stop - w) / 2);
-         layout.f_y_I = Math.max(6, (this.next - (this.put + expandedBodyH + 1)) / 2);
+         layout.f_x_I = Math.max(4, (this.screenWidth - w) / 2);
+         layout.f_y_I = Math.max(6, (this.screenHeight - (this.headerHeight + expandedBodyH + 1)) / 2);
       }
 
       NetHelper bounds = this.windowBounds("settings-window", layout, w, bodyH, rise);
-      this.init(context, "settings-window", bounds, module.name(), layout.collapsed, true, true);
+      this.renderCategoryWindow(context, "settings-window", bounds, module.name(), layout.collapsed, true, true);
       if (bodyH > 0) {
-         NetHelper viewport = this.read(bounds, bodyH);
+         NetHelper viewport = this.windowViewport(bounds, bodyH);
          this.pushClip(context, viewport);
 
          try {
@@ -2424,7 +2424,7 @@ public final class ModulesMenuController {
                viewport.read(),
                viewport.write() + searchStrip,
                viewport.update(),
-               Math.max(1, Math.min(expandedBodyH, Math.max(1, this.next - this.put - 5)) - searchStrip)
+               Math.max(1, Math.min(expandedBodyH, Math.max(1, this.screenHeight - this.headerHeight - 5)) - searchStrip)
             );
             this.settingsView.render(context, fullContent, module, frameSeconds);
          } finally {
@@ -2433,8 +2433,8 @@ public final class ModulesMenuController {
       }
    }
 
-   private void init(SyncManager context, String id, NetHelper bounds, String title, boolean collapsed, boolean collapse, boolean close) {
-      int header = this.put;
+   private void renderCategoryWindow(SyncManager context, String id, NetHelper bounds, String title, boolean collapsed, boolean collapse, boolean close) {
+      int header = this.headerHeight;
       boolean headerHovered = WindowHeaderHelper.read(bounds, header, context.read(), context.write());
       WindowFrameRenderer.init(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
       this.addHit(ModulesMenuController.Inner_CachePool.WINDOW_BODY, bounds, null, null, id, -1);
@@ -2449,8 +2449,8 @@ public final class ModulesMenuController {
    }
 
    private NetHelper windowBounds(String id, AutismConfig.ModuleCategoryLayout layout, int w, int bodyH, int rise) {
-      int h = this.put + bodyH + (bodyH > 0 ? 1 : 0);
-      NetHelper bounds = NetHelper.init(Math.max(0, layout.f_x_I), Math.max(0, layout.f_y_I), w, h).init_NetHelper(this.stop - 4, this.next - 4);
+      int h = this.headerHeight + bodyH + (bodyH > 0 ? 1 : 0);
+      NetHelper bounds = NetHelper.init(Math.max(0, layout.f_x_I), Math.max(0, layout.f_y_I), w, h).init_NetHelper(this.screenWidth - 4, this.screenHeight - 4);
       NetHelper drawn = NetHelper.init(bounds.read(), bounds.write() + rise, bounds.update(), bounds.sync());
       this.sync_Map.put(id, drawn);
       return drawn;
@@ -2461,8 +2461,8 @@ public final class ModulesMenuController {
       return Math.round(Math.max(0, expandedHeight) * transition.animateTo(!collapsed && !this.update_Z ? 1.0F : 0.0F));
    }
 
-   private NetHelper read(NetHelper bounds, int bodyH) {
-      return NetHelper.init(bounds.read() + 1, bounds.write() + this.put, bounds.update() - 2, Math.min(bodyH, Math.max(0, bounds.sync() - this.put - 1)));
+   private NetHelper windowViewport(NetHelper bounds, int bodyH) {
+      return NetHelper.init(bounds.read() + 1, bounds.write() + this.headerHeight, bounds.update() - 2, Math.min(bodyH, Math.max(0, bounds.sync() - this.headerHeight - 1)));
    }
 
    private void renderSearchBox(SyncManager context) {
@@ -2488,10 +2488,10 @@ public final class ModulesMenuController {
       this.addHit(ModulesMenuController.Inner_CachePool.TEXT_FIELD, this.searchBounds, null, null, "search", -1);
    }
 
-   private void tick() {
+   private void ensureClassicLayout() {
       AutismConfig config = AutismConfig.getGlobal();
       if (!config.classicMenuLayoutCustom) {
-         this.run();
+         this.autoArrangeClassicLayout();
       } else {
          boolean broken = false;
          Set<Long> taken = new HashSet<>();
@@ -2517,7 +2517,7 @@ public final class ModulesMenuController {
 
          if (broken) {
             config.classicMenuLayoutCustom = false;
-            this.run();
+            this.autoArrangeClassicLayout();
             this.host.load();
          } else {
             AutismConfig.ModuleCategoryLayout search = this.categoryLayout("search");
@@ -2525,19 +2525,19 @@ public final class ModulesMenuController {
                AutismConfig.ModuleCategoryLayout utility = this.categoryLayout("main-menu");
                search.f_x_I = Math.max(4, utility.f_x_I);
                search.f_y_I = Math.min(
-                  Math.max(4, utility.f_y_I) + this.put + this.renderToolSection(null, 0, 0, this.queue - 2) + 1 + 4, Math.max(4, this.next - this.put - 40)
+                  Math.max(4, utility.f_y_I) + this.headerHeight + this.renderToolSection(null, 0, 0, this.mainMenuWidth - 2) + 1 + 4, Math.max(4, this.screenHeight - this.headerHeight - 40)
                );
                this.host.load();
             }
          }
       }
 
-      this.get();
+      this.normalizeWindowOrder();
    }
 
-   private void run() {
+   private void autoArrangeClassicLayout() {
       int gap = 4;
-      int rowStep = this.reset + 1;
+      int rowStep = this.rowHeight + 1;
       List<String> ids = new ArrayList<>();
 
       for (ae category : ae.init_List()) {
@@ -2547,24 +2547,24 @@ public final class ModulesMenuController {
       }
 
       ids.add("search");
-      int utilityW = Math.max(1, this.queue);
+      int utilityW = Math.max(1, this.mainMenuWidth);
       int categoryW = scaled(150);
       AutismConfig.ModuleCategoryLayout utility = this.categoryLayout("main-menu");
       utility.f_x_I = gap;
       utility.f_y_I = gap;
       utility.visibleRows = 0;
       int left = gap + utilityW + gap;
-      int[] grid = gridLayout(Math.max(categoryW + gap * 2, this.stop - left + gap), this.next, ids.size(), categoryW, this.put, rowStep);
+      int[] grid = gridLayout(Math.max(categoryW + gap * 2, this.screenWidth - left + gap), this.screenHeight, ids.size(), categoryW, this.headerHeight, rowStep);
       int columns = grid[0];
       int slotH = grid[2];
-      this.buffer = grid[1];
-      this.entry = Math.max(0, slotH - this.put - 1);
+      this.classicGridWidth = grid[1];
+      this.classicMaxBodyHeight = Math.max(0, slotH - this.headerHeight - 1);
 
       for (int index = 0; index < ids.size(); index++) {
          AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(ids.get(index));
-         layout.f_x_I = left + index % columns * (this.buffer + gap);
+         layout.f_x_I = left + index % columns * (this.classicGridWidth + gap);
          layout.f_y_I = gap + index / columns * (slotH + gap);
-         layout.visibleRows = Math.max(1, (this.entry - 3) / rowStep);
+         layout.visibleRows = Math.max(1, (this.classicMaxBodyHeight - 3) / rowStep);
       }
    }
 
@@ -2582,11 +2582,11 @@ public final class ModulesMenuController {
    }
 
    private List<String> windowOrder() {
-      this.get();
+      this.normalizeWindowOrder();
       return List.copyOf(init_List);
    }
 
-   private void get() {
+   private void normalizeWindowOrder() {
       List<String> valid = new ArrayList<>();
       valid.add("main-menu");
 
@@ -2605,9 +2605,9 @@ public final class ModulesMenuController {
       }
    }
 
-   private void flush(String id) {
+   private void bringToFront(String id) {
       if (id != null && !id.isBlank()) {
-         this.get();
+         this.normalizeWindowOrder();
          init_List.remove(id);
          init_List.add(id);
       }
@@ -2638,26 +2638,26 @@ public final class ModulesMenuController {
    }
 
    private void onWindowHeaderPress(String id, int mx, int my, int button) {
-      this.flush(id);
+      this.bringToFront(id);
       if (button == 1) {
-         this.close(id);
+         this.toggleCollapsed(id);
       } else if (button == 0) {
          AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(id);
          this.close_Str = id;
-         this.prev = mx;
-         this.valid = my;
+         this.pressX = mx;
+         this.pressY = my;
          this.headerDragged = false;
          NetHelper drawn = this.sync_Map.get(id);
-         this.size = mx - (drawn == null ? layout.f_x_I : drawn.read());
-         this.data = my - (drawn == null ? layout.f_y_I : drawn.write());
+         this.dragOffsetX = mx - (drawn == null ? layout.f_x_I : drawn.read());
+         this.dragOffsetY = my - (drawn == null ? layout.f_y_I : drawn.write());
       }
    }
 
    private boolean withinClickSlop(int mx, int my) {
-      return Math.abs(mx - this.prev) <= 3 && Math.abs(my - this.valid) <= 3;
+      return Math.abs(mx - this.pressX) <= 3 && Math.abs(my - this.pressY) <= 3;
    }
 
-   private void close(String id) {
+   private void toggleCollapsed(String id) {
       if (id != null) {
          AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(id);
          layout.collapsed = !layout.collapsed;
@@ -2762,7 +2762,7 @@ public final class ModulesMenuController {
       return null;
    }
 
-   private void open(String key) {
+   private void selectCategory(String key) {
       if (key != null && (!key.equals(selectedCategoryKey) || this.settingsModule != null || !this.searchQuery.isBlank())) {
          this.close();
          this.searchEdit = null;

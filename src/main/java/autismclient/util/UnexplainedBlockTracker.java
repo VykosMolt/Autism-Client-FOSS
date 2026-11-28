@@ -115,7 +115,7 @@ public final class UnexplainedBlockTracker {
                   this.streaks.add(streak);
                }
 
-               streak.init(c);
+               streak.recordChange(c);
             }
          }
       }
@@ -170,7 +170,7 @@ public final class UnexplainedBlockTracker {
          this.origin = anchor;
       }
 
-      void init(UnexplainedBlockTracker.Inner_StreamUtil c) {
+      void recordChange(UnexplainedBlockTracker.Inner_StreamUtil c) {
          this.changes.values().removeIf(old -> c.time - old.time > 6000L);
          if (this.init_J < 0L || c.time - this.init_J >= 140L) {
             this.init_J = c.time;

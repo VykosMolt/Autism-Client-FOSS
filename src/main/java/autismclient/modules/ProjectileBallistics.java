@@ -41,22 +41,22 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class ProjectileBallistics {
-   private static final ProjectileBallistics.Inner_DataUtil init = new ProjectileBallistics.Inner_DataUtil(0.03, 0.125, 1.5, 0.9900000095367432, 0.800000011920929, 0.0F, true, true, false);
-   private static final ProjectileBallistics.Inner_DataUtil load = new ProjectileBallistics.Inner_DataUtil(0.05, 0.125, 0.5, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
-   private static final ProjectileBallistics.Inner_DataUtil read = new ProjectileBallistics.Inner_DataUtil(0.07, 0.125, 0.7, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
-   private static final ProjectileBallistics.Inner_DataUtil write = new ProjectileBallistics.Inner_DataUtil(0.03, 0.125, 1.1, 0.92, 0.92, 0.0F, false, true, true, ProjectileBallistics.Inner_StreamUtil.FISHING);
-   private static final ProjectileBallistics.Inner_DataUtil update = new ProjectileBallistics.Inner_DataUtil(0.05, 0.25, 2.5, 0.9900000095367432, 0.9900000095367432, 0.0F, true, false, false);
-   private static final ProjectileBallistics.Inner_DataUtil sync = new ProjectileBallistics.Inner_DataUtil(0.05, 0.25, 3.0, 0.9900000095367432, 0.6000000238418579, 0.0F, true, false, false);
-   private static final ProjectileBallistics.Inner_DataUtil flush = new ProjectileBallistics.Inner_DataUtil(
+   private static final ProjectileBallistics.Inner_DataUtil GENERIC_THROWABLE = new ProjectileBallistics.Inner_DataUtil(0.03, 0.125, 1.5, 0.9900000095367432, 0.800000011920929, 0.0F, true, true, false);
+   private static final ProjectileBallistics.Inner_DataUtil POTION = new ProjectileBallistics.Inner_DataUtil(0.05, 0.125, 0.5, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
+   private static final ProjectileBallistics.Inner_DataUtil EXPERIENCE_BOTTLE = new ProjectileBallistics.Inner_DataUtil(0.07, 0.125, 0.7, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
+   private static final ProjectileBallistics.Inner_DataUtil FISHING = new ProjectileBallistics.Inner_DataUtil(0.03, 0.125, 1.1, 0.92, 0.92, 0.0F, false, true, true, ProjectileBallistics.Inner_StreamUtil.FISHING);
+   private static final ProjectileBallistics.Inner_DataUtil TRIDENT = new ProjectileBallistics.Inner_DataUtil(0.05, 0.25, 2.5, 0.9900000095367432, 0.9900000095367432, 0.0F, true, false, false);
+   private static final ProjectileBallistics.Inner_DataUtil BOW = new ProjectileBallistics.Inner_DataUtil(0.05, 0.25, 3.0, 0.9900000095367432, 0.6000000238418579, 0.0F, true, false, false);
+   private static final ProjectileBallistics.Inner_DataUtil CROSSBOW_ARROW = new ProjectileBallistics.Inner_DataUtil(
       0.05, 0.25, 3.1500000953674316, 0.9900000095367432, 0.6000000238418579, 0.0F, false, false, false
    );
-   private static final ProjectileBallistics.Inner_DataUtil close = new ProjectileBallistics.Inner_DataUtil(
+   private static final ProjectileBallistics.Inner_DataUtil CROSSBOW_ROCKET = new ProjectileBallistics.Inner_DataUtil(
       0.0, 0.125, 1.600000023841858, 1.0, 1.0, 0.0F, false, false, false, ProjectileBallistics.Inner_StreamUtil.ROCKET
    );
-   private static final ProjectileBallistics.Inner_DataUtil open = new ProjectileBallistics.Inner_DataUtil(
+   private static final ProjectileBallistics.Inner_DataUtil FIREBALL = new ProjectileBallistics.Inner_DataUtil(
       0.0, 0.5, 1.5, 0.949999988079071, 0.800000011920929, 0.0F, true, true, false, ProjectileBallistics.Inner_StreamUtil.FIREBALL
    );
-   private static final ProjectileBallistics.Inner_DataUtil poll = new ProjectileBallistics.Inner_DataUtil(0.0, 0.15625, 1.5, 1.0, 1.0, 0.0F, true, true, false, ProjectileBallistics.Inner_StreamUtil.WIND);
+   private static final ProjectileBallistics.Inner_DataUtil WIND_CHARGE = new ProjectileBallistics.Inner_DataUtil(0.0, 0.15625, 1.5, 1.0, 1.0, 0.0F, true, true, false, ProjectileBallistics.Inner_StreamUtil.WIND);
 
    private ProjectileBallistics() {
    }
@@ -70,26 +70,26 @@ public final class ProjectileBallistics {
       return new Vec3(delta.x, owner.onGround() ? 0.0 : delta.y, delta.z);
    }
 
-   static ProjectileBallistics.Inner_DataUtil init(String name) {
+   static ProjectileBallistics.Inner_DataUtil infoByName(String name) {
       ProjectileBallistics.Inner_DataUtil var10000;
       switch (name) {
          case "fishing":
-            var10000 = write;
+            var10000 = FISHING;
             break;
          case "generic":
-            var10000 = init;
+            var10000 = GENERIC_THROWABLE;
             break;
          case "bow":
-            var10000 = sync;
+            var10000 = BOW;
             break;
          case "potion":
-            var10000 = load;
+            var10000 = POTION;
             break;
          case "wind":
-            var10000 = poll;
+            var10000 = WIND_CHARGE;
             break;
          case "fireball":
-            var10000 = open;
+            var10000 = FIREBALL;
             break;
          default:
             throw new IllegalArgumentException(name);
@@ -106,14 +106,14 @@ public final class ProjectileBallistics {
       if (stack.getItem() instanceof BowItem) {
          boolean drawing = player.isUsingItem() && player.getUseItem() == stack;
          float power = drawing ? BowItem.getPowerForTime(player.getTicksUsingItem()) : (alwaysBow ? 1.0F : 0.0F);
-         return power < 0.1F ? List.of() : List.of(new ProjectileBallistics.Inner_BufferHelper(sync.init(power * 3.0F), 0.0F));
+         return power < 0.1F ? List.of() : List.of(new ProjectileBallistics.Inner_BufferHelper(BOW.withVelocity(power * 3.0F), 0.0F));
       }
 
       if (stack.getItem() instanceof CrossbowItem) {
          ChargedProjectiles charged = stack.get(DataComponents.CHARGED_PROJECTILES);
          List<ItemStackTemplate> loaded = charged == null ? List.of() : charged.items();
          int count = Math.min(16, multiShot ? Math.max(1, loaded.size()) : 1);
-         float[] spread = init(count);
+         float[] spread = spreadAngles(count);
          List<ProjectileBallistics.Inner_BufferHelper> result = new ArrayList<>(count);
 
          for (int i = 0; i < count; i++) {
@@ -122,7 +122,7 @@ public final class ProjectileBallistics {
                boolean rocket = ammo.is(Items.FIREWORK_ROCKET);
                Fireworks fireworks = ammo.get(DataComponents.FIREWORKS);
                int ticks = rocket ? Math.min(240, 11 + 10 * (fireworks == null ? 0 : fireworks.flightDuration())) : 240;
-               result.add(new ProjectileBallistics.Inner_BufferHelper(rocket ? close : flush, spread[i], ticks));
+               result.add(new ProjectileBallistics.Inner_BufferHelper(rocket ? CROSSBOW_ROCKET : CROSSBOW_ARROW, spread[i], ticks));
             }
          }
 
@@ -133,42 +133,42 @@ public final class ProjectileBallistics {
             return List.of();
          }
 
-         ProjectileBallistics.Inner_DataUtil info = init(stack);
+         ProjectileBallistics.Inner_DataUtil info = infoFor(stack);
          return info == null ? List.of() : List.of(new ProjectileBallistics.Inner_BufferHelper(info, 0.0F));
       } else {
          return List.of();
       }
    }
 
-   private static ProjectileBallistics.Inner_DataUtil init(ItemStack stack) {
+   private static ProjectileBallistics.Inner_DataUtil infoFor(ItemStack stack) {
       ProjectileBallistics.Inner_DataUtil var10000;
       switch (stack.getItem()) {
          case FishingRodItem ignored:
-            var10000 = write;
+            var10000 = FISHING;
             break;
          case ThrowablePotionItem ignored:
-            var10000 = load;
+            var10000 = POTION;
             break;
          case TridentItem ignored:
-            var10000 = update;
+            var10000 = TRIDENT;
             break;
          case SnowballItem ignored:
-            var10000 = init;
+            var10000 = GENERIC_THROWABLE;
             break;
          case EnderpearlItem ignored:
-            var10000 = init;
+            var10000 = GENERIC_THROWABLE;
             break;
          case EggItem ignored:
-            var10000 = init;
+            var10000 = GENERIC_THROWABLE;
             break;
          case ExperienceBottleItem ignored:
-            var10000 = read;
+            var10000 = EXPERIENCE_BOTTLE;
             break;
          case FireChargeItem ignored:
-            var10000 = open;
+            var10000 = FIREBALL;
             break;
          case WindChargeItem ignored:
-            var10000 = poll;
+            var10000 = WIND_CHARGE;
             break;
          default:
             var10000 = null;
@@ -177,7 +177,7 @@ public final class ProjectileBallistics {
       return var10000;
    }
 
-   static float[] init(int count) {
+   static float[] spreadAngles(int count) {
       if (count <= 1) {
          return new float[]{0.0F};
       }
@@ -193,7 +193,7 @@ public final class ProjectileBallistics {
       return result;
    }
 
-   static Vec3 init(float yaw, float pitch, ProjectileBallistics.Inner_DataUtil info) {
+   static Vec3 launchVelocity(float yaw, float pitch, ProjectileBallistics.Inner_DataUtil info) {
       float yr = yaw * 0.017453292F;
       float pr = pitch * 0.017453292F;
       if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
@@ -207,7 +207,7 @@ public final class ProjectileBallistics {
    }
 
    static Vec3 init(float yaw, float pitch, ProjectileBallistics.Inner_BufferHelper shot) {
-      Vec3 velocity = init(yaw, pitch, shot.info());
+      Vec3 velocity = launchVelocity(yaw, pitch, shot.info());
       if (shot.init_F() == 0.0F) {
          return velocity;
       }
@@ -217,7 +217,7 @@ public final class ProjectileBallistics {
       return new Vec3(rotated);
    }
 
-   static Vec3 init(Entity owner, float yaw, ProjectileBallistics.Inner_DataUtil info) {
+   static Vec3 launchStart(Entity owner, float yaw, ProjectileBallistics.Inner_DataUtil info) {
       if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
          double angle = yaw * 0.017453292F;
          return new Vec3(owner.getX() - Math.sin(angle) * 0.3, owner.getEyeY(), owner.getZ() + Math.cos(angle) * 0.3);
@@ -229,7 +229,7 @@ public final class ProjectileBallistics {
       }
    }
 
-   static Vec3 init(Vec3 velocity, ProjectileBallistics.Inner_DataUtil info, boolean water) {
+   static Vec3 applyDrag(Vec3 velocity, ProjectileBallistics.Inner_DataUtil info, boolean water) {
       double drag = water ? info.update() : info.write();
       if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FIREBALL) {
          return velocity.add(velocity.normalize().scale(0.1)).scale(drag);
@@ -251,20 +251,20 @@ public final class ProjectileBallistics {
             velocity = velocity.add(inherited);
          }
 
-         return init(init(level, owner, shot.info()), init(owner, yaw, shot.info()), velocity, shot.info(), shot.init_I());
+         return simulate(worldFor(level, owner, shot.info()), launchStart(owner, yaw, shot.info()), velocity, shot.info(), shot.init_I());
       } else {
          return new ProjectileBallistics.Inner_CachePool(List.of(), null);
       }
    }
 
-   static ProjectileBallistics.Inner_CachePool init(ProjectileBallistics.Inner_ConfigStore world, Vec3 start, Vec3 velocity, ProjectileBallistics.Inner_DataUtil info, int maxTicks) {
+   static ProjectileBallistics.Inner_CachePool simulate(ProjectileBallistics.Inner_ConfigStore world, Vec3 start, Vec3 velocity, ProjectileBallistics.Inner_DataUtil info, int maxTicks) {
       List<Vec3> points = new ArrayList<>();
-      if (init(start) && init(velocity) && world.init(start)) {
+      if (isFinite(start) && isFinite(velocity) && world.isLoaded(start)) {
          Vec3 pos = start;
          points.add(start);
 
          for (int tick = 0; tick < Math.min(240, maxTicks); tick++) {
-            boolean water = world.load(pos);
+            boolean water = world.isWater(pos);
             Vec3 collisionVelocity = velocity;
             if (info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
                if (water) {
@@ -273,16 +273,16 @@ public final class ProjectileBallistics {
             } else if (info.kind() == ProjectileBallistics.Inner_StreamUtil.FISHING) {
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
             } else {
-               velocity = init(velocity, info, water);
+               velocity = applyDrag(velocity, info, water);
                collisionVelocity = velocity;
             }
 
             Vec3 next = pos.add(info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW ? collisionVelocity : velocity);
-            if (!init(next) || !world.init(next)) {
+            if (!isFinite(next) || !world.isLoaded(next)) {
                break;
             }
 
-            HitResult hit = world.init(pos, pos.add(collisionVelocity), tick);
+            HitResult hit = world.clip(pos, pos.add(collisionVelocity), tick);
             if (hit != null && hit.getType() != Type.MISS) {
                points.add(hit.getLocation());
                return new ProjectileBallistics.Inner_CachePool(List.copyOf(points), hit);
@@ -291,7 +291,7 @@ public final class ProjectileBallistics {
             points.add(next);
             pos = next;
             if (info.kind() == ProjectileBallistics.Inner_StreamUtil.ARROW) {
-               if (!world.load(pos)) {
+               if (!world.isWater(pos)) {
                   velocity = velocity.scale(info.write());
                }
 
@@ -307,23 +307,23 @@ public final class ProjectileBallistics {
       }
    }
 
-   private static ProjectileBallistics.Inner_ConfigStore init(final Level level, final Entity owner, final ProjectileBallistics.Inner_DataUtil info) {
+   private static ProjectileBallistics.Inner_ConfigStore worldFor(final Level level, final Entity owner, final ProjectileBallistics.Inner_DataUtil info) {
       final MutableBlockPos cursor = new MutableBlockPos();
       return new ProjectileBallistics.Inner_ConfigStore() {
          @Override
-         public boolean init(Vec3 at) {
+         public boolean isLoaded(Vec3 at) {
             cursor.set(at.x, at.y, at.z);
             return at.y >= level.getMinY() && at.y <= level.getMaxY() && level.getChunkSource().hasChunk(cursor.getX() >> 4, cursor.getZ() >> 4);
          }
 
          @Override
-         public boolean load(Vec3 at) {
+         public boolean isWater(Vec3 at) {
             cursor.set(at.x, at.y, at.z);
             return level.getFluidState(cursor).is(FluidTags.WATER);
          }
 
          @Override
-         public HitResult init(Vec3 from, Vec3 to, int tick) {
+         public HitResult clip(Vec3 from, Vec3 to, int tick) {
             BlockHitResult block = level.clipIncludingBorder(
                new ClipContext(from, to, Block.COLLIDER, info.read_Z() ? Fluid.WATER : Fluid.NONE, CollisionContext.positionContext(from.y))
             );
@@ -347,7 +347,7 @@ public final class ProjectileBallistics {
       };
    }
 
-   private static boolean init(Vec3 v) {
+   private static boolean isFinite(Vec3 v) {
       return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
    }
 
@@ -361,11 +361,11 @@ public final class ProjectileBallistics {
    }
 
    interface Inner_ConfigStore {
-      boolean init(Vec3 var1);
+      boolean isLoaded(Vec3 var1);
 
-      boolean load(Vec3 var1);
+      boolean isWater(Vec3 var1);
 
-      HitResult init(Vec3 var1, Vec3 var2, int var3);
+      HitResult clip(Vec3 var1, Vec3 var2, int var3);
    }
 
    public record Inner_DataUtil(
@@ -405,7 +405,7 @@ public final class ProjectileBallistics {
          );
       }
 
-      ProjectileBallistics.Inner_DataUtil init(double velocity) {
+      ProjectileBallistics.Inner_DataUtil withVelocity(double velocity) {
          return new ProjectileBallistics.Inner_DataUtil(
             this.init_D, this.load_D, velocity, this.write, this.update, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.kind
          );

@@ -56,7 +56,7 @@ public record PacketSchemaSnapshot(
 
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packet.getClass());
       if (schema == null) {
-         List<PacketFieldSnapshot> reflected = init(packet, (PacketSchemaRegistry.Inner_StreamUtil)null);
+         List<PacketFieldSnapshot> reflected = reflectFields(packet, (PacketSchemaRegistry.Inner_StreamUtil)null);
          return new PacketSchemaSnapshot(packet, null, reflected, false, false, "fallback", "no generated schema for packet class");
       }
 
@@ -65,21 +65,21 @@ public record PacketSchemaSnapshot(
             return new PacketSchemaSnapshot(packet, schema, List.of(), true, true, "complete", "");
          }
 
-         List<PacketFieldSnapshot> reflected = init(packet, schema);
+         List<PacketFieldSnapshot> reflected = reflectFields(packet, schema);
          return new PacketSchemaSnapshot(packet, schema, reflected, true, false, "fallback", "schema has no source field list");
       } else {
          List<PacketFieldSnapshot> values = new ArrayList<>();
          boolean allReadable = true;
 
          for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
-            Object value = init(packet, field.name());
+            Object value = readMember(packet, field.name());
             boolean readable = value != UNREADABLE;
             if (!readable) {
                allReadable = false;
             }
 
             values.add(
-               new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
+               new PacketFieldSnapshot(field, readable ? value : null, describeValue(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
             );
          }
 
@@ -110,7 +110,7 @@ public record PacketSchemaSnapshot(
       }
    }
 
-   private static Object init(Object target, String name) {
+   private static Object readMember(Object target, String name) {
       if (target != null && name != null && !name.isBlank()) {
          for (String methodName : accessorNames(name)) {
             try {
@@ -145,7 +145,7 @@ public record PacketSchemaSnapshot(
       return List.of(name, "get" + capitalized, "is" + capitalized);
    }
 
-   private static List<PacketFieldSnapshot> init(Object packet, PacketSchemaRegistry.Inner_StreamUtil schema) {
+   private static List<PacketFieldSnapshot> reflectFields(Object packet, PacketSchemaRegistry.Inner_StreamUtil schema) {
       List<PacketSchemaRegistry.Inner_DataUtil> fieldSchemas = new ArrayList<>();
       if (packet.getClass().isRecord()) {
          for (RecordComponent component : packet.getClass().getRecordComponents()) {
@@ -177,10 +177,10 @@ public record PacketSchemaSnapshot(
       List<PacketFieldSnapshot> values = new ArrayList<>();
 
       for (PacketSchemaRegistry.Inner_DataUtil field : fieldSchemas) {
-         Object value = init(packet, field.name());
+         Object value = readMember(packet, field.name());
          boolean readable = value != UNREADABLE;
          values.add(
-            new PacketFieldSnapshot(field, readable ? value : null, init(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
+            new PacketFieldSnapshot(field, readable ? value : null, describeValue(readable ? value : null, field, new IdentityHashMap<>(), 0), readable, readable && field.editableCandidate())
          );
       }
 
@@ -230,9 +230,9 @@ public record PacketSchemaSnapshot(
       return Set.of("number", "boolean", "string", "identifier", "enum", "uuid").contains(kind);
    }
 
-   private static List<String> init(Object value, PacketSchemaRegistry.Inner_DataUtil field, IdentityHashMap<Object, Boolean> seen, int depth) {
+   private static List<String> describeValue(Object value, PacketSchemaRegistry.Inner_DataUtil field, IdentityHashMap<Object, Boolean> seen, int depth) {
       List<String> lines = new ArrayList<>();
-      init(lines, value, seen, depth);
+      appendValue(lines, value, seen, depth);
       if (lines.isEmpty()) {
          lines.add("null");
       }
@@ -240,13 +240,13 @@ public record PacketSchemaSnapshot(
       return lines;
    }
 
-   private static void init(List<String> lines, Object value, IdentityHashMap<Object, Boolean> seen, int depth) {
+   private static void appendValue(List<String> lines, Object value, IdentityHashMap<Object, Boolean> seen, int depth) {
       if (value == null) {
          lines.add("null");
       } else if (depth > 3) {
-         lines.add(read(String.valueOf(value)));
+         lines.add(truncateText(String.valueOf(value)));
       } else if (value instanceof String string) {
-         lines.add(load(string));
+         lines.add(quote(string));
       } else if (value instanceof Number || value instanceof Boolean || value instanceof UUID || value instanceof Enum) {
          lines.add(String.valueOf(value));
       } else if (value instanceof Identifier identifier) {
@@ -254,7 +254,7 @@ public record PacketSchemaSnapshot(
       } else if (value instanceof ResourceKey<?> key) {
          lines.add(key.identifier().toString());
       } else if (value instanceof Component component) {
-         lines.add(load(component.getString()));
+         lines.add(quote(component.getString()));
       } else if (value instanceof ItemStack stack) {
          lines.add(describeStack(stack));
       } else if (value instanceof HashedStack hashedStack) {
@@ -284,7 +284,7 @@ public record PacketSchemaSnapshot(
          } else {
             lines.add("present");
             List<String> nested = new ArrayList<>();
-            init(nested, optional.get(), seen, depth + 1);
+            appendValue(nested, optional.get(), seen, depth + 1);
 
             for (String line : nested) {
                lines.add("  " + line);
@@ -300,7 +300,7 @@ public record PacketSchemaSnapshot(
                break;
             }
 
-            lines.add("  " + entry.getIntKey() + " -> " + init(entry.getValue(), seen, depth + 1));
+            lines.add("  " + entry.getIntKey() + " -> " + inline(entry.getValue(), seen, depth + 1));
             shown++;
          }
       } else if (value instanceof Map<?, ?> map) {
@@ -313,7 +313,7 @@ public record PacketSchemaSnapshot(
                break;
             }
 
-            lines.add("  " + init(entry.getKey(), seen, depth + 1) + " -> " + init(entry.getValue(), seen, depth + 1));
+            lines.add("  " + inline(entry.getKey(), seen, depth + 1) + " -> " + inline(entry.getValue(), seen, depth + 1));
             shown++;
          }
       } else if (value instanceof Collection<?> collection) {
@@ -326,7 +326,7 @@ public record PacketSchemaSnapshot(
                break;
             }
 
-            lines.add("  #" + shown + " " + init(item, seen, depth + 1));
+            lines.add("  #" + shown + " " + inline(item, seen, depth + 1));
             shown++;
          }
       } else if (value.getClass().isArray()) {
@@ -334,25 +334,25 @@ public record PacketSchemaSnapshot(
          lines.add("array length=" + length);
 
          for (int i = 0; i < Math.min(length, 12); i++) {
-            lines.add("  #" + i + " " + init(Array.get(value, i), seen, depth + 1));
+            lines.add("  #" + i + " " + inline(Array.get(value, i), seen, depth + 1));
          }
 
          if (length > 12) {
             lines.add("  ... +" + (length - 12) + " more");
          }
       } else if (value instanceof Tag tag) {
-         lines.add(read(tag.toString()));
+         lines.add(truncateText(tag.toString()));
       } else if (seen.put(value, Boolean.TRUE) != null) {
          lines.add("<cycle " + value.getClass().getSimpleName() + ">");
       } else {
-         lines.add(read(String.valueOf(value)));
+         lines.add(truncateText(String.valueOf(value)));
          seen.remove(value);
       }
    }
 
-   private static String init(Object value, IdentityHashMap<Object, Boolean> seen, int depth) {
+   private static String inline(Object value, IdentityHashMap<Object, Boolean> seen, int depth) {
       List<String> lines = new ArrayList<>();
-      init(lines, value, seen, depth);
+      appendValue(lines, value, seen, depth);
       return lines.isEmpty() ? "null" : lines.getFirst();
    }
 
@@ -377,7 +377,7 @@ public record PacketSchemaSnapshot(
          try {
             Component customName = stack.getCustomName();
             if (customName != null) {
-               out.append(" name=").append(load(customName.getString()));
+               out.append(" name=").append(quote(customName.getString()));
             }
          } catch (Throwable var5) {
          }
@@ -385,7 +385,7 @@ public record PacketSchemaSnapshot(
          try {
             String components = String.valueOf(stack.getComponentsPatch());
             if (!components.isBlank() && !"{}".equals(components)) {
-               out.append(" components=").append(read(components));
+               out.append(" components=").append(truncateText(components));
             }
          } catch (Throwable var4) {
          }
@@ -399,8 +399,8 @@ public record PacketSchemaSnapshot(
    private static String describeHashedStack(HashedStack stack) {
       if (stack != null && stack != HashedStack.EMPTY) {
          return stack instanceof ActualItem actual
-            ? describeHolder(actual.item()) + " x" + actual.count() + " hashedComponents=" + read(String.valueOf(actual.components()))
-            : read(String.valueOf(stack));
+            ? describeHolder(actual.item()) + " x" + actual.count() + " hashedComponents=" + truncateText(String.valueOf(actual.components()))
+            : truncateText(String.valueOf(stack));
       } else {
          return "empty";
       }
@@ -436,7 +436,7 @@ public record PacketSchemaSnapshot(
          } catch (Throwable var4) {
          }
 
-         return read(String.valueOf(value));
+         return truncateText(String.valueOf(value));
       }
    }
 
@@ -448,11 +448,11 @@ public record PacketSchemaSnapshot(
       return String.format(Locale.ROOT, "%.4f", value);
    }
 
-   private static String load(String value) {
-      return value == null ? "\"\"" : "\"" + read(value.replace("\n", "\\n").replace("\r", "\\r")) + "\"";
+   private static String quote(String value) {
+      return value == null ? "\"\"" : "\"" + truncateText(value.replace("\n", "\\n").replace("\r", "\\r")) + "\"";
    }
 
-   private static String read(String value) {
+   private static String truncateText(String value) {
       if (value == null) {
          return "null";
       }

@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public class SendToggleAction implements MacroAction {
    public SendToggleAction.Inner_DataUtil mode = SendToggleAction.Inner_DataUtil.ENABLE;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public void init() {
       this.mode = SendToggleAction.Inner_DataUtil.values()[(this.mode.ordinal() + 1) % SendToggleAction.Inner_DataUtil.values().length];
@@ -32,7 +32,7 @@ public class SendToggleAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "SEND_TOGGLE");
       tag.putString("mode", this.mode.name());
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -47,7 +47,7 @@ public class SendToggleAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -63,12 +63,12 @@ public class SendToggleAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {

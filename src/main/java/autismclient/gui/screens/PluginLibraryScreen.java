@@ -41,9 +41,9 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private PluginLibraryScreen.Inner_DataUtil groupMode = PluginLibraryScreen.Inner_DataUtil.BY_SERVER;
    private List<PluginLibraryScreen.Inner_StreamUtil> filteredRows = List.of();
    private int headerCount;
-   private int update;
+   private int scrollOffset;
    private boolean draggingScrollbar;
-   private int sync;
+   private int scrollGrabOffset;
    private long seenScanRevision = -9223372036854775808L;
 
    public PluginLibraryScreen(Screen parent) {
@@ -53,13 +53,13 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
    @Override
    protected void init() {
-      this.searchField = new MsdfEditBox(this.font, this.put(), this.get(), this.add(), this.sync(), Component.literal("Search"));
+      this.searchField = new MsdfEditBox(this.font, this.searchX(), this.searchY(), this.searchWidth(), this.controlHeight(), Component.literal("Search"));
       this.searchField.setHint(Component.literal(this.searchHint()));
       this.searchField.setMaxLength(128);
       this.searchField.setValue(this.searchQuery);
       this.searchField.setResponder(value -> {
          this.searchQuery = trim(value);
-         this.update = 0;
+         this.scrollOffset = 0;
          this.rebuildButtons();
       });
       this.addRenderableWidget(this.searchField);
@@ -84,7 +84,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       if (this.groupMode != next) {
          this.groupMode = next;
          this.expandedKeys.clear();
-         this.update = 0;
+         this.scrollOffset = 0;
          if (this.searchField != null) {
             this.searchField.setHint(Component.literal(this.searchHint()));
          }
@@ -149,14 +149,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private List<PluginLibraryScreen.Inner_StreamUtil> buildRows() {
       String query = this.searchQuery.toLowerCase(Locale.ROOT);
       List<PluginLibraryScreen.Inner_ConfigStore> servers = this.serverEntries();
-      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? this.rowsByServer(servers, query) : this.load(servers, query);
+      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? this.rowsByServer(servers, query) : this.rowsByPlugin(servers, query);
    }
 
    private List<PluginLibraryScreen.Inner_StreamUtil> rowsByServer(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
       List<PluginLibraryScreen.Inner_StreamUtil> rows = new ArrayList<>();
 
       for (PluginLibraryScreen.Inner_ConfigStore server : servers) {
-         boolean nameHit = query.isEmpty() || fuzzyMatches(server.load, query) || fuzzyMatches(server.address, query);
+         boolean nameHit = query.isEmpty() || fuzzyMatches(server.name, query) || fuzzyMatches(server.address, query);
          boolean pluginHit = false;
          if (!query.isEmpty()) {
             for (String p : server.plugins) {
@@ -170,14 +170,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          if (query.isEmpty() || nameHit || pluginHit) {
             String key = "srv:" + server.address.toLowerCase(Locale.ROOT);
             boolean open = this.expandedKeys.contains(key);
-            PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.init(
+            PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.groupRow(
                PluginLibraryScreen.Inner_BufferHelper.SERVER,
                key,
-               server.read,
+               server.displayAddress,
                server.plugins.size() + (server.plugins.size() == 1 ? " plugin  " : " plugins  ") + ago(server.scannedAtMs),
                open
             );
-            row.write = server.address;
+            row.serverAddress = server.address;
             row.plugins = server.plugins;
             rows.add(row);
             if (open) {
@@ -197,7 +197,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                }
 
                for (String plugin : shown) {
-                  rows.add(PluginLibraryScreen.Inner_StreamUtil.init(PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN, plugin, ""));
+                  rows.add(PluginLibraryScreen.Inner_StreamUtil.childRow(PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN, plugin, ""));
                }
             }
          }
@@ -207,7 +207,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return rows;
    }
 
-   private List<PluginLibraryScreen.Inner_StreamUtil> load(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
+   private List<PluginLibraryScreen.Inner_StreamUtil> rowsByPlugin(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
       Map<String, List<PluginLibraryScreen.Inner_ConfigStore>> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       for (PluginLibraryScreen.Inner_ConfigStore server : servers) {
@@ -230,14 +230,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          int count = entry.getValue().size();
          String key = "plg:" + entry.getKey().toLowerCase(Locale.ROOT);
          boolean open = this.expandedKeys.contains(key);
-         PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.init(
+         PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.groupRow(
             PluginLibraryScreen.Inner_BufferHelper.PLUGIN, key, entry.getKey(), "on " + count + (count == 1 ? " server" : " servers"), open
          );
          row.servers = entry.getValue();
          rows.add(row);
          if (open) {
             for (PluginLibraryScreen.Inner_ConfigStore server : entry.getValue()) {
-               rows.add(PluginLibraryScreen.Inner_StreamUtil.init(PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER, server.read, ago(server.scannedAtMs)));
+               rows.add(PluginLibraryScreen.Inner_StreamUtil.childRow(PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER, server.displayAddress, ago(server.scannedAtMs)));
             }
          }
       }
@@ -315,11 +315,11 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.buttons.clear();
       this.rowHits.clear();
       this.visibleRows.clear();
-      int ctl = this.sync();
-      this.buttons.add(autismclient.gui.ui.widgets.OverlayActionButton.create(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
-      int toggleY = this.get();
-      int toggleW = this.write();
-      int toggleX = this.pop();
+      int ctl = this.controlHeight();
+      this.buttons.add(autismclient.gui.ui.widgets.OverlayActionButton.create(this.innerX(), this.cardY() + 4, this.backButtonWidth(), ctl, Component.literal("Back"), b -> this.onClose()));
+      int toggleY = this.searchY();
+      int toggleW = this.groupToggleWidth();
+      int toggleX = this.innerX();
       this.buttons
          .add(
             autismclient.gui.ui.widgets.OverlayActionButton.create(
@@ -349,15 +349,15 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          );
       this.filteredRows = this.buildRows();
       int maxScroll = this.maxScroll(this.filteredRows.size());
-      this.update = Math.max(0, Math.min(this.update, maxScroll));
-      int pitch = this.close();
-      int rowH = this.flush();
-      int top = this.next();
-      int bottom = this.prev();
-      int btnH = this.open();
-      int copyW = this.update();
-      int firstVisible = this.update / pitch;
-      int rowY = top - this.update % pitch;
+      this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxScroll));
+      int pitch = this.rowPitch();
+      int rowH = this.rowHeight();
+      int top = this.listTop();
+      int bottom = this.listBottom();
+      int btnH = this.rowButtonHeight();
+      int copyW = this.copyButtonWidth();
+      int firstVisible = this.scrollOffset / pitch;
+      int rowY = top - this.scrollOffset % pitch;
 
       for (int i = firstVisible; i < this.filteredRows.size() && rowY < bottom; rowY += pitch) {
          if (rowY + rowH > top) {
@@ -368,7 +368,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
             boolean parent = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN;
             if (parent && fullyVisible) {
                int btnY = rowY + (rowH - btnH) / 2;
-               int cursor = this.data() - 1;
+               int cursor = this.listRight() - 1;
                if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER) {
                   cursor -= btnH;
                   this.buttons
@@ -386,7 +386,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                      autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.copyRow(row))
                         .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                   );
-               this.rowHits.add(new PluginLibraryScreen.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.key));
+               this.rowHits.add(new PluginLibraryScreen.Inner_CachePool(this.listLeft(), rowY, Math.max(1, cursor - 4 - this.listLeft()), rowH, row.key));
             }
          }
 
@@ -394,7 +394,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
    }
 
-   private int read() {
+   private int backButtonWidth() {
       return this.buttonWidth("Back");
    }
 
@@ -402,17 +402,17 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, labelFont(), 0));
    }
 
-   private int write() {
+   private int groupToggleWidth() {
       return Math.max(this.buttonWidth("By Server"), this.buttonWidth("By Plugin"));
    }
 
-   private int update() {
+   private int copyButtonWidth() {
       return this.buttonWidth("Copy");
    }
 
    private void removeServerScan(PluginLibraryScreen.Inner_StreamUtil row) {
-      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.write != null) {
-         AutismConfig.getGlobal().removePluginScan(row.write);
+      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.serverAddress != null) {
+         AutismConfig.getGlobal().removePluginScan(row.serverAddress);
          this.expandedKeys.remove(row.key);
          this.seenScanRevision = AutismConfig.getGlobal().pluginScanRevision();
          this.rebuildButtons();
@@ -433,7 +433,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          List<String> names = new ArrayList<>();
 
          for (PluginLibraryScreen.Inner_ConfigStore s : row.servers) {
-            names.add(s.read);
+            names.add(s.displayAddress);
          }
 
          text = String.join("\n", names);
@@ -454,8 +454,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
       try {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
-         this.drawCard(graphics, this.push(), this.run(), this.poll(), this.set(), -401402080);
-         this.drawCard(graphics, this.reset(), this.clear(), this.start(), this.stop(), -1206840035);
+         this.drawCard(graphics, this.cardX(), this.cardY(), this.cardWidth(), this.headerCardHeight(), -401402080);
+         this.drawCard(graphics, this.listCardX(), this.listCardY(), this.listCardWidth(), this.listCardHeight(), -1206840035);
          String count = this.headerCount
             + (
                this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
@@ -463,28 +463,28 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   : (this.headerCount == 1 ? " plugin" : " plugins")
             );
          int countW = k.init(this.font, count, labelFont(), GuiColorPalette.close);
-         int countX = this.pop() + this.innerWidth() - countW;
-         int headerTextY = this.centeredTextY(this.run() + 4, this.sync());
-         int titleX = this.pop() + this.read() + 4;
-         this.init(graphics, "Plugin Library", titleX, headerTextY, GuiColorPalette.flush, Math.max(1, countX - 8 - titleX));
-         this.init(graphics, count, countX, headerTextY, GuiColorPalette.close, countW + 4);
+         int countX = this.innerX() + this.innerWidth() - countW;
+         int headerTextY = this.centeredTextY(this.cardY() + 4, this.controlHeight());
+         int titleX = this.innerX() + this.backButtonWidth() + 4;
+         this.drawClippedText(graphics, "Plugin Library", titleX, headerTextY, GuiColorPalette.flush, Math.max(1, countX - 8 - titleX));
+         this.drawClippedText(graphics, count, countX, headerTextY, GuiColorPalette.close, countW + 4);
          String header = this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
-         this.init(graphics, header, this.reset() + 4, this.centeredTextY(this.clear() + 4, 12), GuiColorPalette.close, this.start() - 8);
+         this.drawClippedText(graphics, header, this.listCardX() + 4, this.centeredTextY(this.listCardY() + 4, 12), GuiColorPalette.close, this.listCardWidth() - 8);
          String queryLower = this.searchQuery.toLowerCase(Locale.ROOT);
          autismclient.gui.ui.UiClipStack.getInstance()
             .push(
                graphics,
-               autismclient.gui.f.NetHelper.init(this.size(), this.next(), Math.max(0, this.data() - this.size()), Math.max(0, this.prev() - this.next()))
+               autismclient.gui.f.NetHelper.init(this.listLeft(), this.listTop(), Math.max(0, this.listRight() - this.listLeft()), Math.max(0, this.listBottom() - this.listTop()))
             );
 
          try {
             if (this.filteredRows.isEmpty()) {
-               this.init(
-                  graphics, this.emptyMessage(), this.size() + 4, this.centeredTextY(this.next(), this.flush()), GuiColorPalette.close, this.data() - this.size() - 4
+               this.drawClippedText(
+                  graphics, this.emptyMessage(), this.listLeft() + 4, this.centeredTextY(this.listTop(), this.rowHeight()), GuiColorPalette.close, this.listRight() - this.listLeft() - 4
                );
             } else {
                for (PluginLibraryScreen.Inner_StreamUtil row : this.visibleRows) {
-                  this.init(graphics, row, mx, my, queryLower);
+                  this.drawRow(graphics, row, mx, my, queryLower);
                }
             }
          } finally {
@@ -512,13 +512,13 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          : "Nothing matches \"" + this.searchQuery + "\".";
    }
 
-   private void init(GuiGraphicsExtractor graphics, PluginLibraryScreen.Inner_StreamUtil row, int mx, int my, String queryLower) {
+   private void drawRow(GuiGraphicsExtractor graphics, PluginLibraryScreen.Inner_StreamUtil row, int mx, int my, String queryLower) {
       boolean child = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER;
-      int x = this.size();
+      int x = this.listLeft();
       int y = row.y;
-      int w = this.data() - this.size();
-      int h = this.flush();
-      boolean hovered = my >= y && my < y + h && mx >= x && mx < this.data();
+      int w = this.listRight() - this.listLeft();
+      int h = this.rowHeight();
+      boolean hovered = my >= y && my < y + h && mx >= x && mx < this.listRight();
       if (!child) {
          int fill = hovered ? 620756991 : 352321535;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
@@ -531,23 +531,23 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x + 5, y + (h - 8) / 2, 8, 8), row.expanded, GuiColorPalette.close);
          textLeft += 10;
       } else {
-         this.init(graphics, "-", x + 6 + 12 - 8, textY, GuiColorPalette.close, 8);
+         this.drawClippedText(graphics, "-", x + 6 + 12 - 8, textY, GuiColorPalette.close, 8);
       }
 
       int baseColor = child ? -3158065 : GuiColorPalette.flush;
       int secondaryColor = GuiColorPalette.close;
-      int secondaryW = row.read.isEmpty() ? 0 : k.init(this.font, row.read, labelFont(), secondaryColor);
-      int rowActionReserve = child ? 0 : this.update() + 2 + (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.open() + 2 : 0);
-      int rightLimit = this.data() - rowActionReserve - 4;
+      int secondaryW = row.secondary.isEmpty() ? 0 : k.init(this.font, row.secondary, labelFont(), secondaryColor);
+      int rowActionReserve = child ? 0 : this.copyButtonWidth() + 2 + (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.rowButtonHeight() + 2 : 0);
+      int rightLimit = this.listRight() - rowActionReserve - 4;
       int secondaryX = Math.max(textLeft + 20, rightLimit - secondaryW);
-      int primaryMax = Math.max(20, (row.read.isEmpty() ? rightLimit : secondaryX - 8) - textLeft);
-      this.init(graphics, row.label, textLeft, textY, primaryMax, baseColor, queryLower);
-      if (!row.read.isEmpty() && secondaryX > textLeft) {
-         this.init(graphics, row.read, secondaryX, textY, secondaryColor, secondaryW + 2);
+      int primaryMax = Math.max(20, (row.secondary.isEmpty() ? rightLimit : secondaryX - 8) - textLeft);
+      this.drawHighlightedText(graphics, row.label, textLeft, textY, primaryMax, baseColor, queryLower);
+      if (!row.secondary.isEmpty() && secondaryX > textLeft) {
+         this.drawClippedText(graphics, row.secondary, secondaryX, textY, secondaryColor, secondaryW + 2);
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int maxWidth, int baseColor, String queryLower) {
+   private void drawHighlightedText(GuiGraphicsExtractor graphics, String text, int x, int y, int maxWidth, int baseColor, String queryLower) {
       Identifier font = labelFont();
       int idx = queryLower.isEmpty() ? -1 : text.toLowerCase(Locale.ROOT).indexOf(queryLower);
       if (idx >= 0 && k.init(this.font, text, font, baseColor) <= maxWidth) {
@@ -564,7 +564,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
+   private void drawClippedText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
       k.init(graphics, this.font, text, labelFont(), color, x, y, Math.max(1, maxWidth), false);
    }
 
@@ -585,8 +585,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.scrollbarMetrics(this.filteredRows.size());
          if (sb.isScrollable() && sb.containsTrack(mx, my)) {
             this.draggingScrollbar = true;
-            this.sync = sb.containsThumb(mx, my) ? (int)Math.round(my) - sb.thumbY() : sb.thumbHeight() / 2;
-            this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, my, this.sync);
+            this.scrollGrabOffset = sb.containsThumb(mx, my) ? (int)Math.round(my) - sb.thumbY() : sb.thumbHeight() / 2;
+            this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, my, this.scrollGrabOffset);
             this.rebuildButtons();
             return true;
          }
@@ -600,7 +600,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
       if (Compat263.mouseEventGlfwButton(ve) == 0) {
          for (PluginLibraryScreen.Inner_CachePool hit : this.rowHits) {
-            if (hit.init(mx, my)) {
+            if (hit.contains(mx, my)) {
                this.toggleExpanded(hit.key);
                return true;
             }
@@ -625,7 +625,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       MouseButtonEvent ve = toVirtual(event);
       if (this.draggingScrollbar) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics sb = this.scrollbarMetrics(this.filteredRows.size());
-         this.update = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, ve.y(), this.sync);
+         this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(sb, ve.y(), this.scrollGrabOffset);
          this.rebuildButtons();
          return true;
       } else {
@@ -640,10 +640,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       } else {
          double vy = cA.init_D_D(mouseY);
          double vx = cA.init_D_D(mouseX);
-         if (!(vx < this.reset()) && !(vx > this.reset() + this.start()) && !(vy < this.next()) && !(vy > this.prev())) {
+         if (!(vx < this.listCardX()) && !(vx > this.listCardX() + this.listCardWidth()) && !(vy < this.listTop()) && !(vy > this.listBottom())) {
             int maxScroll = this.maxScroll(this.filteredRows.size());
-            int next = this.update - (int)Math.signum(scrollY) * this.close();
-            this.update = Math.max(0, Math.min(next, maxScroll));
+            int next = this.scrollOffset - (int)Math.signum(scrollY) * this.rowPitch();
+            this.scrollOffset = Math.max(0, Math.min(next, maxScroll));
             this.rebuildButtons();
             return true;
          } else {
@@ -667,118 +667,118 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.minecraft.gui.setScreen(this.parent);
    }
 
-   private int sync() {
+   private int controlHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int flush() {
+   private int rowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int close() {
-      return this.flush() + 2;
+   private int rowPitch() {
+      return this.rowHeight() + 2;
    }
 
-   private int open() {
-      return this.flush() - 2;
+   private int rowButtonHeight() {
+      return this.rowHeight() - 2;
    }
 
    private int centeredTextY(int top, int height) {
       return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
-   private int poll() {
+   private int cardWidth() {
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 440);
    }
 
-   private int push() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.poll(), 6);
+   private int cardX() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.cardWidth(), 6);
    }
 
-   private int pop() {
-      return this.push() + 4;
+   private int innerX() {
+      return this.cardX() + 4;
    }
 
    private int innerWidth() {
-      return Math.max(1, this.poll() - 8);
+      return Math.max(1, this.cardWidth() - 8);
    }
 
-   private int run() {
+   private int cardY() {
       return 6;
    }
 
-   private int get() {
-      return this.run() + 4 + this.sync() + 2;
+   private int searchY() {
+      return this.cardY() + 4 + this.controlHeight() + 2;
    }
 
-   private int set() {
-      return this.get() + this.sync() + 4 - this.run();
+   private int headerCardHeight() {
+      return this.searchY() + this.controlHeight() + 4 - this.cardY();
    }
 
-   private int put() {
-      return this.pop() + this.write() * 2 + 2 + 4;
+   private int searchX() {
+      return this.innerX() + this.groupToggleWidth() * 2 + 2 + 4;
    }
 
-   private int add() {
-      return Math.max(40, this.pop() + this.innerWidth() - this.put());
+   private int searchWidth() {
+      return Math.max(40, this.innerX() + this.innerWidth() - this.searchX());
    }
 
-   private int clear() {
-      return this.run() + this.set() + 4;
+   private int listCardY() {
+      return this.cardY() + this.headerCardHeight() + 4;
    }
 
-   private int reset() {
-      return this.push();
+   private int listCardX() {
+      return this.cardX();
    }
 
-   private int start() {
-      return this.poll();
+   private int listCardWidth() {
+      return this.cardWidth();
    }
 
-   private int stop() {
+   private int listCardHeight() {
       int header = 18;
-      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.close());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int shown = Math.max(3, Math.min(cap, this.filteredRows.size()));
-      int content = header + shown * this.close() - 2 + 4;
-      int available = Math.max(header + this.flush() + 4, this.virtualHeight() - 6 - this.clear());
+      int content = header + shown * this.rowPitch() - 2 + 4;
+      int available = Math.max(header + this.rowHeight() + 4, this.virtualHeight() - 6 - this.listCardY());
       return Math.min(available, content);
    }
 
-   private int next() {
-      return this.clear() + 4 + 12 + 2;
+   private int listTop() {
+      return this.listCardY() + 4 + 12 + 2;
    }
 
-   private int prev() {
-      return this.clear() + this.stop() - 4;
+   private int listBottom() {
+      return this.listCardY() + this.listCardHeight() - 4;
    }
 
-   private int valid() {
-      return Math.max(this.flush(), this.prev() - this.next());
+   private int listViewportHeight() {
+      return Math.max(this.rowHeight(), this.listBottom() - this.listTop());
    }
 
    private int maxScroll(int rowCount) {
-      return Math.max(0, rowCount * this.close() - 2 - this.valid());
+      return Math.max(0, rowCount * this.rowPitch() - 2 - this.listViewportHeight());
    }
 
-   private int size() {
-      return this.reset() + 4;
+   private int listLeft() {
+      return this.listCardX() + 4;
    }
 
-   private int data() {
-      return this.value() - 2;
+   private int listRight() {
+      return this.scrollbarX() - 2;
    }
 
-   private int value() {
-      return this.reset() + this.start() - 4 - 6;
+   private int scrollbarX() {
+      return this.listCardX() + this.listCardWidth() - 4 - 6;
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int rowCount) {
-      int contentPixels = Math.max(0, rowCount * this.close() - 2);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.valid(), this.value(), this.next(), 6, this.valid(), this.update);
+      int contentPixels = Math.max(0, rowCount * this.rowPitch() - 2);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.listViewportHeight(), this.scrollbarX(), this.listTop(), 6, this.listViewportHeight(), this.scrollOffset);
    }
 
    private boolean isCompact() {
-      return this.poll() < 260 || this.virtualHeight() < this.next() + this.close() * 2;
+      return this.cardWidth() < 260 || this.virtualHeight() < this.listTop() + this.rowPitch() * 2;
    }
 
    private enum Inner_BufferHelper {
@@ -790,35 +790,35 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
    private static final class Inner_CachePool {
       final int x;
-      final int load;
-      final int read;
-      final int write;
+      final int y;
+      final int width;
+      final int height;
       final String key;
 
       Inner_CachePool(int x, int y, int width, int height, String key) {
          this.x = x;
-         this.load = y;
-         this.read = width;
-         this.write = height;
+         this.y = y;
+         this.width = width;
+         this.height = height;
          this.key = key;
       }
 
-      boolean init(double mx, double my) {
-         return mx >= this.x && mx <= this.x + this.read && my >= this.load && my <= this.load + this.write;
+      boolean contains(double mx, double my) {
+         return mx >= this.x && mx <= this.x + this.width && my >= this.y && my <= this.y + this.height;
       }
    }
 
    private static final class Inner_ConfigStore {
       final String address;
-      final String load;
-      final String read;
+      final String name;
+      final String displayAddress;
       final List<String> plugins;
       final long scannedAtMs;
 
       Inner_ConfigStore(String address, String name, List<String> plugins, long scannedAtMs) {
          this.address = address;
-         this.load = name;
-         this.read = address;
+         this.name = name;
+         this.displayAddress = address;
          this.plugins = plugins;
          this.scannedAtMs = scannedAtMs;
       }
@@ -833,28 +833,28 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       PluginLibraryScreen.Inner_BufferHelper type;
       String key = "";
       String label = "";
-      String read = "";
+      String secondary = "";
       boolean expanded;
-      String write;
+      String serverAddress;
       List<String> plugins;
       List<PluginLibraryScreen.Inner_ConfigStore> servers;
       int y;
 
-      static PluginLibraryScreen.Inner_StreamUtil init(PluginLibraryScreen.Inner_BufferHelper type, String key, String primary, String secondary, boolean expanded) {
+      static PluginLibraryScreen.Inner_StreamUtil groupRow(PluginLibraryScreen.Inner_BufferHelper type, String key, String primary, String secondary, boolean expanded) {
          PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
          row.type = type;
          row.key = key;
          row.label = primary;
-         row.read = secondary;
+         row.secondary = secondary;
          row.expanded = expanded;
          return row;
       }
 
-      static PluginLibraryScreen.Inner_StreamUtil init(PluginLibraryScreen.Inner_BufferHelper type, String primary, String secondary) {
+      static PluginLibraryScreen.Inner_StreamUtil childRow(PluginLibraryScreen.Inner_BufferHelper type, String primary, String secondary) {
          PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
          row.type = type;
          row.label = primary;
-         row.read = secondary;
+         row.secondary = secondary;
          return row;
       }
    }

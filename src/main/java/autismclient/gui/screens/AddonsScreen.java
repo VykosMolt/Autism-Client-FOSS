@@ -33,8 +33,8 @@ public final class AddonsScreen extends VirtualScaledScreen {
    private String selectedAddonId = "";
    private int scrollOffset;
    private boolean draggingScrollbar;
-   private int update = -2147483648;
-   private int sync;
+   private int lastBodyBottom = -2147483648;
+   private int scrollGrabOffset;
    private List<autismclient.b.DataUtil.StreamUtil> allReports = List.of();
    private String cachedQuery = "";
    private List<autismclient.b.DataUtil.StreamUtil> filteredReports = List.of();
@@ -49,7 +49,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       this.allReports = List.copyOf(autismclient.b.DataUtil.load_List());
       this.cachedQuery = "\u0000";
       this.filteredReports = List.of();
-      this.searchBox = new MsdfEditBox(this.font, this.set() + 4, this.reset(), this.get() - 8, this.controlHeight(), Component.literal("Search addons"));
+      this.searchBox = new MsdfEditBox(this.font, this.listCardX() + 4, this.searchY(), this.listCardWidth() - 8, this.controlHeight(), Component.literal("Search addons"));
       this.searchBox.setHint(Component.literal("Search addons..."));
       this.searchBox.setMaxLength(96);
       this.searchBox.setResponder(value -> {
@@ -63,20 +63,20 @@ public final class AddonsScreen extends VirtualScaledScreen {
 
    private void rebuildButtons() {
       this.buttons.clear();
-      this.update = this.next();
+      this.lastBodyBottom = this.bodyBottom();
       int ctl = this.controlHeight();
       this.buttons
          .add(
             autismclient.gui.ui.widgets.OverlayActionButton.create(
-                  this.backButtonX(), this.pop(), this.backButtonWidth(), ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.parent)
+                  this.backButtonX(), this.headerControlsY(), this.backButtonWidth(), ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.parent)
                )
                .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
          );
       autismclient.b.DataUtil.StreamUtil selected = this.selectedReport();
       int gap = 2;
-      int btnLeft = this.put() + 4;
-      int areaW = this.clear();
-      int row2Y = this.next() - 4 - ctl;
+      int btnLeft = this.detailCardX() + 4;
+      int areaW = this.detailInnerWidth();
+      int row2Y = this.bodyBottom() - 4 - ctl;
       int row1Y = row2Y - ctl - gap;
       boolean disabledRestart = selected != null && autismclient.b.DataUtil.read(selected.init_Str());
       String toggleLabel = restartToggleLabel(selected);
@@ -162,7 +162,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
             + this.buttonWidth(restartToggleLabel(selected))
             + this.buttonWidth("Mods Folder")
             + 6
-         <= this.clear();
+         <= this.detailInnerWidth();
    }
 
    private int buttonRowsHeight(autismclient.b.DataUtil.StreamUtil selected) {
@@ -179,7 +179,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private int backButtonX() {
-      return this.poll() + 4;
+      return this.cardX() + 4;
    }
 
    private void ensureSelection() {
@@ -219,23 +219,23 @@ public final class AddonsScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         if (this.update != this.next()) {
+         if (this.lastBodyBottom != this.bodyBottom()) {
             this.rebuildButtons();
          }
 
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
-         this.drawCard(graphics, this.poll(), this.push(), this.open(), this.headerCardHeight(), -401402080);
-         this.drawCard(graphics, this.set(), this.run(), this.get(), this.prev(), -1206840035);
-         this.drawCard(graphics, this.put(), this.run(), this.add(), this.prev(), -1206840035);
+         this.drawCard(graphics, this.cardX(), this.cardY(), this.cardWidth(), this.headerCardHeight(), -401402080);
+         this.drawCard(graphics, this.listCardX(), this.bodyY(), this.listCardWidth(), this.bodyHeight(), -1206840035);
+         this.drawCard(graphics, this.detailCardX(), this.bodyY(), this.detailCardWidth(), this.bodyHeight(), -1206840035);
          int ctl = this.controlHeight();
          int titleX = this.backButtonX() + this.backButtonWidth() + 4;
-         int titleY = this.centeredTextY(this.pop(), ctl);
-         this.init(graphics, "Addons", titleX, titleY, GuiColorPalette.flush, false);
+         int titleY = this.centeredTextY(this.headerControlsY(), ctl);
+         this.drawText(graphics, "Addons", titleX, titleY, GuiColorPalette.flush, false);
          int summaryLeft = titleX + this.textWidth("Addons") + 8;
-         this.init(
-            graphics, this.summaryText(), this.poll() + this.open() - 4, titleY, GuiColorPalette.close, Math.max(1, this.poll() + this.open() - 4 - summaryLeft)
+         this.drawTextRight(
+            graphics, this.summaryText(), this.cardX() + this.cardWidth() - 4, titleY, GuiColorPalette.close, Math.max(1, this.cardX() + this.cardWidth() - 4 - summaryLeft)
          );
-         this.init(graphics, "Addon Library", this.set() + 4, this.centeredTextY(this.run() + 4, 12), GuiColorPalette.flush, false, this.get() - 8);
+         this.drawTextClipped(graphics, "Addon Library", this.listCardX() + 4, this.centeredTextY(this.bodyY() + 4, 12), GuiColorPalette.flush, false, this.listCardWidth() - 8);
          this.renderList(graphics, mx, my);
          this.renderDetails(graphics);
 
@@ -258,54 +258,54 @@ public final class AddonsScreen extends VirtualScaledScreen {
       this.scrollOffset = snapScroll(this.scrollOffset, pitch, maxScroll);
       this.scroll.jumpTo(this.scrollOffset, maxScroll);
       int first = this.scrollOffset / pitch;
-      int top = this.start();
-      int bottom = this.stop();
+      int top = this.listTop();
+      int bottom = this.listBottom();
       int h = this.rowHeight();
       int y = top - this.scrollOffset % pitch;
 
       for (int i = first; i < reports.size() && y + h <= bottom; i++) {
          if (y + h > top) {
-            this.init(graphics, reports.get(i), y, mouseX, mouseY);
+            this.drawRow(graphics, reports.get(i), y, mouseX, mouseY);
          }
 
          y += pitch;
       }
 
       if (reports.isEmpty()) {
-         this.init(
+         this.drawTextClipped(
             graphics,
             this.allReports.isEmpty() ? "No AUTISM addons discovered." : "No addons match the search.",
-            this.valid(),
-            this.centeredTextY(this.start(), this.rowHeight()),
+            this.rowLeft(),
+            this.centeredTextY(this.listTop(), this.rowHeight()),
             GuiColorPalette.close,
             false,
-            this.value()
+            this.rowWidth()
          );
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.b.DataUtil.StreamUtil report, int y, int mouseX, int mouseY) {
+   private void drawRow(GuiGraphicsExtractor graphics, autismclient.b.DataUtil.StreamUtil report, int y, int mouseX, int mouseY) {
       int h = this.rowHeight();
       boolean selected = report.init_Str().equals(this.selectedAddonId);
-      boolean hovered = mouseX >= this.valid() && mouseX < this.data() && mouseY >= y && mouseY < y + h;
+      boolean hovered = mouseX >= this.rowLeft() && mouseX < this.rowRight() && mouseY >= y && mouseY < y + h;
       int fill = selected ? 858052714 : (hovered ? 606804509 : 403771667);
       int status = selected ? GuiColorPalette.sync : this.statusColor(report);
-      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid(), y, this.value(), h), fill);
-      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid(), y, 2, h), status);
-      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid() + 4, y + 3, 3, h - 6), report.init_I());
+      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.rowLeft(), y, this.rowWidth(), h), fill);
+      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.rowLeft(), y, 2, h), status);
+      autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.rowLeft() + 4, y + 3, 3, h - 6), report.init_I());
       int ty = this.centeredTextY(y, h);
       String statusText = this.statusLabel(report);
-      int statusW = Math.min(this.textWidth(statusText), this.value() / 3);
-      int statusX = this.data() - 4 - statusW;
-      this.init(graphics, statusText, statusX, ty, this.statusColor(report), false, statusW);
-      int nameX = this.valid() + 10;
+      int statusW = Math.min(this.textWidth(statusText), this.rowWidth() / 3);
+      int statusX = this.rowRight() - 4 - statusW;
+      this.drawTextClipped(graphics, statusText, statusX, ty, this.statusColor(report), false, statusW);
+      int nameX = this.rowLeft() + 10;
       int nameMax = Math.max(1, statusX - 4 - nameX);
       int nameW = Math.min(this.textWidth(report.load_Str()), nameMax);
-      this.init(graphics, report.load_Str(), nameX, ty, GuiColorPalette.flush, false, nameMax);
+      this.drawTextClipped(graphics, report.load_Str(), nameX, ty, GuiColorPalette.flush, false, nameMax);
       int idX = nameX + nameW + 4;
       int idMax = statusX - 4 - idX;
       if (idMax > 12) {
-         this.init(graphics, report.init_Str() + (report.read_Str().isBlank() ? "" : "  v" + report.read_Str()), idX, ty, GuiColorPalette.close, false, idMax);
+         this.drawTextClipped(graphics, report.init_Str() + (report.read_Str().isBlank() ? "" : "  v" + report.read_Str()), idX, ty, GuiColorPalette.close, false, idMax);
       }
    }
 
@@ -315,65 +315,65 @@ public final class AddonsScreen extends VirtualScaledScreen {
 
    private int renderDetailsFor(GuiGraphicsExtractor graphics, autismclient.b.DataUtil.StreamUtil report) {
       int line = 12;
-      int x = this.put() + 4;
-      int y = this.run() + 4;
-      int width = this.clear();
-      this.init(graphics, "Details", x, this.centeredTextY(y, 12), GuiColorPalette.flush, false, width);
+      int x = this.detailCardX() + 4;
+      int y = this.bodyY() + 4;
+      int width = this.detailInnerWidth();
+      this.drawTextClipped(graphics, "Details", x, this.centeredTextY(y, 12), GuiColorPalette.flush, false, width);
       y += 14;
       if (report == null) {
-         this.init(graphics, "Select an addon to inspect its status.", x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
+         this.drawTextClipped(graphics, "Select an addon to inspect its status.", x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
          return y + line;
       }
 
       int labelW = this.detailLabelWidth();
-      this.init(graphics, report.load_Str(), x, this.centeredTextY(y, line), GuiColorPalette.flush, false, width);
+      this.drawTextClipped(graphics, report.load_Str(), x, this.centeredTextY(y, line), GuiColorPalette.flush, false, width);
       y += line;
-      this.init(graphics, report.init_Str(), x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
+      this.drawTextClipped(graphics, report.init_Str(), x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
       y += line + 2;
-      y = this.init(graphics, x, y, width, labelW, "Status", this.statusLabel(report), this.statusColor(report));
-      y = this.init(graphics, x, y, width, labelW, "API", this.read(report), -7429889);
-      y = this.init(graphics, x, y, width, labelW, "Version", report.read_Str().isBlank() ? "unknown" : report.read_Str(), GuiColorPalette.flush);
-      y = this.init(graphics, x, y, width, labelW, "Authors", report.write_Str().isBlank() ? "unknown" : report.write_Str(), GuiColorPalette.flush);
-      y = this.init(graphics, x, y, width, labelW, "Extensions", report.close(), GuiColorPalette.open);
+      y = this.drawDetailRow(graphics, x, y, width, labelW, "Status", this.statusLabel(report), this.statusColor(report));
+      y = this.drawDetailRow(graphics, x, y, width, labelW, "API", this.apiVersionText(report), -7429889);
+      y = this.drawDetailRow(graphics, x, y, width, labelW, "Version", report.read_Str().isBlank() ? "unknown" : report.read_Str(), GuiColorPalette.flush);
+      y = this.drawDetailRow(graphics, x, y, width, labelW, "Authors", report.write_Str().isBlank() ? "unknown" : report.write_Str(), GuiColorPalette.flush);
+      y = this.drawDetailRow(graphics, x, y, width, labelW, "Extensions", report.close(), GuiColorPalette.open);
       if (report.sync_I() > 0) {
-         y = this.init(graphics, x, y, width, labelW, "Rejected", Integer.toString(report.sync_I()), -14249);
+         y = this.drawDetailRow(graphics, x, y, width, labelW, "Rejected", Integer.toString(report.sync_I()), -14249);
       }
 
       if (report.write_I() > 0) {
-         y = this.init(graphics, x, y, width, labelW, "Runtime Errors", Integer.toString(report.write_I()), GuiColorPalette.poll);
+         y = this.drawDetailRow(graphics, x, y, width, labelW, "Runtime Errors", Integer.toString(report.write_I()), GuiColorPalette.poll);
       }
 
       if (autismclient.b.DataUtil.read(report.init_Str())) {
          y += 2;
-         this.init(graphics, "Will be disabled after restart.", x, this.centeredTextY(y, line), -14249, false, width);
+         this.drawTextClipped(graphics, "Will be disabled after restart.", x, this.centeredTextY(y, line), -14249, false, width);
          y += line;
       }
 
       if (!report.sync_Str().isBlank()) {
          y += 2;
-         this.init(graphics, report.sync_Str(), x, this.centeredTextY(y, line), GuiColorPalette.poll, false, width);
+         this.drawTextClipped(graphics, report.sync_Str(), x, this.centeredTextY(y, line), GuiColorPalette.poll, false, width);
          y += line;
       }
 
       if (!report.init_List().isEmpty()) {
          y += 2;
-         this.init(graphics, "Latest rejection:", x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
+         this.drawTextClipped(graphics, "Latest rejection:", x, this.centeredTextY(y, line), GuiColorPalette.close, false, width);
          y += line;
-         this.init(graphics, report.init_List().get(report.init_List().size() - 1), x, this.centeredTextY(y, line), -14249, false, width);
+         this.drawTextClipped(graphics, report.init_List().get(report.init_List().size() - 1), x, this.centeredTextY(y, line), -14249, false, width);
          y += line;
       } else if (!report.flush().isBlank()) {
          y += 2;
-         this.init(graphics, report.flush(), x, this.centeredTextY(y, line), -14249, false, width);
+         this.drawTextClipped(graphics, report.flush(), x, this.centeredTextY(y, line), -14249, false, width);
          y += line;
       }
 
       return y;
    }
 
-   private int init(GuiGraphicsExtractor graphics, int x, int y, int width, int labelW, String label, String value, int valueColor) {
+   private int drawDetailRow(GuiGraphicsExtractor graphics, int x, int y, int width, int labelW, String label, String value, int valueColor) {
       int ty = this.centeredTextY(y, 12);
-      this.init(graphics, label + ":", x, ty, GuiColorPalette.close, false, labelW);
-      this.init(graphics, value, x + width, ty, valueColor, Math.max(1, width - labelW - 4));
+      this.drawTextClipped(graphics, label + ":", x, ty, GuiColorPalette.close, false, labelW);
+      this.drawTextRight(graphics, value, x + width, ty, valueColor, Math.max(1, width - labelW - 4));
       return y + 12;
    }
 
@@ -403,8 +403,8 @@ public final class AddonsScreen extends VirtualScaledScreen {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.visibleReports().size());
       if (scrollbar.isScrollable() && scrollbar.containsTrack(virtual.x(), virtual.y())) {
          this.draggingScrollbar = true;
-         this.sync = scrollbar.containsThumb(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
-         this.scrollOffset = snapScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.rowPitch(), scrollbar.maxScroll());
+         this.scrollGrabOffset = scrollbar.containsThumb(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
+         this.scrollOffset = snapScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.scrollGrabOffset), this.rowPitch(), scrollbar.maxScroll());
          this.scroll.jumpTo(this.scrollOffset, scrollbar.maxScroll());
          return true;
       } else {
@@ -435,7 +435,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       MouseButtonEvent virtual = toVirtual(event);
       if (this.draggingScrollbar) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.visibleReports().size());
-         this.scrollOffset = snapScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.sync), this.rowPitch(), scrollbar.maxScroll());
+         this.scrollOffset = snapScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtual.y(), this.scrollGrabOffset), this.rowPitch(), scrollbar.maxScroll());
          this.scroll.jumpTo(this.scrollOffset, scrollbar.maxScroll());
          return true;
       } else {
@@ -447,7 +447,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
       x = cA.init_D_D(x);
       y = cA.init_D_D(y);
-      if (!(x < this.set()) && !(x >= this.set() + this.get()) && !(y < this.run()) && !(y >= this.next())) {
+      if (!(x < this.listCardX()) && !(x >= this.listCardX() + this.listCardWidth()) && !(y < this.bodyY()) && !(y >= this.bodyBottom())) {
          int maxScroll = this.maxScrollFor(this.visibleReports().size());
          if (maxScroll <= 0) {
             return true;
@@ -467,14 +467,14 @@ public final class AddonsScreen extends VirtualScaledScreen {
    }
 
    private autismclient.b.DataUtil.StreamUtil reportAt(double mouseX, double mouseY) {
-      if (!(mouseX < this.valid()) && !(mouseX >= this.data()) && !(mouseY < this.start()) && !(mouseY >= this.stop())) {
+      if (!(mouseX < this.rowLeft()) && !(mouseX >= this.rowRight()) && !(mouseY < this.listTop()) && !(mouseY >= this.listBottom())) {
          List<autismclient.b.DataUtil.StreamUtil> reports = this.visibleReports();
-         int local = (int)mouseY - this.start() + this.scrollOffset;
+         int local = (int)mouseY - this.listTop() + this.scrollOffset;
          if (local % this.rowPitch() >= this.rowHeight()) {
             return null;
          } else {
             int index = local / this.rowPitch();
-            if (this.start() + index * this.rowPitch() - this.scrollOffset + this.rowHeight() > this.stop()) {
+            if (this.listTop() + index * this.rowPitch() - this.scrollOffset + this.rowHeight() > this.listBottom()) {
                return null;
             } else {
                return index >= 0 && index < reports.size() ? reports.get(index) : null;
@@ -597,20 +597,20 @@ public final class AddonsScreen extends VirtualScaledScreen {
       }
    }
 
-   private String read(autismclient.b.DataUtil.StreamUtil report) {
+   private String apiVersionText(autismclient.b.DataUtil.StreamUtil report) {
       String addon = report.load_I() < 0 ? "unknown" : Integer.toString(report.load_I());
       return "addon v" + addon + " / host v" + report.read_I();
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int rows) {
-      int view = Math.max(1, this.stop() - this.start());
+      int view = Math.max(1, this.listBottom() - this.listTop());
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-         this.contentHeight(rows), view, this.size(), this.start(), 6, this.stop() - this.start(), this.scrollOffset
+         this.contentHeight(rows), view, this.scrollbarX(), this.listTop(), 6, this.listBottom() - this.listTop(), this.scrollOffset
       );
    }
 
    private int maxScrollFor(int rows) {
-      return Math.max(0, this.contentHeight(rows) - Math.max(1, this.stop() - this.start()));
+      return Math.max(0, this.contentHeight(rows) - Math.max(1, this.listBottom() - this.listTop()));
    }
 
    private int contentHeight(int rows) {
@@ -625,11 +625,11 @@ public final class AddonsScreen extends VirtualScaledScreen {
       this.setFocused(null);
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center) {
-      this.init(graphics, text, x, y, color, center, 2147483647);
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center) {
+      this.drawTextClipped(graphics, text, x, y, color, center, 2147483647);
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center, int maxWidth) {
+   private void drawTextClipped(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean center, int maxWidth) {
       if (graphics != null) {
          Font renderer = this.font;
          Identifier fontId = THEME.init_Identifier_l(l.read);
@@ -647,7 +647,7 @@ public final class AddonsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int right, int y, int color, int maxWidth) {
+   private void drawTextRight(GuiGraphicsExtractor graphics, String text, int right, int y, int color, int maxWidth) {
       if (graphics != null) {
          Identifier fontId = THEME.init_Identifier_l(l.read);
          String value = k.load(this.font, text == null ? "" : text, Math.max(1, maxWidth), fontId, color);
@@ -675,90 +675,90 @@ public final class AddonsScreen extends VirtualScaledScreen {
       return this.rowHeight() + 2;
    }
 
-   private int open() {
+   private int cardWidth() {
       return Math.max(200, Math.min(560, this.virtualWidth() - 12));
    }
 
-   private int poll() {
-      return (this.virtualWidth() - this.open()) / 2;
+   private int cardX() {
+      return (this.virtualWidth() - this.cardWidth()) / 2;
    }
 
-   private int push() {
+   private int cardY() {
       return 6;
    }
 
-   private int pop() {
-      return this.push() + 4;
+   private int headerControlsY() {
+      return this.cardY() + 4;
    }
 
    private int headerCardHeight() {
       return this.controlHeight() + 8;
    }
 
-   private int run() {
-      return this.push() + this.headerCardHeight() + 4;
+   private int bodyY() {
+      return this.cardY() + this.headerCardHeight() + 4;
    }
 
-   private int get() {
-      return Math.max(140, Math.min(260, (this.open() - 4) * 45 / 100));
+   private int listCardWidth() {
+      return Math.max(140, Math.min(260, (this.cardWidth() - 4) * 45 / 100));
    }
 
-   private int set() {
-      return this.poll();
+   private int listCardX() {
+      return this.cardX();
    }
 
-   private int put() {
-      return this.set() + this.get() + 4;
+   private int detailCardX() {
+      return this.listCardX() + this.listCardWidth() + 4;
    }
 
-   private int add() {
-      return Math.max(1, this.poll() + this.open() - this.put());
+   private int detailCardWidth() {
+      return Math.max(1, this.cardX() + this.cardWidth() - this.detailCardX());
    }
 
-   private int clear() {
-      return Math.max(40, this.add() - 8);
+   private int detailInnerWidth() {
+      return Math.max(40, this.detailCardWidth() - 8);
    }
 
-   private int reset() {
-      return this.run() + 4 + 12 + 2;
+   private int searchY() {
+      return this.bodyY() + 4 + 12 + 2;
    }
 
-   private int start() {
-      return this.reset() + this.controlHeight() + 2;
+   private int listTop() {
+      return this.searchY() + this.controlHeight() + 2;
    }
 
-   private int stop() {
-      return this.next() - 4;
+   private int listBottom() {
+      return this.bodyBottom() - 4;
    }
 
-   private int next() {
-      return this.run() + this.prev();
+   private int bodyBottom() {
+      return this.bodyY() + this.bodyHeight();
    }
 
-   private int prev() {
-      int available = Math.max(60, this.virtualHeight() - 6 - this.run());
+   private int bodyHeight() {
+      int available = Math.max(60, this.virtualHeight() - 6 - this.bodyY());
       int maxRows = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int rows = Math.max(3, Math.min(maxRows, this.visibleReports().size()));
-      int list = this.start() - this.run() + this.contentHeight(rows) + 4;
+      int list = this.listTop() - this.bodyY() + this.contentHeight(rows) + 4;
       autismclient.b.DataUtil.StreamUtil selected = this.selectedReport();
-      int details = this.renderDetailsFor(null, selected) - this.run() + 4 + this.buttonRowsHeight(selected) + 4;
+      int details = this.renderDetailsFor(null, selected) - this.bodyY() + 4 + this.buttonRowsHeight(selected) + 4;
       return Math.min(available, Math.max(list, details));
    }
 
-   private int valid() {
-      return this.set() + 4;
+   private int rowLeft() {
+      return this.listCardX() + 4;
    }
 
-   private int size() {
-      return this.set() + this.get() - 4 - 6;
+   private int scrollbarX() {
+      return this.listCardX() + this.listCardWidth() - 4 - 6;
    }
 
-   private int data() {
-      return this.size() - 2;
+   private int rowRight() {
+      return this.scrollbarX() - 2;
    }
 
-   private int value() {
-      return Math.max(1, this.data() - this.valid());
+   private int rowWidth() {
+      return Math.max(1, this.rowRight() - this.rowLeft());
    }
 
    private static int snapScroll(int value, int step, int maxScroll) {

@@ -7,43 +7,43 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 
 public final class VirtualInputDispatcher {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static boolean init_Z;
-   private static boolean load_Z;
-   private static GuardedInputTicket init_cW;
-   private static GuardedInputTicket load_cW;
-   private static VirtualInputDispatcher.Inner_DataUtil init_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-   private static long init_J;
-   private static int init_I = -1;
-   private static int load_I = -1;
-   private static boolean read_Z;
-   private static boolean write;
-   private static VirtualInputDispatcher.Inner_DataUtil load_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-   private static VirtualInputDispatcher.Inner_DataUtil read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-   private static long load_J;
-   private static long read_J;
+   private static final Minecraft MC = Minecraft.getInstance();
+   private static boolean attackQueued;
+   private static boolean useQueued;
+   private static GuardedInputTicket pendingTicket;
+   private static GuardedInputTicket activeTicket;
+   private static VirtualInputDispatcher.Inner_DataUtil requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static long requestedGeneration;
+   private static int pendingSlot = -1;
+   private static int pendingSlotFrom = -1;
+   private static boolean attackPressed;
+   private static boolean usePressed;
+   private static VirtualInputDispatcher.Inner_DataUtil dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static VirtualInputDispatcher.Inner_DataUtil consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static long dispatchedGeneration;
+   private static long consumedGeneration;
    private static KeyMapping mapping;
-   private static boolean update;
-   private static boolean sync;
+   private static boolean attackHeld;
+   private static boolean useHeld;
 
    private VirtualInputDispatcher() {
    }
 
-   public static void init_V() {
+   public static void queueAttack() {
       if (!autismclient.modules.aD.read_Z()) {
-         init_Z = true;
+         attackQueued = true;
       }
    }
 
-   public static void load_V() {
+   public static void queueUse() {
       if (!autismclient.modules.aD.read_Z()) {
-         load_Z = true;
+         useQueued = true;
       }
    }
 
    public static boolean init(String owner, BooleanSupplier guard, Consumer<Boolean> receipt) {
-      if (owner != null && guard != null && receipt != null && !autismclient.modules.aD.read_Z() && init_cW == null && load_cW == null) {
-         init_cW = new GuardedInputTicket(owner, guard, receipt);
+      if (owner != null && guard != null && receipt != null && !autismclient.modules.aD.read_Z() && pendingTicket == null && activeTicket == null) {
+         pendingTicket = new GuardedInputTicket(owner, guard, receipt);
          return true;
       } else {
          return false;
@@ -51,34 +51,34 @@ public final class VirtualInputDispatcher {
    }
 
    public static boolean isTicketOwner(String owner) {
-      return load_cW != null && load_cW.owner.equals(owner);
+      return activeTicket != null && activeTicket.owner.equals(owner);
    }
 
    public static void markTicketSent(String owner) {
       if (isTicketOwner(owner)) {
-         load_cW.markSent();
+         activeTicket.markSent();
       }
    }
 
    public static void load(String owner) {
-      if (init_cW != null && init_cW.owner.equals(owner)) {
-         GuardedInputTicket old = init_cW;
-         init_cW = null;
+      if (pendingTicket != null && pendingTicket.owner.equals(owner)) {
+         GuardedInputTicket old = pendingTicket;
+         pendingTicket = null;
          old.read();
       }
    }
 
-   private static void tick() {
-      GuardedInputTicket old = load_cW;
-      load_cW = null;
+   private static void finishActiveTicket() {
+      GuardedInputTicket old = activeTicket;
+      activeTicket = null;
       if (old != null) {
          old.load();
       }
    }
 
-   private static void run() {
-      GuardedInputTicket old = init_cW;
-      init_cW = null;
+   private static void dropPendingTicket() {
+      GuardedInputTicket old = pendingTicket;
+      pendingTicket = null;
       if (old != null) {
          old.read();
       }
@@ -86,155 +86,155 @@ public final class VirtualInputDispatcher {
 
    public static void requestScaffold(long generation) {
       if (generation > 0L && !autismclient.modules.aD.read_Z()) {
-         init_J = generation;
-         init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
+         requestedGeneration = generation;
+         requestOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
       }
    }
 
    public static void requestFastExp() {
-      init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      requestOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
    public static void requestFastBlock() {
-      init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      requestOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
    public static boolean consumeFastExp() {
-      return init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      return consumeOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
    public static boolean consumeFastBlock() {
-      return init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      return consumeOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
    public static boolean consumeScaffold(long generation) {
-      if (generation <= 0L || load_J != generation) {
+      if (generation <= 0L || dispatchedGeneration != generation) {
          return false;
       }
 
-      if (!init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD)) {
+      if (!consumeOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD)) {
          return false;
       }
 
-      read_J = generation;
-      load_J = 0L;
+      consumedGeneration = generation;
+      dispatchedGeneration = 0L;
       return true;
    }
 
-   public static boolean read_Z() {
-      return read_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD;
+   public static boolean isScaffoldConsumed() {
+      return consumedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD;
    }
 
    public static long init_J() {
-      return read_Z() ? read_J : 0L;
+      return isScaffoldConsumed() ? consumedGeneration : 0L;
    }
 
    public static void update_V() {
-      if (init_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
-         || load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
-         || read_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
-         || init_J != 0L
-         || load_J != 0L
-         || read_J != 0L) {
-         load(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
-         init_J = 0L;
-         load_J = 0L;
-         read_J = 0L;
+      if (requestedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
+         || dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
+         || consumedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
+         || requestedGeneration != 0L
+         || dispatchedGeneration != 0L
+         || consumedGeneration != 0L) {
+         releaseOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
+         requestedGeneration = 0L;
+         dispatchedGeneration = 0L;
+         consumedGeneration = 0L;
       }
    }
 
-   public static boolean write_Z() {
-      return read_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP;
+   public static boolean isFastExpConsumed() {
+      return consumedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP;
    }
 
    public static boolean hasFastRequest() {
-      return load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP || load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK;
+      return dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP || dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK;
    }
 
    public static void releaseFastExp() {
-      load(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      releaseOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
    }
 
    public static void releaseFastBlock() {
-      load(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      releaseOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
    }
 
-   private static void init_V_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil owner) {
+   private static void requestOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
       if (!autismclient.modules.aD.read_Z() && owner != null && owner != VirtualInputDispatcher.Inner_DataUtil.NONE) {
-         init_as_DataUtil = owner;
+         requestedOwner = owner;
       }
    }
 
-   static boolean init(boolean plainQueued, boolean scaffoldQueued) {
+   static boolean plainWins(boolean plainQueued, boolean scaffoldQueued) {
       return plainQueued && !scaffoldQueued;
    }
 
-   private static boolean init_Z_as_DataUtil(VirtualInputDispatcher.Inner_DataUtil owner) {
-      if (load_as_DataUtil != owner) {
+   private static boolean consumeOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
+      if (dispatchedOwner != owner) {
          return false;
       }
 
-      load_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-      read_as_DataUtil = owner;
+      dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      consumedOwner = owner;
       return true;
    }
 
-   private static void load(VirtualInputDispatcher.Inner_DataUtil owner) {
-      if (init_as_DataUtil == owner) {
-         init_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static void releaseOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
+      if (requestedOwner == owner) {
+         requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
       }
 
-      if (load_as_DataUtil == owner && init_Minecraft != null && init_Minecraft.options != null) {
-         init(init_Minecraft.options.keyUse, false);
-         write = false;
+      if (dispatchedOwner == owner && MC != null && MC.options != null) {
+         simulatePress(MC.options.keyUse, false);
+         usePressed = false;
       }
 
-      if (load_as_DataUtil == owner) {
-         load_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      if (dispatchedOwner == owner) {
+         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
       }
 
-      if (read_as_DataUtil == owner) {
-         read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      if (consumedOwner == owner) {
+         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
       }
 
       if (owner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD) {
-         init_J = 0L;
-         load_J = 0L;
-         read_J = 0L;
+         requestedGeneration = 0L;
+         dispatchedGeneration = 0L;
+         consumedGeneration = 0L;
       }
 
-      if (init_Minecraft != null && init_Minecraft.options != null && init_Minecraft.options.keyUse != null) {
-         KeyMappingControl.of(init_Minecraft.options.keyUse).autism$resetPressedState();
+      if (MC != null && MC.options != null && MC.options.keyUse != null) {
+         KeyMappingControl.of(MC.options.keyUse).autism$resetPressedState();
       }
    }
 
    public static void setAttackHeld(boolean held) {
-      update = init(init_Minecraft != null && init_Minecraft.options != null ? init_Minecraft.options.keyAttack : null, update, held);
+      attackHeld = applyHold(MC != null && MC.options != null ? MC.options.keyAttack : null, attackHeld, held);
    }
 
    public static boolean isHeld(boolean use) {
-      return use ? sync : update;
+      return use ? useHeld : attackHeld;
    }
 
    public static void load(boolean held) {
-      sync = init(init_Minecraft != null && init_Minecraft.options != null ? init_Minecraft.options.keyUse : null, sync, held);
+      useHeld = applyHold(MC != null && MC.options != null ? MC.options.keyUse : null, useHeld, held);
    }
 
-   private static boolean init(KeyMapping mapping, boolean current, boolean held) {
+   private static boolean applyHold(KeyMapping mapping, boolean current, boolean held) {
       if (mapping == null) {
          return false;
       }
 
-      if (held && !mapping.isUnbound() && !autismclient.modules.aD.read_Z() && flush_Z()) {
+      if (held && !mapping.isUnbound() && !autismclient.modules.aD.read_Z() && canDispatch()) {
          if (!mapping.isDown()) {
-            init(mapping, true);
+            simulatePress(mapping, true);
          }
 
          return true;
       } else {
          if (current) {
-            if (flush_Z()) {
-               init(mapping, false);
+            if (canDispatch()) {
+               simulatePress(mapping, false);
             }
 
             KeyMappingControl.of(mapping).autism$resetPressedState();
@@ -244,187 +244,187 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   private static void get() {
+   private static void releaseHolds() {
       setAttackHeld(false);
       load(false);
    }
 
    public static void setSlot(int slot) {
       if (!autismclient.modules.aD.read_Z()) {
-         init_I = Math.max(0, Math.min(8, slot));
-         load_I = -1;
+         pendingSlot = Math.max(0, Math.min(8, slot));
+         pendingSlotFrom = -1;
       }
    }
 
    public static void init(int slot, int from) {
       if (!autismclient.modules.aD.read_Z()) {
-         init_I = Math.max(0, Math.min(8, slot));
-         load_I = from;
+         pendingSlot = Math.max(0, Math.min(8, slot));
+         pendingSlotFrom = from;
       }
    }
 
    public static void close() {
-      if (!flush_Z()) {
-         set();
+      if (!canDispatch()) {
+         resetForState();
       } else {
          boolean combatOwnsUse = ClientInteractionOverride.ownsUseInput();
          boolean combatOwnsAttack = ClientInteractionOverride.ownsAttackInput();
-         if (init_cW != null && !init_cW.isValid()) {
-            run();
+         if (pendingTicket != null && !pendingTicket.isValid()) {
+            dropPendingTicket();
          }
 
-         if (init_Z && !combatOwnsAttack) {
-            init(init_Minecraft.options.keyAttack, true);
-            read_Z = true;
+         if (attackQueued && !combatOwnsAttack) {
+            simulatePress(MC.options.keyAttack, true);
+            attackPressed = true;
          }
 
          if (!combatOwnsAttack) {
-            init_Z = false;
+            attackQueued = false;
          }
 
-         if (init_cW != null && !combatOwnsUse && !load_Z && init_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.NONE) {
-            boolean physicalUse = init_Minecraft.options.keyUse.isDown() || ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$clickCount() > 0;
+         if (pendingTicket != null && !combatOwnsUse && !useQueued && requestedOwner == VirtualInputDispatcher.Inner_DataUtil.NONE) {
+            boolean physicalUse = MC.options.keyUse.isDown() || ((AutismKeyMappingAccessor)MC.options.keyUse).autism$clickCount() > 0;
             if (physicalUse) {
-               run();
+               dropPendingTicket();
             } else {
-               load_cW = init_cW;
-               init_cW = null;
-               init(init_Minecraft.options.keyUse, true);
-               write = true;
+               activeTicket = pendingTicket;
+               pendingTicket = null;
+               simulatePress(MC.options.keyUse, true);
+               usePressed = true;
             }
          }
 
-         if (!combatOwnsUse && (load_Z || init_as_DataUtil != VirtualInputDispatcher.Inner_DataUtil.NONE)) {
-            boolean plainWinsTick = init_as_DataUtil != VirtualInputDispatcher.Inner_DataUtil.NONE && init(load_Z, init_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
-            load_as_DataUtil = plainWinsTick ? VirtualInputDispatcher.Inner_DataUtil.NONE : init_as_DataUtil;
-            load_J = load_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD ? init_J : 0L;
-            if (load_as_DataUtil != VirtualInputDispatcher.Inner_DataUtil.NONE) {
-               while (init_Minecraft.options.keyUse.consumeClick()) {
+         if (!combatOwnsUse && (useQueued || requestedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE)) {
+            boolean plainWinsTick = requestedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE && plainWins(useQueued, requestedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
+            dispatchedOwner = plainWinsTick ? VirtualInputDispatcher.Inner_DataUtil.NONE : requestedOwner;
+            dispatchedGeneration = dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD ? requestedGeneration : 0L;
+            if (dispatchedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE) {
+               while (MC.options.keyUse.consumeClick()) {
                }
             }
 
-            init(init_Minecraft.options.keyUse, true);
-            write = true;
+            simulatePress(MC.options.keyUse, true);
+            usePressed = true;
          }
 
          if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.init_Z_23()) {
-            init_I = -1;
-            load_I = -1;
+            pendingSlot = -1;
+            pendingSlotFrom = -1;
          }
 
-         if (init_I >= 0
-            && init_Minecraft.options.keyHotbarSlots != null
-            && init_I < init_Minecraft.options.keyHotbarSlots.length
-            && (load_I < 0 || init_Minecraft.player.getInventory().getSelectedSlot() == load_I)) {
-            mapping = init_Minecraft.options.keyHotbarSlots[init_I];
-            init(mapping, true);
+         if (pendingSlot >= 0
+            && MC.options.keyHotbarSlots != null
+            && pendingSlot < MC.options.keyHotbarSlots.length
+            && (pendingSlotFrom < 0 || MC.player.getInventory().getSelectedSlot() == pendingSlotFrom)) {
+            mapping = MC.options.keyHotbarSlots[pendingSlot];
+            simulatePress(mapping, true);
          }
 
          if (!combatOwnsUse) {
-            load_Z = false;
-            if (load_as_DataUtil != VirtualInputDispatcher.Inner_DataUtil.NONE || init_as_DataUtil == VirtualInputDispatcher.Inner_DataUtil.NONE) {
-               init_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-               init_J = 0L;
+            useQueued = false;
+            if (dispatchedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE || requestedOwner == VirtualInputDispatcher.Inner_DataUtil.NONE) {
+               requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+               requestedGeneration = 0L;
             }
          }
 
-         init_I = -1;
-         load_I = -1;
+         pendingSlot = -1;
+         pendingSlotFrom = -1;
       }
    }
 
    public static void open() {
-      if (!flush_Z()) {
-         set();
+      if (!canDispatch()) {
+         resetForState();
       }
    }
 
    public static void poll() {
-      tick();
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         if (read_Z) {
-            init(init_Minecraft.options.keyAttack, false);
-            read_Z = false;
+      finishActiveTicket();
+      if (MC != null && MC.options != null) {
+         if (attackPressed) {
+            simulatePress(MC.options.keyAttack, false);
+            attackPressed = false;
          }
 
-         if (write) {
-            init(init_Minecraft.options.keyUse, false);
-            write = false;
+         if (usePressed) {
+            simulatePress(MC.options.keyUse, false);
+            usePressed = false;
          }
 
-         load_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         load_J = 0L;
-         read_J = 0L;
+         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         dispatchedGeneration = 0L;
+         consumedGeneration = 0L;
          if (mapping != null) {
-            init(mapping, false);
+            simulatePress(mapping, false);
             mapping = null;
          }
       } else {
-         read_Z = false;
-         write = false;
-         load_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         read_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         load_J = 0L;
-         read_J = 0L;
+         attackPressed = false;
+         usePressed = false;
+         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         dispatchedGeneration = 0L;
+         consumedGeneration = 0L;
       }
    }
 
-   private static void set() {
-      if (sync_Z()) {
+   private static void resetForState() {
+      if (isScreenBlocked()) {
          pop();
       } else {
          push();
       }
    }
 
-   private static boolean sync_Z() {
-      return init_Minecraft == null
-         || init_Minecraft.player == null
-         || init_Minecraft.level == null
-         || init_Minecraft.options == null
-         || init_Minecraft.getWindow() == null
-         || init_Minecraft.gui.screen() != null
-         || init_Minecraft.gui.overlay() != null;
+   private static boolean isScreenBlocked() {
+      return MC == null
+         || MC.player == null
+         || MC.level == null
+         || MC.options == null
+         || MC.getWindow() == null
+         || MC.gui.screen() != null
+         || MC.gui.overlay() != null;
    }
 
    public static void push() {
-      run();
-      init_Z = false;
-      load_Z = false;
-      init_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-      init_J = 0L;
-      load_J = 0L;
-      read_J = 0L;
-      init_I = -1;
-      load_I = -1;
+      dropPendingTicket();
+      attackQueued = false;
+      useQueued = false;
+      requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      requestedGeneration = 0L;
+      dispatchedGeneration = 0L;
+      consumedGeneration = 0L;
+      pendingSlot = -1;
+      pendingSlotFrom = -1;
       poll();
-      get();
+      releaseHolds();
    }
 
    public static void pop() {
-      run();
-      init_Z = false;
-      load_Z = false;
-      init_as_DataUtil = VirtualInputDispatcher.Inner_DataUtil.NONE;
-      init_J = 0L;
-      load_J = 0L;
-      read_J = 0L;
-      init_I = -1;
-      load_I = -1;
+      dropPendingTicket();
+      attackQueued = false;
+      useQueued = false;
+      requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      requestedGeneration = 0L;
+      dispatchedGeneration = 0L;
+      consumedGeneration = 0L;
+      pendingSlot = -1;
+      pendingSlotFrom = -1;
       poll();
-      get();
-      put();
+      releaseHolds();
+      drainClicks();
    }
 
-   private static void put() {
-      if (init_Minecraft != null && init_Minecraft.options != null) {
-         init_V_KeyMapping(init_Minecraft.options.keyUse);
-         init_V_KeyMapping(init_Minecraft.options.keyAttack);
+   private static void drainClicks() {
+      if (MC != null && MC.options != null) {
+         drainKeyClicks(MC.options.keyUse);
+         drainKeyClicks(MC.options.keyAttack);
       }
    }
 
-   private static void init_V_KeyMapping(KeyMapping mapping) {
+   private static void drainKeyClicks(KeyMapping mapping) {
       if (mapping != null) {
          while (mapping.consumeClick()) {
          }
@@ -433,18 +433,18 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   private static boolean flush_Z() {
-      return init_Minecraft != null
-         && init_Minecraft.player != null
-         && init_Minecraft.level != null
-         && init_Minecraft.options != null
-         && init_Minecraft.getWindow() != null
-         && init_Minecraft.gui.screen() == null
-         && init_Minecraft.gui.overlay() == null
+   private static boolean canDispatch() {
+      return MC != null
+         && MC.player != null
+         && MC.level != null
+         && MC.options != null
+         && MC.getWindow() != null
+         && MC.gui.screen() == null
+         && MC.gui.overlay() == null
          && !autismclient.modules.aD.init_Z();
    }
 
-   private static void init(KeyMapping mapping, boolean pressed) {
+   private static void simulatePress(KeyMapping mapping, boolean pressed) {
       if (mapping != null) {
          KeyMappingControl.of(mapping).autism$simulatePress(pressed);
       }

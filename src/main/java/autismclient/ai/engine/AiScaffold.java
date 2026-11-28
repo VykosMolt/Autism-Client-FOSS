@@ -43,7 +43,7 @@ public final class AiScaffold {
    private static final Set<AiScaffold.Inner_StreamUtil> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
    private static final Map<Path, LinkedHashMap<Long, Block>> init_Map = new LinkedHashMap<>();
    private static final Map<Path, CompletableFuture<Void>> load_Map = new LinkedHashMap<>();
-   private static final Map<Path, Map<Long, Block>> read = new LinkedHashMap<>();
+   private static final Map<Path, Map<Long, Block>> recordedBlocks = new LinkedHashMap<>();
    private static final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(
       Thread.ofPlatform().daemon(true).name("AI scaffold journal").factory()
    );
@@ -93,7 +93,7 @@ public final class AiScaffold {
                }
             }
          } else {
-            records.putAll(read.getOrDefault(key, Map.of()));
+            records.putAll(recordedBlocks.getOrDefault(key, Map.of()));
          }
 
          if (init_Map.size() >= 64) {
@@ -220,10 +220,10 @@ public final class AiScaffold {
    }
 
    public static boolean init(Block recorded, Block live) {
-      return recorded != null && (recorded == live || init(recorded) && init(live));
+      return recorded != null && (recorded == live || isDirtLike(recorded) && isDirtLike(live));
    }
 
-   private static boolean init(Block block) {
+   private static boolean isDirtLike(Block block) {
       return block == Blocks.DIRT || block == Blocks.GRASS_BLOCK || block == Blocks.MYCELIUM;
    }
 
@@ -259,7 +259,7 @@ public final class AiScaffold {
       private final LinkedHashMap<Long, Block> init_LinkedHashMap;
       private final Path init_Path;
       private long init_J;
-      private long load = -1L;
+      private long savedRevision = -1L;
       private CompletableFuture<Void> init_CompletableFuture = CompletableFuture.completedFuture(null);
 
       private Inner_StreamUtil() {
@@ -281,7 +281,7 @@ public final class AiScaffold {
       }
 
       public void persist() {
-         if (this.init_Path != null && (this.load != this.init_J || this.init_CompletableFuture.isCompletedExceptionally())) {
+         if (this.init_Path != null && (this.savedRevision != this.init_J || this.init_CompletableFuture.isCompletedExceptionally())) {
             LinkedHashMap<Long, Block> snapshot = new LinkedHashMap<>(this.init_LinkedHashMap);
             JsonArray rows = new JsonArray();
             snapshot.forEach(
@@ -292,7 +292,7 @@ public final class AiScaffold {
                   );
                }
             );
-            this.load = this.init_J;
+            this.savedRevision = this.init_J;
             CompletableFuture<Void> previous = AiScaffold.load_Map.getOrDefault(this.init_Path, CompletableFuture.completedFuture(null));
             this.init_CompletableFuture = previous.handle((ignored, failure) -> null).thenRunAsync(() -> {
                try {
@@ -303,14 +303,14 @@ public final class AiScaffold {
                }
             }, AiScaffold.init_ExecutorService);
             AiScaffold.load_Map.put(this.init_Path, this.init_CompletableFuture);
-            AiScaffold.read.put(this.init_Path, snapshot);
+            AiScaffold.recordedBlocks.put(this.init_Path, snapshot);
             if (AiScaffold.load_Map.size() > 64) {
                Iterator<Entry<Path, CompletableFuture<Void>>> iterator = AiScaffold.load_Map.entrySet().iterator();
 
                while (iterator.hasNext()) {
                   Entry<Path, CompletableFuture<Void>> write = iterator.next();
                   if (!write.getKey().equals(this.init_Path) && write.getValue().isDone() && !AiScaffold.auditInUse(write.getKey())) {
-                     AiScaffold.read.remove(write.getKey());
+                     AiScaffold.recordedBlocks.remove(write.getKey());
                      iterator.remove();
                   }
                }

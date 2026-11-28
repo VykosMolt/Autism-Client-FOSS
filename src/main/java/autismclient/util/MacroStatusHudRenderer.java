@@ -13,7 +13,7 @@ import net.minecraft.resources.Identifier;
 public final class MacroStatusHudRenderer {
    private static final autismclient.gui.f.b.CharEncoder THEME = new autismclient.gui.f.b.CharEncoder();
    private static final long REFRESH_INTERVAL_NANOS = 50000000L;
-   private static final int init_I = -9448565;
+   private static final int ACCENT_COLOR = -9448565;
    private static final Identifier STATUS_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.write);
    private static final Identifier ACTION_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
    private static final Identifier TITLE_FONT = THEME.init_Identifier_l(autismclient.gui.f.b.l.load);
@@ -23,20 +23,20 @@ public final class MacroStatusHudRenderer {
    private static int[] cachedSteps = new int[0];
    private static int[] cachedTotals = new int[0];
    private static int[] cachedCompletedSteps = new int[0];
-   private static int write = -2147483648;
-   private static int update = -2147483648;
-   private static int sync = -2147483648;
-   private static int flush = -2147483648;
-   private static int close = -2147483648;
-   private static int open = -2147483648;
-   private static int poll = -2147483648;
+   private static int cachedRowsPerRun = -2147483648;
+   private static int cachedCurrent = -2147483648;
+   private static int cachedTotal = -2147483648;
+   private static int cachedScroll = -2147483648;
+   private static int cachedVisibleRows = -2147483648;
+   private static int cachedPanelWidth = -2147483648;
+   private static int cachedThemeGeneration = -2147483648;
    private static String title = null;
    private static String cachedTitle = "";
    private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> cachedLines = List.of();
    private static long lastRefreshNanos;
    private static Font cachedFont;
-   private static int push = -2147483648;
-   private static int pop = -2147483648;
+   private static int visibilityPanelWidth = -2147483648;
+   private static int visibilityMaxLines = -2147483648;
    private static long visibilityCheckedAt;
    private static boolean cachedVisible;
    private static boolean visibilityCached;
@@ -44,7 +44,7 @@ public final class MacroStatusHudRenderer {
    private MacroStatusHudRenderer() {
    }
 
-   public static void init(GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, int maxLines) {
+   public static void renderAt(GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, int maxLines) {
       init(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
    }
 
@@ -67,14 +67,14 @@ public final class MacroStatusHudRenderer {
    }
 
    private static boolean isVisibleCached(Font textRenderer, int panelWidth, int maxLines) {
-      if (visibilityCached && textRenderer == cachedFont && panelWidth == push && maxLines == pop && System.nanoTime() - visibilityCheckedAt < 8000000L) {
+      if (visibilityCached && textRenderer == cachedFont && panelWidth == visibilityPanelWidth && maxLines == visibilityMaxLines && System.nanoTime() - visibilityCheckedAt < 8000000L) {
          visibilityCached = false;
          return cachedVisible;
       } else {
-         boolean result = load(textRenderer, panelWidth, maxLines);
+         boolean result = computeVisible(textRenderer, panelWidth, maxLines);
          cachedFont = textRenderer;
-         push = panelWidth;
-         pop = maxLines;
+         visibilityPanelWidth = panelWidth;
+         visibilityMaxLines = maxLines;
          visibilityCheckedAt = System.nanoTime();
          cachedVisible = result;
          visibilityCached = true;
@@ -82,7 +82,7 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   private static boolean load(Font textRenderer, int panelWidth, int maxLines) {
+   private static boolean computeVisible(Font textRenderer, int panelWidth, int maxLines) {
       List<MacroExecutor.ActiveRunSnapshot> runs = MacroExecutor.getActiveRunSnapshots();
       if (runs.isEmpty()) {
          clearCache();
@@ -92,15 +92,15 @@ public final class MacroStatusHudRenderer {
       MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       AutismMacro macro = primary.macro();
       if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
-         int total = init(primary, macro);
+         int total = actionTotal(primary, macro);
          int current = Math.max(0, primary.currentStep());
          int rowsPerRun = Math.max(2, maxLines / Math.max(1, runs.size()));
-         int visibleRows = init(total, rowsPerRun);
-         int scroll = init(current, total, rowsPerRun);
+         int visibleRows = visibleRowCount(total, rowsPerRun);
+         int scroll = scrollStart(current, total, rowsPerRun);
          long now = System.nanoTime();
-         boolean runsMatch = init(runs, rowsPerRun);
-         if (init(runsMatch, current, total, scroll, visibleRows, panelWidth, now)) {
-            init(textRenderer, runs, rowsPerRun, panelWidth, now);
+         boolean runsMatch = runsMatchCache(runs, rowsPerRun);
+         if (needsRefresh(runsMatch, current, total, scroll, visibleRows, panelWidth, now)) {
+            rebuildCache(textRenderer, runs, rowsPerRun, panelWidth, now);
          }
 
          return true;
@@ -110,21 +110,21 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   private static int init(MacroExecutor.ActiveRunSnapshot run, AutismMacro macro) {
+   private static int actionTotal(MacroExecutor.ActiveRunSnapshot run, AutismMacro macro) {
       int actionCount = macro != null && macro.actions != null ? macro.actions.size() : 0;
       return Math.max(run.totalSteps(), actionCount);
    }
 
-   private static int init(int total, int rowsPerRun) {
+   private static int visibleRowCount(int total, int rowsPerRun) {
       return Math.min(rowsPerRun, total);
    }
 
-   private static int init(int current, int total, int rowsPerRun) {
+   private static int scrollStart(int current, int total, int rowsPerRun) {
       return total <= rowsPerRun ? 0 : Math.max(0, Math.min(current - rowsPerRun / 2, total - rowsPerRun));
    }
 
-   private static boolean init(List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun) {
-      if (rowsPerRun == write && runs.size() == cachedNames.length) {
+   private static boolean runsMatchCache(List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun) {
+      if (rowsPerRun == cachedRowsPerRun && runs.size() == cachedNames.length) {
          for (int i = 0; i < runs.size(); i++) {
             MacroExecutor.ActiveRunSnapshot run = runs.get(i);
             if (run.currentStep() != cachedSteps[i] || run.totalSteps() != cachedTotals[i] || run.lastCompletedStep() != cachedCompletedSteps[i] || !Objects.equals(run.macroName(), cachedNames[i])) {
@@ -138,14 +138,14 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   private static boolean init(boolean runsMatch, int current, int total, int scroll, int visibleRows, int panelWidth, long now) {
-      boolean layoutChanged = !runsMatch || sync != total || close != visibleRows || open != panelWidth || poll != ThemePaletteManager.generation();
+   private static boolean needsRefresh(boolean runsMatch, int current, int total, int scroll, int visibleRows, int panelWidth, long now) {
+      boolean layoutChanged = !runsMatch || cachedTotal != total || cachedVisibleRows != visibleRows || cachedPanelWidth != panelWidth || cachedThemeGeneration != ThemePaletteManager.generation();
       if (layoutChanged) {
          return true;
       } else if (cachedLines.isEmpty()) {
          return true;
       } else {
-         return update == current && flush == scroll ? false : now - lastRefreshNanos >= 50000000L;
+         return cachedCurrent == current && cachedScroll == scroll ? false : now - lastRefreshNanos >= 50000000L;
       }
    }
 
@@ -153,7 +153,7 @@ public final class MacroStatusHudRenderer {
       return ThemePaletteManager.recolor(-9448565, ThemePaletteManager.ColorRole.ACCENT);
    }
 
-   private static void init(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
+   private static void rebuildCache(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
       int contentWidth = panelWidth - 12;
       int nowColor = accentColor();
       ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
@@ -162,10 +162,10 @@ public final class MacroStatusHudRenderer {
          AutismMacro macro = run.macro();
          if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
             List<MacroAction> actions = macro.actions;
-            int total = init(run, macro);
+            int total = actionTotal(run, macro);
             int current = Math.max(0, run.currentStep());
-            int visibleRows = init(total, rowsPerRun);
-            int scroll = init(current, total, rowsPerRun);
+            int visibleRows = visibleRowCount(total, rowsPerRun);
+            int scroll = scrollStart(current, total, rowsPerRun);
             rows.add(
                new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
                   autismclient.gui.f.b.k.init(
@@ -213,15 +213,15 @@ public final class MacroStatusHudRenderer {
          cachedCompletedSteps[i] = run.lastCompletedStep();
       }
 
-      int primaryTotal = init(primary, primary.macro());
+      int primaryTotal = actionTotal(primary, primary.macro());
       int primaryCurrent = Math.max(0, primary.currentStep());
-      write = rowsPerRun;
-      update = primaryCurrent;
-      sync = primaryTotal;
-      flush = init(primaryCurrent, primaryTotal, rowsPerRun);
-      close = init(primaryTotal, rowsPerRun);
-      open = panelWidth;
-      poll = ThemePaletteManager.generation();
+      cachedRowsPerRun = rowsPerRun;
+      cachedCurrent = primaryCurrent;
+      cachedTotal = primaryTotal;
+      cachedScroll = scrollStart(primaryCurrent, primaryTotal, rowsPerRun);
+      cachedVisibleRows = visibleRowCount(primaryTotal, rowsPerRun);
+      cachedPanelWidth = panelWidth;
+      cachedThemeGeneration = ThemePaletteManager.generation();
       title = runs.size() == 1 ? primary.macroName() : runs.size() + " macros";
       cachedTitle = autismclient.gui.f.b.k.init(textRenderer, runs.size() == 1 ? "MACRO" : "MACROS", contentWidth, TITLE_FONT, TITLE_COLOR);
       cachedLines = rows;
@@ -233,13 +233,13 @@ public final class MacroStatusHudRenderer {
       cachedSteps = new int[0];
       cachedTotals = new int[0];
       cachedCompletedSteps = new int[0];
-      write = -2147483648;
-      update = -2147483648;
-      sync = -2147483648;
-      flush = -2147483648;
-      close = -2147483648;
-      open = -2147483648;
-      poll = -2147483648;
+      cachedRowsPerRun = -2147483648;
+      cachedCurrent = -2147483648;
+      cachedTotal = -2147483648;
+      cachedScroll = -2147483648;
+      cachedVisibleRows = -2147483648;
+      cachedPanelWidth = -2147483648;
+      cachedThemeGeneration = -2147483648;
       title = null;
       cachedTitle = "";
       cachedLines = List.of();

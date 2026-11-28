@@ -9,7 +9,7 @@ public class StretchRowLayout extends LayoutContainer {
       this.init_I = 0;
    }
 
-   public StretchRowLayout init(EdgeInsets padding) {
+   public StretchRowLayout withPadding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.padding.equals(next)) {
          this.padding = next;

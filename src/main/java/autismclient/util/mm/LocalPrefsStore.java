@@ -40,7 +40,7 @@ public final class LocalPrefsStore {
    private volatile boolean chatMirror = true;
    private volatile boolean debugLog;
    private volatile int defaultMaxPlayers = 8;
-   private volatile boolean flush = true;
+   private volatile boolean defaultPublic = true;
    private volatile String discordSession = "";
    private volatile String discordName = "";
    private volatile String discordIdToken = "";
@@ -85,7 +85,7 @@ public final class LocalPrefsStore {
       return this.shareLocation;
    }
 
-   public void load(boolean v) {
+   public void setShareLocation(boolean v) {
       this.shareLocation = v;
       this.scheduleSave();
    }
@@ -94,7 +94,7 @@ public final class LocalPrefsStore {
       return this.autoJoinPublic;
    }
 
-   public void read(boolean v) {
+   public void setAutoJoinPublic(boolean v) {
       this.autoJoinPublic = v;
       this.scheduleSave();
    }
@@ -151,7 +151,7 @@ public final class LocalPrefsStore {
       return this.killSwitch;
    }
 
-   public void write(boolean v) {
+   public void setKillSwitch(boolean v) {
       this.killSwitch = v;
       this.scheduleSave();
    }
@@ -160,7 +160,7 @@ public final class LocalPrefsStore {
       return this.chatMirror;
    }
 
-   public void update(boolean v) {
+   public void setChatMirror(boolean v) {
       this.chatMirror = v;
       this.scheduleSave();
    }
@@ -169,7 +169,7 @@ public final class LocalPrefsStore {
       return this.debugLog;
    }
 
-   public void sync(boolean v) {
+   public void setDebugLog(boolean v) {
       this.debugLog = v;
       this.scheduleSave();
    }
@@ -183,12 +183,12 @@ public final class LocalPrefsStore {
       this.scheduleSave();
    }
 
-   public boolean flush() {
-      return this.flush;
+   public boolean isDefaultPublic() {
+      return this.defaultPublic;
    }
 
    public void setDefaultPublic(boolean v) {
-      this.flush = v;
+      this.defaultPublic = v;
       this.scheduleSave();
    }
 
@@ -223,7 +223,7 @@ public final class LocalPrefsStore {
       return this.myDupeStatus;
    }
 
-   public void load(int v) {
+   public void setMyDupeStatus(int v) {
       this.myDupeStatus = v >= 0 && v <= 1 ? v : -1;
       this.scheduleSave();
    }
@@ -294,7 +294,7 @@ public final class LocalPrefsStore {
       }
    }
 
-   public void open(String fpHex) {
+   public void untrust(String fpHex) {
       if (this.trusted.remove(fpHex)) {
          this.scheduleSave();
       }
@@ -317,7 +317,7 @@ public final class LocalPrefsStore {
       }
    }
 
-   public void poll(String id) {
+   public void unblockDiscord(String id) {
       if (this.blockedDiscord.remove(id) != null) {
          this.scheduleSave();
       }
@@ -334,7 +334,7 @@ public final class LocalPrefsStore {
       }
    }
 
-   public void push(String id) {
+   public void unbanDiscord(String id) {
       if (this.bannedDiscord.remove(id) != null) {
          this.scheduleSave();
       }
@@ -352,7 +352,7 @@ public final class LocalPrefsStore {
       }
    }
 
-   public void read(String id, String name) {
+   public void refreshBlockedName(String id, String name) {
       if (isValidDiscordId(id) && name != null && !name.isBlank()) {
          String clean = sanitizeName(name);
          if (!clean.isEmpty()) {
@@ -390,7 +390,7 @@ public final class LocalPrefsStore {
             p.killSwitch = readBool(props, "killSwitch");
             p.chatMirror = readBool(props, "chatMirror", true);
             p.debugLog = readBool(props, "debugLog");
-            p.flush = readBool(props, "defaultPublic", true);
+            p.defaultPublic = readBool(props, "defaultPublic", true);
 
             try {
                p.defaultMaxPlayers = Integer.parseInt(props.getProperty("defaultMaxPlayers", "8"));
@@ -459,7 +459,7 @@ public final class LocalPrefsStore {
          props.setProperty("killSwitch", Boolean.toString(this.killSwitch));
          props.setProperty("chatMirror", Boolean.toString(this.chatMirror));
          props.setProperty("debugLog", Boolean.toString(this.debugLog));
-         props.setProperty("defaultPublic", Boolean.toString(this.flush));
+         props.setProperty("defaultPublic", Boolean.toString(this.defaultPublic));
          props.setProperty("defaultMaxPlayers", Integer.toString(this.defaultMaxPlayers));
          props.setProperty("defaultLobbyName", this.defaultLobbyName);
          props.setProperty("defaultServer", this.defaultServer);

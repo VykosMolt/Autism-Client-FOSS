@@ -106,7 +106,7 @@ final class AiPortalLinks {
                   }
 
                   init_List.sort(Comparator.comparingLong(AiPortalLinks.Inner_DataUtil::observedAtMillis));
-                  service.savePortalMemory(init_Str, load());
+                  service.savePortalMemory(init_Str, toJson());
                }
             }
          );
@@ -159,7 +159,7 @@ final class AiPortalLinks {
 
          AiService service = AiService.getExistingInstance();
          if (service != null) {
-            service.savePortalMemory(init_Str, load());
+            service.savePortalMemory(init_Str, toJson());
          }
       }
    }
@@ -377,22 +377,22 @@ final class AiPortalLinks {
 
    static JsonArray snapshotJson() {
       init_V();
-      return load();
+      return toJson();
    }
 
    static BlockPos init(int radius) {
       init_V();
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && mc.level != null
-         ? init(load(), AiWorldIdentity.currentDimensionId(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
+         ? nearestLinkMatching(toJson(), AiWorldIdentity.currentDimensionId(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
          : null;
    }
 
-   static BlockPos init(JsonArray records, String dimension, BlockPos origin, int radius) {
-      return init(records, dimension, origin, radius, at -> true);
+   static BlockPos nearestLink(JsonArray records, String dimension, BlockPos origin, int radius) {
+      return nearestLinkMatching(records, dimension, origin, radius, at -> true);
    }
 
-   private static BlockPos init(JsonArray records, String dimension, BlockPos origin, int radius, Predicate<BlockPos> accepted) {
+   private static BlockPos nearestLinkMatching(JsonArray records, String dimension, BlockPos origin, int radius, Predicate<BlockPos> accepted) {
       BlockPos best = null;
       double distance = (double)radius * radius;
 
@@ -424,7 +424,7 @@ final class AiPortalLinks {
       return best;
    }
 
-   private static JsonArray load() {
+   private static JsonArray toJson() {
       JsonArray out = new JsonArray();
 
       for (AiPortalLinks.Inner_DataUtil link : init_List) {

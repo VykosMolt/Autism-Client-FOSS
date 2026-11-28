@@ -10,9 +10,9 @@ import net.minecraft.client.gui.screens.Screen;
 
 public final class ScreenMacroStopWidget {
    private static final int WIDTH = 172;
-   private static final int load = 10;
-   private static final int read = 58;
-   private static final int write = 16;
+   private static final int MAX_LINES = 10;
+   private static final int STOP_BUTTON_WIDTH = 58;
+   private static final int STOP_BUTTON_HEIGHT = 16;
    private static final int update = 3;
    private static final int sync = 40;
    private static volatile autismclient.gui.f.NetHelper bounds;

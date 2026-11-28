@@ -22,22 +22,22 @@ public final class ClickProfile {
    public final double tick;
 
    private ClickProfile(ClickProfile.Inner_DataUtil b) {
-      this.technique = b.init_BufferHelper == null ? ClickTechnique.NORMAL : b.init_BufferHelper;
+      this.technique = b.technique == null ? ClickTechnique.NORMAL : b.technique;
       double ceiling = Math.min(this.technique.load_D, 30.0);
       if (this.technique == ClickTechnique.RAGE) {
-         double cps = init(init(b.load_D, this.technique.write_D), 1.0, ceiling);
+         double cps = clamp(finiteOr(b.cpsHigh, this.technique.write_D), 1.0, ceiling);
          this.load_D = cps;
          this.read = cps;
       } else {
-         double lo = init(b.init_D, 0.0 / 0.0);
-         double hi = init(b.load_D, 0.0 / 0.0);
+         double lo = finiteOr(b.cpsLow, 0.0 / 0.0);
+         double hi = finiteOr(b.cpsHigh, 0.0 / 0.0);
          if (Double.isNaN(lo) || Double.isNaN(hi)) {
             lo = this.technique.read_D;
             hi = this.technique.write_D;
          }
 
-         lo = init(lo, 1.0, ceiling);
-         hi = init(hi, 1.0, ceiling);
+         lo = clamp(lo, 1.0, ceiling);
+         hi = clamp(hi, 1.0, ceiling);
          if (hi < lo) {
             double swap = lo;
             lo = hi;
@@ -55,25 +55,25 @@ public final class ClickProfile {
 
       this.minIntervalNanos = ClickTimingMath.init(ClickTimingMath.init(this.technique, this.read));
       this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.init(this.load_D));
-      double holdLo = init(init(b.read, 40.0), 1.0, 1000.0);
-      double holdHi = init(init(b.write, 90.0), 1.0, 1000.0);
+      double holdLo = clamp(finiteOr(b.holdLowMs, 40.0), 1.0, 1000.0);
+      double holdHi = clamp(finiteOr(b.holdHighMs, 90.0), 1.0, 1000.0);
       this.write = Math.min(holdLo, holdHi);
       this.update = Math.max(holdLo, holdHi);
-      this.sync = init(init(b.update, 1.0), 0.0, 2.0);
-      this.flush = init(init(b.sync, 0.5), 0.0, 1.0);
-      this.close = init(init(b.flush, 1.0), 0.0, 3.0);
-      this.open = init(init(b.close, 1.0), 0.25, 4.0);
+      this.sync = clamp(finiteOr(b.update, 1.0), 0.0, 2.0);
+      this.flush = clamp(finiteOr(b.sync, 0.5), 0.0, 1.0);
+      this.close = clamp(finiteOr(b.flush, 1.0), 0.0, 3.0);
+      this.open = clamp(finiteOr(b.close, 1.0), 0.25, 4.0);
       int sLo = Math.max(1, Math.min(32, b.init_I));
       int sHi = Math.max(1, Math.min(32, b.load_I));
       this.init_I = Math.min(sLo, sHi);
       this.load_I = Math.max(sLo, sHi);
-      double rLo = init(init(b.open, 100.0), 0.0, 2000.0);
-      double rHi = init(init(b.poll, 220.0), 0.0, 2000.0);
+      double rLo = clamp(finiteOr(b.open, 100.0), 0.0, 2000.0);
+      double rHi = clamp(finiteOr(b.poll, 220.0), 0.0, 2000.0);
       this.poll = Math.min(rLo, rHi);
       this.push = Math.max(rLo, rHi);
-      this.pop = init(init(b.push, 10.0), 1.0, 100.0);
-      this.freeSpin = b.init_Z;
-      this.tick = init(init(b.pop, 1.0), 0.1, 20.0);
+      this.pop = clamp(finiteOr(b.push, 10.0), 1.0, 100.0);
+      this.freeSpin = b.freeSpin;
+      this.tick = clamp(finiteOr(b.freeSpinDecayPerSecond, 1.0), 0.1, 20.0);
    }
 
    public static ClickProfile.Inner_DataUtil builder(ClickTechnique technique) {
@@ -84,20 +84,20 @@ public final class ClickProfile {
       return builder(technique).init();
    }
 
-   private static double init(double value, double fallback) {
+   private static double finiteOr(double value, double fallback) {
       return Double.isFinite(value) ? value : fallback;
    }
 
-   private static double init(double value, double lo, double hi) {
+   private static double clamp(double value, double lo, double hi) {
       return Math.max(lo, Math.min(hi, value));
    }
 
    public static final class Inner_DataUtil {
-      private final ClickTechnique init_BufferHelper;
-      private double init_D;
-      private double load_D;
-      private double read;
-      private double write;
+      private final ClickTechnique technique;
+      private double cpsLow;
+      private double cpsHigh;
+      private double holdLowMs;
+      private double holdHighMs;
       private double update = 1.0;
       private double sync = 0.5;
       private double flush = 1.0;
@@ -107,14 +107,14 @@ public final class ClickProfile {
       private double open;
       private double poll;
       private double push = 10.0;
-      private boolean init_Z;
-      private double pop = 1.0;
+      private boolean freeSpin;
+      private double freeSpinDecayPerSecond = 1.0;
 
       private Inner_DataUtil(ClickTechnique technique) {
-         this.init_BufferHelper = technique == null ? ClickTechnique.NORMAL : technique;
-         this.init_D = this.init_BufferHelper.read_D;
-         this.load_D = this.init_BufferHelper.write_D;
-         switch (this.init_BufferHelper) {
+         this.technique = technique == null ? ClickTechnique.NORMAL : technique;
+         this.cpsLow = this.technique.read_D;
+         this.cpsHigh = this.technique.write_D;
+         switch (this.technique) {
             case BUTTERFLY:
                this.load(10.0, 80.0);
                break;
@@ -125,7 +125,7 @@ public final class ClickProfile {
                this.load(40.0, 90.0);
          }
 
-         if (this.init_BufferHelper == ClickTechnique.SCROLL) {
+         if (this.technique == ClickTechnique.SCROLL) {
             this.init_CachePool_DataUtil_I_I(4, 9);
             this.read(100.0, 250.0);
          } else {
@@ -135,14 +135,14 @@ public final class ClickProfile {
       }
 
       public ClickProfile.Inner_DataUtil cpsRange(double low, double high) {
-         this.init_D = low;
-         this.load_D = high;
+         this.cpsLow = low;
+         this.cpsHigh = high;
          return this;
       }
 
       public ClickProfile.Inner_DataUtil load(double lowMs, double highMs) {
-         this.read = lowMs;
-         this.write = highMs;
+         this.holdLowMs = lowMs;
+         this.holdHighMs = highMs;
          return this;
       }
 
@@ -184,8 +184,8 @@ public final class ClickProfile {
       }
 
       public ClickProfile.Inner_DataUtil freeSpin(boolean freeSpin, double decayPerSecond) {
-         this.init_Z = freeSpin;
-         this.pop = decayPerSecond;
+         this.freeSpin = freeSpin;
+         this.freeSpinDecayPerSecond = decayPerSecond;
          return this;
       }
 

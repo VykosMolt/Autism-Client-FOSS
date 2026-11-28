@@ -52,7 +52,7 @@ final class AiBarter {
    private AiBarter() {
    }
 
-   static AiBarter.Inner_StreamUtil init(int pearlsTarget, int pearlsGained, int goldCarried, int goldSpent, int goldBudget, boolean pastDeadline) {
+   static AiBarter.Inner_StreamUtil decide(int pearlsTarget, int pearlsGained, int goldCarried, int goldSpent, int goldBudget, boolean pastDeadline) {
       if (pearlsTarget > 0 && pearlsGained >= pearlsTarget) {
          return AiBarter.Inner_StreamUtil.PEARLS_MET;
       } else if (goldCarried > 0 && goldSpent < goldBudget) {
@@ -66,7 +66,7 @@ final class AiBarter {
       return goldArg > 0 ? Math.min(goldArg, carried) : carried;
    }
 
-   static boolean init(String typeId, boolean baby, boolean alive, boolean converting) {
+   static boolean isBarterPiglin(String typeId, boolean baby, boolean alive, boolean converting) {
       return alive && "minecraft:piglin".equals(typeId) && !baby && !converting;
    }
 
@@ -74,7 +74,7 @@ final class AiBarter {
       return AiBarterBatch.init(args);
    }
 
-   static AiOperation load(JsonObject args) {
+   static AiOperation createBarterOp(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int pearlsTarget = Math.max(0, Math.min(64, AiJson.getInt(args, "pearls", 0)));
@@ -114,18 +114,18 @@ final class AiBarter {
                boolean armorChecked;
                boolean armorWarning;
                boolean cancelled;
-               int write;
-               int update;
-               int sync;
-               int flush;
-               int close;
-               int open;
-               int poll;
+               int stageTicks;
+               int interruptCount;
+               int ingotsThrown;
+               int ingotsRecovered;
+               int ingotsStolen;
+               int barters;
+               int goldSpent;
                int push;
-               int pop;
-               int tick;
-               int run;
-               int get;
+               int refusedThrows;
+               int babyWaitTicks;
+               int goldBeforeThrow;
+               int babyStealsInRow;
                final Set<Integer> holdersBeforeThrow = new LinkedHashSet<>();
                long throwRevision = -1L;
                String pickupItem;
@@ -134,18 +134,18 @@ final class AiBarter {
                public AiOperation.Result tick() {
                   if (!this.cancelled && mc.player != null && mc.level != null) {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                        return this.init(
+                        return this.fail(
                            AiFailure.LOW_HEALTH,
                            "low_health",
                            "Low health; bartering stopped after "
-                              + this.open
+                              + this.barters
                               + " barter(s); recovery ops allowed at low health: game:fish, game:farm (harvest only), game:collect_drops, game:eat, game:sleep, game:flee, game:obtain <food> with allowCombat:false, and game:goto while no hostile is within 24 blocks"
                         );
                      }
 
                      int pearlsGained = this.pearlsGained();
-                     AiBarter.Inner_StreamUtil decision = AiBarter.init(
-                        pearlsTarget, pearlsGained, AiGameState.countMainInventoryItem("minecraft:gold_ingot"), this.poll, this.goldToTrade, System.nanoTime() > this.deadline
+                     AiBarter.Inner_StreamUtil decision = AiBarter.decide(
+                        pearlsTarget, pearlsGained, AiGameState.countMainInventoryItem("minecraft:gold_ingot"), this.goldSpent, this.goldToTrade, System.nanoTime() > this.deadline
                      );
                      if (decision == AiBarter.Inner_StreamUtil.GOLD_OUT
                         && (
@@ -163,23 +163,23 @@ final class AiBarter {
                               + "/"
                               + pearlsTarget
                               + " ender pearls after "
-                              + this.open
+                              + this.barters
                               + " barter(s), gold left "
                               + AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                            AiRunTrace.recordGlobalSplit("pearls_met", detail);
                            return this.finish(AiOperation.Status.SUCCEEDED, "Pearl target met: " + detail);
                         case GOLD_OUT:
-                           if (this.open > 0) {
+                           if (this.barters > 0) {
                               return this.finish(
                                  AiOperation.Status.SUCCEEDED,
-                                 "Out of gold after " + this.open + " barter(s); pearls " + pearlsGained + (pearlsTarget > 0 ? "/" + pearlsTarget : "")
+                                 "Out of gold after " + this.barters + " barter(s); pearls " + pearlsGained + (pearlsTarget > 0 ? "/" + pearlsTarget : "")
                               );
                            } else {
-                              if (this.sync == 0) {
-                                 return this.init(AiFailure.MISSING_MATERIALS, "no_gold", "NO_GOLD: the carried gold is gone before the first barter");
+                              if (this.ingotsThrown == 0) {
+                                 return this.fail(AiFailure.MISSING_MATERIALS, "no_gold", "NO_GOLD: the carried gold is gone before the first barter");
                               }
 
-                              return this.init(
+                              return this.fail(
                                  AiFailure.TARGET_GONE, "gold_lost", "Every thrown ingot was stolen or lost without one barter (baby piglins steal gold; brutes never barter)"
                               );
                            }
@@ -187,13 +187,13 @@ final class AiBarter {
                            return this.finish(
                               AiOperation.Status.TIMED_OUT,
                               "Barter deadline reached after "
-                                 + this.open
+                                 + this.barters
                                  + " barter(s); pearls "
                                  + pearlsGained
                                  + (pearlsTarget > 0 ? "/" + pearlsTarget : "")
                            );
                         default:
-                           AiOperation.Result guarded = this.sync();
+                           AiOperation.Result guarded = this.tickGuard();
                            if (guarded != null) {
                               return guarded;
                            } else if (this.armorOp != null) {
@@ -229,7 +229,7 @@ final class AiBarter {
                               } else if (this.stage == AiBarter.Inner_DataUtil.AWAIT) {
                                  return this.tickAwait();
                               } else {
-                                 return this.stage == AiBarter.Inner_DataUtil.RECOVER ? this.write() : this.update();
+                                 return this.stage == AiBarter.Inner_DataUtil.RECOVER ? this.recoverIngot() : this.collectDrops();
                               }
                            }
                      }
@@ -247,17 +247,17 @@ final class AiBarter {
                      this.piglin = this.nearestPiglin();
                      this.push = 0;
                      if (this.piglin == null) {
-                        if (this.open > 0) {
+                        if (this.barters > 0) {
                            return this.finish(
-                              AiOperation.Status.SUCCEEDED, "No more adult piglins nearby after " + this.open + " barter(s)"
+                              AiOperation.Status.SUCCEEDED, "No more adult piglins nearby after " + this.barters + " barter(s)"
                            );
                         }
 
                         if (!this.ignoringPiglins.isEmpty()) {
-                           return this.init(AiFailure.UNREACHABLE, "unreachable", "No route to any adult piglin nearby");
+                           return this.fail(AiFailure.UNREACHABLE, "unreachable", "No route to any adult piglin nearby");
                         }
 
-                        return this.init(
+                        return this.fail(
                            AiFailure.TARGET_NOT_FOUND, "no_piglins", "NO_PIGLINS: no adult piglin within 32 blocks (babies steal gold without bartering; brutes never barter)"
                         );
                      }
@@ -293,7 +293,7 @@ final class AiBarter {
 
                      this.releaseMovementKeys();
                      this.stage = AiBarter.Inner_DataUtil.THROW;
-                     this.write = 0;
+                     this.stageTicks = 0;
                      return this.running("In toss range of the piglin");
                   }
                }
@@ -310,25 +310,25 @@ final class AiBarter {
 
                      if (this.throwRevision >= 0L) {
                         int now = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
-                        if (now < this.run) {
-                           int spent = this.run - now;
-                           this.poll += spent;
-                           this.sync += spent;
-                           this.pop = 0;
+                        if (now < this.goldBeforeThrow) {
+                           int spent = this.goldBeforeThrow - now;
+                           this.goldSpent += spent;
+                           this.ingotsThrown += spent;
+                           this.refusedThrows = 0;
                            this.throwRevision = -1L;
                            this.stage = AiBarter.Inner_DataUtil.AWAIT;
-                           this.write = 0;
+                           this.stageTicks = 0;
                            return this.running("Ingot thrown; waiting for the piglin to pick it up");
                         } else if (AiServerEvidence.inventoryRevision() > this.throwRevision) {
                            this.throwRevision = -1L;
-                           this.write = 0;
-                           return ++this.pop >= 3
+                           this.stageTicks = 0;
+                           return ++this.refusedThrows >= 3
                               ? this.finish(
                                  AiOperation.Status.UNCERTAIN, "The ingot throw was applied but no ingot left the inventory; reobserve before repeating"
                               )
                               : this.running("The throw was refused; retrying");
                         } else {
-                           return ++this.write > 40
+                           return ++this.stageTicks > 40
                               ? this.finish(
                                  AiOperation.Status.UNCERTAIN, "The ingot throw was not confirmed by the server; reobserve before repeating"
                               )
@@ -339,17 +339,17 @@ final class AiBarter {
                         if (admirer != null) {
                            this.admirer = admirer;
                            this.stage = AiBarter.Inner_DataUtil.AWAIT;
-                           this.write = 0;
+                           this.stageTicks = 0;
                            return this.running("A piglin is already admiring an ingot");
                         }
 
                         this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.piglin));
                         this.aim.tick();
-                        if (!this.aim.isSettled() && ++this.write <= 30) {
+                        if (!this.aim.isSettled() && ++this.stageTicks <= 30) {
                            return this.running("Turning toward the piglin");
                         }
 
-                        this.write = 0;
+                        this.stageTicks = 0;
                         int slot = this.goldSlot();
                         if (slot < 0) {
                            if (this.push < 3 && this.nearestItem(16.0) != null) {
@@ -361,11 +361,11 @@ final class AiBarter {
                            }
                         } else {
                            Vec3 toss = mc.player.position().add(this.piglin.position().subtract(mc.player.position()).scale(0.6));
-                           if (this.babyPiglinNear(toss, 9.0) && ++this.tick <= 60) {
+                           if (this.babyPiglinNear(toss, 9.0) && ++this.babyWaitTicks <= 60) {
                               return this.running("A baby piglin is near the toss; waiting");
                            }
 
-                           this.tick = 0;
+                           this.babyWaitTicks = 0;
                            this.holdersBeforeThrow.clear();
 
                            for (Entity entity : mc.level.entitiesForRendering()) {
@@ -375,7 +375,7 @@ final class AiBarter {
                            }
 
                            this.snapshotDrops();
-                           this.run = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
+                           this.goldBeforeThrow = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                            this.throwRevision = AiServerEvidence.inventoryRevision();
                            AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, this.screenSlot(slot), 0, ContainerInput.THROW);
                            return this.running("Throwing one gold ingot at the piglin");
@@ -392,26 +392,26 @@ final class AiBarter {
                   if (this.admirer == null) {
                      this.admirer = this.findAdmiringPiglin();
                      if (this.admirer != null) {
-                        this.write = 0;
+                        this.stageTicks = 0;
                      }
                   }
 
                   if (this.admirer == null) {
                      Piglin taker = this.ingotTaker();
                      if (taker != null && taker.isBaby()) {
-                        this.close++;
+                        this.ingotsStolen++;
                         this.holdersBeforeThrow.add(taker.getId());
-                        AutismClientAddon.LOG.info("[AI] barter: a baby piglin took the ingot ({} stolen, {} bartered)", this.close, this.open);
-                        if (++this.get >= 4 && this.open == 0) {
-                           return this.init(AiFailure.TARGET_GONE, "babies", "Baby piglins took " + this.close + " ingots here; barter elsewhere");
+                        AutismClientAddon.LOG.info("[AI] barter: a baby piglin took the ingot ({} stolen, {} bartered)", this.ingotsStolen, this.barters);
+                        if (++this.babyStealsInRow >= 4 && this.barters == 0) {
+                           return this.fail(AiFailure.TARGET_GONE, "babies", "Baby piglins took " + this.ingotsStolen + " ingots here; barter elsewhere");
                         }
 
                         this.piglin = null;
                         this.stage = AiBarter.Inner_DataUtil.APPROACH;
-                        this.write = 0;
+                        this.stageTicks = 0;
                         return this.running("A baby piglin took the ingot; trying a piglin away from babies");
-                     } else if (++this.write > 200) {
-                        this.write = 0;
+                     } else if (++this.stageTicks > 200) {
+                        this.stageTicks = 0;
                         if (this.nearestItem(16.0) != null) {
                            if (++this.push >= 3) {
                               if (this.piglin != null) {
@@ -427,7 +427,7 @@ final class AiBarter {
                               return this.running("Recovering the ignored ingot");
                            }
                         } else {
-                           this.close++;
+                           this.ingotsStolen++;
                            this.piglin = null;
                            this.stage = AiBarter.Inner_DataUtil.APPROACH;
                            return this.running("The ingot vanished without a barter (a baby piglin steals gold); continuing");
@@ -440,15 +440,15 @@ final class AiBarter {
                      this.trackNewDrops();
                      if (this.admirer.isAlive() && !this.admirer.isConverting()) {
                         if (!this.admirer.getOffhandItem().is(Items.GOLD_INGOT)) {
-                           this.open++;
-                           this.get = 0;
+                           this.barters++;
+                           this.babyStealsInRow = 0;
                            this.stage = AiBarter.Inner_DataUtil.COLLECT;
-                           this.write = 0;
-                           return this.running("Barter " + this.open + " tossed its loot; collecting");
-                        } else if (++this.write > 360) {
+                           this.stageTicks = 0;
+                           return this.running("Barter " + this.barters + " tossed its loot; collecting");
+                        } else if (++this.stageTicks > 360) {
                            this.admirer = null;
                            this.piglin = null;
-                           this.write = 0;
+                           this.stageTicks = 0;
                            this.stage = AiBarter.Inner_DataUtil.APPROACH;
                            return this.running("The admire never resolved; re-targeting");
                         } else {
@@ -456,13 +456,13 @@ final class AiBarter {
                         }
                      } else {
                         this.admirer = null;
-                        this.write = 0;
+                        this.stageTicks = 0;
                         return this.running("The bartering piglin is gone; re-targeting");
                      }
                   }
                }
 
-               AiOperation.Result write() {
+               AiOperation.Result recoverIngot() {
                   if (this.child == null) {
                      this.child = AiGameplay.write(
                         AiJson.objectOf("item", "minecraft:gold_ingot", "count", 1, "additional", true, "timeoutSeconds", 25)
@@ -478,18 +478,18 @@ final class AiBarter {
                   this.child.cancel();
                   this.child = null;
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
-                     this.flush++;
-                     this.poll = Math.max(0, this.poll - 1);
+                     this.ingotsRecovered++;
+                     this.goldSpent = Math.max(0, this.goldSpent - 1);
                   }
 
                   this.stage = AiBarter.Inner_DataUtil.THROW;
-                  this.write = 0;
+                  this.stageTicks = 0;
                   return this.running(
                      r.status() == AiOperation.Status.SUCCEEDED ? "Ingot recovered; re-throwing" : "The ingot is gone; continuing"
                   );
                }
 
-               AiOperation.Result update() {
+               AiOperation.Result collectDrops() {
                   this.trackNewDrops();
                   if (this.child != null) {
                      AiOperation.Result r = this.child.tick();
@@ -539,12 +539,12 @@ final class AiBarter {
                      this.admirer = null;
                      this.piglin = null;
                      this.stage = AiBarter.Inner_DataUtil.APPROACH;
-                     this.write = 0;
+                     this.stageTicks = 0;
                      return this.running("Barter drops collected; continuing");
                   }
                }
 
-               AiOperation.Result sync() {
+               AiOperation.Result tickGuard() {
                   if (this.guardOp != null) {
                      AiOperation.Result result = this.guardOp.tick();
                      if (!result.terminal()) {
@@ -564,7 +564,7 @@ final class AiBarter {
 
                      this.guardOp = action;
                      this.interruptReason = AiGuard.decisionReason(this.guardPolicy, vitals);
-                     this.update++;
+                     this.interruptCount++;
                      if (this.child != null) {
                         this.child.cancel();
                         this.child = null;
@@ -587,7 +587,7 @@ final class AiBarter {
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Piglin piglin) {
                         String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(piglin.getType()).toString();
-                        if (AiBarter.init(typeId, piglin.isBaby(), piglin.isAlive(), piglin.isConverting())
+                        if (AiBarter.isBarterPiglin(typeId, piglin.isBaby(), piglin.isAlive(), piglin.isConverting())
                            && !piglin.isAggressive()
                            && !this.ignoringPiglins.contains(piglin.getId())) {
                            double distance = piglin.distanceToSqr(mc.player)
@@ -672,7 +672,7 @@ final class AiBarter {
 
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Piglin piglin
-                        && AiBarter.init("minecraft:piglin", piglin.isBaby(), piglin.isAlive(), piglin.isConverting())
+                        && AiBarter.isBarterPiglin("minecraft:piglin", piglin.isBaby(), piglin.isAlive(), piglin.isConverting())
                         && piglin.getOffhandItem().is(Items.GOLD_INGOT)) {
                         double distance = piglin.distanceToSqr(mc.player);
                         if (distance < bestDistance) {
@@ -792,15 +792,15 @@ final class AiBarter {
                   int pearlsGained = this.pearlsGained();
                   JsonObject out = AiJson.objectOf(
                      "bartered",
-                     this.open,
+                     this.barters,
                      "thrown",
-                     this.sync,
+                     this.ingotsThrown,
                      "recovered",
-                     this.flush,
+                     this.ingotsRecovered,
                      "stolen",
-                     this.close,
+                     this.ingotsStolen,
                      "goldSpent",
-                     this.poll,
+                     this.goldSpent,
                      "goldBudget",
                      this.goldToTrade,
                      "goldLeft",
@@ -833,13 +833,13 @@ final class AiBarter {
                      );
                   }
 
-                  out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.update, this.interruptReason));
+                  out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.interruptCount, this.interruptReason));
                   return out;
                }
 
                AiOperation.Result running(String message) {
                   return new AiOperation.Result(
-                     AiOperation.Status.RUNNING, message + " (" + this.open + " bartered)", this.dropsJson().toString(), List.of()
+                     AiOperation.Status.RUNNING, message + " (" + this.barters + " bartered)", this.dropsJson().toString(), List.of()
                   );
                }
 
@@ -849,7 +849,7 @@ final class AiBarter {
                   return new AiOperation.Result(status, message, data.toString(), List.of());
                }
 
-               AiOperation.Result init(AiFailure code, String reason, String message) {
+               AiOperation.Result fail(AiFailure code, String reason, String message) {
                   JsonObject data = this.dropsJson();
                   data.addProperty("reason", reason);
                   this.cancel();

@@ -22,7 +22,7 @@ final class AiSleep {
    private static final int BED_SEARCH_RADIUS = 24;
    private static final int USE_ATTEMPT_TICKS = 80;
    private static final int read = 120;
-   private static final int write = 300;
+   private static final int MAX_SLEEP_TICKS = 300;
    private static final int update = 40;
    private static final long SLEEP_START_TICK = 12542L;
    private static final long SLEEP_END_TICK = 23460L;
@@ -56,7 +56,7 @@ final class AiSleep {
             public AiOperation.Result tick() {
                if (!this.cancelled && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > this.deadline) {
-                     return this.init(this.slept ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Sleep deadline reached");
+                     return this.finish(this.slept ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Sleep deadline reached");
                   }
 
                   if (mc.player.isSleeping()) {
@@ -64,18 +64,18 @@ final class AiSleep {
                      this.sleepTicks++;
                      if (!AiSleep.load()) {
                         mc.player.stopSleeping();
-                        return this.init(AiOperation.Status.SUCCEEDED, "Slept through; day time is now " + AiSleep.dayTime());
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Slept through; day time is now " + AiSleep.dayTime());
                      } else if (this.sleepTicks > 300) {
                         mc.player.stopSleeping();
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.UNCERTAIN, "Still dark after 300 ticks asleep (day time " + AiSleep.dayTime() + "); the sleep did not complete"
                         );
                      } else {
-                        return this.init("Sleeping (" + this.sleepTicks + " ticks)");
+                        return this.running("Sleeping (" + this.sleepTicks + " ticks)");
                      }
                   } else {
                      if (this.slept) {
-                        return this.init(
+                        return this.finish(
                            AiSleep.load() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
                            AiSleep.load() ? "Woke early and it is still dark; the sleep did not complete" : "Woke up; day time is now " + AiSleep.dayTime()
                         );
@@ -83,13 +83,13 @@ final class AiSleep {
 
                      String dimension = mc.level.dimension().identifier().toString();
                      if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse()) {
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.FAILED, "Beds explode in " + dimension + "; sleep in the Overworld, or use game:dimension to get there first"
                         );
                      }
 
                      if (requireNight && !AiSleep.load()) {
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.FAILED,
                            "It is not dark enough to sleep (day time "
                               + AiSleep.dayTime()
@@ -110,7 +110,7 @@ final class AiSleep {
                      }
 
                      if (this.bedPos == null && this.write < 40) {
-                        return this.init("Looking for a bed");
+                        return this.running("Looking for a bed");
                      }
 
                      if (this.bedPos != null) {
@@ -122,15 +122,15 @@ final class AiSleep {
 
                            AiOperation.Result legResult = this.approachOp.tick();
                            if (!legResult.terminal()) {
-                              return this.init("Walking to the bed");
+                              return this.running("Walking to the bed");
                            } else {
                               this.approachOp.cancel();
                               this.approachOp = null;
                               if (legResult.status() != AiOperation.Status.SUCCEEDED) {
                                  this.bedPos = null;
-                                 return this.init("No route to that bed; looking for another");
+                                 return this.running("No route to that bed; looking for another");
                               } else {
-                                 return this.init("Arrived at the bed");
+                                 return this.running("Arrived at the bed");
                               }
                            }
                         } else {
@@ -142,8 +142,8 @@ final class AiSleep {
                            this.aim.aimAt(interactionHit.getLocation());
                            this.aim.tick();
                            if (++this.useTicks > 80) {
-                              String refusal = AiSleep.init(AiChatLedger.recent(16), this.chatRevisionBeforeUse);
-                              return this.init(
+                              String refusal = AiSleep.sleepRefusal(AiChatLedger.recent(16), this.chatRevisionBeforeUse);
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  refusal.isEmpty()
                                     ? "The bed did not accept the player and no refusal reason was observed; the usual reasons are monsters nearby or an obstructed bed"
@@ -152,12 +152,12 @@ final class AiSleep {
                            }
 
                            if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.bedPos)) {
-                              return this.init("Turning toward the bed");
+                              return this.running("Turning toward the bed");
                            }
 
                            BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                            if (hit == null) {
-                              return this.init("Turning toward the bed");
+                              return this.running("Turning toward the bed");
                            }
 
                            if (this.chatRevisionBeforeUse < 0L) {
@@ -166,33 +166,33 @@ final class AiSleep {
 
                            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                            Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-                           return this.init("Getting into bed");
+                           return this.running("Getting into bed");
                         }
                      } else {
                         if (!place) {
-                           return this.init(AiOperation.Status.FAILED, "No bed within 24 blocks and place is disabled");
+                           return this.finish(AiOperation.Status.FAILED, "No bed within 24 blocks and place is disabled");
                         }
 
                         Item carried = this.carriedBed();
                         if (carried == null) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty("minecraft:red_bed", 1);
-                           return this.init(AiOperation.Status.FAILED, "No bed nearby and none in the inventory", AiJson.objectOf("missing", missing));
+                           return this.finishWith(AiOperation.Status.FAILED, "No bed nearby and none in the inventory", AiJson.objectOf("missing", missing));
                         }
 
                         BlockPos spot = AiCraft.findPlacementSpot();
                         if (spot == null) {
-                           return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for a bed");
+                           return this.finish(AiOperation.Status.FAILED, "No free supported spot next to the player for a bed");
                         }
 
                         this.placer.start(spot, carried);
                         this.placingBed = true;
                         this.placeTicks = 0;
-                        return this.init("Placing a bed");
+                        return this.running("Placing a bed");
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Sleep cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Sleep cancelled");
                }
             }
 
@@ -201,15 +201,15 @@ final class AiSleep {
                if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                   this.placingBed = false;
                   this.bedPos = this.placer.targetPos();
-                  return this.init("Bed placed");
+                  return this.running("Bed placed");
                }
 
                if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks <= 120) {
-                  return this.init("Placing a bed");
+                  return this.running("Placing a bed");
                }
 
                this.placingBed = false;
-               return this.init(AiOperation.Status.FAILED, "Could not place a bed: " + this.placer.failureReason());
+               return this.finish(AiOperation.Status.FAILED, "Could not place a bed: " + this.placer.failureReason());
             }
 
             BlockPos nearestBed() {
@@ -268,15 +268,15 @@ final class AiSleep {
                return out;
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressData().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finishWith(status, message, null);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+            AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject extra) {
                JsonObject data = this.progressData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -321,7 +321,7 @@ final class AiSleep {
       return mc.level == null ? false : mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).canSleep(mc.level);
    }
 
-   static String init(List<AiChatLedger.ChatEntry> entries, long sinceRevision) {
+   static String sleepRefusal(List<AiChatLedger.ChatEntry> entries, long sinceRevision) {
       for (AiChatLedger.ChatEntry entry : entries) {
          if (entry.revision() > sinceRevision) {
             String text = entry.text().toLowerCase(Locale.ROOT);

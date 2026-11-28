@@ -18,8 +18,8 @@ public final class AiContext {
    static final int init_I = 8;
    static final int load_I = 2000;
    static final int read_I = 6000;
-   static final int write = 600;
-   static final int update = 300;
+   static final int MEMORY_TEXT_MAX = 600;
+   static final int PAYLOAD_TEXT_MAX = 300;
    public static final String init_Str = "PLAN MODE is active: you may only research (observe, screenshot, catalog_search/inspect, memory, web_search/fetch, task_update) and ask_user when a choice is the user's to make. Do NOT perform actions or request them. Produce a numbered plan: each step's goal, the exact capability id and key arguments you will use, verification per step, and abort/reset conditions. End by calling finish with outcome answered and the full plan as the message. The user reviews it before anything executes.";
    static final Set<String> init_Set = Set.of(
       "game:world_memory",
@@ -202,11 +202,11 @@ public final class AiContext {
       return missing;
    }
 
-   static String init(AiCatalog.Snapshot catalog, boolean speedrunScoped) {
-      return init(catalog, speedrunScoped, true);
+   static String catalogText(AiCatalog.Snapshot catalog, boolean speedrunScoped) {
+      return catalogTextFor(catalog, speedrunScoped, true);
    }
 
-   static String init(AiCatalog.Snapshot catalog, boolean speedrunScoped, boolean verify) {
+   static String catalogTextFor(AiCatalog.Snapshot catalog, boolean speedrunScoped, boolean verify) {
       AiContext.Inner_CachePool cached = init_c_CachePool;
       if (cached != null && cached.catalog() == catalog && cached.scoped() == speedrunScoped && cached.verify() == verify) {
          return cached.text();
@@ -225,7 +225,7 @@ public final class AiContext {
 
       for (AiCatalog.Entry e : entries) {
          String id = e.contract().id();
-         if (!load(id)) {
+         if (!isToolId(id)) {
             int colon = id.indexOf(58);
             collapsed.merge(colon < 0 ? id : id.substring(0, colon), 1, Integer::sum);
          } else if (speedrunScoped) {
@@ -258,7 +258,7 @@ public final class AiContext {
 
       for (AiCatalog.Entry e : entries) {
          String id = e.contract().id();
-         if (load(id) && (!speedrunScoped || init_Set.contains(id))) {
+         if (isToolId(id) && (!speedrunScoped || init_Set.contains(id))) {
             String purpose = load_Set.contains(id) ? e.contract().purpose() : init_Str(e.contract().purpose());
             out.append("\n").append(id).append(" | ").append(purpose).append(" | ").append(e.contract().inputSchema());
             if (verify) {
@@ -277,11 +277,11 @@ public final class AiContext {
       return cut > 0 ? purpose.substring(0, cut) : purpose;
    }
 
-   private static boolean load(String id) {
+   private static boolean isToolId(String id) {
       return id.startsWith("game:") || id.startsWith("client:") || id.startsWith("command:");
    }
 
-   static String init(String objective, List<String> updates, boolean planning, boolean vision) {
+   static String header(String objective, List<String> updates, boolean planning, boolean vision) {
       StringBuilder out = new StringBuilder("OBJECTIVE: ").append(objective);
       List<String> kept = updates == null ? List.of() : updates.subList(Math.max(0, updates.size() - 8), updates.size());
       if (!kept.isEmpty()) {
@@ -306,7 +306,7 @@ public final class AiContext {
       return out.toString();
    }
 
-   public static AiContext.Inner_StreamUtil init(
+   public static AiContext.Inner_StreamUtil buildPrompt(
       AiCatalog.Snapshot catalog,
       String objective,
       List<String> updates,
@@ -332,8 +332,8 @@ public final class AiContext {
       long now,
       int maxCharacters
    ) {
-      String stable = init(catalog, init_Z(objective), verify);
-      String header = init(objective, updates, planning, vision);
+      String stable = catalogTextFor(catalog, init_Z(objective), verify);
+      String header = header(objective, updates, planning, vision);
       if (stable.length() + 1 + header.length() > maxCharacters) {
          throw new IllegalArgumentException("Context limit too small for mandatory task and observation data");
       }
@@ -341,28 +341,28 @@ public final class AiContext {
       int room = maxCharacters - stable.length() - 1;
       StringBuilder tier = new StringBuilder(header);
       String topic = objective + " " + String.join(" ", updates == null ? List.of() : updates) + " " + (taskState == null ? "" : taskState);
-      init(tier, AiPlaybooks.init(topic, 4000), room);
-      init(tier, AiPlaybooks.load(topic, 12000), room);
+      appendIfRoom(tier, AiPlaybooks.init(topic, 4000), room);
+      appendIfRoom(tier, AiPlaybooks.load(topic, 12000), room);
       boolean scoped = init_Z(objective);
 
       for (AiCatalog.Entry e : catalog.search(topic, 0, 6)) {
          String id = e.contract().id();
          if (!id.startsWith("game:") && !id.startsWith("client:") && (!id.startsWith("command:") || scoped)) {
-            init(tier, "\nRELEVANT CONTRACT: " + AiJson.GSON.toJson(e), room);
+            appendIfRoom(tier, "\nRELEVANT CONTRACT: " + AiJson.GSON.toJson(e), room);
          }
       }
 
-      init(tier, init(memories, now, 6000), room);
+      appendIfRoom(tier, memoriesText(memories, now, 6000), room);
       return new AiContext.Inner_StreamUtil(stable, tier.toString());
    }
 
-   private static void init(StringBuilder tier, String section, int room) {
+   private static void appendIfRoom(StringBuilder tier, String section, int room) {
       if (section != null && !section.isEmpty() && tier.length() + section.length() <= room) {
          tier.append(section);
       }
    }
 
-   static String init(List<AiMemoryStore.Memory> memories, long now, int maxCharacters) {
+   static String memoriesText(List<AiMemoryStore.Memory> memories, long now, int maxCharacters) {
       if (memories != null && !memories.isEmpty()) {
          StringBuilder out = new StringBuilder("\nMEMORY (revalidate world facts before relying on them; newer user statements override older ones):");
          int header = out.length();
@@ -372,7 +372,7 @@ public final class AiContext {
             StringBuilder line = new StringBuilder("\n- [")
                .append(m.kind())
                .append("] ")
-               .append(init(m.text(), 600))
+               .append(flatten(m.text(), 600))
                .append(" (")
                .append(m.id())
                .append(", ")
@@ -380,7 +380,7 @@ public final class AiContext {
                .append(")");
             String payload = m.payload() == null ? "" : m.payload().trim();
             if (!payload.isEmpty() && !payload.equals("{}") && !payload.equals("[]")) {
-               line.append(" payload: ").append(init(payload, 300));
+               line.append(" payload: ").append(flatten(payload, 300));
             }
 
             if (out.length() + line.length() <= maxCharacters) {
@@ -395,7 +395,7 @@ public final class AiContext {
       }
    }
 
-   private static String init(String text, int max) {
+   private static String flatten(String text, int max) {
       String flat = text == null ? "" : text.replaceAll("\\s+", " ").trim();
       return flat.length() <= max ? flat : flat.substring(0, max - 3) + "...";
    }
@@ -454,7 +454,7 @@ public final class AiContext {
       AiCatalog.Snapshot catalog, AiObservation observation, String objective, String task, List<AiMemoryStore.Memory> memories, int maxCharacters
    ) {
       String turn = init(new AiContext.Inner_DataUtil(), task, new JsonObject(), -1, 60, 0L, null, null, observation);
-      AiContext.Inner_StreamUtil prompt = init(
+      AiContext.Inner_StreamUtil prompt = buildPrompt(
          catalog, objective, List.of(), task, false, true, memories, System.currentTimeMillis(), maxCharacters - turn.length() - 1
       );
       return prompt.text() + "\n" + turn;

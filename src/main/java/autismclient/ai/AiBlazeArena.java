@@ -42,7 +42,7 @@ final class AiBlazeArena implements AiOperation {
    private final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
    private final AiFireControl fireControl = new AiFireControl();
    private final long deadline;
-   private int write;
+   private int cellIndex;
    private int update;
    private int sync;
    private int flush;
@@ -149,16 +149,16 @@ final class AiBlazeArena implements AiOperation {
          || this.mc.player != this.player
          || this.mc.level != this.level
          || this.mc.getConnection() != this.connection) {
-         return this.init(AiOperation.Status.CANCELLED, "Spawner setup world/player changed");
+         return this.finish(AiOperation.Status.CANCELLED, "Spawner setup world/player changed");
       }
 
       if (!this.mc.player.isAlive()) {
-         return this.init(AiOperation.Status.FAILED, "Player died during spawner setup");
+         return this.finish(AiOperation.Status.FAILED, "Player died during spawner setup");
       }
 
       this.flush++;
       if (System.nanoTime() > this.deadline && this.canInterruptNow()) {
-         return this.init(AiOperation.Status.SUCCEEDED, "Spawner setup budget ended; partial geometry recorded");
+         return this.finish(AiOperation.Status.SUCCEEDED, "Spawner setup budget ended; partial geometry recorded");
       }
 
       if (this.mc.level.getBlockState(this.spawner).is(Blocks.SPAWNER)
@@ -169,12 +169,12 @@ final class AiBlazeArena implements AiOperation {
             && (this.faceApproach == null || this.faceApproach.canInterruptNow())) {
             for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 5.0)) {
                if (e instanceof Blaze && AiDefense.load(this.mc, e) || e.distanceToSqr(this.mc.player) < 9.0) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "A blaze is in melee range; prioritize its kill over more construction");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "A blaze is in melee range; prioritize its kill over more construction");
                }
             }
 
             if (AiCombat.nextIncoming(this.mc) != null) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Incoming shot; hand control back to combat");
+               return this.finish(AiOperation.Status.SUCCEEDED, "Incoming shot; hand control back to combat");
             }
 
             if (this.fireControl.init(false, null)) {
@@ -182,8 +182,8 @@ final class AiBlazeArena implements AiOperation {
             }
          }
 
-         if (this.write >= this.plannedCells.size()) {
-            return this.init(AiOperation.Status.SUCCEEDED, "Small spawner cap and observed shooter screen settled");
+         if (this.cellIndex >= this.plannedCells.size()) {
+            return this.finish(AiOperation.Status.SUCCEEDED, "Small spawner cap and observed shooter screen settled");
          }
 
          if (this.faceApproach != null) {
@@ -195,7 +195,7 @@ final class AiBlazeArena implements AiOperation {
                         "kind",
                         "placement-face",
                         "cell",
-                        this.plannedCells.get(this.write).toShortString(),
+                        this.plannedCells.get(this.cellIndex).toShortString(),
                         "result",
                         r.status(),
                         "message",
@@ -208,14 +208,14 @@ final class AiBlazeArena implements AiOperation {
                this.faceApproach = null;
                if (r.status() != AiOperation.Status.SUCCEEDED) {
                   this.placementOutcomes
-                     .add(AiJson.objectOf("cell", this.plannedCells.get(this.write).toShortString(), "result", "kept", "reason", r.message()));
+                     .add(AiJson.objectOf("cell", this.plannedCells.get(this.cellIndex).toShortString(), "result", "kept", "reason", r.message()));
                   this.sync++;
-                  this.write++;
+                  this.cellIndex++;
                }
             }
 
             return this.running("Reach the roof's actual support side over existing floor");
-         } else if (this.stairIndex < this.stairStands.size() && this.write >= this.stairCellCount) {
+         } else if (this.stairIndex < this.stairStands.size() && this.cellIndex >= this.stairCellCount) {
             BlockPos stand = this.stairStands.get(this.stairIndex);
             if (!this.mc.level.getBlockState(stand.below()).isCollisionShapeFullBlock(this.mc.level, stand.below())) {
                this.stairIndex = this.stairStands.size();
@@ -258,23 +258,23 @@ final class AiBlazeArena implements AiOperation {
 
             return this.running("Walk onto the confirmed construction stair to reach roof faces");
          } else {
-            BlockPos cell = this.plannedCells.get(this.write);
+            BlockPos cell = this.plannedCells.get(this.cellIndex);
             if (!this.placing) {
                String refusal = this.keepReason(cell);
                if (!refusal.isEmpty() && !refusal.equals("outside current placement reach")) {
                   this.placementOutcomes.add(AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", refusal));
                   this.sync++;
-                  this.write++;
+                  this.cellIndex++;
                   return this.running("Reusing existing cover or preserving the open exit");
                }
 
                Item material = this.expendableBlock();
                if (material == null) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "No expendable nonflammable blocks; use existing fortress cover");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "No expendable nonflammable blocks; use existing fortress cover");
                }
 
                if (!autismclient.ai.engine.AiPlacer.canPlaceFromHere(cell, material)) {
-                  if (this.write >= this.stairCellCount && this.approachedCells.add(cell)) {
+                  if (this.cellIndex >= this.stairCellCount && this.approachedCells.add(cell)) {
                      this.faceApproach = AiGoto.approachToPlaceCompat(cell, material, 2);
                      return this.running("Find a visible support face without more scaffolding");
                   }
@@ -284,7 +284,7 @@ final class AiBlazeArena implements AiOperation {
                         AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", "no reachable support face after bounded approach")
                      );
                   this.sync++;
-                  this.write++;
+                  this.cellIndex++;
                   return this.running("Keep a partial cap where no legal support side is reachable");
                }
 
@@ -321,13 +321,13 @@ final class AiBlazeArena implements AiOperation {
                   );
                this.placer.reset();
                this.placing = false;
-               this.write++;
+               this.cellIndex++;
             }
 
             return this.running("Set minimal spawner escape cap / fireball screen (" + this.update + " blocks confirmed)");
          }
       } else {
-         return this.init(AiOperation.Status.FAILED, "Observed blaze spawner no longer present");
+         return this.finish(AiOperation.Status.FAILED, "Observed blaze spawner no longer present");
       }
    }
 
@@ -403,7 +403,7 @@ final class AiBlazeArena implements AiOperation {
          "planned",
          this.plannedCells.size(),
          "visited",
-         this.write,
+         this.cellIndex,
          "ticks",
          this.flush,
          "completeEnclosure",
@@ -427,7 +427,7 @@ final class AiBlazeArena implements AiOperation {
       return AiGameOperations.result(AiOperation.Status.RUNNING, m, this.progressData());
    }
 
-   private AiOperation.Result init(AiOperation.Status s, String m) {
+   private AiOperation.Result finish(AiOperation.Status s, String m) {
       JsonObject d = this.progressData();
       this.cancel();
       return AiGameOperations.result(s, m, d);

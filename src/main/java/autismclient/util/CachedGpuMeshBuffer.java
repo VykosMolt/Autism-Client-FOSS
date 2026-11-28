@@ -20,14 +20,14 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
    private final String label;
    private GpuBuffer init_GpuBuffer;
    private PrimitiveTopology init_PrimitiveTopology;
-   private int load;
+   private int indexCount;
 
    public CachedGpuMeshBuffer(String label) {
       this.label = label;
    }
 
    public boolean hasBuffer() {
-      return this.init_GpuBuffer != null && !this.init_GpuBuffer.isClosed() && this.load > 0;
+      return this.init_GpuBuffer != null && !this.init_GpuBuffer.isClosed() && this.indexCount > 0;
    }
 
    public boolean init(RenderType type, Consumer<VertexConsumer> emit) {
@@ -48,7 +48,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
             }
 
             this.init_PrimitiveTopology = state.primitiveTopology();
-            this.load = state.indexCount();
+            this.indexCount = state.indexCount();
             this.init_GpuBuffer = RenderSystem.getDevice().createBuffer(() -> this.label, 32, mesh.vertexBuffer());
          }
 
@@ -59,7 +59,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
    public void init(RenderType type, Matrix4fc framePose, double offsetX, double offsetY, double offsetZ) {
       if (this.hasBuffer()) {
          AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(this.init_PrimitiveTopology);
-         GpuBuffer indices = sequential.getBuffer(this.load);
+         GpuBuffer indices = sequential.getBuffer(this.indexCount);
          Matrix4fStack modelView = RenderSystem.getModelViewStack();
          modelView.pushMatrix();
 
@@ -69,7 +69,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
             }
 
             modelView.translate((float)offsetX, (float)offsetY, (float)offsetZ);
-            Compat263.drawFromBuffer(type.prepare(), this.init_GpuBuffer, indices, sequential.type(), 0, 0, this.load);
+            Compat263.drawFromBuffer(type.prepare(), this.init_GpuBuffer, indices, sequential.type(), 0, 0, this.indexCount);
          } finally {
             modelView.popMatrix();
          }
@@ -79,7 +79,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
    public void release() {
       GpuBuffer buffer = this.init_GpuBuffer;
       this.init_GpuBuffer = null;
-      this.load = 0;
+      this.indexCount = 0;
       this.init_PrimitiveTopology = null;
       if (buffer != null && !buffer.isClosed()) {
          if (RenderSystem.isOnRenderThread()) {

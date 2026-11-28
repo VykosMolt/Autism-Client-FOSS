@@ -101,7 +101,7 @@ public class CraftAction implements MacroAction {
          if (tag.contains("entries")) {
             for (Tag element : tag.getList("entries").orElse(new ListTag())) {
                if (element instanceof CompoundTag entryTag) {
-                  CraftAction.Inner_DataUtil entry = CraftAction.Inner_DataUtil.init(entryTag);
+                  CraftAction.Inner_DataUtil entry = CraftAction.Inner_DataUtil.fromTag(entryTag);
                   if (entry.isValid()) {
                      this.entries.add(entry);
                   }
@@ -110,7 +110,7 @@ public class CraftAction implements MacroAction {
          }
 
          if (this.entries.isEmpty()) {
-            CraftAction.Inner_DataUtil legacyEntry = CraftAction.Inner_DataUtil.init(tag);
+            CraftAction.Inner_DataUtil legacyEntry = CraftAction.Inner_DataUtil.fromTag(tag);
             if (legacyEntry.isValid()) {
                this.entries.add(legacyEntry);
             }
@@ -196,7 +196,7 @@ public class CraftAction implements MacroAction {
          return tag;
       }
 
-      public static CraftAction.Inner_DataUtil init(CompoundTag tag) {
+      public static CraftAction.Inner_DataUtil fromTag(CompoundTag tag) {
          CraftAction.Inner_DataUtil entry = new CraftAction.Inner_DataUtil();
          if (tag == null) {
             return entry;

@@ -37,16 +37,16 @@ public final class WindowIconManager {
 
    public static void load(Minecraft client) {
       load_I = 60;
-      write(client);
+      retryApply(client);
    }
 
    public static void read(Minecraft client) {
       if (load_I > 0) {
-         write(client);
+         retryApply(client);
       }
    }
 
-   private static void write(Minecraft client) {
+   private static void retryApply(Minecraft client) {
       if (load_I > 0) {
          load_I--;
          if (client != null && client.getWindow() != null) {
@@ -57,7 +57,7 @@ public final class WindowIconManager {
                ok = applyIcons(client);
             } else {
                client.getWindow().setTitle("AUTISM Client");
-               ok = init(client.getWindow().handle());
+               ok = applyIconsToWindow(client.getWindow().handle());
             }
 
             if (ok) {
@@ -77,7 +77,7 @@ public final class WindowIconManager {
       }
    }
 
-   private static boolean init(long windowHandle) {
+   private static boolean applyIconsToWindow(long windowHandle) {
       if (windowHandle == 0L) {
          return false;
       }
@@ -91,7 +91,7 @@ public final class WindowIconManager {
             int size = ICON_SIZES[i];
 
             try (
-               InputStream stream = init("icon_" + size + "x" + size + ".png");
+               InputStream stream = openIcon("icon_" + size + "x" + size + ".png");
                NativeImage image = NativeImage.read(stream);
             ) {
                ByteBuffer pixels = MemoryUtil.memAlloc(image.getWidth() * image.getHeight() * 4);
@@ -113,7 +113,7 @@ public final class WindowIconManager {
       }
    }
 
-   private static InputStream init(String fileName) throws IOException {
+   private static InputStream openIcon(String fileName) throws IOException {
       InputStream stream = WindowIconManager.class.getClassLoader().getResourceAsStream("assets/autismclient/icons/window/" + fileName);
       if (stream == null) {
          throw new IOException("Missing Autism window icon resource: " + fileName);

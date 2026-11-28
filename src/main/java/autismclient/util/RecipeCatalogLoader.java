@@ -87,7 +87,7 @@ final class RecipeCatalogLoader {
          RecipeCatalogLoader.Inner_CachePool server = load_aK_CachePool(mc);
          return server != null && !server.craftingRecipes().isEmpty()
             ? server
-            : init(registryAccess(mc), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level), mc);
+            : loadForClient(registryAccess(mc), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level), mc);
       } else {
          return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
@@ -109,7 +109,7 @@ final class RecipeCatalogLoader {
             FeatureFlagSet features = enabledFeatures(mc);
             ContextMap slotContext = SlotDisplayContext.fromLevel(mc.level);
             synchronized (LOCK) {
-               if (!init(access, features) || cachedSnapshot == null && pendingLoad == null) {
+               if (!isCacheValid(access, features) || cachedSnapshot == null && pendingLoad == null) {
                   loadAsync(access, features, slotContext);
                }
             }
@@ -127,7 +127,7 @@ final class RecipeCatalogLoader {
          RegistryAccess access = registryAccess(mc);
          FeatureFlagSet features = enabledFeatures(mc);
          synchronized (LOCK) {
-            if (init(access, features)) {
+            if (isCacheValid(access, features)) {
                if (cachedSnapshot != null && !cachedSnapshot.craftingRecipes().isEmpty()) {
                   return cachedSnapshot.craftingRecipes();
                }
@@ -146,7 +146,7 @@ final class RecipeCatalogLoader {
    }
 
    static List<RecipeCatalogLoader.Inner_StreamUtil> buildCraftingRecipes(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
-      return init(access, features, slotContext, null).craftingRecipes();
+      return loadForClient(access, features, slotContext, null).craftingRecipes();
    }
 
    static int recipeFileCount(Minecraft mc) {
@@ -161,7 +161,7 @@ final class RecipeCatalogLoader {
       return mc.getConnection() != null ? mc.getConnection().enabledFeatures() : mc.level.enabledFeatures();
    }
 
-   private static boolean init(RegistryAccess access, FeatureFlagSet features) {
+   private static boolean isCacheValid(RegistryAccess access, FeatureFlagSet features) {
       return cachedAccess == access && Objects.equals(cachedFeatures, features);
    }
 
@@ -188,18 +188,18 @@ final class RecipeCatalogLoader {
       return load;
    }
 
-   private static RecipeCatalogLoader.Inner_CachePool init(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext, Minecraft mc) {
+   private static RecipeCatalogLoader.Inner_CachePool loadForClient(RegistryAccess access, FeatureFlagSet features, ContextMap slotContext, Minecraft mc) {
       if (access == null) {
          return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
 
       CompletableFuture<RecipeCatalogLoader.Inner_CachePool> pending;
       synchronized (LOCK) {
-         if (init(access, features) && cachedSnapshot != null) {
+         if (isCacheValid(access, features) && cachedSnapshot != null) {
             return cachedSnapshot;
          }
 
-         pending = init(access, features) && pendingLoad != null ? pendingLoad : loadAsync(access, features, slotContext);
+         pending = isCacheValid(access, features) && pendingLoad != null ? pendingLoad : loadAsync(access, features, slotContext);
       }
 
       RecipeCatalogLoader.Inner_CachePool loaded;
@@ -212,7 +212,7 @@ final class RecipeCatalogLoader {
       if (loaded != null && !loaded.craftingRecipes().isEmpty()) {
          return loaded;
       } else {
-         return mc == null ? RecipeCatalogLoader.Inner_CachePool.EMPTY : init(mc.getResourceManager(), access, features, slotContext);
+         return mc == null ? RecipeCatalogLoader.Inner_CachePool.EMPTY : loadFromResources(mc.getResourceManager(), access, features, slotContext);
       }
    }
 
@@ -223,7 +223,7 @@ final class RecipeCatalogLoader {
 
       try {
          Compat263.vanillaListResources(pack, PackType.SERVER_DATA, "minecraft", "recipe", files::putIfAbsent);
-         RecipeCatalogLoader.Inner_CachePool parsed = init(files, access, features, slotContext, "client jar");
+         RecipeCatalogLoader.Inner_CachePool parsed = loadFromFiles(files, access, features, slotContext, "client jar");
          LOGGER.info(
             "[Autism] recipes: {} crafting + {} cooking from the client jar ({} files, {} skipped) in {} ms",
             parsed.craftingRecipes().size(),
@@ -240,7 +240,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static RecipeCatalogLoader.Inner_CachePool init(
+   private static RecipeCatalogLoader.Inner_CachePool loadFromFiles(
       Map<Identifier, IoSupplier<InputStream>> files, RegistryAccess access, FeatureFlagSet features, ContextMap slotContext, String source
    ) {
       DynamicOps<JsonElement> ops = access.createSerializationContext(JsonOps.INSTANCE);
@@ -255,11 +255,11 @@ final class RecipeCatalogLoader {
             JsonElement json = JsonParser.parseReader(reader);
             Recipe<?> decoded = Recipe.CODEC.parse(ops, json).getOrThrow(JsonParseException::new).value();
             if (decoded instanceof CraftingRecipe craftingRecipe) {
-               for (RecipeCatalogLoader.Inner_StreamUtil recipe : init(recipeId, craftingRecipe, features, slotContext)) {
+               for (RecipeCatalogLoader.Inner_StreamUtil recipe : craftingEntries(recipeId, craftingRecipe, features, slotContext)) {
                   crafting.put(recipe.recipeKey, recipe);
                }
             } else if (decoded instanceof AbstractCookingRecipe cookingRecipe) {
-               RecipeCatalogLoader.Inner_DataUtil recipe = init(recipeId, cookingRecipe, decoded, slotContext);
+               RecipeCatalogLoader.Inner_DataUtil recipe = cookingEntry(recipeId, cookingRecipe, decoded, slotContext);
                if (recipe != null) {
                   cooking.add(recipe);
                }
@@ -275,7 +275,7 @@ final class RecipeCatalogLoader {
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(craftingList), List.copyOf(cooking), source, files.size(), failed);
    }
 
-   private static RecipeCatalogLoader.Inner_CachePool init(ResourceManager manager, RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
+   private static RecipeCatalogLoader.Inner_CachePool loadFromResources(ResourceManager manager, RegistryAccess access, FeatureFlagSet features, ContextMap slotContext) {
       if (manager == null) {
          return RecipeCatalogLoader.Inner_CachePool.EMPTY;
       }
@@ -287,7 +287,7 @@ final class RecipeCatalogLoader {
          files.put(entry.getKey(), resource::open);
       }
 
-      return files.isEmpty() ? RecipeCatalogLoader.Inner_CachePool.EMPTY : init(files, access, features, slotContext, "client resources");
+      return files.isEmpty() ? RecipeCatalogLoader.Inner_CachePool.EMPTY : loadFromFiles(files, access, features, slotContext, "client resources");
    }
 
    private static RecipeCatalogLoader.Inner_CachePool load_aK_CachePool(Minecraft mc) {
@@ -313,7 +313,7 @@ final class RecipeCatalogLoader {
          }
 
          try {
-            load_aK_CachePool = init(manager.getRecipes(), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level));
+            load_aK_CachePool = buildCatalog(manager.getRecipes(), enabledFeatures(mc), SlotDisplayContext.fromLevel(mc.level));
             load_Obj = manager;
          } catch (RuntimeException e) {
             return null;
@@ -323,7 +323,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   static RecipeCatalogLoader.Inner_CachePool init(Collection<RecipeHolder<?>> holders, FeatureFlagSet enabledFeatures, ContextMap slotContext) {
+   static RecipeCatalogLoader.Inner_CachePool buildCatalog(Collection<RecipeHolder<?>> holders, FeatureFlagSet enabledFeatures, ContextMap slotContext) {
       LinkedHashMap<String, RecipeCatalogLoader.Inner_StreamUtil> craftingByKey = new LinkedHashMap<>();
       List<RecipeCatalogLoader.Inner_DataUtil> cooking = new ArrayList<>();
 
@@ -333,11 +333,11 @@ final class RecipeCatalogLoader {
             if (recipeId != null) {
                Recipe<?> decoded = holder.value();
                if (decoded instanceof CraftingRecipe crafting) {
-                  for (RecipeCatalogLoader.Inner_StreamUtil recipe : init(recipeId, crafting, enabledFeatures, slotContext)) {
+                  for (RecipeCatalogLoader.Inner_StreamUtil recipe : craftingEntries(recipeId, crafting, enabledFeatures, slotContext)) {
                      craftingByKey.put(recipe.recipeKey, recipe);
                   }
                } else if (decoded instanceof AbstractCookingRecipe cookingRecipe) {
-                  RecipeCatalogLoader.Inner_DataUtil recipe = init(recipeId, cookingRecipe, decoded, slotContext);
+                  RecipeCatalogLoader.Inner_DataUtil recipe = cookingEntry(recipeId, cookingRecipe, decoded, slotContext);
                   if (recipe != null) {
                      cooking.add(recipe);
                   }
@@ -352,7 +352,7 @@ final class RecipeCatalogLoader {
       return new RecipeCatalogLoader.Inner_CachePool(List.copyOf(crafting), List.copyOf(cooking));
    }
 
-   private static RecipeCatalogLoader.Inner_DataUtil init(Identifier recipeId, AbstractCookingRecipe cooking, Recipe<?> decoded, ContextMap slotContext) {
+   private static RecipeCatalogLoader.Inner_DataUtil cookingEntry(Identifier recipeId, AbstractCookingRecipe cooking, Recipe<?> decoded, ContextMap slotContext) {
       List<ItemStack> inputStacks = cooking.input().display().resolveForStacks(slotContext);
       LinkedHashMap<Identifier, Item> inputs = new LinkedHashMap<>();
 
@@ -376,11 +376,11 @@ final class RecipeCatalogLoader {
       }
 
       return !inputs.isEmpty() && !result.isEmpty()
-         ? new RecipeCatalogLoader.Inner_DataUtil(recipeId.toString(), new ArrayList<>(inputs.values()), result, init(decoded), cooking.experience(), cooking.cookingTime())
+         ? new RecipeCatalogLoader.Inner_DataUtil(recipeId.toString(), new ArrayList<>(inputs.values()), result, recipeKind(decoded), cooking.experience(), cooking.cookingTime())
          : null;
    }
 
-   private static String init(Recipe<?> recipe) {
+   private static String recipeKind(Recipe<?> recipe) {
       String name = recipe.getClass().getSimpleName().toLowerCase(Locale.ROOT);
       if (name.contains("blast")) {
          return "minecraft:blast_furnace";
@@ -414,7 +414,7 @@ final class RecipeCatalogLoader {
          }
 
          List<Ingredient> explicitRequirements = craftingRequirements != null && craftingRequirements.isPresent()
-            ? load(craftingRequirements.get())
+            ? presentIngredients(craftingRequirements.get())
             : List.of();
          int width;
          int height;
@@ -423,13 +423,13 @@ final class RecipeCatalogLoader {
          if (display instanceof ShapedCraftingRecipeDisplay shapedDisplay) {
             width = shapedDisplay.width();
             height = shapedDisplay.height();
-            gridIngredients = init(shapedDisplay.ingredients(), slotContext);
-            requirements = explicitRequirements.isEmpty() ? load(gridIngredients) : explicitRequirements;
+            gridIngredients = displayIngredients(shapedDisplay.ingredients(), slotContext);
+            requirements = explicitRequirements.isEmpty() ? presentIngredients(gridIngredients) : explicitRequirements;
          } else {
-            List<SlotDisplay> displays = init(display);
+            List<SlotDisplay> displays = slotDisplays(display);
             width = Math.max(1, displays.size());
             height = 1;
-            requirements = explicitRequirements.isEmpty() ? load(init(displays, slotContext)) : explicitRequirements;
+            requirements = explicitRequirements.isEmpty() ? presentIngredients(displayIngredients(displays, slotContext)) : explicitRequirements;
             gridIngredients = new ArrayList<>(requirements);
          }
 
@@ -438,7 +438,7 @@ final class RecipeCatalogLoader {
                return null;
             }
 
-            String signature = init(result, shaped, width, height, init(shaped, gridIngredients, requirements, slotContext));
+            String signature = signature(result, shaped, width, height, signatureParts(shaped, gridIngredients, requirements, slotContext));
             return new RecipeCatalogLoader.Inner_StreamUtil(recipeKey, result, width, height, shaped, gridIngredients, requirements, signature);
          } else {
             return null;
@@ -448,14 +448,14 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static List<RecipeCatalogLoader.Inner_StreamUtil> init(Identifier recipeId, CraftingRecipe recipe, FeatureFlagSet enabledFeatures, ContextMap slotContext) {
+   private static List<RecipeCatalogLoader.Inner_StreamUtil> craftingEntries(Identifier recipeId, CraftingRecipe recipe, FeatureFlagSet enabledFeatures, ContextMap slotContext) {
       if (recipe != null && !recipe.isSpecial() && !recipe.placementInfo().isImpossibleToPlace()) {
          List<RecipeCatalogLoader.Inner_StreamUtil> result = new ArrayList<>();
          List<RecipeDisplay> displays = recipe.display();
 
          for (int displayIndex = 0; displayIndex < displays.size(); displayIndex++) {
             RecipeDisplay display = displays.get(displayIndex);
-            RecipeCatalogLoader.Inner_StreamUtil localRecipe = init(recipeId, recipe, display, displayIndex, enabledFeatures, slotContext);
+            RecipeCatalogLoader.Inner_StreamUtil localRecipe = craftingEntry(recipeId, recipe, display, displayIndex, enabledFeatures, slotContext);
             if (localRecipe != null) {
                result.add(localRecipe);
             }
@@ -467,7 +467,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static RecipeCatalogLoader.Inner_StreamUtil init(
+   private static RecipeCatalogLoader.Inner_StreamUtil craftingEntry(
       Identifier recipeId, CraftingRecipe recipe, RecipeDisplay display, int displayIndex, FeatureFlagSet enabledFeatures, ContextMap slotContext
    ) {
       if (display != null && display.isEnabled(enabledFeatures)) {
@@ -485,22 +485,22 @@ final class RecipeCatalogLoader {
             if (recipe instanceof ShapedRecipe shapedRecipe && display instanceof ShapedCraftingRecipeDisplay shapedDisplay) {
                width = shapedRecipe.getWidth();
                height = shapedRecipe.getHeight();
-               gridIngredients = init(shapedRecipe.getIngredients(), width * height);
-               requirements = load(gridIngredients);
+               gridIngredients = shapedGrid(shapedRecipe.getIngredients(), width * height);
+               requirements = presentIngredients(gridIngredients);
                if (width != shapedDisplay.width() || height != shapedDisplay.height()) {
                   width = shapedDisplay.width();
                   height = shapedDisplay.height();
-                  gridIngredients = init(shapedDisplay.ingredients(), slotContext);
-                  requirements = load(gridIngredients);
+                  gridIngredients = displayIngredients(shapedDisplay.ingredients(), slotContext);
+                  requirements = presentIngredients(gridIngredients);
                }
             } else if (display instanceof ShapedCraftingRecipeDisplay shapedDisplay) {
                width = shapedDisplay.width();
                height = shapedDisplay.height();
-               gridIngredients = init(shapedDisplay.ingredients(), slotContext);
-               requirements = load(gridIngredients);
+               gridIngredients = displayIngredients(shapedDisplay.ingredients(), slotContext);
+               requirements = presentIngredients(gridIngredients);
             } else {
                height = 1;
-               requirements = init(recipe, display, slotContext);
+               requirements = recipeRequirements(recipe, display, slotContext);
                width = requirements.size();
                gridIngredients = new ArrayList<>(requirements);
             }
@@ -515,7 +515,7 @@ final class RecipeCatalogLoader {
                   recipeKey = recipeKey + "#" + displayIndex;
                }
 
-               String signature = init(result, shaped, width, height, init(shaped, gridIngredients, requirements, slotContext));
+               String signature = signature(result, shaped, width, height, signatureParts(shaped, gridIngredients, requirements, slotContext));
                return new RecipeCatalogLoader.Inner_StreamUtil(recipeKey, result, width, height, shaped, gridIngredients, requirements, signature);
             } else {
                return null;
@@ -528,7 +528,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static List<Ingredient> init(List<Optional<Ingredient>> ingredients, int size) {
+   private static List<Ingredient> shapedGrid(List<Optional<Ingredient>> ingredients, int size) {
       List<Ingredient> grid = new ArrayList<>(Math.max(size, ingredients == null ? 0 : ingredients.size()));
       if (ingredients != null) {
          for (Optional<Ingredient> ingredient : ingredients) {
@@ -543,20 +543,20 @@ final class RecipeCatalogLoader {
       return grid;
    }
 
-   private static List<Ingredient> init(List<SlotDisplay> displays, ContextMap slotContext) {
+   private static List<Ingredient> displayIngredients(List<SlotDisplay> displays, ContextMap slotContext) {
       List<Ingredient> ingredients = new ArrayList<>(displays == null ? 0 : displays.size());
       if (displays == null) {
          return ingredients;
       }
 
       for (SlotDisplay display : displays) {
-         ingredients.add(init(display, slotContext));
+         ingredients.add(displayIngredient(display, slotContext));
       }
 
       return ingredients;
    }
 
-   private static Ingredient init(SlotDisplay display, ContextMap slotContext) {
+   private static Ingredient displayIngredient(SlotDisplay display, ContextMap slotContext) {
       if (display == null) {
          return null;
       }
@@ -585,15 +585,15 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static List<Ingredient> init(CraftingRecipe recipe, RecipeDisplay display, ContextMap slotContext) {
+   private static List<Ingredient> recipeRequirements(CraftingRecipe recipe, RecipeDisplay display, ContextMap slotContext) {
       PlacementInfo placement = recipe.placementInfo();
-      List<SlotDisplay> slots = init(display);
+      List<SlotDisplay> slots = slotDisplays(display);
       return placement != null && !placement.ingredients().isEmpty() && (slots.isEmpty() || slots.size() == placement.ingredients().size())
          ? new ArrayList<>(placement.ingredients())
-         : load(init(slots, slotContext));
+         : presentIngredients(displayIngredients(slots, slotContext));
    }
 
-   private static List<SlotDisplay> init(RecipeDisplay display) {
+   private static List<SlotDisplay> slotDisplays(RecipeDisplay display) {
       if (display instanceof ShapedCraftingRecipeDisplay shaped) {
          return shaped.ingredients();
       } else {
@@ -601,7 +601,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static List<Ingredient> load(List<Ingredient> ingredients) {
+   private static List<Ingredient> presentIngredients(List<Ingredient> ingredients) {
       List<Ingredient> present = new ArrayList<>();
       if (ingredients == null) {
          return present;
@@ -616,17 +616,17 @@ final class RecipeCatalogLoader {
       return present;
    }
 
-   private static List<String> init(boolean shaped, List<Ingredient> gridIngredients, List<Ingredient> requirements, ContextMap slotContext) {
+   private static List<String> signatureParts(boolean shaped, List<Ingredient> gridIngredients, List<Ingredient> requirements, ContextMap slotContext) {
       List<String> parts = new ArrayList<>();
       if (shaped) {
          if (gridIngredients != null) {
             for (Ingredient ingredient : gridIngredients) {
-               parts.add(init(ingredient, slotContext));
+               parts.add(ingredientKey(ingredient, slotContext));
             }
          }
       } else if (requirements != null) {
          for (Ingredient ingredient : requirements) {
-            parts.add(init(ingredient, slotContext));
+            parts.add(ingredientKey(ingredient, slotContext));
          }
 
          parts.sort(String.CASE_INSENSITIVE_ORDER);
@@ -635,7 +635,7 @@ final class RecipeCatalogLoader {
       return parts;
    }
 
-   private static String init(Ingredient ingredient, ContextMap slotContext) {
+   private static String ingredientKey(Ingredient ingredient, ContextMap slotContext) {
       return ingredient != null && !ingredient.isEmpty() ? init_Str(ingredient.display().resolveForStacks(slotContext)) : "_";
    }
 
@@ -664,7 +664,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   private static String init(ItemStack result, boolean shaped, int width, int height, Collection<String> parts) {
+   private static String signature(ItemStack result, boolean shaped, int width, int height, Collection<String> parts) {
       Identifier resultId = BuiltInRegistries.ITEM.getKey(result.getItem());
       String resultKey = resultId == null ? result.getHoverName().getString() : resultId.toString();
       return resultKey + "|" + result.getCount() + "|" + (shaped ? "shaped" : "shapeless") + "|" + width + "x" + height + "|" + String.join(";", parts);

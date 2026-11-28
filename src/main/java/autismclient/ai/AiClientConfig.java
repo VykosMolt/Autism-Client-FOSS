@@ -34,15 +34,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 
 final class AiClientConfig {
-   static final List<String> init = List.of("master", "accent", "outline", "text", "toggle", "backdrop", "success", "danger", "button", "header", "hover");
-   private static final List<String> load = List.of(
+   static final List<String> THEME_CHANNELS = List.of("master", "accent", "outline", "text", "toggle", "backdrop", "success", "danger", "button", "header", "hover");
+   private static final List<String> HUD_ANCHORS = List.of(
       "TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT", "TOP_CENTER", "BOTTOM_CENTER", "CENTER_LEFT", "CENTER_RIGHT", "CENTER"
    );
 
    private AiClientConfig() {
    }
 
-   static <T> T init(Supplier<T> action) {
+   static <T> T onClientThread(Supplier<T> action) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.isSameThread()) {
          return action.get();
@@ -74,11 +74,11 @@ final class AiClientConfig {
       }
    }
 
-   private static String init(JsonObject args, String fallback) {
+   private static String actionOf(JsonObject args, String fallback) {
       return AiJson.getString(args, "action", fallback).trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String load(JsonObject args, String key) {
+   private static String requireString(JsonObject args, String key) {
       String value = AiJson.getString(args, key, "").trim();
       if (value.isEmpty()) {
          throw new IllegalArgumentException(key + " is required");
@@ -90,15 +90,15 @@ final class AiClientConfig {
    }
 
    static JsonObject profiles(JsonObject args) {
-      String action = init(args, "list");
-      return init(
+      String action = actionOf(args, "list");
+      return onClientThread(
          () -> {
             autismclient.util.AutismProfileManager m = autismclient.util.AutismProfileManager.getInstance();
             switch (action) {
                case "list":
-                  return init(m);
+                  return profilesJson(m);
                case "create":
-                  String name = load(args, "name");
+                  String name = requireString(args, "name");
                   if (m.isNameTaken(name, null)) {
                      throw new IllegalArgumentException("A profile named '" + name + "' already exists");
                   } else {
@@ -116,56 +116,56 @@ final class AiClientConfig {
                         m.switchTo(px);
                      }
 
-                     JsonObject out = init(m);
-                     out.add("created", init(px, m));
+                     JsonObject out = profilesJson(m);
+                     out.add("created", profileJson(px, m));
                      return out;
                   }
                case "switch":
                case "load": {
-                  AutismProfile p = init(m, args, "name");
+                  AutismProfile p = findProfile(m, args, "name");
                   m.switchTo(p);
-                  return init(m);
+                  return profilesJson(m);
                }
                case "save": {
-                  AutismProfile p = args.has("name") ? init(m, args, "name") : m.active();
+                  AutismProfile p = args.has("name") ? findProfile(m, args, "name") : m.active();
                   if (p == null) {
                      throw new IllegalStateException("No active profile");
                   }
 
                   m.saveSnapshot(p);
-                  JsonObject out = init(m);
-                  out.add("saved", init(p, m));
+                  JsonObject out = profilesJson(m);
+                  out.add("saved", profileJson(p, m));
                   return out;
                }
                case "rename": {
-                  AutismProfile p = init(m, args, "name");
-                  if (!m.rename(p, load(args, "newName"))) {
+                  AutismProfile p = findProfile(m, args, "name");
+                  if (!m.rename(p, requireString(args, "newName"))) {
                      throw new IllegalArgumentException("Rename refused: blank or duplicate name");
                   }
 
-                  return init(m);
+                  return profilesJson(m);
                }
                case "duplicate": {
-                  AutismProfile p = init(m, args, "name");
-                  AutismProfile copy = m.duplicate(p, load(args, "newName"));
+                  AutismProfile p = findProfile(m, args, "name");
+                  AutismProfile copy = m.duplicate(p, requireString(args, "newName"));
                   if (copy == null) {
                      throw new IllegalArgumentException("Duplicate refused: blank or duplicate name");
                   }
 
-                  JsonObject out = init(m);
-                  out.add("created", init(copy, m));
+                  JsonObject out = profilesJson(m);
+                  out.add("created", profileJson(copy, m));
                   return out;
                }
                case "delete": {
-                  AutismProfile p = init(m, args, "name");
+                  AutismProfile p = findProfile(m, args, "name");
                   if (!m.delete(p)) {
                      throw new IllegalArgumentException("The default profile and the last remaining profile cannot be deleted");
                   }
 
-                  return init(m);
+                  return profilesJson(m);
                }
                case "set": {
-                  AutismProfile p = init(m, args, "name");
+                  AutismProfile p = findProfile(m, args, "name");
                   if (args.has("autoSave")) {
                      m.setAutoSave(p, AiJson.getBoolean(args, "autoSave", p.autoSave));
                   }
@@ -178,7 +178,7 @@ final class AiClientConfig {
                      m.read(p, AiJson.getBoolean(args, "ownThemeColor", p.ownThemeColor));
                   }
 
-                  return init(m);
+                  return profilesJson(m);
                }
                default:
                   throw new IllegalArgumentException(
@@ -189,8 +189,8 @@ final class AiClientConfig {
       );
    }
 
-   private static AutismProfile init(autismclient.util.AutismProfileManager m, JsonObject args, String key) {
-      String name = load(args, key);
+   private static AutismProfile findProfile(autismclient.util.AutismProfileManager m, JsonObject args, String key) {
+      String name = requireString(args, key);
       AutismProfile byId = m.byId(AutismProfile.sanitizeId(name));
       if (byId != null) {
          return byId;
@@ -205,7 +205,7 @@ final class AiClientConfig {
       throw new IllegalArgumentException("No profile named '" + name + "'; list the profiles first");
    }
 
-   private static JsonObject init(AutismProfile p, autismclient.util.AutismProfileManager m) {
+   private static JsonObject profileJson(AutismProfile p, autismclient.util.AutismProfileManager m) {
       return AiJson.objectOf(
          "id",
          p.id,
@@ -226,32 +226,32 @@ final class AiClientConfig {
       );
    }
 
-   private static JsonObject init(autismclient.util.AutismProfileManager m) {
+   private static JsonObject profilesJson(autismclient.util.AutismProfileManager m) {
       JsonArray list = new JsonArray();
 
       for (AutismProfile p : m.profiles()) {
-         list.add(init(p, m));
+         list.add(profileJson(p, m));
       }
 
       return AiJson.objectOf("active", m.activeId(), "unsavedChanges", m.hasUnsavedChanges(), "profiles", list);
    }
 
    static JsonObject load(JsonObject args) {
-      String action = init(args, "get");
-      return init(() -> {
+      String action = actionOf(args, "get");
+      return onClientThread(() -> {
          AutismConfig cfg = AutismConfig.getGlobal();
          AutismConfig.ThemeColors colors = cfg.themeColors;
          switch (action) {
             case "get":
-               return init(colors);
+               return colorsJson(colors);
             case "set":
                JsonObject wanted = args.has("colors") && args.get("colors").isJsonObject() ? args.getAsJsonObject("colors") : args;
                int changed = 0;
                boolean perChannel = false;
 
-               for (String channel : init) {
+               for (String channel : THEME_CHANNELS) {
                   if (wanted.has(channel) && !wanted.get(channel).isJsonNull()) {
-                     init(colors, channel, init(wanted.get(channel).getAsString(), channel));
+                     setChannelColor(colors, channel, parseColor(wanted.get(channel).getAsString(), channel));
                      changed++;
                      if (!channel.equals("master")) {
                         perChannel = true;
@@ -260,7 +260,7 @@ final class AiClientConfig {
                }
 
                if (changed == 0) {
-                  throw new IllegalArgumentException("Give at least one channel in colors: " + init);
+                  throw new IllegalArgumentException("Give at least one channel in colors: " + THEME_CHANNELS);
                } else {
                   if (args.has("advanced")) {
                      colors.advanced = AiJson.getBoolean(args, "advanced", colors.advanced);
@@ -270,28 +270,28 @@ final class AiClientConfig {
 
                   autismclient.util.ThemePaletteManager.reload();
                   cfg.save();
-                  JsonObject out = init(colors);
+                  JsonObject out = colorsJson(colors);
                   out.addProperty("changed", changed);
                   return out;
                }
             case "reset":
                AutismConfig.ThemeColors stock = new AutismConfig.ThemeColors();
 
-               for (String channel : init) {
-                  init(colors, channel, init(stock, channel));
+               for (String channel : THEME_CHANNELS) {
+                  setChannelColor(colors, channel, channelColor(stock, channel));
                }
 
                colors.advanced = false;
                autismclient.util.ThemePaletteManager.reload();
                cfg.save();
-               return init(colors);
+               return colorsJson(colors);
             default:
                throw new IllegalArgumentException("Unknown theme action '" + action + "'; use get, set or reset");
          }
       });
    }
 
-   static int init(String raw, String channel) {
+   static int parseColor(String raw, String channel) {
       String s = raw == null ? "" : raw.trim();
       if (s.startsWith("#")) {
          s = s.substring(1);
@@ -313,11 +313,11 @@ final class AiClientConfig {
       return (int)value;
    }
 
-   static String init(int argb) {
+   static String hexColor(int argb) {
       return String.format(Locale.ROOT, "#%08X", argb);
    }
 
-   static int init(AutismConfig.ThemeColors c, String channel) {
+   static int channelColor(AutismConfig.ThemeColors c, String channel) {
       int var10000;
       switch (channel) {
          case "master":
@@ -360,7 +360,7 @@ final class AiClientConfig {
       return var10000;
    }
 
-   static void init(AutismConfig.ThemeColors c, String channel, int argb) {
+   static void setChannelColor(AutismConfig.ThemeColors c, String channel, int argb) {
       switch (channel) {
          case "master":
             c.master = argb;
@@ -400,19 +400,19 @@ final class AiClientConfig {
       }
    }
 
-   private static JsonObject init(AutismConfig.ThemeColors c) {
+   private static JsonObject colorsJson(AutismConfig.ThemeColors c) {
       JsonObject colors = new JsonObject();
 
-      for (String channel : init) {
-         colors.addProperty(channel, init(init(c, channel)));
+      for (String channel : THEME_CHANNELS) {
+         colors.addProperty(channel, hexColor(channelColor(c, channel)));
       }
 
       return AiJson.objectOf("advanced", c.advanced, "customized", autismclient.util.ThemePaletteManager.isCustomActive(), "colors", colors);
    }
 
    static JsonObject read(JsonObject args) {
-      String action = init(args, "list");
-      return init(
+      String action = actionOf(args, "list");
+      return onClientThread(
          () -> {
             Minecraft mc = Minecraft.getInstance();
             switch (action) {
@@ -420,12 +420,12 @@ final class AiClientConfig {
                   JsonArray elements = new JsonArray();
 
                   for (String id : autismclient.util.AutismHudManager.elementIds()) {
-                     elements.add(init(id, false));
+                     elements.add(hudElementJson(id, false));
                   }
 
                   return AiJson.objectOf("elements", elements, "revision", autismclient.util.AutismHudManager.revision());
                case "get":
-                  return init(init_Str(args), true);
+                  return hudElementJson(init_Str(args), true);
                case "set": {
                   String id = init_Str(args);
                   AutismConfig.HudElementState state = autismclient.util.AutismHudManager.getState(id);
@@ -436,8 +436,8 @@ final class AiClientConfig {
                   boolean positioned = args.has("x") || args.has("y");
                   if (args.has("anchor")) {
                      String anchor = AiJson.getString(args, "anchor", "").trim().toUpperCase(Locale.ROOT);
-                     if (!load.contains(anchor)) {
-                        throw new IllegalArgumentException("anchor must be one of " + load);
+                     if (!HUD_ANCHORS.contains(anchor)) {
+                        throw new IllegalArgumentException("anchor must be one of " + HUD_ANCHORS);
                      }
 
                      state.anchor = anchor;
@@ -467,12 +467,12 @@ final class AiClientConfig {
                   }
 
                   autismclient.util.AutismHudManager.setEnabled(id, autismclient.util.AutismHudManager.getState(id).enabled);
-                  return init(id, true);
+                  return hudElementJson(id, true);
                }
                case "reset": {
                   String id = init_Str(args);
                   autismclient.util.AutismHudManager.resetElement(id);
-                  return init(id, true);
+                  return hudElementJson(id, true);
                }
                default:
                   throw new IllegalArgumentException("Unknown HUD action '" + action + "'; use list, get, set or reset");
@@ -482,7 +482,7 @@ final class AiClientConfig {
    }
 
    private static String init_Str(JsonObject args) {
-      String id = load(args, "id");
+      String id = requireString(args, "id");
 
       for (String known : autismclient.util.AutismHudManager.elementIds()) {
          if (known.equalsIgnoreCase(id)) {
@@ -493,7 +493,7 @@ final class AiClientConfig {
       throw new IllegalArgumentException("Unknown HUD element '" + id + "'; list the elements first");
    }
 
-   private static JsonObject init(String id, boolean withSettings) {
+   private static JsonObject hudElementJson(String id, boolean withSettings) {
       AutismConfig.HudElementState s = autismclient.util.AutismHudManager.getState(id);
       JsonObject out = AiJson.objectOf(
          "id",
@@ -521,8 +521,8 @@ final class AiClientConfig {
    }
 
    static JsonObject write(JsonObject args) {
-      String action = init(args, "state");
-      return init(() -> {
+      String action = actionOf(args, "state");
+      return onClientThread(() -> {
          ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
          autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.getInstance();
          switch (action) {
@@ -550,11 +550,11 @@ final class AiClientConfig {
                throw new IllegalArgumentException("Unknown action '" + action + "'; use state, send, delay, flush, clear or delayMode");
          }
 
-         return init(module, shared);
+         return packetStateJson(module, shared);
       });
    }
 
-   private static JsonObject init(ModuleRuntimeManager module, autismclient.util.AutismSessionState shared) {
+   private static JsonObject packetStateJson(ModuleRuntimeManager module, autismclient.util.AutismSessionState shared) {
       return AiJson.objectOf(
          "send",
          shared.isSendPacketsEnabled(),
@@ -570,17 +570,17 @@ final class AiClientConfig {
    }
 
    static JsonObject update(JsonObject args) {
-      String action = init(args, "list");
-      return init(
+      String action = actionOf(args, "list");
+      return onClientThread(
          () -> {
             ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             switch (action) {
                case "list":
-                  return init(module);
+                  return blockedPacketsJson(module);
                case "block":
                case "unblock":
                   boolean c2s = isServerbound(args);
-                  Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.resolvePacketClass(load(args, "packet"));
+                  Class<? extends Packet<?>> packet = autismclient.util.PacketTypeRegistry.resolvePacketClass(requireString(args, "packet"));
                   if (packet == null) {
                      throw new IllegalArgumentException(
                         "Unknown packet '" + AiJson.getString(args, "packet", "") + "'; use the friendly names from action list"
@@ -600,7 +600,7 @@ final class AiClientConfig {
                      module.setCustomS2cPackets(set);
                   }
 
-                  return init(module);
+                  return blockedPacketsJson(module);
                case "clear":
                   boolean c2sClear = isServerbound(args);
                   if (c2sClear) {
@@ -609,34 +609,34 @@ final class AiClientConfig {
                      module.setCustomS2cPackets(new LinkedHashSet<>());
                   }
 
-                  return init(module);
+                  return blockedPacketsJson(module);
                case "presets":
                   JsonArray presets = new JsonArray();
 
                   for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().builtInPresets()) {
-                     presets.add(init(e));
+                     presets.add(presetJson(e));
                   }
 
                   for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().userPresets()) {
-                     presets.add(init(e));
+                     presets.add(presetJson(e));
                   }
 
                   return AiJson.objectOf("presets", presets);
                case "loadPreset":
-                  if (!PacketPresetManager.getInstance().loadPreset(load(args, "name"))) {
+                  if (!PacketPresetManager.getInstance().loadPreset(requireString(args, "name"))) {
                      throw new IllegalArgumentException("Unknown preset; action presets lists them");
                   }
 
-                  return init(module);
+                  return blockedPacketsJson(module);
                case "savePreset":
-                  String name = load(args, "name");
+                  String name = requireString(args, "name");
                   if (!PacketPresetManager.getInstance().savePreset(name)) {
                      throw new IllegalArgumentException("The preset name is reserved or invalid");
                   }
 
                   return AiJson.objectOf("saved", name);
                case "deletePreset":
-                  if (!PacketPresetManager.getInstance().deletePreset(load(args, "name"))) {
+                  if (!PacketPresetManager.getInstance().deletePreset(requireString(args, "name"))) {
                      throw new IllegalArgumentException("Unknown or built-in preset");
                   }
 
@@ -661,7 +661,7 @@ final class AiClientConfig {
       }
    }
 
-   private static JsonArray init(Set<Class<? extends Packet<?>>> packets) {
+   private static JsonArray packetNames(Set<Class<? extends Packet<?>>> packets) {
       JsonArray out = new JsonArray();
       List<String> sorted = new ArrayList<>();
 
@@ -674,17 +674,17 @@ final class AiClientConfig {
       return out;
    }
 
-   private static JsonObject init(ModuleRuntimeManager module) {
-      return AiJson.objectOf("blockedC2S", init(module.getCustomC2sPacketsCopy()), "blockedS2C", init(module.getCustomS2cPacketsCopy()));
+   private static JsonObject blockedPacketsJson(ModuleRuntimeManager module) {
+      return AiJson.objectOf("blockedC2S", packetNames(module.getCustomC2sPacketsCopy()), "blockedS2C", packetNames(module.getCustomS2cPacketsCopy()));
    }
 
-   private static JsonObject init(PacketPresetManager.Inner_DataUtil e) {
+   private static JsonObject presetJson(PacketPresetManager.Inner_DataUtil e) {
       return AiJson.objectOf("name", e.name(), "c2s", e.c2sCount(), "s2c", e.s2cCount(), "builtIn", e.isBuiltIn());
    }
 
    static JsonObject sync(JsonObject args) {
-      String action = init(args, "list");
-      return init(() -> {
+      String action = actionOf(args, "list");
+      return onClientThread(() -> {
          AutismWaypoints w = AutismWaypoints.getInstance();
          String scope = AuditWaypointScope.current(Minecraft.getInstance());
          switch (action) {
@@ -692,11 +692,11 @@ final class AiClientConfig {
                break;
             case "add":
                BlockPos pos = parsePos(args);
-               int color = args.has("color") ? init(AiJson.getString(args, "color", ""), "color") : -8337153;
-               w.init(scope, new AutismWaypoints.Waypoint(load(args, "name"), pos.getX(), pos.getY(), pos.getZ(), color, System.currentTimeMillis()));
+               int color = args.has("color") ? parseColor(AiJson.getString(args, "color", ""), "color") : -8337153;
+               w.init(scope, new AutismWaypoints.Waypoint(requireString(args, "name"), pos.getX(), pos.getY(), pos.getZ(), color, System.currentTimeMillis()));
                break;
             case "remove":
-               if (!w.remove(scope, load(args, "name"))) {
+               if (!w.remove(scope, requireString(args, "name"))) {
                   throw new IllegalArgumentException("Unknown waypoint");
                }
                break;
@@ -704,12 +704,12 @@ final class AiClientConfig {
                w.clearScope(scope);
                break;
             case "rename":
-               if (!w.init(scope, load(args, "name"), load(args, "newName"))) {
+               if (!w.init(scope, requireString(args, "name"), requireString(args, "newName"))) {
                   throw new IllegalArgumentException("Unknown waypoint or duplicate name");
                }
                break;
             case "color":
-               if (!w.setColor(scope, load(args, "name"), init(load(args, "color"), "color"))) {
+               if (!w.setColor(scope, requireString(args, "name"), parseColor(requireString(args, "color"), "color"))) {
                   throw new IllegalArgumentException("Unknown waypoint");
                }
                break;
@@ -723,7 +723,7 @@ final class AiClientConfig {
          JsonArray list = new JsonArray();
 
          for (AutismWaypoints.Waypoint wp : w.list(scope)) {
-            list.add(AiJson.objectOf("name", wp.name(), "x", wp.x(), "y", wp.y(), "z", wp.z(), "color", init(wp.color()), "death", wp.death()));
+            list.add(AiJson.objectOf("name", wp.name(), "x", wp.x(), "y", wp.y(), "z", wp.z(), "color", hexColor(wp.color()), "death", wp.death()));
          }
 
          return AiJson.objectOf("scope", scope, "waypoints", list);
@@ -744,8 +744,8 @@ final class AiClientConfig {
    }
 
    static JsonObject close(JsonObject args) {
-      String action = init(args, "list");
-      return init(
+      String action = actionOf(args, "list");
+      return onClientThread(
          () -> {
             autismclient.util.ProxyListManager m = autismclient.util.ProxyListManager.getInstance();
             switch (action) {
@@ -753,11 +753,11 @@ final class AiClientConfig {
                   break;
                case "add": {
                   autismclient.util.bW proxy = new autismclient.util.bW();
-                  proxy.load_Str = AiJson.getString(args, "name", load(args, "address"));
+                  proxy.load_Str = AiJson.getString(args, "name", requireString(args, "address"));
                   proxy.init_bZ = AiJson.getString(args, "type", "Socks5").equalsIgnoreCase("Socks4")
                      ? autismclient.util.ProxyProtocolType.Socks4
                      : autismclient.util.ProxyProtocolType.Socks5;
-                  proxy.read = load(args, "address");
+                  proxy.read = requireString(args, "address");
                   proxy.init_I = AiJson.getInt(args, "port", 0);
                   if (proxy.init_I < 1 || proxy.init_I > 65535) {
                      throw new IllegalArgumentException("port must be 1-65535");
@@ -772,12 +772,12 @@ final class AiClientConfig {
                }
                case "enable":
                case "disable": {
-                  autismclient.util.bW proxy = init(m, args);
+                  autismclient.util.bW proxy = findProxy(m, args);
                   m.setProxyEnabled(proxy, action.equals("enable"));
                   break;
                }
                case "remove":
-                  m.removeProxy(init(m, args));
+                  m.removeProxy(findProxy(m, args));
                   break;
                default:
                   throw new IllegalArgumentException("Unknown action '" + action + "'; use list, add, enable, disable or remove");
@@ -814,8 +814,8 @@ final class AiClientConfig {
       );
    }
 
-   private static autismclient.util.bW init(autismclient.util.ProxyListManager m, JsonObject args) {
-      String key = load(args, "proxy");
+   private static autismclient.util.bW findProxy(autismclient.util.ProxyListManager m, JsonObject args) {
+      String key = requireString(args, "proxy");
       autismclient.util.bW byId = m.findById(key);
       if (byId != null) {
          return byId;
@@ -831,8 +831,8 @@ final class AiClientConfig {
    }
 
    static JsonObject open(JsonObject args) {
-      String action = init(args, "get");
-      return init(
+      String action = actionOf(args, "get");
+      return onClientThread(
          () -> {
             if (action.equals("set")) {
                if (args.has("enabled")) {
@@ -874,7 +874,7 @@ final class AiClientConfig {
    }
 
    static JsonObject poll(JsonObject args) {
-      return init(() -> {
+      return onClientThread(() -> {
          Minecraft mc = Minecraft.getInstance();
          ClientPacketListener connection = mc.getConnection();
          if (connection == null) {
@@ -909,29 +909,29 @@ final class AiClientConfig {
    }
 
    static JsonObject pop(JsonObject args) {
-      String action = init(args, "list");
-      return init(() -> {
+      String action = actionOf(args, "list");
+      return onClientThread(() -> {
          autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.getInstance();
          switch (action) {
             case "list":
-               return init(m);
+               return macrosJson(m);
             case "create":
-               if (!m.createFolder(load(args, "name"))) {
+               if (!m.createFolder(requireString(args, "name"))) {
                   throw new IllegalArgumentException("Folder exists already or the name is invalid");
                }
                break;
             case "rename":
-               if (!m.renameFolder(load(args, "name"), load(args, "newName"))) {
+               if (!m.renameFolder(requireString(args, "name"), requireString(args, "newName"))) {
                   throw new IllegalArgumentException("Rename refused: unknown folder or duplicate name");
                }
                break;
             case "delete":
-               if (!m.deleteFolder(load(args, "name"))) {
+               if (!m.deleteFolder(requireString(args, "name"))) {
                   throw new IllegalArgumentException("Unknown folder");
                }
                break;
             case "move":
-               autismclient.util.AutismMacro macro = m.findByName(load(args, "macro"));
+               autismclient.util.AutismMacro macro = m.findByName(requireString(args, "macro"));
                if (macro == null) {
                   throw new IllegalArgumentException("Unknown macro; read client:macros first");
                }
@@ -949,27 +949,27 @@ final class AiClientConfig {
                throw new IllegalArgumentException("Unknown folder action '" + action + "'; use list, create, rename, delete or move");
          }
 
-         JsonObject out = init(m);
+         JsonObject out = macrosJson(m);
          out.addProperty("action", action);
          return out;
       });
    }
 
    static JsonObject tick(JsonObject args) {
-      String action = init(args, "running");
-      return init(() -> {
+      String action = actionOf(args, "running");
+      return onClientThread(() -> {
          autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.getInstance();
          switch (action) {
             case "running":
                return AiJson.objectOf("running", MacroExecutor.isRunning());
             case "delete": {
-               autismclient.util.AutismMacro macro = init(m, args);
+               autismclient.util.AutismMacro macro = findMacro(m, args);
                m.deleteMacro(macro);
                return AiJson.objectOf("deleted", macro.name, "macros", m.getMacros().size());
             }
             case "rename": {
-               autismclient.util.AutismMacro macro = init(m, args);
-               String next = load(args, "newName");
+               autismclient.util.AutismMacro macro = findMacro(m, args);
+               String next = requireString(args, "newName");
                if (m.findByName(next) != null) {
                   throw new IllegalArgumentException("A macro named '" + next + "' already exists");
                }
@@ -980,7 +980,7 @@ final class AiClientConfig {
                return AiJson.objectOf("renamed", next, "folder", macro.folder);
             }
             case "duplicate": {
-               autismclient.util.AutismMacro macro = init(m, args);
+               autismclient.util.AutismMacro macro = findMacro(m, args);
                autismclient.util.AutismMacro copy = m.importMacro(macro, AiJson.getString(args, "newName", macro.name + " copy").trim());
                if (copy == null) {
                   throw new IllegalStateException("The macro could not be duplicated");
@@ -989,7 +989,7 @@ final class AiClientConfig {
                return AiJson.objectOf("created", copy.name, "folder", copy.folder);
             }
             case "export": {
-               autismclient.util.AutismMacro macro = init(m, args);
+               autismclient.util.AutismMacro macro = findMacro(m, args);
                return AiJson.objectOf("name", macro.name, "share", autismclient.util.MacroClipboardCodec.encodeMacro(macro));
             }
             case "stop":
@@ -1007,8 +1007,8 @@ final class AiClientConfig {
       });
    }
 
-   private static autismclient.util.AutismMacro init(autismclient.util.MacroLibraryManager m, JsonObject args) {
-      autismclient.util.AutismMacro macro = m.findByName(load(args, "name"));
+   private static autismclient.util.AutismMacro findMacro(autismclient.util.MacroLibraryManager m, JsonObject args) {
+      autismclient.util.AutismMacro macro = m.findByName(requireString(args, "name"));
       if (macro == null) {
          throw new IllegalArgumentException("Unknown macro; read client:macros first");
       } else {
@@ -1016,7 +1016,7 @@ final class AiClientConfig {
       }
    }
 
-   private static JsonObject init(autismclient.util.MacroLibraryManager m) {
+   private static JsonObject macrosJson(autismclient.util.MacroLibraryManager m) {
       Map<String, Integer> counts = new LinkedHashMap<>();
 
       for (String folder : m.getFolders()) {

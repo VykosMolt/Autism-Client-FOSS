@@ -8,7 +8,7 @@ public class MoveAction implements MacroAction {
    public MoveAction.Inner_DataUtil direction = MoveAction.Inner_DataUtil.FORWARD;
    public int durationTicks = 20;
    public boolean nonBlocking = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public MoveAction() {
    }
@@ -66,7 +66,7 @@ public class MoveAction implements MacroAction {
       tag.putString("direction", this.direction.name());
       tag.putInt("durationTicks", this.durationTicks);
       tag.putBoolean("nonBlocking", this.nonBlocking);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -89,7 +89,7 @@ public class MoveAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -110,12 +110,12 @@ public class MoveAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum Inner_DataUtil {

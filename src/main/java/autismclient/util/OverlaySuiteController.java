@@ -132,7 +132,7 @@ public final class OverlaySuiteController {
       manager.register(this.init_AutismLauncherOver);
    }
 
-   public static OverlaySuiteController init(Font font) {
+   public static OverlaySuiteController create(Font font) {
       return init(font, null);
    }
 

@@ -208,21 +208,21 @@ public final class PacketInspectorEngine {
          return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, includePayloadAnalyzer);
       } catch (Throwable t) {
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(entry.name + " [" + entry.direction + "]");
-         builder.init("Meta", UiColorPalette.warmWhite());
-         builder.load("Name: " + entry.name, UiColorPalette.softWhite());
-         builder.load("Direction: " + entry.direction, directionColor(entry.direction));
-         builder.load("Class: " + entry.packetClass.getName(), UiColorPalette.textBody());
-         builder.load("Tick: " + entry.tick, UiColorPalette.textBody());
-         builder.load("Time: " + Instant.ofEpochMilli(entry.timestampMs), UiColorPalette.textBody());
+         builder.section("Meta", UiColorPalette.warmWhite());
+         builder.line("Name: " + entry.name, UiColorPalette.softWhite());
+         builder.line("Direction: " + entry.direction, directionColor(entry.direction));
+         builder.line("Class: " + entry.packetClass.getName(), UiColorPalette.textBody());
+         builder.line("Tick: " + entry.tick, UiColorPalette.textBody());
+         builder.line("Time: " + Instant.ofEpochMilli(entry.timestampMs), UiColorPalette.textBody());
          builder.blankLine();
-         builder.init("Inspect Error", UiColorPalette.errorText());
-         builder.load("The detailed inspector failed on this packet, so this fallback view was opened instead.", UiColorPalette.errorText());
-         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), UiColorPalette.errorText());
+         builder.section("Inspect Error", UiColorPalette.errorText());
+         builder.line("The detailed inspector failed on this packet, so this fallback view was opened instead.", UiColorPalette.errorText());
+         builder.line("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + sanitize(t.getMessage())), UiColorPalette.errorText());
          if (entry.packet != null) {
             builder.blankLine();
-            builder.init("Fallback", UiColorPalette.warningYellow());
-            builder.load("Packet Type: " + describeValue(callGetter(entry.packet, "getPacketType")), UiColorPalette.textBody());
-            builder.load("toString(): " + poll(String.valueOf(entry.packet)), UiColorPalette.textMuted());
+            builder.section("Fallback", UiColorPalette.warningYellow());
+            builder.line("Packet Type: " + describeValue(callGetter(entry.packet, "getPacketType")), UiColorPalette.textBody());
+            builder.line("toString(): " + sanitize(String.valueOf(entry.packet)), UiColorPalette.textMuted());
          }
 
          return builder.build();
@@ -245,46 +245,46 @@ public final class PacketInspectorEngine {
       String title = entry.name + " [" + entry.direction + "]";
       PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
       AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
-      builder.init("Meta", UiColorPalette.warmWhite());
-      builder.load("Name: " + entry.name, UiColorPalette.softWhite());
-      builder.load("Direction: " + entry.direction, directionColor(entry.direction));
-      builder.load("Class: " + entry.packetClass.getName(), UiColorPalette.textBody());
+      builder.section("Meta", UiColorPalette.warmWhite());
+      builder.line("Name: " + entry.name, UiColorPalette.softWhite());
+      builder.line("Direction: " + entry.direction, directionColor(entry.direction));
+      builder.line("Class: " + entry.packetClass.getName(), UiColorPalette.textBody());
       if (payloadSnapshot != null) {
-         builder.load("Payload Channel: " + payloadSnapshot.channel(), UiColorPalette.successText());
-         builder.load("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
+         builder.line("Payload Channel: " + payloadSnapshot.channel(), UiColorPalette.successText());
+         builder.line("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
          PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(payloadSnapshot);
          if (filter != null) {
-            builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
+            builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
          }
 
          String source = read_Str_Str(payloadSnapshot.channel());
          if (source != null && !source.isBlank()) {
-            builder.load("Likely Source: " + source, UiColorPalette.textBody());
+            builder.line("Likely Source: " + source, UiColorPalette.textBody());
          }
       }
 
       Object packetType = callGetter(entry.packet, "getPacketType");
       if (packetType != null) {
-         builder.load("Packet Type: " + describeValue(packetType), UiColorPalette.textBody());
+         builder.line("Packet Type: " + describeValue(packetType), UiColorPalette.textBody());
       }
 
-      builder.load("Tick: " + entry.tick, UiColorPalette.textBody());
-      builder.load("Time: " + Instant.ofEpochMilli(entry.timestampMs), UiColorPalette.textBody());
-      builder.load("Inventory: " + entry.inventoryPacket + " | Movement: " + entry.movementPacket, UiColorPalette.textMuted());
+      builder.line("Tick: " + entry.tick, UiColorPalette.textBody());
+      builder.line("Time: " + Instant.ofEpochMilli(entry.timestampMs), UiColorPalette.textBody());
+      builder.line("Inventory: " + entry.inventoryPacket + " | Movement: " + entry.movementPacket, UiColorPalette.textMuted());
       PacketDetailFormatter.Inner_DataUtil normalAnalysis = PacketDetailFormatter.analyze(entry);
       if (entry.packet == null) {
          builder.blankLine();
-         builder.init("Reality", UiColorPalette.cyan());
+         builder.section("Reality", UiColorPalette.cyan());
          if (payloadSnapshot != null) {
             init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
-            builder.load("Packet Object: missing; showing preserved payload snapshot.", UiColorPalette.textMuted());
+            builder.line("Packet Object: missing; showing preserved payload snapshot.", UiColorPalette.textMuted());
          } else {
-            builder.load("Packet instance is missing, so only metadata is available.", UiColorPalette.errorText());
+            builder.line("Packet instance is missing, so only metadata is available.", UiColorPalette.errorText());
          }
 
          if (normalAnalysis.hasMeaning()) {
             builder.blankLine();
-            builder.init("Meaning", UiColorPalette.warningYellow());
+            builder.section("Meaning", UiColorPalette.warningYellow());
             appendLines(builder, normalAnalysis.meaningLines());
          }
 
@@ -292,14 +292,14 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.blankLine();
-               builder.init("Analyzer", UiColorPalette.mint());
-               builder.init(analyzerBuilder);
+               builder.section("Analyzer", UiColorPalette.mint());
+               builder.append(analyzerBuilder);
             }
          }
 
          if (normalAnalysis.hasWire()) {
             builder.blankLine();
-            builder.init("Wire", UiColorPalette.blue());
+            builder.section("Wire", UiColorPalette.blue());
             appendLines(builder, normalAnalysis.wireLines());
          }
 
@@ -308,25 +308,25 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.PacketSummaryFlags summary = PacketInspectorEngine.PacketSummaryFlags.NONE;
          if (normalAnalysis.init_Z()) {
             builder.blankLine();
-            builder.init("Reality", UiColorPalette.cyan());
+            builder.section("Reality", UiColorPalette.cyan());
             appendLines(builder, normalAnalysis.lines());
          } else if (payloadSnapshot != null) {
             builder.blankLine();
-            builder.init("Reality", UiColorPalette.cyan());
+            builder.section("Reality", UiColorPalette.cyan());
             init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
          } else {
             PacketInspectorEngine.ReportBuilder summaryBuilder = new PacketInspectorEngine.ReportBuilder(title);
             summary = init_bu_FileCache_Packet(entry.packet, entry.name, entry, summaryBuilder);
             if (summary.init_Z()) {
                builder.blankLine();
-               builder.init("Reality", UiColorPalette.cyan());
-               builder.init(summaryBuilder);
+               builder.section("Reality", UiColorPalette.cyan());
+               builder.append(summaryBuilder);
             }
          }
 
          if (normalAnalysis.hasMeaning()) {
             builder.blankLine();
-            builder.init("Meaning", UiColorPalette.warningYellow());
+            builder.section("Meaning", UiColorPalette.warningYellow());
             appendLines(builder, normalAnalysis.meaningLines());
          }
 
@@ -334,21 +334,21 @@ public final class PacketInspectorEngine {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.blankLine();
-               builder.init("Analyzer", UiColorPalette.mint());
-               builder.init(analyzerBuilder);
+               builder.section("Analyzer", UiColorPalette.mint());
+               builder.append(analyzerBuilder);
             }
          }
 
          if (normalAnalysis.hasWire()) {
             builder.blankLine();
-            builder.init("Wire", UiColorPalette.blue());
+            builder.section("Wire", UiColorPalette.blue());
             appendLines(builder, normalAnalysis.wireLines());
          }
 
          boolean semanticComplete = normalAnalysis.init_Z() ? normalAnalysis.write() : summary.load();
          if (!semanticComplete) {
             builder.blankLine();
-            builder.init("Details", UiColorPalette.blue());
+            builder.section("Details", UiColorPalette.blue());
             dumpObject(entry.packet, builder, new IdentityHashMap<>());
          }
 
@@ -363,25 +363,25 @@ public final class PacketInspectorEngine {
          String title = entry == null ? "Payload Analyzer" : entry.name + " Analyzer";
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
          AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
-         builder.init("Analyzer", UiColorPalette.mint());
+         builder.section("Analyzer", UiColorPalette.mint());
          if (snapshot == null) {
-            builder.load("No payload snapshot is available for this packet.", UiColorPalette.errorText());
+            builder.line("No payload snapshot is available for this packet.", UiColorPalette.errorText());
             return builder.build();
          }
 
          if (payloadAnalysis == null) {
-            builder.load("Channel: " + snapshot.channel(), UiColorPalette.successText());
-            builder.load(
+            builder.line("Channel: " + snapshot.channel(), UiColorPalette.successText());
+            builder.line(
                "Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction())
             );
-            builder.load("Body Size: " + snapshot.rawBytes().length + " bytes", UiColorPalette.textBright());
+            builder.line("Body Size: " + snapshot.rawBytes().length + " bytes", UiColorPalette.textBright());
             String source = read_Str_Str(snapshot.channel());
             if (source != null && !source.isBlank()) {
-               builder.load("What It Looks Like: " + source, UiColorPalette.textBright());
+               builder.line("What It Looks Like: " + source, UiColorPalette.textBright());
             }
 
             builder.blankLine();
-            builder.load("Decoder Status: waiting for automatic payload analysis.", UiColorPalette.warningYellow());
+            builder.line("Decoder Status: waiting for automatic payload analysis.", UiColorPalette.warningYellow());
             return builder.build();
          } else {
             init_Z_AutismPayloadSuppo(snapshot, builder, payloadAnalysis);
@@ -389,8 +389,8 @@ public final class PacketInspectorEngine {
          }
       } catch (Throwable t) {
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder("Payload Analyzer");
-         builder.init("Analyzer Error", UiColorPalette.errorText());
-         builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), UiColorPalette.errorText());
+         builder.section("Analyzer Error", UiColorPalette.errorText());
+         builder.line("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + sanitize(t.getMessage())), UiColorPalette.errorText());
          return builder.build();
       }
    }
@@ -409,7 +409,7 @@ public final class PacketInspectorEngine {
          true,
          1.0,
          "Decoder failed",
-         List.of(new PacketInspectorEngine.ColoredLine("Decoder Status: failed", UiColorPalette.errorText()), new PacketInspectorEngine.ColoredLine("Reason: " + poll(reason), UiColorPalette.errorText()))
+         List.of(new PacketInspectorEngine.ColoredLine("Decoder Status: failed", UiColorPalette.errorText()), new PacketInspectorEngine.ColoredLine("Reason: " + sanitize(reason), UiColorPalette.errorText()))
       );
    }
 
@@ -489,70 +489,70 @@ public final class PacketInspectorEngine {
 
       byte[] raw = snapshot.rawBytes();
       String channel = orFallback(snapshot.channel(), "unknown");
-      builder.load("Channel: " + channel, UiColorPalette.successText());
+      builder.line("Channel: " + channel, UiColorPalette.successText());
       PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
+         builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
       String source = read_Str_Str(channel);
       if (source != null && !source.isBlank()) {
-         builder.load("Likely Source: " + source, UiColorPalette.textBright());
+         builder.line("Likely Source: " + source, UiColorPalette.textBright());
       }
 
-      builder.load(
+      builder.line(
          "Payload Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction())
       );
       if (snapshot.packetId() >= 0) {
-         builder.load("Payload Packet ID: " + snapshot.packetId(), UiColorPalette.textBody());
+         builder.line("Payload Packet ID: " + snapshot.packetId(), UiColorPalette.textBody());
       }
 
-      builder.load("Payload Class: " + orFallback(snapshot.payloadClassName(), "unknown"), UiColorPalette.textBody());
-      builder.load("Payload Size: " + raw.length + " bytes", UiColorPalette.textBright());
+      builder.line("Payload Class: " + orFallback(snapshot.payloadClassName(), "unknown"), UiColorPalette.textBody());
+      builder.line("Payload Size: " + raw.length + " bytes", UiColorPalette.textBright());
       if (snapshot.commandApiValue() != null) {
-         builder.load("CommandApi Value: " + snapshot.commandApiValue(), UiColorPalette.successText());
+         builder.line("CommandApi Value: " + snapshot.commandApiValue(), UiColorPalette.successText());
       }
 
       PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(raw);
       if (isRegisterChannel(channel)) {
-         List<String> channels = sync(raw, 10);
+         List<String> channels = identifierPreview(raw, 10);
          if (!channels.isEmpty()) {
             int total = countChannelIds(raw);
-            builder.load((isUnregisterChannel(channel) ? "Unregistered" : "Registered") + " Channels: " + total, UiColorPalette.successText());
+            builder.line((isUnregisterChannel(channel) ? "Unregistered" : "Registered") + " Channels: " + total, UiColorPalette.successText());
 
             for (String value : channels) {
-               builder.load("  - " + value, UiColorPalette.textBright());
+               builder.line("  - " + value, UiColorPalette.textBright());
             }
 
             if (total > channels.size()) {
-               builder.load("  ... +" + (total - channels.size()) + " more", UiColorPalette.textMuted());
+               builder.line("  ... +" + (total - channels.size()) + " more", UiColorPalette.textMuted());
             }
          }
       }
 
       if (preview.mcStringPreview() != null && !preview.mcStringPreview().startsWith("<")) {
-         builder.load("Minecraft String: " + open(poll(preview.mcStringPreview())), UiColorPalette.successText());
+         builder.line("Minecraft String: " + quote(sanitize(preview.mcStringPreview())), UiColorPalette.successText());
       }
 
       if (preview.javaUtfPreview() != null && !preview.javaUtfPreview().startsWith("<")) {
-         builder.load("Java writeUTF: " + open(poll(preview.javaUtfPreview())), UiColorPalette.successText());
+         builder.line("Java writeUTF: " + quote(sanitize(preview.javaUtfPreview())), UiColorPalette.successText());
       }
 
       if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank() && !"<binary>".equals(preview.utf8Preview())) {
-         builder.load("UTF-8 Guess: " + open(poll(init_Str_Str(preview.utf8Preview()))), UiColorPalette.successText());
+         builder.line("UTF-8 Guess: " + quote(sanitize(init_Str_Str(preview.utf8Preview()))), UiColorPalette.successText());
       }
 
-      List<String> identifiers = sync(raw, 6);
+      List<String> identifiers = identifierPreview(raw, 6);
       if (!identifiers.isEmpty() && !isRegisterChannel(channel)) {
-         builder.load("Identifier Tokens: " + identifiers.size(), UiColorPalette.textBright());
+         builder.line("Identifier Tokens: " + identifiers.size(), UiColorPalette.textBright());
 
          for (String identifier : identifiers) {
-            builder.load("  - " + identifier, UiColorPalette.textBody());
+            builder.line("  - " + identifier, UiColorPalette.textBody());
          }
       }
 
-      builder.load("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
-      builder.load("Analyzer: automatic payload decoding runs when this packet is inspected.", UiColorPalette.textBody());
+      builder.line("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
+      builder.line("Analyzer: automatic payload decoding runs when this packet is inspected.", UiColorPalette.textBody());
       return true;
    }
 
@@ -560,7 +560,7 @@ public final class PacketInspectorEngine {
       if (builder != null && lines != null) {
          for (PacketInspectorEngine.ColoredLine line : lines) {
             if (line != null) {
-               builder.load(line.text(), line.color());
+               builder.line(line.text(), line.color());
             }
          }
       }
@@ -586,18 +586,18 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundPlayerActionPacket playerAction) {
          wrote = true;
          complete = true;
-         builder.load("Action: " + playerAction.getAction(), UiColorPalette.textBright());
-         builder.load("Meaning: " + describePlayerAction(playerAction.getAction()), UiColorPalette.textBright());
-         builder.load("Block Pos: " + formatPos(playerAction.getPos()), UiColorPalette.textBright());
-         builder.load("Face: " + playerAction.getDirection(), UiColorPalette.textBright());
-         builder.load("Sequence: " + playerAction.getSequence(), UiColorPalette.textBody());
+         builder.line("Action: " + playerAction.getAction(), UiColorPalette.textBright());
+         builder.line("Meaning: " + describePlayerAction(playerAction.getAction()), UiColorPalette.textBright());
+         builder.line("Block Pos: " + formatPos(playerAction.getPos()), UiColorPalette.textBright());
+         builder.line("Face: " + playerAction.getDirection(), UiColorPalette.textBright());
+         builder.line("Sequence: " + playerAction.getSequence(), UiColorPalette.textBody());
          String capturedBlockState = entry == null ? null : entry.write;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
-            builder.load("Block: " + capturedBlockState, UiColorPalette.successText());
+            builder.line("Block: " + capturedBlockState, UiColorPalette.successText());
          } else {
             BlockState state = blockStateAt(playerAction.getPos());
             if (state != null) {
-               builder.load("Block: " + describeBlockState(state), UiColorPalette.successText());
+               builder.line("Block: " + describeBlockState(state), UiColorPalette.successText());
             }
          }
 
@@ -607,7 +607,7 @@ public final class PacketInspectorEngine {
                   || playerAction.getAction() == Action.DROP_ALL_ITEMS
                   || playerAction.getAction() == Action.RELEASE_USE_ITEM
             )) {
-            builder.load("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
+            builder.line("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
          }
       }
 
@@ -615,24 +615,24 @@ public final class PacketInspectorEngine {
          BlockHitResult hit = interactBlock.hitResult();
          wrote = true;
          complete = true;
-         builder.load("Interaction: Use Block (right click targeted block)", UiColorPalette.textBright());
-         builder.load("Hand: " + interactBlock.hand(), UiColorPalette.textBright());
-         builder.load("Block Pos: " + formatPos(hit.getBlockPos()), UiColorPalette.textBright());
-         builder.load("Side: " + hit.getDirection(), UiColorPalette.textBright());
-         builder.load("Hit Pos: " + formatVec(hit.getLocation()), UiColorPalette.textBright());
-         builder.load("Inside Block: " + hit.isInside(), UiColorPalette.textBright());
-         builder.load("Sequence: " + interactBlock.sequence(), UiColorPalette.textBody());
+         builder.line("Interaction: Use Block (right click targeted block)", UiColorPalette.textBright());
+         builder.line("Hand: " + interactBlock.hand(), UiColorPalette.textBright());
+         builder.line("Block Pos: " + formatPos(hit.getBlockPos()), UiColorPalette.textBright());
+         builder.line("Side: " + hit.getDirection(), UiColorPalette.textBright());
+         builder.line("Hit Pos: " + formatVec(hit.getLocation()), UiColorPalette.textBright());
+         builder.line("Inside Block: " + hit.isInside(), UiColorPalette.textBright());
+         builder.line("Sequence: " + interactBlock.sequence(), UiColorPalette.textBody());
          if (MC.player != null) {
-            builder.load("Held Item: " + describeStack(MC.player.getItemInHand(interactBlock.hand())), UiColorPalette.successText());
+            builder.line("Held Item: " + describeStack(MC.player.getItemInHand(interactBlock.hand())), UiColorPalette.successText());
          }
 
          String capturedBlockState = entry == null ? null : entry.write;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
-            builder.load("Block: " + capturedBlockState, UiColorPalette.successText());
+            builder.line("Block: " + capturedBlockState, UiColorPalette.successText());
          } else {
             BlockState state = blockStateAt(hit.getBlockPos());
             if (state != null) {
-               builder.load("Block: " + describeBlockState(state), UiColorPalette.successText());
+               builder.line("Block: " + describeBlockState(state), UiColorPalette.successText());
             }
          }
       }
@@ -640,17 +640,17 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundUseItemPacket interactItem) {
          wrote = true;
          complete = true;
-         builder.load("Interaction: Use Item (right click without a targeted block)", UiColorPalette.textBright());
-         builder.load("Hand: " + interactItem.hand(), UiColorPalette.textBright());
-         builder.load("Sequence: " + interactItem.sequence(), UiColorPalette.textBody());
-         builder.load("Yaw: " + interactItem.yRot(), UiColorPalette.textBody());
-         builder.load("Pitch: " + interactItem.xRot(), UiColorPalette.textBody());
+         builder.line("Interaction: Use Item (right click without a targeted block)", UiColorPalette.textBright());
+         builder.line("Hand: " + interactItem.hand(), UiColorPalette.textBright());
+         builder.line("Sequence: " + interactItem.sequence(), UiColorPalette.textBody());
+         builder.line("Yaw: " + interactItem.yRot(), UiColorPalette.textBody());
+         builder.line("Pitch: " + interactItem.xRot(), UiColorPalette.textBody());
          if (MC.player != null) {
             if (firstGetterValue(MC.player.getInventory(), "getSelectedSlot", "selectedSlot") instanceof Number number) {
-               builder.load("Selected Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
+               builder.line("Selected Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
             }
 
-            builder.load("Held Item: " + describeStack(MC.player.getItemInHand(interactItem.hand())), UiColorPalette.successText());
+            builder.line("Held Item: " + describeStack(MC.player.getItemInHand(interactItem.hand())), UiColorPalette.successText());
          }
       }
 
@@ -659,21 +659,21 @@ public final class PacketInspectorEngine {
          complete = true;
          int entityId = interactEntity.entityId();
          appendEntity(builder, "Entity Id", entityId);
-         builder.load("Player Sneaking: " + interactEntity.usingSecondaryAction(), UiColorPalette.textBright());
+         builder.line("Player Sneaking: " + interactEntity.usingSecondaryAction(), UiColorPalette.textBright());
          PacketInspectorEngine.InteractEntityCapture capture = captureInteract(interactEntity);
          if (capture.action != null) {
-            builder.load("Interaction: " + capture.action, UiColorPalette.textBright());
+            builder.line("Interaction: " + capture.action, UiColorPalette.textBright());
          }
 
          if (capture.hand != null) {
-            builder.load("Hand: " + capture.hand, UiColorPalette.textBright());
+            builder.line("Hand: " + capture.hand, UiColorPalette.textBright());
             if (MC.player != null) {
-               builder.load("Held Item: " + describeStack(MC.player.getItemInHand(capture.hand)), UiColorPalette.successText());
+               builder.line("Held Item: " + describeStack(MC.player.getItemInHand(capture.hand)), UiColorPalette.successText());
             }
          }
 
          if (capture.hitPos != null) {
-            builder.load("Hit Pos: " + formatVec(capture.hitPos), UiColorPalette.textBright());
+            builder.line("Hit Pos: " + formatVec(capture.hitPos), UiColorPalette.textBright());
          }
       }
 
@@ -681,86 +681,86 @@ public final class PacketInspectorEngine {
          wrote = true;
          complete = true;
          appendEntity(builder, "Entity Id", attack.entityId());
-         builder.load("Interaction: Attack", UiColorPalette.textBright());
+         builder.line("Interaction: Attack", UiColorPalette.textBright());
          if (MC.player != null) {
-            builder.load("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
+            builder.line("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
          }
       }
 
       if (packet instanceof ClientboundOpenScreenPacket openScreen) {
          wrote = true;
          complete = true;
-         builder.load("Sync Id: " + openScreen.getContainerId(), UiColorPalette.textBright());
-         builder.load("Screen Type: " + describeValue(openScreen.getType()), UiColorPalette.textBright());
-         builder.load("Title: " + formatValue(openScreen.getTitle()), UiColorPalette.successText());
+         builder.line("Sync Id: " + openScreen.getContainerId(), UiColorPalette.textBright());
+         builder.line("Screen Type: " + describeValue(openScreen.getType()), UiColorPalette.textBright());
+         builder.line("Title: " + formatValue(openScreen.getTitle()), UiColorPalette.successText());
       }
 
       if (packet instanceof ClientboundContainerSetSlotPacket slotUpdate) {
          wrote = true;
          complete = true;
-         builder.load("Sync Id: " + slotUpdate.getContainerId(), UiColorPalette.textBright());
-         builder.load("Revision: " + slotUpdate.getStateId(), UiColorPalette.textBody());
-         builder.load("Slot: " + slotUpdate.getSlot(), UiColorPalette.textBright());
-         builder.load("Stack: " + describeStack(slotUpdate.getItem()), UiColorPalette.successText());
+         builder.line("Sync Id: " + slotUpdate.getContainerId(), UiColorPalette.textBright());
+         builder.line("Revision: " + slotUpdate.getStateId(), UiColorPalette.textBody());
+         builder.line("Slot: " + slotUpdate.getSlot(), UiColorPalette.textBright());
+         builder.line("Stack: " + describeStack(slotUpdate.getItem()), UiColorPalette.successText());
       }
 
       if (packet instanceof ClientboundContainerSetContentPacket inventory) {
          wrote = true;
-         builder.load("Sync Id: " + inventory.containerId(), UiColorPalette.textBright());
-         builder.load("Revision: " + inventory.stateId(), UiColorPalette.textBody());
-         builder.load("Items: " + inventory.items().size() + " slots (" + countNonEmpty(inventory.items()) + " non-empty)", UiColorPalette.textBright());
-         builder.load("Cursor: " + describeStack(inventory.carriedItem()), UiColorPalette.successText());
+         builder.line("Sync Id: " + inventory.containerId(), UiColorPalette.textBright());
+         builder.line("Revision: " + inventory.stateId(), UiColorPalette.textBody());
+         builder.line("Items: " + inventory.items().size() + " slots (" + countNonEmpty(inventory.items()) + " non-empty)", UiColorPalette.textBright());
+         builder.line("Cursor: " + describeStack(inventory.carriedItem()), UiColorPalette.successText());
       }
 
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunkData) {
          wrote = true;
-         builder.load("Chunk: " + chunkData.x() + ", " + chunkData.z(), UiColorPalette.textBright());
-         builder.load("Chunk Data: " + describeValue(chunkData.chunkData()), UiColorPalette.textBody());
-         builder.load("Light Data: " + describeValue(chunkData.lightData()), UiColorPalette.textBody());
+         builder.line("Chunk: " + chunkData.x() + ", " + chunkData.z(), UiColorPalette.textBright());
+         builder.line("Chunk Data: " + describeValue(chunkData.chunkData()), UiColorPalette.textBody());
+         builder.line("Light Data: " + describeValue(chunkData.lightData()), UiColorPalette.textBody());
       }
 
       if (packet instanceof ClientboundEntityPositionSyncPacket positionSync) {
          wrote = true;
          appendEntity(builder, "Entity Id", positionSync.id());
-         builder.load("Values: " + describeValue(Compat263.entityPosSyncValues(positionSync)), UiColorPalette.textBright());
-         builder.load("On Ground: " + positionSync.onGround(), UiColorPalette.textBright());
+         builder.line("Values: " + describeValue(Compat263.entityPosSyncValues(positionSync)), UiColorPalette.textBright());
+         builder.line("On Ground: " + positionSync.onGround(), UiColorPalette.textBright());
       }
 
       if (packet instanceof ClientboundSetEntityDataPacket trackerUpdate) {
          wrote = true;
          appendEntity(builder, "Entity Id", trackerUpdate.id());
          List<?> trackedValues = trackerUpdate.packedItems();
-         builder.load("Tracked Values: " + (trackedValues == null ? 0 : trackedValues.size()), UiColorPalette.textBright());
+         builder.line("Tracked Values: " + (trackedValues == null ? 0 : trackedValues.size()), UiColorPalette.textBright());
       }
 
       if (packet instanceof ClientboundAddEntityPacket addEntity) {
          wrote = true;
          complete = true;
          appendEntity(builder, "Entity Id", addEntity.getId());
-         builder.load("Entity Type: " + entityTypeId(addEntity.getType()), UiColorPalette.successText());
-         builder.load("Uuid: " + addEntity.getUUID(), UiColorPalette.textBody());
-         builder.load("Pos: " + formatVec(new Vec3(addEntity.getX(), addEntity.getY(), addEntity.getZ())), UiColorPalette.textBright());
-         builder.load("Movement: " + formatVec(addEntity.getMovement()), UiColorPalette.textBright());
-         builder.load("Rot: yaw=" + addEntity.getYRot() + ", pitch=" + addEntity.getXRot() + ", head=" + addEntity.getYHeadRot(), UiColorPalette.textBright());
-         builder.load("Data: " + addEntity.getData(), UiColorPalette.textBody());
+         builder.line("Entity Type: " + entityTypeId(addEntity.getType()), UiColorPalette.successText());
+         builder.line("Uuid: " + addEntity.getUUID(), UiColorPalette.textBody());
+         builder.line("Pos: " + formatVec(new Vec3(addEntity.getX(), addEntity.getY(), addEntity.getZ())), UiColorPalette.textBright());
+         builder.line("Movement: " + formatVec(addEntity.getMovement()), UiColorPalette.textBright());
+         builder.line("Rot: yaw=" + addEntity.getYRot() + ", pitch=" + addEntity.getXRot() + ", head=" + addEntity.getYHeadRot(), UiColorPalette.textBright());
+         builder.line("Data: " + addEntity.getData(), UiColorPalette.textBody());
       }
 
       if (packet instanceof ClientboundSoundPacket soundPacket) {
          wrote = true;
          complete = true;
-         builder.load("Sound: " + describeHolder(soundPacket.getSound()), UiColorPalette.successText());
-         builder.load("Category: " + soundPacket.getSource(), UiColorPalette.textBright());
-         builder.load("Pos: " + formatVec(new Vec3(soundPacket.getX(), soundPacket.getY(), soundPacket.getZ())), UiColorPalette.textBright());
-         builder.load("Volume: " + soundPacket.getVolume(), UiColorPalette.textBody());
-         builder.load("Pitch: " + soundPacket.getPitch(), UiColorPalette.textBody());
-         builder.load("Seed: " + soundPacket.getSeed(), UiColorPalette.textMuted());
+         builder.line("Sound: " + describeHolder(soundPacket.getSound()), UiColorPalette.successText());
+         builder.line("Category: " + soundPacket.getSource(), UiColorPalette.textBright());
+         builder.line("Pos: " + formatVec(new Vec3(soundPacket.getX(), soundPacket.getY(), soundPacket.getZ())), UiColorPalette.textBright());
+         builder.line("Volume: " + soundPacket.getVolume(), UiColorPalette.textBody());
+         builder.line("Pitch: " + soundPacket.getPitch(), UiColorPalette.textBody());
+         builder.line("Seed: " + soundPacket.getSeed(), UiColorPalette.textMuted());
       }
 
       if (packet instanceof ClientboundGameEventPacket gameState) {
          wrote = true;
          complete = true;
-         builder.load("Reason: " + describeValue(gameState.getEvent()), UiColorPalette.textBright());
-         builder.load("Value: " + gameState.getParam(), UiColorPalette.textBright());
+         builder.line("Reason: " + describeValue(gameState.getEvent()), UiColorPalette.textBright());
+         builder.line("Value: " + gameState.getParam(), UiColorPalette.textBright());
       }
 
       PacketInspectorEngine.PacketSummaryFlags broadKnown = init_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
@@ -776,32 +776,32 @@ public final class PacketInspectorEngine {
       AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
       if (payloadSnapshot != null) {
          wrote = true;
-         builder.load("Channel: " + payloadSnapshot.channel(), UiColorPalette.textBright());
+         builder.line("Channel: " + payloadSnapshot.channel(), UiColorPalette.textBright());
          if (payloadSnapshot.protocolPhase() != null && !payloadSnapshot.protocolPhase().isBlank()) {
-            builder.load("Payload Protocol: " + payloadSnapshot.protocolPhase(), UiColorPalette.textBody());
+            builder.line("Payload Protocol: " + payloadSnapshot.protocolPhase(), UiColorPalette.textBody());
          }
 
-         builder.load("Payload Class: " + payloadSnapshot.payloadClassName(), UiColorPalette.textBody());
-         builder.load("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
+         builder.line("Payload Class: " + payloadSnapshot.payloadClassName(), UiColorPalette.textBody());
+         builder.line("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
          if (payloadSnapshot.commandApiValue() != null) {
-            builder.load("CommandApi Value: " + payloadSnapshot.commandApiValue(), UiColorPalette.successText());
+            builder.line("CommandApi Value: " + payloadSnapshot.commandApiValue(), UiColorPalette.successText());
          }
 
          PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(payloadSnapshot.rawBytes());
          if (preview.mcStringPreview() != null && !preview.mcStringPreview().startsWith("<")) {
-            builder.load("Minecraft String: " + preview.mcStringPreview(), UiColorPalette.successText());
+            builder.line("Minecraft String: " + preview.mcStringPreview(), UiColorPalette.successText());
          }
 
          if (preview.javaUtfPreview() != null && !preview.javaUtfPreview().startsWith("<")) {
-            builder.load("Java writeUTF: " + preview.javaUtfPreview(), UiColorPalette.successText());
+            builder.line("Java writeUTF: " + preview.javaUtfPreview(), UiColorPalette.successText());
          }
 
          if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank() && !"<binary>".equals(preview.utf8Preview())) {
-            builder.load("UTF-8 Guess: " + preview.utf8Preview(), UiColorPalette.successText());
+            builder.line("UTF-8 Guess: " + preview.utf8Preview(), UiColorPalette.successText());
          }
 
-         builder.load("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
-         builder.load("Payload Fields: raw bytes preserved; use Edit Payload for typed builder.", UiColorPalette.successText());
+         builder.line("Payload Hex: " + preview.hexPreview(), UiColorPalette.textMuted());
+         builder.line("Payload Fields: raw bytes preserved; use Edit Payload for typed builder.", UiColorPalette.successText());
          complete = false;
       }
 
@@ -817,7 +817,7 @@ public final class PacketInspectorEngine {
       }
 
       for (PacketInspectorEngine.ColoredLine line : payloadAnalysis.lines()) {
-         builder.load(line.text(), line.color());
+         builder.line(line.text(), line.color());
       }
 
       return true;
@@ -837,21 +837,21 @@ public final class PacketInspectorEngine {
       boolean completeKnownSchema = false;
       String bestInterpretation = "";
       reportProgress(builder, progressSink, 0.06, "Reading payload metadata", false, false);
-      builder.load("Channel: " + snapshot.channel(), UiColorPalette.successText());
-      builder.load("Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction()));
-      builder.load("Body Size: " + raw.length + " bytes", UiColorPalette.textBright());
+      builder.line("Channel: " + snapshot.channel(), UiColorPalette.successText());
+      builder.line("Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction()));
+      builder.line("Body Size: " + raw.length + " bytes", UiColorPalette.textBright());
       PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(snapshot);
       if (filter != null) {
-         builder.load("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
+         builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
       String source = read_Str_Str(snapshot.channel());
       if (source != null && !source.isBlank()) {
-         builder.load("What It Looks Like: " + source, UiColorPalette.textBright());
+         builder.line("What It Looks Like: " + source, UiColorPalette.textBright());
       }
 
       if (snapshot.commandApiValue() != null) {
-         builder.load("CommandApi Int: " + snapshot.commandApiValue(), UiColorPalette.successText());
+         builder.line("CommandApi Int: " + snapshot.commandApiValue(), UiColorPalette.successText());
          decodedAnything = true;
       }
 
@@ -891,7 +891,7 @@ public final class PacketInspectorEngine {
          } else {
             JsonElement embeddedJson = findEmbeddedJson(raw);
             if (embeddedJson != null) {
-               builder.load("Decoded As: embedded JSON", UiColorPalette.successText());
+               builder.line("Decoded As: embedded JSON", UiColorPalette.successText());
                describeJson(embeddedJson, builder);
                decodedStrongly = true;
                decodedAnything = true;
@@ -905,8 +905,8 @@ public final class PacketInspectorEngine {
       String minecraftString = completeKnownSchema ? null : AutismPayloadSupport.decodeMcString(raw);
       if (!completeKnownSchema) {
          if (minecraftString != null && !minecraftString.isBlank()) {
-            builder.load("Decoded As: Minecraft String", UiColorPalette.successText());
-            builder.load("Value: " + open(poll(minecraftString)), UiColorPalette.textBright());
+            builder.line("Decoded As: Minecraft String", UiColorPalette.successText());
+            builder.line("Value: " + quote(sanitize(minecraftString)), UiColorPalette.textBright());
             decodedStrongly = true;
             decodedAnything = true;
             textualPayload = true;
@@ -917,10 +917,10 @@ public final class PacketInspectorEngine {
 
          List<String> minecraftStrings = load_List_BArr_I(raw, 12);
          if (minecraftStrings.size() > 1 || minecraftStrings.size() == 1 && !Objects.equals(minecraftStrings.get(0), minecraftString)) {
-            builder.load("Minecraft String Sequence: " + minecraftStrings.size() + " value" + pluralSuffix(minecraftStrings.size()), UiColorPalette.successText());
+            builder.line("Minecraft String Sequence: " + minecraftStrings.size() + " value" + pluralSuffix(minecraftStrings.size()), UiColorPalette.successText());
 
             for (String value : minecraftStrings) {
-               builder.load("  - " + open(poll(value)), UiColorPalette.textBright());
+               builder.line("  - " + quote(sanitize(value)), UiColorPalette.textBright());
             }
 
             decodedStrongly = true;
@@ -933,8 +933,8 @@ public final class PacketInspectorEngine {
 
          String javaUtf = AutismPayloadSupport.decodeJavaUtf(raw);
          if (javaUtf != null && !javaUtf.isBlank()) {
-            builder.load("Decoded As: Java writeUTF", UiColorPalette.successText());
-            builder.load("Value: " + open(poll(javaUtf)), UiColorPalette.textBright());
+            builder.line("Decoded As: Java writeUTF", UiColorPalette.successText());
+            builder.line("Value: " + quote(sanitize(javaUtf)), UiColorPalette.textBright());
             decodedStrongly = true;
             decodedAnything = true;
             textualPayload = true;
@@ -945,10 +945,10 @@ public final class PacketInspectorEngine {
 
          List<String> javaUtfStrings = readJavaUtfStrings(raw, 12);
          if (javaUtfStrings.size() > 1 || javaUtfStrings.size() == 1 && !Objects.equals(javaUtfStrings.get(0), javaUtf)) {
-            builder.load("Java writeUTF Sequence: " + javaUtfStrings.size() + " value" + pluralSuffix(javaUtfStrings.size()), UiColorPalette.successText());
+            builder.line("Java writeUTF Sequence: " + javaUtfStrings.size() + " value" + pluralSuffix(javaUtfStrings.size()), UiColorPalette.successText());
 
             for (String value : javaUtfStrings) {
-               builder.load("  - " + open(poll(value)), UiColorPalette.textBright());
+               builder.line("  - " + quote(sanitize(value)), UiColorPalette.textBright());
             }
 
             decodedStrongly = true;
@@ -969,7 +969,7 @@ public final class PacketInspectorEngine {
 
          String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
          if (utf8 != null && !utf8.isBlank() && !Objects.equals(utf8, minecraftString) && !Objects.equals(utf8, javaUtf)) {
-            builder.load("Readable UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.successText());
+            builder.line("Readable UTF-8: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.successText());
             decodedAnything = true;
             textualPayload = true;
             if (bestInterpretation.isBlank()) {
@@ -988,12 +988,12 @@ public final class PacketInspectorEngine {
             bestInterpretation = "Minecraft ByteBuf-style payload with embedded string fields";
          }
 
-         List<String> identifiers = sync(raw, 16);
+         List<String> identifiers = identifierPreview(raw, 16);
          if (!identifiers.isEmpty() && !isRegisterChannel(snapshot.channel())) {
-            builder.load("Identifier Tokens: " + identifiers.size(), UiColorPalette.textBright());
+            builder.line("Identifier Tokens: " + identifiers.size(), UiColorPalette.textBright());
 
             for (String identifier : identifiers) {
-               builder.load("  - " + identifier, UiColorPalette.textBody());
+               builder.line("  - " + identifier, UiColorPalette.textBody());
             }
 
             decodedAnything = true;
@@ -1003,12 +1003,12 @@ public final class PacketInspectorEngine {
             }
          }
 
-         List<String> strings = flush(raw, 8);
+         List<String> strings = stringPreview(raw, 8);
          if (!strings.isEmpty()) {
-            builder.load("Readable Fragments:", UiColorPalette.textBright());
+            builder.line("Readable Fragments:", UiColorPalette.textBright());
 
             for (String string : strings) {
-               builder.load("  - " + open(poll(string)), UiColorPalette.textBody());
+               builder.line("  - " + quote(sanitize(string)), UiColorPalette.textBody());
             }
 
             decodedAnything = true;
@@ -1041,20 +1041,20 @@ public final class PacketInspectorEngine {
       }
 
       if (raw.length == 0) {
-         builder.load("Body is empty.", UiColorPalette.textMuted());
+         builder.line("Body is empty.", UiColorPalette.textMuted());
       } else if (!bestInterpretation.isBlank()) {
-         builder.load("Best Interpretation: " + bestInterpretation, !completeKnownSchema && !decodedStrongly ? UiColorPalette.textBright() : UiColorPalette.successText());
+         builder.line("Best Interpretation: " + bestInterpretation, !completeKnownSchema && !decodedStrongly ? UiColorPalette.textBright() : UiColorPalette.successText());
       }
 
       if (raw.length != 0) {
          if (completeKnownSchema) {
-            builder.load("Confidence: complete known-schema decode. Payload body is accounted for.", UiColorPalette.successText());
+            builder.line("Confidence: complete known-schema decode. Payload body is accounted for.", UiColorPalette.successText());
          } else if (decodedStrongly) {
-            builder.load("Confidence: high. A full structured/text decoder matched this payload.", UiColorPalette.successText());
+            builder.line("Confidence: high. A full structured/text decoder matched this payload.", UiColorPalette.successText());
          } else if (!decodedAnything) {
-            builder.load("Binary Payload: no safe schema/text decoder matched. Exact bytes are preserved.", UiColorPalette.textMuted());
+            builder.line("Binary Payload: no safe schema/text decoder matched. Exact bytes are preserved.", UiColorPalette.textMuted());
          } else if (!decodedStrongly) {
-            builder.load("Confidence: partial. Analyzer found readable hints, but no complete schema matched.", UiColorPalette.textMuted());
+            builder.line("Confidence: partial. Analyzer found readable hints, but no complete schema matched.", UiColorPalette.textMuted());
          }
       }
 
@@ -1095,8 +1095,8 @@ public final class PacketInspectorEngine {
          }
 
          if (brand != null && !brand.isBlank()) {
-            builder.load("Decoded As: Brand payload (" + mode + ")", UiColorPalette.successText());
-            builder.load("Brand: " + open(poll(init_Str_Str(brand))), UiColorPalette.textBright());
+            builder.line("Decoded As: Brand payload (" + mode + ")", UiColorPalette.successText());
+            builder.line("Brand: " + quote(sanitize(init_Str_Str(brand))), UiColorPalette.textBright());
             return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
          } else {
             return PacketInspectorEngine.PayloadDecodeResult.NONE;
@@ -1105,7 +1105,7 @@ public final class PacketInspectorEngine {
          if ("vv:server_details".equals(channel)) {
             JsonElement json = parseJsonPayload(raw);
             if (json != null) {
-               builder.load("Decoded As: ViaVersion server details JSON", UiColorPalette.successText());
+               builder.line("Decoded As: ViaVersion server details JSON", UiColorPalette.successText());
                describeJson(json, builder);
                return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
             }
@@ -1119,10 +1119,10 @@ public final class PacketInspectorEngine {
                }
 
                if (!values.isEmpty()) {
-                  builder.load("Decoded As: Fabric readable payload fields", UiColorPalette.successText());
+                  builder.line("Decoded As: Fabric readable payload fields", UiColorPalette.successText());
 
                   for (String value : values) {
-                     builder.load("  - " + open(poll(init_Str_Str(value))), UiColorPalette.textBright());
+                     builder.line("  - " + quote(sanitize(init_Str_Str(value))), UiColorPalette.textBright());
                   }
 
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
@@ -1130,8 +1130,8 @@ public final class PacketInspectorEngine {
 
                String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
-                  builder.load("Decoded As: Fabric readable text payload", UiColorPalette.successText());
-                  builder.load("Text: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
+                  builder.line("Decoded As: Fabric readable text payload", UiColorPalette.successText());
+                  builder.line("Text: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
@@ -1139,8 +1139,8 @@ public final class PacketInspectorEngine {
             if (channel.startsWith("worldedit:")) {
                String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
-                  builder.load("Decoded As: WorldEdit/CUI text payload", UiColorPalette.successText());
-                  builder.load("Message: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
+                  builder.line("Decoded As: WorldEdit/CUI text payload", UiColorPalette.successText());
+                  builder.line("Message: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
@@ -1163,19 +1163,19 @@ public final class PacketInspectorEngine {
       }
 
       if (subchannel != null && !subchannel.isBlank()) {
-         builder.load("Decoded As: BungeeCord/DataOutput plugin message", UiColorPalette.successText());
-         builder.load("Subchannel: " + subchannel, UiColorPalette.textBright());
+         builder.line("Decoded As: BungeeCord/DataOutput plugin message", UiColorPalette.successText());
+         builder.line("Subchannel: " + subchannel, UiColorPalette.textBright());
          String normalized = subchannel.toLowerCase(Locale.ROOT);
          boolean known = true;
 
          try {
             switch (normalized) {
                case "connect":
-                  builder.load("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
                   break;
                case "connectother":
-                  builder.load("Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
-                  builder.load("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
                case "ip":
                case "getserver":
                case "getservers":
@@ -1186,26 +1186,26 @@ public final class PacketInspectorEngine {
                case "playerlist":
                case "uuidother":
                case "serverip":
-                  builder.load("Argument: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Argument: " + reader.readJavaUtf(), UiColorPalette.textBright());
                   break;
                case "message":
                case "messageraw":
                case "kickplayer":
-                  builder.load("Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
-                  builder.load("Message: " + open(poll(reader.readJavaUtf())), UiColorPalette.textBright());
+                  builder.line("Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Message: " + quote(sanitize(reader.readJavaUtf())), UiColorPalette.textBright());
                   break;
                case "forward": {
-                  builder.load("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Target Server: " + reader.readJavaUtf(), UiColorPalette.textBright());
                   String nestedChannel = reader.readJavaUtf();
-                  builder.load("Nested Channel: " + nestedChannel, UiColorPalette.successText());
+                  builder.line("Nested Channel: " + nestedChannel, UiColorPalette.successText());
                   byte[] nested = reader.readShortPrefixedBytes();
                   init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
                }
                case "forwardtoplayer": {
-                  builder.load("Target Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
+                  builder.line("Target Player: " + reader.readJavaUtf(), UiColorPalette.textBright());
                   String nestedChannel = reader.readJavaUtf();
-                  builder.load("Nested Channel: " + nestedChannel, UiColorPalette.successText());
+                  builder.line("Nested Channel: " + nestedChannel, UiColorPalette.successText());
                   byte[] nested = reader.readShortPrefixedBytes();
                   init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
@@ -1220,32 +1220,32 @@ public final class PacketInspectorEngine {
                      try {
                         String value = reader.readJavaUtf();
                         if (!isMostlyPrintableText(value)) {
-                           reader.init(before);
+                           reader.seek(before);
                            break;
                         }
 
                         values.add(value);
                      } catch (IOException ex) {
-                        reader.init(before);
+                        reader.seek(before);
                         break;
                      }
                   }
 
                   if (!values.isEmpty()) {
-                     builder.load("Additional UTF Fields: " + values.size(), UiColorPalette.textBright());
+                     builder.line("Additional UTF Fields: " + values.size(), UiColorPalette.textBright());
 
                      for (String value : values) {
-                        builder.load("  - " + open(poll(value)), UiColorPalette.textBody());
+                        builder.line("  - " + quote(sanitize(value)), UiColorPalette.textBody());
                      }
                   }
             }
          } catch (IOException ex) {
-            builder.load("BungeeCord Parse Stopped: " + poll(ex.getMessage()), UiColorPalette.warningYellow());
+            builder.line("BungeeCord Parse Stopped: " + sanitize(ex.getMessage()), UiColorPalette.warningYellow());
             return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
          }
 
          if (reader.remaining() > 0) {
-            builder.load("Remaining Bytes: " + reader.remaining() + "B " + AutismPayloadSupport.toHexPreview(reader.remainingBytes(), 48), UiColorPalette.textMuted());
+            builder.line("Remaining Bytes: " + reader.remaining() + "B " + AutismPayloadSupport.toHexPreview(reader.remainingBytes(), 48), UiColorPalette.textMuted());
          }
 
          return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, known && reader.remaining() == 0);
@@ -1263,12 +1263,12 @@ public final class PacketInspectorEngine {
       } else {
          byte[] decoded = decompress(raw, kind);
          if (decoded != null && decoded.length != 0) {
-            builder.load("Decoded As: " + kind.init() + " compressed payload", UiColorPalette.successText());
-            builder.load("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.textBright());
+            builder.line("Decoded As: " + kind.label() + " compressed payload", UiColorPalette.successText());
+            builder.line("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.textBright());
             PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.channel(), decoded, builder);
             return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
          } else {
-            builder.load("Compression Decode: " + kind.init() + " header found, but decompression failed.", UiColorPalette.warningYellow());
+            builder.line("Compression Decode: " + kind.label() + " header found, but decompression failed.", UiColorPalette.warningYellow());
             return new PacketInspectorEngine.PayloadDecodeResult(true, false, false, false);
          }
       }
@@ -1279,7 +1279,7 @@ public final class PacketInspectorEngine {
          bytes = new byte[0];
       }
 
-      builder.load(title + ": " + bytes.length + " bytes", UiColorPalette.textBright());
+      builder.line(title + ": " + bytes.length + " bytes", UiColorPalette.textBright());
       if (bytes.length == 0) {
          return PacketInspectorEngine.PayloadDecodeResult.NONE;
       }
@@ -1290,7 +1290,7 @@ public final class PacketInspectorEngine {
       boolean complete = false;
       JsonElement json = parseJsonPayload(bytes);
       if (json != null) {
-         builder.load("  Nested Decoded As: JSON", UiColorPalette.successText());
+         builder.line("  Nested Decoded As: JSON", UiColorPalette.successText());
          describeJson(json, builder);
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       }
@@ -1307,7 +1307,7 @@ public final class PacketInspectorEngine {
 
       String mcString = AutismPayloadSupport.decodeMcString(bytes);
       if (mcString != null && !mcString.isBlank()) {
-         builder.load("  Nested Minecraft String: " + open(poll(mcString)), UiColorPalette.successText());
+         builder.line("  Nested Minecraft String: " + quote(sanitize(mcString)), UiColorPalette.successText());
          anything = true;
          strong = true;
          textual = true;
@@ -1316,10 +1316,10 @@ public final class PacketInspectorEngine {
 
       List<String> javaUtf = readJavaUtfStrings(bytes, 8);
       if (!javaUtf.isEmpty()) {
-         builder.load("  Nested Java UTF Fields: " + javaUtf.size(), UiColorPalette.successText());
+         builder.line("  Nested Java UTF Fields: " + javaUtf.size(), UiColorPalette.successText());
 
          for (String value : javaUtf) {
-            builder.load("    - " + open(poll(value)), UiColorPalette.textBody());
+            builder.line("    - " + quote(sanitize(value)), UiColorPalette.textBody());
          }
 
          anything = true;
@@ -1328,12 +1328,12 @@ public final class PacketInspectorEngine {
          complete = true;
       }
 
-      List<String> ids = sync(bytes, 8);
+      List<String> ids = identifierPreview(bytes, 8);
       if (!ids.isEmpty()) {
-         builder.load("  Nested Identifiers: " + ids.size(), UiColorPalette.textBright());
+         builder.line("  Nested Identifiers: " + ids.size(), UiColorPalette.textBright());
 
          for (String id : ids) {
-            builder.load("    - " + id, UiColorPalette.textBody());
+            builder.line("    - " + id, UiColorPalette.textBody());
          }
 
          anything = true;
@@ -1343,11 +1343,11 @@ public final class PacketInspectorEngine {
       if (!anything) {
          String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (utf8 != null && !utf8.isBlank()) {
-            builder.load("  Nested UTF-8: " + open(poll(init_Str_Str(utf8))), UiColorPalette.textBright());
+            builder.line("  Nested UTF-8: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
             anything = true;
             textual = true;
          } else {
-            builder.load("  Nested Hex: " + AutismPayloadSupport.toHexPreview(bytes, 64), UiColorPalette.textMuted());
+            builder.line("  Nested Hex: " + AutismPayloadSupport.toHexPreview(bytes, 64), UiColorPalette.textMuted());
          }
       }
 
@@ -1361,10 +1361,10 @@ public final class PacketInspectorEngine {
             return PacketInspectorEngine.PayloadDecodeResult.NONE;
          }
 
-         builder.load("Minecraft ByteBuf String Fields: " + fields.size(), UiColorPalette.textBright());
+         builder.line("Minecraft ByteBuf String Fields: " + fields.size(), UiColorPalette.textBright());
 
          for (PacketInspectorEngine.WireFieldSlice field : fields) {
-            builder.load("  @" + field.init_I() + " len=" + field.load() + ": " + open(poll(field.init_Str())), UiColorPalette.textBody());
+            builder.line("  @" + field.init_I() + " len=" + field.load() + ": " + quote(sanitize(field.init_Str())), UiColorPalette.textBody());
          }
 
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
@@ -1396,7 +1396,7 @@ public final class PacketInspectorEngine {
          anything |= lengthPrefixed.init_Z();
          strong |= lengthPrefixed.load_Z();
          textual |= lengthPrefixed.read();
-         PacketInspectorEngine.PayloadDecodeResult rawUuid = update(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult rawUuid = decodeRawUuid(raw, builder);
          anything |= rawUuid.init_Z();
          return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, false);
       } else {
@@ -1408,7 +1408,7 @@ public final class PacketInspectorEngine {
       if (raw != null && raw.length >= 3) {
          CompoundTag compressed = readGzipNbt(raw);
          if (compressed != null) {
-            builder.load(label + ": compressed NBT compound", UiColorPalette.successText());
+            builder.line(label + ": compressed NBT compound", UiColorPalette.successText());
             describeNbt(compressed, builder, "  ");
             return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
          } else {
@@ -1434,17 +1434,17 @@ public final class PacketInspectorEngine {
 
    private static void describeNbt(CompoundTag tag, PacketInspectorEngine.ReportBuilder builder, String indent) {
       if (tag != null) {
-         builder.load(indent + "Keys: " + tag.size(), UiColorPalette.textBright());
+         builder.line(indent + "Keys: " + tag.size(), UiColorPalette.textBright());
          int shown = 0;
 
          for (String key : tag.keySet()) {
             if (shown >= 16) {
-               builder.load(indent + "... +" + (tag.size() - shown) + " more", UiColorPalette.textMuted());
+               builder.line(indent + "... +" + (tag.size() - shown) + " more", UiColorPalette.textMuted());
                break;
             }
 
             Tag value = tag.get(key);
-            builder.load(indent + key + ": " + tagSummary(value), UiColorPalette.textBody());
+            builder.line(indent + key + ": " + tagSummary(value), UiColorPalette.textBody());
             shown++;
          }
       }
@@ -1456,7 +1456,7 @@ public final class PacketInspectorEngine {
       }
 
       String value = tag.toString();
-      return tag.getClass().getSimpleName() + " " + poll(value);
+      return tag.getClass().getSimpleName() + " " + sanitize(value);
    }
 
    private static boolean appendIdentifiers(String text, PacketInspectorEngine.ReportBuilder builder) {
@@ -1464,10 +1464,10 @@ public final class PacketInspectorEngine {
          boolean wrote = false;
          List<String> uuids = findAll(UUID_PATTERN, text, 8);
          if (!uuids.isEmpty()) {
-            builder.load("UUID Tokens: " + uuids.size(), UiColorPalette.textBright());
+            builder.line("UUID Tokens: " + uuids.size(), UiColorPalette.textBright());
 
             for (String uuid : uuids) {
-               builder.load("  - " + uuid.toLowerCase(Locale.ROOT), UiColorPalette.textBody());
+               builder.line("  - " + uuid.toLowerCase(Locale.ROOT), UiColorPalette.textBody());
             }
 
             wrote = true;
@@ -1475,10 +1475,10 @@ public final class PacketInspectorEngine {
 
          List<String> hosts = findAll(HOST_PATTERN, text, 12);
          if (!hosts.isEmpty()) {
-            builder.load("Host/IP Tokens: " + hosts.size(), UiColorPalette.textBright());
+            builder.line("Host/IP Tokens: " + hosts.size(), UiColorPalette.textBright());
 
             for (String host : hosts) {
-               builder.load("  - " + host, UiColorPalette.textBody());
+               builder.line("  - " + host, UiColorPalette.textBody());
             }
 
             wrote = true;
@@ -1504,7 +1504,7 @@ public final class PacketInspectorEngine {
             if (isPlausibleSize(decoded)) {
                PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
-                  builder.load("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
+                  builder.line("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
                   PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Base64 decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
@@ -1523,7 +1523,7 @@ public final class PacketInspectorEngine {
             if (isPlausibleSize(decoded)) {
                PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
-                  builder.load("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
+                  builder.line("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
                   PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Hex decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
@@ -1558,7 +1558,7 @@ public final class PacketInspectorEngine {
                      byte[] slice = Arrays.copyOfRange(raw, start, start + length);
                      PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
                      if (outcome.init_Z()) {
-                        builder.load("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", UiColorPalette.textBright());
+                        builder.line("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", UiColorPalette.textBright());
                         PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                         anything = true;
                         strong |= nested.load_Z() || outcome.load_Z();
@@ -1577,7 +1577,7 @@ public final class PacketInspectorEngine {
                   byte[] slice = Arrays.copyOfRange(raw, shortStart, shortStart + shortLength);
                   PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
                   if (outcome.init_Z()) {
-                     builder.load("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", UiColorPalette.textBright());
+                     builder.line("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", UiColorPalette.textBright());
                      PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                      anything = true;
                      strong |= nested.load_Z() || outcome.load_Z();
@@ -1594,7 +1594,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult update(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeRawUuid(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 16) {
          List<String> uuids = new ArrayList<>();
 
@@ -1612,10 +1612,10 @@ public final class PacketInspectorEngine {
             return PacketInspectorEngine.PayloadDecodeResult.NONE;
          }
 
-         builder.load("Raw UUID Candidates: " + uuids.size(), UiColorPalette.textBright());
+         builder.line("Raw UUID Candidates: " + uuids.size(), UiColorPalette.textBright());
 
          for (String uuid : uuids) {
-            builder.load("  - " + uuid, UiColorPalette.textBody());
+            builder.line("  - " + uuid, UiColorPalette.textBody());
          }
 
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, false, false);
@@ -1633,7 +1633,7 @@ public final class PacketInspectorEngine {
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (!readJavaUtfStrings(bytes, 4).isEmpty()) {
          return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
-      } else if (!sync(bytes, 4).isEmpty()) {
+      } else if (!identifierPreview(bytes, 4).isEmpty()) {
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
       } else {
          String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
@@ -1746,17 +1746,17 @@ public final class PacketInspectorEngine {
 
    private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       List<String> nullSeparated = splitNullSeparated(raw, 48);
-      List<String> identifiers = sync(raw, 48);
+      List<String> identifiers = identifierPreview(raw, 48);
       LinkedHashSet<String> channels = new LinkedHashSet<>();
       channels.addAll(nullSeparated.stream().filter(value -> CHANNEL_ID_PATTERN.matcher(value).matches()).map(value -> value.toLowerCase(Locale.ROOT)).toList());
       channels.addAll(identifiers);
       if (channels.isEmpty()) {
-         builder.load("Register Payload: no channel identifiers were readable.", UiColorPalette.textMuted());
+         builder.line("Register Payload: no channel identifiers were readable.", UiColorPalette.textMuted());
          return false;
       }
 
       int total = Math.max(countChannelIds(raw), channels.size());
-      builder.load(
+      builder.line(
          (isUnregisterChannel(snapshot.channel()) ? "Unregistered" : "Registered") + " Channels: " + channels.size() + (total > channels.size() ? "+ shown" : ""),
          UiColorPalette.successText()
       );
@@ -1764,11 +1764,11 @@ public final class PacketInspectorEngine {
 
       for (String channel : channels) {
          if (shown >= 48) {
-            builder.load("  ... +" + (channels.size() - shown) + " more", UiColorPalette.textMuted());
+            builder.line("  ... +" + (channels.size() - shown) + " more", UiColorPalette.textMuted());
             break;
          }
 
-         builder.load("  - " + channel, UiColorPalette.textBright());
+         builder.line("  - " + channel, UiColorPalette.textBright());
          shown++;
       }
 
@@ -1813,10 +1813,10 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      builder.load("Null-Separated Strings: " + parts.size() + " value" + pluralSuffix(parts.size()), UiColorPalette.successText());
+      builder.line("Null-Separated Strings: " + parts.size() + " value" + pluralSuffix(parts.size()), UiColorPalette.successText());
 
       for (String part : parts) {
-         builder.load("  - " + open(poll(part)), UiColorPalette.textBright());
+         builder.line("  - " + quote(sanitize(part)), UiColorPalette.textBright());
       }
 
       return true;
@@ -2017,52 +2017,52 @@ public final class PacketInspectorEngine {
 
    private static void init_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
-         List<String> varInts = update(raw, 5);
+         List<String> varInts = varIntPreview(raw, 5);
          if (!varInts.isEmpty()) {
-            builder.load("VarInt Prefix: " + String.join(", ", varInts), UiColorPalette.textBody());
+            builder.line("VarInt Prefix: " + String.join(", ", varInts), UiColorPalette.textBody());
          }
 
          if (raw.length >= 1) {
-            builder.load("First Byte: unsigned=" + (raw[0] & 0xFF) + ", signed=" + raw[0], UiColorPalette.textMuted());
+            builder.line("First Byte: unsigned=" + (raw[0] & 0xFF) + ", signed=" + raw[0], UiColorPalette.textMuted());
          }
 
          if (raw.length >= 2) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Short: BE=" + be.getShort(0) + ", LE=" + le.getShort(0), UiColorPalette.textMuted());
+            builder.line("First Short: BE=" + be.getShort(0) + ", LE=" + le.getShort(0), UiColorPalette.textMuted());
          }
 
          if (raw.length >= 4) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Int: BE=" + be.getInt(0) + ", LE=" + le.getInt(0), UiColorPalette.textMuted());
+            builder.line("First Int: BE=" + be.getInt(0) + ", LE=" + le.getInt(0), UiColorPalette.textMuted());
             float beFloat = be.getFloat(0);
             float leFloat = le.getFloat(0);
             if (isReasonableFloat(beFloat) || isReasonableFloat(leFloat)) {
-               builder.load("First Float: BE=" + formatFloat(beFloat) + ", LE=" + formatFloat(leFloat), UiColorPalette.textMuted());
+               builder.line("First Float: BE=" + formatFloat(beFloat) + ", LE=" + formatFloat(leFloat), UiColorPalette.textMuted());
             }
          }
 
          if (raw.length >= 8) {
             ByteBuffer be = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             ByteBuffer le = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN);
-            builder.load("First Long: BE=" + be.getLong(0) + ", LE=" + le.getLong(0), UiColorPalette.textMuted());
+            builder.line("First Long: BE=" + be.getLong(0) + ", LE=" + le.getLong(0), UiColorPalette.textMuted());
             double beDouble = be.getDouble(0);
             double leDouble = le.getDouble(0);
             if (isReasonableDouble(beDouble) || isReasonableDouble(leDouble)) {
-               builder.load("First Double: BE=" + formatDouble(beDouble) + ", LE=" + formatDouble(leDouble), UiColorPalette.textMuted());
+               builder.line("First Double: BE=" + formatDouble(beDouble) + ", LE=" + formatDouble(leDouble), UiColorPalette.textMuted());
             }
          }
 
          if (raw.length >= 16) {
             ByteBuffer uuidBuffer = ByteBuffer.wrap(raw).order(ByteOrder.BIG_ENDIAN);
             UUID uuid = new UUID(uuidBuffer.getLong(0), uuidBuffer.getLong(8));
-            builder.load("First 16 Bytes As UUID: " + uuid, UiColorPalette.textMuted());
+            builder.line("First 16 Bytes As UUID: " + uuid, UiColorPalette.textMuted());
          }
       }
    }
 
-   private static List<String> update(byte[] raw, int max) {
+   private static List<String> varIntPreview(byte[] raw, int max) {
       if (raw != null && raw.length != 0) {
          List<String> values = new ArrayList<>();
          int index = 0;
@@ -2086,9 +2086,9 @@ public final class PacketInspectorEngine {
    private static void appendCompression(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       PacketInspectorEngine.CompressionKind kind = detectCompression(raw);
       if (kind == PacketInspectorEngine.CompressionKind.GZIP) {
-         builder.load("Compression Hint: gzip stream header", UiColorPalette.warningYellow());
+         builder.line("Compression Hint: gzip stream header", UiColorPalette.warningYellow());
       } else if (kind == PacketInspectorEngine.CompressionKind.ZLIB) {
-         builder.load("Compression Hint: zlib/deflate stream header", UiColorPalette.warningYellow());
+         builder.line("Compression Hint: zlib/deflate stream header", UiColorPalette.warningYellow());
       }
    }
 
@@ -2115,7 +2115,7 @@ public final class PacketInspectorEngine {
             }
          }
 
-         builder.load(
+         builder.line(
             "Binary Stats: printable="
                + percent(printable, raw.length)
                + ", zero="
@@ -2205,28 +2205,28 @@ public final class PacketInspectorEngine {
       if (json != null) {
          if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
-            builder.load("Decoded As: JSON object (" + object.size() + " keys)", UiColorPalette.successText());
+            builder.line("Decoded As: JSON object (" + object.size() + " keys)", UiColorPalette.successText());
 
             for (Entry<String, JsonElement> entry : object.entrySet()) {
-               builder.load("  " + entry.getKey() + ": " + jsonSummary(entry.getValue()), UiColorPalette.textBright());
+               builder.line("  " + entry.getKey() + ": " + jsonSummary(entry.getValue()), UiColorPalette.textBright());
             }
          } else if (json.isJsonArray()) {
             JsonArray array = json.getAsJsonArray();
-            builder.load("Decoded As: JSON array (" + array.size() + " items)", UiColorPalette.successText());
+            builder.line("Decoded As: JSON array (" + array.size() + " items)", UiColorPalette.successText());
             int index = 0;
 
             for (JsonElement element : array) {
                if (index >= 16) {
-                  builder.load("  ... +" + (array.size() - index) + " more", UiColorPalette.textMuted());
+                  builder.line("  ... +" + (array.size() - index) + " more", UiColorPalette.textMuted());
                   break;
                }
 
-               builder.load("  [" + index + "]: " + jsonSummary(element), UiColorPalette.textBright());
+               builder.line("  [" + index + "]: " + jsonSummary(element), UiColorPalette.textBright());
                index++;
             }
          } else {
-            builder.load("Decoded As: JSON value", UiColorPalette.successText());
-            builder.load("Value: " + jsonSummary(json), UiColorPalette.textBright());
+            builder.line("Decoded As: JSON value", UiColorPalette.successText());
+            builder.line("Value: " + jsonSummary(json), UiColorPalette.textBright());
          }
       }
    }
@@ -2236,11 +2236,11 @@ public final class PacketInspectorEngine {
          return "null";
       } else if (element.isJsonPrimitive()) {
          JsonPrimitive primitive = element.getAsJsonPrimitive();
-         return primitive.isString() ? open(poll(primitive.getAsString())) : poll(primitive.toString());
+         return primitive.isString() ? quote(sanitize(primitive.getAsString())) : sanitize(primitive.toString());
       } else if (element.isJsonArray()) {
-         return "array[" + element.getAsJsonArray().size() + "] " + poll(element.toString());
+         return "array[" + element.getAsJsonArray().size() + "] " + sanitize(element.toString());
       } else {
-         return element.isJsonObject() ? "object{" + element.getAsJsonObject().size() + "} " + poll(element.toString()) : poll(element.toString());
+         return element.isJsonObject() ? "object{" + element.getAsJsonObject().size() + "} " + sanitize(element.toString()) : sanitize(element.toString());
       }
    }
 
@@ -2262,7 +2262,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static List<String> sync(byte[] raw, int max) {
+   private static List<String> identifierPreview(byte[] raw, int max) {
       String text = new String(raw == null ? new byte[0] : raw, StandardCharsets.UTF_8);
       Matcher matcher = CHANNEL_ID_PATTERN.matcher(text);
       LinkedHashSet<String> tokens = new LinkedHashSet<>();
@@ -2286,7 +2286,7 @@ public final class PacketInspectorEngine {
       return tokens.size();
    }
 
-   private static List<String> flush(byte[] raw, int max) {
+   private static List<String> stringPreview(byte[] raw, int max) {
       String text = new String(raw == null ? new byte[0] : raw, StandardCharsets.ISO_8859_1);
       Matcher matcher = PRINTABLE_RUN_PATTERN.matcher(text);
       List<String> runs = new ArrayList<>();
@@ -2511,7 +2511,7 @@ public final class PacketInspectorEngine {
             wrote |= appendMeaning(builder, "Server removed entities");
             Object ids = firstPresent(firstGetterValue(packet, "getEntityIds", "entityIds"), recordComponentAt(packet, 0));
             if (ids != null) {
-               builder.load("Entities: " + open(ids), UiColorPalette.cyan());
+               builder.line("Entities: " + entityIdList(ids), UiColorPalette.cyan());
                wrote = true;
             }
             break;
@@ -2526,7 +2526,7 @@ public final class PacketInspectorEngine {
             wrote |= load_Z_bu_ConfigStore(builder, packet, "Vehicle", "getVehicle", "vehicle", "vehicleId");
             Object passengers = firstPresent(firstGetterValue(packet, "getPassengers", "passengers"), propertyByLabel(packet, "Passengers"));
             if (passengers != null) {
-               builder.load("Passengers: " + open(passengers), UiColorPalette.cyan());
+               builder.line("Passengers: " + entityIdList(passengers), UiColorPalette.cyan());
                wrote = true;
             }
             break;
@@ -2554,10 +2554,10 @@ public final class PacketInspectorEngine {
             );
             Object slot = firstPresent(firstGetterValue(packet, "getSlot", "slot", "getSelectedSlot", "selectedSlot"), recordComponentAt(packet, 0));
             if (slot instanceof Number number) {
-               builder.load("Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
+               builder.line("Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
                wrote = true;
             } else if (slot != null) {
-               builder.load("Slot: " + describeValue(slot), UiColorPalette.textBright());
+               builder.line("Slot: " + describeValue(slot), UiColorPalette.textBright());
                wrote = true;
             }
             break;
@@ -2795,7 +2795,7 @@ public final class PacketInspectorEngine {
 
    private static boolean appendMeaning(PacketInspectorEngine.ReportBuilder builder, String meaning) {
       if (meaning != null && !meaning.isBlank()) {
-         builder.load("Meaning: " + meaning, UiColorPalette.textBright());
+         builder.line("Meaning: " + meaning, UiColorPalette.textBright());
          return true;
       } else {
          return false;
@@ -2809,7 +2809,7 @@ public final class PacketInspectorEngine {
 
    private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != MISSING) {
-         builder.load(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
+         builder.line(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
          return true;
       } else {
          return false;
@@ -2818,7 +2818,7 @@ public final class PacketInspectorEngine {
 
    private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != MISSING) {
-         builder.load(label + ": " + poll(value), labeledValueColor(label, value));
+         builder.line(label + ": " + valueText(value), labeledValueColor(label, value));
          return true;
       } else {
          return false;
@@ -2831,7 +2831,7 @@ public final class PacketInspectorEngine {
          appendEntity(builder, label, number.intValue());
          return true;
       } else if (value instanceof Entity entity) {
-         builder.load(label + ": " + describeEntity(entity), UiColorPalette.cyan());
+         builder.line(label + ": " + describeEntity(entity), UiColorPalette.cyan());
          return true;
       } else {
          return init_Z_bu_ConfigStore(builder, label, value);
@@ -2841,8 +2841,8 @@ public final class PacketInspectorEngine {
    private static boolean read_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
       if (value != null && value != MISSING) {
-         String text = update(value);
-         builder.load(label + ": " + (text != null && !text.isBlank() ? open(poll(text)) : load_Str_Str_Obj(label, value)), scalarValueColor(label, value));
+         String text = componentText(value);
+         builder.line(label + ": " + (text != null && !text.isBlank() ? quote(sanitize(text)) : load_Str_Str_Obj(label, value)), scalarValueColor(label, value));
          return true;
       } else {
          return false;
@@ -2853,9 +2853,9 @@ public final class PacketInspectorEngine {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
       if (value != null && value != MISSING) {
          if (value instanceof Collection<?> collection) {
-            builder.load(label + ": " + describeCollection(collection), UiColorPalette.textBody());
+            builder.line(label + ": " + describeCollection(collection), UiColorPalette.textBody());
          } else {
-            builder.load(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
+            builder.line(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
          }
 
          return true;
@@ -2871,7 +2871,7 @@ public final class PacketInspectorEngine {
       Object y = firstPresent(firstGetterValue(packet, yGetter, yField), propertyByLabel(packet, yField));
       Object z = firstPresent(firstGetterValue(packet, zGetter, zField), propertyByLabel(packet, zField));
       if (x instanceof Number xn && y instanceof Number yn && z instanceof Number zn) {
-         builder.load(label + ": " + formatVec(new Vec3(xn.doubleValue(), yn.doubleValue(), zn.doubleValue())), UiColorPalette.warningYellow());
+         builder.line(label + ": " + formatVec(new Vec3(xn.doubleValue(), yn.doubleValue(), zn.doubleValue())), UiColorPalette.warningYellow());
          return true;
       } else {
          return false;
@@ -2883,7 +2883,7 @@ public final class PacketInspectorEngine {
       if (properties.isEmpty()) {
          String rawFallback = read_Str_Obj(packet);
          if (rawFallback != null) {
-            builder.load("Raw: " + rawFallback, UiColorPalette.textMuted());
+            builder.line("Raw: " + rawFallback, UiColorPalette.textMuted());
             return new PacketInspectorEngine.PacketSummaryFlags(true, false);
          } else {
             return PacketInspectorEngine.PacketSummaryFlags.NONE;
@@ -2900,7 +2900,7 @@ public final class PacketInspectorEngine {
             if (value != null && value != MISSING) {
                String summary = load_Str_Str_Obj(property.label(), value);
                if (summary != null && !summary.isBlank()) {
-                  builder.load(property.label() + ": " + summary, labeledValueColor(property.label(), value));
+                  builder.line(property.label() + ": " + summary, labeledValueColor(property.label(), value));
                   lines++;
                }
             }
@@ -2914,9 +2914,9 @@ public final class PacketInspectorEngine {
       Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
       if (packet instanceof ServerboundPunchPacket) {
-         builder.load("Interaction: Punch / Swing (attack / use animation)", UiColorPalette.textBright());
+         builder.line("Interaction: Punch / Swing (attack / use animation)", UiColorPalette.textBright());
          if (MC.player != null) {
-            builder.load("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
+            builder.line("Held Item: " + describeStack(MC.player.getMainHandItem()), UiColorPalette.successText());
          }
 
          return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -2925,10 +2925,10 @@ public final class PacketInspectorEngine {
       if (packet instanceof CompatSwingPacket || isPacketNamed(packet, packetNameHint, "HandSwingC2S", "HandSwingC2SPacket")) {
          Object hand = firstPresent(firstGetterValue(packet, "getHand", "hand"), recordComponentAt(packet, 0), propertyByLabel(packet, "Hand"));
          if (hand != null) {
-            builder.load("Interaction: Swing InteractionHand (attack / use animation)", UiColorPalette.textBright());
-            builder.load("Hand: " + describeValue(hand), UiColorPalette.textBright());
+            builder.line("Interaction: Swing InteractionHand (attack / use animation)", UiColorPalette.textBright());
+            builder.line("Hand: " + describeValue(hand), UiColorPalette.textBright());
             if (MC.player != null && hand instanceof InteractionHand playerHand) {
-               builder.load("Held Item: " + describeStack(MC.player.getItemInHand(playerHand)), UiColorPalette.successText());
+               builder.line("Held Item: " + describeStack(MC.player.getItemInHand(playerHand)), UiColorPalette.successText());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -2939,9 +2939,9 @@ public final class PacketInspectorEngine {
          Object slot = firstGetterValue(updateSelectedSlotPacket, "getSelectedSlot", "getSlot", "selectedSlot", "slot");
          if (slot != null) {
             if (slot instanceof Number number) {
-               builder.load("Selected Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
+               builder.line("Selected Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
             } else {
-               builder.load("Selected Slot: " + describeValue(slot), UiColorPalette.textBright());
+               builder.line("Selected Slot: " + describeValue(slot), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -2955,33 +2955,33 @@ public final class PacketInspectorEngine {
          Object signature = firstPresent(firstGetterValue(packet, "signature", "getSignature"), recordComponentAt(packet, 3));
          Object acknowledgment = firstPresent(firstGetterValue(packet, "acknowledgment", "getAcknowledgment"), recordComponentAt(packet, 4));
          if (message != null || timestamp != null || salt != null) {
-            builder.load("Kind: Outgoing Signed Chat Message", UiColorPalette.textBright());
+            builder.line("Kind: Outgoing Signed Chat Message", UiColorPalette.textBright());
             if (MC.player != null) {
                String senderName = MC.player.getName() == null ? null : MC.player.getName().getString();
                if (senderName != null && !senderName.isBlank()) {
-                  builder.load("Sender: " + senderName, UiColorPalette.textBright());
+                  builder.line("Sender: " + senderName, UiColorPalette.textBright());
                }
             }
 
-            String text = update(message);
+            String text = componentText(message);
             if (text != null && !text.isBlank()) {
-               builder.load("Message: " + open(poll(text)), UiColorPalette.successText());
+               builder.line("Message: " + quote(sanitize(text)), UiColorPalette.successText());
             }
 
             if (timestamp != null) {
-               builder.load("Timestamp: " + describeValue(timestamp), UiColorPalette.textBody());
+               builder.line("Timestamp: " + describeValue(timestamp), UiColorPalette.textBody());
             }
 
             if (salt != null) {
-               builder.load("Salt: " + describeValue(salt), UiColorPalette.textBody());
+               builder.line("Salt: " + describeValue(salt), UiColorPalette.textBody());
             }
 
             if (signature != null) {
-               builder.load("Signature: Present", UiColorPalette.textBody());
+               builder.line("Signature: Present", UiColorPalette.textBody());
             }
 
             if (acknowledgment != null) {
-               builder.load("Acknowledgment: " + poll(acknowledgment), plainValueColor(acknowledgment));
+               builder.line("Acknowledgment: " + valueText(acknowledgment), plainValueColor(acknowledgment));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -2997,8 +2997,8 @@ public final class PacketInspectorEngine {
             propertyByLabel(packet, "Sequence")
          );
          if (sequence != null) {
-            builder.load("Meaning: Server acknowledged a sequence-based player action", UiColorPalette.textBright());
-            builder.load("Sequence: " + describeValue(sequence), UiColorPalette.textBright());
+            builder.line("Meaning: Server acknowledged a sequence-based player action", UiColorPalette.textBright());
+            builder.line("Sequence: " + describeValue(sequence), UiColorPalette.textBright());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3012,17 +3012,17 @@ public final class PacketInspectorEngine {
             propertyByLabel(packet, "Sync Id", "SyncId")
          );
          if (syncId != null) {
-            builder.load("Interaction: Close Handled Screen", UiColorPalette.textBright());
-            builder.load("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
+            builder.line("Interaction: Close Handled Screen", UiColorPalette.textBright());
+            builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
             if (entry != null && entry.update != null && !entry.update.isBlank()) {
-               builder.load("Closed Screen: " + entry.update, UiColorPalette.successText());
+               builder.line("Closed Screen: " + entry.update, UiColorPalette.successText());
             }
 
             if (syncId instanceof Number number && number.intValue() == 0) {
-               builder.load("Likely Screen: Player Inventory / Survival Crafting", UiColorPalette.successText());
+               builder.line("Likely Screen: Player Inventory / Survival Crafting", UiColorPalette.successText());
             }
 
-            builder.load("Note: This packet only sends the sync id, not the closed screen title/type", UiColorPalette.textBody());
+            builder.line("Note: This packet only sends the sync id, not the closed screen title/type", UiColorPalette.textBody());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3042,21 +3042,21 @@ public final class PacketInspectorEngine {
             propertyByLabel(packet, "Equipment List", "EquipmentList")
          );
          if (entityIdValue != null || equipmentListValue != null) {
-            builder.load("Meaning: Server updated an entity's visible equipment", UiColorPalette.textBright());
+            builder.line("Meaning: Server updated an entity's visible equipment", UiColorPalette.textBright());
             if (entityIdValue instanceof Number entityIdNumber) {
                appendEntity(builder, "Entity Id", entityIdNumber.intValue());
             } else if (entityIdValue != null) {
-               builder.load("Entity Id: " + describeValue(entityIdValue), UiColorPalette.textBright());
+               builder.line("Entity Id: " + describeValue(entityIdValue), UiColorPalette.textBright());
             }
 
             if (equipmentListValue instanceof Collection<?> equipmentEntries) {
-               builder.load("Changed Slots: " + equipmentEntries.size(), UiColorPalette.textBright());
+               builder.line("Changed Slots: " + equipmentEntries.size(), UiColorPalette.textBright());
                String equipmentSummary = describeEquipment(equipmentEntries);
                if (equipmentSummary != null && !equipmentSummary.isBlank()) {
-                  builder.load("Equipment: " + equipmentSummary, UiColorPalette.successText());
+                  builder.line("Equipment: " + equipmentSummary, UiColorPalette.successText());
                }
             } else if (equipmentListValue != null) {
-               builder.load("Equipment: " + poll(equipmentListValue), plainValueColor(equipmentListValue));
+               builder.line("Equipment: " + valueText(equipmentListValue), plainValueColor(equipmentListValue));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3067,13 +3067,13 @@ public final class PacketInspectorEngine {
          Object syncId = firstGetterValue(buttonClickPacket, "getSyncId", "syncId");
          Object buttonId = firstGetterValue(buttonClickPacket, "getButtonId", "buttonId");
          if (syncId != null || buttonId != null) {
-            builder.load("Interaction: Click handled-screen button", UiColorPalette.textBright());
+            builder.line("Interaction: Click handled-screen button", UiColorPalette.textBright());
             if (syncId != null) {
-               builder.load("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
+               builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
             }
 
             if (buttonId != null) {
-               builder.load("Button Id: " + describeValue(buttonId), UiColorPalette.textBright());
+               builder.line("Button Id: " + describeValue(buttonId), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3085,11 +3085,11 @@ public final class PacketInspectorEngine {
          Object stack = firstGetterValue(creativeInventoryActionPacket, "getStack", "stack");
          if (slot != null || stack != null) {
             if (slot != null) {
-               builder.load("Slot: " + describeValue(slot), UiColorPalette.textBright());
+               builder.line("Slot: " + describeValue(slot), UiColorPalette.textBright());
             }
 
             if (stack != null) {
-               builder.load("Stack: " + poll(stack), plainValueColor(stack));
+               builder.line("Stack: " + valueText(stack), plainValueColor(stack));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3105,35 +3105,35 @@ public final class PacketInspectorEngine {
          Object modifiedStacks = firstGetterValue(clickSlotPacket, "getModifiedStacks", "modifiedStacks");
          Object cursorStack = firstGetterValue(clickSlotPacket, "cursor", "getStack", "getCursorStack", "cursorStack");
          if (syncId != null || slot != null || actionType != null) {
-            builder.load("Interaction: " + describeClickType(actionType), UiColorPalette.textBright());
+            builder.line("Interaction: " + describeClickType(actionType), UiColorPalette.textBright());
             if (syncId != null) {
-               builder.load("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
+               builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
             }
 
             if (revision != null) {
-               builder.load("Revision: " + describeValue(revision), UiColorPalette.textBody());
+               builder.line("Revision: " + describeValue(revision), UiColorPalette.textBody());
             }
 
             if (slot != null) {
-               builder.load("Slot: " + describeValue(slot), UiColorPalette.textBright());
+               builder.line("Slot: " + describeValue(slot), UiColorPalette.textBright());
             }
 
             if (button != null) {
-               builder.load("Button: " + describeValue(button), UiColorPalette.textBright());
+               builder.line("Button: " + describeValue(button), UiColorPalette.textBright());
             }
 
             if (actionType != null) {
-               builder.load("Action Type: " + describeValue(actionType), UiColorPalette.textBright());
+               builder.line("Action Type: " + describeValue(actionType), UiColorPalette.textBright());
             }
 
             if (cursorStack != null) {
-               builder.load("Cursor: " + poll(cursorStack), plainValueColor(cursorStack));
+               builder.line("Cursor: " + valueText(cursorStack), plainValueColor(cursorStack));
             }
 
             if (modifiedStacks instanceof Map<?, ?> map) {
-               builder.load("Changed Slots: " + map.size(), UiColorPalette.textBody());
+               builder.line("Changed Slots: " + map.size(), UiColorPalette.textBody());
             } else if (modifiedStacks != null) {
-               builder.load("Changed Slots: " + poll(modifiedStacks), plainValueColor(modifiedStacks));
+               builder.line("Changed Slots: " + valueText(modifiedStacks), plainValueColor(modifiedStacks));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, false);
@@ -3146,25 +3146,25 @@ public final class PacketInspectorEngine {
          Object title = firstGetterValue(bookUpdatePacket, "title", "getTitle");
          if (slot != null || pages != null || title != null) {
             boolean signing = title instanceof Optional<?> optional && optional.isPresent();
-            builder.load("Interaction: " + (signing ? "Sign Book" : "Edit Book"), UiColorPalette.textBright());
+            builder.line("Interaction: " + (signing ? "Sign Book" : "Edit Book"), UiColorPalette.textBright());
             if (slot instanceof Number number) {
-               builder.load("Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
+               builder.line("Slot: " + describeHotbarSlot(number.intValue()), UiColorPalette.textBright());
             } else if (slot != null) {
-               builder.load("Slot: " + describeValue(slot), UiColorPalette.textBright());
+               builder.line("Slot: " + describeValue(slot), UiColorPalette.textBright());
             }
 
             if (title != null) {
-               String titleComponent = update(title);
+               String titleComponent = componentText(title);
                if (titleComponent != null && !titleComponent.isBlank()) {
-                  builder.load("Title: " + open(poll(titleComponent)), UiColorPalette.successText());
+                  builder.line("Title: " + quote(sanitize(titleComponent)), UiColorPalette.successText());
                }
             }
 
             if (pages instanceof Collection<?> collection) {
-               builder.load("Pages: " + collection.size(), UiColorPalette.textBright());
+               builder.line("Pages: " + collection.size(), UiColorPalette.textBright());
                String preview = bookPagesPreview(collection);
                if (preview != null) {
-                  builder.load("Preview: " + preview, UiColorPalette.textBody());
+                  builder.line("Preview: " + preview, UiColorPalette.textBody());
                }
             }
 
@@ -3177,19 +3177,19 @@ public final class PacketInspectorEngine {
          Object lines = firstGetterValue(updateSignPacket, "getText", "text");
          Object front = firstGetterValue(updateSignPacket, "isFront", "front");
          if (pos != null || lines != null || front != null) {
-            builder.load("Interaction: Update Sign Component", UiColorPalette.textBright());
+            builder.line("Interaction: Update Sign Component", UiColorPalette.textBright());
             if (pos != null) {
-               builder.load("Block Pos: " + poll(pos), plainValueColor(pos));
+               builder.line("Block Pos: " + valueText(pos), plainValueColor(pos));
             }
 
             if (front != null) {
-               builder.load("Side: " + (Boolean.TRUE.equals(front) ? "Front" : "Back"), UiColorPalette.textBright());
+               builder.line("Side: " + (Boolean.TRUE.equals(front) ? "Front" : "Back"), UiColorPalette.textBright());
             }
 
             if (lines instanceof String[] stringLines) {
-               builder.load("Component: " + signLinesPreview(stringLines), UiColorPalette.successText());
+               builder.line("Component: " + signLinesPreview(stringLines), UiColorPalette.successText());
             } else if (lines != null) {
-               builder.load("Component: " + poll(lines), plainValueColor(lines));
+               builder.line("Component: " + valueText(lines), plainValueColor(lines));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3199,8 +3199,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundRenameItemPacket renameItemPacket) {
          Object name = firstGetterValue(renameItemPacket, "getName", "name");
          if (name != null) {
-            builder.load("Interaction: Rename Item in Anvil", UiColorPalette.textBright());
-            builder.load("Name: " + open(poll(String.valueOf(name))), UiColorPalette.successText());
+            builder.line("Interaction: Rename Item in Anvil", UiColorPalette.textBright());
+            builder.line("Name: " + quote(sanitize(String.valueOf(name))), UiColorPalette.successText());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3210,17 +3210,17 @@ public final class PacketInspectorEngine {
          Object recipeId = firstGetterValue(craftRequestPacket, "recipeId", "getRecipeId");
          Object craftAll = firstGetterValue(craftRequestPacket, "craftAll", "isCraftAll", "getCraftAll");
          if (syncId != null || recipeId != null || craftAll != null) {
-            builder.load("Interaction: Craft Recipe", UiColorPalette.textBright());
+            builder.line("Interaction: Craft Recipe", UiColorPalette.textBright());
             if (syncId != null) {
-               builder.load("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
+               builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
             }
 
             if (recipeId != null) {
-               builder.load("Recipe: " + describeValue(recipeId), UiColorPalette.successText());
+               builder.line("Recipe: " + describeValue(recipeId), UiColorPalette.successText());
             }
 
             if (craftAll != null) {
-               builder.load("Craft All: " + describeValue(craftAll), UiColorPalette.textBright());
+               builder.line("Craft All: " + describeValue(craftAll), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3230,8 +3230,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ServerboundSelectTradePacket selectMerchantTradePacket) {
          Object tradeId = firstGetterValue(selectMerchantTradePacket, "getTradeId", "tradeId");
          if (tradeId != null) {
-            builder.load("Interaction: Select Merchant Trade", UiColorPalette.textBright());
-            builder.load("Trade Index: " + describeValue(tradeId), UiColorPalette.textBright());
+            builder.line("Interaction: Select Merchant Trade", UiColorPalette.textBright());
+            builder.line("Trade Index: " + describeValue(tradeId), UiColorPalette.textBright());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3242,15 +3242,15 @@ public final class PacketInspectorEngine {
          Object value = firstGetterValue(screenHandlerPropertyUpdatePacket, "getValue", "value");
          if (syncId != null || property != null || value != null) {
             if (syncId != null) {
-               builder.load("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
+               builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
             }
 
             if (property != null) {
-               builder.load("Property: " + describeValue(property), UiColorPalette.textBright());
+               builder.line("Property: " + describeValue(property), UiColorPalette.textBright());
             }
 
             if (value != null) {
-               builder.load("Value: " + describeValue(value), UiColorPalette.textBright());
+               builder.line("Value: " + describeValue(value), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3265,15 +3265,15 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                appendEntity(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
+               builder.line("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
             }
 
             if (pos != null) {
-               builder.load("Block Pos: " + poll(pos), plainValueColor(pos));
+               builder.line("Block Pos: " + valueText(pos), plainValueColor(pos));
             }
 
             if (progress != null) {
-               builder.load("Progress: " + describeValue(progress), UiColorPalette.textBright());
+               builder.line("Progress: " + describeValue(progress), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3298,11 +3298,11 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                appendEntity(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
+               builder.line("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
             }
 
             if (status != null) {
-               builder.load("Status: " + describeValue(status), UiColorPalette.textBright());
+               builder.line("Status: " + describeValue(status), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3320,11 +3320,11 @@ public final class PacketInspectorEngine {
             if (entityId instanceof Number number) {
                appendEntity(builder, "Entity Id", number.intValue());
             } else if (entityId != null) {
-               builder.load("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
+               builder.line("Entity Id: " + describeValue(entityId), UiColorPalette.textBright());
             }
 
             if (velocity != null) {
-               builder.load("Velocity: " + poll(velocity), plainValueColor(velocity));
+               builder.line("Velocity: " + valueText(velocity), plainValueColor(velocity));
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3335,20 +3335,20 @@ public final class PacketInspectorEngine {
          Object content = firstGetterValue(gameMessagePacket, "content", "getContent");
          Object overlay = firstGetterValue(gameMessagePacket, "overlay", "isOverlay", "getOverlay");
          if (content != null || overlay != null) {
-            String message = update(content);
-            builder.load("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.textBright());
+            String message = componentText(content);
+            builder.line("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.textBright());
             PacketInspectorEngine.ParsedMessagePair parsed = init_bu_StateCache_Str(message);
             if (parsed != null) {
-               builder.load("Possible Sender: " + parsed.init(), UiColorPalette.textBright());
-               builder.load("Message: " + open(poll(parsed.load())), UiColorPalette.successText());
+               builder.line("Possible Sender: " + parsed.init(), UiColorPalette.textBright());
+               builder.line("Message: " + quote(sanitize(parsed.load())), UiColorPalette.successText());
             } else if (message != null && !message.isBlank()) {
-               builder.load("Message: " + open(poll(message)), UiColorPalette.successText());
+               builder.line("Message: " + quote(sanitize(message)), UiColorPalette.successText());
             } else if (content != null) {
-               builder.load("Message: " + poll(content), plainValueColor(content));
+               builder.line("Message: " + valueText(content), plainValueColor(content));
             }
 
             if (overlay != null) {
-               builder.load("Overlay: " + describeValue(overlay), UiColorPalette.textBright());
+               builder.line("Overlay: " + describeValue(overlay), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3394,7 +3394,7 @@ public final class PacketInspectorEngine {
          Object timestamp = null;
          if (body != null) {
             Object bodyContent = firstPresent(firstGetterValue(body, "content", "getContent"), recordComponentAt(body, 0), init_Obj_Obj_ObjArr(body));
-            if (bodyContent != null && (message == null || update(message) == null || update(message).isBlank())) {
+            if (bodyContent != null && (message == null || componentText(message) == null || componentText(message).isBlank())) {
                message = bodyContent;
             }
 
@@ -3413,10 +3413,10 @@ public final class PacketInspectorEngine {
 
       if (packet instanceof ClientboundSetActionBarTextPacket overlayMessagePacket) {
          Object text = firstGetterValue(overlayMessagePacket, "text", "getText");
-         String message = update(text);
+         String message = componentText(text);
          if (message != null || text != null) {
-            builder.load("Kind: Overlay / HUD message", UiColorPalette.textBright());
-            builder.load("Message: " + (message == null ? poll(text) : open(poll(message))), message == null ? plainValueColor(text) : UiColorPalette.successText());
+            builder.line("Kind: Overlay / HUD message", UiColorPalette.textBright());
+            builder.line("Message: " + (message == null ? valueText(text) : quote(sanitize(message))), message == null ? plainValueColor(text) : UiColorPalette.successText());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3424,8 +3424,8 @@ public final class PacketInspectorEngine {
       if (packet instanceof ClientboundOpenBookPacket openWrittenBookPacket) {
          Object hand = firstGetterValue(openWrittenBookPacket, "getHand", "hand");
          if (hand != null) {
-            builder.load("Interaction: Open Written Book", UiColorPalette.textBright());
-            builder.load("Hand: " + describeValue(hand), UiColorPalette.textBright());
+            builder.line("Interaction: Open Written Book", UiColorPalette.textBright());
+            builder.line("Hand: " + describeValue(hand), UiColorPalette.textBright());
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3433,7 +3433,7 @@ public final class PacketInspectorEngine {
       if (packet instanceof ClientboundDisconnectPacket disconnectPacket) {
          Object reason = firstGetterValue(disconnectPacket, "reason", "getReason");
          if (reason != null) {
-            builder.load("Reason: " + poll(reason), plainValueColor(reason));
+            builder.line("Reason: " + valueText(reason), plainValueColor(reason));
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
@@ -3447,15 +3447,15 @@ public final class PacketInspectorEngine {
          Object onGround = firstGetterValue(playerMovePacket, "isOnGround", "onGround");
          if (x != null || y != null || z != null || yaw != null || pitch != null || onGround != null) {
             if (x != null || y != null || z != null) {
-               builder.load("Pos: x=" + describeValue(x) + ", y=" + describeValue(y) + ", z=" + describeValue(z), UiColorPalette.textBright());
+               builder.line("Pos: x=" + describeValue(x) + ", y=" + describeValue(y) + ", z=" + describeValue(z), UiColorPalette.textBright());
             }
 
             if (yaw != null || pitch != null) {
-               builder.load("Rot: yaw=" + describeValue(yaw) + ", pitch=" + describeValue(pitch), UiColorPalette.textBright());
+               builder.line("Rot: yaw=" + describeValue(yaw) + ", pitch=" + describeValue(pitch), UiColorPalette.textBright());
             }
 
             if (onGround != null) {
-               builder.load("On Ground: " + describeValue(onGround), UiColorPalette.textBright());
+               builder.line("On Ground: " + describeValue(onGround), UiColorPalette.textBright());
             }
 
             return new PacketInspectorEngine.PacketSummaryFlags(true, true);
@@ -3489,9 +3489,9 @@ public final class PacketInspectorEngine {
       if (!wroteAny) {
          String rawFallback = read_Str_Obj(root);
          if (rawFallback != null) {
-            builder.load("Raw: " + rawFallback, UiColorPalette.textMuted());
+            builder.line("Raw: " + rawFallback, UiColorPalette.textMuted());
          } else {
-            builder.load("<No readable fields>", UiColorPalette.textMuted());
+            builder.line("<No readable fields>", UiColorPalette.textMuted());
          }
       }
    }
@@ -3502,50 +3502,50 @@ public final class PacketInspectorEngine {
       try {
          dumpProperty(label, value, depth, indent, builder, visited);
       } catch (Throwable t) {
-         builder.load(indent + label + ": <error reading value: " + t.getClass().getSimpleName() + ">", UiColorPalette.errorText());
+         builder.line(indent + label + ": <error reading value: " + t.getClass().getSimpleName() + ">", UiColorPalette.errorText());
       }
    }
 
    private static void dumpProperty(String label, Object value, int depth, String indent, PacketInspectorEngine.ReportBuilder builder, IdentityHashMap<Object, Boolean> visited) {
       if (!builder.isTruncated()) {
          if (value == MISSING) {
-            builder.load(indent + label + ": <inaccessible>", UiColorPalette.textMuted());
+            builder.line(indent + label + ": <inaccessible>", UiColorPalette.textMuted());
          } else if (value == null) {
-            builder.load(indent + label + ": null", UiColorPalette.textMuted());
+            builder.line(indent + label + ": null", UiColorPalette.textMuted());
          } else if (depth >= 7) {
-            builder.load(indent + label + ": <max depth reached>", UiColorPalette.textMuted());
+            builder.line(indent + label + ": <max depth reached>", UiColorPalette.textMuted());
          } else {
             Class<?> valueClass = value.getClass();
             if (isSimpleValue(value)) {
-               builder.load(indent + label + ": " + formatLabeledValue(label, value), scalarValueColor(label, value));
+               builder.line(indent + label + ": " + formatLabeledValue(label, value), scalarValueColor(label, value));
             } else if (value instanceof Optional<?> optional) {
                if (optional.isEmpty()) {
-                  builder.load(indent + label + ": Optional.empty", UiColorPalette.textMuted());
+                  builder.line(indent + label + ": Optional.empty", UiColorPalette.textMuted());
                } else {
-                  builder.load(indent + label + ": Optional", UiColorPalette.textBody());
+                  builder.line(indent + label + ": Optional", UiColorPalette.textBody());
                   dumpProperty("value", optional.get(), depth + 1, builder, visited);
                }
             } else if (value instanceof BlockHitResult hit) {
-               builder.load(indent + label + ": BlockHitResult", UiColorPalette.textBody());
+               builder.line(indent + label + ": BlockHitResult", UiColorPalette.textBody());
                dumpProperty("blockPos", hit.getBlockPos(), depth + 1, builder, visited);
                dumpProperty("hitPos", hit.getLocation(), depth + 1, builder, visited);
                dumpProperty("side", hit.getDirection(), depth + 1, builder, visited);
                dumpProperty("type", hit.getType(), depth + 1, builder, visited);
                dumpProperty("insideBlock", hit.isInside(), depth + 1, builder, visited);
             } else if (value instanceof Map<?, ?> map) {
-               builder.load(indent + label + ": Map[" + map.size() + "]", UiColorPalette.textBody());
+               builder.line(indent + label + ": Map[" + map.size() + "]", UiColorPalette.textBody());
                int index = 0;
 
                for (Entry<?, ?> entry : map.entrySet()) {
                   if (index >= 64) {
-                     builder.load(indent + "  ... " + (map.size() - index) + " more entries", UiColorPalette.textMuted());
+                     builder.line(indent + "  ... " + (map.size() - index) + " more entries", UiColorPalette.textMuted());
                      return;
                   }
 
                   if (isSimpleValue(entry.getKey()) && isSimpleValue(entry.getValue())) {
-                     builder.load(indent + "  [" + index + "] " + formatValue(entry.getKey()) + " = " + formatValue(entry.getValue()), UiColorPalette.textBright());
+                     builder.line(indent + "  [" + index + "] " + formatValue(entry.getKey()) + " = " + formatValue(entry.getValue()), UiColorPalette.textBright());
                   } else {
-                     builder.load(indent + "  [" + index + "]", UiColorPalette.textBody());
+                     builder.line(indent + "  [" + index + "]", UiColorPalette.textBody());
                      dumpProperty("key", entry.getKey(), depth + 2, builder, visited);
                      dumpProperty("value", entry.getValue(), depth + 2, builder, visited);
                   }
@@ -3553,12 +3553,12 @@ public final class PacketInspectorEngine {
                   index++;
                }
             } else if (value instanceof Collection<?> collection) {
-               builder.load(indent + label + ": List[" + collection.size() + "]", UiColorPalette.textBody());
+               builder.line(indent + label + ": List[" + collection.size() + "]", UiColorPalette.textBody());
                int index = 0;
 
                for (Object item : collection) {
                   if (index >= 64) {
-                     builder.load(indent + "  ... " + (collection.size() - index) + " more entries", UiColorPalette.textMuted());
+                     builder.line(indent + "  ... " + (collection.size() - index) + " more entries", UiColorPalette.textMuted());
                      return;
                   }
 
@@ -3568,30 +3568,30 @@ public final class PacketInspectorEngine {
             } else if (valueClass.isArray()) {
                int length = Array.getLength(value);
                if (valueClass.getComponentType().isPrimitive()) {
-                  builder.load(indent + label + ": " + push(value), UiColorPalette.textBright());
+                  builder.line(indent + label + ": " + primitiveArrayText(value), UiColorPalette.textBright());
                } else {
-                  builder.load(indent + label + ": " + classLabel(valueClass) + "[" + length + "]", UiColorPalette.textBody());
+                  builder.line(indent + label + ": " + classLabel(valueClass) + "[" + length + "]", UiColorPalette.textBody());
 
                   for (int i = 0; i < Math.min(length, 64); i++) {
                      dumpProperty("[" + i + "]", Array.get(value, i), depth + 1, builder, visited);
                   }
 
                   if (length > 64) {
-                     builder.load(indent + "  ... " + (length - 64) + " more entries", UiColorPalette.textMuted());
+                     builder.line(indent + "  ... " + (length - 64) + " more entries", UiColorPalette.textMuted());
                   }
                }
             } else if (visited.containsKey(value)) {
-               builder.load(indent + label + ": <already shown " + classLabel(valueClass) + ">", UiColorPalette.textMuted());
+               builder.line(indent + label + ": <already shown " + classLabel(valueClass) + ">", UiColorPalette.textMuted());
             } else if (init_Z_Class(valueClass)) {
-               builder.load(indent + label + ": " + describeValue(value), scalarValueColor(label, value));
+               builder.line(indent + label + ": " + describeValue(value), scalarValueColor(label, value));
             } else {
                visited.put(value, Boolean.TRUE);
                List<PacketInspectorEngine.PropertyEntry> properties = properties(value);
                List<Field> fields = instanceFields(valueClass);
                if (properties.isEmpty() && fields.isEmpty()) {
-                  builder.load(indent + label + ": " + describeValue(value), scalarValueColor(label, value));
+                  builder.line(indent + label + ": " + describeValue(value), scalarValueColor(label, value));
                } else {
-                  builder.load(indent + label + ": " + classLabel(valueClass), UiColorPalette.textBody());
+                  builder.line(indent + label + ": " + classLabel(valueClass), UiColorPalette.textBody());
                   Set<String> consumedFieldNames = new LinkedHashSet<>();
 
                   for (PacketInspectorEngine.PropertyEntry property : properties) {
@@ -4000,7 +4000,7 @@ public final class PacketInspectorEngine {
          for (RecordComponent component : components) {
             Object value = invokeQuietly(component.getAccessor(), owner);
             if (value != null && value != MISSING && !isExcluded(value, excludedValues)) {
-               String text = update(value);
+               String text = componentText(value);
                if (text != null && !text.isBlank()) {
                   return value;
                }
@@ -4191,11 +4191,11 @@ public final class PacketInspectorEngine {
       } else if (value instanceof Number number && isEntityIdLabel(label)) {
          return describeEntityId(number.intValue());
       } else if (value instanceof String string) {
-         return open(poll(string));
+         return quote(sanitize(string));
       } else if (value instanceof Character c) {
-         return open(String.valueOf(c));
+         return quote(String.valueOf(c));
       } else if (value instanceof Component text) {
-         return open(poll(text.getString()));
+         return quote(sanitize(text.getString()));
       } else if (value instanceof Identifier id) {
          return id.toString();
       } else if (value instanceof UUID uuid) {
@@ -4213,7 +4213,7 @@ public final class PacketInspectorEngine {
       } else if (value instanceof ItemStack stack) {
          return describeStack(stack);
       } else if (value instanceof Tag nbt) {
-         return poll(nbt.asString().orElse(String.valueOf(nbt)));
+         return sanitize(nbt.asString().orElse(String.valueOf(nbt)));
       } else if (value instanceof BlockState state) {
          return describeBlockState(state);
       } else if (value instanceof Holder<?> entry) {
@@ -4221,7 +4221,7 @@ public final class PacketInspectorEngine {
       } else if (value instanceof BitSet bitSet) {
          return formatBitSet(bitSet);
       } else {
-         return value instanceof Class<?> clazz ? classLabel(clazz) : close(poll(String.valueOf(value)));
+         return value instanceof Class<?> clazz ? classLabel(clazz) : rewriteNames(sanitize(String.valueOf(value)));
       }
    }
 
@@ -4235,7 +4235,7 @@ public final class PacketInspectorEngine {
       }
 
       try {
-         return close(poll(String.valueOf(value)));
+         return rewriteNames(sanitize(String.valueOf(value)));
       } catch (Throwable ignored) {
          return "<unprintable " + classLabel(value.getClass()) + ">";
       }
@@ -4247,7 +4247,7 @@ public final class PacketInspectorEngine {
       }
 
       try {
-         String raw = close(poll(String.valueOf(value)));
+         String raw = rewriteNames(sanitize(String.valueOf(value)));
          if (raw != null && !raw.isBlank()) {
             return isDefaultObjectToString(raw) ? null : raw;
          } else {
@@ -4332,7 +4332,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String update(Object value) {
+   private static String componentText(Object value) {
       if (value == null || value == MISSING) {
          return null;
       } else if (value instanceof Component text) {
@@ -4340,7 +4340,7 @@ public final class PacketInspectorEngine {
       } else if (value instanceof String string) {
          return string;
       } else if (value instanceof Optional<?> optional) {
-         return optional.<String>map(PacketInspectorEngine::update).orElse(null);
+         return optional.<String>map(PacketInspectorEngine::componentText).orElse(null);
       } else if (value instanceof String[] array) {
          return String.join(" | ", array);
       } else {
@@ -4358,13 +4358,13 @@ public final class PacketInspectorEngine {
       int index = 0;
 
       for (Object page : pages) {
-         String text = update(page);
+         String text = componentText(page);
          if ((text == null || text.isBlank()) && page != null) {
             text = describeValue(page);
          }
 
          if (text != null && !text.isBlank()) {
-            previews.add("p" + (index + 1) + "=" + open(poll(text)));
+            previews.add("p" + (index + 1) + "=" + quote(sanitize(text)));
          }
 
          index++;
@@ -4382,7 +4382,7 @@ public final class PacketInspectorEngine {
       for (int i = 0; i < lines.length; i++) {
          String line = lines[i] == null ? "" : lines[i].trim();
          if (!line.isEmpty()) {
-            parts.add("L" + (i + 1) + "=" + open(poll(line)));
+            parts.add("L" + (i + 1) + "=" + quote(sanitize(line)));
          }
       }
 
@@ -4395,51 +4395,51 @@ public final class PacketInspectorEngine {
       boolean wrote = false;
       boolean informative = false;
       if (kind != null && !kind.isBlank()) {
-         builder.load("Kind: " + kind, scalarValueColor("Kind", kind));
+         builder.line("Kind: " + kind, scalarValueColor("Kind", kind));
          wrote = true;
       }
 
-      String chatType = flush(parameters);
+      String chatType = chatTypeName(parameters);
       if (chatType != null && !chatType.isBlank()) {
-         builder.load("Chat Type: " + chatType, scalarValueColor("Chat Type", chatType));
+         builder.line("Chat Type: " + chatType, scalarValueColor("Chat Type", chatType));
          wrote = true;
          informative = true;
       }
 
       String sender = init_Str_Obj_UUID(parameters, senderUuid);
       if (sender != null && !sender.isBlank()) {
-         builder.load("Sender: " + sender, scalarValueColor("Sender", sender));
+         builder.line("Sender: " + sender, scalarValueColor("Sender", sender));
          wrote = true;
          informative = true;
       }
 
-      String target = sync(parameters);
+      String target = chatTargetName(parameters);
       if (target != null && !target.isBlank()) {
-         builder.load("Target: " + target, scalarValueColor("Target", target));
+         builder.line("Target: " + target, scalarValueColor("Target", target));
          wrote = true;
          informative = true;
       }
 
-      String message = update(messageValue);
+      String message = componentText(messageValue);
       if (message != null && !message.isBlank()) {
-         builder.load("Message: " + open(poll(message)), scalarValueColor("Message", message));
+         builder.line("Message: " + quote(sanitize(message)), scalarValueColor("Message", message));
          wrote = true;
          informative = true;
       } else if (messageValue != null) {
-         builder.load("Message: " + poll(messageValue), labeledValueColor("Message", messageValue));
+         builder.line("Message: " + valueText(messageValue), labeledValueColor("Message", messageValue));
          wrote = true;
          informative = true;
       }
 
       if (timestampValue != null) {
-         builder.load("Timestamp: " + describeValue(timestampValue), scalarValueColor("Timestamp", timestampValue));
+         builder.line("Timestamp: " + describeValue(timestampValue), scalarValueColor("Timestamp", timestampValue));
          wrote = true;
          informative = true;
       }
 
-      String filter = close(filterMask);
+      String filter = filterMaskText(filterMask);
       if (filter != null) {
-         builder.load("Filter: " + filter, scalarValueColor("Filter", filter));
+         builder.line("Filter: " + filter, scalarValueColor("Filter", filter));
          wrote = true;
          informative = true;
       }
@@ -4448,7 +4448,7 @@ public final class PacketInspectorEngine {
    }
 
    private static String init_Str_Obj_UUID(Object parameters, UUID senderUuid) {
-      String senderName = update(
+      String senderName = componentText(
          firstPresent(
             callGetter(parameters, "name"),
             recordComponentAt(parameters, 1),
@@ -4460,23 +4460,23 @@ public final class PacketInspectorEngine {
       }
 
       if (senderName != null && !senderName.isBlank()) {
-         return senderUuid == null ? poll(senderName) : poll(senderName) + " (" + senderUuid + ")";
+         return senderUuid == null ? sanitize(senderName) : sanitize(senderName) + " (" + senderUuid + ")";
       } else {
          return senderUuid == null ? null : senderUuid.toString();
       }
    }
 
-   private static String sync(Object parameters) {
-      String targetName = update(firstPresent(callGetter(parameters, "targetName"), recordComponentAt(parameters, 2)));
-      return targetName != null && !targetName.isBlank() ? poll(targetName) : null;
+   private static String chatTargetName(Object parameters) {
+      String targetName = componentText(firstPresent(callGetter(parameters, "targetName"), recordComponentAt(parameters, 2)));
+      return targetName != null && !targetName.isBlank() ? sanitize(targetName) : null;
    }
 
-   private static String flush(Object parameters) {
+   private static String chatTypeName(Object parameters) {
       Object type = firstPresent(callGetter(parameters, "type"), recordComponentAt(parameters, 0));
       return type == null ? null : describeValue(type);
    }
 
-   private static String close(Object filterMask) {
+   private static String filterMaskText(Object filterMask) {
       if (filterMask == null) {
          return null;
       }
@@ -4499,7 +4499,7 @@ public final class PacketInspectorEngine {
          if (MC.getConnection() != null) {
             PlayerInfo entry = MC.getConnection().getPlayerInfo(uuid);
             if (entry != null && entry.getProfile() != null) {
-               String profileName = update(entry.getProfile());
+               String profileName = componentText(entry.getProfile());
                if (profileName != null && !profileName.isBlank()) {
                   return profileName;
                }
@@ -4512,7 +4512,7 @@ public final class PacketInspectorEngine {
          if (MC.level != null) {
             for (AbstractClientPlayer player : MC.level.players()) {
                if (uuid.equals(player.getUUID()) && player.getGameProfile() != null) {
-                  String profileName = update(player.getGameProfile());
+                  String profileName = componentText(player.getGameProfile());
                   if (profileName != null && !profileName.isBlank()) {
                      return profileName;
                   }
@@ -4557,11 +4557,11 @@ public final class PacketInspectorEngine {
    private static String describeEntity(Entity entity) {
       String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
       String name = entity.getDisplayName() == null ? "" : entity.getDisplayName().getString();
-      return typeId + " #" + entity.getId() + " [" + poll(name) + "] @" + formatVec(new Vec3(entity.getX(), entity.getY(), entity.getZ()));
+      return typeId + " #" + entity.getId() + " [" + sanitize(name) + "] @" + formatVec(new Vec3(entity.getX(), entity.getY(), entity.getZ()));
    }
 
    private static void appendEntity(PacketInspectorEngine.ReportBuilder builder, String label, int entityId) {
-      builder.load(label + ": " + describeEntityId(entityId), UiColorPalette.cyan());
+      builder.line(label + ": " + describeEntityId(entityId), UiColorPalette.cyan());
    }
 
    private static String describeEntityId(int entityId) {
@@ -4569,7 +4569,7 @@ public final class PacketInspectorEngine {
       return entity != null ? entityId + " -> " + describeEntity(entity) : entityId + " (entity not loaded in client world)";
    }
 
-   private static String open(Object ids) {
+   private static String entityIdList(Object ids) {
       if (ids != null && ids != MISSING) {
          List<String> parts = new ArrayList<>();
          int total = 0;
@@ -4591,14 +4591,14 @@ public final class PacketInspectorEngine {
                if (id instanceof Number number) {
                   parts.add(describeEntityId(number.intValue()));
                } else {
-                  parts.add(poll(id));
+                  parts.add(valueText(id));
                }
 
                shown++;
             }
          } else {
             if (!ids.getClass().isArray()) {
-               return poll(ids);
+               return valueText(ids);
             }
 
             int length = Array.getLength(ids);
@@ -4606,7 +4606,7 @@ public final class PacketInspectorEngine {
 
             for (int i = 0; i < Math.min(length, 8); i++) {
                Object id = Array.get(ids, i);
-               parts.add(id instanceof Number number ? describeEntityId(number.intValue()) : poll(id));
+               parts.add(id instanceof Number number ? describeEntityId(number.intValue()) : valueText(id));
             }
          }
 
@@ -4633,7 +4633,7 @@ public final class PacketInspectorEngine {
             break;
          }
 
-         parts.add(poll(item));
+         parts.add(valueText(item));
          shown++;
       }
 
@@ -4683,14 +4683,14 @@ public final class PacketInspectorEngine {
       String name = stack.getHoverName() == null ? "" : stack.getHoverName().getString();
       String display = itemId;
       if (!name.isEmpty() && !Objects.equals(name, stack.getItem().getName(stack).getString())) {
-         display = display + " [" + poll(name) + "]";
+         display = display + " [" + sanitize(name) + "]";
       }
 
       return stack.getCount() + "x " + display;
    }
 
    private static String describeBlockState(BlockState state) {
-      return BuiltInRegistries.BLOCK.getKey(state.getBlock()) + " " + poll(state.toString());
+      return BuiltInRegistries.BLOCK.getKey(state.getBlock()) + " " + sanitize(state.toString());
    }
 
    private static String formatPos(BlockPos pos) {
@@ -4727,7 +4727,7 @@ public final class PacketInspectorEngine {
       try {
          Optional<?> key = entry.unwrapKey();
          if (key.isPresent()) {
-            return poll(String.valueOf(key.get()));
+            return sanitize(String.valueOf(key.get()));
          }
       } catch (Throwable var3) {
       }
@@ -4735,15 +4735,15 @@ public final class PacketInspectorEngine {
       try {
          Object value = callGetter(entry, "value");
          if (value != null) {
-            return poll(String.valueOf(value));
+            return sanitize(String.valueOf(value));
          }
       } catch (Throwable var2) {
       }
 
-      return poll(String.valueOf(entry));
+      return sanitize(String.valueOf(entry));
    }
 
-   private static String poll(Object value) {
+   private static String valueText(Object value) {
       return load_Str_Str_Obj("", value);
    }
 
@@ -4920,7 +4920,7 @@ public final class PacketInspectorEngine {
       return capture;
    }
 
-   private static String push(Object array) {
+   private static String primitiveArrayText(Object array) {
       int length = Array.getLength(array);
       StringBuilder builder = new StringBuilder();
       builder.append(array.getClass().getComponentType().getSimpleName()).append('[').append(length).append("] ");
@@ -5005,7 +5005,7 @@ public final class PacketInspectorEngine {
                break;
             }
 
-            String summary = pop(entry);
+            String summary = slotEntrySummary(entry);
             if (summary != null && !summary.isBlank()) {
                parts.add(summary);
                shown++;
@@ -5018,7 +5018,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String pop(Object entry) {
+   private static String slotEntrySummary(Object entry) {
       if (entry == null) {
          return null;
       }
@@ -5030,15 +5030,15 @@ public final class PacketInspectorEngine {
          firstGetterValue(entry, "getSecond", "second", "stack", "getStack"), recordComponentAt(entry, 1), fieldValue(entry, "second")
       );
       if (slot == null && stack == null) {
-         return poll(entry);
+         return valueText(entry);
       }
 
       String slotComponent = slot == null ? "Unknown Slot" : describeValue(slot);
-      String stackComponent = stack instanceof ItemStack itemStack ? describeStack(itemStack) : poll(stack);
+      String stackComponent = stack instanceof ItemStack itemStack ? describeStack(itemStack) : valueText(stack);
       return slotComponent + "=" + stackComponent;
    }
 
-   private static String close(String raw) {
+   private static String rewriteNames(String raw) {
       if (raw != null && !raw.isBlank()) {
          String rewritten = rewriteIntermediary(raw, INTERMEDIARY_QUALIFIED_NAME, true);
          return rewriteIntermediary(rewritten, INTERMEDIARY_SIMPLE_NAME, false);
@@ -5069,11 +5069,11 @@ public final class PacketInspectorEngine {
       return buffer.toString();
    }
 
-   private static String open(String value) {
+   private static String quote(String value) {
       return "\"" + value + "\"";
    }
 
-   private static String poll(String value) {
+   private static String sanitize(String value) {
       if (value == null) {
          return "";
       }
@@ -5106,7 +5106,7 @@ public final class PacketInspectorEngine {
          this.init_Str = label;
       }
 
-      String init() {
+      String label() {
          return this.init_Str;
       }
    }
@@ -5121,11 +5121,11 @@ public final class PacketInspectorEngine {
          this.title = title;
       }
 
-      void init(String title, int color) {
-         this.load("[" + title + "]", color);
+      void section(String title, int color) {
+         this.line("[" + title + "]", color);
       }
 
-      void load(String text, int color) {
+      void line(String text, int color) {
          if (!this.truncated) {
             if (this.lines.size() >= 900) {
                this.truncated = true;
@@ -5139,13 +5139,13 @@ public final class PacketInspectorEngine {
       }
 
       void blankLine() {
-         this.load("", UiColorPalette.textBright());
+         this.line("", UiColorPalette.textBright());
       }
 
-      void init(PacketInspectorEngine.ReportBuilder other) {
+      void append(PacketInspectorEngine.ReportBuilder other) {
          if (other != null) {
             for (PacketInspectorEngine.ColoredLine line : other.lines) {
-               this.load(line.text(), line.color());
+               this.line(line.text(), line.color());
             }
          }
       }
@@ -5172,12 +5172,12 @@ public final class PacketInspectorEngine {
    public static final class InspectionReport {
       private final String title;
       private final List<PacketInspectorEngine.ColoredLine> lines;
-      private final String load;
+      private final String copyText;
 
       private InspectionReport(String title, List<PacketInspectorEngine.ColoredLine> lines, String copyText) {
          this.title = title;
          this.lines = Collections.unmodifiableList(lines);
-         this.load = copyText;
+         this.copyText = copyText;
       }
 
       public String title() {
@@ -5189,7 +5189,7 @@ public final class PacketInspectorEngine {
       }
 
       public String load() {
-         return this.load;
+         return this.copyText;
       }
    }
 
@@ -5251,7 +5251,7 @@ public final class PacketInspectorEngine {
          return this.position;
       }
 
-      void init(int position) {
+      void seek(int position) {
          this.position = Math.max(0, Math.min(this.bytes.length, position));
       }
 

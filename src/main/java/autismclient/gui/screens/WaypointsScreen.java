@@ -47,9 +47,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private final List<String> load_List = new ArrayList<>();
    private ThemedTextInputBox nameInput;
    private ThemedTextInputBox hexInput;
-   private int get;
+   private int listScroll;
    private boolean draggingScrollbar;
-   private int set;
+   private int scrollbarGrabOffset;
    private String colorEditName;
    private String focusedName;
    private boolean load_Z;
@@ -89,25 +89,25 @@ public class WaypointsScreen extends VirtualScaledScreen {
          this.colorPanel = null;
          this.load_List.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
-         int x = this.get();
-         int y = this.set();
-         int panelW = this.put();
-         int panelH = this.add();
+         int x = this.panelX();
+         int y = this.panelY();
+         int panelW = this.panelWidth();
+         int panelH = this.panelHeight();
          this.ensureNameInput();
          this.layoutNameInput();
          this.syncNameInputs();
          this.init_V_GuiGraphicsExtract_7(graphics, x, y, panelW, panelH, mx, my);
-         if (panelW < 180 || this.run() < this.rowHeight()) {
-            this.init(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight() + 4, 12), labelTextColor(), Math.max(0, panelW - 8));
+         if (panelW < 180 || this.listHeight() < this.rowHeight()) {
+            this.drawTrimmed(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight() + 4, 12), labelTextColor(), Math.max(0, panelW - 8));
             return;
          }
 
          int ctl = this.controlHeight();
          int fieldX = x + 4;
-         int fieldY = this.push();
+         int fieldY = this.nameFieldY();
          this.nameInput.render(graphics, mx, my, delta);
          int addW = this.addButtonWidth();
-         this.init(
+         this.renderToneButton(
             graphics,
             "Add",
             x + panelW - 4 - addW,
@@ -124,19 +124,19 @@ public class WaypointsScreen extends VirtualScaledScreen {
          String scopeLabel = "unknown".equals(this.scope)
             ? "Scope: unknown (join a server or world)"
             : "Scope: " + AuditWaypointScope.display(this.scope);
-         this.init(graphics, scopeLabel, fieldX, this.centeredTextY(scopeY, 12), labelTextColor(), panelW - 8);
+         this.drawTrimmed(graphics, scopeLabel, fieldX, this.centeredTextY(scopeY, 12), labelTextColor(), panelW - 8);
          if (this.colorEditName != null) {
             this.renderColorPanel(graphics, fieldX, scopeY + 12 + 2, panelW - 8, delta, mx, my);
          }
 
          int listY = this.listTop();
-         int listH = this.run();
+         int listH = this.listHeight();
          autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.listLayout(listY, listH);
-         this.load(graphics, fieldX, listY, panelW - 8, listH, -1442248437, THEME.set());
+         this.drawBox(graphics, fieldX, listY, panelW - 8, listH, -1442248437, THEME.set());
          listLayout.pushContentClip(graphics);
 
          try {
-            this.init(graphics, listLayout, delta, mx, my);
+            this.renderList(graphics, listLayout, delta, mx, my);
          } finally {
             listLayout.popContentClip(graphics);
          }
@@ -147,14 +147,14 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, float delta, int mx, int my) {
+   private void renderList(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, float delta, int mx, int my) {
       List<AutismWaypoints.Waypoint> rows = this.waypointRows();
-      this.get = this.clamp(this.get, 0, layout.maxScroll());
+      this.listScroll = this.clamp(this.listScroll, 0, layout.maxScroll());
       int x = layout.x() + layout.contentInset();
       int w = layout.contentWidth();
       int rowH = this.rowHeight();
       if (rows.isEmpty()) {
-         this.init(graphics, "No waypoints for this scope.", x + 4, this.centeredTextY(layout.y() + layout.contentInset(), rowH), labelTextColor(), w - 8);
+         this.drawTrimmed(graphics, "No waypoints for this scope.", x + 4, this.centeredTextY(layout.y() + layout.contentInset(), rowH), labelTextColor(), w - 8);
       } else {
          int del = rowH - 2;
          layout.forEachVisibleRow(
@@ -186,7 +186,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
                int delX = x + w - 2 - del;
                int delY = rowY + (rowH - del) / 2;
                int coordsX = nameX + 120 + 8;
-               this.init(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.centeredTextY(rowY, rowH), labelTextColor(), delX - 4 - coordsX);
+               this.drawTrimmed(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.centeredTextY(rowY, rowH), labelTextColor(), delX - 4 - coordsX);
                autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, delX, delY, del, del, over);
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.ROW, x, rowY, w, rowH, waypoint.name()));
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
@@ -197,9 +197,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private void renderColorPanel(GuiGraphicsExtractor graphics, int x, int y, int w, float delta, int mx, int my) {
-      int ph = this.poll();
+      int ph = this.colorPanelHeight();
       this.colorPanel = autismclient.gui.f.NetHelper.init(x, y, w, ph);
-      this.load(graphics, x, y, w, ph, -301266162, THEME.set());
+      this.drawBox(graphics, x, y, w, ph, -301266162, THEME.set());
       int current = AutismWaypoints.getInstance().colorOf(this.scope, this.colorEditName, defaultWaypointColor());
       int swatchY = y + 4;
       int swatchX = x + 4;
@@ -230,10 +230,10 @@ public class WaypointsScreen extends VirtualScaledScreen {
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(previewX, hexY, 18, ctl), current);
       autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(previewX, hexY, 18, ctl), THEME.set());
       int hintX = previewX + 18 + 8;
-      this.init(graphics, "# hex applies live", hintX, this.centeredTextY(hexY, ctl), labelTextColor(), x + w - hintX - 4);
+      this.drawTrimmed(graphics, "# hex applies live", hintX, this.centeredTextY(hexY, ctl), labelTextColor(), x + w - hintX - 4);
    }
 
-   private void init(
+   private void renderToneButton(
       GuiGraphicsExtractor graphics,
       String label,
       int x,
@@ -276,8 +276,8 @@ public class WaypointsScreen extends VirtualScaledScreen {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
       if (metrics.isScrollable() && metrics.containsTrack(mx, my)) {
          this.draggingScrollbar = true;
-         this.set = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
-         this.get = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.set));
+         this.scrollbarGrabOffset = metrics.containsThumb(mx, my) ? my - metrics.thumbY() : metrics.thumbHeight() / 2;
+         this.listScroll = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(metrics, my, this.scrollbarGrabOffset));
          return true;
       }
 
@@ -295,14 +295,14 @@ public class WaypointsScreen extends VirtualScaledScreen {
       for (String name : this.load_List) {
          ThemedTextInputBox rowField = this.renameInputs.get(name);
          if (rowField != null && rowField.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
-            this.read(name);
+            this.beginRename(name);
             return true;
          }
       }
 
       for (int i = this.init_List.size() - 1; i >= 0; i--) {
          WaypointsScreen.Inner_DataUtil hit = this.init_List.get(i);
-         if (hit.init(mx, my)
+         if (hit.contains(mx, my)
             && (
                hit.type != WaypointsScreen.Inner_StreamUtil.REMOVE
                      && hit.type != WaypointsScreen.Inner_StreamUtil.SWATCH
@@ -314,16 +314,16 @@ public class WaypointsScreen extends VirtualScaledScreen {
                   this.addCurrentWaypoint();
                   break;
                case SWATCH:
-                  this.write(hit.value);
+                  this.openColorEditor(hit.value);
                   break;
                case PRESET:
-                  this.update(hit.value);
+                  this.applyPresetColor(hit.value);
                   break;
                case REMOVE:
                   this.init_V_Str_10(hit.value);
                   break;
                case ROW:
-                  this.load(hit.value);
+                  this.copyCoordinates(hit.value);
                   break;
                case CLOSE:
                   this.onClose();
@@ -350,8 +350,8 @@ public class WaypointsScreen extends VirtualScaledScreen {
          return true;
       }
 
-      this.get = this.get + (scrollY < 0.0 ? this.rowPitch() : -this.rowPitch());
-      this.get = this.clamp(this.get, 0, this.scrollbarMetrics().maxScroll());
+      this.listScroll = this.listScroll + (scrollY < 0.0 ? this.rowPitch() : -this.rowPitch());
+      this.listScroll = this.clamp(this.listScroll, 0, this.scrollbarMetrics().maxScroll());
       return true;
    }
 
@@ -391,7 +391,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          return true;
       }
 
-      this.get = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), my, this.set));
+      this.listScroll = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), my, this.scrollbarGrabOffset));
       return true;
    }
 
@@ -461,7 +461,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             int y = (int)Math.floor(this.minecraft.player.getY());
             int z = (int)Math.floor(this.minecraft.player.getZ());
             store.init(this.scope, new AutismWaypoints.Waypoint(name, x, y, z, defaultWaypointColor(), System.currentTimeMillis()));
-            this.flush("");
+            this.setNameInput("");
             this.clampScroll();
          } else {
             bi.read("Join a world to add a waypoint here.");
@@ -482,7 +482,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       this.clampScroll();
    }
 
-   private void load(String name) {
+   private void copyCoordinates(String name) {
       for (AutismWaypoints.Waypoint waypoint : this.waypointRows()) {
          if (waypoint.name().equals(name)) {
             String coords = waypoint.x() + " " + waypoint.y() + " " + waypoint.z();
@@ -518,7 +518,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       this.renameInputs.putAll(alive);
    }
 
-   private void read(String name) {
+   private void beginRename(String name) {
       if (this.focusedName != null && !this.focusedName.equals(name)) {
          this.commitRename();
       }
@@ -579,7 +579,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return mx >= field.getX() && mx < field.getX() + field.getWidth() && my >= field.getY() && my < field.getY() + field.getHeight();
    }
 
-   private void write(String name) {
+   private void openColorEditor(String name) {
       this.colorEditName = name;
       this.load_Z = true;
 
@@ -601,7 +601,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void update(String hexIndex) {
+   private void applyPresetColor(String hexIndex) {
       if (this.colorEditName != null) {
          int index;
          try {
@@ -623,7 +623,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void sync(String raw) {
+   private void onHexChanged(String raw) {
       if (!this.load_Z && this.colorEditName != null) {
          Integer color = parseHexColor(raw);
          if (color != null) {
@@ -699,15 +699,15 @@ public class WaypointsScreen extends VirtualScaledScreen {
                return true;
             }
          });
-         this.hexInput.setChangedListener(this::sync);
+         this.hexInput.setChangedListener(this::onHexChanged);
       }
    }
 
    private void layoutNameInput() {
       if (this.nameInput != null) {
-         this.nameInput.setX(this.get() + 4);
-         this.nameInput.setY(this.push());
-         this.nameInput.setWidth(Math.max(40, this.put() - this.addButtonWidth() - 8 - 2));
+         this.nameInput.setX(this.panelX() + 4);
+         this.nameInput.setY(this.nameFieldY());
+         this.nameInput.setWidth(Math.max(40, this.panelWidth() - this.addButtonWidth() - 8 - 2));
          this.nameInput.setHeight(this.controlHeight());
       }
    }
@@ -720,7 +720,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return this.nameInput == null ? "" : this.nameInput.getValue();
    }
 
-   private void flush(String value) {
+   private void setNameInput(String value) {
       this.ensureNameInput();
       this.nameInput.setValue(value == null ? "" : value);
       this.nameInput.setSelectionEnd(this.nameInput.getValue().length());
@@ -742,39 +742,39 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return this.rowHeight() + 2;
    }
 
-   private int poll() {
+   private int colorPanelHeight() {
       return 18 + this.controlHeight() + 4;
    }
 
-   private int push() {
-      return this.set() + this.headerHeight() + 4;
+   private int nameFieldY() {
+      return this.panelY() + this.headerHeight() + 4;
    }
 
-   private int pop() {
+   private int listTopOffset() {
       int y = this.headerHeight() + 4 + this.controlHeight() + 2 + 12 + 2;
-      return this.colorEditName != null ? y + this.poll() + 2 : y;
+      return this.colorEditName != null ? y + this.colorPanelHeight() + 2 : y;
    }
 
    private int listTop() {
-      return this.set() + this.pop();
+      return this.panelY() + this.listTopOffset();
    }
 
-   private int run() {
-      return Math.max(1, this.set() + this.add() - 4 - this.listTop());
+   private int listHeight() {
+      return Math.max(1, this.panelY() + this.panelHeight() - 4 - this.listTop());
    }
 
    private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout(int listY, int listH) {
       return autismclient.gui.ui.widgets.ScrollListLayout.compute(
-         this.get() + 4, listY, this.put() - 8, listH, this.waypointRows().size(), this.rowHeight(), this.rowPitch(), this.get, 4, 8, 2, 6, false
+         this.panelX() + 4, listY, this.panelWidth() - 8, listH, this.waypointRows().size(), this.rowHeight(), this.rowPitch(), this.listScroll, 4, 8, 2, 6, false
       );
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
-      return this.listLayout(this.listTop(), this.run()).scrollbar();
+      return this.listLayout(this.listTop(), this.listHeight()).scrollbar();
    }
 
    private boolean isOverList(int mx, int my) {
-      autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.listLayout(this.listTop(), this.run());
+      autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.listLayout(this.listTop(), this.listHeight());
       return mx >= listLayout.x() + listLayout.contentInset()
          && mx < listLayout.x() + listLayout.contentInset() + listLayout.contentWidth()
          && my >= listLayout.y() + listLayout.contentInset()
@@ -782,7 +782,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private void clampScroll() {
-      this.get = this.clamp(this.get, 0, this.scrollbarMetrics().maxScroll());
+      this.listScroll = this.clamp(this.listScroll, 0, this.scrollbarMetrics().maxScroll());
    }
 
    private int snapToRow(int offset) {
@@ -793,26 +793,26 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return Math.max(min, Math.min(max, value));
    }
 
-   private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.put(), 6);
+   private int panelX() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.panelWidth(), 6);
    }
 
-   private int set() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.add(), 6);
+   private int panelY() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.panelHeight(), 6);
    }
 
-   private int put() {
+   private int panelWidth() {
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 340);
    }
 
-   private int add() {
+   private int panelHeight() {
       int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int shown = Math.max(3, Math.min(cap, this.waypointRows().size()));
-      int content = this.pop() + shown * this.rowPitch() + 4 + 4;
+      int content = this.listTopOffset() + shown * this.rowPitch() + 4 + 4;
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, content);
    }
 
-   private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {
+   private void drawBox(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {
       autismclient.gui.f.PacketUtil.init(
          graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ThemePaletteManager.recolor(-1721357268, ThemePaletteManager.ColorRole.OUTLINE)
       );
@@ -822,7 +822,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
+   private void drawTrimmed(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
       String display = autismclient.gui.f.b.k.init(
          this.font, text == null ? "" : text, Math.max(0, maxWidth), THEME.init_Identifier_l(l.read), color
       );
@@ -830,7 +830,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private record Inner_DataUtil(WaypointsScreen.Inner_StreamUtil type, int x, int load, int read, int write, String value) {
-      boolean init(int mx, int my) {
+      boolean contains(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }

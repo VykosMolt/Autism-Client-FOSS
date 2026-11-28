@@ -12,7 +12,7 @@ public class WaitForLanStepAction implements MacroAction {
    public int defaultStep = 1;
    public List<WaitForLanStepAction.Inner_DataUtil> entries = new ArrayList<>();
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public MacroActionType getType() {
@@ -44,12 +44,12 @@ public class WaitForLanStepAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -58,7 +58,7 @@ public class WaitForLanStepAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putBoolean("filterByUser", this.filterByUser);
       tag.putInt("defaultStep", this.defaultStep);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListTag list = new ListTag();
 
       for (WaitForLanStepAction.Inner_DataUtil entry : this.entries) {
@@ -75,7 +75,7 @@ public class WaitForLanStepAction implements MacroAction {
       this.filterByUser = tag.getBooleanOr("filterByUser", false);
       this.defaultStep = tag.getIntOr("defaultStep", 1);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -83,7 +83,7 @@ public class WaitForLanStepAction implements MacroAction {
       if (tag.contains("entries")) {
          for (Tag el : tag.getList("entries").orElse(new ListTag())) {
             if (el instanceof CompoundTag c) {
-               this.entries.add(WaitForLanStepAction.Inner_DataUtil.init(c));
+               this.entries.add(WaitForLanStepAction.Inner_DataUtil.fromTag(c));
             }
          }
       }
@@ -108,7 +108,7 @@ public class WaitForLanStepAction implements MacroAction {
          return tag;
       }
 
-      public static WaitForLanStepAction.Inner_DataUtil init(CompoundTag tag) {
+      public static WaitForLanStepAction.Inner_DataUtil fromTag(CompoundTag tag) {
          WaitForLanStepAction.Inner_DataUtil e = new WaitForLanStepAction.Inner_DataUtil();
          e.username = tag.getStringOr("username", "");
          e.step = tag.getIntOr("step", 1);

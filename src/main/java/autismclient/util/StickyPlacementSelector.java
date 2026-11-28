@@ -7,12 +7,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 
 public final class StickyPlacementSelector {
-   private StickyPlacementSelector.Inner_DataUtil init;
+   private StickyPlacementSelector.Inner_DataUtil stickyKey;
 
    public <T> int init(List<T> options, Function<T, BlockPlacementPlanner.SupportCandidate> option) {
-      if (this.init != null) {
+      if (this.stickyKey != null) {
          for (int i = 0; i < options.size(); i++) {
-            if (this.init.equals(StickyPlacementSelector.Inner_DataUtil.init(option.apply(options.get(i))))) {
+            if (this.stickyKey.equals(StickyPlacementSelector.Inner_DataUtil.of(option.apply(options.get(i))))) {
                return i;
             }
          }
@@ -22,15 +22,15 @@ public final class StickyPlacementSelector {
    }
 
    public void init(BlockPlacementPlanner.SupportCandidate option) {
-      this.init = StickyPlacementSelector.Inner_DataUtil.init(option);
+      this.stickyKey = StickyPlacementSelector.Inner_DataUtil.of(option);
    }
 
    public void init() {
-      this.init = null;
+      this.stickyKey = null;
    }
 
    private record Inner_DataUtil(BlockPos init_BlockPos, BlockPos load, Direction init_Direction, AABB init_AABB) {
-      static StickyPlacementSelector.Inner_DataUtil init(BlockPlacementPlanner.SupportCandidate option) {
+      static StickyPlacementSelector.Inner_DataUtil of(BlockPlacementPlanner.SupportCandidate option) {
          return new StickyPlacementSelector.Inner_DataUtil(option.targetCell().immutable(), option.supportPos().immutable(), option.face(), option.faceRect());
       }
    }

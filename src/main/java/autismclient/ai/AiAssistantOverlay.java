@@ -14,8 +14,8 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow {
    private static final int flush_I = 4;
    private static final int close_I = 2;
-   private static final int open = 360;
-   private static final int poll = 240;
+   private static final int DEFAULT_WIDTH = 360;
+   private static final int DEFAULT_HEIGHT = 240;
    private static final Map<String, String> EFFORT_LABELS = Map.of("low", "Low", "medium", "Med", "high", "High", "max", "Max");
    private final AiService service;
    private final AiViewState viewState;
@@ -36,8 +36,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private boolean flush_Z;
    private double dragOffsetX;
    private double dragOffsetY;
-   private int push;
-   private int pop;
+   private int contextMenuX;
+   private int contextMenuY;
 
    AiAssistantOverlay(AiService service) {
       super("ai-assistant", 360, 240);
@@ -51,7 +51,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.settingsView = new AiSettingsView(service, this.viewState, this);
       this.memoryView = new AiMemoryView(service, this.viewState, this);
       this.pinned = service.getSettings().pinned;
-      this.renameInput.setOnSubmit(text -> this.clear());
+      this.renameInput.setOnSubmit(text -> this.commitRename());
       List<autismclient.gui.ui.widgets.TextInputWidget> all = new ArrayList<>(
          List.of(
             this.chatView.input,
@@ -128,11 +128,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    void showSettings() {
-      this.init(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
+      this.switchTab(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
    }
 
    void showMemory() {
-      this.init(AiAssistantOverlay.Inner_DataUtil.MEMORY);
+      this.switchTab(AiAssistantOverlay.Inner_DataUtil.MEMORY);
    }
 
    void write_V() {
@@ -140,11 +140,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    int read_I() {
-      return this.push;
+      return this.contextMenuX;
    }
 
    int write_I() {
-      return this.pop;
+      return this.contextMenuY;
    }
 
    void init(autismclient.gui.ui.widgets.TextInputWidget field) {
@@ -158,7 +158,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    void init(String id) {
-      this.contextMenu.init(this.push, this.pop, id);
+      this.contextMenu.init(this.contextMenuX, this.contextMenuY, id);
    }
 
    void openAction(String action, String query) {
@@ -199,26 +199,26 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.chatView.setAttachmentsEnabled("attachments".equals(name));
       switch (name == null ? "" : name) {
          case "settings":
-            this.init(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
+            this.switchTab(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
             break;
          case "memory":
-            this.init(AiAssistantOverlay.Inner_DataUtil.MEMORY);
+            this.switchTab(AiAssistantOverlay.Inner_DataUtil.MEMORY);
             break;
          case "sessions":
-            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
+            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
             if (!this.sessionsDrawer.open) {
                this.sessionsDrawer.toggle();
             }
             break;
          default:
-            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
+            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
             this.sessionsDrawer.load();
       }
 
       this.viewState.invalidate();
    }
 
-   private void init(AiAssistantOverlay.Inner_DataUtil next) {
+   private void switchTab(AiAssistantOverlay.Inner_DataUtil next) {
       if (next != this.tab) {
          for (autismclient.gui.ui.widgets.TextInputWidget field : this.inputs) {
             field.setFocused(false);
@@ -245,9 +245,9 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
    }
 
-   private void put() {
+   private void toggleSessions() {
       if (this.tab != AiAssistantOverlay.Inner_DataUtil.CHAT) {
-         this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
+         this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
       }
 
       this.sessionsDrawer.toggle();
@@ -260,7 +260,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init(this.renameInput);
    }
 
-   private void clear() {
+   private void commitRename() {
       String text = this.renameInput.getValue().trim();
       this.renaming = false;
       this.renameInput.setFocused(false);
@@ -310,7 +310,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             autismclient.gui.f.NetHelper area = autismclient.gui.f.NetHelper.init(
                content.read(), divider + 1 + 2, content.update(), Math.max(0, content.load() - divider - 1 - 2)
             );
-            this.init(toolbar);
+            this.drawToolbar(toolbar);
             switch (this.tab) {
                case CHAT:
                   this.chatView.render(this.ui, area, now);
@@ -335,7 +335,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
    }
 
-   private void init(autismclient.gui.f.NetHelper bar) {
+   private void drawToolbar(autismclient.gui.f.NetHelper bar) {
       autismclient.gui.ui.UiColorScheme colors = this.ui.colors;
       int h = bar.sync();
       int x = bar.read();
@@ -347,7 +347,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.sessionsDrawer.open,
             false,
             this.sessionsDrawer.open ? "Hide chats" : "Chats",
-            this::put
+            this::toggleSessions
          );
       x += h + 2 + 2;
       right -= h;
@@ -359,7 +359,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             !inChat,
             false,
             inChat ? "Settings" : "Back to chat (Esc)",
-            () -> this.init(inChat ? AiAssistantOverlay.Inner_DataUtil.SETTINGS : AiAssistantOverlay.Inner_DataUtil.CHAT)
+            () -> this.switchTab(inChat ? AiAssistantOverlay.Inner_DataUtil.SETTINGS : AiAssistantOverlay.Inner_DataUtil.CHAT)
          );
       right -= h + 2;
       this.ui
@@ -388,7 +388,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             autismclient.gui.ui.widgets.PillBadgeRenderer.init(
                this.ui.renderContext, chip, label, colors.accent, level.equals(this.viewState.effectiveEffortLevel), this.ui.isHovered(chip)
             );
-            this.ui.addInteractiveRegion(chip, () -> this.read(level), null, "Reasoning effort");
+            this.ui.addInteractiveRegion(chip, () -> this.setEffort(level), null, "Reasoning effort");
             cx += chip.update() + 2;
          }
 
@@ -424,7 +424,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
    }
 
-   private void read(String level) {
+   private void setEffort(String level) {
       this.service.setEffortLevel(level);
       this.viewState.effectiveEffortLevel = level;
       this.viewState.invalidate();
@@ -433,8 +433,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    @Override
    public boolean mouseClicked(double x, double y, int button) {
       if (this.windowVisible && this.containsPoint(x, y)) {
-         this.push = (int)x;
-         this.pop = (int)y;
+         this.contextMenuX = (int)x;
+         this.contextMenuY = (int)y;
          if (this.contextMenu.isOpen()) {
             this.contextMenu.init(x, y, button, (id, label, index) -> this.sessionsDrawer.onMenuAction(id, index));
             return true;
@@ -587,7 +587,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             focused.setFocused(false);
             return true;
          } else if (this.tab != AiAssistantOverlay.Inner_DataUtil.CHAT) {
-            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
+            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
             return true;
          } else if (this.sessionsDrawer.open) {
             this.sessionsDrawer.load();

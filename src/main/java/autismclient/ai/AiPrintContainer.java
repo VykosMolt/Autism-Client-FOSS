@@ -71,9 +71,9 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    private AiSavedContents.Inner_DataUtil slotLayout;
    private AiInventoryController inventory;
    private Map<Item, Integer> removed = Map.of();
-   private boolean close;
+   private boolean isChest;
    private autismclient.ai.print.PrintContainerOrder order;
-   private boolean open;
+   private boolean contentsVerified;
    private boolean poll;
    private int recoverySlot = -1;
    private ItemStack recoveryStack = ItemStack.EMPTY;
@@ -183,12 +183,12 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean load_Z() {
-      return this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.open && this.pop();
+      return this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.contentsVerified && this.sameWorld();
    }
 
    @Override
    public boolean isProvenFull() {
-      if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.b_() && this.pop()) {
+      if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.b_() && this.sameWorld()) {
          this.resetTransfer();
          this.setStatus(
             autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING, "Rechecking native container capacity after a machine update"
@@ -214,7 +214,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       if (this.b_()) {
          this.removed = removed;
          this.poll = true;
-         this.close = this.state.is(Blocks.CHEST);
+         this.isChest = this.state.is(Blocks.CHEST);
       }
    }
 
@@ -226,7 +226,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    @Override
    public boolean needsRevisit() {
       if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED
-         && this.close
+         && this.isChest
          && this.state.is(Blocks.CHEST)
          && !this.removed.values().stream().noneMatch(count -> count > 0)) {
          this.resetTransfer();
@@ -271,7 +271,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          : List.of(this.pos, this.pos.relative(ChestBlock.getConnectedDirection(this.state)));
    }
 
-   private boolean init(int menuSlot) {
+   private boolean slotMatches(int menuSlot) {
       ItemStack stack = this.menu.getSlot(menuSlot).getItem();
       ItemStack wanted = this.savedSlots.get(menuSlot - this.slotLayout.offset());
       return menuSlot >= this.slotLayout.offset()
@@ -395,8 +395,8 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
             this.status == autismclient.ai.print.PrintMachineJob.JobStatus.READY
                || this.status == autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING
          )
-         && this.pop()
-         && this.tick()) {
+         && this.sameWorld()
+         && this.stateStillMatches()) {
          if (!autismclient.ai.print.PrintContainerAccess.init(this.mc.level, this.pos)) {
             return false;
          } else {
@@ -414,11 +414,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       }
    }
 
-   private boolean pop() {
+   private boolean sameWorld() {
       return this.mc.level == this.level && this.mc.player == this.player && this.mc.player != null;
    }
 
-   private boolean tick() {
+   private boolean stateStillMatches() {
       if (!this.env.hasChunkAt(this.pos)) {
          return false;
       }
@@ -441,7 +441,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          );
       }
 
-      if (!this.pop()) {
+      if (!this.sameWorld()) {
          return this.setStatus(
             autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT, "World or player changed before filling saved contents"
          );
@@ -451,7 +451,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          return this.setStatus(autismclient.ai.print.PrintMachineJob.JobStatus.PREPARING, "Waiting for the saved container chunk");
       }
 
-      if (!this.tick()) {
+      if (!this.stateStillMatches()) {
          if (this.lockedHopper && AiSavedContents.init(this.state, this.env.getBlockState(this.pos), this.hasSource)) {
             if (this.hopperUnlockSinceTick == -9223372036854775808L) {
                this.hopperUnlockSinceTick = this.env.currentTick();
@@ -566,7 +566,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          return this.status;
       }
 
-      if (this.pop() && this.env.isCreativeMode() == this.creativeAtDispatch && this.tick()) {
+      if (this.sameWorld() && this.env.isCreativeMode() == this.creativeAtDispatch && this.stateStillMatches()) {
          if (this.menu == null) {
             if (this.mc.gui.screen() == null && this.mc.player.containerMenu == this.mc.player.inventoryMenu) {
                if (System.nanoTime() - this.dispatchedAtNanos < 5000000000L) {
@@ -688,11 +688,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      this.mc.player,
                      this.savedSlots,
                      this.slotLayout,
-                     this::init
+                     this::slotMatches
                   );
                   if (recovery.ready()) {
                      for (int index = this.slotLayout.offset(); index < this.slotLayout.offset() + this.slotLayout.savedSlots(); index++) {
-                        if (this.init(index)) {
+                        if (this.slotMatches(index)) {
                            ItemStack stack = this.menu.getSlot(index).getItem();
                            if (this.init(stack)) {
                               String blocked = this.guard.get();
@@ -816,7 +816,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   }
 
                   if (!ItemStack.matches(this.menu.getSlot(i).getItem(), wanted)) {
-                     if (this.init(i)) {
+                     if (this.slotMatches(i)) {
                         this.initialContents = null;
                         this.fillTargets = null;
                         this.fillIndex = 0;
@@ -845,7 +845,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                }
 
                this.verifiedSlotCount = this.fillTargets.size();
-               if (this.close) {
+               if (this.isChest) {
                   for (int raw = 0; raw < this.slotLayout.savedSlots(); raw++) {
                      if (!this.savedSlots.containsKey(raw) && !this.menu.getSlot(this.slotLayout.offset() + raw).getItem().isEmpty()) {
                         this.skipReasons = List.of("Additional items remain in fresh collector slot " + raw + ". Saved slots are verified");
@@ -855,7 +855,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   }
                }
 
-               this.open = IntStream.range(this.slotLayout.offset(), this.slotLayout.offset() + this.slotLayout.savedSlots())
+               this.contentsVerified = IntStream.range(this.slotLayout.offset(), this.slotLayout.offset() + this.slotLayout.savedSlots())
                   .allMatch(index -> {
                      Slot cell = this.menu.getSlot(index);
                      ItemStack stack = cell.getItem();
@@ -914,7 +914,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       this.inventory = null;
       this.fillIndex = this.verifiedSlotCount = this.skippedSlotCount = 0;
       this.flush = false;
-      this.open = false;
+      this.contentsVerified = false;
       this.skipReasons = List.of();
       this.creativeStockSnapshots.clear();
       this.collectorFrontier.clear();

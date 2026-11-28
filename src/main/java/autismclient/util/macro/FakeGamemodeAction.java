@@ -9,7 +9,7 @@ import net.minecraft.world.level.GameType;
 public class FakeGamemodeAction implements MacroAction {
    public FakeGamemodeAction.Inner_StreamUtil mode = FakeGamemodeAction.Inner_StreamUtil.RESET;
    public FakeGamemodeAction.Inner_DataUtil method = FakeGamemodeAction.Inner_DataUtil.FAKE;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -31,7 +31,7 @@ public class FakeGamemodeAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("mode", this.mode.name());
       tag.putString("method", this.method.name());
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -51,7 +51,7 @@ public class FakeGamemodeAction implements MacroAction {
          this.method = FakeGamemodeAction.Inner_DataUtil.FAKE;
       }
 
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    @Override
@@ -73,12 +73,12 @@ public class FakeGamemodeAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 
    private static GameType gameTypeOf(FakeGamemodeAction.Inner_StreamUtil mode) {

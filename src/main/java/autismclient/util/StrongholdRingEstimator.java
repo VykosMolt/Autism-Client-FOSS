@@ -9,8 +9,8 @@ import net.minecraft.world.phys.Vec3;
 public final class StrongholdRingEstimator {
    public static final double init_D = 2.5E-5;
    private static final double load = 181.0;
-   private static final double read = 640.0;
-   private static final double write = 24373.0;
+   private static final double RING_HALF_WIDTH = 640.0;
+   private static final double SEARCH_BOUND = 24373.0;
    private static final int[] RING_STRONGHOLDS = new int[]{3, 6, 10, 15, 21, 28, 36, 9};
 
    private StrongholdRingEstimator() {
@@ -43,7 +43,7 @@ public final class StrongholdRingEstimator {
             int offset = legacyTargets ? 8 : 0;
             int first = (int)Math.ceil((Math.max(-24373.0, originPrimary - nearestBound) - offset) / 16.0);
             int last = (int)Math.floor((Math.min(24373.0, originPrimary + nearestBound) - offset) / 16.0);
-            double[][] distances = init(origin);
+            double[][] distances = sampleRingDistances(origin);
             List<StrongholdRingEstimator.Inner_CachePool> candidates = new ArrayList<>();
             double maxLog = -1.0 / 0.0;
 
@@ -61,7 +61,7 @@ public final class StrongholdRingEstimator {
                      double x = alongX ? a : b;
                      double z = alongX ? b : a;
                      double radius = Math.hypot(x, z);
-                     int ring = init(radius);
+                     int ring = ringFor(radius);
                      if (ring >= 0) {
                         double dx = x - origin.x;
                         double dz = z - origin.z;
@@ -72,7 +72,7 @@ public final class StrongholdRingEstimator {
                            if (!(Math.abs(error) > 4.0)) {
                               double distance = Math.hypot(dx, dz);
                               if (!(distance > nearestBound)) {
-                                 double prior = init(radius, ring);
+                                 double prior = ringPrior(radius, ring);
                                  double likelihood = 0.0;
                                  boolean consistent = true;
 
@@ -158,7 +158,7 @@ public final class StrongholdRingEstimator {
       }
    }
 
-   private static int init(double radius) {
+   private static int ringFor(double radius) {
       for (int i = 0; i < RING_STRONGHOLDS.length; i++) {
          if (Math.abs(radius - (2048 + 3072 * i)) <= 821.0) {
             return i;
@@ -168,13 +168,13 @@ public final class StrongholdRingEstimator {
       return -1;
    }
 
-   private static double init(double radius, int ring) {
+   private static double ringPrior(double radius, int ring) {
       double edge = Math.abs(radius - (2048 + 3072 * ring)) - 640.0;
       double snapWeight = edge <= 0.0 ? 1.0 : Math.max(1.0E-4, 1.0 - edge / 181.0);
       return RING_STRONGHOLDS[ring] * snapWeight / Math.max(1.0, radius);
    }
 
-   private static double[][] init(Vec3 origin) {
+   private static double[][] sampleRingDistances(Vec3 origin) {
       double[][] samples = new double[RING_STRONGHOLDS.length][1024];
 
       for (int ring = 0; ring < RING_STRONGHOLDS.length; ring++) {

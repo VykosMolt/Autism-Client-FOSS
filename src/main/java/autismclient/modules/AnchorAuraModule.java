@@ -77,15 +77,15 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private static final int tick = 4;
    private static final int run = 12;
    private static int[] cachedOffsets = new int[0];
-   private static int get = -1;
+   private static int cachedOffsetsRadius = -1;
    private final Random random = new Random();
    private long profileNanosTotal;
    private long profileNanosMax;
-   private int set;
+   private int profiledTicks;
    private final Map<BlockPos, Integer> bannedCells = new HashMap<>();
    private LivingEntity currentTarget;
-   private int put = -2147483648;
-   private int add = -2147483648;
+   private int mayActTick = -2147483648;
+   private int engagedTick = -2147483648;
    private final autismclient.util.ActionCooldownScheduler stepCooldowns = new autismclient.util.ActionCooldownScheduler();
    private final autismclient.util.CombatAimSpeedController aimSpeed = new autismclient.util.CombatAimSpeedController();
    private final autismclient.util.SessionContextWatcher sessionWatcher = new autismclient.util.SessionContextWatcher();
@@ -98,42 +98,42 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private final Set<BlockPos> ownPlacedAnchors = new LinkedHashSet<>();
    private String entityFilterSource;
    private Set<String> entityFilterIds = Set.of();
-   private int clear = -1;
-   private int reset = -1;
-   private int start;
-   private int stop = -2147483648;
+   private int switchBackSlot = -1;
+   private int switchedToSlot = -1;
+   private int switchBackDelayTicks;
+   private int lastSlotSwitchTick = -2147483648;
    private BlockPos activeAnchor;
    private LivingEntity activeTarget;
    private final autismclient.util.BlockSequenceSyncTracker sequenceSync = new autismclient.util.BlockSequenceSyncTracker();
-   private int next;
-   private int prev;
+   private int anchorDeadlineTick;
+   private int staleReleaseTick;
    private boolean activeAnchorStale;
    private boolean detonateSent;
-   private int valid = -2147483648;
+   private int detonateSentTick = -2147483648;
    private boolean chargeSent;
-   private int size = -2147483648;
-   private int data;
+   private int chargeSentTick = -2147483648;
+   private int placeAttempts;
    private BlockPos candidateCursor;
    private BlockPos budgetRefusedCell;
-   private int value;
+   private int budgetRefusals;
    private BlockPos plannedAnchor;
-   private int cache = -1;
+   private int plannedSlot = -1;
    private LivingEntity plannedTarget;
-   private int state;
-   private int queue;
+   private int planHoldUntilTick;
+   private int planHoldMisses;
    private BlockPos plannedShield;
    private boolean plannedShieldObsidian;
    private BlockPos previewAnchor;
    private BlockPos previewSupport;
    private BlockPos previewShield;
-   private int buffer = -2147483648;
+   private int previewUntilTick = -2147483648;
    private BlockPos activeShield;
    private boolean activeShieldObsidian;
    private BlockPos plannedSupport;
    private BlockPos activeSupport;
-   private int entry;
-   private int node;
-   private int task;
+   private int supportAttempts;
+   private int shieldAttempts;
+   private int emptyCellTicks;
    private autismclient.util.ExplosionDamageCalculator.SimOptions simOptions;
    private final Map<BlockPos, autismclient.util.ExplosionDamageCalculator.SimOptions> simOptionsByCell;
    private String statusText;
@@ -307,42 +307,42 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.aimedCell = null;
       this.profileNanosTotal = 0L;
       this.profileNanosMax = 0L;
-      this.set = 0;
+      this.profiledTicks = 0;
       this.currentTarget = null;
-      this.put = -2147483648;
-      this.add = -2147483648;
+      this.mayActTick = -2147483648;
+      this.engagedTick = -2147483648;
       this.stepCooldowns.init();
       this.leadEstimator.init();
       this.activationLatch.init();
       this.switchSettledAtNanos = 0L;
       this.pausedUntilNanos = 0L;
       this.ownPlacedAnchors.clear();
-      this.clear = -1;
-      this.reset = -1;
-      this.start = 0;
-      this.stop = -2147483648;
+      this.switchBackSlot = -1;
+      this.switchedToSlot = -1;
+      this.switchBackDelayTicks = 0;
+      this.lastSlotSwitchTick = -2147483648;
       this.activeAnchor = null;
       this.activeTarget = null;
       this.sequenceSync.init();
       this.activeAnchorStale = false;
       this.detonateSent = false;
-      this.valid = -2147483648;
+      this.detonateSentTick = -2147483648;
       this.chargeSent = false;
-      this.size = -2147483648;
+      this.chargeSentTick = -2147483648;
       this.candidateCursor = null;
       this.budgetRefusedCell = null;
-      this.value = 0;
+      this.budgetRefusals = 0;
       this.activeShield = null;
       this.activeShieldObsidian = false;
       this.plannedSupport = null;
       this.activeSupport = null;
-      this.entry = 0;
-      this.node = 0;
+      this.supportAttempts = 0;
+      this.shieldAttempts = 0;
       this.previewAnchor = null;
       this.previewSupport = null;
       this.previewShield = null;
-      this.buffer = -2147483648;
-      this.task = 0;
+      this.previewUntilTick = -2147483648;
+      this.emptyCellTicks = 0;
       this.clearPlan();
       this.bannedCells.clear();
       this.simOptionsByCell.clear();
@@ -382,12 +382,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    LivingEntity currentTarget() {
-      int age = AutismSessionState.getInstance().getClientTick() - this.add;
-      return this.isEnabled() && age >= 0 && age <= 2 && this.flush() ? this.currentTarget : null;
+      int age = AutismSessionState.getInstance().getClientTick() - this.engagedTick;
+      return this.isEnabled() && age >= 0 && age <= 2 && this.canAct() ? this.currentTarget : null;
    }
 
    public static double averageTickMillis() {
-      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.set > 0 ? aura.profileNanosTotal / aura.set / 1000.0 : 0.0;
+      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.profiledTicks > 0 ? aura.profileNanosTotal / aura.profiledTicks / 1000.0 : 0.0;
    }
 
    public static double maxTickMillis() {
@@ -402,7 +402,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          BlockPos support = aura.plannedSupport != null ? aura.plannedSupport : aura.activeSupport;
          BlockPos shield = aura.plannedShield != null ? aura.plannedShield : aura.activeShield;
          int tick = AutismSessionState.getInstance().getClientTick();
-         if (anchor == null && support == null && shield == null && tick - aura.buffer < 0) {
+         if (anchor == null && support == null && shield == null && tick - aura.previewUntilTick < 0) {
             anchor = aura.previewAnchor;
             support = aura.previewSupport;
             shield = aura.previewShield;
@@ -428,7 +428,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    public static boolean init_Z_2() {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled()) {
-         int age = AutismSessionState.getInstance().getClientTick() - aura.put;
+         int age = AutismSessionState.getInstance().getClientTick() - aura.mayActTick;
          return age >= 0 && age <= 5;
       } else {
          return false;
@@ -436,11 +436,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    public static boolean read_Z() {
-      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.add == AutismSessionState.getInstance().getClientTick() : false;
+      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.engagedTick == AutismSessionState.getInstance().getClientTick() : false;
    }
 
    public static boolean init_Z_I(int slot) {
-      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.clear >= 0 && aura.reset == slot : false;
+      return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.switchBackSlot >= 0 && aura.switchedToSlot == slot : false;
    }
 
    public static boolean init_Z_BlockPos(BlockPos cell) {
@@ -471,10 +471,10 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    @Override
    public boolean isSilentMovementActive() {
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.flush());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.canAct());
    }
 
-   private boolean sync() {
+   private boolean activationActive() {
       if (System.nanoTime() < this.pausedUntilNanos) {
          return false;
       }
@@ -493,7 +493,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   private boolean flush() {
+   private boolean canAct() {
       return MC != null
          && MC.player != null
          && MC.level != null
@@ -518,7 +518,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !AutoArmorModule.init_Z_20();
    }
 
-   private static boolean close() {
+   private static boolean higherPriorityActive() {
       return BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.flush() && CrystalAuraModule.init_Z_51();
    }
 
@@ -551,7 +551,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.pruneBannedCells(tick);
          this.tickSwitchBack();
          this.tickAnchorDeadline(tick);
-         if (!this.flush()) {
+         if (!this.canAct()) {
             this.currentTarget = null;
             this.clearPlan();
             this.releaseControl();
@@ -559,7 +559,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          this.pauseAfterKill(this.currentTarget);
-         if (!this.sync()) {
+         if (!this.activationActive()) {
             this.currentTarget = null;
             this.clearPlan();
             this.releaseControl();
@@ -572,7 +572,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          if (enemy == null || enemy != this.currentTarget) {
-            this.task = 0;
+            this.emptyCellTicks = 0;
          }
 
          this.currentTarget = enemy;
@@ -591,7 +591,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
          autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(48);
          this.refreshSimOptions();
-         boolean higherRung = close();
+         boolean higherRung = higherPriorityActive();
          boolean caPrime = CrystalAuraModule.flush();
          boolean caCommitted = caPrime && CrystalAuraModule.sync_Z_11();
          if (caPrime) {
@@ -601,8 +601,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          AnchorAuraModule.Inner_CachePool plan;
          try (autismclient.util.ExplosionDamageCalculator.SimScope pass = autismclient.util.ExplosionDamageCalculator.beginSimScope()) {
             plan = this.continueActiveAnchor(tick, range, budget);
-            if (plan == null && this.activeAnchor == null && enemy != null && !caPrime && this.sync()) {
-               plan = this.init(enemy, tick, range, budget, higherRung || caCommitted);
+            if (plan == null && this.activeAnchor == null && enemy != null && !caPrime && this.activationActive()) {
+               plan = this.planNextStep(enemy, tick, range, budget, higherRung || caCommitted);
             }
          }
 
@@ -624,12 +624,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          boolean finishing = this.isFinishingStep(plan);
          boolean mayAct = !higherRung && !caCommitted || finishing;
          if (mayAct) {
-            this.put = tick;
+            this.mayActTick = tick;
          }
 
          boolean releasedToDefend = mayAct && !finishing && !this.stepReady(plan.step()) && CrystalAuraModule.close();
          if (mayAct && !releasedToDefend) {
-            this.add = tick;
+            this.engagedTick = tick;
          }
 
          autismclient.util.InventorySlotArbiter.claimInventoryClick("anchor-aura");
@@ -670,7 +670,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          long elapsed = System.nanoTime() - profileStarted;
          this.profileNanosTotal += elapsed;
          this.profileNanosMax = Math.max(this.profileNanosMax, elapsed);
-         this.set++;
+         this.profiledTicks++;
       }
    }
 
@@ -716,7 +716,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             System.nanoTime(),
             autismclient.util.ActionCooldownScheduler.jitteredDelayNanos(this.stepDelay(step), this.integer("step-jitter"), this.random)
          );
-      this.start = this.integer("switch-back-delay");
+      this.switchBackDelayTicks = this.integer("switch-back-delay");
    }
 
    private int stepDelay(AnchorAuraModule.Inner_ConfigStore step) {
@@ -748,7 +748,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return true;
       }
 
-      if (this.activeAnchor != null && this.flush() && hitResult instanceof BlockHitResult hit) {
+      if (this.activeAnchor != null && this.canAct() && hitResult instanceof BlockHitResult hit) {
          ItemStack held = MC.player.getItemInHand(hand);
          if (!isRespawnAnchor(held) && !isGlowstone(held) && !isObsidian(held)) {
             return false;
@@ -785,7 +785,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       boolean anchor = state.getBlock() instanceof RespawnAnchorBlock;
       if (this.activeSupport != null) {
          if (MC.level.getBlockState(this.activeSupport).canBeReplaced()) {
-            if (!this.activeAnchorStale && this.entry < 3) {
+            if (!this.activeAnchorStale && this.supportAttempts < 3) {
                return this.planSupport(this.activeAnchor, this.activeSupport, range, budget);
             }
 
@@ -804,9 +804,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          if (this.detonateSent) {
             this.releaseActiveAnchor(false);
             return null;
-         } else if (this.bool("place") && !this.activeAnchorStale && this.data < 3) {
+         } else if (this.bool("place") && !this.activeAnchorStale && this.placeAttempts < 3) {
             this.chargeSent = false;
-            this.size = -2147483648;
+            this.chargeSentTick = -2147483648;
             return this.planPlaceAnchor(cell, range, budget);
          } else {
             this.releaseActiveAnchor(true);
@@ -821,9 +821,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          if (this.activeShield != null && MC.level.getBlockState(this.activeShield).canBeReplaced()) {
-            if (!this.activeAnchorStale && this.node < 3 && this.hasShieldMaterial(this.activeShieldObsidian)) {
-               AnchorAuraModule.Inner_CachePool shield = this.load(this.activeShield, range, budget);
-               if (charge <= 0 || shield != null && !this.sync(cell)) {
+            if (!this.activeAnchorStale && this.shieldAttempts < 3 && this.hasShieldMaterial(this.activeShieldObsidian)) {
+               AnchorAuraModule.Inner_CachePool shield = this.planShield(this.activeShield, range, budget);
+               if (charge <= 0 || shield != null && !this.selfDamageSafe(cell)) {
                   return shield;
                }
 
@@ -841,7 +841,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          if (charge <= 0) {
-            if (!this.poll(cell)) {
+            if (!this.shieldedDetonationSafe(cell)) {
                if (this.activeShield != null && MC.level.getBlockState(this.activeShield) == autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield)) {
                   this.releaseActiveAnchor(true);
                }
@@ -850,12 +850,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             } else if (!this.bool("charge")) {
                return null;
             } else {
-               return this.chargeSent && tick - this.size < latencyTicks()
+               return this.chargeSent && tick - this.chargeSentTick < latencyTicks()
                   ? null
                   : this.planUseAnchor(cell, AnchorAuraModule.Inner_ConfigStore.CHARGE, range, budget);
             }
          } else if (this.bool("detonate") && this.canDetonate(cell, state)) {
-            return this.detonateSent && tick - this.valid < latencyTicks()
+            return this.detonateSent && tick - this.detonateSentTick < latencyTicks()
                ? null
                : this.planUseAnchor(cell, AnchorAuraModule.Inner_ConfigStore.DETONATE, range, budget);
          } else {
@@ -875,11 +875,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             : AnchorAuraModule.Inner_ConfigStore.CHARGE;
          boolean usable = step == AnchorAuraModule.Inner_ConfigStore.DETONATE
             ? this.bool("detonate") && this.canDetonate(adopted, state)
-            : this.open();
+            : this.canCycleWithGlowstone();
          boolean refused = true;
          if (usable) {
             autismclient.util.BlockPlacementPlanner.RejectReason[] outcome = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
-            AnchorAuraModule.Inner_CachePool plan = this.init(adopted, step, range, budget, outcome);
+            AnchorAuraModule.Inner_CachePool plan = this.planUseAnchorWithReasons(adopted, step, range, budget, outcome);
             if (plan != null) {
                this.adoptAnchor(adopted, tick, null, false);
                return plan;
@@ -897,28 +897,28 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return null;
       }
 
-      if (!this.open()) {
+      if (!this.canCycleWithGlowstone()) {
          return null;
       }
 
       List<BlockPos> cells = this.candidateCells(enemy, range);
       if (cells.isEmpty()) {
          if (this.bool("glowstone-shield")) {
-            AnchorAuraModule.Inner_CachePool shielded = this.load(enemy, range, budget);
+            AnchorAuraModule.Inner_CachePool shielded = this.planShieldedAnchor(enemy, range, budget);
             if (shielded != null) {
                return shielded;
             }
          }
 
-         if (this.task < 3) {
-            this.task++;
+         if (this.emptyCellTicks < 3) {
+            this.emptyCellTicks++;
          }
 
-         if (this.bool("force-engage") && this.task >= 3) {
-            cells = this.load(enemy, range);
+         if (this.bool("force-engage") && this.emptyCellTicks >= 3) {
+            cells = this.forcedCandidateCells(enemy, range);
          }
       } else {
-         this.task = 0;
+         this.emptyCellTicks = 0;
       }
 
       if (cells.isEmpty() && this.bool("support-blocks")) {
@@ -946,7 +946,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          BlockPos cover = step == 0 && this.bool("glowstone-shield")
             ? this.findShieldCell(enemy, cell, this.decimal("min-target-damage"), this.decimal("max-self-damage"))
             : null;
-         AnchorAuraModule.Inner_CachePool plan = this.init(cell, cover, cover != null && this.coverMaterialFor(cover, cell) == 1, range, budget, outcome);
+         AnchorAuraModule.Inner_CachePool plan = this.planPlaceAnchorWithShield(cell, cover, cover != null && this.coverMaterialFor(cover, cell) == 1, range, budget, outcome);
          if (plan != null) {
             this.candidateCursor = cell;
             return plan;
@@ -974,32 +974,32 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private boolean budgetRefusedThrice(BlockPos cell) {
       if (cell.equals(this.budgetRefusedCell)) {
-         this.value++;
+         this.budgetRefusals++;
       } else {
          this.budgetRefusedCell = cell.immutable();
-         this.value = 1;
+         this.budgetRefusals = 1;
       }
 
-      if (this.value < 3) {
+      if (this.budgetRefusals < 3) {
          return false;
       }
 
       this.budgetRefusedCell = null;
-      this.value = 0;
+      this.budgetRefusals = 0;
       return true;
    }
 
-   private AnchorAuraModule.Inner_CachePool init(LivingEntity enemy, int tick, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget, boolean hotbarOwnedAbove) {
+   private AnchorAuraModule.Inner_CachePool planNextStep(LivingEntity enemy, int tick, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget, boolean hotbarOwnedAbove) {
       if (this.plannedAnchor != null) {
          boolean valid = this.bool("place")
             && enemy == this.plannedTarget
-            && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.cache, "anchor-aura")
+            && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.plannedSlot, "anchor-aura")
             && (
                this.plannedSupport != null
-                  ? isObsidian(MC.player.getInventory().getItem(this.cache))
+                  ? isObsidian(MC.player.getInventory().getItem(this.plannedSlot))
                      && this.canPlaceAnchorAt(this.plannedAnchor, this.motionEnvelope())
                      && this.canPlaceBlockAt(Blocks.OBSIDIAN.defaultBlockState(), this.plannedSupport, this.motionEnvelope())
-                  : isRespawnAnchor(MC.player.getInventory().getItem(this.cache))
+                  : isRespawnAnchor(MC.player.getInventory().getItem(this.plannedSlot))
                      && this.canPlaceBlockAt(Blocks.RESPAWN_ANCHOR.defaultBlockState(), this.plannedAnchor, this.motionEnvelope())
             )
             && (
@@ -1009,19 +1009,19 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          valid = valid && this.planStillWorthIt(enemy, this.plannedAnchor, this.plannedSupport, this.plannedShield);
          if (valid) {
             if (hotbarOwnedAbove) {
-               this.state = tick + this.switchDelay();
+               this.planHoldUntilTick = tick + this.switchDelay();
             }
 
-            if (tick - this.state < 0) {
+            if (tick - this.planHoldUntilTick < 0) {
                AnchorAuraModule.Inner_CachePool held = this.plannedSupport != null
                   ? this.planSupport(this.plannedAnchor, this.plannedSupport, range, budget)
-                  : this.init(this.plannedAnchor, this.plannedShield, this.plannedShieldObsidian, range, budget, null);
+                  : this.planPlaceAnchorWithShield(this.plannedAnchor, this.plannedShield, this.plannedShieldObsidian, range, budget, null);
                if (held != null) {
-                  this.queue = 0;
+                  this.planHoldMisses = 0;
                   return held;
                }
 
-               if (++this.queue < 3) {
+               if (++this.planHoldMisses < 3) {
                   return null;
                }
             }
@@ -1039,9 +1039,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.plannedSupport = plan.step() == AnchorAuraModule.Inner_ConfigStore.SUPPORT ? plan.cell() : null;
          this.plannedShield = plan.load();
          this.plannedShieldObsidian = plan.shieldObsidian();
-         this.cache = plan.slot();
+         this.plannedSlot = plan.slot();
          this.plannedTarget = enemy;
-         this.state = tick + this.switchDelay();
+         this.planHoldUntilTick = tick + this.switchDelay();
       }
 
       return plan;
@@ -1061,7 +1061,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             ? true
             : shield == null
                && this.bool("force-engage")
-               && this.task >= 3
+               && this.emptyCellTicks >= 3
                && this.rankAcceptable(
                   autismclient.util.TargetLeadDamageEstimator.init(enemy, center(cell), 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.init(enemy))
                )
@@ -1073,16 +1073,16 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private void clearPlan() {
       this.plannedAnchor = null;
-      this.cache = -1;
+      this.plannedSlot = -1;
       this.plannedTarget = null;
-      this.state = 0;
-      this.queue = 0;
+      this.planHoldUntilTick = 0;
+      this.planHoldMisses = 0;
       this.plannedShield = null;
       this.plannedShieldObsidian = false;
       this.plannedSupport = null;
    }
 
-   private boolean open() {
+   private boolean canCycleWithGlowstone() {
       if (!this.bool("charge") || !this.bool("detonate")) {
          return false;
       } else if (this.findHotbarSlot(AnchorAuraModule::isGlowstone) < 0) {
@@ -1112,8 +1112,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private void adoptAnchor(BlockPos anchorCell, BlockPos supportCell, int tick) {
       this.adoptAnchor(anchorCell, tick, null, false);
       this.activeSupport = supportCell.immutable();
-      this.entry = 0;
-      this.next = tick + this.cycleBudgetTicks(true);
+      this.supportAttempts = 0;
+      this.anchorDeadlineTick = tick + this.cycleBudgetTicks(true);
    }
 
    private void adoptAnchor(BlockPos cell, int tick, BlockPos shield, boolean shieldObsidian) {
@@ -1123,26 +1123,26 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.sequenceSync.init();
       this.activeShield = shield;
       this.activeShieldObsidian = shieldObsidian;
-      this.node = 0;
-      this.next = tick + this.cycleBudgetTicks(shield != null);
+      this.shieldAttempts = 0;
+      this.anchorDeadlineTick = tick + this.cycleBudgetTicks(shield != null);
       this.activeAnchorStale = false;
       this.detonateSent = false;
-      this.valid = -2147483648;
+      this.detonateSentTick = -2147483648;
       this.chargeSent = false;
-      this.size = -2147483648;
-      this.data = 0;
-      this.task = 0;
+      this.chargeSentTick = -2147483648;
+      this.placeAttempts = 0;
+      this.emptyCellTicks = 0;
       this.candidateCursor = null;
    }
 
    private void tickAnchorDeadline(int tick) {
       if (this.activeAnchor != null) {
          if (!this.activeAnchorStale) {
-            if (tick - this.next > 0) {
+            if (tick - this.anchorDeadlineTick > 0) {
                this.activeAnchorStale = true;
-               this.prev = tick + this.cycleBudgetTicks(this.activeShield != null);
+               this.staleReleaseTick = tick + this.cycleBudgetTicks(this.activeShield != null);
             }
-         } else if (tick - this.prev > 0) {
+         } else if (tick - this.staleReleaseTick > 0) {
             this.releaseActiveAnchor(true);
          }
       }
@@ -1166,13 +1166,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.activeShieldObsidian = false;
       this.plannedSupport = null;
       this.activeSupport = null;
-      this.entry = 0;
-      this.node = 0;
+      this.supportAttempts = 0;
+      this.shieldAttempts = 0;
       this.activeAnchorStale = false;
       this.detonateSent = false;
-      this.valid = -2147483648;
+      this.detonateSentTick = -2147483648;
       this.chargeSent = false;
-      this.size = -2147483648;
+      this.chargeSentTick = -2147483648;
       autismclient.util.InventorySlotArbiter.releaseAllSlots("anchor-aura");
       autismclient.util.InventorySlotArbiter.releaseInventoryClick("anchor-aura");
    }
@@ -1190,10 +1190,10 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private AnchorAuraModule.Inner_CachePool planPlaceAnchor(BlockPos cell, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
-      return this.init(cell, null, false, range, budget, null);
+      return this.planPlaceAnchorWithShield(cell, null, false, range, budget, null);
    }
 
-   private AnchorAuraModule.Inner_CachePool init(
+   private AnchorAuraModule.Inner_CachePool planPlaceAnchorWithShield(
       BlockPos cell,
       BlockPos shield,
       boolean shieldObsidian,
@@ -1245,10 +1245,10 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private AnchorAuraModule.Inner_CachePool planUseAnchor(
       BlockPos cell, AnchorAuraModule.Inner_ConfigStore step, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget
    ) {
-      return this.init(cell, step, range, budget, null);
+      return this.planUseAnchorWithReasons(cell, step, range, budget, null);
    }
 
-   private AnchorAuraModule.Inner_CachePool init(
+   private AnchorAuraModule.Inner_CachePool planUseAnchorWithReasons(
       BlockPos cell,
       AnchorAuraModule.Inner_ConfigStore step,
       double range,
@@ -1264,7 +1264,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return candidate == null ? null : new AnchorAuraModule.Inner_CachePool(cell, step, slot, candidate, range, null, false, null);
    }
 
-   private AnchorAuraModule.Inner_CachePool load(BlockPos cell, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
+   private AnchorAuraModule.Inner_CachePool planShield(BlockPos cell, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       boolean obsidian = this.activeShieldObsidian;
       if (!this.canPlaceBlockAt(shieldState(obsidian), cell, this.motionEnvelope())) {
          return null;
@@ -1441,7 +1441,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             "anchor-aura",
             hit,
             InteractionHand.MAIN_HAND,
-            () -> this.flush()
+            () -> this.canAct()
                && this.stepStillValid(plan)
                && this.wireRotation() != null
                && this.hitForRotation(plan, this.wireRotation()) != null,
@@ -1462,13 +1462,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.previewAnchor = this.plannedAnchor != null ? this.plannedAnchor : this.activeAnchor;
          this.previewSupport = this.plannedSupport != null ? this.plannedSupport : this.activeSupport;
          this.previewShield = this.plannedShield != null ? this.plannedShield : this.activeShield;
-         this.buffer = tick + 10;
+         this.previewUntilTick = tick + 10;
       }
 
       this.markStep(plan.step());
       if (plan.step() == AnchorAuraModule.Inner_ConfigStore.SUPPORT) {
          this.adoptAnchor(plan.read(), plan.cell(), tick);
-         this.entry++;
+         this.supportAttempts++;
       }
 
       if (plan.step() == AnchorAuraModule.Inner_ConfigStore.PLACE) {
@@ -1476,7 +1476,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             this.adoptAnchor(plan.cell(), tick, plan.load(), plan.shieldObsidian());
          }
 
-         this.data++;
+         this.placeAttempts++;
          this.sequenceSync.init(MC.level, ((AutismClientLevelPredictionAccessor)MC.level).autism$getBlockPredictionHandler().currentSequence());
          this.ownPlacedAnchors.add(plan.cell().immutable());
 
@@ -1486,17 +1486,17 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       if (plan.step() == AnchorAuraModule.Inner_ConfigStore.SHIELD) {
-         this.node++;
+         this.shieldAttempts++;
       }
 
       if (plan.step() == AnchorAuraModule.Inner_ConfigStore.CHARGE) {
          this.chargeSent = true;
-         this.size = tick;
+         this.chargeSentTick = tick;
       }
 
       if (plan.step() == AnchorAuraModule.Inner_ConfigStore.DETONATE) {
          this.detonateSent = true;
-         this.valid = tick;
+         this.detonateSentTick = tick;
       }
 
       this.aimSpeed.load(this.aimSubject(), tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
@@ -1545,7 +1545,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                && anchor
                && state.getValue(RespawnAnchorBlock.CHARGE) < 4
                && isGlowstone(MC.player.getMainHandItem())
-               && this.poll(plan.cell());
+               && this.shieldedDetonationSafe(plan.cell());
             break;
          case DETONATE:
             var10000 = !this.sequenceSync.init(MC.level)
@@ -1576,7 +1576,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          } else if (isGlowstone(MC.player.getMainHandItem()) && this.detonateSlot() < 0) {
             return false;
          } else {
-            return !this.anchorExplodes(cell) ? false : this.sync(cell) && this.close(cell);
+            return !this.anchorExplodes(cell) ? false : this.selfDamageSafe(cell) && this.friendsSafe(cell);
          }
       }
    }
@@ -1715,7 +1715,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
-         if (!this.bannedCells.containsKey(cursor) && this.flush(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
+         if (!this.bannedCells.containsKey(cursor) && this.matchesAimMode(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
             Vec3 centre = center(cursor);
             if (!this.bool("only-above") || !(centre.y < enemy.getY())) {
                double distanceSq = eye.distanceToSqr(centre);
@@ -1806,7 +1806,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          for (int i = 0; i + 2 < offsets.length; i += 3) {
             cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
             BlockPos anchorCell = cursor.above();
-            if (this.flush(anchorCell)
+            if (this.matchesAimMode(anchorCell)
                && !this.bannedCells.containsKey(cursor)
                && !this.bannedCells.containsKey(anchorCell)
                && this.anchorExplodes(anchorCell)
@@ -1852,7 +1852,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   private List<BlockPos> load(LivingEntity enemy, double range) {
+   private List<BlockPos> forcedCandidateCells(LivingEntity enemy, double range) {
       LocalPlayer player = MC.player;
       Vec3 eye = player.getEyePosition();
       BlockPos origin = player.blockPosition();
@@ -1868,7 +1868,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
-         if (!this.bannedCells.containsKey(cursor) && this.flush(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
+         if (!this.bannedCells.containsKey(cursor) && this.matchesAimMode(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
             Vec3 centre = center(cursor);
             double distanceSq = eye.distanceToSqr(centre);
             if (!(distanceSq > rangeSq) && new AABB(cursor).intersects(enemyRing)) {
@@ -1880,7 +1880,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
                   enemy, centre, 5.0F, this.simOptionsFor(cursor), autismclient.util.TargetLeadDamageEstimator.init(enemy)
                );
-               if (this.rankAcceptable(rank) && this.close(cursor)) {
+               if (this.rankAcceptable(rank) && this.friendsSafe(cursor)) {
                   accepted.add(new AnchorAuraModule.Inner_BufferHelper(cursor.immutable(), rank, distanceSq));
                }
             }
@@ -1914,7 +1914,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return result;
    }
 
-   private AnchorAuraModule.Inner_CachePool load(LivingEntity enemy, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
+   private AnchorAuraModule.Inner_CachePool planShieldedAnchor(LivingEntity enemy, double range, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       if (!this.hasShieldMaterial(false) && !this.hasShieldMaterial(true)) {
          return null;
       }
@@ -1934,7 +1934,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
-         if (!this.bannedCells.containsKey(cursor) && this.flush(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
+         if (!this.bannedCells.containsKey(cursor) && this.matchesAimMode(cursor) && this.anchorExplodes(cursor) && this.canPlaceBlockAt(anchor, cursor, nextBox)) {
             Vec3 centre = center(cursor);
             if (!this.bool("only-above") || !(centre.y < enemy.getY())) {
                double distanceSq = eye.distanceToSqr(centre);
@@ -1976,7 +1976,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             int material = this.coverMaterialFor(shield, scored.cell());
             if (material >= 0) {
                boolean obsidian = material == 1;
-               return this.init(scored.cell(), shield, obsidian, range, budget, null);
+               return this.planPlaceAnchorWithShield(scored.cell(), shield, obsidian, range, budget, null);
             }
          }
       }
@@ -2003,7 +2003,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       double bestValue = -1.0 / 0.0;
 
       for (BlockPos shieldCell : this.shieldCandidates(anchorCell)) {
-         if (obsidianAvailable && this.durableCoverPlaceable(shieldCell, anchorCell) || glowstoneAvailable && this.update(shieldCell)) {
+         if (obsidianAvailable && this.durableCoverPlaceable(shieldCell, anchorCell) || glowstoneAvailable && this.hasAnySupport(shieldCell)) {
             autismclient.util.ExplosionDamageCalculator.SimOptions verify = this.simOptionsFor(anchorCell).withPlacedObsidian(shieldCell);
             autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
                enemy, centre, 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.init(enemy)
@@ -2039,8 +2039,8 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       cells.sort(
          (first, second) -> {
-            boolean firstGround = this.write(first);
-            boolean secondGround = this.write(second);
+            boolean firstGround = this.hasGroundSupport(first);
+            boolean secondGround = this.hasGroundSupport(second);
             if (firstGround != secondGround) {
                return firstGround ? -1 : 1;
             } else {
@@ -2054,12 +2054,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       return cells.size() <= 12 ? cells : new ArrayList<>(cells.subList(0, 12));
    }
 
-   private boolean write(BlockPos cell) {
+   private boolean hasGroundSupport(BlockPos cell) {
       BlockPos below = cell.below();
       return autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(below), below, false);
    }
 
-   private boolean update(BlockPos cell) {
+   private boolean hasAnySupport(BlockPos cell) {
       for (Direction face : Direction.values()) {
          BlockPos support = cell.relative(face);
          if (autismclient.util.BlockPlacementPlanner.isValidSupportBlock(MC.level.getBlockState(support), support, false)) {
@@ -2071,12 +2071,12 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private boolean durableCoverPlaceable(BlockPos cell, BlockPos anchorCell) {
-      return this.update(cell) || cell.distManhattan(anchorCell) == 1;
+      return this.hasAnySupport(cell) || cell.distManhattan(anchorCell) == 1;
    }
 
    private int coverMaterialFor(BlockPos cell, BlockPos anchor) {
       boolean durable = this.hasShieldMaterial(true) && this.durableCoverPlaceable(cell, anchor);
-      boolean fuel = this.hasShieldMaterial(false) && this.update(cell);
+      boolean fuel = this.hasShieldMaterial(false) && this.hasAnySupport(cell);
       if (!durable
          || fuel && !"Durable".equals(this.choice("cover-material")) && (!"Adaptive".equals(this.choice("cover-material")) || !this.load(cell, anchor))) {
          return fuel ? 0 : (durable ? 1 : -1);
@@ -2151,7 +2151,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
-         if (!this.bannedCells.containsKey(cursor) && this.flush(cursor) && (!this.bool("own-only") || this.ownPlacedAnchors.contains(cursor))) {
+         if (!this.bannedCells.containsKey(cursor) && this.matchesAimMode(cursor) && (!this.bool("own-only") || this.ownPlacedAnchors.contains(cursor))) {
             BlockState state = MC.level.getBlockState(cursor);
             if (state.getBlock() instanceof RespawnAnchorBlock && this.anchorExplodes(cursor)) {
                Vec3 centre = center(cursor);
@@ -2245,27 +2245,27 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             return false;
          }
 
-         this.start = this.integer("switch-back-delay");
+         this.switchBackDelayTicks = this.integer("switch-back-delay");
          return true;
       } else {
-         if (this.load(slot, finishingWork)) {
-            if (this.clear < 0) {
-               this.clear = held;
+         if (this.switchToSlot(slot, finishingWork)) {
+            if (this.switchBackSlot < 0) {
+               this.switchBackSlot = held;
             }
 
-            this.reset = slot;
+            this.switchedToSlot = slot;
          }
 
-         this.start = this.integer("switch-back-delay");
+         this.switchBackDelayTicks = this.integer("switch-back-delay");
          return player.getInventory().getSelectedSlot() == slot && System.nanoTime() >= this.switchSettledAtNanos;
       }
    }
 
-   private boolean load(int slot, boolean finishingWork) {
+   private boolean switchToSlot(int slot, boolean finishingWork) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27()) {
          if (finishingWork || !CrystalAuraModule.flush() || !CrystalAuraModule.init_Z_51() && !CrystalAuraModule.sync_Z_11()) {
             int tick = AutismSessionState.getInstance().getClientTick();
-            if (tick == this.stop) {
+            if (tick == this.lastSlotSwitchTick) {
                return false;
             }
 
@@ -2280,7 +2280,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                autismclient.util.InventorySlotArbiter.endActionGroup("anchor-aura");
             }
 
-            this.stop = tick;
+            this.lastSlotSwitchTick = tick;
             return true;
          } else {
             return false;
@@ -2311,19 +2311,19 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private void tickSwitchBack() {
-      if (this.clear >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
-         if (this.reset >= 0 && MC.player.getInventory().getSelectedSlot() != this.reset) {
+      if (this.switchBackSlot >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
+         if (this.switchedToSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.switchedToSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (!CrystalAuraModule.init_Z_I_10(selected) && !KillAuraModule.load_Z_I_3(selected)) {
-               this.clear = -1;
-               this.reset = -1;
-               this.start = 0;
+               this.switchBackSlot = -1;
+               this.switchedToSlot = -1;
+               this.switchBackDelayTicks = 0;
             }
-         } else if (this.start > 0) {
-            this.start--;
-         } else if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.clear, "anchor-aura") && this.load(this.clear, false)) {
-            this.clear = -1;
-            this.reset = -1;
+         } else if (this.switchBackDelayTicks > 0) {
+            this.switchBackDelayTicks--;
+         } else if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.switchBackSlot, "anchor-aura") && this.switchToSlot(this.switchBackSlot, false)) {
+            this.switchBackSlot = -1;
+            this.switchedToSlot = -1;
          }
       }
    }
@@ -2369,15 +2369,15 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
    }
 
-   private boolean sync(BlockPos cell) {
+   private boolean selfDamageSafe(BlockPos cell) {
       return !autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(this.selfDamage(cell));
    }
 
-   private boolean flush(BlockPos cell) {
+   private boolean matchesAimMode(BlockPos cell) {
       return !"Aimed".equals(this.choice("aim-mode")) || cell.equals(this.aimedCell);
    }
 
-   private boolean close(BlockPos cell) {
+   private boolean friendsSafe(BlockPos cell) {
       return !this.bool("protect-friends")
          || autismclient.util.WeaponDamageCalculator.init(center(cell), 5.0F, this.selfSimOptions(cell), this.decimal("max-friend-damage"));
    }
@@ -2390,7 +2390,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       autismclient.util.ExplosionDamageCalculator.SimOptions options = this.simOptionsFor(cell);
       if (this.activeShield == null || !cell.equals(this.activeAnchor)) {
          return options;
-      } else if (this.open(cell)) {
+      } else if (this.shieldInPlace(cell)) {
          return options.withPlacedObsidian(this.activeShield);
       } else {
          return MC.level.getBlockState(this.activeShield) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield)
@@ -2399,7 +2399,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   private boolean open(BlockPos cell) {
+   private boolean shieldInPlace(BlockPos cell) {
       if (this.activeShield != null && cell.equals(this.activeAnchor)) {
          net.minecraft.world.level.block.Block material = shieldState(this.activeShieldObsidian).getBlock();
          return MC.level.getBlockState(this.activeShield).is(material) && autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield).is(material);
@@ -2408,17 +2408,17 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   private boolean poll(BlockPos cell) {
+   private boolean shieldedDetonationSafe(BlockPos cell) {
       if (this.activeShield == null || !cell.equals(this.activeAnchor)) {
          return true;
       }
 
-      if (!this.open(cell)) {
+      if (!this.shieldInPlace(cell)) {
          return false;
       }
 
       double self = this.selfDamage(cell);
-      return self <= this.decimal("max-self-damage") && !autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(self) && this.close(cell);
+      return self <= this.decimal("max-self-damage") && !autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(self) && this.friendsSafe(cell);
    }
 
    private static int compareRanks(autismclient.util.ExplosionDamageCalculator.DamagePair first, autismclient.util.ExplosionDamageCalculator.DamagePair second) {
@@ -2443,7 +2443,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private static int[] offsetsForRadius(int radius) {
       int clamped = Mth.clamp(radius, 0, 8);
-      if (clamped == get) {
+      if (clamped == cachedOffsetsRadius) {
          return cachedOffsets;
       }
 
@@ -2472,7 +2472,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       cachedOffsets = flat;
-      get = clamped;
+      cachedOffsetsRadius = clamped;
       return flat;
    }
 

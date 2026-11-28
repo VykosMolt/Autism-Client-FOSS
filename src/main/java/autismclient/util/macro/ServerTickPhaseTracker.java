@@ -21,13 +21,13 @@ public class ServerTickPhaseTracker {
    private static volatile long lastPacketNanos = 0L;
    private static volatile long lastGameTime = -9223372036854775808L;
    private static volatile double estimatedTps = 20.0;
-   private static volatile long sync = 0L;
-   private static volatile long flush = 0L;
-   private static volatile long close = 0L;
+   private static volatile long phaseNanos = 0L;
+   private static volatile long nextTickNanos = 0L;
+   private static volatile long lastSampleNanos = 0L;
    private static volatile int burstPacketCount = 0;
-   private static final long open = 5000000L;
+   private static final long MIN_SAMPLE_GAP_NANOS = 5000000L;
 
-   public static void init(ClientboundSetTimePacket packet) {
+   public static void onTimePacket(ClientboundSetTimePacket packet) {
       long now = System.nanoTime();
       if (firstPacketNanos == 0L) {
          firstPacketNanos = now;
@@ -60,18 +60,18 @@ public class ServerTickPhaseTracker {
 
    public static void noteBurstPacket() {
       long now = System.nanoTime();
-      if (now - close < 5000000L) {
+      if (now - lastSampleNanos < 5000000L) {
          burstPacketCount++;
       } else {
          burstPacketCount = 1;
       }
 
-      close = now;
+      lastSampleNanos = now;
    }
 
    public static void init(Packet<?> packet) {
       if (packet instanceof ClientboundSetTimePacket worldTimePacket) {
-         init(worldTimePacket);
+         onTimePacket(worldTimePacket);
       } else if (packet instanceof Pos || packet instanceof ClientboundSetEntityMotionPacket || packet instanceof ClientboundPlayerPositionPacket) {
          noteBurstPacket();
       }
@@ -87,13 +87,13 @@ public class ServerTickPhaseTracker {
             sumPhase += phase;
          }
 
-         sync = sumPhase / validSamples;
+         phaseNanos = sumPhase / validSamples;
          long mostRecent = sendTimes[(sampleCursor - 1 + 60) % 60];
          long tickNumber = mostRecent / 50000000L;
-         flush = tickNumber * 50000000L + sync;
+         nextTickNanos = tickNumber * 50000000L + phaseNanos;
          long now = System.nanoTime();
-         if (flush > now) {
-            flush -= 50000000L;
+         if (nextTickNanos > now) {
+            nextTickNanos -= 50000000L;
          }
       }
    }
@@ -108,14 +108,14 @@ public class ServerTickPhaseTracker {
    }
 
    public static long nextTickNanos() {
-      if (flush == 0L) {
+      if (nextTickNanos == 0L) {
          return System.nanoTime() + 50000000L;
       }
 
       long now = System.nanoTime();
-      long elapsed = now - flush;
+      long elapsed = now - nextTickNanos;
       long ticksElapsed = elapsed / 50000000L;
-      return flush + (ticksElapsed + 1L) * 50000000L;
+      return nextTickNanos + (ticksElapsed + 1L) * 50000000L;
    }
 
    public static long init(int bufferMs, boolean ignorePing) {
@@ -136,7 +136,7 @@ public class ServerTickPhaseTracker {
    public static boolean isWarmedUp() {
       if (firstPacketNanos != 0L && sampleCount >= 40) {
          long elapsedMs = (System.nanoTime() - firstPacketNanos) / 1000000L;
-         return elapsedMs >= 2000L && flush > 0L;
+         return elapsedMs >= 2000L && nextTickNanos > 0L;
       } else {
          return false;
       }
@@ -190,8 +190,8 @@ public class ServerTickPhaseTracker {
       return firstPacketNanos == 0L ? 0L : (System.nanoTime() - firstPacketNanos) / 1000000L;
    }
 
-   public static long update() {
-      return sync / 1000000L;
+   public static long phaseMs() {
+      return phaseNanos / 1000000L;
    }
 
    public static void reset() {
@@ -201,13 +201,13 @@ public class ServerTickPhaseTracker {
       lastPacketNanos = 0L;
       lastGameTime = -9223372036854775808L;
       estimatedTps = 20.0;
-      sync = 0L;
-      flush = 0L;
-      close = 0L;
+      phaseNanos = 0L;
+      nextTickNanos = 0L;
+      lastSampleNanos = 0L;
       burstPacketCount = 0;
    }
 
    public static String debugSummary() {
-      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", getLatencyMs(), sampleCount, 40, update(), confidence() * 100.0F);
+      return String.format("Ping: %dms | Samples: %d/%d | Phase: %dms | Confidence: %.0f%%", getLatencyMs(), sampleCount, 40, phaseMs(), confidence() * 100.0F);
    }
 }

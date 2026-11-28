@@ -29,7 +29,7 @@ public class LookAtBlockAction implements MacroAction {
    public boolean smooth;
    public int smoothness = 6;
    public boolean waitForCompletion = true;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public LookAtBlockAction() {
    }
@@ -60,13 +60,13 @@ public class LookAtBlockAction implements MacroAction {
          LookAtBlockAction.Inner_DataUtil var10000;
          switch (this.targetMode) {
             case SPECIFIC:
-               var10000 = init(mc.player.getEyePosition(), new Vec3(this.blockX + 0.5, this.blockY + 0.5, this.blockZ + 0.5));
+               var10000 = rotationTo(mc.player.getEyePosition(), new Vec3(this.blockX + 0.5, this.blockY + 0.5, this.blockZ + 0.5));
                break;
             case BLOCK:
-               var10000 = this.load(mc);
+               var10000 = this.nearestBlockTarget(mc);
                break;
             case ENTITY:
-               var10000 = this.read(mc);
+               var10000 = this.nearestEntityTarget(mc);
                break;
             default:
                throw new MatchException(null, null);
@@ -115,7 +115,7 @@ public class LookAtBlockAction implements MacroAction {
       tag.putBoolean("smooth", this.smooth);
       tag.putInt("smoothness", RotateAction.clampSmoothness(this.smoothness));
       tag.putBoolean("waitForCompletion", this.waitForCompletion);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -168,7 +168,7 @@ public class LookAtBlockAction implements MacroAction {
       this.smoothness = RotateAction.clampSmoothness(tag.getIntOr("smoothness", 6));
       this.waitForCompletion = tag.getBooleanOr("waitForCompletion", true);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -188,7 +188,7 @@ public class LookAtBlockAction implements MacroAction {
             var10000 = this.blockLabel();
             break;
          case ENTITY:
-            var10000 = this.load();
+            var10000 = this.entitySummary();
             break;
          default:
             throw new MatchException(null, null);
@@ -210,15 +210,15 @@ public class LookAtBlockAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
-   private LookAtBlockAction.Inner_DataUtil load(Minecraft mc) {
+   private LookAtBlockAction.Inner_DataUtil nearestBlockTarget(Minecraft mc) {
       if (mc.player != null && mc.level != null && !this.blockIds.isEmpty()) {
          Vec3 eyePos = mc.player.getEyePosition();
          BlockPos center = mc.player.blockPosition();
@@ -246,13 +246,13 @@ public class LookAtBlockAction implements MacroAction {
             }
          }
 
-         return bestPos == null ? null : init(eyePos, Vec3.atCenterOf(bestPos));
+         return bestPos == null ? null : rotationTo(eyePos, Vec3.atCenterOf(bestPos));
       } else {
          return null;
       }
    }
 
-   private LookAtBlockAction.Inner_DataUtil read(Minecraft mc) {
+   private LookAtBlockAction.Inner_DataUtil nearestEntityTarget(Minecraft mc) {
       if (mc.player != null && mc.level != null && !this.entityIds.isEmpty()) {
          Set<String> typeIds = new HashSet<>();
          Set<String> specificUuids = new HashSet<>();
@@ -277,7 +277,7 @@ public class LookAtBlockAction implements MacroAction {
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity != null && entity != mc.player && entity.isAlive()) {
                double distSq = mc.player.distanceToSqr(entity);
-               if (!(distSq > bestSq) && this.init(entity, typeIds, specificUuids)) {
+               if (!(distSq > bestSq) && this.matchesEntity(entity, typeIds, specificUuids)) {
                   bestSq = distSq;
                   bestEntity = entity;
                }
@@ -289,13 +289,13 @@ public class LookAtBlockAction implements MacroAction {
          }
 
          Vec3 targetPos = bestEntity.getBoundingBox().getCenter();
-         return init(mc.player.getEyePosition(), targetPos);
+         return rotationTo(mc.player.getEyePosition(), targetPos);
       } else {
          return null;
       }
    }
 
-   private boolean init(Entity entity, Set<String> typeIds, Set<String> specificUuids) {
+   private boolean matchesEntity(Entity entity, Set<String> typeIds, Set<String> specificUuids) {
       if (specificUuids.contains(entity.getStringUUID())) {
          return true;
       }
@@ -313,7 +313,7 @@ public class LookAtBlockAction implements MacroAction {
       return this.blockIds.size() == 1 ? "Nearest " + first : "Nearest " + first + " (+" + (this.blockIds.size() - 1) + ")";
    }
 
-   private String load() {
+   private String entitySummary() {
       if (this.entityIds.isEmpty()) {
          return "Entity (none)";
       }
@@ -332,7 +332,7 @@ public class LookAtBlockAction implements MacroAction {
       return this.entityIds.size() == 1 ? "Nearest " + first : "Nearest " + first + " (+" + (this.entityIds.size() - 1) + ")";
    }
 
-   private static LookAtBlockAction.Inner_DataUtil init(Vec3 from, Vec3 to) {
+   private static LookAtBlockAction.Inner_DataUtil rotationTo(Vec3 from, Vec3 to) {
       Vec3 diff = to.subtract(from);
       double dist = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
       float yaw = (float)Math.toDegrees(Math.atan2(-diff.x, diff.z));

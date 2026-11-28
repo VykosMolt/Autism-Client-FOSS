@@ -33,7 +33,7 @@ public final class ThemeTextureRecolorer {
    private static final Set<Identifier> init_Set = new HashSet<>();
    private static final Set<Identifier> load_Set = new HashSet<>();
    private static final Map<Identifier, Integer> failedGenerations = new HashMap<>();
-   private static final Map<Identifier, Identifier> write = new HashMap<>();
+   private static final Map<Identifier, Identifier> themeTextureCache = new HashMap<>();
    private static int currentGeneration;
    private static ThemeTextureRecolorer.Inner_ConfigStore preview;
    private static volatile boolean init_Z;
@@ -110,7 +110,7 @@ public final class ThemeTextureRecolorer {
                MINECRAFT.execute(() -> {
                   init_Set.remove(source);
                   if (result != null) {
-                     Identifier id = read(source);
+                     Identifier id = skyboxTextureId(source);
                      MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
                      tintCache.put(source, new ThemeTextureRecolorer.Inner_DataUtil(id, targetColor));
                   }
@@ -120,7 +120,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private static Identifier read(Identifier source) {
+   private static Identifier skyboxTextureId(Identifier source) {
       return Identifier.fromNamespaceAndPath(
          "autismclient", "dynamic/skybox/" + source.getNamespace() + "/" + source.getPath().replace('/', '_').replace(".png", "")
       );
@@ -136,7 +136,7 @@ public final class ThemeTextureRecolorer {
 
       try (NativeImage src = NativeImage.read(png)) {
          NativeImage recolored = src.mappedCopy(argb -> ThemePaletteManager.recolorTexturePixel(argb, ch, st));
-         Identifier id = write(source);
+         Identifier id = themeTextureId(source);
          MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), recolored, FilterMode.LINEAR));
          recolorCache.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
          return id;
@@ -173,7 +173,7 @@ public final class ThemeTextureRecolorer {
                   } else if (result == null) {
                      failedGenerations.put(source, generation);
                   } else {
-                     Identifier id = write(source);
+                     Identifier id = themeTextureId(source);
                      MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), result, FilterMode.LINEAR));
                      recolorCache.put(source, new ThemeTextureRecolorer.Inner_BufferHelper(id, generation));
                   }
@@ -205,7 +205,7 @@ public final class ThemeTextureRecolorer {
          return null;
       }
 
-      Identifier cached = write.get(source);
+      Identifier cached = themeTextureCache.get(source);
       if (cached != null) {
          return cached;
       }
@@ -219,7 +219,7 @@ public final class ThemeTextureRecolorer {
             "autismclient", "dynamic/white/" + source.getNamespace() + "/" + source.getPath().replace('/', '_').replace(".png", "")
          );
          MINECRAFT.getTextureManager().register(id, new ThemeTextureRecolorer.Inner_StreamUtil(source.toString(), white, FilterMode.LINEAR));
-         write.put(source, id);
+         themeTextureCache.put(source, id);
          return id;
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("Theme whiten failed for {}", source, t);
@@ -227,7 +227,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private static Identifier write(Identifier source) {
+   private static Identifier themeTextureId(Identifier source) {
       return Identifier.fromNamespaceAndPath(
          "autismclient", "dynamic/theme/" + source.getNamespace() + "/" + source.getPath().replace('/', '_').replace(".png", "")
       );
@@ -292,13 +292,13 @@ public final class ThemeTextureRecolorer {
 
       if (!load_Z) {
          load_Z = true;
-         init(st, () -> {});
+         recolorBackdrop(st, () -> {});
       }
 
       return original;
    }
 
-   private static void init(ThemePaletteManager.CompiledPalette st, Runnable jobDone) {
+   private static void recolorBackdrop(ThemePaletteManager.CompiledPalette st, Runnable jobDone) {
       int generation = currentGeneration;
 
       byte[] png;
@@ -359,7 +359,7 @@ public final class ThemeTextureRecolorer {
       ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
       if (st.isModified(ThemePaletteManager.ColorRole.BACKDROP)) {
          load_Z = true;
-         init(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
+         recolorBackdrop(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
       }
 
       init_V();
@@ -369,7 +369,7 @@ public final class ThemeTextureRecolorer {
       try {
          TextureContents contents = TextureContents.load(MINECRAFT.getResourceManager(), source);
          NativeImage full = contents.image();
-         NativeImage scaled = init(full, maxDim);
+         NativeImage scaled = downscale(full, maxDim);
          if (scaled != full) {
             full.close();
          }
@@ -392,7 +392,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   private static NativeImage init(NativeImage src, int maxDim) {
+   private static NativeImage downscale(NativeImage src, int maxDim) {
       int w = src.getWidth();
       int h = src.getHeight();
       if (w <= maxDim && h <= maxDim) {
@@ -537,11 +537,11 @@ public final class ThemeTextureRecolorer {
                      if (!this.init_Z) {
                         for (int yx = 0; yx < h; yx++) {
                            for (int xx = 0; xx < w; xx++) {
-                              this.texture.init.setPixel(xx, yx, out[yx * w + xx]);
+                              this.texture.pixels.setPixel(xx, yx, out[yx * w + xx]);
                            }
                         }
 
-                        this.texture.init();
+                        this.texture.upload();
                      }
                   }
                });
@@ -640,24 +640,24 @@ public final class ThemeTextureRecolorer {
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {
-      private final NativeImage init;
+      private final NativeImage pixels;
 
       private Inner_StreamUtil(String label, NativeImage pixels, FilterMode filter) {
-         this.init = pixels;
+         this.pixels = pixels;
          this.texture = RenderSystem.getDevice().createTexture(label, 5, GpuFormat.RGBA8_UNORM, pixels.getWidth(), pixels.getHeight(), 1, 1);
          this.sampler = RenderSystem.getSamplerCache().getRepeat(filter);
          this.textureView = RenderSystem.getDevice().createTextureView(this.texture);
-         this.init();
+         this.upload();
       }
 
-      private void init() {
-         RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.init);
+      private void upload() {
+         RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.pixels);
       }
 
       @Override
       public void close() {
          try {
-            this.init.close();
+            this.pixels.close();
          } catch (Throwable var2) {
          }
 

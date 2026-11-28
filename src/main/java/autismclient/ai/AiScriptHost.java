@@ -47,16 +47,16 @@ final class AiScriptHost implements AutoCloseable {
    }
 
    JsonObject init(String source, int timeout, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
-      return this.init(source, timeout, cancelled, new JsonObject());
+      return this.runScript(source, timeout, cancelled, new JsonObject());
    }
 
    JsonObject init(String source, JsonArray fixtures, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (fixtures.size() <= 4 && fixtures.toString().length() <= 64000) {
-         this.init(source, 3, cancelled, AiJson.objectOf("validateOnly", true));
+         this.runScript(source, 3, cancelled, AiJson.objectOf("validateOnly", true));
          JsonArray results = new JsonArray();
 
          for (JsonElement fixture : fixtures) {
-            results.add(this.init(source, 2, cancelled, AiJson.objectOf("fixture", fixture)));
+            results.add(this.runScript(source, 2, cancelled, AiJson.objectOf("fixture", fixture)));
          }
 
          JsonObject report = AiJson.objectOf(
@@ -80,7 +80,7 @@ final class AiScriptHost implements AutoCloseable {
       }
    }
 
-   static boolean init(String name) {
+   static boolean isSecretEnvVar(String name) {
       String key = name.toUpperCase(Locale.ROOT);
       return key.contains("API_KEY")
          || key.endsWith("TOKEN")
@@ -102,7 +102,7 @@ final class AiScriptHost implements AutoCloseable {
          || key.startsWith("SSH_");
    }
 
-   private JsonObject init(String source, int timeout, BooleanSupplier cancelled, JsonObject request) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   private JsonObject runScript(String source, int timeout, BooleanSupplier cancelled, JsonObject request) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (!source.isBlank() && source.length() <= 128000) {
          request.addProperty("source", source);
          request.addProperty("deadlineSeconds", Math.max(1, Math.min(3600, timeout)) + 30);
@@ -144,7 +144,7 @@ final class AiScriptHost implements AutoCloseable {
          ProcessBuilder builder = new ProcessBuilder(java, "-Xmx256m", "-jar", jar.toAbsolutePath().toString());
          builder.directory(scripts.toFile());
          builder.redirectError(Redirect.DISCARD);
-         builder.environment().keySet().removeIf(AiScriptHost::init);
+         builder.environment().keySet().removeIf(AiScriptHost::isSecretEnvVar);
          this.process = builder.start();
          Process live = this.process;
          LIVE_PROCESSES.add(live);

@@ -12,7 +12,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
    public boolean listenDuringPreviousAction = false;
    public int timeoutMs = 0;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -26,7 +26,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       tag.putString("gameMode", this.gameMode.name());
       tag.putBoolean("detectFake", this.detectFake);
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -39,7 +39,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       this.detectFake = tag.getBooleanOr("detectFake", false);
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -64,12 +64,12 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public boolean init(GameType mode) {

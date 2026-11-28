@@ -8,17 +8,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public final class AiMiningQuota {
-   private final Map<String, Integer> init;
-   private final Map<String, Integer> load = new LinkedHashMap<>();
+   private final Map<String, Integer> requested;
+   private final Map<String, Integer> mined = new LinkedHashMap<>();
 
    private AiMiningQuota(Map<String, Integer> requested) {
-      this.init = requested;
-      requested.keySet().forEach(k -> this.load.put(k, 0));
+      this.requested = requested;
+      requested.keySet().forEach(k -> this.mined.put(k, 0));
    }
 
    public static JsonObject normalizeArgs(JsonObject args) {
       AiMiningTargets targets = AiMiningTargets.parse(AiJson.getString(args, "block", ""));
-      int count = init(args.has("count") ? args.get("count") : new JsonPrimitive(1), "default");
+      int count = parseCount(args.has("count") ? args.get("count") : new JsonPrimitive(1), "default");
       LinkedHashMap<String, Integer> overrides = new LinkedHashMap<>(targets.counts());
       if (args.has("counts")) {
          if (!args.get("counts").isJsonObject()) {
@@ -31,7 +31,7 @@ public final class AiMiningQuota {
                throw new IllegalArgumentException("Mining amount has no selected block: " + e.getKey());
             }
 
-            overrides.put(key.spec(), init(e.getValue(), key.spec()));
+            overrides.put(key.spec(), parseCount(e.getValue(), key.spec()));
          }
       }
 
@@ -48,7 +48,7 @@ public final class AiMiningQuota {
       return out;
    }
 
-   private static int init(JsonElement e, String type) {
+   private static int parseCount(JsonElement e, String type) {
       try {
          if (!e.isJsonPrimitive() || !e.getAsString().matches("[0-9]+")) {
             throw new NumberFormatException();
@@ -83,8 +83,8 @@ public final class AiMiningQuota {
       String best = null;
       int score = -1;
 
-      for (Entry<String, Integer> e : this.init.entrySet()) {
-         if (this.load.get(e.getKey()) < e.getValue() && AiMiningTargets.matches(e.getKey(), id)) {
+      for (Entry<String, Integer> e : this.requested.entrySet()) {
+         if (this.mined.get(e.getKey()) < e.getValue() && AiMiningTargets.matches(e.getKey(), id)) {
             int rank = (e.getKey().contains(":") ? 10000 : 0) + e.getKey().length();
             if (rank > score) {
                best = e.getKey();
@@ -102,29 +102,29 @@ public final class AiMiningQuota {
          return false;
       }
 
-      this.load.put(key, this.load.get(key) + 1);
+      this.mined.put(key, this.mined.get(key) + 1);
       return true;
    }
 
    public boolean isMet() {
-      return this.init.entrySet().stream().allMatch(e -> this.load.get(e.getKey()) >= e.getValue());
+      return this.requested.entrySet().stream().allMatch(e -> this.mined.get(e.getKey()) >= e.getValue());
    }
 
    public int totalCount() {
-      return this.init.values().stream().mapToInt(Integer::intValue).sum();
+      return this.requested.values().stream().mapToInt(Integer::intValue).sum();
    }
 
    public JsonObject brokenByBlock() {
       JsonObject out = new JsonObject();
-      this.load.forEach(out::addProperty);
+      this.mined.forEach(out::addProperty);
       return out;
    }
 
    public JsonObject load() {
       JsonObject out = new JsonObject();
-      this.init.forEach((k, n) -> {
-         if (n > this.load.get(k)) {
-            out.addProperty(k, n - this.load.get(k));
+      this.requested.forEach((k, n) -> {
+         if (n > this.mined.get(k)) {
+            out.addProperty(k, n - this.mined.get(k));
          }
       });
       return out;

@@ -27,8 +27,8 @@ final class SlotClickCommandHelper {
       target.then(init("shift-right", SlotClickCommandHelper.Inner_StreamUtil.init("Shift Right", ContainerInput.QUICK_MOVE, 1), executor));
       target.then(init("clone", SlotClickCommandHelper.Inner_StreamUtil.init("Clone", ContainerInput.CLONE, 2), executor));
       target.then(init("pickup-all", SlotClickCommandHelper.Inner_StreamUtil.init("Pick Up All", ContainerInput.PICKUP_ALL, 0), executor));
-      target.then(init("drop-item", SlotClickCommandHelper.Inner_StreamUtil.init("Drop Item", SlotClickCommandHelper.Inner_CachePool.ITEM), executor));
-      target.then(load("drop-stack", SlotClickCommandHelper.Inner_StreamUtil.init("Drop Stack", SlotClickCommandHelper.Inner_CachePool.STACK), executor));
+      target.then(init("drop-item", SlotClickCommandHelper.Inner_StreamUtil.dropSpec("Drop Item", SlotClickCommandHelper.Inner_CachePool.ITEM), executor));
+      target.then(load("drop-stack", SlotClickCommandHelper.Inner_StreamUtil.dropSpec("Drop Stack", SlotClickCommandHelper.Inner_CachePool.STACK), executor));
       LiteralArgumentBuilder<AutismCommandSource> swap = LiteralArgumentBuilder.<AutismCommandSource>literal("swap");
       RequiredArgumentBuilder<AutismCommandSource, Integer> hotbar = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
             "swap-hotbar", IntegerArgumentType.integer(1, 9)
@@ -50,7 +50,7 @@ final class SlotClickCommandHelper {
             )
          );
       hotbar.then(
-         init(
+         timesArgument(
             (context, times) -> executor.execute(
                context,
                SlotClickCommandHelper.Inner_StreamUtil.init(
@@ -111,7 +111,7 @@ final class SlotClickCommandHelper {
 
    private static LiteralArgumentBuilder<AutismCommandSource> init(String literal, SlotClickCommandHelper.Inner_StreamUtil spec, SlotClickCommandHelper.Inner_DataUtil executor) {
       LiteralArgumentBuilder<AutismCommandSource> node = load(literal, spec, executor);
-      node.then(init((context, times) -> executor.execute(context, spec, times)));
+      node.then(timesArgument((context, times) -> executor.execute(context, spec, times)));
       return node;
    }
 
@@ -119,7 +119,7 @@ final class SlotClickCommandHelper {
       return (LiteralArgumentBuilder<AutismCommandSource>)LiteralArgumentBuilder.<AutismCommandSource>literal(literal).executes(context -> executor.execute(context, spec, 1));
    }
 
-   private static RequiredArgumentBuilder<AutismCommandSource, Integer> init(SlotClickCommandHelper.Inner_BufferHelper executor) {
+   private static RequiredArgumentBuilder<AutismCommandSource, Integer> timesArgument(SlotClickCommandHelper.Inner_BufferHelper executor) {
       return (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
          .suggests(autismclient.commands.CommandSuggestions::sync)
          .executes(context -> executor.execute(context, IntegerArgumentType.getInteger(context, "times")));
@@ -146,7 +146,7 @@ final class SlotClickCommandHelper {
          return new SlotClickCommandHelper.Inner_StreamUtil(label, input, button, SlotClickCommandHelper.Inner_CachePool.NONE);
       }
 
-      static SlotClickCommandHelper.Inner_StreamUtil init(String label, SlotClickCommandHelper.Inner_CachePool dropMode) {
+      static SlotClickCommandHelper.Inner_StreamUtil dropSpec(String label, SlotClickCommandHelper.Inner_CachePool dropMode) {
          return new SlotClickCommandHelper.Inner_StreamUtil(label, ContainerInput.THROW, dropMode == SlotClickCommandHelper.Inner_CachePool.STACK ? 1 : 0, dropMode);
       }
    }

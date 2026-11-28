@@ -4,36 +4,36 @@ import autismclient.api.custommenu.CustomMenuSnapshot;
 import net.minecraft.network.protocol.Packet;
 
 public final class CustomMenuTracker {
-   private static final CustomMenuStateStore init = new CustomMenuStateStore();
+   private static final CustomMenuStateStore store = new CustomMenuStateStore();
 
    private CustomMenuTracker() {
    }
 
    public static void init(Packet<?> packet, String phase) {
-      init.init(packet, phase);
+      store.init(packet, phase);
    }
 
    public static void load(Packet<?> packet, String phase) {
-      init.load(packet, phase);
+      store.load(packet, phase);
    }
 
    public static CustomMenuSnapshot snapshot() {
-      return init.snapshot();
+      return store.snapshot();
    }
 
    public static long generation() {
-      return init.generation();
+      return store.generation();
    }
 
    public static void init(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
-      init.init(expected, replacement);
+      store.init(expected, replacement);
    }
 
    public static void init(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
-      init.init(seenGeneration, replacement, phase);
+      store.init(seenGeneration, replacement, phase);
    }
 
    public static void clear() {
-      init.clear();
+      store.clear();
    }
 }

@@ -32,45 +32,45 @@ public final class PackUrlValidator {
       try {
          return parseUri(url.toURI());
       } catch (URISyntaxException e) {
-         throw init_MalformedURLExcept_Str_Exception(url.toExternalForm(), e);
+         throw malformed(url.toExternalForm(), e);
       }
    }
 
    public static PackUrlValidator.Inner_ConfigStore parseUri(URI uri) throws MalformedURLException {
       Objects.requireNonNull(uri, "uri");
       String text = uri.toASCIIString();
-      if (text.equals(uri.toString()) && !init_Z_Str(text) && !uri.isOpaque()) {
+      if (text.equals(uri.toString()) && !hasUnsafeChars(text) && !uri.isOpaque()) {
          String scheme = uri.getScheme();
          if (scheme != null && (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
             String rawAuthority = uri.getRawAuthority();
             if (rawAuthority != null && !rawAuthority.isBlank() && uri.getRawUserInfo() == null && rawAuthority.indexOf(64) < 0) {
                String host = uri.getHost();
                if (host != null && !host.isBlank()) {
-                  host = init_Str_Str(host);
-                  if (host.isBlank() || init_Z_Str(host) || host.indexOf(37) >= 0 || host.indexOf(47) >= 0) {
-                     throw init_MalformedURLExcept_Str_Exception(text, null);
+                  host = stripBrackets(host);
+                  if (host.isBlank() || hasUnsafeChars(host) || host.indexOf(37) >= 0 || host.indexOf(47) >= 0) {
+                     throw malformed(text, null);
                   }
 
                   if (host.chars().anyMatch(c -> c > 127)) {
-                     throw init_MalformedURLExcept_Str_Exception(text, null);
+                     throw malformed(text, null);
                   }
 
-                  if (host.matches("[0-9.]+") && init_BArr_Str(host) == null) {
-                     throw init_MalformedURLExcept_Str_Exception(text, null);
+                  if (host.matches("[0-9.]+") && parseIpv4(host) == null) {
+                     throw malformed(text, null);
                   }
 
                   if (host.indexOf(58) >= 0) {
-                     if (!load(rawAuthority) || host.indexOf(46) >= 0) {
-                        throw init_MalformedURLExcept_Str_Exception(text, null);
+                     if (!hasBracketedHost(rawAuthority) || host.indexOf(46) >= 0) {
+                        throw malformed(text, null);
                      }
 
                      try {
                         InetAddress numeric = InetAddress.getByName(host);
                         if (!(numeric instanceof Inet6Address)) {
-                           throw init_MalformedURLExcept_Str_Exception(text, null);
+                           throw malformed(text, null);
                         }
                      } catch (UnknownHostException e) {
-                        throw init_MalformedURLExcept_Str_Exception(text, e);
+                        throw malformed(text, e);
                      }
                   }
 
@@ -89,26 +89,26 @@ public final class PackUrlValidator {
                         requestTarget = requestTarget + "?" + uri.getRawQuery();
                      }
 
-                     String authority = init_Str_Str(host, port, scheme.equalsIgnoreCase("https") ? 443 : 80);
+                     String authority = formatHostPort(host, port, scheme.equalsIgnoreCase("https") ? 443 : 80);
                      return new PackUrlValidator.Inner_ConfigStore(uri, host, port, authority, requestTarget);
                   } else {
-                     throw init_MalformedURLExcept_Str_Exception(text, null);
+                     throw malformed(text, null);
                   }
                } else {
-                  throw init_MalformedURLExcept_Str_Exception(text, null);
+                  throw malformed(text, null);
                }
             } else {
-               throw init_MalformedURLExcept_Str_Exception(text, null);
+               throw malformed(text, null);
             }
          } else {
             throw new MalformedURLException("Only HTTP and HTTPS resource-pack URLs are accepted");
          }
       } else {
-         throw init_MalformedURLExcept_Str_Exception(text, null);
+         throw malformed(text, null);
       }
    }
 
-   public static PackUrlValidator.Inner_CachePool init_TextFormat_CachePo_URL(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
+   public static PackUrlValidator.Inner_CachePool resolveUrlEndpoint(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
       return resolveEndpoint(parseUrl(url), snapshot, resolver);
    }
 
@@ -116,11 +116,11 @@ public final class PackUrlValidator {
       PackUrlValidator.Inner_ConfigStore target, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver
    ) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
-      List<InetAddress> addresses = init_List_Str_TextFormat_StreamU(target.load(), resolver);
-      PackUrlValidator.Inner_DataUtil kind = init_TextFormat_DataUti_List(addresses);
+      List<InetAddress> addresses = resolveHost(target.load(), resolver);
+      PackUrlValidator.Inner_DataUtil kind = classifyAddresses(addresses);
 
       for (InetAddress address : addresses) {
-         if (!init_Z_InetAddress(address, target.port(), kind, snapshot)) {
+         if (!isAllowedAddress(address, target.port(), kind, snapshot)) {
             throw new IOException("Resource-pack address is outside the connected server's allowed scope");
          }
       }
@@ -131,9 +131,9 @@ public final class PackUrlValidator {
    public static PackUrlValidator.Inner_BufferHelper routeFor(Proxy proxy, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
       if (proxy != null && proxy.type() != Type.DIRECT) {
          if (proxy.address() instanceof InetSocketAddress socketAddress) {
-            PackUrlValidator.Inner_ConfigStore target = init_TextFormat_ConfigS_InetSocketAddress(socketAddress);
-            List<InetAddress> addresses = init_List_Str_TextFormat_StreamU(target.load(), resolver);
-            PackUrlValidator.Inner_DataUtil kind = init_TextFormat_DataUti_List(addresses);
+            PackUrlValidator.Inner_ConfigStore target = targetFromSocket(socketAddress);
+            List<InetAddress> addresses = resolveHost(target.load(), resolver);
+            PackUrlValidator.Inner_DataUtil kind = classifyAddresses(addresses);
             if (kind == PackUrlValidator.Inner_DataUtil.SPECIAL) {
                throw new IOException("The configured proxy address is not a unicast address");
             } else {
@@ -160,7 +160,7 @@ public final class PackUrlValidator {
          try {
             uri = new URI(location);
          } catch (URISyntaxException e) {
-            throw init_MalformedURLExcept_Str_Exception(location, e);
+            throw malformed(location, e);
          }
 
          PackUrlValidator.Inner_ConfigStore target = parseUri(uri);
@@ -181,8 +181,8 @@ public final class PackUrlValidator {
    public static String endpointKey(ConnectionPrivacyRegistry.ServerEndpoint endpoint) throws IOException {
       Objects.requireNonNull(endpoint, "endpoint");
       String host = endpoint.host();
-      if (host != null && !host.isBlank() && !init_Z_Str(host) && host.indexOf(37) < 0) {
-         host = init_Str_Str(host.trim());
+      if (host != null && !host.isBlank() && !hasUnsafeChars(host) && host.indexOf(37) < 0) {
+         host = stripBrackets(host.trim());
 
          while (host.endsWith(".") && host.length() > 1) {
             host = host.substring(0, host.length() - 1);
@@ -207,7 +207,7 @@ public final class PackUrlValidator {
                      host = host.substring(0, zone);
                   }
                } else {
-                  if (host.matches("[0-9.]+") && init_BArr_Str(host) == null) {
+                  if (host.matches("[0-9.]+") && parseIpv4(host) == null) {
                      throw new IOException("Invalid original numeric origin");
                   }
 
@@ -217,7 +217,7 @@ public final class PackUrlValidator {
                throw new IOException("Invalid original Minecraft origin", e);
             }
 
-            return init_Str_Str(host, port, 25565);
+            return formatHostPort(host, port, 25565);
          } else {
             throw new IOException("Invalid original Minecraft port");
          }
@@ -237,7 +237,7 @@ public final class PackUrlValidator {
          }
       } else {
          String local = socketAddress.toString();
-         if (!local.isBlank() && !init_Z_Str(local)) {
+         if (!local.isBlank() && !hasUnsafeChars(local)) {
             return "local:" + local;
          } else {
             throw new IOException("The connected local peer has no stable identity");
@@ -245,16 +245,16 @@ public final class PackUrlValidator {
       }
    }
 
-   public static String init_Str_InetAddress(InetAddress address, int port, String scheme) {
+   public static String formatAuthority(InetAddress address, int port, String scheme) {
       int defaultPort = scheme.equalsIgnoreCase("https") ? 443 : 80;
-      return init_Str_Str(address.getHostAddress(), port, defaultPort);
+      return formatHostPort(address.getHostAddress(), port, defaultPort);
    }
 
    public static boolean sameAuthority(PackUrlValidator.Inner_ConfigStore first, PackUrlValidator.Inner_ConfigStore second) {
       return first.init_Str().equals(second.init_Str()) && first.load().equalsIgnoreCase(second.load()) && first.port() == second.port();
    }
 
-   private static PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS_InetSocketAddress(InetSocketAddress address) throws IOException {
+   private static PackUrlValidator.Inner_ConfigStore targetFromSocket(InetSocketAddress address) throws IOException {
       String host = address.getHostString();
       int port = address.getPort();
       if (host != null && !host.isBlank() && port >= 1 && port <= 65535) {
@@ -263,14 +263,14 @@ public final class PackUrlValidator {
          try {
             return parseUri(new URI("http://" + literal + ":" + port + "/"));
          } catch (URISyntaxException e) {
-            throw init_MalformedURLExcept_Str_Exception(address.toString(), e);
+            throw malformed(address.toString(), e);
          }
       } else {
          throw new IOException("Invalid configured proxy endpoint");
       }
    }
 
-   private static List<InetAddress> init_List_Str_TextFormat_StreamU(String host, PackUrlValidator.Inner_StreamUtil resolver) throws UnknownHostException {
+   private static List<InetAddress> resolveHost(String host, PackUrlValidator.Inner_StreamUtil resolver) throws UnknownHostException {
       Objects.requireNonNull(resolver, "resolver");
       List<InetAddress> resolved = resolver.resolve(host);
       if (resolved != null && !resolved.isEmpty()) {
@@ -290,11 +290,11 @@ public final class PackUrlValidator {
       }
    }
 
-   private static PackUrlValidator.Inner_DataUtil init_TextFormat_DataUti_List(List<InetAddress> addresses) throws IOException {
-      PackUrlValidator.Inner_DataUtil kind = init_TextFormat_DataUti_InetAddress(addresses.getFirst());
+   private static PackUrlValidator.Inner_DataUtil classifyAddresses(List<InetAddress> addresses) throws IOException {
+      PackUrlValidator.Inner_DataUtil kind = classifyAddress(addresses.getFirst());
 
       for (InetAddress address : addresses) {
-         if (init_TextFormat_DataUti_InetAddress(address) != kind) {
+         if (classifyAddress(address) != kind) {
             throw new IOException("Mixed DNS answer categories are not accepted");
          }
       }
@@ -306,7 +306,7 @@ public final class PackUrlValidator {
       }
    }
 
-   private static boolean init_Z_InetAddress(InetAddress address, int port, PackUrlValidator.Inner_DataUtil kind, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
+   private static boolean isAllowedAddress(InetAddress address, int port, PackUrlValidator.Inner_DataUtil kind, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
       if (kind == PackUrlValidator.Inner_DataUtil.PUBLIC) {
          return true;
       }
@@ -329,7 +329,7 @@ public final class PackUrlValidator {
       }
    }
 
-   private static PackUrlValidator.Inner_DataUtil init_TextFormat_DataUti_InetAddress(InetAddress address) {
+   private static PackUrlValidator.Inner_DataUtil classifyAddress(InetAddress address) {
       byte[] bytes = address.getAddress();
       if (address.isAnyLocalAddress() || address.isMulticastAddress() || init_Z_BArr(bytes) || init_Z_InetAddress_BArr(address, bytes)) {
          return PackUrlValidator.Inner_DataUtil.SPECIAL;
@@ -337,7 +337,7 @@ public final class PackUrlValidator {
          return PackUrlValidator.Inner_DataUtil.LOOPBACK;
       } else if (address.isLinkLocalAddress()) {
          return PackUrlValidator.Inner_DataUtil.LINK_LOCAL;
-      } else if (address.isSiteLocalAddress() || load(bytes) || read(bytes)) {
+      } else if (address.isSiteLocalAddress() || isCarrierGradeNat(bytes) || isUniqueLocalIpv6(bytes)) {
          return PackUrlValidator.Inner_DataUtil.PRIVATE;
       } else if (address instanceof Inet4Address) {
          return PackUrlValidator.Inner_DataUtil.PUBLIC;
@@ -349,10 +349,10 @@ public final class PackUrlValidator {
    private static boolean init_Z_BArr(byte[] b) {
       if (b.length != 16) {
          return false;
-      } else if (init_Z_BArr_IArr(b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255)) {
+      } else if (hasPrefix(b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255)) {
          return true;
       } else {
-         return !init_Z_BArr_IArr(b, 0, 100, 255, 155) && !init_Z_BArr_IArr(b, 0, 100, 255, 155, 1) ? b[0] == 32 && b[1] == 2 : true;
+         return !hasPrefix(b, 0, 100, 255, 155) && !hasPrefix(b, 0, 100, 255, 155, 1) ? b[0] == 32 && b[1] == 2 : true;
       }
    }
 
@@ -360,15 +360,15 @@ public final class PackUrlValidator {
       if (!(address instanceof Inet4Address)) {
          if (b.length != 16) {
             return true;
-         } else if (init_Z_BArr_IArr(b, 32, 1, 13, 184)) {
+         } else if (hasPrefix(b, 32, 1, 13, 184)) {
             return true;
          } else {
-            return b[0] == 32 && b[1] == 1 && (init_I_B(b[2]) & 254) == 0 ? true : init_Z_BArr_IArr(b, 1, 0) && init_Z_BArr(b, 2, 12);
+            return b[0] == 32 && b[1] == 1 && (unsigned(b[2]) & 254) == 0 ? true : hasPrefix(b, 1, 0) && isZeroRange(b, 2, 12);
          }
       } else {
-         int a = init_I_B(b[0]);
-         int second = init_I_B(b[1]);
-         int third = init_I_B(b[2]);
+         int a = unsigned(b[0]);
+         int second = unsigned(b[1]);
+         int third = unsigned(b[2]);
          return a == 0
             || a >= 224
             || a == 192 && second == 0 && third == 0
@@ -380,21 +380,21 @@ public final class PackUrlValidator {
       }
    }
 
-   private static boolean load(byte[] b) {
-      return b.length == 4 && init_I_B(b[0]) == 100 && (init_I_B(b[1]) & 192) == 64;
+   private static boolean isCarrierGradeNat(byte[] b) {
+      return b.length == 4 && unsigned(b[0]) == 100 && (unsigned(b[1]) & 192) == 64;
    }
 
-   private static boolean read(byte[] bytes) {
+   private static boolean isUniqueLocalIpv6(byte[] bytes) {
       return bytes.length == 16 && (bytes[0] & 254) == 252;
    }
 
-   private static boolean init_Z_BArr_IArr(byte[] value, int... prefix) {
+   private static boolean hasPrefix(byte[] value, int... prefix) {
       if (value.length < prefix.length) {
          return false;
       }
 
       for (int i = 0; i < prefix.length; i++) {
-         if (init_I_B(value[i]) != prefix[i]) {
+         if (unsigned(value[i]) != prefix[i]) {
             return false;
          }
       }
@@ -402,7 +402,7 @@ public final class PackUrlValidator {
       return true;
    }
 
-   private static boolean init_Z_BArr(byte[] value, int from, int to) {
+   private static boolean isZeroRange(byte[] value, int from, int to) {
       for (int i = from; i < to; i++) {
          if (value[i] != 0) {
             return false;
@@ -412,11 +412,11 @@ public final class PackUrlValidator {
       return true;
    }
 
-   private static int init_I_B(byte value) {
+   private static int unsigned(byte value) {
       return value & 0xFF;
    }
 
-   private static byte[] init_BArr_Str(String host) {
+   private static byte[] parseIpv4(String host) {
       String[] parts = host.split("\\.", -1);
       if (parts.length != 4) {
          return null;
@@ -447,7 +447,7 @@ public final class PackUrlValidator {
       return bytes;
    }
 
-   private static boolean init_Z_Str(String value) {
+   private static boolean hasUnsafeChars(String value) {
       for (int i = 0; i < value.length(); i++) {
          char c = value.charAt(i);
          if (c <= ' ' || c == 127 || c == '\\') {
@@ -458,21 +458,21 @@ public final class PackUrlValidator {
       return false;
    }
 
-   private static boolean load(String rawAuthority) {
+   private static boolean hasBracketedHost(String rawAuthority) {
       String hostPort = rawAuthority.substring(rawAuthority.lastIndexOf(64) + 1);
       return hostPort.startsWith("[") && hostPort.indexOf(93) > 0;
    }
 
-   private static String init_Str_Str(String host) {
+   private static String stripBrackets(String host) {
       return host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
    }
 
-   private static String init_Str_Str(String host, int port, int defaultPort) {
+   private static String formatHostPort(String host, int port, int defaultPort) {
       String formatted = host.indexOf(58) >= 0 ? "[" + host + "]" : host;
       return port == defaultPort ? formatted : formatted + ":" + port;
    }
 
-   private static MalformedURLException init_MalformedURLExcept_Str_Exception(String value, Exception cause) {
+   private static MalformedURLException malformed(String value, Exception cause) {
       MalformedURLException exception = new MalformedURLException("Invalid resource-pack URL: " + value);
       if (cause != null) {
          exception.initCause(cause);
@@ -493,7 +493,7 @@ public final class PackUrlValidator {
          return this.uri.getScheme().toLowerCase(Locale.ROOT);
       }
 
-      public PackUrlValidator.Inner_ConfigStore init_TextFormat_ConfigS() {
+      public PackUrlValidator.Inner_ConfigStore parsedTarget() {
          try {
             return PackUrlValidator.parseUri(this.uri);
          } catch (IOException e) {

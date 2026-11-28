@@ -39,7 +39,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private autismclient.gui.ui.widgets.DropdownWidget methodDropdown;
    private autismclient.gui.ui.widgets.DropdownWidget load_SyncManager;
    private boolean scrollbarDragging;
-   private int write;
+   private int scrollbarGrabOffset;
 
    public JoinMacroScreen(Screen parent) {
       super(Component.literal("Join Macro"));
@@ -54,7 +54,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    @Override
    protected void init() {
       if (this.searchField == null) {
-         this.searchField = new ThemedTextInputBox(this.minecraft, this.font, this.open(), this.get(), this.put(), this.controlHeight(), false);
+         this.searchField = new ThemedTextInputBox(this.minecraft, this.font, this.contentX(), this.searchY(), this.searchWidth(), this.controlHeight(), false);
          this.searchField.setPlaceholder(Component.literal("Search macros..."));
          this.searchField.setMaxLength(64);
          this.searchField.setChangedListener(value -> {
@@ -84,12 +84,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          this.buttons.clear();
          this.dropdowns.clear();
          graphics.fill(0, 0, this.virtualWidth(), this.virtualHeight(), -15987181);
-         int x = this.flush();
-         int panelW = this.close();
+         int x = this.panelX();
+         int panelW = this.panelWidth();
          int ctl = this.controlHeight();
          this.addButton(
-            this.open(),
-            this.pop(),
+            this.contentX(),
+            this.titleY(),
             0,
             ctl,
             "Back",
@@ -103,31 +103,31 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
-            autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
+            autismclient.gui.f.NetHelper.init(x, this.panelTop(), panelW, this.headerPanelHeight()),
             5,
             -401402080,
             ThemePaletteManager.recolor(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
-            autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
+            autismclient.gui.f.NetHelper.init(this.listX(), this.listY(), this.listWidth(), this.listHeight()),
             5,
             -1206840035,
             ThemePaletteManager.recolor(GuiColorPalette.update, ThemePaletteManager.ColorRole.OUTLINE)
          );
-         int titleX = this.open() + this.buttonWidth("Back") + 4;
+         int titleX = this.contentX() + this.buttonWidth("Back") + 4;
          autismclient.gui.f.b.k.init(
-            graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, GuiColorPalette.flush, titleX, this.centeredTextY(this.pop(), ctl), false
+            graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, GuiColorPalette.flush, titleX, this.centeredTextY(this.titleY(), ctl), false
          );
-         this.init(graphics, this.open(), this.tick_I_3(), this.poll());
+         this.renderSelectedInfo(graphics, this.contentX(), this.tick_I_3(), this.contentWidth());
          boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns);
          int hoverX = menuOpen ? -2147483648 : virtualMouseX;
          int hoverY = menuOpen ? -2147483648 : virtualMouseY;
          this.searchField.render(graphics, virtualMouseX, virtualMouseY, delta);
-         this.load(hoverX, hoverY);
-         this.init(graphics, hoverX, hoverY);
-         this.load(graphics, hoverX, hoverY);
-         this.read(graphics, hoverX, hoverY);
+         this.addActionButtons(hoverX, hoverY);
+         this.renderExecutionMethod(graphics, hoverX, hoverY);
+         this.renderMacroList(graphics, hoverX, hoverY);
+         this.renderButtons(graphics, hoverX, hoverY);
          autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(graphics, this.font, this.dropdowns, virtualMouseX, virtualMouseY);
          autismclient.gui.ui.widgets.DropdownWidget.renderOpenPopup(graphics, this.font, this.dropdowns, virtualMouseX, virtualMouseY);
       } finally {
@@ -135,9 +135,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private void load(int mouseX, int mouseY) {
-      int x = this.set() + this.put() + 2;
-      int y = this.get();
+   private void addActionButtons(int mouseX, int mouseY) {
+      int x = this.searchX() + this.searchWidth() + 2;
+      int y = this.searchY();
       int ctl = this.controlHeight();
       this.addButton(x, y, 0, ctl, "Edit", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, this.selectedMacro() != null, () -> this.openEditor(this.selectedMacro()));
       x += this.buttonWidth("Edit") + 2;
@@ -156,9 +156,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      int x = this.open();
-      int y = this.add();
+   private void renderExecutionMethod(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+      int x = this.contentX();
+      int y = this.methodRowY();
       int ctl = this.controlHeight();
       autismclient.gui.f.b.k.init(graphics, this.font, "Execution Method", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.centeredTextY(y, ctl), false);
       JoinMacroController.Inner_StreamUtil[] timings = JoinMacroController.Inner_StreamUtil.values();
@@ -186,7 +186,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          true,
          () -> JoinMacroController.load(!JoinMacroController.keepEnabled())
       );
-      int triggerRowY = this.clear();
+      int triggerRowY = this.triggerRowY();
       autismclient.gui.f.b.k.init(
          graphics, this.font, keep ? "Repeat On" : "Run On", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.centeredTextY(triggerRowY, ctl), false
       );
@@ -235,7 +235,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return existing;
    }
 
-   private void init(GuiGraphicsExtractor graphics, int x, int y, int maxWidth) {
+   private void renderSelectedInfo(GuiGraphicsExtractor graphics, int x, int y, int maxWidth) {
       int line = 12;
       String selected = JoinMacroController.macroName();
       if (selected.isBlank()) {
@@ -284,15 +284,15 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return autismclient.gui.f.b.k.init(this.font, combined, autismclient.gui.f.a.DataUtil.init, 0) > maxWidth;
    }
 
-   private void load(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      int listX = this.start();
-      int listW = this.next();
+   private void renderMacroList(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+      int listX = this.listX();
+      int listW = this.listWidth();
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics();
-      int rowX = this.value();
+      int rowX = this.rowX();
       int rowRight = this.init_I_PoolEntry_DataUtil(scrollbar);
       int rowH = this.update_I_2();
-      int pitch = this.sync();
-      int visibleRows = this.data();
+      int pitch = this.rowPitch();
+      int visibleRows = this.visibleRows();
       String title = this.rows.size() <= visibleRows
          ? "Macros"
          : "Macros  showing " + (this.scrollRow + 1) + "-" + Math.min(this.rows.size(), this.scrollRow + visibleRows) + " / " + this.rows.size();
@@ -303,12 +303,12 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          autismclient.gui.f.a.DataUtil.init,
          GuiColorPalette.flush,
          listX + 4,
-         this.centeredTextY(this.stop() + 4, 12),
+         this.centeredTextY(this.listY() + 4, 12),
          false
       );
       if (this.rows.isEmpty()) {
          autismclient.gui.f.b.k.init(
-            graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, rowX + 8, this.centeredTextY(this.size(), rowH), false
+            graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, rowX + 8, this.centeredTextY(this.listBodyY(), rowH), false
          );
       } else {
          String selected = JoinMacroController.macroName();
@@ -316,7 +316,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
          for (int i = this.scrollRow; i < max; i++) {
             JoinMacroScreen.Inner_StreamUtil row = this.rows.get(i);
-            int rowY = this.size() + (i - this.scrollRow) * pitch;
+            int rowY = this.listBodyY() + (i - this.scrollRow) * pitch;
             autismclient.gui.f.NetHelper rowBounds = autismclient.gui.f.NetHelper.init(rowX, rowY, rowRight - rowX, rowH);
             boolean hovered = rowBounds.init_Z(mouseX, mouseY);
             boolean active = row.name.equalsIgnoreCase(selected);
@@ -329,7 +329,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
                   hovered
                );
             } else {
-               this.init(graphics, rowBounds, row.name, active, hovered);
+               this.renderMacroRow(graphics, rowBounds, row.name, active, hovered);
                String stepsText = row.steps + (row.steps == 1 ? " step" : " steps");
                int stepsW = autismclient.gui.f.b.k.init(this.font, stepsText, autismclient.gui.f.a.DataUtil.init, 0);
                int rightX = rowRight - 4 - stepsW;
@@ -356,7 +356,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private void read(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+   private void renderButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       for (JoinMacroScreen.Inner_DataUtil button : this.buttons) {
          autismclient.gui.ui.widgets.ButtonDrawHelper.init(
             graphics,
@@ -382,7 +382,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       this.buttons.add(new JoinMacroScreen.Inner_DataUtil(x, y, w, h, label, variant, enabled, action));
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, String key, boolean selected, boolean hovered) {
+   private void renderMacroRow(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, String key, boolean selected, boolean hovered) {
       autismclient.gui.f.PacketUtil.load(
          graphics,
          bounds,
@@ -416,8 +416,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics();
          if (scrollbar.isScrollable() && scrollbar.containsTrack(event.x(), event.y())) {
             this.scrollbarDragging = true;
-            this.write = scrollbar.containsThumb(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
-            this.setScrollPixels(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, event.y(), this.write));
+            this.scrollbarGrabOffset = scrollbar.containsThumb(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.thumbY()) : scrollbar.thumbHeight() / 2;
+            this.setScrollPixels(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, event.y(), this.scrollbarGrabOffset));
             if (this.searchField != null) {
                this.searchField.setFocused(false);
             }
@@ -426,7 +426,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          }
 
          for (JoinMacroScreen.Inner_DataUtil button : this.buttons) {
-            if (button.init(event.x(), event.y())) {
+            if (button.contains(event.x(), event.y())) {
                if (button.enabled && button.action != null) {
                   button.action.run();
                }
@@ -478,7 +478,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseDrag(this.dropdowns, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else if (this.scrollbarDragging) {
-         this.setScrollPixels(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), event.y(), this.write));
+         this.setScrollPixels(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(), event.y(), this.scrollbarGrabOffset));
          return true;
       } else {
          return this.searchField != null && this.searchField.mouseDragged(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
@@ -497,8 +497,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          return true;
       }
 
-      if (mouseX >= this.start() && mouseX < this.start() + this.next() && mouseY >= this.stop() && mouseY < this.stop() + this.valid()) {
-         int maxScroll = Math.max(0, this.rows.size() - this.data());
+      if (mouseX >= this.listX() && mouseX < this.listX() + this.listWidth() && mouseY >= this.listY() && mouseY < this.listY() + this.listHeight()) {
+         int maxScroll = Math.max(0, this.rows.size() - this.visibleRows());
          if (maxScroll > 0) {
             this.scrollRow = Math.max(0, Math.min(maxScroll, this.scrollRow - (int)Math.signum(scrollY)));
          }
@@ -563,7 +563,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             );
       }
 
-      this.scrollRow = Math.max(0, Math.min(this.scrollRow, Math.max(0, this.rows.size() - this.data())));
+      this.scrollRow = Math.max(0, Math.min(this.scrollRow, Math.max(0, this.rows.size() - this.visibleRows())));
    }
 
    private String searchQuery() {
@@ -590,10 +590,10 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private int init_I_D_D(double mouseX, double mouseY) {
-      int y = this.size();
-      int pitch = this.sync();
-      int h = this.data() * pitch;
-      if (!(mouseX < this.value()) && !(mouseX >= this.init_I_PoolEntry_DataUtil(this.scrollbarMetrics())) && !(mouseY < y) && !(mouseY >= y + h)) {
+      int y = this.listBodyY();
+      int pitch = this.rowPitch();
+      int h = this.visibleRows() * pitch;
+      if (!(mouseX < this.rowX()) && !(mouseX >= this.init_I_PoolEntry_DataUtil(this.scrollbarMetrics())) && !(mouseY < y) && !(mouseY >= y + h)) {
          int local = (int)mouseY - y;
          if (local % pitch >= this.update_I_2()) {
             return -1;
@@ -608,9 +608,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void layoutSearchField() {
       if (this.searchField != null) {
-         this.searchField.setX(this.set());
-         this.searchField.setY(this.get());
-         this.searchField.setWidth(this.put());
+         this.searchField.setX(this.searchX());
+         this.searchField.setY(this.searchY());
+         this.searchField.setWidth(this.searchWidth());
          this.searchField.setHeight(this.controlHeight());
       }
    }
@@ -641,128 +641,128 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int sync() {
+   private int rowPitch() {
       return this.update_I_2() + 2;
    }
 
-   private int flush() {
-      return Math.max(6, (this.virtualWidth() - this.close()) / 2);
+   private int panelX() {
+      return Math.max(6, (this.virtualWidth() - this.panelWidth()) / 2);
    }
 
-   private int close() {
+   private int panelWidth() {
       return Math.max(1, Math.min(382, this.virtualWidth() - 12));
    }
 
-   private int open() {
-      return this.flush() + 4;
+   private int contentX() {
+      return this.panelX() + 4;
    }
 
-   private int poll() {
-      return Math.max(1, this.close() - 8);
+   private int contentWidth() {
+      return Math.max(1, this.panelWidth() - 8);
    }
 
-   private int push() {
+   private int panelTop() {
       return 6;
    }
 
-   private int pop() {
-      return this.push() + 4;
+   private int titleY() {
+      return this.panelTop() + 4;
    }
 
    private int tick_I_3() {
-      return this.pop() + this.controlHeight() + 2;
+      return this.titleY() + this.controlHeight() + 2;
    }
 
-   private int run() {
-      return (this.init_Z_I(this.poll()) ? 2 : 1) * 12;
+   private int selectedInfoHeight() {
+      return (this.init_Z_I(this.contentWidth()) ? 2 : 1) * 12;
    }
 
-   private int get() {
-      return this.tick_I_3() + this.run() + 2;
+   private int searchY() {
+      return this.tick_I_3() + this.selectedInfoHeight() + 2;
    }
 
-   private int set() {
-      return this.open();
+   private int searchX() {
+      return this.contentX();
    }
 
-   private int put() {
+   private int searchWidth() {
       int buttons = 0;
 
       for (String label : ACTION_BUTTON_LABELS) {
          buttons += this.buttonWidth(label) + 2;
       }
 
-      return Math.max(40, this.poll() - buttons);
+      return Math.max(40, this.contentWidth() - buttons);
    }
 
-   private int add() {
-      return this.get() + this.controlHeight() + 2;
+   private int methodRowY() {
+      return this.searchY() + this.controlHeight() + 2;
    }
 
-   private int clear() {
-      return this.add() + this.controlHeight() + 2;
+   private int triggerRowY() {
+      return this.methodRowY() + this.controlHeight() + 2;
    }
 
-   private int reset() {
-      return this.clear() + this.controlHeight() + 4 - this.push();
+   private int headerPanelHeight() {
+      return this.triggerRowY() + this.controlHeight() + 4 - this.panelTop();
    }
 
-   private int start() {
-      return this.flush();
+   private int listX() {
+      return this.panelX();
    }
 
-   private int stop() {
-      return this.push() + this.reset() + 4;
+   private int listY() {
+      return this.panelTop() + this.headerPanelHeight() + 4;
    }
 
-   private int next() {
-      return this.close();
+   private int listWidth() {
+      return this.panelWidth();
    }
 
-   private int prev() {
+   private int listHeaderHeight() {
       return 18;
    }
 
-   private int valid() {
-      int available = Math.max(this.prev() + this.update_I_2() + 4, this.virtualHeight() - 6 - this.stop());
-      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.sync());
+   private int listHeight() {
+      int available = Math.max(this.listHeaderHeight() + this.update_I_2() + 4, this.virtualHeight() - 6 - this.listY());
+      int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int shown = Math.max(3, Math.min(cap, this.rows.size()));
-      return Math.min(available, this.prev() + shown * this.sync() - 2 + 4);
+      return Math.min(available, this.listHeaderHeight() + shown * this.rowPitch() - 2 + 4);
    }
 
-   private int size() {
-      return this.stop() + this.prev();
+   private int listBodyY() {
+      return this.listY() + this.listHeaderHeight();
    }
 
-   private int data() {
-      return Math.max(1, (this.valid() - this.prev() - 4 + 2) / this.sync());
+   private int visibleRows() {
+      return Math.max(1, (this.listHeight() - this.listHeaderHeight() - 4 + 2) / this.rowPitch());
    }
 
-   private int value() {
-      return this.start() + 4;
+   private int rowX() {
+      return this.listX() + 4;
    }
 
    private int init_I_PoolEntry_DataUtil(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar) {
-      int right = this.start() + this.next() - 4;
-      return scrollbar.isScrollable() ? this.cache() - 2 : right;
+      int right = this.listX() + this.listWidth() - 4;
+      return scrollbar.isScrollable() ? this.rowRight() - 2 : right;
    }
 
-   private int cache() {
-      return this.start() + this.next() - 4 - 6;
+   private int rowRight() {
+      return this.listX() + this.listWidth() - 4 - 6;
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics() {
-      int pitch = this.sync();
-      int trackY = this.size();
-      int trackH = Math.max(1, this.data() * pitch - 2);
+      int pitch = this.rowPitch();
+      int trackY = this.listBodyY();
+      int trackH = Math.max(1, this.visibleRows() * pitch - 2);
       int contentPixels = Math.max(0, this.rows.size() * pitch);
-      int viewPixels = Math.max(1, this.data() * pitch);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, viewPixels, this.cache(), trackY, 6, trackH, this.scrollRow * pitch);
+      int viewPixels = Math.max(1, this.visibleRows() * pitch);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, viewPixels, this.rowRight(), trackY, 6, trackH, this.scrollRow * pitch);
    }
 
    private void setScrollPixels(int scrollPixels) {
-      int maxScrollRows = Math.max(0, this.rows.size() - this.data());
-      this.scrollRow = Math.max(0, Math.min(maxScrollRows, Math.round((float)scrollPixels / this.sync())));
+      int maxScrollRows = Math.max(0, this.rows.size() - this.visibleRows());
+      this.scrollRow = Math.max(0, Math.min(maxScrollRows, Math.round((float)scrollPixels / this.rowPitch())));
    }
 
    private JoinMacroController.Inner_CachePool[] init_aA_CachePoolArr() {
@@ -799,7 +799,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       boolean enabled,
       Runnable action
    ) {
-      boolean init(double mx, double my) {
+      boolean contains(double mx, double my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }

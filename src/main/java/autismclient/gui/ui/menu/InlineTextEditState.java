@@ -12,7 +12,7 @@ final class InlineTextEditState {
    String text;
    int cursor;
    private int anchor;
-   private int read;
+   private int scrollX;
 
    InlineTextEditState(Object owner, String initial, InlineTextEditState.Inner_DataUtil sink) {
       this.owner = owner;
@@ -36,12 +36,12 @@ final class InlineTextEditState {
    }
 
    int scroll() {
-      return this.read;
+      return this.scrollX;
    }
 
    int init(int availableWidth, ToIntFunction<String> widths) {
-      this.read = TextFieldRenderer.init(this.text, this.cursor, availableWidth, widths, this.read);
-      return this.read;
+      this.scrollX = TextFieldRenderer.init(this.text, this.cursor, availableWidth, widths, this.scrollX);
+      return this.scrollX;
    }
 
    void commit() {
@@ -102,7 +102,7 @@ final class InlineTextEditState {
                this.deleteSelection();
                return true;
             case 262:
-               this.init(this.update(), shift);
+               this.init(this.nextWordEnd(), shift);
                return true;
             case 263:
                this.init(this.previousWordStart(), shift);
@@ -123,7 +123,7 @@ final class InlineTextEditState {
             return true;
          case 261:
             if (!this.deleteSelection() && this.cursor < this.text.length()) {
-               this.replaceRange(this.cursor, ctrl ? this.update() : Utf16TextCursor.write(this.text, this.cursor), "");
+               this.replaceRange(this.cursor, ctrl ? this.nextWordEnd() : Utf16TextCursor.write(this.text, this.cursor), "");
             }
 
             return true;
@@ -217,7 +217,7 @@ final class InlineTextEditState {
       return i;
    }
 
-   private int update() {
+   private int nextWordEnd() {
       int i = this.cursor;
 
       while (i < this.text.length() && isWordChar(this.text.charAt(i))) {

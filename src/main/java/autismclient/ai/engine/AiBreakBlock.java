@@ -92,15 +92,15 @@ public final class AiBreakBlock {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z || this.mc.player == null || this.mc.level == null) {
-               return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Break cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Break cancelled");
             }
 
             if (this.mc.level != this.level) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during break");
+               return this.finish(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during break");
             }
 
             if (System.nanoTime() >= this.deadline) {
-               return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Break deadline reached");
+               return this.finish(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Break deadline reached");
             }
 
             if (this.child != null) {
@@ -111,33 +111,33 @@ public final class AiBreakBlock {
 
                this.child = null;
                if (result.status() != AiOperation.Status.SUCCEEDED || this.children.needsReconciliation) {
-                  return this.init(result);
+                  return this.finishWith(result);
                }
             }
 
             if (this.mc.level.getBlockState(target).getDestroySpeed(this.mc.level, target) < 0.0F) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.UNBREAKABLE_OBSTACLE, "Target is unbreakable");
+               return this.finish(AiOperation.Status.FAILED, AiFailure.UNBREAKABLE_OBSTACLE, "Target is unbreakable");
             }
 
             if (requireDrops && MiningCost.load(this.mc, this.mc.level.getBlockState(target), true) < 0) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
+               return this.finish(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
             }
 
             if (requireDrops && AiBreakBlock.hasLavaBelow(this.mc.level, target)) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
+               return this.finish(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
             }
 
             if (!this.init_RefQueue_DataUtil.isDiggingTargetCompat(target) && AiBlockInteraction.findClimbSafeFaceHit(this.mc, target, null) == null) {
                if (this.mc.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null
                   && this.mc.level.getBlockState(target).isAir()) {
-                  return this.init(AiOperation.Status.SUCCEEDED, null, "Block already absent");
+                  return this.finish(AiOperation.Status.SUCCEEDED, null, "Block already absent");
                }
             } else {
                if (this.mc.player.onClimbable() && !this.mc.player.onGround()) {
                   this.mc.options.keyShift.setDown(true);
                   if (!this.load_Z) {
                      this.load_Z = true;
-                     return this.init("Holding the ladder before breaking");
+                     return this.running("Holding the ladder before breaking");
                   }
 
                   if (Boolean.getBoolean("autism.navigation.debug") && this.mc.player.tickCount % 5 == 0) {
@@ -160,26 +160,26 @@ public final class AiBreakBlock {
                AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.digCompat(target);
                this.aim.tick();
                if (status == AiBlockDigger.Inner_DataUtil_2.load) {
-                  return this.init(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
+                  return this.finish(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
                }
 
                if (status == AiBlockDigger.Inner_DataUtil_2.init) {
-                  return this.init("Breaking target");
+                  return this.running("Breaking target");
                }
 
                this.children.recordTransition(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.isDiggingTargetCompat(target));
                if (this.children.needsReconciliation) {
-                  return this.init(
+                  return this.finish(
                      AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat()
                   );
                }
 
                if (++this.load_I >= 2) {
-                  return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Target could not be broken: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat());
+                  return this.finish(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Target could not be broken: " + this.init_RefQueue_DataUtil.lastFailureReasonCompat());
                }
             }
 
-            this.init();
+            this.releaseSneak();
             this.child = AiGoto.approachBlockToBreakCompat(
                target,
                (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L),
@@ -188,25 +188,25 @@ public final class AiBreakBlock {
                this.load_I > 0 ? 1.75 : 0.25,
                !sealedWater.isEmpty()
             );
-            return this.init("Approaching target");
+            return this.running("Approaching target");
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             return new AiOperation.Result(AiOperation.Status.RUNNING, message, "{}", List.of());
          }
 
-         AiOperation.Result init(AiOperation.Status status, AiFailure failure, String message) {
-            return this.init(new AiOperation.Result(status, message, "{}", List.of(), failure));
+         AiOperation.Result finish(AiOperation.Status status, AiFailure failure, String message) {
+            return this.finishWith(new AiOperation.Result(status, message, "{}", List.of(), failure));
          }
 
-         AiOperation.Result init(AiOperation.Result result) {
+         AiOperation.Result finishWith(AiOperation.Result result) {
             this.children.markPending(this.requiresReconciliationAfterEmergency());
             result = this.children.wrapResult(result);
             this.cancel();
             return result;
          }
 
-         void init() {
+         void releaseSneak() {
             if (this.load_Z) {
                this.load_Z = false;
                this.mc.options.keyShift.setDown(KeyMappingControl.of(this.mc.options.keyShift).autism$physicalForBody());
@@ -238,7 +238,7 @@ public final class AiBreakBlock {
 
                this.init_RefQueue_DataUtil.stopCompat();
                this.aim.clear();
-               this.init();
+               this.releaseSneak();
                if (this.mc.player != null && this.originalSlot >= 0) {
                   this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
                }

@@ -6,20 +6,20 @@ import java.util.Arrays;
 final class AiPerfMetrics {
    private final long[] samples = new long[1200];
    private long total;
-   private volatile long load;
+   private volatile long sampleCount;
 
    void init(long nanos) {
       this.total += nanos;
    }
 
    void load(long nanos) {
-      this.samples[(int)(this.load % this.samples.length)] = this.total + nanos;
+      this.samples[(int)(this.sampleCount % this.samples.length)] = this.total + nanos;
       this.total = 0L;
-      this.load++;
+      this.sampleCount++;
    }
 
    JsonObject init() {
-      int size = (int)Math.min(this.load, this.samples.length);
+      int size = (int)Math.min(this.sampleCount, this.samples.length);
       long[] copy = Arrays.copyOf(this.samples, size);
       Arrays.sort(copy);
       return AiJson.objectOf(

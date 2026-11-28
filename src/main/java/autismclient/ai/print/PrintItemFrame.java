@@ -83,7 +83,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       return !source.isAir() && (source.isSolid() || source.getBlock() instanceof DiodeBlock);
    }
 
-   private boolean open() {
+   private boolean sameWorld() {
       return this.worldToken != null && this.worldToken == this.env.worldToken();
    }
 
@@ -91,7 +91,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       return a.isEmpty() ? b.isEmpty() : !b.isEmpty() && ItemStack.isSameItemSameComponents(a, b);
    }
 
-   private PrintItemFrame.Inner_DataUtil init(List<PrintItemFrame.Inner_DataUtil> seen) {
+   private PrintItemFrame.Inner_DataUtil findOurs(List<PrintItemFrame.Inner_DataUtil> seen) {
       PrintItemFrame.Inner_DataUtil found = null;
 
       for (PrintItemFrame.Inner_DataUtil o : seen) {
@@ -114,7 +114,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.sameWorld()) {
          this.message = "World changed before the frame was hung";
          return this.status = PrintMachineJob.JobStatus.CONFLICT;
       }
@@ -133,7 +133,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status = PrintMachineJob.JobStatus.PREPARING;
       }
 
-      PrintItemFrame.Inner_DataUtil ours = this.init(seen);
+      PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
       if (ours == null && seen.stream().filter(o -> o.facing() == this.spec.facing()).count() > 1L) {
          return this.status = PrintMachineJob.JobStatus.CONFLICT;
       }
@@ -224,14 +224,14 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.sameWorld()) {
          this.message = "World changed after a frame click; not repeating it";
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
       List<PrintItemFrame.Inner_DataUtil> seen = this.env.itemFramesAt(this.spec.cell());
       if (seen != null) {
-         PrintItemFrame.Inner_DataUtil ours = this.init(seen);
+         PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
          boolean var10000;
          switch (this.stage) {
             case HANG:
@@ -274,7 +274,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status;
       }
 
-      if (!this.open()) {
+      if (!this.sameWorld()) {
          this.message = "World changed before the frame's final check";
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
@@ -284,7 +284,7 @@ public final class PrintItemFrame implements PrintMachineJob {
          return PrintMachineJob.JobStatus.PREPARING;
       }
 
-      PrintItemFrame.Inner_DataUtil ours = this.init(seen);
+      PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
       if (ours != null && ours.uuid().equals(this.frameId)) {
          return PrintMachineJob.JobStatus.SUCCEEDED;
       }

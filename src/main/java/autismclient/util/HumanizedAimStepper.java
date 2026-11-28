@@ -18,30 +18,30 @@ public final class HumanizedAimStepper {
    private final Random random;
    private final HumanHandProfile hand;
    private boolean init_Z;
-   private double tick;
-   private double run;
+   private double aimYaw;
+   private double aimPitch;
    private boolean load_Z;
-   private double get;
-   private double set;
-   private double put;
-   private double add;
+   private double lastGoalYaw;
+   private double lastGoalPitch;
+   private double goalVelocityYaw;
+   private double goalVelocityPitch;
    private boolean read_Z;
-   private double clear;
-   private double reset;
-   private double start;
-   private double stop;
-   private double next;
-   private double prev;
-   private double valid;
-   private double size;
-   private double data;
-   private double value;
+   private double strokeYaw;
+   private double strokePitch;
+   private double perpYaw;
+   private double perpPitch;
+   private double strokeCurve;
+   private double strokeTicks;
+   private double strokeTick;
+   private double strokeEase;
+   private double strokeOffsetYaw;
+   private double strokeOffsetPitch;
    private int init_I;
    private boolean write_Z;
-   private double cache;
-   private double state;
-   private double queue;
-   private double buffer;
+   private double tremorYaw;
+   private double tremorPitch;
+   private double driftYaw;
+   private double driftPitch;
 
    public HumanizedAimStepper(HumanHandProfile hand, Random random) {
       this.hand = hand;
@@ -67,8 +67,8 @@ public final class HumanizedAimStepper {
       this.read_Z = false;
       this.write_Z = false;
       this.init_I = 0;
-      this.put = this.add = 0.0;
-      this.cache = this.state = this.queue = this.buffer = 0.0;
+      this.goalVelocityYaw = this.goalVelocityPitch = 0.0;
+      this.tremorYaw = this.tremorPitch = this.driftYaw = this.driftPitch = 0.0;
    }
 
    public boolean init_Z() {
@@ -88,40 +88,40 @@ public final class HumanizedAimStepper {
       double tolerance = Math.max(0.5, toleranceDeg);
       if (!this.init_Z) {
          this.init_Z = true;
-         this.tick = actualYawDeg;
-         this.run = actualPitchDeg;
+         this.aimYaw = actualYawDeg;
+         this.aimPitch = actualPitchDeg;
       } else {
-         this.tick = actualYawDeg + init(read(this.tick - actualYawDeg), -0.75, 0.75);
-         this.run = actualPitchDeg + init(this.run - actualPitchDeg, -0.75, 0.75);
+         this.aimYaw = actualYawDeg + clamp(wrapDegrees(this.aimYaw - actualYawDeg), -0.75, 0.75);
+         this.aimPitch = actualPitchDeg + clamp(this.aimPitch - actualPitchDeg, -0.75, 0.75);
       }
 
-      double goalYaw = this.tick + read(goalYawDeg - this.tick);
-      this.init(goalYaw, goalPitchDeg);
-      double errYaw = goalYaw - this.tick;
-      double errPitch = goalPitchDeg - this.run;
+      double goalYaw = this.aimYaw + wrapDegrees(goalYawDeg - this.aimYaw);
+      this.trackGoalVelocity(goalYaw, goalPitchDeg);
+      double errYaw = goalYaw - this.aimYaw;
+      double errPitch = goalPitchDeg - this.aimPitch;
       if (move) {
-         this.tick = this.tick + this.hand.poll() * this.put;
-         this.run = this.run + this.hand.poll() * this.add;
+         this.aimYaw = this.aimYaw + this.hand.poll() * this.goalVelocityYaw;
+         this.aimPitch = this.aimPitch + this.hand.poll() * this.goalVelocityPitch;
          if (this.read_Z) {
-            this.load();
+            this.advanceStroke();
          } else if (this.init_I > 0) {
             this.init_I--;
-         } else if (Math.hypot(errYaw, errPitch) > this.load(tolerance)) {
-            this.init(errYaw, errPitch, tolerance, maxYawStep, maxPitchStep);
-            this.load();
+         } else if (Math.hypot(errYaw, errPitch) > this.settleTolerance(tolerance)) {
+            this.beginStroke(errYaw, errPitch, tolerance, maxYawStep, maxPitchStep);
+            this.advanceStroke();
          } else {
-            this.tick = this.tick + this.hand.push() * errYaw;
-            this.run = this.run + this.hand.push() * errPitch * this.hand.set();
+            this.aimYaw = this.aimYaw + this.hand.push() * errYaw;
+            this.aimPitch = this.aimPitch + this.hand.push() * errPitch * this.hand.set();
          }
       }
 
-      this.read();
+      this.updateNoise();
       if (!move) {
          return new double[]{0.0, 0.0};
       }
 
-      double wantYaw = read(this.tick + this.cache + this.queue - actualYawDeg);
-      double wantPitch = this.run + this.state + this.buffer - actualPitchDeg;
+      double wantYaw = wrapDegrees(this.aimYaw + this.tremorYaw + this.driftYaw - actualYawDeg);
+      double wantPitch = this.aimPitch + this.tremorPitch + this.driftPitch - actualPitchDeg;
       double scale = 1.0;
       if (maxYawStep > 0.0 && Math.abs(wantYaw) > maxYawStep) {
          scale = Math.min(scale, maxYawStep / Math.abs(wantYaw));
@@ -138,74 +138,74 @@ public final class HumanizedAimStepper {
       return new double[]{wantYaw * scale, wantPitch * scale};
    }
 
-   private double load(double tolerance) {
+   private double settleTolerance(double tolerance) {
       return Math.max(this.hand.pop(), 0.35 * tolerance);
    }
 
-   private void init(double goalYaw, double goalPitch) {
+   private void trackGoalVelocity(double goalYaw, double goalPitch) {
       if (this.load_Z) {
-         double dYaw = goalYaw - this.get;
-         double dPitch = goalPitch - this.set;
+         double dYaw = goalYaw - this.lastGoalYaw;
+         double dPitch = goalPitch - this.lastGoalPitch;
          if (Math.hypot(dYaw, dPitch) > 8.0) {
-            this.put = 0.0;
-            this.add = 0.0;
+            this.goalVelocityYaw = 0.0;
+            this.goalVelocityPitch = 0.0;
          } else {
-            this.put = this.put + 0.45 * (dYaw - this.put);
-            this.add = this.add + 0.45 * (dPitch - this.add);
+            this.goalVelocityYaw = this.goalVelocityYaw + 0.45 * (dYaw - this.goalVelocityYaw);
+            this.goalVelocityPitch = this.goalVelocityPitch + 0.45 * (dPitch - this.goalVelocityPitch);
          }
       }
 
       this.load_Z = true;
-      this.get = goalYaw;
-      this.set = goalPitch;
+      this.lastGoalYaw = goalYaw;
+      this.lastGoalPitch = goalPitch;
    }
 
-   private void init(double errYaw, double errPitch, double tolerance, double maxYawStep, double maxPitchStep) {
+   private void beginStroke(double errYaw, double errPitch, double tolerance, double maxYawStep, double maxPitchStep) {
       double distance = Math.hypot(errYaw, errPitch);
       double gain = this.write_Z
          ? 0.96 + 0.040000000000000036 * this.random.nextDouble()
-         : init(this.hand.read() + this.hand.write() * this.clampedGaussian(), 0.8, 1.06);
+         : clamp(this.hand.read() + this.hand.write() * this.clampedGaussian(), 0.8, 1.06);
       double ny = -errPitch / distance;
       double np = errYaw / distance;
       double lateral = this.hand.update() * distance * this.clampedGaussian();
-      this.clear = errYaw * gain + ny * lateral;
-      this.reset = errPitch * gain * this.hand.set() + np * lateral;
-      double length = Math.hypot(this.clear, this.reset);
-      this.start = length > 1.0E-9 ? -this.reset / length : 0.0;
-      this.stop = length > 1.0E-9 ? this.clear / length : 0.0;
-      this.next = (this.hand.sync() + this.hand.flush() * init(this.clampedGaussian(), -2.5, 2.5)) * length;
-      this.size = init(this.hand.close() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
+      this.strokeYaw = errYaw * gain + ny * lateral;
+      this.strokePitch = errPitch * gain * this.hand.set() + np * lateral;
+      double length = Math.hypot(this.strokeYaw, this.strokePitch);
+      this.perpYaw = length > 1.0E-9 ? -this.strokePitch / length : 0.0;
+      this.perpPitch = length > 1.0E-9 ? this.strokeYaw / length : 0.0;
+      this.strokeCurve = (this.hand.sync() + this.hand.flush() * clamp(this.clampedGaussian(), -2.5, 2.5)) * length;
+      this.strokeEase = clamp(this.hand.close() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
       double width = Math.max(1.0, 2.0 * tolerance);
       double fittsMs = this.hand.fittsIntercept() + this.hand.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
       double ticks = this.write_Z ? 0.0 : fittsMs / 50.0 * Math.exp(this.hand.open() * this.clampedGaussian());
-      ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.write_Z ? 20.0 : 14.0) * this.size * this.size)));
+      ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.write_Z ? 20.0 : 14.0) * this.strokeEase * this.strokeEase)));
       if (maxYawStep > 0.0) {
-         ticks = Math.max(ticks, 1.875 * Math.abs(this.clear) / maxYawStep);
+         ticks = Math.max(ticks, 1.875 * Math.abs(this.strokeYaw) / maxYawStep);
       }
 
       if (maxPitchStep > 0.0) {
-         ticks = Math.max(ticks, 1.875 * Math.abs(this.reset) / maxPitchStep);
+         ticks = Math.max(ticks, 1.875 * Math.abs(this.strokePitch) / maxPitchStep);
       }
 
-      this.prev = Math.max(2.0, ticks) * (this.write_Z ? 1.0 + 0.12 * this.random.nextDouble() : 1.0);
-      this.valid = 0.0;
-      this.data = 0.0;
-      this.value = 0.0;
+      this.strokeTicks = Math.max(2.0, ticks) * (this.write_Z ? 1.0 + 0.12 * this.random.nextDouble() : 1.0);
+      this.strokeTick = 0.0;
+      this.strokeOffsetYaw = 0.0;
+      this.strokeOffsetPitch = 0.0;
       this.read_Z = true;
    }
 
-   private void load() {
-      this.valid++;
-      double s = Math.min(1.0, this.valid / this.prev);
-      double u = Math.pow(s, this.size);
+   private void advanceStroke() {
+      this.strokeTick++;
+      double s = Math.min(1.0, this.strokeTick / this.strokeTicks);
+      double u = Math.pow(s, this.strokeEase);
       double along = smootherStep(u);
-      double side = Math.sin(3.141592653589793 * u) * this.next;
-      double y = this.clear * along + this.start * side;
-      double p = this.reset * along + this.stop * side;
-      this.tick = this.tick + (y - this.data);
-      this.run = this.run + (p - this.value);
-      this.data = y;
-      this.value = p;
+      double side = Math.sin(3.141592653589793 * u) * this.strokeCurve;
+      double y = this.strokeYaw * along + this.perpYaw * side;
+      double p = this.strokePitch * along + this.perpPitch * side;
+      this.aimYaw = this.aimYaw + (y - this.strokeOffsetYaw);
+      this.aimPitch = this.aimPitch + (p - this.strokeOffsetPitch);
+      this.strokeOffsetYaw = y;
+      this.strokeOffsetPitch = p;
       if (s >= 1.0) {
          this.read_Z = false;
          this.init_I = this.write_Z
@@ -219,23 +219,23 @@ public final class HumanizedAimStepper {
       return u * u * u * (10.0 + u * (-15.0 + 6.0 * u));
    }
 
-   private void read() {
+   private void updateNoise() {
       double innovation = Math.sqrt(0.8775000000000001);
-      this.cache = 0.35 * this.cache + this.hand.tick() * innovation * this.clampedGaussian();
-      this.state = 0.35 * this.state + this.hand.tick() * innovation * this.clampedGaussian();
-      this.queue = this.queue + (-this.hand.get() * this.queue + this.hand.run() * this.clampedGaussian());
-      this.buffer = this.buffer + (-this.hand.get() * this.buffer + this.hand.run() * this.clampedGaussian());
+      this.tremorYaw = 0.35 * this.tremorYaw + this.hand.tick() * innovation * this.clampedGaussian();
+      this.tremorPitch = 0.35 * this.tremorPitch + this.hand.tick() * innovation * this.clampedGaussian();
+      this.driftYaw = this.driftYaw + (-this.hand.get() * this.driftYaw + this.hand.run() * this.clampedGaussian());
+      this.driftPitch = this.driftPitch + (-this.hand.get() * this.driftPitch + this.hand.run() * this.clampedGaussian());
    }
 
    private double clampedGaussian() {
-      return init(this.random.nextGaussian(), -3.0, 3.0);
+      return clamp(this.random.nextGaussian(), -3.0, 3.0);
    }
 
-   private static double init(double v, double lo, double hi) {
+   private static double clamp(double v, double lo, double hi) {
       return Math.max(lo, Math.min(hi, v));
    }
 
-   private static double read(double degrees) {
+   private static double wrapDegrees(double degrees) {
       double wrapped = degrees % 360.0;
       if (wrapped >= 180.0) {
          wrapped -= 360.0;

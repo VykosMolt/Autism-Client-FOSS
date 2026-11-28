@@ -24,7 +24,7 @@ final class PearlLandingEvaluator {
    private PearlLandingEvaluator() {
    }
 
-   static PearlLandingEvaluator.Inner_StreamUtil init(PearlLandingEvaluator.Inner_CachePool world, AABB body, Vec3 velocity, double gravity) {
+   static PearlLandingEvaluator.Inner_StreamUtil simulateFall(PearlLandingEvaluator.Inner_CachePool world, AABB body, Vec3 velocity, double gravity) {
       double fallen = 0.0;
       int settled = 0;
       int impactTick = 2147483647;
@@ -39,7 +39,7 @@ final class PearlLandingEvaluator {
             return new PearlLandingEvaluator.Inner_StreamUtil(contact, fallen, 0.0F);
          }
 
-         Vec3 moved = world.init(body, velocity);
+         Vec3 moved = world.collide(body, velocity);
          body = body.move(moved);
          fallen += Math.max(0.0, -moved.y);
          contact = world.contactAt(body);
@@ -60,7 +60,7 @@ final class PearlLandingEvaluator {
             settled = 0;
          }
 
-         if (body.maxY < world.init() - 16) {
+         if (body.maxY < world.minY() - 16) {
             return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.VOID, fallen, 1.0F);
          }
 
@@ -73,9 +73,9 @@ final class PearlLandingEvaluator {
       }
 
       if (velocity.horizontalDistance() < 1.0E-4) {
-         Vec3 down = new Vec3(0.0, world.init() - 17 - body.maxY, 0.0);
+         Vec3 down = new Vec3(0.0, world.minY() - 17 - body.maxY, 0.0);
          if (down.y < 0.0 && world.isClear(body.expandTowards(down))) {
-            Vec3 moved = world.init(body, down);
+            Vec3 moved = world.collide(body, down);
             PearlLandingEvaluator.Inner_DataUtil medium = world.contactAt(body.expandTowards(moved));
             if (medium != null) {
                return new PearlLandingEvaluator.Inner_StreamUtil(medium, fallen - moved.y, 0.0F);
@@ -96,7 +96,7 @@ final class PearlLandingEvaluator {
       return ticks < 10 && !bypassCooldown ? Math.max(0, rawDamage - 5) : rawDamage;
    }
 
-   static int init(PearlLandingEvaluator.Inner_DataUtil end, double damage, double health, double maxHealth, double thresholdPercent) {
+   static int tintFor(PearlLandingEvaluator.Inner_DataUtil end, double damage, double health, double maxHealth, double thresholdPercent) {
       if (end != PearlLandingEvaluator.Inner_DataUtil.VOID && end != PearlLandingEvaluator.Inner_DataUtil.HAZARD && !(damage >= health)) {
          return end != PearlLandingEvaluator.Inner_DataUtil.UNKNOWN && Double.isFinite(damage) && !(damage >= maxHealth * Math.clamp(thresholdPercent, 1.0, 100.0) / 100.0)
             ? -10099317
@@ -113,7 +113,7 @@ final class PearlLandingEvaluator {
             AABB body = player.getBoundingBox().move(destination.subtract(player.position()));
             PearlLandingEvaluator.Inner_CachePool world = new PearlLandingEvaluator.Inner_CachePool() {
                @Override
-               public int init() {
+               public int minY() {
                   return mc.level.getMinY();
                }
 
@@ -131,7 +131,7 @@ final class PearlLandingEvaluator {
                }
 
                @Override
-               public Vec3 init(AABB box, Vec3 motion) {
+               public Vec3 collide(AABB box, Vec3 motion) {
                   return Entity.collideBoundingBox(player, motion, box, mc.level, List.of());
                }
 
@@ -176,7 +176,7 @@ final class PearlLandingEvaluator {
                   return mc.level.getBlockState(BlockPos.containing(box.getCenter().x, box.minY - 0.01, box.getCenter().z)).getBlock().getFriction() * 0.91;
                }
             };
-            PearlLandingEvaluator.Inner_StreamUtil fall = init(
+            PearlLandingEvaluator.Inner_StreamUtil fall = simulateFall(
                world, body, player.getDeltaMovement(), player.hasEffect(MobEffects.SLOW_FALLING) ? Math.min(0.01, player.getGravity()) : player.getGravity()
             );
             AutismLivingEntityAccessor access = (AutismLivingEntityAccessor)player;
@@ -186,7 +186,7 @@ final class PearlLandingEvaluator {
             float fallDamage = player.hasEffect(MobEffects.SLOW_FALLING)
                ? 0.0F
                : access.autism$getDamageAfterMagicAbsorb(player.damageSources().fall(), rawFall);
-            int tint = init(
+            int tint = tintFor(
                fall.init_aU_DataUtil(), pearlDamage + fallDamage, player.getHealth() + player.getAbsorptionAmount(), player.getMaxHealth(), threshold
             );
             return tint == -10099317 && !mc.level.noCollision(player, body.deflate(0.001)) ? -12971 : tint;
@@ -201,7 +201,7 @@ final class PearlLandingEvaluator {
    interface Inner_CachePool {
       boolean isClear(AABB var1);
 
-      Vec3 init(AABB var1, Vec3 var2);
+      Vec3 collide(AABB var1, Vec3 var2);
 
       PearlLandingEvaluator.Inner_DataUtil contactAt(AABB var1);
 
@@ -211,7 +211,7 @@ final class PearlLandingEvaluator {
          return 0.546;
       }
 
-      int init();
+      int minY();
    }
 
    enum Inner_DataUtil {

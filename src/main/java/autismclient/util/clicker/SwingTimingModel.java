@@ -6,12 +6,12 @@ public final class SwingTimingModel {
    public static final double init_D = 0.92;
    public static final double load = -75.0;
    public static final double read = 50.0;
-   private static final double write = 0.4;
-   private static final double update = 0.9;
-   private static final double sync = 60.0;
-   private static final double flush = 120.0;
+   private static final double NOISE_DECAY = 0.4;
+   private static final double NOISE_SCALE = 0.9;
+   private static final double PAUSE_MIN_MS = 60.0;
+   private static final double PAUSE_RANGE_MS = 120.0;
    private final Random random;
-   private double close;
+   private double noise;
 
    public SwingTimingModel() {
       this(new Random());
@@ -19,7 +19,7 @@ public final class SwingTimingModel {
 
    public SwingTimingModel(Random rng) {
       this.random = rng == null ? new Random() : rng;
-      this.close = 0.9 * this.random.nextGaussian();
+      this.noise = 0.9 * this.random.nextGaussian();
    }
 
    public double init(double lowMs, double highMs, double hesitationChance) {
@@ -36,8 +36,8 @@ public final class SwingTimingModel {
    public long init(double lowMs, double highMs) {
       double low = Math.max(1.0, Math.min(lowMs, highMs));
       double high = Math.max(low, Math.max(lowMs, highMs));
-      this.close = 0.4 * this.close + 0.9 * this.random.nextGaussian();
-      return ClickTimingMath.load(low + (high - low) * init(this.close));
+      this.noise = 0.4 * this.noise + 0.9 * this.random.nextGaussian();
+      return ClickTimingMath.load(low + (high - low) * sigmoid(this.noise));
    }
 
    public static boolean init(double shownCharge, int ticker, double delayTicks, double msPerTick, double offsetMs) {
@@ -48,7 +48,7 @@ public final class SwingTimingModel {
       }
    }
 
-   private static double init(double x) {
+   private static double sigmoid(double x) {
       return 1.0 / (1.0 + Math.exp(-x));
    }
 }

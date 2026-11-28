@@ -64,7 +64,7 @@ public class ThemeColorScreen extends Screen {
    private List<ThemeColorScreen.Inner_DataUtil> cachedRows;
    private boolean cachedRowsAdvanced;
    private List<Module> read_List;
-   private int close = -2147483648;
+   private int cachedListRevision = -2147483648;
    private static final int open = 240;
    private static final int poll = 224;
 
@@ -182,11 +182,11 @@ public class ThemeColorScreen extends Screen {
       colors.borderControl = UiLayoutMath.lerpColor(colors.borderControl, this.recolor(1291805796, ThemePaletteManager.ColorRole.OUTLINE), 0.15F);
    }
 
-   private autismclient.gui.f.SyncManager init(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      return this.init(graphics, mouseX, mouseY, this.previewTheme);
+   private autismclient.gui.f.SyncManager uiContext(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+      return this.uiContext(graphics, mouseX, mouseY, this.previewTheme);
    }
 
-   private autismclient.gui.f.SyncManager init(GuiGraphicsExtractor graphics, int mouseX, int mouseY, autismclient.gui.ui.UiTheme theme) {
+   private autismclient.gui.f.SyncManager uiContext(GuiGraphicsExtractor graphics, int mouseX, int mouseY, autismclient.gui.ui.UiTheme theme) {
       autismclient.gui.f.SyncManager base = autismclient.gui.f.UiHelper.init(graphics, this.font, mouseX, mouseY);
       return new autismclient.gui.f.SyncManager(graphics, theme, base.init_PoolEntry(), base.init_I(), base.load_I(), mouseX, mouseY, base.init_F());
    }
@@ -213,7 +213,7 @@ public class ThemeColorScreen extends Screen {
       try {
          int sw = cA.init_I();
          int sh = cA.load_I();
-         autismclient.gui.f.SyncManager ctx = this.init(graphics, mx, my);
+         autismclient.gui.f.SyncManager ctx = this.uiContext(graphics, mx, my);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), ctx.init_TableIndex().colors().backdropScrim);
          int margin = 6;
          int contentW = sw - margin * 2;
@@ -221,7 +221,7 @@ public class ThemeColorScreen extends Screen {
          int gap = 4;
          int leftW = Math.max(224, Math.min(240, contentW - gap - 120));
          int rightW = Math.max(1, contentW - leftW - gap);
-         int leftH = Math.min(contentH, this.sync());
+         int leftH = Math.min(contentH, this.leftColumnHeight());
          ThemeColorScreen.Inner_BufferHelper preview = this.layoutFor(rightW, contentH);
          int rightH = preview.write();
          if (Math.abs(leftH - rightH) <= 8) {
@@ -230,8 +230,8 @@ public class ThemeColorScreen extends Screen {
 
          autismclient.gui.f.NetHelper left = autismclient.gui.f.NetHelper.init(margin, margin, leftW, leftH);
          autismclient.gui.f.NetHelper right = autismclient.gui.f.NetHelper.init(margin + leftW + gap, margin, rightW, rightH);
-         this.init(ctx, left, mx, my);
-         this.init(ctx, right, preview);
+         this.renderColorList(ctx, left, mx, my);
+         this.renderPreview(ctx, right, preview);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -257,26 +257,26 @@ public class ThemeColorScreen extends Screen {
       return ThemeColorScreen.Inner_CachePool.panelWidth(this.draftColors.advanced);
    }
 
-   private int sync() {
+   private int leftColumnHeight() {
       return 4 + this.init_I() + this.controlHeight() + 2 + this.lineHeight() + this.colorRows().size() * this.defaultRowHeight() + 4 + this.pickerHeight() + 4 + this.controlHeight() + 4;
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, int mx, int my) {
+   private void renderColorList(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, int mx, int my) {
       GuiGraphicsExtractor g = ctx.init_GuiGraphicsExtract();
       autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().colors().windowSurface, ctx.init_TableIndex().colors().borderSubtle);
       int x = area.read() + 4;
       int y = area.write() + 4;
       int innerW = area.update() - 8;
       int ctrlH = this.controlHeight();
-      this.init(g, "THEME COLOR", autismclient.gui.f.a.DataUtil.read, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
+      this.drawLabel(g, "THEME COLOR", autismclient.gui.f.a.DataUtil.read, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
       y += this.init_I();
       int tabW = (innerW - 2) / 2;
       this.simpleTab = autismclient.gui.f.NetHelper.init(x, y, tabW, ctrlH);
       this.advancedTab = autismclient.gui.f.NetHelper.init(x + tabW + 2, y, innerW - tabW - 2, ctrlH);
-      this.init(g, this.simpleTab, "Simple", !this.draftColors.advanced, this.simpleTab.init_Z(mx, my));
-      this.init(g, this.advancedTab, "Advanced", this.draftColors.advanced, this.advancedTab.init_Z(mx, my));
+      this.renderTab(g, this.simpleTab, "Simple", !this.draftColors.advanced, this.simpleTab.init_Z(mx, my));
+      this.renderTab(g, this.advancedTab, "Advanced", this.draftColors.advanced, this.advancedTab.init_Z(mx, my));
       y += ctrlH + 2;
-      this.init(
+      this.drawLabel(
          g,
          this.draftColors.advanced ? "Channels" : "One color recolors the whole theme",
          autismclient.gui.f.a.DataUtil.load,
@@ -325,10 +325,10 @@ public class ThemeColorScreen extends Screen {
          autismclient.gui.f.NetHelper swatch = autismclient.gui.f.NetHelper.init(rb.read() + 3, rb.write() + 2, 20, rb.sync() - 4);
          autismclient.gui.f.PacketUtil.load(g, swatch, 2, 0xFF000000 | c.getter().getAsInt() & 16777215, ctx.init_TableIndex().colors().borderSubtle);
          int textY = UiLayoutMath.centerTextY(rb.write(), rb.sync(), k.init(autismclient.gui.f.a.DataUtil.init), 1);
-         this.init(g, c.label(), autismclient.gui.f.a.DataUtil.init, sel ? this.textColor(-791321) : this.textColor(-4743522), swatch.init() + 4 + 1, textY);
+         this.drawLabel(g, c.label(), autismclient.gui.f.a.DataUtil.init, sel ? this.textColor(-791321) : this.textColor(-4743522), swatch.init() + 4 + 1, textY);
          String hex = hexString(c.getter().getAsInt());
          int hexW = k.init(this.font, hex, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, hex, autismclient.gui.f.a.DataUtil.init, this.textColor(-4743522), rb.init() - hexW - 4, textY);
+         this.drawLabel(g, hex, autismclient.gui.f.a.DataUtil.init, this.textColor(-4743522), rb.init() - hexW - 4, textY);
          y += rowH;
       }
 
@@ -338,14 +338,14 @@ public class ThemeColorScreen extends Screen {
       this.pickerArea = autismclient.gui.f.NetHelper.init(
          x, y, innerW, Math.max(ThemeColorScreen.Inner_CachePool.panelHeight(this.draftColors.advanced), Math.min(this.pickerHeight(), footerY - 4 - y))
       );
-      this.picker.init(ctx, this.pickerArea);
+      this.picker.renderPicker(ctx, this.pickerArea);
       int bw = (innerW - 4) / 3;
       this.resetButton = autismclient.gui.f.NetHelper.init(x, footerY, bw, ctrlH);
       this.cancelButton = autismclient.gui.f.NetHelper.init(x + bw + 2, footerY, bw, ctrlH);
       this.applyButton = autismclient.gui.f.NetHelper.init(x + (bw + 2) * 2, footerY, innerW - (bw + 2) * 2, ctrlH);
-      this.init(g, this.resetButton, "Reset", this.recolor(1717972012, ThemePaletteManager.ColorRole.OUTLINE), this.resetButton.init_Z(mx, my));
-      this.init(g, this.cancelButton, "Cancel", this.recolor(1717972012, ThemePaletteManager.ColorRole.OUTLINE), this.cancelButton.init_Z(mx, my));
-      this.init(g, this.applyButton, "Apply", this.recolor(-39836, ThemePaletteManager.ColorRole.ACCENT), this.applyButton.init_Z(mx, my));
+      this.renderOutlinedButton(g, this.resetButton, "Reset", this.recolor(1717972012, ThemePaletteManager.ColorRole.OUTLINE), this.resetButton.init_Z(mx, my));
+      this.renderOutlinedButton(g, this.cancelButton, "Cancel", this.recolor(1717972012, ThemePaletteManager.ColorRole.OUTLINE), this.cancelButton.init_Z(mx, my));
+      this.renderOutlinedButton(g, this.applyButton, "Apply", this.recolor(-39836, ThemePaletteManager.ColorRole.ACCENT), this.applyButton.init_Z(mx, my));
    }
 
    private ThemeColorScreen.Inner_BufferHelper layoutFor(int panelW, int budget) {
@@ -354,7 +354,7 @@ public class ThemeColorScreen extends Screen {
       int logoH = this.logoTexture != null && this.logoTexture.width() > 0
          ? Math.max(1, Math.round(logoW * ((float)this.logoTexture.height() / this.logoTexture.width())))
          : 0;
-      int h = this.close() + this.poll() + 4;
+      int h = this.previewHeaderHeight() + this.previewBodyHeight() + 4;
       boolean showLogo = logoH > 0 && h + logoH + 2 <= budget;
       if (showLogo) {
          h += logoH + 2;
@@ -373,23 +373,23 @@ public class ThemeColorScreen extends Screen {
       return new ThemeColorScreen.Inner_BufferHelper(logoW, logoH, showLogo, bannerH, Math.min(h, budget));
    }
 
-   private int flush() {
+   private int previewBarHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
-   private int close() {
-      return 4 + this.init_I() + this.flush() + 2 + 8;
+   private int previewHeaderHeight() {
+      return 4 + this.init_I() + this.previewBarHeight() + 2 + 8;
    }
 
-   private void init(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, ThemeColorScreen.Inner_BufferHelper layout) {
+   private void renderPreview(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, ThemeColorScreen.Inner_BufferHelper layout) {
       GuiGraphicsExtractor g = ctx.init_GuiGraphicsExtract();
       autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().colors().windowSurface, ctx.init_TableIndex().colors().borderSubtle);
       int x = area.read() + 4;
       int y = area.write() + 4;
       int innerW = area.update() - 8;
-      this.init(g, "LIVE PREVIEW", autismclient.gui.f.a.DataUtil.load, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
+      this.drawLabel(g, "LIVE PREVIEW", autismclient.gui.f.a.DataUtil.load, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
       y += this.init_I();
-      int barH = this.flush();
+      int barH = this.previewBarHeight();
       autismclient.gui.f.PacketUtil.read(
          g, autismclient.gui.f.NetHelper.init(x, y, innerW, barH), 5, ctx.init_TableIndex().colors().headerSurface, ctx.init_TableIndex().colors().borderSubtle
       );
@@ -412,25 +412,25 @@ public class ThemeColorScreen extends Screen {
          );
       }
 
-      this.init(
+      this.drawLabel(
          g,
          "Autism Client",
          autismclient.gui.f.a.DataUtil.load,
          this.recolor(-2828, ThemePaletteManager.ColorRole.TEXT),
          x + 8 + 14,
-         this.init(y, barH, autismclient.gui.f.a.DataUtil.load)
+         this.textBaselineY(y, barH, autismclient.gui.f.a.DataUtil.load)
       );
       y += barH + 2 + 8;
       g.enableScissor(area.read() + 1, area.write() + 1, area.init() - 1, area.load() - 1);
 
       try {
-         this.init(g, area, x, y, innerW, layout);
+         this.renderPreviewContents(g, area, x, y, innerW, layout);
       } finally {
          g.disableScissor();
       }
    }
 
-   private void init(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area, int x, int y, int innerW, ThemeColorScreen.Inner_BufferHelper layout) {
+   private void renderPreviewContents(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area, int x, int y, int innerW, ThemeColorScreen.Inner_BufferHelper layout) {
       int contentLimit = area.load() - 4;
       if (this.panoramaTexture != null) {
          this.panoramaTexture.applyPalette(this.draftPalette);
@@ -459,31 +459,31 @@ public class ThemeColorScreen extends Screen {
          }
       }
 
-      this.init(g, "MODULES", autismclient.gui.f.a.DataUtil.load, this.textColor(-4743522), x, y);
+      this.drawLabel(g, "MODULES", autismclient.gui.f.a.DataUtil.load, this.textColor(-4743522), x, y);
       y += this.lineHeight();
       List<Module> preview = this.load_List();
 
-      for (int i = 0; i < preview.size() && y + this.open() <= contentLimit; i++) {
+      for (int i = 0; i < preview.size() && y + this.previewRowHeight() <= contentLimit; i++) {
          Module m = preview.get(i);
          String key = m.keybind() >= 0 ? autismclient.commands.arguments.KeyBindArgumentType.keyName(m.keybind()) : "";
-         y = this.init(g, x, y, innerW, m.name(), key, m.isEnabled(), i == 0, i == 1);
+         y = this.renderPreviewModuleRow(g, x, y, innerW, m.name(), key, m.isEnabled(), i == 0, i == 1);
       }
 
       y += 8;
       int ctrlH = this.controlHeight();
       if (y + ctrlH <= contentLimit) {
-         this.init(g, x, y, ctrlH, true);
-         this.init(g, x + 30 + 2, y, ctrlH, false);
+         this.renderPreviewToggle(g, x, y, ctrlH, true);
+         this.renderPreviewToggle(g, x + 30 + 2, y, ctrlH, false);
          int chipX = x + 64 + 4;
          int successW = this.buttonWidth("Success");
          if (chipX + successW <= x + innerW) {
-            this.init(g, chipX, y, successW, ctrlH, "Success", this.recolor(-9448565, ThemePaletteManager.ColorRole.SUCCESS));
+            this.renderPreviewChip(g, chipX, y, successW, ctrlH, "Success", this.recolor(-9448565, ThemePaletteManager.ColorRole.SUCCESS));
          }
 
          chipX += successW + 2;
          int dangerW = this.buttonWidth("Danger");
          if (chipX + dangerW <= x + innerW) {
-            this.init(g, chipX, y, dangerW, ctrlH, "Danger", this.recolor(-1938838, ThemePaletteManager.ColorRole.DANGER));
+            this.renderPreviewChip(g, chipX, y, dangerW, ctrlH, "Danger", this.recolor(-1938838, ThemePaletteManager.ColorRole.DANGER));
          }
 
          y += ctrlH + 4;
@@ -493,7 +493,7 @@ public class ThemeColorScreen extends Screen {
          int btnTextW = k.init(this.font, "Button", autismclient.gui.f.a.DataUtil.init, -791321);
          int btnW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(btnTextW);
          autismclient.gui.f.NetHelper btn = autismclient.gui.f.NetHelper.init(x, y, btnW, ctrlH);
-         autismclient.gui.f.SyncManager sample = this.init(g, -1, -1);
+         autismclient.gui.f.SyncManager sample = this.uiContext(g, -1, -1);
          autismclient.gui.f.b.CachePool.init(sample, btn, "Button", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, false, false);
          int fieldX = btn.init() + 2;
          autismclient.gui.f.NetHelper field = autismclient.gui.f.NetHelper.init(fieldX, y, Math.max(0, x + innerW - fieldX), ctrlH);
@@ -506,17 +506,17 @@ public class ThemeColorScreen extends Screen {
 
       int lineH = this.lineHeight();
       if (y + lineH <= contentLimit) {
-         this.init(g, "Primary text sample", autismclient.gui.f.a.DataUtil.init, this.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), x, y);
+         this.drawLabel(g, "Primary text sample", autismclient.gui.f.a.DataUtil.init, this.recolor(-791321, ThemePaletteManager.ColorRole.TEXT), x, y);
          y += lineH;
       }
 
       if (y + lineH <= contentLimit) {
-         this.init(g, "Secondary / muted text", autismclient.gui.f.a.DataUtil.init, this.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT), x, y);
+         this.drawLabel(g, "Secondary / muted text", autismclient.gui.f.a.DataUtil.init, this.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT), x, y);
          y += lineH;
       }
 
       if (y + lineH <= contentLimit) {
-         this.init(g, "Accent text", autismclient.gui.f.a.DataUtil.init, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
+         this.drawLabel(g, "Accent text", autismclient.gui.f.a.DataUtil.init, this.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y);
          y += lineH;
       }
 
@@ -546,20 +546,20 @@ public class ThemeColorScreen extends Screen {
       }
    }
 
-   private int open() {
+   private int previewRowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int poll() {
-      return this.lineHeight() + this.load_List().size() * (this.open() + 2) + 8 + (this.controlHeight() + 4) * 2 + this.lineHeight() * 3;
+   private int previewBodyHeight() {
+      return this.lineHeight() + this.load_List().size() * (this.previewRowHeight() + 2) + 8 + (this.controlHeight() + 4) * 2 + this.lineHeight() * 3;
    }
 
-   private int init(int boxY, int boxH, Identifier fontId) {
+   private int textBaselineY(int boxY, int boxH, Identifier fontId) {
       return UiLayoutMath.centerTextY(boxY, boxH, k.init(fontId), 1);
    }
 
-   private int init(GuiGraphicsExtractor g, int x, int y, int w, String name, String keybind, boolean on, boolean selected, boolean hovered) {
-      int h = this.open();
+   private int renderPreviewModuleRow(GuiGraphicsExtractor g, int x, int y, int w, String name, String keybind, boolean on, boolean selected, boolean hovered) {
+      int h = this.previewRowHeight();
       autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, h);
       autismclient.gui.ui.UiColorScheme colors = this.previewTheme.colors();
       int fill = selected ? UiLayoutMath.lerpColor(colors.cardSurface, this.recolor(-50373, ThemePaletteManager.ColorRole.TOGGLE), 0.12F) : (hovered ? colors.cardSurfaceElevated : colors.cardSurface);
@@ -568,10 +568,10 @@ public class ThemeColorScreen extends Screen {
          autismclient.gui.f.PacketUtil.load(g, row, 3, 0, this.recolor(-50373, ThemePaletteManager.ColorRole.TOGGLE));
       }
 
-      int ty = this.init(y, h, autismclient.gui.f.a.DataUtil.init);
+      int ty = this.textBaselineY(y, h, autismclient.gui.f.a.DataUtil.init);
       String label = name + (keybind != null && !keybind.isEmpty() ? " [" + keybind + "]" : "");
-      this.init(g, -1, -1).init_PoolEntry().drawEllipsized(g, label, x + 8, ty, Math.max(1, w - 30 - 16), on ? colors.textPrimary : colors.textSecondary);
-      this.init(g, x + w - 30 - 4, y, h, on);
+      this.uiContext(g, -1, -1).init_PoolEntry().drawEllipsized(g, label, x + 8, ty, Math.max(1, w - 30 - 16), on ? colors.textPrimary : colors.textSecondary);
+      this.renderPreviewToggle(g, x + w - 30 - 4, y, h, on);
       return y + h + 2;
    }
 
@@ -591,7 +591,7 @@ public class ThemeColorScreen extends Screen {
 
    private List<Module> load_List() {
       int rev = al.init_I();
-      if (this.read_List != null && this.close == rev) {
+      if (this.read_List != null && this.cachedListRevision == rev) {
          return this.read_List;
       }
 
@@ -607,21 +607,21 @@ public class ThemeColorScreen extends Screen {
       }
 
       this.read_List = out;
-      this.close = rev;
+      this.cachedListRevision = rev;
       return out;
    }
 
-   private void init(GuiGraphicsExtractor g, int x, int y, int h, boolean on) {
+   private void renderPreviewToggle(GuiGraphicsExtractor g, int x, int y, int h, boolean on) {
       autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(x, y, 30, h);
-      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.init(g, -1, -1, this.load_TableIndex), b, null, on, false, "themePreviewToggle:" + x + ":" + y);
+      autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(this.uiContext(g, -1, -1, this.load_TableIndex), b, null, on, false, "themePreviewToggle:" + x + ":" + y);
    }
 
    private int buttonWidth(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
    }
 
-   private void init(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, int color) {
-      autismclient.gui.ui.widgets.PillBadgeRenderer.init(this.init(g, -1, -1), autismclient.gui.f.NetHelper.init(x, y, w, h), label, color, true, false);
+   private void renderPreviewChip(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, int color) {
+      autismclient.gui.ui.widgets.PillBadgeRenderer.init(this.uiContext(g, -1, -1), autismclient.gui.f.NetHelper.init(x, y, w, h), label, color, true, false);
    }
 
    private int recolor(int color, ThemePaletteManager.ColorRole ch) {
@@ -632,9 +632,9 @@ public class ThemeColorScreen extends Screen {
       return this.recolor(color, ThemePaletteManager.ColorRole.TEXT);
    }
 
-   private void init(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper b, String label, boolean active, boolean hover) {
+   private void renderTab(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper b, String label, boolean active, boolean hover) {
       autismclient.gui.f.b.CachePool.init(
-         this.init(g, -1, -1),
+         this.uiContext(g, -1, -1),
          b,
          label,
          active ? autismclient.gui.f.b.CachePool.Inner_DataUtil.read : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -643,9 +643,9 @@ public class ThemeColorScreen extends Screen {
       );
    }
 
-   private void init(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper b, String label, int border, boolean hover) {
+   private void renderOutlinedButton(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper b, String label, int border, boolean hover) {
       autismclient.gui.f.b.CachePool.init(
-         this.init(g, -1, -1),
+         this.uiContext(g, -1, -1),
          b,
          label,
          border == this.recolor(-39836, ThemePaletteManager.ColorRole.ACCENT)
@@ -656,7 +656,7 @@ public class ThemeColorScreen extends Screen {
       );
    }
 
-   private void init(GuiGraphicsExtractor g, String text, Identifier font, int color, int x, int y) {
+   private void drawLabel(GuiGraphicsExtractor g, String text, Identifier font, int color, int x, int y) {
       k.init(g, this.font, text, font, color, x, y, false);
    }
 
@@ -879,9 +879,9 @@ public class ThemeColorScreen extends Screen {
       private float saturation;
       private float brightness;
       private int red;
-      private int close;
-      private int open;
-      private int poll = 255;
+      private int green;
+      private int blue;
+      private int alpha = 255;
       private autismclient.gui.f.NetHelper svArea;
       private autismclient.gui.f.NetHelper hueArea;
       private autismclient.gui.f.NetHelper redSlider;
@@ -889,35 +889,35 @@ public class ThemeColorScreen extends Screen {
       private autismclient.gui.f.NetHelper blueSlider;
       private autismclient.gui.f.NetHelper alphaSlider;
       private autismclient.gui.f.NetHelper hexInputArea;
-      private int push;
+      private int dragTarget;
       private autismclient.util.ThemedTextInputBox hexInput;
 
       static int panelWidth(boolean alpha) {
-         return 94 + read(alpha);
+         return 94 + sliderStackHeight(alpha);
       }
 
       static int panelHeight(boolean alpha) {
-         return controlsHeight() + 4 + read(alpha);
+         return controlsHeight() + 4 + sliderStackHeight(alpha);
       }
 
       private static int controlsHeight() {
          return Math.max(36, autismclient.gui.ui.UiDensityMetrics.scaledHeight(13) * 2 + 2);
       }
 
-      private static int read(boolean alpha) {
+      private static int sliderStackHeight(boolean alpha) {
          return ((alpha ? 4 : 3) - 1) * 12 + 9;
       }
 
-      private int init(int color, ThemePaletteManager.ColorRole ch) {
+      private int pickerRecolor(int color, ThemePaletteManager.ColorRole ch) {
          return ThemePaletteManager.recolorWithPalette(color, ch, this.palette);
       }
 
       void setArgb(int argb) {
-         this.poll = argb >>> 24 & 0xFF;
+         this.alpha = argb >>> 24 & 0xFF;
          this.red = argb >>> 16 & 0xFF;
-         this.close = argb >>> 8 & 0xFF;
-         this.open = argb & 0xFF;
-         float[] hsb = Color.RGBtoHSB(this.red, this.close, this.open, null);
+         this.green = argb >>> 8 & 0xFF;
+         this.blue = argb & 0xFF;
+         float[] hsb = Color.RGBtoHSB(this.red, this.green, this.blue, null);
          this.hue = hsb[0];
          this.saturation = hsb[1];
          this.brightness = hsb[2];
@@ -929,7 +929,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       private int argb() {
-         return (this.showAlpha ? this.poll : 255) << 24 | this.red << 16 | this.close << 8 | this.open;
+         return (this.showAlpha ? this.alpha : 255) << 24 | this.red << 16 | this.green << 8 | this.blue;
       }
 
       private void ensureHexInput() {
@@ -937,54 +937,54 @@ public class ThemeColorScreen extends Screen {
             this.hexInput = new autismclient.util.ThemedTextInputBox(mc(), mc().font, 0, 0, 20, autismclient.gui.ui.UiDensityMetrics.scaledHeight(13), false);
             this.hexInput.setMaxLength(6);
             this.hexInput.setFilter(next -> next.chars().allMatch(ch -> isHexDigit((char)ch)));
-            this.hexInput.setChangedListener(value -> this.sync());
-            this.hexInput.setValue(String.format(Locale.ROOT, "%06X", this.red << 16 | this.close << 8 | this.open));
+            this.hexInput.setChangedListener(value -> this.applyHexInput());
+            this.hexInput.setValue(String.format(Locale.ROOT, "%06X", this.red << 16 | this.green << 8 | this.blue));
          }
       }
 
       private void syncHexInput() {
          if (this.hexInput != null && !this.hexInput.isFocused()) {
-            this.hexInput.setValue(String.format(Locale.ROOT, "%06X", this.red << 16 | this.close << 8 | this.open));
+            this.hexInput.setValue(String.format(Locale.ROOT, "%06X", this.red << 16 | this.green << 8 | this.blue));
          }
       }
 
-      private void read() {
+      private void syncRgbFromHsb() {
          int rgb = Color.HSBtoRGB(this.hue, this.saturation, this.brightness) & 16777215;
          this.red = rgb >> 16 & 0xFF;
-         this.close = rgb >> 8 & 0xFF;
-         this.open = rgb & 0xFF;
+         this.green = rgb >> 8 & 0xFF;
+         this.blue = rgb & 0xFF;
          this.syncHexInput();
-         this.update();
+         this.notifyChange();
       }
 
-      private void write() {
-         float[] hsb = Color.RGBtoHSB(this.red, this.close, this.open, null);
+      private void syncHsbFromRgb() {
+         float[] hsb = Color.RGBtoHSB(this.red, this.green, this.blue, null);
          this.hue = hsb[0];
          this.saturation = hsb[1];
          this.brightness = hsb[2];
          this.syncHexInput();
-         this.update();
+         this.notifyChange();
       }
 
-      private void update() {
+      private void notifyChange() {
          if (this.onChange != null) {
             this.onChange.accept(this.argb());
          }
       }
 
-      void init(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area) {
+      void renderPicker(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area) {
          GuiGraphicsExtractor g2 = ctx.init_GuiGraphicsExtract();
-         int slidersH = read(this.showAlpha);
+         int slidersH = sliderStackHeight(this.showAlpha);
          int svH = Math.max(controlsHeight(), Math.min(90, area.sync() - 4 - slidersH));
          this.svArea = autismclient.gui.f.NetHelper.init(area.read(), area.write(), 130, svH);
          this.hueArea = autismclient.gui.f.NetHelper.init(this.svArea.init() + 6, area.write(), 14, svH);
-         ThemeColorScreen.Inner_StreamUtil.init(this.hue).init(g2, this.svArea);
+         ThemeColorScreen.Inner_StreamUtil.forHue(this.hue).blitTo(g2, this.svArea);
          autismclient.gui.f.PacketUtil.load(g2, this.svArea, ctx.init_TableIndex().colors().borderSubtle);
          int cx = this.svArea.read() + Math.round(this.saturation * (this.svArea.update() - 1));
          int cy = this.svArea.write() + Math.round((1.0F - this.brightness) * (this.svArea.sync() - 1));
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 4, cy - 4, 8, 8), 4, 0, -1342177280);
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 3, cy - 3, 6, 6), 3, 0, -1);
-         ThemeColorScreen.Inner_StreamUtil.hueTexture().init(g2, this.hueArea);
+         ThemeColorScreen.Inner_StreamUtil.hueTexture().blitTo(g2, this.hueArea);
          autismclient.gui.f.PacketUtil.load(g2, this.hueArea, ctx.init_TableIndex().colors().borderSubtle);
          int hy = this.hueArea.write() + Math.round((1.0F - this.hue) * (this.hueArea.sync() - 1));
          autismclient.gui.f.PacketUtil.load(
@@ -1008,11 +1008,11 @@ public class ThemeColorScreen extends Screen {
          this.greenSlider = autismclient.gui.f.NetHelper.init(area.read() + 14, sy + 12, area.update() - 52, 9);
          this.blueSlider = autismclient.gui.f.NetHelper.init(area.read() + 14, sy + 24, area.update() - 52, 9);
          this.renderChannelSlider(ctx, this.redSlider, "R", this.red, -43691);
-         this.renderChannelSlider(ctx, this.greenSlider, "G", this.close, -11149961);
-         this.renderChannelSlider(ctx, this.blueSlider, "B", this.open, -10053121);
+         this.renderChannelSlider(ctx, this.greenSlider, "G", this.green, -11149961);
+         this.renderChannelSlider(ctx, this.blueSlider, "B", this.blue, -10053121);
          if (this.showAlpha) {
             this.alphaSlider = autismclient.gui.f.NetHelper.init(area.read() + 14, sy + 36, area.update() - 52, 9);
-            this.renderChannelSlider(ctx, this.alphaSlider, "A", this.poll, -4210753);
+            this.renderChannelSlider(ctx, this.alphaSlider, "A", this.alpha, -4210753);
          } else {
             this.alphaSlider = null;
          }
@@ -1025,7 +1025,7 @@ public class ThemeColorScreen extends Screen {
             mc().font,
             label,
             autismclient.gui.f.a.DataUtil.init,
-            this.init(-4743522, ThemePaletteManager.ColorRole.TEXT),
+            this.pickerRecolor(-4743522, ThemePaletteManager.ColorRole.TEXT),
             b2.read() - 12,
             b2.write() + 1,
             false
@@ -1044,7 +1044,7 @@ public class ThemeColorScreen extends Screen {
             mc().font,
             Integer.toString(value),
             autismclient.gui.f.a.DataUtil.init,
-            this.init(-791321, ThemePaletteManager.ColorRole.TEXT),
+            this.pickerRecolor(-791321, ThemePaletteManager.ColorRole.TEXT),
             b2.init() + 5,
             b2.write() + 1,
             false
@@ -1059,28 +1059,28 @@ public class ThemeColorScreen extends Screen {
             if (this.hexInput.mouseClicked(mx, my, button)) {
                return true;
             } else if (this.svArea.init_Z(mx, my)) {
-               this.push = 1;
-               this.init(mx, my);
+               this.dragTarget = 1;
+               this.dragSaturationValue(mx, my);
                return true;
             } else if (this.hueArea.init_Z(mx, my)) {
-               this.push = 2;
+               this.dragTarget = 2;
                this.dragHue(my);
                return true;
             } else if (this.redSlider.init_Z(mx, my)) {
-               this.push = 3;
-               this.init(mx, this.redSlider, 0);
+               this.dragTarget = 3;
+               this.dragChannelSlider(mx, this.redSlider, 0);
                return true;
             } else if (this.greenSlider.init_Z(mx, my)) {
-               this.push = 4;
-               this.init(mx, this.greenSlider, 1);
+               this.dragTarget = 4;
+               this.dragChannelSlider(mx, this.greenSlider, 1);
                return true;
             } else if (this.blueSlider.init_Z(mx, my)) {
-               this.push = 5;
-               this.init(mx, this.blueSlider, 2);
+               this.dragTarget = 5;
+               this.dragChannelSlider(mx, this.blueSlider, 2);
                return true;
             } else if (this.alphaSlider != null && this.alphaSlider.init_Z(mx, my)) {
-               this.push = 6;
-               this.init(mx, this.alphaSlider, 3);
+               this.dragTarget = 6;
+               this.dragChannelSlider(mx, this.alphaSlider, 3);
                return true;
             } else {
                return false;
@@ -1090,32 +1090,32 @@ public class ThemeColorScreen extends Screen {
 
       void mouseDragged(int mx, int my, int button, double dx, double dy) {
          if (this.hexInput == null || !this.hexInput.mouseDragged(mx, my, button, dx, dy)) {
-            switch (this.push) {
+            switch (this.dragTarget) {
                case 1:
-                  this.init(mx, my);
+                  this.dragSaturationValue(mx, my);
                   break;
                case 2:
                   this.dragHue(my);
                   break;
                case 3:
-                  this.init(mx, this.redSlider, 0);
+                  this.dragChannelSlider(mx, this.redSlider, 0);
                   break;
                case 4:
-                  this.init(mx, this.greenSlider, 1);
+                  this.dragChannelSlider(mx, this.greenSlider, 1);
                   break;
                case 5:
-                  this.init(mx, this.blueSlider, 2);
+                  this.dragChannelSlider(mx, this.blueSlider, 2);
                   break;
                case 6:
                   if (this.alphaSlider != null) {
-                     this.init(mx, this.alphaSlider, 3);
+                     this.dragChannelSlider(mx, this.alphaSlider, 3);
                   }
             }
          }
       }
 
       void mouseReleased(int mx, int my, int button) {
-         this.push = 0;
+         this.dragTarget = 0;
          if (this.hexInput != null) {
             this.hexInput.mouseReleased(mx, my, button);
          }
@@ -1146,52 +1146,52 @@ public class ThemeColorScreen extends Screen {
          }
       }
 
-      private void sync() {
+      private void applyHexInput() {
          String hexText = this.hexInput == null ? "" : this.hexInput.getValue();
          if (hexText.length() == 6) {
             try {
                int rgb = Integer.parseInt(hexText, 16) & 16777215;
                this.red = rgb >> 16 & 0xFF;
-               this.close = rgb >> 8 & 0xFF;
-               this.open = rgb & 0xFF;
-               float[] hsb = Color.RGBtoHSB(this.red, this.close, this.open, null);
+               this.green = rgb >> 8 & 0xFF;
+               this.blue = rgb & 0xFF;
+               float[] hsb = Color.RGBtoHSB(this.red, this.green, this.blue, null);
                this.hue = hsb[0];
                this.saturation = hsb[1];
                this.brightness = hsb[2];
-               this.update();
+               this.notifyChange();
             } catch (NumberFormatException var4) {
             }
          }
       }
 
-      private void init(int mx, int my) {
+      private void dragSaturationValue(int mx, int my) {
          this.saturation = clamp01((float)(mx - this.svArea.read()) / Math.max(1, this.svArea.update() - 1));
          this.brightness = clamp01(1.0F - (float)(my - this.svArea.write()) / Math.max(1, this.svArea.sync() - 1));
-         this.read();
+         this.syncRgbFromHsb();
       }
 
       private void dragHue(int my) {
          this.hue = clamp01(1.0F - (float)(my - this.hueArea.write()) / Math.max(1, this.hueArea.sync() - 1));
-         this.read();
+         this.syncRgbFromHsb();
       }
 
-      private void init(int mx, autismclient.gui.f.NetHelper bounds, int channel) {
+      private void dragChannelSlider(int mx, autismclient.gui.f.NetHelper bounds, int channel) {
          int value = Math.round(clamp01((float)(mx - bounds.read()) / Math.max(1, bounds.update())) * 255.0F);
          if (channel == 0) {
             this.red = value;
          } else if (channel == 1) {
-            this.close = value;
+            this.green = value;
          } else {
             if (channel != 2) {
-               this.poll = value;
-               this.update();
+               this.alpha = value;
+               this.notifyChange();
                return;
             }
 
-            this.open = value;
+            this.blue = value;
          }
 
-         this.write();
+         this.syncHsbFromRgb();
       }
 
       private static boolean isHexDigit(char c) {
@@ -1217,13 +1217,13 @@ public class ThemeColorScreen extends Screen {
       private static int svTextureHueBucket = -2147483648;
       private final Identifier textureId;
       private final NativeImage image;
-      private final int read;
-      private final int write;
+      private final int width;
+      private final int height;
 
       private Inner_StreamUtil(Identifier id, String label, int w, int h) {
          this.textureId = id;
-         this.read = w;
-         this.write = h;
+         this.width = w;
+         this.height = h;
          this.image = new NativeImage(w, h, true);
          this.texture = RenderSystem.getDevice().createTexture("AUTISM " + label, 5, GpuFormat.RGBA8_UNORM, w, h, 1, 1);
          this.sampler = RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST);
@@ -1237,10 +1237,10 @@ public class ThemeColorScreen extends Screen {
                Identifier.fromNamespaceAndPath("autismclient", "dynamic/theme/picker_hue"), "theme picker hue", 14, 96
             );
 
-            for (int y = 0; y < hueTexture.write; y++) {
-               int color = 0xFF000000 | Color.HSBtoRGB(1.0F - (float)y / (hueTexture.write - 1), 1.0F, 1.0F) & 16777215;
+            for (int y = 0; y < hueTexture.height; y++) {
+               int color = 0xFF000000 | Color.HSBtoRGB(1.0F - (float)y / (hueTexture.height - 1), 1.0F, 1.0F) & 16777215;
 
-               for (int x = 0; x < hueTexture.read; x++) {
+               for (int x = 0; x < hueTexture.width; x++) {
                   hueTexture.image.setPixel(x, y, color);
                }
             }
@@ -1251,7 +1251,7 @@ public class ThemeColorScreen extends Screen {
          return hueTexture;
       }
 
-      static ThemeColorScreen.Inner_StreamUtil init(float hue) {
+      static ThemeColorScreen.Inner_StreamUtil forHue(float hue) {
          int bucket = Math.round(ThemeColorScreen.Inner_CachePool.clamp01(hue) * 360.0F);
          if (svTexture == null) {
             svTexture = new ThemeColorScreen.Inner_StreamUtil(
@@ -1262,11 +1262,11 @@ public class ThemeColorScreen extends Screen {
          if (svTextureHueBucket != bucket) {
             float hh = bucket / 360.0F;
 
-            for (int x = 0; x < svTexture.read; x++) {
-               float s = (float)x / (svTexture.read - 1);
+            for (int x = 0; x < svTexture.width; x++) {
+               float s = (float)x / (svTexture.width - 1);
 
-               for (int y = 0; y < svTexture.write; y++) {
-                  float v = 1.0F - (float)y / (svTexture.write - 1);
+               for (int y = 0; y < svTexture.height; y++) {
+                  float v = 1.0F - (float)y / (svTexture.height - 1);
                   svTexture.image.setPixel(x, y, 0xFF000000 | Color.HSBtoRGB(hh, s, v) & 16777215);
                }
             }
@@ -1282,7 +1282,7 @@ public class ThemeColorScreen extends Screen {
          RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.image);
       }
 
-      private void init(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area) {
+      private void blitTo(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area) {
          g.blit(
             RenderPipelines.GUI_TEXTURED,
             this.textureId,
@@ -1292,10 +1292,10 @@ public class ThemeColorScreen extends Screen {
             0.0F,
             area.update(),
             area.sync(),
-            this.read,
-            this.write,
-            this.read,
-            this.write,
+            this.width,
+            this.height,
+            this.width,
+            this.height,
             -1
          );
       }

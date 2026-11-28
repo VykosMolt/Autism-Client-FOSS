@@ -36,7 +36,7 @@ import net.minecraft.world.phys.HitResult.Type;
 
 final class AiBucket {
    private static final int init = 60;
-   private static final int load = 40;
+   private static final int MAX_WAIT_TICKS = 40;
 
    private AiBucket() {
    }
@@ -72,7 +72,7 @@ final class AiBucket {
             final int resultCountBefore = AiGameState.countInventoryItem(resultId);
             BlockPos target;
             int load_I;
-            int read;
+            int waitTicks;
             long inventoryRevision;
             boolean init_Z;
             boolean load_Z;
@@ -85,52 +85,52 @@ final class AiBucket {
             @Override
             public AiOperation.Result tick() {
                if (this.load_Z || mc.player == null || mc.level == null) {
-                  return this.init(AiOperation.Status.CANCELLED, "Bucket use cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Bucket use cancelled");
                }
 
                if (mc.level != this.level) {
-                  return this.init(AiOperation.Status.CANCELLED, "Bucket target belongs to the previous dimension");
+                  return this.finish(AiOperation.Status.CANCELLED, "Bucket target belongs to the previous dimension");
                }
 
                if (action == AiBucket.Inner_DataUtil.EMPTY
                   && fluid.equals("water")
                   && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-                  return this.init(AiOperation.Status.FAILED, "Water placement refused by the current dimension rule");
+                  return this.finish(AiOperation.Status.FAILED, "Water placement refused by the current dimension rule");
                }
 
                if (System.nanoTime() > this.deadline) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Bucket use did not complete before the deadline");
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Bucket use did not complete before the deadline");
                }
 
                if (this.init_Z) {
                   if (AiGameState.countInventoryItem(resultId) > this.resultCountBefore && AiServerEvidence.inventoryRevision() > this.inventoryRevision) {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.SUCCEEDED,
                         action == AiBucket.Inner_DataUtil.FILL ? "Filled a bucket with " + fluid : "Emptied the " + fluid + " bucket"
                      );
                   } else {
-                     return ++this.read > 40
-                        ? this.init(AiOperation.Status.UNCERTAIN, "The click went out but the held bucket did not change; reobserve before repeating")
-                        : this.init("Waiting for the bucket to change");
+                     return ++this.waitTicks > 40
+                        ? this.finish(AiOperation.Status.UNCERTAIN, "The click went out but the held bucket did not change; reobserve before repeating")
+                        : this.running("Waiting for the bucket to change");
                   }
                } else {
                   if (AiGameState.countInventoryItem(bucketId) <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty(bucketId, 1);
-                     return this.init(AiOperation.Status.FAILED, "No " + bucketId + " in inventory", AiJson.objectOf("missing", missing));
+                     return this.finishWith(AiOperation.Status.FAILED, "No " + bucketId + " in inventory", AiJson.objectOf("missing", missing));
                   }
 
                   if (AiItems.equipHotbar(AiItems.resolveItem(bucketId)) < 0) {
-                     return this.init(AiOperation.Status.FAILED, "Could not hold the " + bucketId);
+                     return this.finish(AiOperation.Status.FAILED, "Could not hold the " + bucketId);
                   }
 
                   if (this.target == null) {
-                     this.target = action == AiBucket.Inner_DataUtil.FILL ? this.findFillTarget() : this.load();
+                     this.target = action == AiBucket.Inner_DataUtil.FILL ? this.findFillTarget() : this.findEmptyTarget();
                      this.load_I = 0;
                   }
 
                   if (this.target == null) {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.FAILED,
                         action == AiBucket.Inner_DataUtil.FILL
                            ? "No " + fluid + " SOURCE block within reach (flowing " + fluid + " cannot be picked up)"
@@ -140,30 +140,30 @@ final class AiBucket {
 
                   Vec3 point = this.aimPoint();
                   if (point == null) {
-                     return this.init(AiOperation.Status.FAILED, "No visible source face within reach at " + this.target.toShortString());
+                     return this.finish(AiOperation.Status.FAILED, "No visible source face within reach at " + this.target.toShortString());
                   }
 
                   this.aim.setTargetRotation(autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()));
                   this.aim.tick();
                   if (++this.load_I > 60) {
-                     return this.init(AiOperation.Status.FAILED, "Could not aim at " + this.target.toShortString());
+                     return this.finish(AiOperation.Status.FAILED, "Could not aim at " + this.target.toShortString());
                   }
 
-                  BlockHitResult hit = this.init(action == AiBucket.Inner_DataUtil.FILL ? Fluid.SOURCE_ONLY : Fluid.NONE);
-                  boolean waterlog = fluid.equals("water") && AiBucket.init(mc.level.getBlockState(this.target));
-                  if (!AiBucket.init(action, hit, this.target, waterlog)) {
-                     return this.init("Turning toward " + this.target.toShortString());
+                  BlockHitResult hit = this.raycast(action == AiBucket.Inner_DataUtil.FILL ? Fluid.SOURCE_ONLY : Fluid.NONE);
+                  boolean waterlog = fluid.equals("water") && AiBucket.isWaterloggable(mc.level.getBlockState(this.target));
+                  if (!AiBucket.hitMatchesWaterlog(action, hit, this.target, waterlog)) {
+                     return this.running("Turning toward " + this.target.toShortString());
                   }
 
                   if (action == AiBucket.Inner_DataUtil.EMPTY
                      && fluid.equals("water")
                      && !waterlog
-                     && AiBucket.init(mc.level.getBlockState(hit.getBlockPos()))) {
-                     return this.init("Turning toward " + this.target.toShortString());
+                     && AiBucket.isWaterloggable(mc.level.getBlockState(hit.getBlockPos()))) {
+                     return this.running("Turning toward " + this.target.toShortString());
                   }
 
                   if (!this.init_Z_9()) {
-                     return this.init("Writing the look before using the bucket");
+                     return this.running("Writing the look before using the bucket");
                   }
 
                   if (action == AiBucket.Inner_DataUtil.EMPTY && fluid.equals("lava")) {
@@ -175,14 +175,14 @@ final class AiBucket {
                      mc.options.keySprint.setDown(false);
                      Vec3 motion = mc.player.getDeltaMovement();
                      if (!mc.player.onGround() || motion.x * motion.x + motion.z * motion.z > 1.0E-4) {
-                        return this.init("Settling before the lava pour");
+                        return this.running("Settling before the lava pour");
                      }
 
                      BlockPos feet = mc.player.blockPosition();
 
                      for (BlockPos body : List.of(feet, feet.above())) {
                         if (body.distManhattan(this.target) <= 1) {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.FAILED, "Refusing a lava pour into or beside the player's own cells at " + this.target.toShortString()
                            );
                         }
@@ -211,24 +211,24 @@ final class AiBucket {
                   }
 
                   this.init_Z = true;
-                  return this.init("Using the bucket");
+                  return this.running("Using the bucket");
                }
             }
 
             boolean init_Z_9() {
                autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.getSnapshot();
-               return wire.initialized() && AiBucket.init(wire.currentYaw(), wire.currentPitch(), mc.player.getYRot(), mc.player.getXRot());
+               return wire.initialized() && AiBucket.wireMatchesPlayer(wire.currentYaw(), wire.currentPitch(), mc.player.getYRot(), mc.player.getXRot());
             }
 
             Vec3 aimPoint() {
                if (action == AiBucket.Inner_DataUtil.FILL) {
-                  if (!this.init(this.target)) {
+                  if (!this.isSourceFluid(this.target)) {
                      return null;
                   }
 
                   Vec3 eye = mc.player.getEyePosition();
                   double reach = Math.max(4.5, mc.player.blockInteractionRange());
-                  return AiBucket.init(this.target, point -> {
+                  return AiBucket.visiblePoint(this.target, point -> {
                      if (eye.distanceToSqr(point) > reach * reach) {
                         return false;
                      }
@@ -238,13 +238,13 @@ final class AiBucket {
                   });
                } else {
                   BlockHitResult hit = AiBucket.init(
-                     mc, this.target, fluid.equals("water") && AiBucket.init(mc.level.getBlockState(this.target)), fluid.equals("water")
+                     mc, this.target, fluid.equals("water") && AiBucket.isWaterloggable(mc.level.getBlockState(this.target)), fluid.equals("water")
                   );
                   return hit == null ? null : hit.getLocation();
                }
             }
 
-            BlockHitResult init(Fluid fluidMode) {
+            BlockHitResult raycast(Fluid fluidMode) {
                double reach = Math.max(4.5, mc.player.blockInteractionRange());
                Vec3 eye = mc.player.getEyePosition();
                Vec3 end = eye.add(mc.player.getLookAngle().scale(reach));
@@ -254,7 +254,7 @@ final class AiBucket {
 
             BlockPos findFillTarget() {
                if (explicit != null) {
-                  return this.init(explicit) ? explicit : null;
+                  return this.isSourceFluid(explicit) ? explicit : null;
                }
 
                double reach = Math.max(4.5, mc.player.blockInteractionRange());
@@ -264,7 +264,7 @@ final class AiBucket {
                double bestDistance = reach * reach;
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -radius, -radius), origin.offset(radius, radius, radius))) {
-                  if (this.init(pos)) {
+                  if (this.isSourceFluid(pos)) {
                      double distance = mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos));
                      if (distance < bestDistance) {
                         bestDistance = distance;
@@ -276,7 +276,7 @@ final class AiBucket {
                return best;
             }
 
-            boolean init(BlockPos pos) {
+            boolean isSourceFluid(BlockPos pos) {
                if (!AiTerrain.isLoaded(mc.level, pos)) {
                   return false;
                } else {
@@ -289,7 +289,7 @@ final class AiBucket {
                }
             }
 
-            BlockPos load() {
+            BlockPos findEmptyTarget() {
                if (explicit != null) {
                   return explicit;
                }
@@ -334,15 +334,15 @@ final class AiBucket {
                return out;
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finishWith(status, message, null);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+            AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject extra) {
                JsonObject data = this.progressJson();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -367,17 +367,17 @@ final class AiBucket {
       }
    }
 
-   static boolean init(float wireYaw, float wirePitch, float playerYaw, float playerPitch) {
+   static boolean wireMatchesPlayer(float wireYaw, float wirePitch, float playerYaw, float playerPitch) {
       return Float.isFinite(wireYaw) && Float.isFinite(wirePitch) && Float.isFinite(playerYaw) && Float.isFinite(playerPitch)
          ? Math.abs(Mth.wrapDegrees(wireYaw - playerYaw)) <= 0.05F && Math.abs(wirePitch - playerPitch) <= 0.05F
          : false;
    }
 
-   static boolean init(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target) {
-      return init(action, hit, target, false);
+   static boolean hitMatches(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target) {
+      return hitMatchesWaterlog(action, hit, target, false);
    }
 
-   static boolean init(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target, boolean waterlog) {
+   static boolean hitMatchesWaterlog(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target, boolean waterlog) {
       if (hit == null) {
          return false;
       }
@@ -397,12 +397,12 @@ final class AiBucket {
       return var10000;
    }
 
-   static boolean init(BlockState state) {
+   static boolean isWaterloggable(BlockState state) {
       BooleanProperty property = BlockStateProperties.WATERLOGGED;
       return state.getBlock() instanceof LiquidBlockContainer && state.hasProperty(property) && !state.getValue(property);
    }
 
-   static BlockHitResult init(Minecraft mc, BlockPos target, boolean waterlog) {
+   static BlockHitResult unusedRaycastTarget(Minecraft mc, BlockPos target, boolean waterlog) {
       return init(mc, target, waterlog, false);
    }
 
@@ -415,9 +415,9 @@ final class AiBucket {
          BlockHitResult best = null;
 
          for (Direction face : Direction.values()) {
-            if (!water || !init(mc.level.getBlockState(target.relative(face.getOpposite())))) {
+            if (!water || !isWaterloggable(mc.level.getBlockState(target.relative(face.getOpposite())))) {
                BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target.relative(face.getOpposite()), face);
-               if (init(AiBucket.Inner_DataUtil.EMPTY, hit, target)
+               if (hitMatches(AiBucket.Inner_DataUtil.EMPTY, hit, target)
                   && (
                      best == null || mc.player.getEyePosition().distanceToSqr(hit.getLocation()) < mc.player.getEyePosition().distanceToSqr(best.getLocation())
                   )) {
@@ -432,7 +432,7 @@ final class AiBucket {
       }
    }
 
-   static Vec3 init(BlockPos source, Predicate<Vec3> visible) {
+   static Vec3 visiblePoint(BlockPos source, Predicate<Vec3> visible) {
       for (double x : new double[]{0.5, 0.2, 0.8}) {
          for (double z : new double[]{0.5, 0.2, 0.8}) {
             Vec3 point = new Vec3(source.getX() + x, source.getY() + 0.8, source.getZ() + z);

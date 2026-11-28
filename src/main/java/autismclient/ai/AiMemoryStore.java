@@ -77,7 +77,7 @@ public final class AiMemoryStore {
    }
 
    public synchronized void reload() throws IOException {
-      this.write();
+      this.pruneExpired();
       Path file = this.init_Path.resolve("memory.json");
       if (Files.exists(file)) {
          try {
@@ -107,7 +107,7 @@ public final class AiMemoryStore {
             this.init_Map.putAll(loaded);
             this.load_Map.clear();
             this.load_Map.putAll(loadedEpochs);
-            this.sync();
+            this.refreshSnapshots();
          } catch (RuntimeException e) {
             Path backup = this.init_Path.resolve("memory-corrupt-" + System.currentTimeMillis() + ".json");
 
@@ -116,16 +116,16 @@ public final class AiMemoryStore {
             } catch (IOException var7) {
             }
 
-            this.update();
+            this.trimBackups();
             this.init_Map.clear();
             this.load_Map.clear();
-            this.sync();
+            this.refreshSnapshots();
             this.init_Str = "Memory could not be loaded; preserved as " + backup.getFileName();
          }
       }
    }
 
-   private void write() {
+   private void pruneExpired() {
       try (Stream<Path> entries = Files.list(this.init_Path)) {
          LocalDate cutoff = LocalDate.now().minusDays(14L);
 
@@ -144,7 +144,7 @@ public final class AiMemoryStore {
       }
    }
 
-   private void update() {
+   private void trimBackups() {
       try (Stream<Path> entries = Files.list(this.init_Path)) {
          List<Path> backups = entries.filter(x$0 -> Files.isRegularFile(x$0))
             .filter(p -> p.getFileName().toString().startsWith("memory-corrupt-"))
@@ -193,7 +193,7 @@ public final class AiMemoryStore {
       this.load_Map.merge(world, 1, Integer::sum);
 
       try {
-         this.read();
+         this.save();
       } catch (IOException | RuntimeException e) {
          if (previous == null) {
             this.load_Map.remove(world);
@@ -266,7 +266,7 @@ public final class AiMemoryStore {
             this.init_Map.put(m.id(), m);
 
             try {
-               this.read();
+               this.save();
                return m;
             } catch (IOException | RuntimeException e) {
                this.init_Map.clear();
@@ -355,7 +355,7 @@ public final class AiMemoryStore {
       this.init_Map.remove(id);
 
       try {
-         this.read();
+         this.save();
       } catch (IOException | RuntimeException e) {
          this.init_Map.clear();
          this.init_Map.putAll(before);
@@ -368,7 +368,7 @@ public final class AiMemoryStore {
       this.init_Map.clear();
 
       try {
-         this.read();
+         this.save();
          this.read_Map.clear();
       } catch (IOException | RuntimeException e) {
          this.init_Map.putAll(before);
@@ -376,17 +376,17 @@ public final class AiMemoryStore {
       }
    }
 
-   public synchronized void read() throws IOException {
+   public synchronized void save() throws IOException {
       JsonObject snapshot = AiJson.objectOf("version", 1, "records", this.init_Map.values(), "epochs", this.load_Map);
       if (snapshot.toString().getBytes(StandardCharsets.UTF_8).length > 15000000) {
          throw new IOException("Memory capacity reached; inspect and prune records before adding more");
       }
 
       AiJson.writeAtomicJson(this.init_Path.resolve("memory.json"), snapshot);
-      this.sync();
+      this.refreshSnapshots();
    }
 
-   private void sync() {
+   private void refreshSnapshots() {
       this.init_List = List.copyOf(this.init_Map.values());
       this.write_Map = Map.copyOf(this.load_Map);
    }

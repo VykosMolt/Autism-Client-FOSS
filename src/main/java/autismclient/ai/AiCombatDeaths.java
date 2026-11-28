@@ -14,31 +14,31 @@ import net.minecraft.world.entity.LivingEntity;
 
 final class AiCombatDeaths {
    private final Set<UUID> counted = new HashSet<>();
-   private final Set<UUID> load = new HashSet<>();
+   private final Set<UUID> confirmed = new HashSet<>();
    private final Map<UUID, LivingEntity> tracked = new HashMap<>();
    private final JsonArray init_JsonArray = new JsonArray();
 
-   void init(UUID identity) {
-      if (!this.load.contains(identity)) {
+   void track(UUID identity) {
+      if (!this.confirmed.contains(identity)) {
          this.counted.add(identity);
       }
    }
 
    void init(LivingEntity entity) {
-      this.init(entity.getUUID());
+      this.track(entity.getUUID());
       if (this.counted.contains(entity.getUUID())) {
          this.tracked.put(entity.getUUID(), entity);
       }
    }
 
-   boolean init(UUID identity, boolean confirmedDeath, boolean stillPresent) {
+   boolean confirmDeath(UUID identity, boolean confirmedDeath, boolean stillPresent) {
       if (!this.counted.contains(identity)) {
          return false;
       }
 
       if (confirmedDeath) {
          this.counted.remove(identity);
-         return this.load.add(identity);
+         return this.confirmed.add(identity);
       }
 
       if (!stillPresent) {
@@ -54,7 +54,7 @@ final class AiCombatDeaths {
       while (iterator.hasNext()) {
          Entry<UUID, LivingEntity> entry = iterator.next();
          LivingEntity entity = entry.getValue();
-         if (this.init(entry.getKey(), entity.isDeadOrDying(), !entity.isRemoved() && mc.level.getEntity(entity.getId()) == entity)) {
+         if (this.confirmDeath(entry.getKey(), entity.isDeadOrDying(), !entity.isRemoved() && mc.level.getEntity(entity.getId()) == entity)) {
             this.init_JsonArray.add(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
          }
 
@@ -65,7 +65,7 @@ final class AiCombatDeaths {
    }
 
    int killCount() {
-      return this.load.size();
+      return this.confirmed.size();
    }
 
    JsonArray killedTypes() {

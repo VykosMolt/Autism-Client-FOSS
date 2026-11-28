@@ -102,66 +102,66 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private int launchDamageTick = -2147483648;
    private int lastImpulseTick = -2147483648;
    private int engageTick;
-   private int tick;
-   private int run = -2147483648;
+   private int safeLandingTicks;
+   private int lastPlaceTick = -2147483648;
    private boolean engaged;
    private boolean disengaging;
    private boolean landingSafe;
    private boolean dangerReturning;
    private boolean slotsReleased;
-   private int get;
-   private int set = 1;
-   private int put;
-   private int add = -2147483648;
+   private int disengageTicks;
+   private int ticksToPlacement = 1;
+   private int ownSteerHoldTicks;
+   private int safeCatchTick = -2147483648;
    private boolean caughtSafely;
    private final ClutchFallPhysics.Inner_NetHelper ownSteerWindow = new ClutchFallPhysics.Inner_NetHelper(160);
    private Vec3 preImpulseMotion;
    private Vec3 postImpulseMotion = Vec3.ZERO;
-   private int clear = -2147483648;
-   private int reset = -2147483648;
-   private int start = -2147483648;
+   private int serverImpulseTick = -2147483648;
+   private int unattributedHurtTick = -2147483648;
+   private int disallowedCauseTick = -2147483648;
    private String causeDebug = "";
-   private int stop = -2147483648;
-   private int next = -1;
-   private int prev = -1;
-   private int valid = -1;
-   private int size = -1;
-   private int data;
+   private int causeDebugTick = -2147483648;
+   private int originalHotbarSlot = -1;
+   private int clutchSlot = -1;
+   private int restoreToSlot = -1;
+   private int restoreFromSlot = -1;
+   private int slotRestoreTicksLeft;
    private ClutchModule.Inner_DataUtil currentPlan;
    private BlockPos placedCatchCell;
    private BlockPos catchTarget;
    private BlockPos lastGroundPos;
    private BlockPos launchGroundPos;
-   private int value = -2147483648;
-   private int cache;
+   private int lastGroundTick = -2147483648;
+   private int catchRowY;
    private boolean steerAxisX;
-   private int state;
+   private int catchMode;
    private boolean edgeRescue;
    private boolean lastShift;
    private boolean lastShiftOwned;
-   private int queue = -2147483648;
+   private int crouchStartTick = -2147483648;
    private Vec3 nextEyePosition;
    private Boolean hitAxisZ;
    private boolean enemyLaunchedUp;
    private volatile ClutchModule.Inner_ConfigStore wireState;
-   private int buffer = -2147483648;
-   private int entry = -2147483648;
+   private int chargeThrowTick = -2147483648;
+   private int ownBoostDroppedTick = -2147483648;
    private boolean ignoredLaunch;
-   private int node = -2147483648;
-   private int task = -2147483648;
-   private int pool = -2147483648;
+   private int ignoredLaunchTick = -2147483648;
+   private int lastRouteTick = -2147483648;
+   private int groundedLaunchTick = -2147483648;
    private Vec3 chargeThrowEye;
-   private int index = -2147483648;
+   private int ownBlastTick = -2147483648;
    private Vec3 ownBlastCenter;
-   private static final int count = 100;
-   private int flags;
-   private int level;
+   private static final int OWN_BLAST_WINDOW_TICKS = 100;
+   private int rescues;
+   private int placements;
    private String status = "Idle";
    private BlockHitResult sentPlacementHit;
    private BlockPos lastPlacedPos;
-   private int frame = -1;
-   private int block = -1;
-   private int chunk = -2147483648;
+   private int placedSlot = -1;
+   private int placementSequence = -1;
+   private int placeHitTick = -2147483648;
    private BlockPos rowReturnPos;
    private static final double read_D = 0.05;
    private static final double write_D = 0.6;
@@ -248,20 +248,20 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    public static boolean read_Z_20() {
       ClutchModule clutch = instance();
-      return clutch != null && clutch.engaged && !clutch.disengaging && clutch.canSteer() && clutch.state != 3 && !aD.init_Z() && !FreecamController.isActive();
+      return clutch != null && clutch.engaged && !clutch.disengaging && clutch.canSteer() && clutch.catchMode != 3 && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean sync_Z_10() {
       ClutchModule clutch = instance();
-      return clutch != null && clutch.engaged && !clutch.disengaging && clutch.canSteer() && clutch.state != 3 && !ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 4);
+      return clutch != null && clutch.engaged && !clutch.disengaging && clutch.canSteer() && clutch.catchMode != 3 && !ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 4);
    }
 
    public static boolean flush_Z_9() {
       ClutchModule clutch = instance();
       return clutch != null
          && clutch.isEnabled()
-         && clutch.set()
-         && (clutch.engaged && !clutch.disengaging ? clutch.canSteer() && clutch.state != 3 : clutch.put > 0 && clutch.ownSteerArmed());
+         && clutch.canAct()
+         && (clutch.engaged && !clutch.disengaging ? clutch.canSteer() && clutch.catchMode != 3 : clutch.ownSteerHoldTicks > 0 && clutch.ownSteerArmed());
    }
 
    public static boolean close_Z_8() {
@@ -281,7 +281,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    @Override
    public boolean hasDisabledTickWork() {
-      return this.engaged || this.rotationReturning() || this.valid >= 0;
+      return this.engaged || this.rotationReturning() || this.restoreToSlot >= 0;
    }
 
    @Override
@@ -305,11 +305,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    public int rescueCount() {
-      return this.flags;
+      return this.rescues;
    }
 
    public int placementCount() {
-      return this.level;
+      return this.placements;
    }
 
    private int clientTick() {
@@ -326,7 +326,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean ownSteerArmed() {
-      return this.ownSteerWindow.isActive(this.clientTick()) && this.bool("own-steer") && (this.bool("own-knockback") || this.inGuardTime() || this.prev());
+      return this.ownSteerWindow.isActive(this.clientTick()) && this.bool("own-steer") && (this.bool("own-knockback") || this.inGuardTime() || this.recentlyCaught());
    }
 
    public static void init_V_LivingEntity_5(LivingEntity entity) {
@@ -370,7 +370,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             cause, own, cause != ClutchFallPhysics.Inner_StreamUtil.OTHER || owner instanceof LivingEntity || direct instanceof Projectile && owner != null, clutch.clientTick()
          );
          if (cause != ClutchFallPhysics.Inner_StreamUtil.OTHER || direct instanceof Projectile) {
-            clutch.start = clutch.isAllowedCause(hit) ? -2147483648 : clutch.clientTick();
+            clutch.disallowedCauseTick = clutch.isAllowedCause(hit) ? -2147483648 : clutch.clientTick();
             if (!clutch.isAllowedCause(hit)) {
                clutch.markIgnoredLaunch();
             }
@@ -383,7 +383,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             clutch.lastImpulseTick = clutch.clientTick();
             clutch.rearmForEnemyHit();
             if (!hit.own()) {
-               clutch.entry = -2147483648;
+               clutch.ownBoostDroppedTick = -2147483648;
             }
          } else if (hit.own() && cause != ClutchFallPhysics.Inner_StreamUtil.OTHER) {
             clutch.dropOwnBoost();
@@ -397,10 +397,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             + (direct == null ? "-" : direct.getType().toShortString())
             + " eligible="
             + clutch.isAllowedCause(hit);
-         clutch.stop = clutch.clientTick();
+         clutch.causeDebugTick = clutch.clientTick();
          if (!clutch.isAllowedCause(hit) && cause == ClutchFallPhysics.Inner_StreamUtil.OTHER && owner == null && direct == null) {
-            clutch.reset = clutch.clientTick();
-            if (ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.clear, 2)) {
+            clutch.unattributedHurtTick = clutch.clientTick();
+            if (ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.serverImpulseTick, 2)) {
                clutch.onServerImpulse(true);
             }
          }
@@ -423,19 +423,19 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          Vec3 before = clutch.preImpulseMotion == null ? Vec3.ZERO : clutch.preImpulseMotion;
          clutch.preImpulseMotion = null;
          Vec3 push = MC.player.getDeltaMovement().subtract(before);
-         boolean impulse = ClutchFallPhysics.hasImpulseChange(before, MC.player.getDeltaMovement(), ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.reset, 3));
+         boolean impulse = ClutchFallPhysics.hasImpulseChange(before, MC.player.getDeltaMovement(), ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.unattributedHurtTick, 3));
          if (impulse) {
-            clutch.clear = clutch.clientTick();
+            clutch.serverImpulseTick = clutch.clientTick();
             clutch.postImpulseMotion = MC.player.getDeltaMovement();
          }
 
          if (impulse || clutch.causeDebug.isEmpty()) {
             String line = String.format(Locale.ROOT, "push %.2f/%.2f before=%s", push.horizontalDistance(), push.y, before == Vec3.ZERO ? "none" : "seen");
-            clutch.causeDebug = clutch.stop == clutch.clientTick() ? clutch.causeDebug + " | " + line : line;
-            clutch.stop = clutch.clientTick();
+            clutch.causeDebug = clutch.causeDebugTick == clutch.clientTick() ? clutch.causeDebug + " | " + line : line;
+            clutch.causeDebugTick = clutch.clientTick();
          }
 
-         if (ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 3)) {
+         if (ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 3)) {
             clutch.dropOwnBoost();
          } else {
             ClutchModule.Inner_CachePool nearest = null;
@@ -457,7 +457,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
             if (nearest != null && score <= 0.025) {
                ClutchFallPhysics.Inner_TaskQueue hit = new ClutchFallPhysics.Inner_TaskQueue(
-                  nearest.cause, nearest.own || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 3), nearest.attributed || impulse, clutch.clientTick()
+                  nearest.cause, nearest.own || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 3), nearest.attributed || impulse, clutch.clientTick()
                );
                boolean enemyDamage = clutch.launchCause != null && !clutch.launchCause.own() && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.launchDamageTick, 2);
                if (nearest.own && !enemyDamage || clutch.launchCause == null || !ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.launchCause.tick(), 4)) {
@@ -472,7 +472,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                }
             }
 
-            boolean excluded = ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.start, 3)
+            boolean excluded = ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.disallowedCauseTick, 3)
                || nearest != null
                   && !clutch.isAllowedCause(new ClutchFallPhysics.Inner_TaskQueue(nearest.cause, nearest.own, nearest.attributed || impulse, clutch.clientTick()));
             if (!impulse
@@ -482,7 +482,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   clutch.markIgnoredLaunch();
                }
             } else {
-               clutch.onServerImpulse(ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.reset, 3));
+               clutch.onServerImpulse(ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.unattributedHurtTick, 3));
             }
 
             if (clutch.engaged && clutch.isAllowedCause(clutch.launchCause) && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.launchCause.tick(), 2)) {
@@ -516,12 +516,12 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          if (!packet.playerKnockback().isEmpty() && !(packet.playerKnockback().get().lengthSqr() < 0.0025)) {
             boolean ownBlast = clutch.ownBlastCenter != null
-                  && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.index, 100)
+                  && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBlastTick, 100)
                   && clutch.ownBlastCenter.distanceToSqr(packet.center()) <= 64.0
                || clutch.nearOwnChargeThrow(packet.center());
             boolean own = nearest != null
-               ? nearest.own || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 3)
-               : ownBlast || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 3);
+               ? nearest.own || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 3)
+               : ownBlast || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 3);
             ClutchFallPhysics.Inner_TaskQueue hit = new ClutchFallPhysics.Inner_TaskQueue(
                nearest != null ? nearest.cause : ClutchFallPhysics.Inner_StreamUtil.BLAST, own, nearest == null || nearest.attributed, clutch.clientTick()
             );
@@ -535,7 +535,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   clutch.markIgnoredLaunch();
                }
             } else {
-               clutch.start = clutch.isAllowedCause(hit) ? -2147483648 : clutch.clientTick();
+               clutch.disallowedCauseTick = clutch.isAllowedCause(hit) ? -2147483648 : clutch.clientTick();
                if (!clutch.isAllowedCause(hit)) {
                   clutch.markIgnoredLaunch();
                }
@@ -572,8 +572,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
       this.launchCause = null;
       this.launchDamageTick = -2147483648;
-      this.entry = this.clientTick();
-      this.pool = -2147483648;
+      this.ownBoostDroppedTick = this.clientTick();
+      this.groundedLaunchTick = -2147483648;
       this.markIgnoredLaunch();
       if (this.engaged) {
          autismclient.util.ClientInteractionOverride.clearAll();
@@ -583,11 +583,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private void markIgnoredLaunch() {
       this.ignoredLaunch = true;
-      this.node = this.clientTick();
+      this.ignoredLaunchTick = this.clientTick();
    }
 
    private boolean nearOwnChargeThrow(Vec3 near) {
-      return this.chargeThrowEye != null && near != null && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.buffer, 20) && this.chargeThrowEye.distanceToSqr(near) <= 64.0;
+      return this.chargeThrowEye != null && near != null && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.chargeThrowTick, 20) && this.chargeThrowEye.distanceToSqr(near) <= 64.0;
    }
 
    private boolean freshEnemyLaunch() {
@@ -595,7 +595,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void onServerImpulse(boolean hurt) {
-      if (this.bool("melee") && MC.level != null && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.entry, 3) && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.start, 3)) {
+      if (this.bool("melee") && MC.level != null && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.ownBoostDroppedTick, 3) && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.disallowedCauseTick, 3)) {
          if (!this.engaged && this.postImpulseMotion.y >= 0.55 && this.nearOwnChargeThrow(MC.player.position())) {
             this.causeDebug = this.causeDebug + " own boost";
             this.dropOwnBoost();
@@ -612,25 +612,25 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private void rearmForEnemyHit() {
       if (this.engaged && ClutchFallPhysics.isEnemyCause(this.launchCause)) {
-         if (this.state == 0 || this.state == 3) {
-            this.steerAxisX = this.stop();
+         if (this.catchMode == 0 || this.catchMode == 3) {
+            this.steerAxisX = this.pickSteerAxis();
          }
 
-         this.state = ClutchFallPhysics.normalizeMode(this.state);
+         this.catchMode = ClutchFallPhysics.normalizeMode(this.catchMode);
          this.disengaging = false;
-         this.get = 0;
-         this.tick = 0;
+         this.disengageTicks = 0;
+         this.safeLandingTicks = 0;
          this.engageTick = this.clientTick();
       }
    }
 
    private boolean inKnockbackLaunch(int tick) {
-      return ClutchFallPhysics.isEnemyCause(this.launchCause) && !MC.player.onGround() && ClutchFallPhysics.isRecentKnockbackLaunch(tick, this.launchCause.tick(), this.clear, this.value, 160);
+      return ClutchFallPhysics.isEnemyCause(this.launchCause) && !MC.player.onGround() && ClutchFallPhysics.isRecentKnockbackLaunch(tick, this.launchCause.tick(), this.serverImpulseTick, this.lastGroundTick, 160);
    }
 
    private boolean inGuardTime() {
       int ticks = (int)Math.round(this.decimal("guard-time") * 20.0);
-      return ticks > 0 && this.add != -2147483648 && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.add, ticks);
+      return ticks > 0 && this.safeCatchTick != -2147483648 && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.safeCatchTick, ticks);
    }
 
    private void markGroundedLaunch() {
@@ -639,13 +639,13 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && MC.player.onGround()
          && MC.player.getDeltaMovement().y < jump
          && !MC.level.noCollision(MC.player, MC.player.getBoundingBox().move(0.0, -0.08, 0.0))) {
-         this.pool = this.clientTick();
+         this.groundedLaunchTick = this.clientTick();
       }
    }
 
    private boolean shouldJumpOnLaunch(boolean stocked, int mode) {
       if (stocked && mode != 2 && !this.disengaging && MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() <= 1) {
-         return ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.pool, 2) ? true : this.engaged && !this.landingSafe && ClutchFallPhysics.isEnemyCause(this.launchCause) && !this.next();
+         return ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.groundedLaunchTick, 2) ? true : this.engaged && !this.landingSafe && ClutchFallPhysics.isEnemyCause(this.launchCause) && !this.isGroundedSafe();
       } else {
          return false;
       }
@@ -682,19 +682,19 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                autismclient.util.ClientInteractionOverride.clearAll();
             }
 
-            int slot = clutch.valid;
-            int from = clutch.size;
-            if (slot < 0 && clutch.engaged && clutch.bool("restore-slot") && clutch.next >= 0 && clutch.prev >= 0 && clutch.next != clutch.prev) {
-               slot = clutch.next;
-               from = clutch.prev;
+            int slot = clutch.restoreToSlot;
+            int from = clutch.restoreFromSlot;
+            if (slot < 0 && clutch.engaged && clutch.bool("restore-slot") && clutch.originalHotbarSlot >= 0 && clutch.clutchSlot >= 0 && clutch.originalHotbarSlot != clutch.clutchSlot) {
+               slot = clutch.originalHotbarSlot;
+               from = clutch.clutchSlot;
             }
 
             clutch.resetAll();
             clutch.lastLevel = MC.level;
             if (slot >= 0) {
-               clutch.valid = slot;
-               clutch.size = from;
-               clutch.data = 20;
+               clutch.restoreToSlot = slot;
+               clutch.restoreFromSlot = from;
+               clutch.slotRestoreTicksLeft = 20;
             }
          } else {
             clutch.wireState = null;
@@ -718,7 +718,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             && owner == null
             && launched
             && this.chargeThrowEye != null
-            && ClutchFallPhysics.isWithinTickWindow(tick, this.buffer, 8)
+            && ClutchFallPhysics.isWithinTickWindow(tick, this.chargeThrowTick, 8)
             && entity.position().distanceToSqr(this.chargeThrowEye) < 9.0) {
             own = true;
          }
@@ -739,15 +739,15 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       if (packet instanceof ServerboundUseItemOnPacket use
          && use.hand() == InteractionHand.MAIN_HAND
          && use.hitResult() == this.sentPlacementHit
-         && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.chunk, 1)) {
-         this.block = use.sequence();
+         && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.placeHitTick, 1)) {
+         this.placementSequence = use.sequence();
       }
 
       InteractionHand hand = packet instanceof ServerboundUseItemPacket use
          ? use.hand()
          : (packet instanceof ServerboundUseItemOnPacket use ? use.hand() : null);
       if (MC.player != null && hand != null && (MC.player.getItemInHand(hand).is(Items.FIRE_CHARGE) || MC.player.getItemInHand(hand).is(Items.WIND_CHARGE))) {
-         this.buffer = this.clientTick();
+         this.chargeThrowTick = this.clientTick();
          this.chargeThrowEye = MC.player.getEyePosition();
       }
 
@@ -764,13 +764,13 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             || block.is(Blocks.TNT)
             || block.is(Blocks.RESPAWN_ANCHOR)
             || block.is(BlockTags.BEDS)) {
-            this.index = this.clientTick();
+            this.ownBlastTick = this.clientTick();
             this.ownBlastCenter = Vec3.atCenterOf(clicked);
          }
       }
 
       if (MC.level != null && packet instanceof ServerboundAttackPacket attack && MC.level.getEntity(attack.entityId()) instanceof EndCrystal crystal) {
-         this.index = this.clientTick();
+         this.ownBlastTick = this.clientTick();
          this.ownBlastCenter = crystal.position();
       }
 
@@ -783,9 +783,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && hit != null
          && hand == InteractionHand.MAIN_HAND
          && hit == clutch.sentPlacementHit
-         && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.chunk, 1)) {
+         && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.placeHitTick, 1)) {
          if (result != null && result.consumesAction()) {
-            ScaffoldModule.init_V_I_I(clutch.frame, clutch.block);
+            ScaffoldModule.init_V_I_I(clutch.placedSlot, clutch.placementSequence);
             if (clutch.lastPlacedPos != null && MC.level != null && !MC.level.getBlockState(clutch.lastPlacedPos).isAir()) {
                PlacedBlockTrailRenderer.init(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH, clutch.lastPlacedPos);
             }
@@ -793,11 +793,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          clutch.sentPlacementHit = null;
          clutch.lastPlacedPos = null;
-         clutch.frame = clutch.block = -1;
+         clutch.placedSlot = clutch.placementSequence = -1;
       }
    }
 
-   private boolean set() {
+   private boolean canAct() {
       return MC.player != null
          && MC.level != null
          && MC.gameMode != null
@@ -820,7 +820,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && !AutoTotemModule.init_Z_6();
    }
 
-   private static boolean put() {
+   private static boolean scaffoldEnabled() {
       Module module = al.init_Module_Str("scaffold");
       return module != null && module.isEnabled();
    }
@@ -832,7 +832,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       try {
          this.runPreMovementTick();
       } finally {
-         this.worldCache.load();
+         this.worldCache.deactivate();
       }
    }
 
@@ -842,7 +842,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this.dangerReturning = false;
          this.tickRotationReturn();
          this.tickSlotRestore();
-         if (this.ignoredLaunch && (MC.player.onGround() || MC.player.isInWater() || MC.player.isInLava()) && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.node, 2)) {
+         if (this.ignoredLaunch && (MC.player.onGround() || MC.player.isInWater() || MC.player.isInLava()) && !ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.ignoredLaunchTick, 2)) {
             this.ignoredLaunch = false;
          }
 
@@ -852,7 +852,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             this.ownSteerWindow.clear();
          }
 
-         if (this.isEnabled() && this.set()) {
+         if (this.isEnabled() && this.canAct()) {
             if (this.edgeRescue && !this.canSteer()) {
                this.edgeRescue = false;
             }
@@ -860,14 +860,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             this.pruneSamples();
             int tick = this.clientTick();
             if (MC.player.onGround()) {
-               this.write(tick);
+               this.updateLastGround(tick);
             }
 
             if (!this.engaged
                && ClutchFallPhysics.isEnemyCause(this.launchCause)
                && !ClutchFallPhysics.isWithinTickWindow(tick, this.launchCause.tick(), 2)
                && !ClutchFallPhysics.isWithinTickWindow(tick, this.lastImpulseTick, 2)
-               && this.next()) {
+               && this.isGroundedSafe()) {
                this.launchCause = null;
                this.launchDamageTick = -2147483648;
                this.enemyLaunchedUp = false;
@@ -884,7 +884,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                this.recentPlacementCells.entrySet().removeIf(entry -> tick - entry.getValue() > 1);
                boolean freshHit = this.isAllowedCause(this.launchCause)
                   && (ClutchFallPhysics.isWithinTickWindow(tick, this.launchCause.tick(), 24) && ClutchFallPhysics.isWithinTickWindow(tick, this.lastImpulseTick, 24) || this.inKnockbackLaunch(tick));
-               boolean walkingEdge = !this.engaged && !freshHit && this.reset();
+               boolean walkingEdge = !this.engaged && !freshHit && this.walkingOffEdge();
                if (this.engaged || freshHit || walkingEdge || this.ownFallNeedsRescue(tick)) {
                   ClutchFallPhysics.Inner_ConfigStore forecast = walkingEdge ? this.forecastWalking() : this.forecastFall();
                   if (!this.engaged && !freshHit) {
@@ -959,7 +959,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                         }
                      }
 
-                     if (first == null && slot >= 0 && !walkingEdge && forecast.unsafe() && this.clear()) {
+                     if (first == null && slot >= 0 && !walkingEdge && forecast.unsafe() && this.canCrouchCatch()) {
                         triedCrouch = true;
                         ClutchFallPhysics.Inner_ConfigStore crouched = this.forecastSteeredFrom(chosenAxis, 1, true);
                         ClutchModule.Inner_BufferHelper catchRoute = this.planCatch(crouched, slot);
@@ -973,7 +973,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
                      if (first == null && this.canSteer() && !walkingEdge && forecast.unsafe() && this.rowReturnTarget() != null) {
                         ClutchFallPhysics.Inner_ConfigStore rowReturn = this.forecastSteered(chosenAxis, 4);
-                        ClutchModule.Inner_BufferHelper catchRoute = this.init(rowReturn, slot, null, false, Set.of(), true);
+                        ClutchModule.Inner_BufferHelper catchRoute = this.prepareRoute(rowReturn, slot, null, false, Set.of(), true);
                         if (catchRoute != null) {
                            forecast = rowReturn;
                            first = catchRoute;
@@ -1017,16 +1017,16 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
                      this.engage(tick, first != null);
                      if (acquireCrouch) {
-                        this.queue = tick;
+                        this.crouchStartTick = tick;
                      }
 
                      acquiredRoute = first;
                      this.steerAxisX = chosenAxis;
-                     this.state = chosenMode;
+                     this.catchMode = chosenMode;
                      this.edgeRescue = walkingEdge;
                      if (first != null && !first.plan().init_Z_2() && !first.tower()) {
                         this.catchTarget = first.plan().init_BlockPos();
-                        this.cache = this.catchTarget.getY();
+                        this.catchRowY = this.catchTarget.getY();
                      }
 
                      this.landingSafe = !forecast.unsafe();
@@ -1050,17 +1050,17 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                      }
 
                      this.disengaging = false;
-                     this.get = 0;
-                     this.tick = 0;
+                     this.disengageTicks = 0;
+                     this.safeLandingTicks = 0;
                   }
 
-                  if (this.edgeRescue ? !forecast.unsafe() : this.next()) {
-                     this.tick++;
+                  if (this.edgeRescue ? !forecast.unsafe() : this.isGroundedSafe()) {
+                     this.safeLandingTicks++;
                   } else {
-                     this.tick = 0;
+                     this.safeLandingTicks = 0;
                   }
 
-                  if (this.tick < 1 && tick - this.engageTick <= (MC.player.onGround() ? 80 : 160)) {
+                  if (this.safeLandingTicks < 1 && tick - this.engageTick <= (MC.player.onGround() ? 80 : 160)) {
                      int slot = this.catchBlockSlot();
                      ClutchModule.Inner_BufferHelper tower = null;
                      if (this.landingSafe) {
@@ -1081,7 +1081,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               : null;
                            if (!alternateForecast.unsafe()) {
                               this.steerAxisX = !this.steerAxisX;
-                              this.state = 0;
+                              this.catchMode = 0;
                               this.landingSafe = true;
                               this.currentPlan = null;
                               this.status = "Landing";
@@ -1090,7 +1090,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
                            if (this.routeClearlyBetter(alternate, route)) {
                               this.steerAxisX = !this.steerAxisX;
-                              this.state = 0;
+                              this.catchMode = 0;
                               forecast = alternateForecast;
                               route = alternate;
                            }
@@ -1099,7 +1099,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               ClutchFallPhysics.Inner_ConfigStore candidate = this.forecastSteered(this.steerAxisX, mode);
                               ClutchModule.Inner_BufferHelper catchRoute = candidate.unsafe() ? this.planCatch(candidate, slot) : null;
                               if (!candidate.unsafe()) {
-                                 this.state = mode;
+                                 this.catchMode = mode;
                                  this.landingSafe = true;
                                  this.currentPlan = null;
                                  this.restoreSlot();
@@ -1108,19 +1108,19 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               }
 
                               if (this.routeClearlyBetter(catchRoute, route)) {
-                                 this.state = mode;
+                                 this.catchMode = mode;
                                  forecast = candidate;
                                  route = catchRoute;
                               }
                            }
                         }
 
-                        if (!this.landingSafe && route == null && slot >= 0 && !this.edgeRescue && !triedCrouch && this.clear()) {
+                        if (!this.landingSafe && route == null && slot >= 0 && !this.edgeRescue && !triedCrouch && this.canCrouchCatch()) {
                            ClutchFallPhysics.Inner_ConfigStore crouched = this.forecastSteeredFrom(this.steerAxisX, 1, true);
                            ClutchModule.Inner_BufferHelper catchRoute = this.planCatch(crouched, slot);
                            if (catchRoute != null) {
-                              this.queue = tick;
-                              this.state = 1;
+                              this.crouchStartTick = tick;
+                              this.catchMode = 1;
                               forecast = crouched;
                               route = catchRoute;
                            }
@@ -1128,11 +1128,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
                         if (!this.landingSafe && route == null && this.canSteer() && !this.edgeRescue && this.rowReturnTarget() != null) {
                            ClutchFallPhysics.Inner_ConfigStore rowReturn = this.forecastSteered(this.steerAxisX, 4);
-                           ClutchModule.Inner_BufferHelper catchRoute = this.init(rowReturn, slot, null, false, Set.of(), true);
+                           ClutchModule.Inner_BufferHelper catchRoute = this.prepareRoute(rowReturn, slot, null, false, Set.of(), true);
                            if (catchRoute != null) {
                               forecast = rowReturn;
                               route = catchRoute;
-                              this.state = 4;
+                              this.catchMode = 4;
                            }
                         }
 
@@ -1141,7 +1141,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                         }
 
                         if (!this.landingSafe && route == null && !this.edgeRescue) {
-                           route = this.planSingleBlockSave(forecast, this.steerAxisX, this.state, slot);
+                           route = this.planSingleBlockSave(forecast, this.steerAxisX, this.catchMode, slot);
                         }
 
                         if (!this.landingSafe && route == null && !this.edgeRescue) {
@@ -1171,7 +1171,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                            if (this.edgeRescue) {
                               this.disengage();
                            } else {
-                              if (!this.valid() && !ClutchFallPhysics.isWithinTickWindow(tick, this.task, 3) && !this.placedThisTick(tick)) {
+                              if (!this.scaffoldActive() && !ClutchFallPhysics.isWithinTickWindow(tick, this.lastRouteTick, 3) && !this.placedThisTick(tick)) {
                                  this.restoreSlot();
                               }
 
@@ -1185,33 +1185,33 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               }
                            }
                         } else {
-                           this.task = tick;
+                           this.lastRouteTick = tick;
                            this.nextEyePosition = forecast.eyePositions().size() > 1 ? forecast.eyePositions().get(1) : null;
                            boolean reacquiringHand = this.slotsReleased;
                            if (this.slotsReleased) {
                               this.slotsReleased = false;
-                              this.next = this.originalSlot();
-                              this.valid = -1;
+                              this.originalHotbarSlot = this.originalSlot();
+                              this.restoreToSlot = -1;
                               autismclient.util.ClientInteractionOverride.clearAll();
                               autismclient.util.SilentRotationManager.syncFromServerRotation();
                            }
 
-                           this.prev = slot;
-                           boolean hand = autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.prev);
-                           if (hand && (MC.player.getInventory().getSelectedSlot() != this.prev || reacquiringHand)) {
-                              autismclient.util.VirtualInputDispatcher.setSlot(this.prev);
+                           this.clutchSlot = slot;
+                           boolean hand = autismclient.util.InventorySlotArbiter.claimSlot(this.id(), this.clutchSlot);
+                           if (hand && (MC.player.getInventory().getSelectedSlot() != this.clutchSlot || reacquiringHand)) {
+                              autismclient.util.VirtualInputDispatcher.setSlot(this.clutchSlot);
                            }
 
                            if (!route.plan().init_Z_2() && !route.tower()) {
                               this.catchTarget = route.plan().init_BlockPos();
-                              this.cache = this.catchTarget.getY();
+                              this.catchRowY = this.catchTarget.getY();
                            }
 
                            ClutchBlockPlanner.Inner_NetHelper link = route.plan().init_k_NetHelper();
-                           this.set = this.placementTick(link);
+                           this.ticksToPlacement = this.placementTick(link);
                            if (hand
                               && this.currentPlan != null
-                              && this.currentPlan.slot == this.prev
+                              && this.currentPlan.slot == this.clutchSlot
                               && !this.recentPlacementCells.containsKey(this.currentPlan.pos)
                               && (!route.tower() || route.plan().init_k_NetHelper().init_BlockPos().equals(this.currentPlan.pos))) {
                               for (int i = 0; i < route.plan().init_List().size(); i++) {
@@ -1235,28 +1235,28 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                  }
                               }
 
-                              if (this.start()) {
+                              if (this.tryPlaceCurrent()) {
                                  return;
                               }
                            }
 
-                           ClutchModule.Inner_DataUtil next = this.preparePlacement(route, link, this.prev);
+                           ClutchModule.Inner_DataUtil next = this.preparePlacement(route, link, this.clutchSlot);
                            if (next == null && !route.tower() && !this.edgeRescue) {
                               ClutchModule.Inner_BufferHelper alternate = this.planCatch(
-                                 forecast, this.prev, null, route.plan().load(), Set.of(link.init_BlockPos())
+                                 forecast, this.clutchSlot, null, route.plan().load(), Set.of(link.init_BlockPos())
                               );
                               if (alternate != null) {
                                  ClutchModule.Inner_DataUtil candidate = this.preparePlacement(
-                                    alternate, alternate.plan().init_k_NetHelper(), this.prev
+                                    alternate, alternate.plan().init_k_NetHelper(), this.clutchSlot
                                  );
                                  if (candidate != null) {
                                     route = alternate;
                                     link = route.plan().init_k_NetHelper();
                                     next = candidate;
-                                    this.set = this.placementTick(link);
+                                    this.ticksToPlacement = this.placementTick(link);
                                     if (!route.plan().init_Z_2()) {
                                        this.catchTarget = route.plan().init_BlockPos();
-                                       this.cache = this.catchTarget.getY();
+                                       this.catchRowY = this.catchTarget.getY();
                                     }
                                  }
                               }
@@ -1266,7 +1266,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               this.currentPlan = null;
                               this.status = "Turning to the catch";
                               autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, route.aimAt(link, this.earliestPlacementTick(link)));
-                              this.stepRotation(this.set);
+                              this.stepRotation(this.ticksToPlacement);
                            } else {
                               this.currentPlan = next;
                               this.status = !hand
@@ -1289,7 +1289,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                     ClutchModule.Inner_DataUtil current = this.earliestPlacementTick(link) == 0
                                        ? this.currentPlan
                                        : this.preparePlacement(
-                                          route, new ClutchBlockPlanner.Inner_NetHelper(link.init_BlockPos(), link.load_BlockPos(), link.init_Direction(), 0, 0), this.prev
+                                          route, new ClutchBlockPlanner.Inner_NetHelper(link.init_BlockPos(), link.load_BlockPos(), link.init_Direction(), 0, 0), this.clutchSlot
                                        );
                                     if (current != null
                                        && ScaffoldModule.init_Z_Vec3(
@@ -1305,7 +1305,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                           reach
                                        )) {
                                        this.currentPlan = current;
-                                       this.set = 1;
+                                       this.ticksToPlacement = 1;
                                     }
                                  }
 
@@ -1335,22 +1335,22 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               }
 
                               autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, this.currentPlan.placement.aim().goalRotation());
-                              this.stepRotation(this.set);
+                              this.stepRotation(this.ticksToPlacement);
                               if (hand) {
-                                 this.start();
+                                 this.tryPlaceCurrent();
                               }
                            }
                         }
                      }
                   } else {
-                     int caughtRow = this.launchGroundPos == null ? this.cache : Math.min(this.cache, this.launchGroundPos.getY());
-                     if (this.tick >= 1 && MC.player.getY() >= caughtRow + 1 - this.safeFallDistance()) {
-                        this.flags++;
-                        this.add = tick;
+                     int caughtRow = this.launchGroundPos == null ? this.catchRowY : Math.min(this.catchRowY, this.launchGroundPos.getY());
+                     if (this.safeLandingTicks >= 1 && MC.player.getY() >= caughtRow + 1 - this.safeFallDistance()) {
+                        this.rescues++;
+                        this.safeCatchTick = tick;
                         this.caughtSafely = true;
                      }
 
-                     if (this.tick >= 1 && !this.placedThisTick(tick)) {
+                     if (this.safeLandingTicks >= 1 && !this.placedThisTick(tick)) {
                         this.restoreSlot();
                      }
 
@@ -1369,7 +1369,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void stepRotation(int ticksLeft) {
-      if ((this.state == 4 || this.currentPlan != null && this.currentPlan.read) && ticksLeft <= 1) {
+      if ((this.catchMode == 4 || this.currentPlan != null && this.currentPlan.read) && ticksLeft <= 1) {
          autismclient.util.SilentRotationManager.stepUrgentFixed(this.id(), MC.player, 180.0F);
       } else {
          autismclient.util.SilentRotationManager.stepUrgentTimed(this.id(), MC.player, ticksLeft);
@@ -1380,22 +1380,22 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.engaged = true;
       this.slotsReleased = !placement;
       this.disengaging = false;
-      this.get = 0;
+      this.disengageTicks = 0;
       this.engageTick = tick;
-      this.tick = 0;
-      this.state = 0;
+      this.safeLandingTicks = 0;
+      this.catchMode = 0;
       this.edgeRescue = false;
       this.enemyLaunchedUp = false;
       this.caughtSafely = false;
       this.hitAxisZ = null;
       this.steerAxisX = Math.abs(MC.player.getDeltaMovement().x) > Math.abs(MC.player.getDeltaMovement().z);
-      this.cache = this.launchGroundPos != null ? this.launchGroundPos.getY() : (int)Math.floor(MC.player.getY()) - 1;
+      this.catchRowY = this.launchGroundPos != null ? this.launchGroundPos.getY() : (int)Math.floor(MC.player.getY()) - 1;
       this.placedCatchCell = null;
       this.catchTarget = null;
-      this.task = tick;
-      this.next = placement ? this.originalSlot() : -1;
+      this.lastRouteTick = tick;
+      this.originalHotbarSlot = placement ? this.originalSlot() : -1;
       if (placement) {
-         this.valid = -1;
+         this.restoreToSlot = -1;
          autismclient.util.SilentRotationManager.syncFromServerRotation();
          autismclient.util.ClientInteractionOverride.clearAll();
          autismclient.util.VirtualInputDispatcher.update_V();
@@ -1409,14 +1409,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private int originalSlot() {
       int selected = MC.player.getInventory().getSelectedSlot();
-      return this.valid >= 0 && selected == this.size ? this.valid : selected;
+      return this.restoreToSlot >= 0 && selected == this.restoreFromSlot ? this.restoreToSlot : selected;
    }
 
    private boolean placedThisTick(int tick) {
-      return this.run == tick || this.sentPlacementHit != null && ClutchFallPhysics.isWithinTickWindow(tick, this.chunk, 1);
+      return this.lastPlaceTick == tick || this.sentPlacementHit != null && ClutchFallPhysics.isWithinTickWindow(tick, this.placeHitTick, 1);
    }
 
-   private void write(int tick) {
+   private void updateLastGround(int tick) {
       AABB body = MC.player.getBoundingBox().expandTowards(MC.player.xo - MC.player.getX(), 0.0, MC.player.zo - MC.player.getZ());
       double best = 1.0 / 0.0;
 
@@ -1429,7 +1429,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                if (distance < best) {
                   best = distance;
                   this.lastGroundPos = pos;
-                  this.value = tick;
+                  this.lastGroundTick = tick;
                }
             }
          }
@@ -1444,9 +1444,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          } else if (!this.inGuardTime()) {
             return !this.bool("own-knockback")
                ? false
-               : ClutchFallPhysics.shouldDeployRescue(tick, this.value, MC.player.getY(), this.lastGroundPos.getY(), MC.player.getDeltaMovement().y, this.ignoredLaunch, put());
+               : ClutchFallPhysics.shouldDeployRescue(tick, this.lastGroundTick, MC.player.getY(), this.lastGroundPos.getY(), MC.player.getDeltaMovement().y, this.ignoredLaunch, scaffoldEnabled());
          } else {
-            return !put() || MC.player.getY() < this.lastGroundPos.getY() + 0.4;
+            return !scaffoldEnabled() || MC.player.getY() < this.lastGroundPos.getY() + 0.4;
          }
       } else {
          return false;
@@ -1573,8 +1573,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
       ClutchFallPhysics.Inner_CachePool collision = (body, motion) -> Entity.collideBoundingBox(MC.player, motion, body, MC.level, List.of());
       ClutchFallPhysics.Inner_JsonUtil medium = this::mediumAt;
-      if (this.engaged && !this.disengaging && this.canSteer() && this.state != 3) {
-         return this.forecastSteered(this.steerAxisX, this.state);
+      if (this.engaged && !this.disengaging && this.canSteer() && this.catchMode != 3) {
+         return this.forecastSteered(this.steerAxisX, this.catchMode);
       }
 
       Vec3 acceleration = Vec3.ZERO;
@@ -1600,7 +1600,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private ClutchFallPhysics.Inner_ConfigStore forecastSteered(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
       if (this.canSteer() && !this.disengaging && mode != 3) {
-         return this.load(axis, mode, extra, placementTick);
+         return this.forecastMode(axis, mode, extra, placementTick);
       }
 
       Vec3 acceleration = Vec3.ZERO;
@@ -1626,16 +1626,16 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private ClutchFallPhysics.Inner_ConfigStore forecastSteered(boolean axis, int mode, List<VoxelShape> extra) {
-      return this.load(axis, mode, extra, 0);
+      return this.forecastMode(axis, mode, extra, 0);
    }
 
-   private ClutchFallPhysics.Inner_ConfigStore load(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
+   private ClutchFallPhysics.Inner_ConfigStore forecastMode(boolean axis, int mode, List<VoxelShape> extra, int placementTick) {
       if (mode == 3) {
          return this.forecastSteered(axis, mode, extra, placementTick);
       }
 
       if (MC.player.onGround()
-         || !this.add()
+         || !this.crouchRecent()
             && (!(Math.abs(MC.player.getBoundingBox().getXsize() - 0.6) < 0.001) || !(Math.abs(MC.player.getBoundingBox().getYsize() - 1.5) < 0.001))) {
          Vec3 initialMotion = MC.player.getDeltaMovement();
          if (this.canSteer() && this.shouldJumpOnLaunch(this.bestBlockSlot() >= 0, mode)) {
@@ -1715,15 +1715,15 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return this.rowReturnPos = found;
    }
 
-   private boolean add() {
-      return ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.queue, 2) && !MC.player.onGround();
+   private boolean crouchRecent() {
+      return ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.crouchStartTick, 2) && !MC.player.onGround();
    }
 
-   private boolean clear() {
+   private boolean canCrouchCatch() {
       AABB body = MC.player.getBoundingBox();
       return this.canSteer()
          && !MC.player.onGround()
-         && !this.add()
+         && !this.crouchRecent()
          && !MC.options.keyShift.isDown()
          && Math.abs(body.getXsize() - 0.6) < 0.001
          && Math.abs(body.getYsize() - 1.8) < 0.001
@@ -1737,7 +1737,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private ClutchFallPhysics.Inner_ConfigStore forecastSteeredFrom(boolean axis, int mode, boolean start, List<VoxelShape> extra, int placementTick) {
       return ClutchFallPhysics.simulateMotionFall(
          autismclient.ai.engine.AiPhysics.MotionState.of(MC.player),
-         MC.options.keyShift.isDown() ? 64 : (!start && this.clientTick() != this.queue ? 0 : 1),
+         MC.options.keyShift.isDown() ? 64 : (!start && this.clientTick() != this.crouchStartTick ? 0 : 1),
          MC.player.getYRot(),
          this.safeFallDistance(),
          autismclient.ai.engine.AiPhysics.createLiveWorld(MC.level, MC.player),
@@ -1761,14 +1761,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
    }
 
-   private boolean reset() {
+   private boolean walkingOffEdge() {
       return this.ownSteerWindow.isActive(this.clientTick())
          && this.bool("own-knockback")
          && this.bool("own-steer")
-         && this.put > 0
+         && this.ownSteerHoldTicks > 0
          && MC.player.onGround()
          && this.lastGroundPos != null
-         && !put()
+         && !scaffoldEnabled()
          && !this.ignoredLaunch
          && inputVector(this.keyboardInput(), MC.player.getYRot()).horizontalDistanceSqr() > 0.0;
    }
@@ -1803,8 +1803,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private int catchBlockSlot() {
       int selected = MC.player.getInventory().getSelectedSlot();
-      return this.prev >= 0
-            && this.prev == selected
+      return this.clutchSlot >= 0
+            && this.clutchSlot == selected
             && this.isClutchBlock(MC.player.getInventory().getItem(selected))
             && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(selected, this.id())
             && ScaffoldModule.load_I_I(selected) > 0
@@ -1860,13 +1860,13 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private ClutchModule.Inner_BufferHelper planCatch(
       ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts
    ) {
-      ClutchModule.Inner_BufferHelper prepared = this.init(forecast, slot, assumed, bestEffort, rejectedStarts, this.state == 4);
+      ClutchModule.Inner_BufferHelper prepared = this.prepareRoute(forecast, slot, assumed, bestEffort, rejectedStarts, this.catchMode == 4);
       return prepared == null && !bestEffort && assumed == null
          ? (this.currentPlan != null && this.currentPlan.read ? this.planUrgentCatch(forecast, slot) : null)
          : prepared;
    }
 
-   private ClutchModule.Inner_BufferHelper init(
+   private ClutchModule.Inner_BufferHelper prepareRoute(
       ClutchFallPhysics.Inner_ConfigStore forecast, int slot, BlockPos assumed, boolean bestEffort, Set<BlockPos> rejectedStarts, boolean marginal
    ) {
       if (!forecast.steps().isEmpty() && slot >= 0) {
@@ -1882,7 +1882,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          RotationMath.Rotation from = this.currentLook();
          ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> turnCost = link -> {
             Vec3 eye = forecast.eyePositions().isEmpty()
-               ? ClutchModule.Inner_BufferHelper.init(bodies, eyeHeight, this.earliestPlacementTick(link))
+               ? ClutchModule.Inner_BufferHelper.eyeFromBodies(bodies, eyeHeight, this.earliestPlacementTick(link))
                : forecast.eyePositions().get(Mth.clamp(this.earliestPlacementTick(link), 0, forecast.eyePositions().size() - 1));
             float angle = RotationMath.vectorAngleDegrees(from, ClutchModule.Inner_BufferHelper.aimFrom(eye, link));
             return Math.max(0.0F, angle / this.placementTick(link) - 25.0F) * 0.04;
@@ -2012,10 +2012,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       final BlockPos assumed, double range, final Set<BlockPos> rejectedStarts, final int maxRow, boolean optional
    ) {
       final boolean sneaking = MC.player.isSecondaryUseActive();
-      final BlockHitResult writtenRay = this.worldCache.init(range);
-      final List<AABB> others = this.worldCache.init(optional);
+      final BlockHitResult writtenRay = this.worldCache.wireRay(range);
+      final List<AABB> others = this.worldCache.cachedOtherBodies(optional);
       return new ClutchBlockPlanner.Inner_DataUtil() {
-         private boolean update(int x, int y, int z) {
+         private boolean isAssumed(int x, int y, int z) {
             return assumed != null && assumed.getX() == x && assumed.getY() == y && assumed.getZ() == z;
          }
 
@@ -2026,12 +2026,12 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          @Override
          public boolean load(int x, int y, int z) {
-            return this.update(x, y, z) || ClutchModule.this.worldCache.init(x, y, z, sneaking);
+            return this.isAssumed(x, y, z) || ClutchModule.this.worldCache.isSupport(x, y, z, sneaking);
          }
 
          @Override
          public boolean read(int x, int y, int z) {
-            if (y <= maxRow && !this.update(x, y, z) && ClutchModule.this.worldCache.init(x, y, z)) {
+            if (y <= maxRow && !this.isAssumed(x, y, z) && ClutchModule.this.worldCache.isReplaceable(x, y, z)) {
                if (!ClutchModule.this.recentPlacementCells.isEmpty() && ClutchModule.this.recentPlacementCells.containsKey(new BlockPos(x, y, z))) {
                   return false;
                }
@@ -2170,7 +2170,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       if (this.launchGroundPos != null) {
          return this.launchGroundPos.getY();
       } else {
-         return this.lastGroundPos != null && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.value, 40)
+         return this.lastGroundPos != null && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.lastGroundTick, 40)
             ? this.lastGroundPos.getY()
             : Mth.floor(MC.player.getY() + 1.0E-6) - 1;
       }
@@ -2201,8 +2201,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       RotationMath.Rotation from = this.currentLook();
       autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(24);
       boolean sneaking = MC.player.isSecondaryUseActive();
-      Vec3 eye = this.edgeRescue ? MC.player.getEyePosition() : route.init(at);
-      Vec3 leadEye = !this.edgeRescue && !route.plan().init_Z_2() && !route.plan().read() ? route.init(at + 1) : eye;
+      Vec3 eye = this.edgeRescue ? MC.player.getEyePosition() : route.eyeAt(at);
+      Vec3 leadEye = !this.edgeRescue && !route.plan().init_Z_2() && !route.plan().read() ? route.eyeAt(at + 1) : eye;
       autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
          new autismclient.util.BlockPlacementPlanner.Query(link.init_BlockPos(), eye, reach, placement)
             .withFromRotation(from)
@@ -2240,8 +2240,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          link.init_BlockPos(), candidate, link.load_I(), slot, route.plan().init_Z_2(), route.tower(), nextFace, route.plan().read()
       );
       if (nextFace != null && !prepared.read) {
-         autismclient.util.BlockPlacementPlanner.PlacementPlan carried = this.init(
-            prepared, candidate.aim().goalRotation(), eye, route.init(at + 1), null, reach, at
+         autismclient.util.BlockPlacementPlanner.PlacementPlan carried = this.placementFor(
+            prepared, candidate.aim().goalRotation(), eye, route.eyeAt(at + 1), null, reach, at
          );
          if (carried != null) {
             prepared = new ClutchModule.Inner_DataUtil(
@@ -2259,9 +2259,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
    }
 
-   private boolean start() {
+   private boolean tryPlaceCurrent() {
       if (this.currentPlan != null
-         && this.run != this.clientTick()
+         && this.lastPlaceTick != this.clientTick()
          && MC.player.getInventory().getSelectedSlot() == this.currentPlan.slot
          && !MC.player.isUsingItem()
          && this.wireState != null
@@ -2378,11 +2378,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   : autismclient.util.ClientInteractionOverride.queueUseBlock(hit, InteractionHand.MAIN_HAND)) {
                   this.sentPlacementHit = hit;
                   this.lastPlacedPos = placedCell.immutable();
-                  this.frame = this.currentPlan.slot;
-                  this.block = -1;
-                  this.chunk = this.clientTick();
-                  this.run = this.clientTick();
-                  this.level++;
+                  this.placedSlot = this.currentPlan.slot;
+                  this.placementSequence = -1;
+                  this.placeHitTick = this.clientTick();
+                  this.lastPlaceTick = this.clientTick();
+                  this.placements++;
                   this.recentPlacementCells.put(placedCell, this.clientTick());
                   this.placedCatchCell = placedCell;
                   if (hit.getDirection().getAxis() != Axis.Y) {
@@ -2407,7 +2407,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    ) {
       Vec3 eye = MC.player.getEyePosition();
       Vec3 next = this.nextEyePosition != null ? this.nextEyePosition : eye.add(MC.player.getDeltaMovement());
-      return this.init(candidatePlan, rotation, eye, next, wireEye, reach, 0);
+      return this.placementFor(candidatePlan, rotation, eye, next, wireEye, reach, 0);
    }
 
    private ClutchFallPhysics.Inner_DataUtil predictAirSweep(int lead, float yaw) {
@@ -2423,10 +2423,10 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
    }
 
-   private autismclient.util.BlockPlacementPlanner.PlacementPlan init(
+   private autismclient.util.BlockPlacementPlanner.PlacementPlan placementFor(
       ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Rotation rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
    ) {
-      boolean moving = this.state == 4
+      boolean moving = this.catchMode == 4
          && lead <= 1
          && !MC.player.onGround()
          && Math.abs(MC.player.getBoundingBox().getYsize() - 1.8) < 0.001
@@ -2443,7 +2443,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
       autismclient.util.BlockPlacementPlanner.SupportCandidate option = candidatePlan.placement.support();
       AABB rect = option.faceRect();
-      double margin = this.state == 4 ? 1.0E-5 : 0.02;
+      double margin = this.catchMode == 4 ? 1.0E-5 : 0.02;
       autismclient.util.BlockPlacementPlanner.HitValidator placement = autismclient.util.BlockPlacementPlanner.blockItemValidator(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
       autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(8);
       List<Vec3> points = new ArrayList<>(ClutchBlockPlanner.init_List_Vec3(eye, next, rect, candidatePlan.pos, candidatePlan.face, margin));
@@ -2469,7 +2469,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          goals.add(RotationMath.applyGcd(RotationMath.lookAt(point, eye), rotation));
       }
 
-      if (this.state == 4) {
+      if (this.catchMode == 4) {
          List<ClutchBlockPlanner.Inner_StreamUtil> counts = moving && candidatePlan.face != null && candidatePlan.face.getAxis() != Axis.Y
             ? ClutchBlockPlanner.init_List_Vec3(
                eye,
@@ -2566,11 +2566,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return false;
    }
 
-   private boolean stop() {
+   private boolean pickSteerAxis() {
       return this.hitAxisZ != null ? this.hitAxisZ : Math.abs(MC.player.getDeltaMovement().x) > Math.abs(MC.player.getDeltaMovement().z);
    }
 
-   private boolean next() {
+   private boolean isGroundedSafe() {
       return ClutchFallPhysics.isGroundedSafe(
          MC.player.getBoundingBox(),
          MC.player.getDeltaMovement(),
@@ -2581,8 +2581,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
    }
 
-   private boolean prev() {
-      return this.add != -2147483648 && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.add, 10);
+   private boolean recentlyCaught() {
+      return this.safeCatchTick != -2147483648 && ClutchFallPhysics.isWithinTickWindow(this.clientTick(), this.safeCatchTick, 10);
    }
 
    private boolean shouldSteerInput(Input input) {
@@ -2590,7 +2590,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this.status = "Idle";
       }
 
-      if (this.ownSteerArmed() && MC.player.onGround() && (!input.shift() || input.jump()) && !put() && this.set()) {
+      if (this.ownSteerArmed() && MC.player.onGround() && (!input.shift() || input.jump()) && !scaffoldEnabled() && this.canAct()) {
          Vec3 wish = inputVector(input, SilentMovementCoordinator.getMovementYaw(MC.player));
          Vec3 motion = MC.player.getDeltaMovement();
          AABB body = MC.player.getBoundingBox();
@@ -2598,9 +2598,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          AABB column = new AABB(centre.x - 0.05, body.minY - 0.6, centre.z - 0.05, centre.x + 0.05, body.minY - 0.01, centre.z + 0.05);
          boolean hanging = MC.level.noCollision(MC.player, column) && this.ownFallDropDangerous(this.depthBelow(column.move(0.0, body.minY - column.minY, 0.0)));
          if (hanging) {
-            this.put = Math.max(this.put, 2);
+            this.ownSteerHoldTicks = Math.max(this.ownSteerHoldTicks, 2);
          } else if (wish.lengthSqr() == 0.0 && motion.horizontalDistanceSqr() < 0.0025) {
-            this.put = 0;
+            this.ownSteerHoldTicks = 0;
          }
 
          if (wish.lengthSqr() > 0.0 || motion.horizontalDistanceSqr() >= 0.0025) {
@@ -2609,26 +2609,26 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             Vec3 next = ahead.getCenter();
             AABB feet = new AABB(next.x - 0.05, ahead.minY - 0.6, next.z - 0.05, next.x + 0.05, ahead.minY - 0.01, next.z + 0.05);
             if (MC.level.noCollision(MC.player, feet) && this.ownFallDropDangerous(this.depthBelow(feet.move(0.0, body.minY - feet.minY, 0.0)))) {
-               this.put = 6;
+               this.ownSteerHoldTicks = 6;
             }
          }
 
          if (input.jump()) {
             if (((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() > 1) {
-               return this.put-- > 0;
+               return this.ownSteerHoldTicks-- > 0;
             }
 
             if (this.ignoredLaunch || this.nearOwnChargeThrow(MC.player.position()) || MC.player.hasEffect(MobEffects.JUMP_BOOST) || !this.jumpWouldBeUnsafe(input)) {
-               this.put = 0;
+               this.ownSteerHoldTicks = 0;
                return false;
             }
 
-            this.put = Math.max(this.put, 6);
+            this.ownSteerHoldTicks = Math.max(this.ownSteerHoldTicks, 6);
          }
 
-         return this.put-- > 0;
+         return this.ownSteerHoldTicks-- > 0;
       } else {
-         this.put = 0;
+         this.ownSteerHoldTicks = 0;
          return false;
       }
    }
@@ -2700,7 +2700,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private boolean ownFallDropDangerous(double below) {
       return this.ownSteerWindow.isActive(this.clientTick())
-         && (this.bool("own-knockback") && this.isDangerousDrop(0.0, below) || (this.inGuardTime() || this.prev()) && this.fallWouldKill(0.0, below));
+         && (this.bool("own-knockback") && this.isDangerousDrop(0.0, below) || (this.inGuardTime() || this.recentlyCaught()) && this.fallWouldKill(0.0, below));
    }
 
    private Input steerInput(Input input) {
@@ -2742,7 +2742,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private static Input engagedSteerInput(ClutchModule clutch, Input input) {
       if (clutch.engaged && !clutch.disengaging) {
-         if (!clutch.canSteer() || !clutch.set() || clutch.state == 3 || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.entry, 4)) {
+         if (!clutch.canSteer() || !clutch.canAct() || clutch.catchMode == 3 || ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.ownBoostDroppedTick, 4)) {
             return input;
          }
 
@@ -2751,7 +2751,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
 
          Vec3 motion = MC.player.getDeltaMovement();
-         Vec3 wanted = clutch.steerDirection(MC.player.getBoundingBox(), motion, clutch.steerAxisX, clutch.state, MC.player.onGround());
+         Vec3 wanted = clutch.steerDirection(MC.player.getBoundingBox(), motion, clutch.steerAxisX, clutch.catchMode, MC.player.onGround());
          if (MC.player.onGround() && motion.y <= 0.0) {
             wanted = ClutchFallPhysics.brakingDirection(motion);
          }
@@ -2761,14 +2761,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          double side = wanted.x * Math.cos(yaw) + wanted.z * Math.sin(yaw);
          boolean edge = MC.player.onGround() && motion.y <= 0.0 && MC.level.noCollision(MC.player, MC.player.getBoundingBox().move(motion.x, -0.2, motion.z));
          boolean freshImpulse = clutch.launchCause != null && ClutchFallPhysics.isWithinTickWindow(clutch.clientTick(), clutch.launchCause.tick(), 2);
-         boolean jump = clutch.shouldJumpOnLaunch(clutch.catchBlockSlot() >= 0, clutch.state);
+         boolean jump = clutch.shouldJumpOnLaunch(clutch.catchBlockSlot() >= 0, clutch.catchMode);
          return new Input(
             forward > 0.08,
             forward < -0.08,
             side > 0.08,
             side < -0.08,
             jump,
-            input.shift() || clutch.clientTick() == clutch.queue || edge && (!freshImpulse || clutch.catchBlockSlot() < 0) && !jump,
+            input.shift() || clutch.clientTick() == clutch.crouchStartTick || edge && (!freshImpulse || clutch.catchBlockSlot() < 0) && !jump,
             false
          );
       } else {
@@ -2797,14 +2797,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       if (!this.slotsReleased) {
          this.slotsReleased = true;
          autismclient.util.InventorySlotArbiter.releaseAllSlots(this.id());
-         if (this.bool("restore-slot") && this.next >= 0 && this.prev >= 0 && this.next != this.prev) {
-            this.valid = this.next;
-            this.size = this.prev;
-            this.data = 20;
+         if (this.bool("restore-slot") && this.originalHotbarSlot >= 0 && this.clutchSlot >= 0 && this.originalHotbarSlot != this.clutchSlot) {
+            this.restoreToSlot = this.originalHotbarSlot;
+            this.restoreFromSlot = this.clutchSlot;
+            this.slotRestoreTicksLeft = 20;
             this.tickSlotRestore();
          }
 
-         if ("clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && !this.valid()) {
+         if ("clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && !this.scaffoldActive()) {
             autismclient.util.SilentRotationManager.releaseOwner(this.id());
          }
       }
@@ -2817,26 +2817,26 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          if (MC.player != null && MC.level != null && MC.player.isAlive()) {
             if (!this.disengaging && !this.slotsReleased) {
                this.disengaging = true;
-               this.get = 0;
-               if (this.bool("restore-slot") && this.next >= 0 && this.prev >= 0 && this.next != this.prev) {
-                  this.valid = this.next;
-                  this.size = this.prev;
-                  this.data = 20;
+               this.disengageTicks = 0;
+               if (this.bool("restore-slot") && this.originalHotbarSlot >= 0 && this.clutchSlot >= 0 && this.originalHotbarSlot != this.clutchSlot) {
+                  this.restoreToSlot = this.originalHotbarSlot;
+                  this.restoreFromSlot = this.clutchSlot;
+                  this.slotRestoreTicksLeft = 20;
                }
 
                this.tickSlotRestore();
             }
 
-            this.get++;
+            this.disengageTicks++;
             RotationMath.Rotation resume = ScaffoldModule.read_ce_DataUtil();
-            boolean bridge = this.valid();
+            boolean bridge = this.scaffoldActive();
             if (this.slotsReleased) {
                this.finishDisengage(bridge);
             } else {
-               if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && this.get < 20) {
+               if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) && this.disengageTicks < 20) {
                   RotationMath.Rotation goal = resume != null ? resume : RotationMath.ofPlayer(MC.player);
                   autismclient.util.SilentRotationManager.requestRotation(this.id(), 50, goal);
-                  autismclient.util.SilentRotationManager.stepUrgentTimed(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
+                  autismclient.util.SilentRotationManager.stepUrgentTimed(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.disengageTicks)));
                   RotationMath.Rotation end = autismclient.util.SilentRotationManager.getCurrentRotation();
                   if (end != null && RotationMath.vectorAngleDegrees(end, goal) > 1.0F) {
                      this.status = "Handing back";
@@ -2852,8 +2852,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   private boolean valid() {
-      return ScaffoldModule.read_ce_DataUtil() != null || put();
+   private boolean scaffoldActive() {
+      return ScaffoldModule.read_ce_DataUtil() != null || scaffoldEnabled();
    }
 
    private void finishDisengage(boolean bridge) {
@@ -2883,15 +2883,15 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
 
       if (this.caughtSafely) {
-         this.add = this.clientTick();
+         this.safeCatchTick = this.clientTick();
       }
 
       this.caughtSafely = false;
       this.engaged = this.disengaging = this.dangerReturning = this.slotsReleased = this.edgeRescue = false;
-      this.state = 0;
-      this.get = 0;
+      this.catchMode = 0;
+      this.disengageTicks = 0;
       this.status = "Idle";
-      this.next = this.prev = -1;
+      this.originalHotbarSlot = this.clutchSlot = -1;
    }
 
    private void tickRotationReturn() {
@@ -2901,11 +2901,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void tickSlotRestore() {
-      if (this.valid >= 0 && MC.player != null) {
-         if ((!this.engaged || this.disengaging || this.slotsReleased) && --this.data >= 0 && MC.player.getInventory().getSelectedSlot() == this.size) {
-            autismclient.util.VirtualInputDispatcher.init(this.valid, this.size);
+      if (this.restoreToSlot >= 0 && MC.player != null) {
+         if ((!this.engaged || this.disengaging || this.slotsReleased) && --this.slotRestoreTicksLeft >= 0 && MC.player.getInventory().getSelectedSlot() == this.restoreFromSlot) {
+            autismclient.util.VirtualInputDispatcher.init(this.restoreToSlot, this.restoreFromSlot);
          } else {
-            this.valid = -1;
+            this.restoreToSlot = -1;
          }
       }
    }
@@ -2951,45 +2951,45 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.wireState = null;
       this.lastLevel = null;
       this.engaged = this.disengaging = this.landingSafe = this.dangerReturning = this.slotsReleased = false;
-      this.get = 0;
-      this.next = this.prev = -1;
+      this.disengageTicks = 0;
+      this.originalHotbarSlot = this.clutchSlot = -1;
       this.currentPlan = null;
-      this.add = -2147483648;
+      this.safeCatchTick = -2147483648;
       this.caughtSafely = false;
       this.ownSteerWindow.clear();
       this.preImpulseMotion = null;
       this.postImpulseMotion = Vec3.ZERO;
-      this.clear = this.reset = -2147483648;
-      this.start = -2147483648;
-      this.valid = this.size = -1;
+      this.serverImpulseTick = this.unattributedHurtTick = -2147483648;
+      this.disallowedCauseTick = -2147483648;
+      this.restoreToSlot = this.restoreFromSlot = -1;
       this.placedCatchCell = this.catchTarget = null;
       this.lastGroundPos = this.launchGroundPos = this.rowReturnPos = null;
-      this.value = -2147483648;
+      this.lastGroundTick = -2147483648;
       this.status = "Idle";
-      this.tick = 0;
+      this.safeLandingTicks = 0;
       this.lastImpulseTick = -2147483648;
-      this.put = 0;
-      this.state = 0;
+      this.ownSteerHoldTicks = 0;
+      this.catchMode = 0;
       this.edgeRescue = false;
       this.enemyLaunchedUp = false;
       this.hitAxisZ = null;
       this.lastShift = this.lastShiftOwned = false;
-      this.queue = -2147483648;
+      this.crouchStartTick = -2147483648;
       this.nextEyePosition = null;
       this.causeDebug = "";
-      this.buffer = -2147483648;
+      this.chargeThrowTick = -2147483648;
       this.chargeThrowEye = null;
-      this.index = -2147483648;
+      this.ownBlastTick = -2147483648;
       this.ownBlastCenter = null;
-      this.entry = -2147483648;
+      this.ownBoostDroppedTick = -2147483648;
       this.ignoredLaunch = false;
-      this.node = -2147483648;
-      this.task = -2147483648;
-      this.pool = -2147483648;
+      this.ignoredLaunchTick = -2147483648;
+      this.lastRouteTick = -2147483648;
+      this.groundedLaunchTick = -2147483648;
       this.sentPlacementHit = null;
       this.lastPlacedPos = null;
-      this.frame = this.block = -1;
-      this.chunk = -2147483648;
+      this.placedSlot = this.placementSequence = -1;
+      this.placeHitTick = -2147483648;
    }
 
    private record Inner_BufferHelper(ClutchBlockPlanner.Inner_JsonUtil plan, List<AABB> bodies, double eyeHeight, boolean tower, List<Vec3> load) {
@@ -3001,21 +3001,21 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this(plan, bodies, eyeHeight, tower, List.of());
       }
 
-      Vec3 init(int tick) {
-         return this.load.isEmpty() ? init(this.bodies, this.eyeHeight, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
+      Vec3 eyeAt(int tick) {
+         return this.load.isEmpty() ? eyeFromBodies(this.bodies, this.eyeHeight, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
       }
 
       RotationMath.Rotation aimAt(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
-         return aimFrom(this.init(tick), link);
+         return aimFrom(this.eyeAt(tick), link);
       }
 
-      static Vec3 init(List<AABB> bodies, double eyeHeight, int tick) {
+      static Vec3 eyeFromBodies(List<AABB> bodies, double eyeHeight, int tick) {
          AABB body = bodies.get(Mth.clamp(tick, 0, bodies.size() - 1));
          return new Vec3((body.minX + body.maxX) * 0.5, body.minY + eyeHeight, (body.minZ + body.maxZ) * 0.5);
       }
 
-      static RotationMath.Rotation init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
-         return aimFrom(init(bodies, eyeHeight, tick), link);
+      static RotationMath.Rotation unusedAimFromBodies(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
+         return aimFrom(eyeFromBodies(bodies, eyeHeight, tick), link);
       }
 
       static RotationMath.Rotation aimFrom(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
@@ -3047,7 +3047,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       private boolean active;
       private final Long2ByteOpenHashMap supportCache = new Long2ByteOpenHashMap();
       private final Long2ByteOpenHashMap replaceableCache = new Long2ByteOpenHashMap();
-      private final Long2ByteOpenHashMap read = new Long2ByteOpenHashMap();
+      private final Long2ByteOpenHashMap cellCache = new Long2ByteOpenHashMap();
       private final MutableBlockPos scratchPos = new MutableBlockPos();
       private boolean sneaking;
       private List<AABB> otherBodies;
@@ -3061,7 +3061,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this.active = true;
          this.supportCache.clear();
          this.replaceableCache.clear();
-         this.read.clear();
+         this.cellCache.clear();
          this.otherBodies = this.optionalOtherBodies = null;
          this.rayWireState = null;
          this.cachedRange = 0.0 / 0.0;
@@ -3069,7 +3069,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this.fallDamageCurve = null;
       }
 
-      void load() {
+      void deactivate() {
          this.active = false;
          this.otherBodies = this.optionalOtherBodies = null;
          this.rayWireState = null;
@@ -3077,9 +3077,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          this.fallDamageCurve = null;
       }
 
-      boolean init(int x, int y, int z, boolean sneaking) {
+      boolean isSupport(int x, int y, int z, boolean sneaking) {
          if (!this.active) {
-            return this.load(x, y, z, sneaking);
+            return this.computeSupport(x, y, z, sneaking);
          }
 
          if (this.sneaking != sneaking) {
@@ -3090,21 +3090,21 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          long key = BlockPos.asLong(x, y, z);
          byte known = this.supportCache.get(key);
          if (known == 0) {
-            this.supportCache.put(key, known = (byte)(this.load(x, y, z, sneaking) ? 1 : 2));
+            this.supportCache.put(key, known = (byte)(this.computeSupport(x, y, z, sneaking) ? 1 : 2));
          }
 
          return known == 1;
       }
 
-      boolean init(int x, int y, int z) {
+      boolean isReplaceable(int x, int y, int z) {
          if (!this.active) {
-            return this.read(x, y, z);
+            return this.computeReplaceable(x, y, z);
          }
 
          long key = BlockPos.asLong(x, y, z);
          byte known = this.replaceableCache.get(key);
          if (known == 0) {
-            this.replaceableCache.put(key, known = (byte)(this.read(x, y, z) ? 1 : 2));
+            this.replaceableCache.put(key, known = (byte)(this.computeReplaceable(x, y, z) ? 1 : 2));
          }
 
          return known == 1;
@@ -3129,14 +3129,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                      double dy = distanceToCube(eye.y, qy);
                      if (!(dx * dx + dy * dy + dz * dz > reach)) {
                         if (!this.active) {
-                           if (this.load(qx, qy, qz)) {
+                           if (this.cellHasBlocks(qx, qy, qz)) {
                               return false;
                            }
                         } else {
                            long key = BlockPos.asLong(qx, qy, qz);
-                           byte known = this.read.get(key);
+                           byte known = this.cellCache.get(key);
                            if (known == 0) {
-                              this.read.put(key, known = (byte)(this.load(qx, qy, qz) ? 2 : 1));
+                              this.cellCache.put(key, known = (byte)(this.cellHasBlocks(qx, qy, qz) ? 2 : 1));
                            }
 
                            if (known == 2) {
@@ -3158,7 +3158,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return eye < low ? low - eye : (eye > high ? eye - high : 0.0);
       }
 
-      private boolean load(int qx, int qy, int qz) {
+      private boolean cellHasBlocks(int qx, int qy, int qz) {
          int sy = qy >> 2;
          if (sy >= Module.MC.level.getMinSectionY() && sy <= Module.MC.level.getMaxSectionY()) {
             if (!(Module.MC.level.getChunkSource().getChunk(qx >> 2, qz >> 2, ChunkStatus.FULL, false) instanceof LevelChunk chunk)) {
@@ -3196,7 +3196,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
       }
 
-      List<AABB> init(boolean optional) {
+      List<AABB> cachedOtherBodies(boolean optional) {
          if (!this.active) {
             return ClutchModule.this.otherBodies(optional);
          } else if (optional) {
@@ -3206,7 +3206,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
       }
 
-      BlockHitResult init(double range) {
+      BlockHitResult wireRay(double range) {
          ClutchModule.Inner_ConfigStore written = ClutchModule.this.wireState;
          if (this.active && written == this.rayWireState && range == this.cachedRange) {
             return this.cachedWireRay;
@@ -3232,7 +3232,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
       }
 
-      private boolean load(int x, int y, int z, boolean sneaking) {
+      private boolean computeSupport(int x, int y, int z, boolean sneaking) {
          this.scratchPos.set(x, y, z);
          if (!Module.MC.level.hasChunkAt(this.scratchPos)) {
             return false;
@@ -3242,7 +3242,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return !state.canBeReplaced() && autismclient.util.BlockPlacementPlanner.isValidSupportBlock(state, this.scratchPos.immutable(), sneaking);
       }
 
-      private boolean read(int x, int y, int z) {
+      private boolean computeReplaceable(int x, int y, int z) {
          this.scratchPos.set(x, y, z);
          if (!Module.MC.level.isOutsideBuildHeight(this.scratchPos) && Module.MC.level.hasChunkAt(this.scratchPos)) {
             BlockState state = Module.MC.level.getBlockState(this.scratchPos);

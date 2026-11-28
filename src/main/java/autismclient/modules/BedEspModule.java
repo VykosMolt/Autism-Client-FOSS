@@ -376,8 +376,8 @@ public final class BedEspModule extends Module {
       Map<Block, BedEspModule.Inner_BufferHelper> toolCache = new HashMap<>();
       boolean loaded = true;
       this.breakSpeedByStack.clear();
-      List<ItemStack> hotbar = this.read();
-      List<ItemStack> recommended = this.write();
+      List<ItemStack> hotbar = this.hotbarTools();
+      List<ItemStack> recommended = this.recommendedToolList();
       List<ItemStack> tools = this.bool("my-tools") ? hotbar : recommended;
       BlockState[] states = this.observedSurroundings.get(p);
 
@@ -390,7 +390,7 @@ public final class BedEspModule extends Module {
             if (s.isAir()) {
                grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
             } else if (init_Z_Block(s.getBlock())) {
-               BedEspModule.Inner_BufferHelper best = toolCache.computeIfAbsent(s.getBlock(), b -> this.init(s, at, tools));
+               BedEspModule.Inner_BufferHelper best = toolCache.computeIfAbsent(s.getBlock(), b -> this.bestTool(s, at, tools));
                grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(2, best.breakTicks(), tools.indexOf(best.tool()));
             }
          } else {
@@ -425,7 +425,7 @@ public final class BedEspModule extends Module {
          Block b = MC.level.getBlockState(entry.getValue().getFirst()).getBlock();
          BlockPos at = entry.getValue().getFirst();
          materials.add(
-            new BedEspModule.Inner_StreamUtil(entry.getKey(), b, entry.getValue().size(), this.init(MC.level.getBlockState(at), at, recommended).tool())
+            new BedEspModule.Inner_StreamUtil(entry.getKey(), b, entry.getValue().size(), this.bestTool(MC.level.getBlockState(at), at, recommended).tool())
          );
       }
 
@@ -435,7 +435,7 @@ public final class BedEspModule extends Module {
 
       for (BlockPos at : plan.path()) {
          BlockState block = MC.level.getBlockState(at);
-         BedEspModule.Inner_BufferHelper actual = actualTools.computeIfAbsent(block.getBlock(), b -> this.init(block, at, hotbar));
+         BedEspModule.Inner_BufferHelper actual = actualTools.computeIfAbsent(block.getBlock(), b -> this.bestTool(block, at, hotbar));
          actualTicks += actual.breakTicks();
          ItemStack tool = actual.tool();
          if (!tool.isEmpty() && routeTools.stream().noneMatch(t -> ItemStack.isSameItemSameComponents(t, tool))) {
@@ -490,7 +490,7 @@ public final class BedEspModule extends Module {
          && other.getValue(BedBlock.FACING) == first.getValue(BedBlock.FACING);
    }
 
-   private List<ItemStack> read() {
+   private List<ItemStack> hotbarTools() {
       List<ItemStack> tools = new ArrayList<>();
       tools.add(ItemStack.EMPTY);
 
@@ -501,7 +501,7 @@ public final class BedEspModule extends Module {
       return tools;
    }
 
-   private List<ItemStack> write() {
+   private List<ItemStack> recommendedToolList() {
       return recommendedTools();
    }
 
@@ -519,7 +519,7 @@ public final class BedEspModule extends Module {
       return tools;
    }
 
-   private BedEspModule.Inner_BufferHelper init(BlockState state, BlockPos pos, List<ItemStack> tools) {
+   private BedEspModule.Inner_BufferHelper bestTool(BlockState state, BlockPos pos, List<ItemStack> tools) {
       double best = 1.0 / 0.0;
       ItemStack chosen = ItemStack.EMPTY;
       float hardness = state.getDestroySpeed(MC.level, pos);

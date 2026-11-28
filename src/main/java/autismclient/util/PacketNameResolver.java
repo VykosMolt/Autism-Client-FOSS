@@ -11,13 +11,13 @@ import net.minecraft.network.protocol.Packet;
 public class PacketNameResolver {
    private static final String UNKNOWN = "Unknown Packet";
    private static final ConcurrentMap<Class<?>, String> NAME_CACHE = new ConcurrentHashMap<>();
-   private static final ConcurrentMap<String, String> load = new ConcurrentHashMap<>();
-   private static final ConcurrentMap<Class<?>, String> read = new ConcurrentHashMap<>();
-   private static final ConcurrentMap<Class<?>, String> write = new ConcurrentHashMap<>();
-   private static final ConcurrentMap<String, String> update = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<String, String> nameCache = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<Class<?>, String> s2cClassNames = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<Class<?>, String> c2sClassNames = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<String, String> normalizedCache = new ConcurrentHashMap<>();
    private static final Map<String, String> ALIASES = buildAliases();
 
-   private static String read(String name) {
+   private static String stripPacketSuffix(String name) {
       return name != null && name.endsWith("Packet") ? name.substring(0, name.length() - 6) : name;
    }
 
@@ -28,22 +28,22 @@ public class PacketNameResolver {
          return cached;
       }
 
-      String name = load(packetClass);
+      String name = registryName(packetClass);
       if (name != null) {
-         return init_Str_Class_Str(packetClass, read(name));
+         return init_Str_Class_Str(packetClass, stripPacketSuffix(name));
       }
 
-      String typeName = load(packet);
+      String typeName = packetTypeName(packet);
       if (typeName != null) {
-         return init_Str_Class_Str(packetClass, read(typeName));
+         return init_Str_Class_Str(packetClass, stripPacketSuffix(typeName));
       }
 
-      String inspected = read(packet, packetClass.getSimpleName());
+      String inspected = inspectSlotPacket(packet, packetClass.getSimpleName());
       if (inspected != null) {
          return init_Str_Class_Str(packetClass, inspected);
       }
 
-      String readable = read(packetClass);
+      String readable = readableName(packetClass);
       return init_Str_Class_Str(packetClass, readable != null ? readable : "Unknown Packet");
    }
 
@@ -57,36 +57,36 @@ public class PacketNameResolver {
          }
       }
 
-      String cacheKey = load(packetClass, direction);
-      String cached = load.get(cacheKey);
+      String cacheKey = cacheKey(packetClass, direction);
+      String cached = nameCache.get(cacheKey);
       if (cached != null) {
          return init_Str_ConcurrentMap(classCache, packetClass, cached);
       }
 
-      String name = read(packetClass, direction);
+      String name = registryNameFor(packetClass, direction);
       if (name != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, read(name)));
+         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, stripPacketSuffix(name)));
       }
 
-      String typeName = load(packet, direction);
+      String typeName = packetTypeNameFor(packet, direction);
       if (typeName != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, read(typeName)));
+         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, stripPacketSuffix(typeName)));
       }
 
-      String inspected = read(packet, packetClass.getSimpleName());
+      String inspected = inspectSlotPacket(packet, packetClass.getSimpleName());
       if (inspected != null) {
          return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, inspected));
       }
 
-      String readable = read(packetClass);
+      String readable = readableName(packetClass);
       return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, readable != null ? readable : "Unknown Packet"));
    }
 
    private static ConcurrentMap<Class<?>, String> cacheFor(String direction) {
       if ("S2C".equalsIgnoreCase(direction)) {
-         return read;
+         return s2cClassNames;
       } else {
-         return "C2S".equalsIgnoreCase(direction) ? write : null;
+         return "C2S".equalsIgnoreCase(direction) ? c2sClassNames : null;
       }
    }
 
@@ -104,12 +104,12 @@ public class PacketNameResolver {
          return cached;
       }
 
-      String name = load(packetClass);
+      String name = registryName(packetClass);
       if (name != null) {
-         return init_Str_Class_Str(packetClass, read(name));
+         return init_Str_Class_Str(packetClass, stripPacketSuffix(name));
       }
 
-      String readable = read(packetClass);
+      String readable = readableName(packetClass);
       return init_Str_Class_Str(packetClass, readable != null ? readable : "Unknown Packet");
    }
 
@@ -125,13 +125,13 @@ public class PacketNameResolver {
    private static String init_Str_Str_Str(String key, String value) {
       String safe = value == null ? "Unknown Packet" : value;
       if (key != null) {
-         load.putIfAbsent(key, safe);
+         nameCache.putIfAbsent(key, safe);
       }
 
       return safe;
    }
 
-   private static String load(Class<?> packetClass, String direction) {
+   private static String cacheKey(Class<?> packetClass, String direction) {
       String dir = direction == null ? "" : direction.toUpperCase(Locale.ROOT);
       return dir + "|" + (packetClass == null ? "" : packetClass.getName());
    }
@@ -140,23 +140,23 @@ public class PacketNameResolver {
       if (name != null && !name.isEmpty()) {
          Class<? extends Packet<?>> packetClass = PacketTypeRegistry.resolvePacketClass(name);
          if (packetClass != null) {
-            String resolved = load(packetClass);
-            return resolved != null ? read(resolved) : "Unknown Packet";
+            String resolved = registryName(packetClass);
+            return resolved != null ? stripPacketSuffix(resolved) : "Unknown Packet";
          }
 
-         String resolved = write(name);
+         String resolved = resolveText(name);
          if (resolved != null) {
-            return read(resolved);
+            return stripPacketSuffix(resolved);
          }
 
-         String readable = update(name);
+         String readable = readableFromRaw(name);
          return readable != null ? readable : "Unknown Packet";
       } else {
          return "";
       }
    }
 
-   private static String load(Class<? extends Packet<?>> packetClass) {
+   private static String registryName(Class<? extends Packet<?>> packetClass) {
       if (packetClass == null) {
          return null;
       }
@@ -175,51 +175,51 @@ public class PacketNameResolver {
          }
       }
 
-      String byText = write(packetClass.getName());
-      return byText != null ? byText : write(packetClass.getCanonicalName());
+      String byText = resolveText(packetClass.getName());
+      return byText != null ? byText : resolveText(packetClass.getCanonicalName());
    }
 
-   private static String read(Class<? extends Packet<?>> packetClass, String direction) {
+   private static String registryNameFor(Class<? extends Packet<?>> packetClass, String direction) {
       if (packetClass == null) {
          return null;
       }
 
-      String direct = write(packetClass, direction);
+      String direct = registeredNameFor(packetClass, direction);
       if (direct != null) {
          return direct;
       }
 
-      String byText = load(packetClass.getName(), direction);
-      return byText != null ? byText : load(packetClass.getCanonicalName(), direction);
+      String byText = resolveTextFor(packetClass.getName(), direction);
+      return byText != null ? byText : resolveTextFor(packetClass.getCanonicalName(), direction);
    }
 
-   private static String load(Packet<?> packet) {
+   private static String packetTypeName(Packet<?> packet) {
       if (packet == null) {
          return null;
       }
 
       try {
          Object packetType = packet.getClass().getMethod("getPacketType").invoke(packet);
-         return packetType == null ? null : write(packetType.toString());
+         return packetType == null ? null : resolveText(packetType.toString());
       } catch (Throwable ignored) {
          return null;
       }
    }
 
-   private static String load(Packet<?> packet, String direction) {
+   private static String packetTypeNameFor(Packet<?> packet, String direction) {
       if (packet == null) {
          return null;
       }
 
       try {
          Object packetType = packet.getClass().getMethod("getPacketType").invoke(packet);
-         return packetType == null ? null : load(packetType.toString(), direction);
+         return packetType == null ? null : resolveTextFor(packetType.toString(), direction);
       } catch (Throwable ignored) {
          return null;
       }
    }
 
-   private static String write(String text) {
+   private static String resolveText(String text) {
       if (text != null && !text.isEmpty()) {
          String normalizedText = load(text);
          if (normalizedText.isEmpty()) {
@@ -244,7 +244,7 @@ public class PacketNameResolver {
       }
    }
 
-   private static String load(String text, String direction) {
+   private static String resolveTextFor(String text, String direction) {
       if (text != null && !text.isEmpty()) {
          String normalizedText = load(text);
          if (normalizedText.isEmpty()) {
@@ -269,7 +269,7 @@ public class PacketNameResolver {
       }
    }
 
-   private static String write(Class<? extends Packet<?>> packetClass, String direction) {
+   private static String registeredNameFor(Class<? extends Packet<?>> packetClass, String direction) {
       for (Class<? extends Packet<?>> registeredClass : registeredClasses(direction)) {
          if (registeredClass == packetClass) {
             return PacketTypeRegistry.getPacketName(registeredClass);
@@ -293,7 +293,7 @@ public class PacketNameResolver {
          return true;
       }
 
-      String strippedRegistered = load(read(registeredName));
+      String strippedRegistered = load(stripPacketSuffix(registeredName));
       if (strippedRegistered.equals(normalizedText)) {
          return true;
       }
@@ -330,7 +330,7 @@ public class PacketNameResolver {
 
    private static void alias(Map<String, String> aliases, String canonicalName, String... variants) {
       aliases.put(load(canonicalName), canonicalName);
-      aliases.put(load(read(canonicalName)), canonicalName);
+      aliases.put(load(stripPacketSuffix(canonicalName)), canonicalName);
 
       for (String variant : variants) {
          if (variant != null && !variant.isEmpty()) {
@@ -339,21 +339,21 @@ public class PacketNameResolver {
       }
    }
 
-   private static String read(Class<?> packetClass) {
+   private static String readableName(Class<?> packetClass) {
       if (packetClass == null) {
          return null;
       }
 
-      String canonical = update(packetClass.getCanonicalName());
-      return canonical != null ? canonical : update(packetClass.getName());
+      String canonical = readableFromRaw(packetClass.getCanonicalName());
+      return canonical != null ? canonical : readableFromRaw(packetClass.getName());
    }
 
-   private static String update(String rawName) {
+   private static String readableFromRaw(String rawName) {
       if (rawName != null && !rawName.isEmpty()) {
          int lastDot = rawName.lastIndexOf(46);
          String shortName = lastDot >= 0 ? rawName.substring(lastDot + 1) : rawName;
          shortName = shortName.replace('$', '.');
-         return init_Z_Str(shortName) ? null : read(shortName);
+         return init_Z_Str(shortName) ? null : stripPacketSuffix(shortName);
       } else {
          return null;
       }
@@ -366,17 +366,17 @@ public class PacketNameResolver {
 
    public static String load(String value) {
       if (value != null && !value.isEmpty()) {
-         if (update.size() > 4096) {
-            update.clear();
+         if (normalizedCache.size() > 4096) {
+            normalizedCache.clear();
          }
 
-         return update.computeIfAbsent(value, PacketNameResolver::sync);
+         return normalizedCache.computeIfAbsent(value, PacketNameResolver::normalize);
       } else {
          return "";
       }
    }
 
-   private static String sync(String value) {
+   private static String normalize(String value) {
       String lower = value.toLowerCase(Locale.ROOT);
       StringBuilder out = new StringBuilder(lower.length());
 
@@ -390,7 +390,7 @@ public class PacketNameResolver {
       return out.toString();
    }
 
-   private static String read(Packet<?> packet, String className) {
+   private static String inspectSlotPacket(Packet<?> packet, String className) {
       try {
          String packetStr = packet.toString();
          if (!packetStr.contains("slot=") && !packetStr.contains("Slot")) {

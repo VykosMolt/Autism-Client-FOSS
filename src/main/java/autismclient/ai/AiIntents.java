@@ -13,22 +13,22 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 
 final class AiIntents {
-   private static final Pattern init_Pattern = Pattern.compile(
+   private static final Pattern CLAUSE_SPLIT = Pattern.compile(
       "\\s*(?:,\\s*(?:and\\s+)?(?:then\\s+)?|;\\s*|\\.\\s+|\\s+and\\s+then\\s+|\\s+then\\s+|\\s+and\\s+|\\s+after\\s+that\\s*,?\\s*|\\s+afterwards\\s*,?\\s*)",
       2
    );
-   private static final Pattern load_Pattern = Pattern.compile(
+   private static final Pattern FILLER_PREFIX = Pattern.compile(
       "^(?:(?:please|pls|now|first|then|also|and|next|finally|go\\s+and|can\\s+you|could\\s+you|would\\s+you|will\\s+you|i\\s+want\\s+you\\s+to|i\\s+need\\s+you\\s+to|i\\s+want\\s+to|i\\s+need\\s+to|i\\s+wanna|i\\s+need|i\\s+want|lets|let's)\\s+)+"
    );
-   private static final Pattern read_Pattern = Pattern.compile(
+   private static final Pattern WANT_PREFIX = Pattern.compile(
       "^(?:please\\s+|pls\\s+)?(?:i\\s+(?:really\\s+)?(?:want|need|would\\s+like|'d\\s+like|wanna\\s+(?:have|get)|want\\s+to\\s+(?:get|have)|need\\s+to\\s+(?:get|have))|i'd\\s+like|give\\s+me|gimme|hand\\s+me|(?:can|could|may)\\s+(?:i|u|you)\\s+(?:get|have|give\\s+me|grab|fetch))\\s+(?!you\\b|to\\b)"
    );
-   private static final Pattern write_Pattern = Pattern.compile("^(?:please\\s+|pls\\s+)?(?:can|could|would|will|may)\\s+(?:you|u|i)\\s+");
-   private static final Pattern update_Pattern = Pattern.compile(
+   private static final Pattern POLITE_QUESTION = Pattern.compile("^(?:please\\s+|pls\\s+)?(?:can|could|would|will|may)\\s+(?:you|u|i)\\s+");
+   private static final Pattern FILLER_SUFFIX = Pattern.compile(
       "(?:\\s+(?:please|pls|now|for\\s+me|right\\s+now|asap|thanks?|thank\\s+you|from\\s+scratch|from\\s+nothing|from\\s+zero|quickly|quick|fast|real\\s+quick|as\\s+fast\\s+as\\s+(?:you\\s+can|possible)|if\\s+you\\s+can|by\\s+yourself|yourself|on\\s+your\\s+own|bro|mate|dude))+$"
    );
    static final String init_Str = "(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?";
-   private static final Map<String, Integer> init_Map = Map.ofEntries(
+   private static final Map<String, Integer> NUMBER_WORDS = Map.ofEntries(
       Map.entry("a", 1),
       Map.entry("an", 1),
       Map.entry("one", 1),
@@ -63,70 +63,70 @@ final class AiIntents {
       Map.entry("a stack of", 64),
       Map.entry("one stack of", 64)
    );
-   private static final Set<String> init_Set = Set.of("some", "more", "a bit of", "a lot of", "lots of");
-   private static final Set<String> load_Set = Set.of(
+   private static final Set<String> VAGUE_QUANTITIES = Set.of("some", "more", "a bit of", "a lot of", "lots of");
+   private static final Set<String> ITEM_FAMILIES = Set.of(
       "log", "planks", "cobblestone", "stone", "dirt", "sand", "gravel", "stick", "wheat_seeds", "torch", "coal", "wool", "glass"
    );
    private static final int write_I = 16;
-   private static final Pattern sync_Pattern = quantityPattern(
+   private static final Pattern GET_PATTERN = quantityPattern(
       "get\\s+me|go\\s+get|go\\s+find|go\\s+grab|go\\s+fetch|find\\s+me|bring\\s+me|get|obtain|collect|gather|grab|fetch|acquire|find|look\\s+for|search\\s+for"
    );
-   private static final Pattern flush = quantityPattern("mine|dig\\s+up|dig\\s+for");
-   private static final Pattern close = Pattern.compile(
+   private static final Pattern MINE_PATTERN = quantityPattern("mine|dig\\s+up|dig\\s+for");
+   private static final Pattern BARE_QUANTITY_PATTERN = Pattern.compile(
       "^(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?([a-z][a-z _'-]*?)$"
    );
-   private static final Pattern open = quantityPattern("craft|make|build\\s+me");
-   private static final Pattern poll = quantityPattern("smelt|cook|bake|roast");
-   private static final Pattern push = quantityPattern("harvest|farm");
-   private static final Pattern pop = Pattern.compile(
+   private static final Pattern CRAFT_PATTERN = quantityPattern("craft|make|build\\s+me");
+   private static final Pattern SMELT_PATTERN = quantityPattern("smelt|cook|bake|roast");
+   private static final Pattern HARVEST_PATTERN = quantityPattern("harvest|farm");
+   private static final Pattern CHOP_PATTERN = Pattern.compile(
       "^(?:chop|cut)(?:\\s+down)?\\s+(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?(?:(?:the\\s+)?(?:nearest\\s+|closest\\s+)?(?:([a-z ]+?)\\s+)?(?:trees?|logs?|wood))$"
    );
-   private static final Pattern tick = Pattern.compile(
+   private static final Pattern PLANT_PATTERN = Pattern.compile(
       "^(?:(?:plant|sow)\\s+(?:a\\s+|some\\s+)?(?:small\\s+|little\\s+|big\\s+)?([a-z ]+?)(?:\\s+(?:farm|field|seeds))?|(?:make|build|create|start|set\\s+up)\\s+(?:a\\s+|an\\s+)?(?:small\\s+|little\\s+|big\\s+)?([a-z ]+?)\\s+(?:farm|field))$"
    );
-   private static final Pattern run = Pattern.compile(
+   private static final Pattern KILL_PATTERN = Pattern.compile(
       "^(?:kill|fight|attack|slay|hunt)\\s+(?:the\\s+)?(?:nearest\\s+|closest\\s+|nearby\\s+|all\\s+(?:the\\s+)?)?(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?([a-z ]+?)(?:\\s+(?:nearby|around\\s+here|near\\s+me))?$"
    );
-   private static final Pattern get = Pattern.compile(
+   private static final Pattern TOGGLE_MODULE_PATTERN = Pattern.compile(
       "^(?:turn|switch|toggle)\\s+(on|off)\\s+(?:the\\s+)?(.+?)(?:\\s+module)?$|^(?:turn|switch)\\s+(?:the\\s+)?(.+?)(?:\\s+module)?\\s+(on|off)$|^(enable|disable|activate|deactivate)\\s+(?:the\\s+)?(.+?)(?:\\s+module)?$"
    );
-   private static final Pattern set = Pattern.compile(
+   private static final Pattern DROP_ALL_PATTERN = Pattern.compile(
       "^(?:drop|throw\\s+out|throw\\s+away|empty)\\s+(?:out\\s+)?(?:all\\s+(?:of\\s+)?)?(?:my\\s+|the\\s+)?(?:whole\\s+|entire\\s+|full\\s+)?(?:inventory|everything|all\\s+(?:my\\s+)?(?:items|stuff)|all|stuff)$"
    );
-   private static final Pattern put = Pattern.compile(
+   private static final Pattern DROP_HELD_PATTERN = Pattern.compile(
       "^drop\\s+(?:the\\s+|my\\s+)?(?:held\\s+item|item\\s+in\\s+my\\s+hand|what\\s+i(?:'m|\\s+am)\\s+holding|hand)$"
    );
-   private static final Pattern add = Pattern.compile(
+   private static final Pattern DROP_COUNT_PATTERN = Pattern.compile(
       "^(?:drop|throw\\s+away|throw\\s+out)\\s+(?:(\\d{1,4})\\s*x?\\s+|x(\\d{1,4})\\s+|(a\\s+stack\\s+of|one\\s+stack\\s+of|a\\s+couple(?:\\s+of)?|a\\s+few|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|thirty[- ]two|forty|fifty|sixty|sixty[- ]four|some|more|a\\s+bit\\s+of|a\\s+lot\\s+of|lots\\s+of)\\s+|(\\d{1,2})\\s+stacks?\\s+of\\s+)?(?:my\\s+|the\\s+|all\\s+(?:my\\s+|the\\s+)?)?([a-z][a-z _-]*?)$"
    );
-   private static final Pattern clear = Pattern.compile("^(?:stop|halt|stay(?:\\s+there)?|wait(?:\\s+there)?|stand\\s+still|that'?s\\s+it|done)$");
-   private static final Pattern reset = Pattern.compile(
+   private static final Pattern STOP_PATTERN = Pattern.compile("^(?:stop|halt|stay(?:\\s+there)?|wait(?:\\s+there)?|stand\\s+still|that'?s\\s+it|done)$");
+   private static final Pattern SPEEDRUN_PATTERN = Pattern.compile(
       "^(?:beat|finish|complete|win)\\s+(?:the\\s+game|minecraft)|speed\\s*run(?:\\s+(?:the\\s+game|minecraft))?|(?:kill|beat|defeat)\\s+the\\s+(?:ender\\s+)?dragon$"
    );
-   private static final Pattern start = Pattern.compile(
+   private static final Pattern EAT_PATTERN = Pattern.compile(
       "^(?:eat(?:\\s+(?:something|some\\s+food|food|a\\s+snack|it|them|that|those|up|the\\s+(?:meat|food)|my\\s+(?:meat|food)))?|have\\s+a\\s+snack|heal\\s+up|fill\\s+(?:up\\s+)?(?:my\\s+)?(?:hunger|food)(?:\\s+bar)?)$"
    );
-   private static final Pattern stop = Pattern.compile("^(?:sleep|go\\s+to\\s+(?:sleep|bed)|sleep\\s+in\\s+(?:a|the)\\s+bed|skip\\s+the\\s+night)$");
-   private static final Pattern next = Pattern.compile(
+   private static final Pattern SLEEP_PATTERN = Pattern.compile("^(?:sleep|go\\s+to\\s+(?:sleep|bed)|sleep\\s+in\\s+(?:a|the)\\s+bed|skip\\s+the\\s+night)$");
+   private static final Pattern EQUIP_PATTERN = Pattern.compile(
       "^(?:equip|wear|put\\s+on|hold|take\\s+out)\\s+(?:my\\s+|the\\s+|a\\s+)?(?:best\\s+)?(armor|armour|sword|weapon|shield)$"
    );
-   private static final Pattern prev = Pattern.compile(
+   private static final Pattern TIDY_PATTERN = Pattern.compile(
       "^(?:clean(?:\\s+up)?|tidy(?:\\s+up)?|sort\\s+out|clear\\s+out|empty)\\s+(?:my\\s+|the\\s+)?(?:inventory|inv|bag|backpack)|(?:throw|toss|get\\s+rid\\s+of|dump|drop)\\s+(?:out\\s+|away\\s+)?(?:all\\s+)?(?:the\\s+|my\\s+)?(?:junk|trash|garbage|useless\\s+(?:stuff|items|things|shit)|crap|shit)(?:\\s+(?:out|away))?|make\\s+(?:some\\s+)?(?:room|space)(?:\\s+in\\s+(?:my\\s+|the\\s+)?(?:inventory|inv|bag))?$"
    );
-   private static final Pattern valid = Pattern.compile(
+   private static final Pattern PLACE_PATTERN = Pattern.compile(
       "^(?:put|place|set)\\s+(?:(it|that|them)|(?:the|a|an|my)\\s+([a-z][a-z ]*?))(?:\\s+down)?(?:\\s+(?:next\\s+to\\s+me|near\\s+me|beside\\s+me|by\\s+me|here|right\\s+here))?(?:\\s+down)?$"
    );
-   private static final Pattern size = Pattern.compile(
+   private static final Pattern FILL_BUCKET_PATTERN = Pattern.compile(
       "^(?:fill|top\\s+up)\\s+(?:it|them|that|the\\s+bucket|a\\s+bucket|my\\s+bucket|(?:the\\s+|my\\s+)?buckets)(?:\\s+up)?(?:\\s+with\\s+water)?$|^(?:get|grab|fetch)\\s+(?:some\\s+)?water$"
    );
-   private static final Pattern data = Pattern.compile("^(?:go\\s+)?fish(?:ing)?$");
-   private static final Pattern value = Pattern.compile(
+   private static final Pattern FISH_PATTERN = Pattern.compile("^(?:go\\s+)?fish(?:ing)?$");
+   private static final Pattern SURFACE_PATTERN = Pattern.compile(
       "^(?:surface|go\\s+(?:up\\s+)?to\\s+the\\s+surface|get\\s+(?:out\\s+of\\s+(?:this|the)\\s+cave|to\\s+the\\s+surface|back\\s+to\\s+the\\s+surface))$"
    );
-   private static final Pattern cache = Pattern.compile(
+   private static final Pattern RECOVER_ITEMS_PATTERN = Pattern.compile(
       "^(?:recover|get\\s+back|pick\\s+up|collect|go\\s+get)\\s+(?:all\\s+)?(?:my\\s+)?(?:stuff|items|things|loot|drops)(?:\\s+(?:back|from\\s+where\\s+i\\s+died|from\\s+my\\s+death))?$"
    );
-   private static final Map<String, String> load_Map = Map.ofEntries(
+   private static final Map<String, String> SMELT_OUTPUTS = Map.ofEntries(
       Map.entry("iron", "minecraft:iron_ingot"),
       Map.entry("raw iron", "minecraft:iron_ingot"),
       Map.entry("iron ore", "minecraft:iron_ingot"),
@@ -157,8 +157,8 @@ final class AiIntents {
       Map.entry("kelp", "minecraft:dried_kelp"),
       Map.entry("cactus", "minecraft:green_dye")
    );
-   private static final Set<String> read_Set = Set.of("meat", "the meat", "my meat", "food", "the food", "my food", "it", "them", "that", "those");
-   private static final Map<String, String> read_Map = Map.of(
+   private static final Set<String> GENERIC_FOOD_WORDS = Set.of("meat", "the meat", "my meat", "food", "the food", "my food", "it", "them", "that", "those");
+   private static final Map<String, String> MOB_MEAT = Map.of(
       "minecraft:cow",
       "minecraft:beef",
       "minecraft:mooshroom",
@@ -172,14 +172,14 @@ final class AiIntents {
       "minecraft:rabbit",
       "minecraft:rabbit"
    );
-   private static final Set<String> write_Set = Set.of("oak", "spruce", "birch", "jungle", "acacia", "dark oak", "mangrove", "cherry", "pale oak");
-   private static final Set<String> update_Set = Set.of("mobs", "mob", "monsters", "monster", "hostiles", "hostile mobs", "hostile", "enemies", "enemy");
-   private static final Pattern state = Pattern.compile(
+   private static final Set<String> WOOD_SPECIES = Set.of("oak", "spruce", "birch", "jungle", "acacia", "dark oak", "mangrove", "cherry", "pale oak");
+   private static final Set<String> HOSTILE_WORDS = Set.of("mobs", "mob", "monsters", "monster", "hostiles", "hostile mobs", "hostile", "enemies", "enemy");
+   private static final Pattern FARM_BUILD_PATTERN = Pattern.compile(
       "^(?:make|build|create|start|set\\s+up|plant|sow|lay\\s+out)\\s+(?:me\\s+|us\\s+)?(.*?)\\b(?:farm|field|garden|crop\\s+field)s?\\b(.*)$"
    );
-   private static final Pattern queue = Pattern.compile("(\\d{1,2})\\s*(?:x|by|\\*)\\s*(\\d{1,2})");
-   private static final Pattern buffer = Pattern.compile("(\\d{1,3})\\s*(?:crops?|plots?|plants?|blocks?|seeds?|tiles?)?");
-   private static final Set<String> sync_Set = Set.of(
+   private static final Pattern DIMENSIONS_PATTERN = Pattern.compile("(\\d{1,2})\\s*(?:x|by|\\*)\\s*(\\d{1,2})");
+   private static final Pattern PLOT_COUNT_PATTERN = Pattern.compile("(\\d{1,3})\\s*(?:crops?|plots?|plants?|blocks?|seeds?|tiles?)?");
+   private static final Set<String> FARM_FILLER_WORDS = Set.of(
       "a",
       "an",
       "some",
@@ -210,7 +210,7 @@ final class AiIntents {
    static final int load_I = 25;
    static final int read_I = 80;
    static final List<String> CROPS = List.of("Wheat", "Carrots", "Potatoes", "Beetroots", "Nether wart");
-   static final List<String> load_List = List.of("Small (about 10 crops)", "Medium (about 25 crops)", "Large (9x9, 80 crops around one water block)");
+   static final List<String> UNUSED_FARM_SIZE_LABELS = List.of("Small (about 10 crops)", "Medium (about 25 crops)", "Large (9x9, 80 crops around one water block)");
 
    private AiIntents() {
    }
@@ -224,7 +224,7 @@ final class AiIntents {
    }
 
    static AiIntents.Inner_CachePool plan(String objective, AiIntents.Inner_StreamUtil lookups) {
-      AiIntents.Inner_BufferHelper schematic = init_ad_BufferHelper(objective);
+      AiIntents.Inner_BufferHelper schematic = schematicIntent(objective);
       if (schematic != null) {
          return new AiIntents.Inner_CachePool(List.of(schematic), "");
       }
@@ -233,7 +233,7 @@ final class AiIntents {
          String text = objective.trim();
          if (text.endsWith("?")) {
             String asked = text.replaceAll("\\?+$", "").trim();
-            if (!write_Pattern.matcher(asked.toLowerCase(Locale.ROOT)).find()) {
+            if (!POLITE_QUESTION.matcher(asked.toLowerCase(Locale.ROOT)).find()) {
                return new AiIntents.Inner_CachePool(List.of(), text);
             }
 
@@ -241,7 +241,7 @@ final class AiIntents {
          }
 
          List<int[]> spans = new ArrayList<>();
-         Matcher m = init_Pattern.matcher(text);
+         Matcher m = CLAUSE_SPLIT.matcher(text);
 
          int at;
          for (at = 0; m.find(); at = m.end()) {
@@ -259,12 +259,12 @@ final class AiIntents {
 
          for (int[] span : spans) {
             String clause = text.substring(span[0], span[1]);
-            if (!clear.matcher(init_Str(clause)).matches() || steps.isEmpty()) {
-               AiIntents.Inner_BufferHelper step = lastVerb != null && flush(init_Str(clause)) == null
-                  ? init_ad_BufferHelper(lastVerb + " " + init_Str(clause), lookups)
+            if (!STOP_PATTERN.matcher(normalizeClause(clause)).matches() || steps.isEmpty()) {
+               AiIntents.Inner_BufferHelper step = lastVerb != null && leadingVerb(normalizeClause(clause)) == null
+                  ? parseClause(lastVerb + " " + normalizeClause(clause), lookups)
                   : null;
                if (step == null) {
-                  step = init_ad_BufferHelper(clause, lookups);
+                  step = parseClause(clause, lookups);
                }
 
                if (step == null) {
@@ -272,17 +272,17 @@ final class AiIntents {
                }
 
                steps.add(step);
-               lastVerb = flush(init_Str(clause));
+               lastVerb = leadingVerb(normalizeClause(clause));
             }
          }
 
-         return new AiIntents.Inner_CachePool(init(load(read(steps))), "");
+         return new AiIntents.Inner_CachePool(fillPlaceNearItem(inheritSmeltCount(linkFightToMeat(steps))), "");
       } else {
          return new AiIntents.Inner_CachePool(List.of(), objective == null ? "" : objective.trim());
       }
    }
 
-   static List<AiIntents.Inner_BufferHelper> init(List<AiIntents.Inner_BufferHelper> steps) {
+   static List<AiIntents.Inner_BufferHelper> fillPlaceNearItem(List<AiIntents.Inner_BufferHelper> steps) {
       List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
 
       for (int i = 1; i < out.size(); i++) {
@@ -307,18 +307,18 @@ final class AiIntents {
       return out;
    }
 
-   static List<AiIntents.Inner_BufferHelper> load(List<AiIntents.Inner_BufferHelper> steps) {
+   static List<AiIntents.Inner_BufferHelper> inheritSmeltCount(List<AiIntents.Inner_BufferHelper> steps) {
       List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
 
       for (int i = 1; i < out.size(); i++) {
          AiIntents.Inner_BufferHelper step = out.get(i);
          AiIntents.Inner_BufferHelper before = out.get(i - 1);
-         if (!init_Z(step.clause()) && step.arguments().has("count")) {
+         if (!hasExplicitQuantity(step.clause()) && step.arguments().has("count")) {
             String output = AiJson.getString(step.arguments(), "item", "");
             String input = AiJson.getString(before.arguments(), "item", AiJson.getString(before.arguments(), "block", ""))
                .replace("minecraft:", "")
                .replace('_', ' ');
-            if (!output.isEmpty() && !input.isEmpty() && output.equals(load_Map.get(input)) && before.arguments().has("count")) {
+            if (!output.isEmpty() && !input.isEmpty() && output.equals(SMELT_OUTPUTS.get(input)) && before.arguments().has("count")) {
                int count = Math.max(1, AiJson.getInt(before.arguments(), "count", 1));
                JsonObject args = step.arguments().deepCopy();
                args.addProperty("count", count);
@@ -333,14 +333,14 @@ final class AiIntents {
       return out;
    }
 
-   static boolean init_Z(String clause) {
+   static boolean hasExplicitQuantity(String clause) {
       String c = clause.toLowerCase(Locale.ROOT);
       if (c.matches(".*\\d.*")) {
          return true;
       }
 
       for (String word : c.split("[^a-z]+")) {
-         if (init_Map.containsKey(word)) {
+         if (NUMBER_WORDS.containsKey(word)) {
             return true;
          }
       }
@@ -348,7 +348,7 @@ final class AiIntents {
       return false;
    }
 
-   static List<AiIntents.Inner_BufferHelper> read(List<AiIntents.Inner_BufferHelper> steps) {
+   static List<AiIntents.Inner_BufferHelper> linkFightToMeat(List<AiIntents.Inner_BufferHelper> steps) {
       List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
 
       for (int i = 0; i < out.size(); i++) {
@@ -364,7 +364,7 @@ final class AiIntents {
                List<String> meats = new ArrayList<>();
 
                for (String target : AiJson.getString(step.arguments(), "target", "").split(",")) {
-                  String meat = read_Map.get(target);
+                  String meat = MOB_MEAT.get(target);
                   if (meat == null) {
                      meats = null;
                      break;
@@ -394,7 +394,7 @@ final class AiIntents {
       return out;
    }
 
-   static AiIntents.Inner_BufferHelper init_ad_BufferHelper(String objective) {
+   static AiIntents.Inner_BufferHelper schematicIntent(String objective) {
       if (objective == null) {
          return null;
       }
@@ -423,22 +423,22 @@ final class AiIntents {
       }
    }
 
-   static String init_Str(String clause) {
+   static String normalizeClause(String clause) {
       String c = clause.trim().toLowerCase(Locale.ROOT).replaceAll("[.!]+$", "").replaceAll("\\s+", " ");
-      c = read_Pattern.matcher(c).replaceFirst("get ");
-      c = load_Pattern.matcher(c).replaceFirst("");
-      c = update_Pattern.matcher(c).replaceFirst("");
+      c = WANT_PREFIX.matcher(c).replaceFirst("get ");
+      c = FILLER_PREFIX.matcher(c).replaceFirst("");
+      c = FILLER_SUFFIX.matcher(c).replaceFirst("");
       return c.trim();
    }
 
-   private static String flush(String clause) {
+   private static String leadingVerb(String clause) {
       int space = clause.indexOf(32);
       String first = space < 0 ? clause : clause.substring(0, space);
       return Set.of("get", "collect", "gather", "craft", "make", "mine", "smelt", "cook", "obtain", "grab").contains(first) ? first : null;
    }
 
-   static AiIntents.Inner_BufferHelper init_ad_BufferHelper(String raw, AiIntents.Inner_StreamUtil lookups) {
-      String c = init_Str(raw);
+   static AiIntents.Inner_BufferHelper parseClause(String raw, AiIntents.Inner_StreamUtil lookups) {
+      String c = normalizeClause(raw);
       if (c.isEmpty()) {
          return null;
       }
@@ -449,7 +449,7 @@ final class AiIntents {
       }
 
       Matcher m;
-      if ((m = get.matcher(c)).matches()) {
+      if ((m = TOGGLE_MODULE_PATTERN.matcher(c)).matches()) {
          boolean on;
          String name;
          if (m.group(1) != null) {
@@ -468,57 +468,57 @@ final class AiIntents {
             ? null
             : new AiIntents.Inner_BufferHelper(raw, "module:" + id, AiJson.objectOf("enabled", on, "persistent", true), (on ? "turn on " : "turn off ") + id);
       } else {
-         if (set.matcher(c).matches()) {
+         if (DROP_ALL_PATTERN.matcher(c).matches()) {
             return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop fullinventory"), "drop the whole inventory");
          }
 
-         if (put.matcher(c).matches()) {
+         if (DROP_HELD_PATTERN.matcher(c).matches()) {
             return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop hand"), "drop the held item");
          }
 
-         if (reset.matcher(c).find()) {
+         if (SPEEDRUN_PATTERN.matcher(c).find()) {
             return new AiIntents.Inner_BufferHelper(raw, "game:speedrun", new JsonObject(), "speedrun: beat the game");
          }
 
-         if (start.matcher(c).matches()) {
+         if (EAT_PATTERN.matcher(c).matches()) {
             return new AiIntents.Inner_BufferHelper(raw, "game:eat", new JsonObject(), "eat");
          }
 
-         if (stop.matcher(c).matches()) {
+         if (SLEEP_PATTERN.matcher(c).matches()) {
             return new AiIntents.Inner_BufferHelper(raw, "game:sleep", new JsonObject(), "sleep in a bed");
          }
 
-         if (data.matcher(c).matches()) {
+         if (FISH_PATTERN.matcher(c).matches()) {
             return new AiIntents.Inner_BufferHelper(raw, "game:fish", new JsonObject(), "fish");
          }
 
-         if ((m = valid.matcher(c)).matches()) {
+         if ((m = PLACE_PATTERN.matcher(c)).matches()) {
             if (m.group(1) != null) {
                return new AiIntents.Inner_BufferHelper(raw, "game:place_near", AiJson.objectOf("item", ""), "put it down beside the player");
             }
 
-            String id = read(load(m.group(2)));
+            String id = resolveItemId(cleanItemWords(m.group(2)));
             return id == null
                ? null
                : new AiIntents.Inner_BufferHelper(
                   raw, "game:place_near", AiJson.objectOf("item", id), "put " + id.replace("minecraft:", "") + " down beside the player"
                );
          } else {
-            if (size.matcher(c).matches()) {
+            if (FILL_BUCKET_PATTERN.matcher(c).matches()) {
                return new AiIntents.Inner_BufferHelper(
                   raw, "game:obtain", AiJson.objectOf("item", "minecraft:water_bucket", "count", 1), "fill a bucket with water"
                );
             }
 
-            if (value.matcher(c).matches()) {
+            if (SURFACE_PATTERN.matcher(c).matches()) {
                return new AiIntents.Inner_BufferHelper(raw, "game:surface", new JsonObject(), "go to the surface");
             }
 
-            if (cache.matcher(c).matches()) {
+            if (RECOVER_ITEMS_PATTERN.matcher(c).matches()) {
                return new AiIntents.Inner_BufferHelper(raw, "game:recover", new JsonObject(), "recover the items from the last death");
             }
 
-            if (prev.matcher(c).matches()) {
+            if (TIDY_PATTERN.matcher(c).matches()) {
                return new AiIntents.Inner_BufferHelper(
                   raw,
                   "game:tidy",
@@ -527,7 +527,7 @@ final class AiIntents {
                );
             }
 
-            if ((m = next.matcher(c)).matches()) {
+            if ((m = EQUIP_PATTERN.matcher(c)).matches()) {
                String var10000;
                switch (m.group(1)) {
                   case "armor":
@@ -544,22 +544,22 @@ final class AiIntents {
                String what = var10000;
                return new AiIntents.Inner_BufferHelper(raw, "game:equip", AiJson.objectOf("what", what), "equip the best " + what);
             } else {
-               AiIntents.Inner_BufferHelper field = init(raw, c);
+               AiIntents.Inner_BufferHelper field = farmBuildIntent(raw, c);
                if (field != null) {
                   return field;
                }
 
-               if ((m = tick.matcher(c)).matches()) {
+               if ((m = PLANT_PATTERN.matcher(c)).matches()) {
                   String crop = update(m.group(1) != null ? m.group(1) : m.group(2));
                   return crop == null
                      ? null
                      : new AiIntents.Inner_BufferHelper(raw, "game:farm", AiJson.objectOf("action", "plant", "crop", crop), "plant a " + crop + " field");
                }
 
-               if ((m = pop.matcher(c)).matches()) {
-                  Integer count = init(m);
+               if ((m = CHOP_PATTERN.matcher(c)).matches()) {
+                  Integer count = matchedCount(m);
                   String species = m.group(5) == null ? null : m.group(5).trim();
-                  if (species != null && !write_Set.contains(species)) {
+                  if (species != null && !WOOD_SPECIES.contains(species)) {
                      return null;
                   }
 
@@ -578,99 +578,99 @@ final class AiIntents {
                      : new AiIntents.Inner_BufferHelper(
                         raw, "game:chop", args, "chop " + (species == null ? "the nearest tree" : species + " logs") + (args.has("count") ? " x" + count : "")
                      );
-               } else if (!(m = run.matcher(c)).matches()) {
-                  if ((m = push.matcher(c)).matches()) {
+               } else if (!(m = KILL_PATTERN.matcher(c)).matches()) {
+                  if ((m = HARVEST_PATTERN.matcher(c)).matches()) {
                      String crop = update(m.group(5));
                      if (crop == null) {
                         return null;
                      }
 
-                     Integer count = init(m);
+                     Integer count = matchedCount(m);
                      return new AiIntents.Inner_BufferHelper(
                         raw, "game:farm", AiJson.objectOf("action", "harvest", "crop", crop, "count", count == null ? 16 : count), "harvest " + crop
                      );
-                  } else if ((m = poll.matcher(c)).matches()) {
-                     if (read_Set.contains(m.group(5).trim())) {
+                  } else if ((m = SMELT_PATTERN.matcher(c)).matches()) {
+                     if (GENERIC_FOOD_WORDS.contains(m.group(5).trim())) {
                         return new AiIntents.Inner_BufferHelper(
                            raw, "game:smelt_auto", AiJson.objectOf("item", "cooked_food", "count", 1, "cookHeld", true), "cook the raw food held"
                         );
                      }
 
-                     String what = load(m.group(5));
-                     String output = load_Map.get(what);
+                     String what = cleanItemWords(m.group(5));
+                     String output = SMELT_OUTPUTS.get(what);
                      if (output == null) {
-                        output = load_Map.get(sync(what));
+                        output = SMELT_OUTPUTS.get(sync(what));
                      }
 
                      if (output == null) {
-                        output = read(what);
+                        output = resolveItemId(what);
                      }
 
                      if (output == null) {
                         return null;
                      }
 
-                     int count = init(m, output, what);
+                     int count = resolveCount(m, output, what);
                      return new AiIntents.Inner_BufferHelper(
                         raw, "game:smelt_auto", AiJson.objectOf("item", output, "count", count), "smelt " + count + " " + output
                      );
-                  } else if ((m = add.matcher(c)).matches()) {
-                     String what = load(m.group(5));
-                     String id = read(what);
+                  } else if ((m = DROP_COUNT_PATTERN.matcher(c)).matches()) {
+                     String what = cleanItemWords(m.group(5));
+                     String id = resolveItemId(what);
                      if (id == null) {
                         return null;
                      }
 
-                     Integer count = init(m);
+                     Integer count = matchedCount(m);
                      String body = "drop " + (count == null ? "" : count + " ") + id.replace("minecraft:", "");
                      return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", body), body);
-                  } else if ((m = flush.matcher(c)).matches()) {
-                     String what = load(m.group(5));
-                     String block = open(what);
+                  } else if ((m = MINE_PATTERN.matcher(c)).matches()) {
+                     String what = cleanItemWords(m.group(5));
+                     String block = resolveBlockId(what);
                      if (block == null) {
-                        String id = read(what);
+                        String id = resolveItemId(what);
                         if (id == null) {
                            return null;
                         }
 
-                        int count = init(m, id, what);
+                        int count = resolveCount(m, id, what);
                         return new AiIntents.Inner_BufferHelper(
                            raw, "game:obtain", AiJson.objectOf("item", id, "count", count, "additional", true), "get " + count + " " + id
                         );
                      } else {
-                        int count = init(m, block, what);
+                        int count = resolveCount(m, block, what);
                         return new AiIntents.Inner_BufferHelper(
                            raw, "game:mine", AiJson.objectOf("block", block, "count", count), "mine " + count + " " + block
                         );
                      }
-                  } else if ((m = open.matcher(c)).matches()) {
-                     String what = load(m.group(5));
-                     String id = read(what);
+                  } else if ((m = CRAFT_PATTERN.matcher(c)).matches()) {
+                     String what = cleanItemWords(m.group(5));
+                     String id = resolveItemId(what);
                      if (id == null) {
                         return null;
                      }
 
-                     int count = init(m, id, what);
+                     int count = resolveCount(m, id, what);
                      return new AiIntents.Inner_BufferHelper(raw, "game:craft", AiJson.objectOf("item", id, "count", count), "craft " + count + " " + id);
-                  } else if ((m = sync_Pattern.matcher(c)).matches()) {
-                     String what = load(m.group(5));
-                     String spec = close(what);
+                  } else if ((m = GET_PATTERN.matcher(c)).matches()) {
+                     String what = cleanItemWords(m.group(5));
+                     String spec = itemOrFamilySpec(what);
                      if (spec == null) {
                         return null;
                      }
 
-                     int count = init(m, spec, what);
+                     int count = resolveCount(m, spec, what);
                      return new AiIntents.Inner_BufferHelper(
                         raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
-                  } else if ((m = close.matcher(c)).matches()) {
-                     String what = load(m.group(5));
-                     String spec = close(what);
+                  } else if ((m = BARE_QUANTITY_PATTERN.matcher(c)).matches()) {
+                     String what = cleanItemWords(m.group(5));
+                     String spec = itemOrFamilySpec(what);
                      if (spec == null) {
                         return null;
                      }
 
-                     int count = init(m, spec, what);
+                     int count = resolveCount(m, spec, what);
                      return new AiIntents.Inner_BufferHelper(
                         raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
@@ -682,7 +682,7 @@ final class AiIntents {
                   List<String> targets = new ArrayList<>();
 
                   for (String one : who.split("\\s+or\\s+(?:an?\\s+|the\\s+)?")) {
-                     String id = update_Set.contains(one.trim()) ? "hostiles" : lookups.entityId().apply(sync(one.trim()));
+                     String id = HOSTILE_WORDS.contains(one.trim()) ? "hostiles" : lookups.entityId().apply(sync(one.trim()));
                      if (id == null) {
                         return null;
                      }
@@ -693,7 +693,7 @@ final class AiIntents {
                   }
 
                   String target = String.join(",", targets);
-                  Integer count = init(m);
+                  Integer count = matchedCount(m);
                   JsonObject args = AiJson.objectOf("target", target);
                   if (count != null && count > 1) {
                      args.addProperty("count", count);
@@ -706,7 +706,7 @@ final class AiIntents {
       }
    }
 
-   static String load(String words) {
+   static String cleanItemWords(String words) {
       String w = words.trim()
          .replaceAll("^(?:of|the|my|some|more)\\s+", "")
          .replaceAll("\\bpick\\s*axe", "pickaxe")
@@ -718,7 +718,7 @@ final class AiIntents {
          .replaceAll("\\s+(?:blocks?|pieces?|items?)$", "")
          .trim();
 
-      for (String species : write_Set) {
+      for (String species : WOOD_SPECIES) {
          if (w.equals(species + " wood") || w.equals(species + " woods")) {
             return species + " log";
          }
@@ -753,16 +753,16 @@ final class AiIntents {
       }
    }
 
-   private static String close(String words) {
+   private static String itemOrFamilySpec(String words) {
       String family = words.replace(' ', '_');
-      if (!load_Set.contains(family) && !load_Set.contains(sync(words).replace(' ', '_'))) {
-         return read(words);
+      if (!ITEM_FAMILIES.contains(family) && !ITEM_FAMILIES.contains(sync(words).replace(' ', '_'))) {
+         return resolveItemId(words);
       } else {
-         return load_Set.contains(family) ? family : sync(words).replace(' ', '_');
+         return ITEM_FAMILIES.contains(family) ? family : sync(words).replace(' ', '_');
       }
    }
 
-   static String read(String words) {
+   static String resolveItemId(String words) {
       try {
          AiItems.ItemSpec target = AiItems.resolveItem(words.replace(' ', '_'));
          if (target.items().size() == 1) {
@@ -771,12 +771,12 @@ final class AiIntents {
             return target.items().isEmpty() ? null : target.spec();
          }
       } catch (RuntimeException e) {
-         String near = write(words);
-         return near != null ? near : write(sync(words));
+         String near = fuzzyItemId(words);
+         return near != null ? near : fuzzyItemId(sync(words));
       }
    }
 
-   static String write(String words) {
+   static String fuzzyItemId(String words) {
       String w = words.trim().replace(' ', '_');
       if (w.length() < 5) {
          return null;
@@ -791,7 +791,7 @@ final class AiIntents {
          if ("minecraft".equals(id.getNamespace())) {
             String path = id.getPath();
             if (Math.abs(path.length() - w.length()) <= allowed) {
-               int edits = init(w, path, allowed);
+               int edits = boundedEditDistance(w, path, allowed);
                if (edits < bestEdits) {
                   bestEdits = edits;
                   best = id.toString();
@@ -806,7 +806,7 @@ final class AiIntents {
       return bestEdits <= allowed && !tie ? best : null;
    }
 
-   static int init(String a, String b, int cap) {
+   static int boundedEditDistance(String a, String b, int cap) {
       int[] prev = new int[b.length() + 1];
       int[] cur = new int[b.length() + 1];
       int j = 0;
@@ -837,7 +837,7 @@ final class AiIntents {
       return Math.min(prev[b.length()], cap + 1);
    }
 
-   private static String open(String words) {
+   private static String resolveBlockId(String words) {
       try {
          AiItems.ItemSpec target = AiItems.resolveBlock(words.replace(' ', '_'));
          if (target.blocks().size() == 1) {
@@ -850,15 +850,15 @@ final class AiIntents {
       }
    }
 
-   static AiIntents.Inner_BufferHelper init(String raw, String c) {
-      Matcher m = state.matcher(c);
+   static AiIntents.Inner_BufferHelper farmBuildIntent(String raw, String c) {
+      Matcher m = FARM_BUILD_PATTERN.matcher(c);
       if (!m.matches()) {
          return null;
       }
 
       String words = (m.group(1) + " " + m.group(2)).trim().replaceAll("\\s+", " ");
       JsonObject args = AiJson.objectOf("action", "build");
-      Matcher dims = queue.matcher(words);
+      Matcher dims = DIMENSIONS_PATTERN.matcher(words);
       if (dims.find()) {
          int w = Math.max(1, Math.min(15, Integer.parseInt(dims.group(1))));
          int l = Math.max(1, Math.min(15, Integer.parseInt(dims.group(2))));
@@ -887,27 +887,27 @@ final class AiIntents {
                   case "little":
                   case "tiny":
                   case "starter":
-                     init(args, 9);
+                     defaultPlotCount(args, 9);
                      break;
                   case "medium":
                   case "decent":
                   case "normal":
                   case "average":
                   case "mid":
-                     init(args, 25);
+                     defaultPlotCount(args, 25);
                      break;
                   case "big":
                   case "large":
                   case "huge":
                   case "massive":
                   case "giant":
-                     init(args, 80);
+                     defaultPlotCount(args, 80);
                      break;
                   default:
-                     Matcher n = buffer.matcher(t);
+                     Matcher n = PLOT_COUNT_PATTERN.matcher(t);
                      if (n.matches() && !args.has("count")) {
                         args.addProperty("count", Math.max(1, Math.min(128, Integer.parseInt(n.group(1)))));
-                     } else if (!sync_Set.contains(t)) {
+                     } else if (!FARM_FILLER_WORDS.contains(t)) {
                         rest.add(t);
                      }
                }
@@ -941,7 +941,7 @@ final class AiIntents {
       return "build a " + name + "farm (" + size + count + " plots)";
    }
 
-   private static void init(JsonObject args, int plots) {
+   private static void defaultPlotCount(JsonObject args, int plots) {
       if (!args.has("count")) {
          args.addProperty("count", plots);
       }
@@ -950,7 +950,7 @@ final class AiIntents {
    static boolean init(AiIntents.Inner_DataUtil ask, String answer, JsonObject args) {
       String a = answer == null ? "" : answer.trim().toLowerCase(Locale.ROOT);
       if (!ask.key().equals("crop")) {
-         Matcher dims = queue.matcher(a);
+         Matcher dims = DIMENSIONS_PATTERN.matcher(a);
          if (dims.find()) {
             int w = Math.max(1, Math.min(15, Integer.parseInt(dims.group(1))));
             int l = Math.max(1, Math.min(15, Integer.parseInt(dims.group(2))));
@@ -965,17 +965,17 @@ final class AiIntents {
                case "small":
                case "little":
                case "tiny":
-                  init(args, 9);
+                  defaultPlotCount(args, 9);
                   return true;
                case "medium":
                case "decent":
                case "normal":
-                  init(args, 25);
+                  defaultPlotCount(args, 25);
                   return true;
                case "large":
                case "big":
                case "huge":
-                  init(args, 80);
+                  defaultPlotCount(args, 80);
                   return true;
                default:
                   if (word.matches("\\d{1,3}")) {
@@ -1053,7 +1053,7 @@ final class AiIntents {
       }
    }
 
-   static Integer init(Matcher m) {
+   static Integer matchedCount(Matcher m) {
       if (m.group(1) != null) {
          return Integer.parseInt(m.group(1));
       } else if (m.group(2) != null) {
@@ -1062,14 +1062,14 @@ final class AiIntents {
          return Integer.parseInt(m.group(4)) * 64;
       } else if (m.group(3) != null) {
          String w = m.group(3).trim().replaceAll("\\s+", " ");
-         return init_Set.contains(w) ? null : w.startsWith("a couple") ? 2 : init_Map.get(w);
+         return VAGUE_QUANTITIES.contains(w) ? null : w.startsWith("a couple") ? 2 : NUMBER_WORDS.get(w);
       } else {
          return null;
       }
    }
 
-   private static int init(Matcher m, String spec, String words) {
-      Integer count = init(m);
+   private static int resolveCount(Matcher m, String spec, String words) {
+      Integer count = matchedCount(m);
       if (count != null) {
          return Math.max(1, Math.min(2304, count));
       } else {
@@ -1078,7 +1078,7 @@ final class AiIntents {
          if (family.contains("seed")) {
             return 8;
          } else {
-            return !load_Set.contains(family) && !plural ? 1 : 16;
+            return !ITEM_FAMILIES.contains(family) && !plural ? 1 : 16;
          }
       }
    }

@@ -39,8 +39,8 @@ public final class PvpHoleScanner {
    private static volatile boolean init_Z;
    private static PvpHoleScanner.Inner_CachePool activeScan;
    private static BlockPos lastCentre;
-   private static int flush;
-   private static int close;
+   private static int lastHorizontalRadius;
+   private static int lastVerticalRadius;
    private static long lastTickTime = -9223372036854775808L;
    private static long lastScanTime = -9223372036854775808L;
    private static WeakReference<Level> levelRef;
@@ -69,23 +69,23 @@ public final class PvpHoleScanner {
       init_Z = true;
       Minecraft mc = Minecraft.getInstance();
       if (mc.isSameThread()) {
-         write();
+         resetState();
       } else {
-         mc.execute(PvpHoleScanner::write);
+         mc.execute(PvpHoleScanner::resetState);
       }
    }
 
    public static void load() {
-      read();
+      tickScan();
    }
 
    public static List<PvpHoleScanner.Inner_DataUtil> holes() {
-      read();
+      tickScan();
       return snapshot.holes();
    }
 
    public static PvpHoleScanner.Inner_DataUtil holeAt(BlockPos pos) {
-      read();
+      tickScan();
       return pos == null ? null : snapshot.byCell().get(pos.asLong());
    }
 
@@ -93,7 +93,7 @@ public final class PvpHoleScanner {
       return holeAt(pos) != null;
    }
 
-   public static List<PvpHoleScanner.Inner_DataUtil> init(BlockPos centre, int horizontalRadius, int verticalRadius) {
+   public static List<PvpHoleScanner.Inner_DataUtil> scanHolesNow(BlockPos centre, int horizontalRadius, int verticalRadius) {
       Level level = Minecraft.getInstance().level;
       if (level != null && centre != null) {
          PvpHoleScanner.Inner_CachePool scan = new PvpHoleScanner.Inner_CachePool(level, centre, horizontalRadius, verticalRadius, 64000L);
@@ -104,7 +104,7 @@ public final class PvpHoleScanner {
       }
    }
 
-   public static PvpHoleScanner.Inner_DataUtil load(BlockPos pos) {
+   public static PvpHoleScanner.Inner_DataUtil scanHoleAtNow(BlockPos pos) {
       Level level = Minecraft.getInstance().level;
       if (level != null && pos != null) {
          PvpHoleScanner.Inner_CachePool scan = new PvpHoleScanner.Inner_CachePool(level, pos, 0, 0, 64000L);
@@ -115,19 +115,19 @@ public final class PvpHoleScanner {
       }
    }
 
-   private static void read() {
+   private static void tickScan() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.isSameThread()) {
          if (init_Z) {
             init_Z = false;
-            write();
+            resetState();
          }
 
          Level level = mc.level;
          if (level != null && mc.player != null && !subscribers.isEmpty()) {
             if (trackedLevel() != level) {
-               write();
-               init(level);
+               resetState();
+               trackLevel(level);
                snapshot = PvpHoleScanner.Inner_BufferHelper.EMPTY;
             }
 
@@ -145,19 +145,19 @@ public final class PvpHoleScanner {
 
                   BlockPos centre = mc.player.blockPosition();
                   boolean moved = lastCentre == null || centre.distManhattan(lastCentre) >= 4;
-                  boolean resized = horizontal != flush || vertical != close;
+                  boolean resized = horizontal != lastHorizontalRadius || vertical != lastVerticalRadius;
                   boolean stale = gameTime - lastScanTime >= 20L;
                   if (!moved && !resized && !stale) {
                      return;
                   }
 
-                  flush = horizontal;
-                  close = vertical;
+                  lastHorizontalRadius = horizontal;
+                  lastVerticalRadius = vertical;
                   activeScan = new PvpHoleScanner.Inner_CachePool(level, centre, horizontal, vertical, 2147483647L);
                }
 
                if (activeScan.step(16384)) {
-                  init(activeScan.holes);
+                  publishHoles(activeScan.holes);
                   lastCentre = activeScan.centre;
                   lastScanTime = gameTime;
                   activeScan = null;
@@ -165,14 +165,14 @@ public final class PvpHoleScanner {
             }
          } else {
             if (activeScan != null || lastCentre != null) {
-               write();
+               resetState();
             }
 
             if (snapshot != PvpHoleScanner.Inner_BufferHelper.EMPTY) {
                snapshot = PvpHoleScanner.Inner_BufferHelper.EMPTY;
             }
 
-            init(level);
+            trackLevel(level);
          }
       }
    }
@@ -182,29 +182,29 @@ public final class PvpHoleScanner {
       return ref == null ? null : ref.get();
    }
 
-   private static void init(Level level) {
+   private static void trackLevel(Level level) {
       if (trackedLevel() != level) {
          levelRef = level == null ? null : new WeakReference<>(level);
       }
    }
 
-   private static void write() {
+   private static void resetState() {
       activeScan = null;
       lastCentre = null;
       levelRef = null;
-      flush = 0;
-      close = 0;
+      lastHorizontalRadius = 0;
+      lastVerticalRadius = 0;
       lastTickTime = -9223372036854775808L;
       lastScanTime = -9223372036854775808L;
    }
 
-   private static void init(List<PvpHoleScanner.Inner_DataUtil> found) {
+   private static void publishHoles(List<PvpHoleScanner.Inner_DataUtil> found) {
       List<PvpHoleScanner.Inner_DataUtil> frozen = List.copyOf(found);
       Map<Long, PvpHoleScanner.Inner_DataUtil> byCell = new HashMap<>(Math.max(16, frozen.size() * 3));
 
       for (PvpHoleScanner.Inner_DataUtil hole : frozen) {
          for (int dx = 0; dx < hole.sizeX; dx++) {
-            for (int dz = 0; dz < hole.load; dz++) {
+            for (int dz = 0; dz < hole.sizeZ; dz++) {
                byCell.putIfAbsent(BlockPos.asLong(hole.pos.getX() + dx, hole.pos.getY(), hole.pos.getZ() + dz), hole);
             }
          }
@@ -213,7 +213,7 @@ public final class PvpHoleScanner {
       snapshot = new PvpHoleScanner.Inner_BufferHelper(frozen, byCell);
    }
 
-   private static long init(int horizontal, int vertical) {
+   private static long cellCount(int horizontal, int vertical) {
       long side = 2L * horizontal + 1L;
       return side * side * (2L * vertical + 1L);
    }
@@ -226,24 +226,24 @@ public final class PvpHoleScanner {
       private final WeakReference<Level> levelRef;
       private final BlockPos centre;
       private final int minX;
-      private final int load;
-      private final int read;
-      private final int write;
-      private final int update;
-      private final int sync;
-      private final int flush;
-      private final int close;
-      private final int open;
-      private final int poll;
-      private final int push;
+      private final int minY;
+      private final int minZ;
+      private final int maxX;
+      private final int maxY;
+      private final int maxZ;
+      private final int gridOriginX;
+      private final int gridOriginZ;
+      private final int gridSizeX;
+      private final int gridSizeZ;
+      private final int gridCells;
       private final byte[] cells;
       private final BitSet claimed;
       private final MutableBlockPos scratchPos = new MutableBlockPos();
       private final List<PvpHoleScanner.Inner_DataUtil> holes = new ArrayList<>();
-      private int pop;
-      private int tick;
-      private int run;
-      private int get = -2147483648;
+      private int cursorX;
+      private int cursorY;
+      private int cursorZ;
+      private int lastRowY = -2147483648;
       private boolean done;
 
       Inner_CachePool(Level level, BlockPos centre, int horizontal, int vertical, long maxCells) {
@@ -252,30 +252,30 @@ public final class PvpHoleScanner {
          int h = Mth.clamp(horizontal, 0, 128);
          int v = Mth.clamp(vertical, 0, 64);
 
-         while (h > 0 && PvpHoleScanner.init(h, v) > maxCells) {
+         while (h > 0 && PvpHoleScanner.cellCount(h, v) > maxCells) {
             h--;
          }
 
-         while (v > 0 && PvpHoleScanner.init(h, v) > maxCells) {
+         while (v > 0 && PvpHoleScanner.cellCount(h, v) > maxCells) {
             v--;
          }
 
          this.minX = centre.getX() - h;
-         this.write = centre.getX() + h;
-         this.read = centre.getZ() - h;
-         this.sync = centre.getZ() + h;
-         this.load = Math.max(centre.getY() - v, level.getMinY() + 1);
-         this.update = Math.min(centre.getY() + v, level.getMaxY() - 3);
-         this.flush = this.minX - 2;
-         this.close = this.read - 2;
-         this.open = this.write - this.minX + 1 + 4;
-         this.poll = this.sync - this.read + 1 + 4;
-         this.push = this.open * this.poll;
-         this.cells = new byte[this.push * 4];
-         this.claimed = new BitSet(this.push);
-         this.pop = this.minX;
-         this.tick = this.load;
-         this.run = this.read;
+         this.maxX = centre.getX() + h;
+         this.minZ = centre.getZ() - h;
+         this.maxZ = centre.getZ() + h;
+         this.minY = Math.max(centre.getY() - v, level.getMinY() + 1);
+         this.maxY = Math.min(centre.getY() + v, level.getMaxY() - 3);
+         this.gridOriginX = this.minX - 2;
+         this.gridOriginZ = this.minZ - 2;
+         this.gridSizeX = this.maxX - this.minX + 1 + 4;
+         this.gridSizeZ = this.maxZ - this.minZ + 1 + 4;
+         this.gridCells = this.gridSizeX * this.gridSizeZ;
+         this.cells = new byte[this.gridCells * 4];
+         this.claimed = new BitSet(this.gridCells);
+         this.cursorX = this.minX;
+         this.cursorY = this.minY;
+         this.cursorZ = this.minZ;
       }
 
       boolean step(int cellBudget) {
@@ -286,27 +286,27 @@ public final class PvpHoleScanner {
          int budget = Math.max(1, cellBudget);
 
          while (budget > 0) {
-            if (this.tick > this.update) {
+            if (this.cursorY > this.maxY) {
                this.done = true;
                return true;
             }
 
-            if (this.get != this.tick) {
-               this.init_V_I(this.tick);
+            if (this.lastRowY != this.cursorY) {
+               this.init_V_I(this.cursorY);
             }
 
-            this.scanCell(this.pop, this.tick, this.run);
+            this.scanCell(this.cursorX, this.cursorY, this.cursorZ);
             budget--;
-            if (++this.run > this.sync) {
-               this.run = this.read;
-               if (++this.pop > this.write) {
-                  this.pop = this.minX;
-                  this.tick++;
+            if (++this.cursorZ > this.maxZ) {
+               this.cursorZ = this.minZ;
+               if (++this.cursorX > this.maxX) {
+                  this.cursorX = this.minX;
+                  this.cursorY++;
                }
             }
          }
 
-         if (this.tick > this.update) {
+         if (this.cursorY > this.maxY) {
             this.done = true;
          }
 
@@ -314,15 +314,15 @@ public final class PvpHoleScanner {
       }
 
       private void init_V_I(int row) {
-         if (this.get != -2147483648 && row - this.get == 1) {
+         if (this.lastRowY != -2147483648 && row - this.lastRowY == 1) {
             int slot = row + 2 & 3;
-            Arrays.fill(this.cells, slot * this.push, (slot + 1) * this.push, (byte)0);
+            Arrays.fill(this.cells, slot * this.gridCells, (slot + 1) * this.gridCells, (byte)0);
          } else {
             Arrays.fill(this.cells, (byte)0);
          }
 
          this.claimed.clear();
-         this.get = row;
+         this.lastRowY = row;
       }
 
       private void scanCell(int cellX, int cellY, int cellZ) {
@@ -347,7 +347,7 @@ public final class PvpHoleScanner {
                   this.init_V(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1], PvpHoleScanner.HORIZONTALS[open2]);
                   break;
                case 3:
-                  this.init(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1]);
+                  this.extendThroughOpenSide(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1]);
                   break;
                case 4:
                   this.load_V(cellX, cellY, cellZ);
@@ -366,7 +366,7 @@ public final class PvpHoleScanner {
          this.addHole(new PvpHoleScanner.Inner_DataUtil(bedrock ? PvpHoleScanner.Inner_StreamUtil.ONE_BY_ONE_BEDROCK : PvpHoleScanner.Inner_StreamUtil.ONE_BY_ONE, new BlockPos(cellX, cellY, cellZ), 1, 1));
       }
 
-      private void init(int cellX, int cellY, int cellZ, Direction open) {
+      private void extendThroughOpenSide(int cellX, int cellY, int cellZ, Direction open) {
          int otherX = cellX + open.getStepX();
          int otherZ = cellZ + open.getStepZ();
          if (this.init_Z(otherX, cellY, otherZ)) {
@@ -420,16 +420,16 @@ public final class PvpHoleScanner {
          this.holes.add(hole);
 
          for (int dx = 0; dx < hole.sizeX; dx++) {
-            for (int dz = 0; dz < hole.load; dz++) {
+            for (int dz = 0; dz < hole.sizeZ; dz++) {
                this.claim(hole.pos.getX() + dx, hole.pos.getZ() + dz);
             }
          }
       }
 
       private int columnIndex(int cellX, int cellZ) {
-         int dx = cellX - this.flush;
-         int dz = cellZ - this.close;
-         return dx >= 0 && dz >= 0 && dx < this.open && dz < this.poll ? dx * this.poll + dz : -1;
+         int dx = cellX - this.gridOriginX;
+         int dz = cellZ - this.gridOriginZ;
+         return dx >= 0 && dz >= 0 && dx < this.gridSizeX && dz < this.gridSizeZ ? dx * this.gridSizeZ + dz : -1;
       }
 
       private void claim(int cellX, int cellZ) {
@@ -446,8 +446,8 @@ public final class PvpHoleScanner {
 
       private byte cellAt(int cellX, int cellY, int cellZ) {
          int index = this.columnIndex(cellX, cellZ);
-         if (index >= 0 && cellY >= this.get - 1 && cellY <= this.get + 2) {
-            index += (cellY & 3) * this.push;
+         if (index >= 0 && cellY >= this.lastRowY - 1 && cellY <= this.lastRowY + 2) {
+            index += (cellY & 3) * this.gridCells;
             byte cached = this.cells[index];
             if (cached != 0) {
                return cached;
@@ -491,14 +491,14 @@ public final class PvpHoleScanner {
       private final PvpHoleScanner.Inner_StreamUtil type;
       private final BlockPos pos;
       private final int sizeX;
-      private final int load;
+      private final int sizeZ;
       private final AABB box;
 
       private Inner_DataUtil(PvpHoleScanner.Inner_StreamUtil type, BlockPos pos, int sizeX, int sizeZ) {
          this.type = type;
          this.pos = pos;
          this.sizeX = sizeX;
-         this.load = sizeZ;
+         this.sizeZ = sizeZ;
          this.box = new AABB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + sizeX, pos.getY() + 1, pos.getZ() + sizeZ);
       }
 
@@ -514,8 +514,8 @@ public final class PvpHoleScanner {
          return this.sizeX;
       }
 
-      public int load() {
-         return this.load;
+      public int sizeZ() {
+         return this.sizeZ;
       }
 
       public AABB box() {
@@ -526,38 +526,38 @@ public final class PvpHoleScanner {
          return this.type == PvpHoleScanner.Inner_StreamUtil.ONE_BY_ONE_BEDROCK;
       }
 
-      public int read() {
-         return this.sizeX * this.load;
+      public int area() {
+         return this.sizeX * this.sizeZ;
       }
 
-      public boolean init(int x, int y, int z) {
+      public boolean contains(int x, int y, int z) {
          return y == this.pos.getY()
             && x >= this.pos.getX()
             && x < this.pos.getX() + this.sizeX
             && z >= this.pos.getZ()
-            && z < this.pos.getZ() + this.load;
+            && z < this.pos.getZ() + this.sizeZ;
       }
 
-      public boolean init(BlockPos other) {
-         return other != null && this.init(other.getX(), other.getY(), other.getZ());
+      public boolean contains(BlockPos other) {
+         return other != null && this.contains(other.getX(), other.getY(), other.getZ());
       }
 
-      public boolean load(BlockPos placed) {
+      public boolean coversColumn(BlockPos placed) {
          return placed == null
             ? false
             : placed.getX() >= this.pos.getX()
                && placed.getX() < this.pos.getX() + this.sizeX
                && placed.getZ() >= this.pos.getZ()
-               && placed.getZ() < this.pos.getZ() + this.load
+               && placed.getZ() < this.pos.getZ() + this.sizeZ
                && placed.getY() >= this.pos.getY()
                && placed.getY() <= this.pos.getY() + 2;
       }
 
       public List<BlockPos> cells() {
-         List<BlockPos> list = new ArrayList<>(this.sizeX * this.load);
+         List<BlockPos> list = new ArrayList<>(this.sizeX * this.sizeZ);
 
          for (int dx = 0; dx < this.sizeX; dx++) {
-            for (int dz = 0; dz < this.load; dz++) {
+            for (int dz = 0; dz < this.sizeZ; dz++) {
                list.add(new BlockPos(this.pos.getX() + dx, this.pos.getY(), this.pos.getZ() + dz));
             }
          }
@@ -573,7 +573,7 @@ public final class PvpHoleScanner {
             return obj instanceof PvpHoleScanner.Inner_DataUtil other
                ? this.type == other.type
                   && this.sizeX == other.sizeX
-                  && this.load == other.load
+                  && this.sizeZ == other.sizeZ
                   && this.pos.equals(other.pos)
                : false;
          }

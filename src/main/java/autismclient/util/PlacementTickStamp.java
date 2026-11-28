@@ -1,16 +1,16 @@
 package autismclient.util;
 
 public final class PlacementTickStamp {
-   private static volatile int init = -2147483648;
+   private static volatile int stampTick = -2147483648;
 
    private PlacementTickStamp() {
    }
 
    public static void stamp() {
-      init = AutismSessionState.getInstance().getClientTick();
+      stampTick = AutismSessionState.getInstance().getClientTick();
    }
 
    public static boolean isThisTick() {
-      return init == AutismSessionState.getInstance().getClientTick();
+      return stampTick == AutismSessionState.getInstance().getClientTick();
    }
 }

@@ -59,10 +59,10 @@ public final class OreSimEngine {
    private static volatile String statusMessage = "";
    private static int trackedCenterX;
    private static int trackedCenterZ;
-   private static int poll = 1;
+   private static int requestedRadius = 1;
    private static boolean centerChunkDone;
    private static final AtomicInteger changeRevision = new AtomicInteger();
-   private static volatile int push;
+   private static volatile int totalPositions;
    private static volatile boolean oreCapReached;
    private static volatile boolean lastQueryCapped;
    private static volatile long pausedSinceNanos;
@@ -116,7 +116,7 @@ public final class OreSimEngine {
 
          int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
          int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
-         int radius = Math.max(1, Math.min(poll, 8));
+         int radius = Math.max(1, Math.min(requestedRadius, 8));
          int diameter = radius * 2 + 1;
          int complete = 0;
 
@@ -134,7 +134,7 @@ public final class OreSimEngine {
    }
 
    public static int positionCount() {
-      return push;
+      return totalPositions;
    }
 
    public static boolean isOreCapReached() {
@@ -175,7 +175,7 @@ public final class OreSimEngine {
             oreCapReached = false;
             auditWriteDeadline = 0L;
             auditHasWriteDeadline = false;
-            push = 0;
+            totalPositions = 0;
             chunkOres.clear();
             pendingChunkOres.clear();
             inFlightTiles.clear();
@@ -235,7 +235,7 @@ public final class OreSimEngine {
    public static void init(ClientLevel level, BlockPos playerPos, Long worldSeed, int radius, int enabledMask) {
       if (level != null && playerPos != null && worldSeed != null) {
          ResourceKey<Level> dimension = level.dimension();
-         if (!init(dimension)) {
+         if (!supportsDimension(dimension)) {
             synchronized (LOCK) {
                if (!unsupportedDimension || activeWorldKey != null || !chunkOres.isEmpty() || !pendingChunkOres.isEmpty() || contextLoading || generating || worldgenUnverified) {
                   generation++;
@@ -253,7 +253,7 @@ public final class OreSimEngine {
                   synchronized (disprovenPositions) {
                      disprovenPositions.clear();
                   }
-                  push = 0;
+                  totalPositions = 0;
                   changeRevision.incrementAndGet();
                }
 
@@ -266,12 +266,12 @@ public final class OreSimEngine {
             OreSimEngine.Inner_StreamUtil wanted = new OreSimEngine.Inner_StreamUtil(worldSeed, dimension);
             synchronized (LOCK) {
                if (!wanted.equals(activeWorldKey)) {
-                  init(wanted);
+                  switchWorld(wanted);
                }
 
                trackedCenterX = playerPos.getX();
                trackedCenterZ = playerPos.getZ();
-               poll = Math.max(1, Math.min(radius, 8));
+               requestedRadius = Math.max(1, Math.min(radius, 8));
                flush();
                promoteReadyPending();
                if (worldgenContext != null && !generating && !verificationRunning && (!auditHasWriteDeadline || System.nanoTime() - auditWriteDeadline >= 0L)) {
@@ -292,7 +292,7 @@ public final class OreSimEngine {
                   int maxParallel = WORKERS.maxWorkers();
 
                   while (inFlightTiles.size() < maxParallel) {
-                     OreSimEngine.Inner_TaskQueue tile = nearestTile(trackedCenterX, trackedCenterZ, poll);
+                     OreSimEngine.Inner_TaskQueue tile = nearestTile(trackedCenterX, trackedCenterZ, requestedRadius);
                      if (tile == null) {
                         break;
                      }
@@ -307,11 +307,11 @@ public final class OreSimEngine {
       }
    }
 
-   private static boolean init(ResourceKey<Level> dimension) {
+   private static boolean supportsDimension(ResourceKey<Level> dimension) {
       return Level.OVERWORLD.equals(dimension) || Level.NETHER.equals(dimension) || Level.END.equals(dimension);
    }
 
-   private static void init(OreSimEngine.Inner_StreamUtil wanted) {
+   private static void switchWorld(OreSimEngine.Inner_StreamUtil wanted) {
       generation++;
       cancelWorkers();
       activeWorldKey = wanted;
@@ -327,7 +327,7 @@ public final class OreSimEngine {
       oreCapReached = false;
       auditWriteDeadline = 0L;
       auditHasWriteDeadline = false;
-      push = 0;
+      totalPositions = 0;
       synchronized (disprovenPositions) {
          disprovenPositions.clear();
       }
@@ -364,7 +364,7 @@ public final class OreSimEngine {
                auditWriteDeadline = System.nanoTime() + AUDIT_WRITE_DELAY_NANOS;
                auditHasWriteDeadline = true;
                if (!tagsVerified) {
-                  init("Minecraft block tags differ from the vanilla 26.3 worldgen profile");
+                  abort("Minecraft block tags differ from the vanilla 26.3 worldgen profile");
                }
             }
          }
@@ -403,13 +403,13 @@ public final class OreSimEngine {
                   }
 
                   if (!chunkOres.containsKey(chunkKey) && !pendingChunkOres.containsKey(chunkKey)) {
-                     if (push + ores.init() > 600000) {
+                     if (totalPositions + ores.size() > 600000) {
                         oreCapReached = true;
                         return;
                      }
 
                      chunkOres.put(chunkKey, ores);
-                     push = push + ores.init();
+                     totalPositions = totalPositions + ores.size();
                      changeRevision.incrementAndGet();
                   }
 
@@ -483,17 +483,17 @@ public final class OreSimEngine {
 
                         for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
                            if (!chunkOres.containsKey(entry.getKey()) && !pendingChunkOres.containsKey(entry.getKey())) {
-                              added += entry.getValue().init();
+                              added += entry.getValue().size();
                            }
                         }
 
-                        if (push + added > 600000) {
+                        if (totalPositions + added > 600000) {
                            oreCapReached = true;
                         } else {
                            for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
                               if (!chunkOres.containsKey(entry.getKey()) && !pendingChunkOres.containsKey(entry.getKey())) {
                                  pendingChunkOres.put(entry.getKey(), entry.getValue());
-                                 push = push + entry.getValue().init();
+                                 totalPositions = totalPositions + entry.getValue().size();
                               }
                            }
 
@@ -551,7 +551,7 @@ public final class OreSimEngine {
          pendingChunkOres.clear();
          inFlightTiles.clear();
          initialChunkPending = false;
-         push = 0;
+         totalPositions = 0;
          worldgenUnverified = false;
          changeRevision.incrementAndGet();
          accepted = true;
@@ -565,12 +565,12 @@ public final class OreSimEngine {
    private static void failIfCurrent(long token, String message) {
       synchronized (LOCK) {
          if (token == generation) {
-            init(message);
+            abort(message);
          }
       }
    }
 
-   private static void init(String message) {
+   private static void abort(String message) {
       generation++;
       cancelWorkers();
       contextLoading = false;
@@ -584,7 +584,7 @@ public final class OreSimEngine {
       oreCapReached = false;
       auditWriteDeadline = System.nanoTime() + AUDIT_WRITE_DELAY_NANOS;
       auditHasWriteDeadline = true;
-      push = 0;
+      totalPositions = 0;
       chunkOres.clear();
       pendingChunkOres.clear();
       inFlightTiles.clear();
@@ -621,7 +621,7 @@ public final class OreSimEngine {
                auditWriteDeadline = System.nanoTime() + AUDIT_WRITE_DELAY_NANOS;
                auditHasWriteDeadline = true;
                if (!verified) {
-                  init(failure == null ? "Minecraft block tags differ from the vanilla 26.3 worldgen profile" : "Minecraft block tags could not be verified");
+                  abort(failure == null ? "Minecraft block tags differ from the vanilla 26.3 worldgen profile" : "Minecraft block tags could not be verified");
                } else if (worldgenUnverified) {
                   generation++;
                   worldgenUnverified = false;
@@ -713,20 +713,20 @@ public final class OreSimEngine {
       int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
       int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
       return NearestChunkSelector.select(
-         trackedCenterX + 0.5, trackedCenterZ + 0.5, centerX, centerZ, poll, key -> chunkOres.containsKey(key) || pendingChunkOres.containsKey(key)
+         trackedCenterX + 0.5, trackedCenterZ + 0.5, centerX, centerZ, requestedRadius, key -> chunkOres.containsKey(key) || pendingChunkOres.containsKey(key)
       );
    }
 
    private static void flush() {
       int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
       int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
-      int keep = poll + 4;
+      int keep = requestedRadius + 4;
       int removed = 0;
 
       for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : chunkOres.entrySet()) {
          long key = entry.getKey();
          if ((Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) && chunkOres.remove(key, entry.getValue())) {
-            removed += entry.getValue().init();
+            removed += entry.getValue().size();
          }
       }
 
@@ -736,13 +736,13 @@ public final class OreSimEngine {
          Entry<Long, OreSimEngine.Inner_DataUtil> entry = pending.next();
          long key = entry.getKey();
          if (Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) {
-            removed += entry.getValue().init();
+            removed += entry.getValue().size();
             pending.remove();
          }
       }
 
       if (removed > 0) {
-         push = Math.max(0, push - removed);
+         totalPositions = Math.max(0, totalPositions - removed);
          oreCapReached = false;
          changeRevision.incrementAndGet();
       }
@@ -926,7 +926,7 @@ public final class OreSimEngine {
          this.stateIds = stateIds;
       }
 
-      int init() {
+      int size() {
          return this.positions.length;
       }
    }

@@ -28,12 +28,12 @@ public final class CustomSkyboxRenderer {
       {0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F}
    };
    private static final Identifier[] init_IdentifierArr = new Identifier[]{
-      init("panorama_0"), init("panorama_1"), init("panorama_2"), init("panorama_3"), init("panorama_5"), init("panorama_4")
+      panorama("panorama_0"), panorama("panorama_1"), panorama("panorama_2"), panorama("panorama_3"), panorama("panorama_5"), panorama("panorama_4")
    };
    private static final float init_F = 64.0F;
    private static final float load_F = 32.0F;
-   private static final float read = 0.286F;
-   private static float write;
+   private static final float SPIN_RATE = 0.286F;
+   private static float spinAngle;
    private static long init_J;
 
    private CustomSkyboxRenderer() {
@@ -55,7 +55,7 @@ public final class CustomSkyboxRenderer {
          boolean recolor = w.bool("skybox-recolor");
          int customColor = am.init_I_Module(w, "skybox-color", -50373);
          float speed = (float)Math.max(0.5, Math.min(3.0, w.decimal("skybox-speed")));
-         float spin = init(w.bool("skybox-spin"), speed);
+         float spin = spin(w.bool("skybox-spin"), speed);
          Matrix4f rotation = new Matrix4f().rotationY(-spin * 0.017453292F).rotateX(3.700098F);
          Vector3f corner = new Vector3f();
 
@@ -84,7 +84,7 @@ public final class CustomSkyboxRenderer {
       }
    }
 
-   private static float init(boolean spinning, float speed) {
+   private static float spin(boolean spinning, float speed) {
       long now = System.nanoTime();
       if (init_J == 0L) {
          init_J = now;
@@ -93,13 +93,13 @@ public final class CustomSkyboxRenderer {
       float dt = (float)(now - init_J) / 1.0E9F;
       init_J = now;
       if (spinning && dt > 0.0F) {
-         write = (write + Math.min(dt, 0.25F) * 0.286F * speed) % 360.0F;
+         spinAngle = (spinAngle + Math.min(dt, 0.25F) * 0.286F * speed) % 360.0F;
       }
 
-      return spinning ? write : 0.0F;
+      return spinning ? spinAngle : 0.0F;
    }
 
-   private static Identifier init(String name) {
+   private static Identifier panorama(String name) {
       return Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/" + name + ".png");
    }
 

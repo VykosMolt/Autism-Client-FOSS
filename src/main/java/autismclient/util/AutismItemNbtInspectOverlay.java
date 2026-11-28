@@ -164,7 +164,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         tab.init_I(),
                         tab.load(),
                         tab.read(),
-                        this.clear(),
+                        this.tabHeight(),
                         tab.label(),
                         "Raw".equals(tab.label()) == this.sync_Z,
                         mouseX,
@@ -173,13 +173,13 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   }
 
                   int listX = this.windowX + this.padding();
-                  int listY = tabY + this.clear() + 2;
+                  int listY = tabY + this.tabHeight() + 2;
                   int listWidth = this.windowWidth - this.padding() * 2;
                   int footerY = this.footerY();
                   int listHeight = Math.max(1, footerY - listY - 4);
                   int lineH = this.lineHeight();
-                  int textX = listX + this.put();
-                  int maxTextWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.put());
+                  int textX = listX + this.textPadding();
+                  int maxTextWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.textPadding());
                   this.rewrap(maxTextWidth);
                   if (this.listView == null
                      || this.listView.getX() != listX
@@ -212,18 +212,18 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                      this.theme.load(autismclient.gui.f.b.l.write),
                      this.windowX + this.padding() + 2,
-                     UiLayoutMath.centerTextY(footerY, this.clear(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
+                     UiLayoutMath.centerTextY(footerY, this.tabHeight(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
                      false
                   );
 
-                  for (AutismItemNbtInspectOverlay.Inner_DataUtil button : this.load(footerY)) {
+                  for (AutismItemNbtInspectOverlay.Inner_DataUtil button : this.footerButtons(footerY)) {
                      autismclient.gui.ui.widgets.ButtonDrawHelper.init(
                         context,
                         this.font,
                         button.init_I(),
                         button.load(),
                         button.read(),
-                        this.clear(),
+                        this.tabHeight(),
                         button.label(),
                         button.active() ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
                         true,
@@ -279,7 +279,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             int tabY = this.tabY();
 
             for (AutismItemNbtInspectOverlay.Inner_DataUtil tab : this.tabs(tabY)) {
-               if (tab.init(mouseX, mouseY, this.clear())) {
+               if (tab.contains(mouseX, mouseY, this.tabHeight())) {
                   this.sync_Z = "Raw".equals(tab.label());
                   this.layoutDirty = true;
                   if (this.listView != null) {
@@ -296,8 +296,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
             int footerY = this.footerY();
 
-            for (AutismItemNbtInspectOverlay.Inner_DataUtil footer : this.load(footerY)) {
-               if (footer.init(mouseX, mouseY, this.clear())) {
+            for (AutismItemNbtInspectOverlay.Inner_DataUtil footer : this.footerButtons(footerY)) {
+               if (footer.contains(mouseX, mouseY, this.tabHeight())) {
                   this.copyToClipboard(footer.label());
                   return true;
                }
@@ -465,21 +465,21 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       } else {
          String text = line.text();
          if (text == null || text.isEmpty()) {
-            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, line.color()));
+            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.plain("", 0, line.color()));
          } else if (this.isBlank(text)) {
             this.wrapText(text, 0, line.color(), maxWidth, target);
          } else {
             int leadingSpaces = this.leadingSpaces(text);
             String indentComponent = " ".repeat(leadingSpaces);
-            int indentWidth = this.load(indentComponent);
+            int indentWidth = this.textWidth(indentComponent);
             int colonIndex = text.indexOf(58, leadingSpaces);
             if (colonIndex > leadingSpaces && colonIndex < text.length() - 1) {
                String label = text.substring(leadingSpaces, colonIndex + 1).trim();
                String value = text.substring(colonIndex + 1).stripLeading();
                String prefix = indentComponent + label + " ";
-               int prefixWidth = this.load(prefix);
-               int continuationOffset = Math.min(prefixWidth, indentWidth + this.stop());
-               this.init(prefix, value, line.color(), prefixWidth, continuationOffset, maxWidth, target);
+               int prefixWidth = this.textWidth(prefix);
+               int continuationOffset = Math.min(prefixWidth, indentWidth + this.continuationIndent());
+               this.wrapValue(prefix, value, line.color(), prefixWidth, continuationOffset, maxWidth, target);
             } else {
                this.wrapText(text.substring(leadingSpaces), indentWidth, line.color(), maxWidth, target);
             }
@@ -487,7 +487,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init(
+   private void wrapValue(
       String prefix,
       String value,
       int valueColor,
@@ -508,7 +508,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, offset);
             String current = remaining;
             int split = autismclient.gui.ui.TextWrapLayout.init(
-               current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
+               current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
             target.add(this.wrappedLine(firstLine ? prefix : null, part, valueColor, offset));
@@ -516,7 +516,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          }
       } else {
          target.add(
-            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.silver()), new ItemNbtInspector.Inner_TaskQueue("", valueColor)), 0)
+            AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(List.of(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.silver()), new ItemNbtInspector.Inner_TaskQueue("", valueColor)), 0)
          );
       }
    }
@@ -524,7 +524,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private void wrapText(String text, int offset, int color, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
       if (text != null) {
          if (text.isEmpty()) {
-            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", offset, color));
+            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.plain("", offset, color));
          } else {
             int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, offset);
             String remaining = text;
@@ -533,10 +533,10 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, safeOffset);
                String current = remaining;
                int split = autismclient.gui.ui.TextWrapLayout.init(
-                  current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
+                  current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
                );
                String part = remaining.substring(0, split).stripTrailing();
-               target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(part, safeOffset, color));
+               target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.plain(part, safeOffset, color));
                remaining = remaining.substring(split).stripLeading();
             }
          }
@@ -559,7 +559,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   y,
                   false
                );
-               cursor += this.load(token.text());
+               cursor += this.textWidth(token.text());
             }
          }
       }
@@ -568,7 +568,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private void wrapTokens(List<ItemNbtInspector.Inner_TaskQueue> source, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
       if (source != null && !source.isEmpty()) {
          int indent = this.tokensWidth(source);
-         int continuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, indent + this.stop());
+         int continuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, indent + this.continuationIndent());
          List<ItemNbtInspector.Inner_TaskQueue> current = new ArrayList<>();
          int currentWidth = 0;
          boolean continuation = false;
@@ -583,7 +583,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   String piece = this.fitPrefix(remaining, room);
                   if (piece.isEmpty()) {
                      if (!current.isEmpty()) {
-                        target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
+                        target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(current, continuation ? continuationOffset : 0));
                         current = new ArrayList<>();
                         currentWidth = 0;
                         continuation = true;
@@ -594,16 +594,16 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   }
 
                   current.add(new ItemNbtInspector.Inner_TaskQueue(piece, token.color()));
-                  currentWidth += this.load(piece);
+                  currentWidth += this.textWidth(piece);
                   remaining = remaining.substring(piece.length());
                   if (!remaining.isEmpty()) {
-                     target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
+                     target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(current, continuation ? continuationOffset : 0));
                      current = new ArrayList<>();
                      currentWidth = 0;
                      continuation = true;
                      remaining = remaining.stripLeading();
                   } else if (currentWidth >= Math.max(22, limit - 4)) {
-                     target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
+                     target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(current, continuation ? continuationOffset : 0));
                      current = new ArrayList<>();
                      currentWidth = 0;
                      continuation = true;
@@ -613,10 +613,10 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          }
 
          if (!current.isEmpty()) {
-            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init(current, continuation ? continuationOffset : 0));
+            target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(current, continuation ? continuationOffset : 0));
          }
       } else {
-         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", 0, UiColorPalette.textMuted()));
+         target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.plain("", 0, UiColorPalette.textMuted()));
       }
    }
 
@@ -627,7 +627,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
 
       tokens.add(new ItemNbtInspector.Inner_TaskQueue(value == null ? "" : value, valueColor));
-      return AutismItemNbtInspectOverlay.Inner_StreamUtil.init(tokens, prefix != null && !prefix.isEmpty() ? 0 : offset);
+      return AutismItemNbtInspectOverlay.Inner_StreamUtil.ofTokens(tokens, prefix != null && !prefix.isEmpty() ? 0 : offset);
    }
 
    private int tokensWidth(List<ItemNbtInspector.Inner_TaskQueue> tokens) {
@@ -646,7 +646,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                return width;
             }
 
-            width += this.load(text.substring(0, spaces));
+            width += this.textWidth(text.substring(0, spaces));
             if (spaces < text.length()) {
                return width;
             }
@@ -658,7 +658,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    private String fitPrefix(String value, int maxWidth) {
       if (value != null && !value.isEmpty()) {
-         if (this.load(value) <= maxWidth) {
+         if (this.textWidth(value) <= maxWidth) {
             return value;
          }
 
@@ -668,7 +668,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          while (low < high) {
             int mid = low + high + 1 >>> 1;
             String candidate = value.substring(0, mid);
-            if (this.load(candidate) <= maxWidth) {
+            if (this.textWidth(candidate) <= maxWidth) {
                low = mid;
             } else {
                high = mid - 1;
@@ -696,7 +696,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return count;
    }
 
-   private int load(String text) {
+   private int textWidth(String text) {
       return text != null && !text.isEmpty()
          ? autismclient.gui.f.b.k.init(this.font, text, this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite())
          : 0;
@@ -728,7 +728,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    private List<AutismItemNbtInspectOverlay.Inner_DataUtil> tabs(int y) {
       int x = this.windowX + this.padding();
-      int w = Math.max(40, Math.max(this.write("Nice"), this.write("Raw")));
+      int w = Math.max(40, Math.max(this.tabButtonWidth("Nice"), this.tabButtonWidth("Raw")));
       return List.of(
          new AutismItemNbtInspectOverlay.Inner_DataUtil("Nice", x, y, w, false), new AutismItemNbtInspectOverlay.Inner_DataUtil("Raw", x + w + 2, y, w, false)
       );
@@ -739,7 +739,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int contentTop() {
-      return 14 + this.padding() + this.clear() + 2 + 4 + this.footerHeight();
+      return 14 + this.padding() + this.tabHeight() + 2 + 4 + this.footerHeight();
    }
 
    private int footerY() {
@@ -761,17 +761,17 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             this.theme.load(autismclient.gui.f.b.l.write)
          )
          + 6
-         + this.read("Copy Raw")
-         + this.read("Copy Nice")
-         + this.reset();
+         + this.footerButtonWidth("Copy Raw")
+         + this.footerButtonWidth("Copy Nice")
+         + this.buttonGap();
       if (this.poll_Z_6()) {
-         need += this.read("Fill Editor") + this.reset();
+         need += this.footerButtonWidth("Fill Editor") + this.buttonGap();
       }
 
       return need <= this.windowWidth - this.padding() * 2;
    }
 
-   private List<AutismItemNbtInspectOverlay.Inner_DataUtil> load(int y) {
+   private List<AutismItemNbtInspectOverlay.Inner_DataUtil> footerButtons(int y) {
       ArrayList<AutismItemNbtInspectOverlay.Inner_DataUtil> buttons = new ArrayList<>();
       boolean editor = !AutismLiteVariant.enabled()
          && this.inspection != null
@@ -783,7 +783,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             this.layoutButtons(buttons, firstCursor, y, "Fill Editor", true);
          }
 
-         int rowY = y + this.clear() + 2;
+         int rowY = y + this.tabHeight() + 2;
          int secondCursor = this.windowX + this.windowWidth - this.padding();
          secondCursor = this.layoutButtons(buttons, secondCursor, rowY, "Copy Raw", false);
          this.layoutButtons(buttons, secondCursor, rowY, "Copy Nice", false);
@@ -801,17 +801,17 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int layoutButtons(List<AutismItemNbtInspectOverlay.Inner_DataUtil> buttons, int cursorX, int y, String label, boolean primary) {
-      int width = this.read(label);
+      int width = this.footerButtonWidth(label);
       int x = cursorX - width;
       buttons.add(new AutismItemNbtInspectOverlay.Inner_DataUtil(label, x, y, width, primary));
-      return x - this.reset();
+      return x - this.buttonGap();
    }
 
-   private int read(String label) {
+   private int footerButtonWidth(String label) {
       return autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 36, 78);
    }
 
-   private int write(String label) {
+   private int tabButtonWidth(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
          autismclient.gui.f.b.k.init(
             this.font,
@@ -826,20 +826,20 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return 4;
    }
 
-   private int put() {
+   private int textPadding() {
       return 4;
    }
 
    private int footerHeight() {
       int rows = this.footerFitsOneRow() ? 1 : 2;
-      return rows * this.clear() + (rows - 1) * 2 + this.padding();
+      return rows * this.tabHeight() + (rows - 1) * 2 + this.padding();
    }
 
-   private int clear() {
+   private int tabHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int reset() {
+   private int buttonGap() {
       return 2;
    }
 
@@ -847,22 +847,22 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int stop() {
+   private int continuationIndent() {
       return 12;
    }
 
    private record Inner_DataUtil(String label, int init_I, int load, int read, boolean active) {
-      boolean init(double mouseX, double mouseY, int height) {
+      boolean contains(double mouseX, double mouseY, int height) {
          return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + height;
       }
    }
 
    private record Inner_StreamUtil(List<ItemNbtInspector.Inner_TaskQueue> tokens, int indent) {
-      static AutismItemNbtInspectOverlay.Inner_StreamUtil init(String text, int offset, int color) {
+      static AutismItemNbtInspectOverlay.Inner_StreamUtil plain(String text, int offset, int color) {
          return new AutismItemNbtInspectOverlay.Inner_StreamUtil(List.of(new ItemNbtInspector.Inner_TaskQueue(text, color)), offset);
       }
 
-      static AutismItemNbtInspectOverlay.Inner_StreamUtil init(List<ItemNbtInspector.Inner_TaskQueue> tokens, int offset) {
+      static AutismItemNbtInspectOverlay.Inner_StreamUtil ofTokens(List<ItemNbtInspector.Inner_TaskQueue> tokens, int offset) {
          return new AutismItemNbtInspectOverlay.Inner_StreamUtil(List.copyOf(tokens), offset);
       }
    }

@@ -81,7 +81,7 @@ final class CraftingClickPlanner {
       CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.Inner_NetHelper spec, int wantCrafts, int selectedHotbar
    ) {
       List<CraftingClickPlanner.Inner_ConfigStore> phases = new ArrayList<>();
-      ItemStack[] state = init(slots);
+      ItemStack[] state = copySlots(slots);
       ItemStack hand = carried == null ? ItemStack.EMPTY : carried.copy();
       int left = wantCrafts;
 
@@ -94,7 +94,7 @@ final class CraftingClickPlanner {
          CraftingClickPlanner.Inner_ConfigStore phase = outcome.phase();
          phases.add(phase);
          left -= phase.load_I();
-         state = init(phase.finalSlots());
+         state = copySlots(phase.finalSlots());
          hand = phase.finalCarried().copy();
       }
 
@@ -113,22 +113,22 @@ final class CraftingClickPlanner {
    ) {
       CraftingClickPlanner.Inner_TaskQueue sim = new CraftingClickPlanner.Inner_TaskQueue(layout, spec, slots, carried);
       if (!sim.stowCarried()) {
-         return CraftingClickPlanner.Inner_DataUtil.load("The cursor holds an item and the inventory has no room for it.");
+         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("The cursor holds an item and the inventory has no room for it.");
       }
 
       if (!sim.clearGrid()) {
-         return CraftingClickPlanner.Inner_DataUtil.load("No room to clear the crafting grid.");
+         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("No room to clear the crafting grid.");
       }
 
-      Map<Integer, ItemStack> assignment = init(sim, crafts);
+      Map<Integer, ItemStack> assignment = assignIngredients(sim, crafts);
       if (assignment == null) {
-         return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.result().getHoverName().getString() + ".");
+         return CraftingClickPlanner.Inner_DataUtil.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
       }
 
       if (crafts > 1) {
          for (ItemStack key : assignment.values()) {
             if (!craftingRemainder(key).isEmpty()) {
-               return CraftingClickPlanner.Inner_DataUtil.init("one craft at a time");
+               return CraftingClickPlanner.Inner_DataUtil.failure("one craft at a time");
             }
          }
       }
@@ -149,13 +149,13 @@ final class CraftingClickPlanner {
       }
 
       for (Entry<ItemStack, List<Integer>> group : groups.entrySet()) {
-         if (!init(sim, group.getKey(), group.getValue(), crafts, selectedHotbar)) {
-            return CraftingClickPlanner.Inner_DataUtil.init("Missing materials for " + spec.result().getHoverName().getString() + ".");
+         if (!fillCells(sim, group.getKey(), group.getValue(), crafts, selectedHotbar)) {
+            return CraftingClickPlanner.Inner_DataUtil.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
          }
       }
 
       if (!sim.gridMatchesRecipe()) {
-         return CraftingClickPlanner.Inner_DataUtil.load("The planned grid does not match the recipe.");
+         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("The planned grid does not match the recipe.");
       }
 
       sim.takeAllResults();
@@ -163,17 +163,17 @@ final class CraftingClickPlanner {
          sim.clearGrid();
          if (sim.carried.isEmpty() && !sim.simulationInvalid) {
             return crafts > 1 && sim.clicks.size() > 96
-               ? CraftingClickPlanner.Inner_DataUtil.init("too many clicks")
+               ? CraftingClickPlanner.Inner_DataUtil.failure("too many clicks")
                : new CraftingClickPlanner.Inner_DataUtil(sim.toPhase(crafts), null, false);
          } else {
-            return CraftingClickPlanner.Inner_DataUtil.init("No room in the inventory for the result.");
+            return CraftingClickPlanner.Inner_DataUtil.failure("No room in the inventory for the result.");
          }
       } else {
-         return CraftingClickPlanner.Inner_DataUtil.init("No room in the inventory for the result.");
+         return CraftingClickPlanner.Inner_DataUtil.failure("No room in the inventory for the result.");
       }
    }
 
-   private static Map<Integer, ItemStack> init(CraftingClickPlanner.Inner_TaskQueue sim, int crafts) {
+   private static Map<Integer, ItemStack> assignIngredients(CraftingClickPlanner.Inner_TaskQueue sim, int crafts) {
       Ingredient[] cells = sim.cells;
       List<ItemStack> keys = new ArrayList<>();
       List<Integer> avail = new ArrayList<>();
@@ -181,7 +181,7 @@ final class CraftingClickPlanner {
       for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
          ItemStack stack = sim.slots[slot];
          if (isUsableIngredient(stack)) {
-            int index = init(keys, stack);
+            int index = indexOfKey(keys, stack);
             if (index < 0) {
                keys.add(stack.copyWithCount(1));
                avail.add(stack.getCount());
@@ -252,7 +252,7 @@ final class CraftingClickPlanner {
       return chosen;
    }
 
-   private static boolean init(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, List<Integer> cells, int crafts, int selectedHotbar) {
+   private static boolean fillCells(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, List<Integer> cells, int crafts, int selectedHotbar) {
       Map<Integer, Integer> need = new LinkedHashMap<>();
 
       for (int cell : cells) {
@@ -261,7 +261,7 @@ final class CraftingClickPlanner {
 
       int total = crafts * cells.size();
 
-      for (int source : init(sim, key, total, selectedHotbar)) {
+      for (int source : sourceSlots(sim, key, total, selectedHotbar)) {
          int remaining = need.values().stream().mapToInt(Integer::intValue).sum();
          if (remaining <= 0) {
             break;
@@ -271,12 +271,12 @@ final class CraftingClickPlanner {
          if (count > 0) {
             int half = (count + 1) / 2;
             if (count > remaining && half >= remaining && half - remaining < count - remaining) {
-               sim.load(source);
+               sim.rightClick(source);
             } else {
                sim.click(source);
             }
 
-            init(sim, source, need);
+            distributeCarried(sim, source, need);
             if (!sim.carried.isEmpty()) {
                sim.click(source);
             }
@@ -290,7 +290,7 @@ final class CraftingClickPlanner {
       return need.values().stream().allMatch(value -> value == 0);
    }
 
-   private static void init(CraftingClickPlanner.Inner_TaskQueue sim, int source, Map<Integer, Integer> need) {
+   private static void distributeCarried(CraftingClickPlanner.Inner_TaskQueue sim, int source, Map<Integer, Integer> need) {
       int guard = 0;
 
       while (!sim.carried.isEmpty() && guard++ < 512) {
@@ -315,7 +315,7 @@ final class CraftingClickPlanner {
             int cellsOpen = open.size();
             int each = low;
             if (amount == cellsOpen * each) {
-               init(sim, open, need, each);
+               spreadCarried(sim, open, need, each);
                return;
             }
 
@@ -325,14 +325,14 @@ final class CraftingClickPlanner {
                int deposit = excess + (cellsOpen == 1 ? 1 : cellsOpen + 2);
                if (deposit < singles) {
                   for (int i = 0; i < excess; i++) {
-                     sim.load(source);
+                     sim.rightClick(source);
                   }
 
-                  init(sim, open, need, each);
+                  spreadCarried(sim, open, need, each);
                } else {
                   for (int cell : open) {
                      for (int i = 0; i < each; i++) {
-                        sim.load(cell);
+                        sim.rightClick(cell);
                      }
 
                      need.put(cell, 0);
@@ -351,7 +351,7 @@ final class CraftingClickPlanner {
 
             if (amount >= cellsOpen) {
                int share = amount / cellsOpen;
-               sim.init(open);
+               sim.dragSplit(open);
 
                for (int cell : open) {
                   need.merge(cell, -share, Integer::sum);
@@ -362,14 +362,14 @@ final class CraftingClickPlanner {
                      break;
                   }
 
-                  sim.load(cell);
+                  sim.rightClick(cell);
                   need.merge(cell, -1, Integer::sum);
                }
             }
          } else {
             for (int cell : open) {
                while (need.get(cell) > low && !sim.carried.isEmpty()) {
-                  sim.load(cell);
+                  sim.rightClick(cell);
                   need.merge(cell, -1, Integer::sum);
                }
             }
@@ -377,11 +377,11 @@ final class CraftingClickPlanner {
       }
    }
 
-   private static void init(CraftingClickPlanner.Inner_TaskQueue sim, List<Integer> open, Map<Integer, Integer> need, int each) {
+   private static void spreadCarried(CraftingClickPlanner.Inner_TaskQueue sim, List<Integer> open, Map<Integer, Integer> need, int each) {
       if (open.size() == 1) {
          sim.click(open.get(0));
       } else {
-         sim.init(open);
+         sim.dragSplit(open);
       }
 
       for (int cell : open) {
@@ -389,7 +389,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   private static List<Integer> init(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, int total, int selectedHotbar) {
+   private static List<Integer> sourceSlots(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, int total, int selectedHotbar) {
       List<Integer> sources = new ArrayList<>();
 
       for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
@@ -421,7 +421,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   private static int init(List<ItemStack> keys, ItemStack stack) {
+   private static int indexOfKey(List<ItemStack> keys, ItemStack stack) {
       for (int i = 0; i < keys.size(); i++) {
          if (ItemStack.isSameItemSameComponents(keys.get(i), stack)) {
             return i;
@@ -461,7 +461,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   static ItemStack[] init(ItemStack[] slots) {
+   static ItemStack[] copySlots(ItemStack[] slots) {
       ItemStack[] out = new ItemStack[slots.length];
 
       for (int i = 0; i < slots.length; i++) {
@@ -471,7 +471,7 @@ final class CraftingClickPlanner {
       return out;
    }
 
-   static String init(CraftingClickPlanner.Inner_ConfigStore phase) {
+   static String describePhase(CraftingClickPlanner.Inner_ConfigStore phase) {
       if (phase == null) {
          return "none";
       }
@@ -557,11 +557,11 @@ final class CraftingClickPlanner {
    }
 
    private record Inner_DataUtil(CraftingClickPlanner.Inner_ConfigStore plan, String error, boolean fatal) {
-      static CraftingClickPlanner.Inner_DataUtil init(String reason) {
+      static CraftingClickPlanner.Inner_DataUtil failure(String reason) {
          return new CraftingClickPlanner.Inner_DataUtil(null, reason, false);
       }
 
-      static CraftingClickPlanner.Inner_DataUtil load(String reason) {
+      static CraftingClickPlanner.Inner_DataUtil fatalFailure(String reason) {
          return new CraftingClickPlanner.Inner_DataUtil(null, reason, true);
       }
    }
@@ -599,15 +599,15 @@ final class CraftingClickPlanner {
    }
 
    record Inner_StreamUtil(int slot, int load, ContainerInput input) {
-      static CraftingClickPlanner.Inner_StreamUtil init(int slot) {
+      static CraftingClickPlanner.Inner_StreamUtil leftClick(int slot) {
          return new CraftingClickPlanner.Inner_StreamUtil(slot, 0, ContainerInput.PICKUP);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil load(int slot) {
+      static CraftingClickPlanner.Inner_StreamUtil rightClick(int slot) {
          return new CraftingClickPlanner.Inner_StreamUtil(slot, 1, ContainerInput.PICKUP);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil read(int slot) {
+      static CraftingClickPlanner.Inner_StreamUtil shiftClick(int slot) {
          return new CraftingClickPlanner.Inner_StreamUtil(slot, 0, ContainerInput.QUICK_MOVE);
       }
 
@@ -615,7 +615,7 @@ final class CraftingClickPlanner {
          return new CraftingClickPlanner.Inner_StreamUtil(-999, AbstractContainerMenu.getQuickcraftMask(0, 0), ContainerInput.QUICK_CRAFT);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil write(int slot) {
+      static CraftingClickPlanner.Inner_StreamUtil dragAdd(int slot) {
          return new CraftingClickPlanner.Inner_StreamUtil(slot, AbstractContainerMenu.getQuickcraftMask(1, 0), ContainerInput.QUICK_CRAFT);
       }
 
@@ -636,8 +636,8 @@ final class CraftingClickPlanner {
       ItemStack carried;
       final List<CraftingClickPlanner.Inner_StreamUtil> clicks = new ArrayList<>();
       final List<ItemStack[]> gridSnapshots = new ArrayList<>();
-      final List<ItemStack> read = new ArrayList<>();
-      final List<ItemStack> write = new ArrayList<>();
+      final List<ItemStack> carriedSnapshots = new ArrayList<>();
+      final List<ItemStack> resultSnapshots = new ArrayList<>();
       int firstTakeIndex = -1;
       boolean simulationInvalid;
       int craftsTaken;
@@ -646,13 +646,13 @@ final class CraftingClickPlanner {
          this.layout = layout;
          this.spec = spec;
          this.cells = spec == null ? new Ingredient[layout.inputSlots().length] : spec.placeIngredients(layout);
-         this.slots = CraftingClickPlanner.init(slots);
+         this.slots = CraftingClickPlanner.copySlots(slots);
          this.carried = carried != null && !carried.isEmpty() ? carried.copy() : ItemStack.EMPTY;
       }
 
       CraftingClickPlanner.Inner_ConfigStore toPhase(int crafts) {
          return new CraftingClickPlanner.Inner_ConfigStore(
-            List.copyOf(this.clicks), crafts, List.copyOf(this.gridSnapshots), List.copyOf(this.read), List.copyOf(this.write), this.firstTakeIndex
+            List.copyOf(this.clicks), crafts, List.copyOf(this.gridSnapshots), List.copyOf(this.carriedSnapshots), List.copyOf(this.resultSnapshots), this.firstTakeIndex
          );
       }
 
@@ -668,7 +668,7 @@ final class CraftingClickPlanner {
 
       private void recordClick(CraftingClickPlanner.Inner_StreamUtil click, Runnable action) {
          ItemStack[] gridBefore = this.gridSnapshot();
-         this.write.add(this.slots[this.layout.resultSlot()].copy());
+         this.resultSnapshots.add(this.slots[this.layout.resultSlot()].copy());
          action.run();
          if (this.carried.isEmpty()) {
             this.carried = ItemStack.EMPTY;
@@ -687,34 +687,34 @@ final class CraftingClickPlanner {
             }
          }
 
-         this.gridSnapshots.add(CraftingClickPlanner.init(this.slots));
-         this.read.add(this.carried.copy());
+         this.gridSnapshots.add(CraftingClickPlanner.copySlots(this.slots));
+         this.carriedSnapshots.add(this.carried.copy());
       }
 
       void click(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.init(slot), () -> this.simulateClick(slot, true));
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.leftClick(slot), () -> this.simulateClick(slot, true));
       }
 
-      void load(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.load(slot), () -> this.simulateClick(slot, false));
+      void rightClick(int slot) {
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.rightClick(slot), () -> this.simulateClick(slot, false));
       }
 
-      void read(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.read(slot), () -> this.write(slot));
+      void shiftClick(int slot) {
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.shiftClick(slot), () -> this.simulateShiftClick(slot));
       }
 
       void takeAllResults() {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.read(this.layout.resultSlot()), this::simulateResultTakes);
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.shiftClick(this.layout.resultSlot()), this::simulateResultTakes);
       }
 
-      void init(List<Integer> targets) {
+      void dragSplit(List<Integer> targets) {
          this.recordClick(CraftingClickPlanner.Inner_StreamUtil.quickCraftStart(), () -> {});
 
          for (int target : targets) {
-            this.recordClick(CraftingClickPlanner.Inner_StreamUtil.write(target), () -> {});
+            this.recordClick(CraftingClickPlanner.Inner_StreamUtil.dragAdd(target), () -> {});
          }
 
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.quickCraftEnd(), () -> this.load(targets));
+         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.quickCraftEnd(), () -> this.simulateDragEnd(targets));
       }
 
       boolean stowCarried() {
@@ -751,7 +751,7 @@ final class CraftingClickPlanner {
 
          for (int slot : this.layout.inputSlots()) {
             if (!this.slots[slot].isEmpty()) {
-               this.read(slot);
+               this.shiftClick(slot);
                if (!this.slots[slot].isEmpty()) {
                   clear = false;
                }
@@ -817,7 +817,7 @@ final class CraftingClickPlanner {
          }
       }
 
-      private void load(List<Integer> targets) {
+      private void simulateDragEnd(List<Integer> targets) {
          if (!this.carried.isEmpty()) {
             List<Integer> added = new ArrayList<>();
 
@@ -854,7 +854,7 @@ final class CraftingClickPlanner {
          return inSlot.isEmpty() ? true : ItemStack.isSameItemSameComponents(carried, inSlot) && inSlot.getCount() <= carried.getMaxStackSize();
       }
 
-      private void write(int slot) {
+      private void simulateShiftClick(int slot) {
          int guard = 0;
 
          while (!this.slots[slot].isEmpty() && guard++ < 64) {
@@ -865,7 +865,7 @@ final class CraftingClickPlanner {
                return;
             }
 
-            this.init(stack, this.layout.write(), this.layout.update(), false);
+            this.moveItemStackTo(stack, this.layout.write(), this.layout.update(), false);
             if (stack.isEmpty()) {
                this.slots[slot] = ItemStack.EMPTY;
             }
@@ -887,7 +887,7 @@ final class CraftingClickPlanner {
 
             ItemStack clicked = result.copy();
             ItemStack moving = result.copy();
-            if (!this.init(moving, this.layout.write(), this.layout.update(), true)) {
+            if (!this.moveItemStackTo(moving, this.layout.write(), this.layout.update(), true)) {
                return;
             }
 
@@ -896,7 +896,7 @@ final class CraftingClickPlanner {
             }
 
             this.slots[this.layout.resultSlot()] = ItemStack.EMPTY;
-            this.write();
+            this.consumeIngredients();
             this.craftsTaken++;
             this.updateResult();
             ItemStack now = this.slots[this.layout.resultSlot()];
@@ -906,7 +906,7 @@ final class CraftingClickPlanner {
          }
       }
 
-      private void write() {
+      private void consumeIngredients() {
          for (int slot : this.layout.inputSlots()) {
             ItemStack stack = this.slots[slot];
             if (!stack.isEmpty()) {
@@ -930,7 +930,7 @@ final class CraftingClickPlanner {
          }
       }
 
-      private boolean init(ItemStack stack, int start, int end, boolean backwards) {
+      private boolean moveItemStackTo(ItemStack stack, int start, int end, boolean backwards) {
          boolean changed = false;
          int dest = backwards ? end - 1 : start;
          if (stack.isStackable()) {

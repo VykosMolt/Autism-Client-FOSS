@@ -65,7 +65,7 @@ public final class AiStance {
       }
    }
 
-   static boolean init(VoxelShape feet, VoxelShape head, VoxelShape floor) {
+   static boolean isOpenStance(VoxelShape feet, VoxelShape head, VoxelShape floor) {
       return feet.isEmpty() && head.isEmpty() && !floor.isEmpty();
    }
 
@@ -106,7 +106,7 @@ public final class AiStance {
          }
 
          BlockPos low = up.below();
-         boolean lowOpen = init(
+         boolean lowOpen = isOpenStance(
             level.getBlockState(low).getCollisionShape(level, low),
             level.getBlockState(low.above()).getCollisionShape(level, low.above()),
             level.getBlockState(low.below()).getCollisionShape(level, low.below())

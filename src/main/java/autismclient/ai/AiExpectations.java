@@ -13,10 +13,10 @@ final class AiExpectations implements AiOperation {
    private final JsonObject expected;
    private final String failureContains;
    private final long startedAt = System.currentTimeMillis();
-   private final long load;
-   private final long read = AiServerEvidence.inventoryRevision();
-   private final long write;
-   private final long update = AiServerEvidence.serverMessageRevision();
+   private final long deadlineNanos;
+   private final long inventoryRevisionAtStart = AiServerEvidence.inventoryRevision();
+   private final long menuGenerationAtStart;
+   private final long messageRevisionAtStart = AiServerEvidence.serverMessageRevision();
    private int init_I;
    private boolean init_Z;
 
@@ -60,8 +60,8 @@ final class AiExpectations implements AiOperation {
          }
 
          CustomMenuSnapshot menu = autismclient.util.custommenu.CustomMenuTracker.snapshot();
-         this.write = menu == null ? -1L : menu.generation();
-         this.load = System.nanoTime() + Math.max(1, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 20))) * 1000000000L;
+         this.menuGenerationAtStart = menu == null ? -1L : menu.generation();
+         this.deadlineNanos = System.nanoTime() + Math.max(1, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 20))) * 1000000000L;
       } else {
          throw new IllegalArgumentException("Expected result must declare an observable inventory, slot, menu, or message condition");
       }
@@ -71,30 +71,30 @@ final class AiExpectations implements AiOperation {
    public AiOperation.Result tick() {
       Minecraft mc = Minecraft.getInstance();
       if (this.init_Z || mc.player == null || mc.level == null) {
-         return this.init(AiOperation.Status.CANCELLED, "Workflow observation cancelled; dispatched effects may remain");
+         return this.finish(AiOperation.Status.CANCELLED, "Workflow observation cancelled; dispatched effects may remain");
       }
 
-      if (!this.failureContains.isBlank() && this.init(this.failureContains)) {
-         return this.init(AiOperation.Status.FAILED, "Observed the configured server rejection response");
+      if (!this.failureContains.isBlank() && this.serverMessageContains(this.failureContains)) {
+         return this.finish(AiOperation.Status.FAILED, "Observed the configured server rejection response");
       }
 
-      if (this.init()) {
+      if (this.expectationsMet()) {
          if (++this.init_I >= 5) {
-            return this.init(AiOperation.Status.SUCCEEDED, "Observed configured server workflow postconditions");
+            return this.finish(AiOperation.Status.SUCCEEDED, "Observed configured server workflow postconditions");
          }
       } else {
          this.init_I = 0;
       }
 
-      return System.nanoTime() > this.load
-         ? this.init(AiOperation.Status.UNCERTAIN, "Submission was sent once but its configured outcome was not observed; inspect before retrying")
-         : this.init(AiOperation.Status.RUNNING, "Waiting for the configured server workflow outcome");
+      return System.nanoTime() > this.deadlineNanos
+         ? this.finish(AiOperation.Status.UNCERTAIN, "Submission was sent once but its configured outcome was not observed; inspect before retrying")
+         : this.finish(AiOperation.Status.RUNNING, "Waiting for the configured server workflow outcome");
    }
 
-   private boolean init() {
+   private boolean expectationsMet() {
       Minecraft mc = Minecraft.getInstance();
       if (this.expected.has("inventory")) {
-         if (AiServerEvidence.inventoryRevision() <= this.read) {
+         if (AiServerEvidence.inventoryRevision() <= this.inventoryRevisionAtStart) {
             return false;
          }
 
@@ -107,7 +107,7 @@ final class AiExpectations implements AiOperation {
       }
 
       if (this.expected.has("slot")) {
-         if (AiServerEvidence.containerRevision(mc.player.containerMenu.containerId) <= this.read) {
+         if (AiServerEvidence.containerRevision(mc.player.containerMenu.containerId) <= this.inventoryRevisionAtStart) {
             return false;
          }
 
@@ -133,21 +133,21 @@ final class AiExpectations implements AiOperation {
          CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.snapshot();
          JsonObject e = this.expected.getAsJsonObject("menu");
          if (current == null
-            || current.generation() <= this.write
+            || current.generation() <= this.menuGenerationAtStart
             || !current.adapterId().equals(AiJson.getString(e, "adapter", ""))
             || !current.title().contains(AiJson.getString(e, "titleContains", ""))) {
             return false;
          }
       }
 
-      return !this.expected.has("message") || this.init(AiJson.getString(this.expected.getAsJsonObject("message"), "contains", ""));
+      return !this.expected.has("message") || this.serverMessageContains(AiJson.getString(this.expected.getAsJsonObject("message"), "contains", ""));
    }
 
-   private boolean init(String text) {
-      return AiServerEvidence.recentServerMessages(32).stream().anyMatch(m -> ((Number)m.get("revision")).longValue() > this.update && m.get("text").toString().contains(text));
+   private boolean serverMessageContains(String text) {
+      return AiServerEvidence.recentServerMessages(32).stream().anyMatch(m -> ((Number)m.get("revision")).longValue() > this.messageRevisionAtStart && m.get("text").toString().contains(text));
    }
 
-   private AiOperation.Result init(AiOperation.Status status, String text) {
+   private AiOperation.Result finish(AiOperation.Status status, String text) {
       return AiGameOperations.result(status, text, AiJson.objectOf("expected", this.expected, "startedAt", this.startedAt));
    }
 

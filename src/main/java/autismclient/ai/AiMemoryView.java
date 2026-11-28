@@ -18,79 +18,79 @@ final class AiMemoryView {
    private final AiAssistantOverlay host;
    final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
    final autismclient.gui.ui.widgets.TextInputWidget editInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
-   private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
-   private final Set<String> init_Set = new HashSet<>();
-   private final Map<String, AiMemoryView.Inner_StreamUtil> init_Map = new HashMap<>();
-   private List<AiMemoryView.Inner_DataUtil> init_List = List.of();
-   private Object init_Obj;
+   private final AiUiKit.Inner_StreamUtil scroll = new AiUiKit.Inner_StreamUtil(false);
+   private final Set<String> expandedIds = new HashSet<>();
+   private final Map<String, AiMemoryView.Inner_StreamUtil> wrapCache = new HashMap<>();
+   private List<AiMemoryView.Inner_DataUtil> rows = List.of();
+   private Object lastSource;
    private String query;
-   private long read_J;
-   private String load_Str;
+   private long nextRefreshAt;
+   private String editingId;
    private String id;
-   private String write_Str;
-   private long write_J;
-   private long update;
+   private String armedClearScope;
+   private long armedForgetAt;
+   private long armedClearAt;
 
    AiMemoryView(AiService service, AiViewState view, AiAssistantOverlay host) {
       this.service = service;
       this.view = view;
       this.host = host;
-      this.editInput.setOnSubmit(text -> this.load());
+      this.editInput.setOnSubmit(text -> this.commitEdit());
    }
 
    void reset() {
       this.searchInput.setValue("");
-      this.load_Str = this.id = this.write_Str = null;
-      this.init_Set.clear();
-      this.init_Map.clear();
-      this.init_Obj = null;
-      this.init_cE_StreamUtil.scrollToTop();
+      this.editingId = this.id = this.armedClearScope = null;
+      this.expandedIds.clear();
+      this.wrapCache.clear();
+      this.lastSource = null;
+      this.scroll.scrollToTop();
    }
 
    boolean cancelEdit() {
-      if (this.load_Str == null) {
+      if (this.editingId == null) {
          return false;
       }
 
-      this.load_Str = null;
+      this.editingId = null;
       this.editInput.setFocused(false);
       return true;
    }
 
-   private void init_V_J(long now) {
+   private void refreshRows(long now) {
       Object source = this.service.getMemoryStore().memories();
       String query = this.searchInput.getValue().trim();
-      if (source != this.init_Obj || !query.equals(this.query) || now >= this.read_J) {
-         this.init_Obj = source;
+      if (source != this.lastSource || !query.equals(this.query) || now >= this.nextRefreshAt) {
+         this.lastSource = source;
          this.query = query;
-         this.read_J = now + 1000L;
+         this.nextRefreshAt = now + 1000L;
          List<AiMemoryView.Inner_DataUtil> rows = new ArrayList<>();
 
          for (AiMemoryStore.Memory memory : this.service.searchMemories(query)) {
             rows.add(new AiMemoryView.Inner_DataUtil(memory, AiUiKit.flattenSingleLine(memory.text())));
          }
 
-         this.init_List = rows;
+         this.rows = rows;
       }
    }
 
    void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
-      this.init_V_J(now);
-      if (this.load_Str != null && !this.editInput.isFocused()) {
-         this.load_Str = null;
+      this.refreshRows(now);
+      if (this.editingId != null && !this.editInput.isFocused()) {
+         this.editingId = null;
       }
 
-      if (this.id != null && now - this.write_J > 3000L) {
+      if (this.id != null && now - this.armedForgetAt > 3000L) {
          this.id = null;
       }
 
-      if (this.write_Str != null && now - this.update > 3000L) {
-         this.write_Str = null;
+      if (this.armedClearScope != null && now - this.armedClearAt > 3000L) {
+         this.armedClearScope = null;
       }
 
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       int ctrl = AiUiKit.toolbarHeight();
-      String count = this.init_List.size() == 1 ? "1 memory" : this.init_List.size() + " memories";
+      String count = this.rows.size() == 1 ? "1 memory" : this.rows.size() + " memories";
       int countW = kit.measureTextWidth(count);
       kit.drawTextInput(
          this.searchInput, autismclient.gui.f.NetHelper.init(area.read(), area.write(), Math.max(40, area.update() - countW - 8), ctrl)
@@ -101,13 +101,13 @@ final class AiMemoryView {
       autismclient.gui.f.NetHelper footer = autismclient.gui.f.NetHelper.init(area.read(), area.load() - ctrl, area.update(), ctrl);
       int top = area.write() + ctrl + 2;
       autismclient.gui.f.NetHelper viewport = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), Math.max(0, footer.write() - 2 - top));
-      this.load(kit, viewport, now);
-      if (!this.init_List.isEmpty() || !this.searchInput.getValue().isBlank()) {
-         this.init_V_cE_NetHelper(kit, footer);
+      this.renderRows(kit, viewport, now);
+      if (!this.rows.isEmpty() || !this.searchInput.getValue().isBlank()) {
+         this.renderFooter(kit, footer);
       }
    }
 
-   private void load(AiUiKit kit, autismclient.gui.f.NetHelper v, long now) {
+   private void renderRows(AiUiKit kit, autismclient.gui.f.NetHelper v, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       int rowH = AiUiKit.inputHeight();
       int line = AiUiKit.lineHeight();
@@ -122,60 +122,60 @@ final class AiMemoryView {
       int textW = Math.max(20, rowW - textX - 4 - (rowH - 2) * 2 - 2 - 4);
       int total = 0;
 
-      for (AiMemoryView.Inner_DataUtil row : this.init_List) {
-         total += this.init(kit, row, textW, rowH, line) + 1;
+      for (AiMemoryView.Inner_DataUtil row : this.rows) {
+         total += this.rowHeight(kit, row, textW, rowH, line) + 1;
       }
 
-      this.init_cE_StreamUtil.layout(v, total);
-      kit.registerScrollPane(this.init_cE_StreamUtil);
-      if (this.init_List.isEmpty()) {
+      this.scroll.layout(v, total);
+      kit.registerScrollPane(this.scroll);
+      if (this.rows.isEmpty()) {
          kit.drawEllipsizedText(
             this.searchInput.getValue().isBlank() ? "Nothing remembered yet" : "No matches", v.read() + 4, v.write() + 3, v.update() - 8, colors.textSecondary
          );
       } else {
          kit.pushClip(v);
-         int y = v.write() - this.init_cE_StreamUtil.offset;
+         int y = v.write() - this.scroll.offset;
 
-         for (AiMemoryView.Inner_DataUtil entry : this.init_List) {
-            int h = this.init(kit, entry, textW, rowH, line);
+         for (AiMemoryView.Inner_DataUtil entry : this.rows) {
+            int h = this.rowHeight(kit, entry, textW, rowH, line);
             if (y >= v.load()) {
                break;
             }
 
             if (y + h > v.write()) {
-               this.init(kit, entry, autismclient.gui.f.NetHelper.init(v.read(), y, rowW, h), chipW, textX, textW, now);
+               this.renderRow(kit, entry, autismclient.gui.f.NetHelper.init(v.read(), y, rowW, h), chipW, textX, textW, now);
             }
 
             y += h + 1;
          }
 
          kit.popClip();
-         kit.drawScrollbar(this.init_cE_StreamUtil);
+         kit.drawScrollbar(this.scroll);
       }
    }
 
-   private int init(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW, int rowH, int line) {
+   private int rowHeight(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW, int rowH, int line) {
       String id = entry.memory().id();
-      if (this.init_Set.contains(id) && !id.equals(this.load_Str)) {
-         int lines = this.init_List_cE(kit, entry, textW).size();
+      if (this.expandedIds.contains(id) && !id.equals(this.editingId)) {
+         int lines = this.wrappedLines(kit, entry, textW).size();
          return rowH + Math.max(0, lines - 1) * line + line + 2;
       } else {
          return rowH;
       }
    }
 
-   private List<String> init_List_cE(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW) {
+   private List<String> wrappedLines(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW) {
       int epoch = AiChatView.textEpoch();
-      AiMemoryView.Inner_StreamUtil wrap = this.init_Map.get(entry.memory().id());
+      AiMemoryView.Inner_StreamUtil wrap = this.wrapCache.get(entry.memory().id());
       if (wrap == null || wrap.width() != textW || wrap.epoch() != epoch || !wrap.text().equals(entry.text())) {
          wrap = new AiMemoryView.Inner_StreamUtil(entry.text(), textW, epoch, kit.renderContext.init_PoolEntry().wrapLines(entry.text(), textW));
-         this.init_Map.put(entry.memory().id(), wrap);
+         this.wrapCache.put(entry.memory().id(), wrap);
       }
 
       return wrap.lines();
    }
 
-   private void init(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, autismclient.gui.f.NetHelper row, int chipW, int textX, int textW, long now) {
+   private void renderRow(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, autismclient.gui.f.NetHelper row, int chipW, int textX, int textW, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       AiMemoryStore.Memory memory = entry.memory();
       String id = memory.id();
@@ -184,31 +184,31 @@ final class AiMemoryView {
       autismclient.gui.f.NetHelper head = autismclient.gui.f.NetHelper.init(row.read(), row.write(), row.update(), rowH);
       boolean hovered = kit.isHovered(row);
       boolean armed = id.equals(this.id);
-      if (hovered || this.init_Set.contains(id)) {
+      if (hovered || this.expandedIds.contains(id)) {
          PacketUtil.load(kit.graphics, row, 3, colors.cardSurfaceElevated);
       }
 
       kit.addInteractiveRegion(row, () -> {
-         if (this.init_Set.remove(id)) {
-            this.init_Map.remove(id);
+         if (this.expandedIds.remove(id)) {
+            this.wrapCache.remove(id);
          } else {
-            this.init_Set.add(id);
+            this.expandedIds.add(id);
          }
-      }, () -> read(memory.text()), null);
+      }, () -> copyToClipboard(memory.text()), null);
       autismclient.gui.ui.widgets.PillBadgeRenderer.init(
          kit.renderContext,
          autismclient.gui.f.NetHelper.init(row.read() + 2, row.write() + 1, chipW, rowH - 2),
-         init_Str_AiMemoryStore_Data(memory.kind()),
-         init_I_cE_AiMemoryStore_Data(kit, memory.kind()),
+         kindLabel(memory.kind()),
+         kindColor(kit, memory.kind()),
          true,
          false
       );
       int x = row.read() + textX;
-      if (id.equals(this.load_Str)) {
+      if (id.equals(this.editingId)) {
          int right = row.init() - (icon + 2) * 2;
          kit.drawTextInput(this.editInput, autismclient.gui.f.NetHelper.init(x - 2, row.write(), Math.max(20, right - x), rowH));
          kit.drawIconButton(
-            autismclient.gui.f.NetHelper.init(right + 2, row.write() + 1, icon, icon), autismclient.util.GuiIconAtlas.CHECK, false, false, "Save (Enter)", this::load
+            autismclient.gui.f.NetHelper.init(right + 2, row.write() + 1, icon, icon), autismclient.util.GuiIconAtlas.CHECK, false, false, "Save (Enter)", this::commitEdit
          );
          kit.drawIconButton(
             autismclient.gui.f.NetHelper.init(right + 4 + icon, row.write() + 1, icon, icon),
@@ -216,7 +216,7 @@ final class AiMemoryView {
             false,
             false,
             "Cancel (Esc)",
-            () -> this.load_Str = null
+            () -> this.editingId = null
          );
       } else {
          int right = row.init() - 3;
@@ -228,15 +228,15 @@ final class AiMemoryView {
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
             autismclient.gui.f.NetHelper pen = autismclient.gui.f.NetHelper.init(trash.read() - 2 - icon, row.write() + 1, icon, icon);
-            kit.drawIconButton(pen, autismclient.util.GuiIconAtlas.EDIT, false, false, "Edit", () -> this.init_V_AiMemoryStore_Memo(memory));
-            kit.drawIconButton(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to forget" : "Forget", () -> this.load(id));
+            kit.drawIconButton(pen, autismclient.util.GuiIconAtlas.EDIT, false, false, "Edit", () -> this.beginEdit(memory));
+            kit.drawIconButton(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to forget" : "Forget", () -> this.armForget(id));
             right = pen.read() - 3;
          }
 
-         if (!this.init_Set.contains(id)) {
+         if (!this.expandedIds.contains(id)) {
             kit.drawCenteredRowText(entry.text(), head, x, Math.max(1, right - x), colors.textPrimary);
          } else {
-            List<String> lines = this.init_List_cE(kit, entry, textW);
+            List<String> lines = this.wrappedLines(kit, entry, textW);
             int ty = kit.renderContext.init_PoolEntry().centerTextY(head);
 
             for (int i = 0; i < lines.size(); i++) {
@@ -249,7 +249,7 @@ final class AiMemoryView {
       }
    }
 
-   private static String init_Str_AiMemoryStore_Data(AiMemoryStore.Inner_DataUtil kind) {
+   private static String kindLabel(AiMemoryStore.Inner_DataUtil kind) {
       String var10000;
       switch (kind) {
          case USER:
@@ -271,7 +271,7 @@ final class AiMemoryView {
       return var10000;
    }
 
-   private static int init_I_cE_AiMemoryStore_Data(AiUiKit kit, AiMemoryStore.Inner_DataUtil kind) {
+   private static int kindColor(AiUiKit kit, AiMemoryStore.Inner_DataUtil kind) {
       int var10000;
       switch (kind) {
          case USER:
@@ -293,79 +293,79 @@ final class AiMemoryView {
       return var10000;
    }
 
-   private void init_V_cE_NetHelper(AiUiKit kit, autismclient.gui.f.NetHelper footer) {
+   private void renderFooter(AiUiKit kit, autismclient.gui.f.NetHelper footer) {
       int ctrl = footer.sync();
       int x = footer.read();
-      String world = "world".equals(this.write_Str) ? "Click again to reset" : "Reset world memory";
+      String world = "world".equals(this.armedClearScope) ? "Click again to reset" : "Reset world memory";
       int worldW = Math.max(kit.measureButtonWidth("Click again to reset"), kit.measureButtonWidth("Reset world memory"));
       kit.drawButton(
          autismclient.gui.f.NetHelper.init(x, footer.write(), worldW, ctrl),
          world,
          autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
-         () -> this.init_V_Str("world"),
+         () -> this.armClear("world"),
          "Forget everything learned about this world"
       );
       x += worldW + 2;
-      String all = "all".equals(this.write_Str) ? "Click again to clear" : "Clear all";
+      String all = "all".equals(this.armedClearScope) ? "Click again to clear" : "Clear all";
       kit.drawButton(
          autismclient.gui.f.NetHelper.init(x, footer.write(), kit.measureButtonWidth("Click again to clear"), ctrl),
          all,
          autismclient.gui.f.b.CachePool.Inner_DataUtil.update,
-         () -> this.init_V_Str("all"),
+         () -> this.armClear("all"),
          "Forget every memory, including about you"
       );
    }
 
-   private void init_V_Str(String which) {
-      if (!which.equals(this.write_Str)) {
-         this.write_Str = which;
-         this.update = System.currentTimeMillis();
+   private void armClear(String which) {
+      if (!which.equals(this.armedClearScope)) {
+         this.armedClearScope = which;
+         this.armedClearAt = System.currentTimeMillis();
       } else {
-         this.write_Str = null;
+         this.armedClearScope = null;
          this.service.clearWorldMemory(which.equals("world"));
-         this.init_List = List.of();
-         this.init_Obj = null;
-         this.init_Set.clear();
+         this.rows = List.of();
+         this.lastSource = null;
+         this.expandedIds.clear();
          autismclient.util.bi.load(which.equals("world") ? "World memory reset" : "Memory cleared");
       }
    }
 
-   private void init_V_AiMemoryStore_Memo(AiMemoryStore.Memory memory) {
-      this.load_Str = memory.id();
+   private void beginEdit(AiMemoryStore.Memory memory) {
+      this.editingId = memory.id();
       this.id = null;
       this.editInput.setValue(memory.text());
       this.editInput.moveCursorToEnd();
       this.host.init(this.editInput);
    }
 
-   private void load() {
-      String id = this.load_Str;
+   private void commitEdit() {
+      String id = this.editingId;
       String text = this.editInput.getValue().trim();
-      this.load_Str = null;
+      this.editingId = null;
       this.editInput.setFocused(false);
       if (id != null && !text.isEmpty()) {
          this.service.correctMemory(id, text);
-         this.init_Obj = null;
+         this.lastSource = null;
          autismclient.util.bi.load("Memory updated");
       }
    }
 
-   private void load(String id) {
+   private void armForget(String id) {
       if (!id.equals(this.id)) {
          this.id = id;
-         this.write_J = System.currentTimeMillis();
+         this.armedForgetAt = System.currentTimeMillis();
       } else {
          this.id = null;
          this.service.forgetMemory(id);
-         List<AiMemoryView.Inner_DataUtil> next = new ArrayList<>(this.init_List);
+         List<AiMemoryView.Inner_DataUtil> next = new ArrayList<>(this.rows);
          next.removeIf(r -> r.memory().id().equals(id));
-         this.init_List = next;
-         this.init_Set.remove(id);
+         this.rows = next;
+         this.expandedIds.remove(id);
          autismclient.util.bi.load("Memory forgotten");
       }
    }
 
-   private static void read(String text) {
+   private static void copyToClipboard(String text) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.keyboardHandler != null) {
          mc.keyboardHandler.setClipboard(text);

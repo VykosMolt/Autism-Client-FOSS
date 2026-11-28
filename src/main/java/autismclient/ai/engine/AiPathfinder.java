@@ -6537,14 +6537,14 @@ public final class AiPathfinder {
          this.chunkMemory = var5;
          this.cellSource = new AiPathfinder.LiveGridView.CellSource() {
             @Override
-            public AiPathfinder.CellInfo putAt_FileStore_BitCache(BlockPos var1x) {
+            public AiPathfinder.CellInfo cellAt(BlockPos var1x) {
                return AiPathfinder.LiveGridView.classifyCell(
                   var1, LiveGridView.this.level, var1x, LiveGridView.this.hotbarSnapshot, LiveGridView.this.acceptedTool
                );
             }
 
             @Override
-            public boolean putAt(int var1x, int var2x) {
+            public boolean isChunkLoaded(int var1x, int var2x) {
                return LiveGridView.this.level.getChunkSource().getChunk(var1x, var2x, ChunkStatus.FULL, false) != null;
             }
 
@@ -6828,7 +6828,7 @@ public final class AiPathfinder {
                int var7 = (int)(var6 >> 32);
                int var8 = var6.intValue();
                long var9 = packChunkKey(var7 >> 4, var8 >> 4);
-               if (this.cellSource.putAt(var7 >> 4, var8 >> 4)) {
+               if (this.cellSource.isChunkLoaded(var7 >> 4, var8 >> 4)) {
                   AiPathfinder.LiveGridView.SectionSlice var20 = this.loadedSlices.get(var9);
                   if (var20 == null || var20.revision() != AiGridRevisions.init(var9)) {
                      var20 = this.allocateSlice(var5, var9);
@@ -6873,7 +6873,7 @@ public final class AiPathfinder {
 
                int var15 = (int)(var13 >> 32);
                int var17 = var13.intValue();
-               if (!this.cellSource.putAt(var15, var17)) {
+               if (!this.cellSource.isChunkLoaded(var15, var17)) {
                   AiPathfinder.LiveGridView.SectionSlice var19 = this.chunkMemory == null
                      ? null
                      : this.chunkMemory.sectionSlice(var15, var17, this.minY, var5, AiGridRevisions.init(var13));
@@ -6943,7 +6943,7 @@ public final class AiPathfinder {
          while (var1.hasNext()) {
             Entry var2 = (Entry)var1.next();
             long var3 = (Long)var2.getKey();
-            if (this.cellSource.putAt((int)(var3 >> 32), (int)var3)) {
+            if (this.cellSource.isChunkLoaded((int)(var3 >> 32), (int)var3)) {
                this.loadedSlices.remove(var3, var2.getValue());
                this.pendingChunkKeys.add(var3);
                var1.remove();
@@ -7006,7 +7006,7 @@ public final class AiPathfinder {
 
          for (int var6 = this.minY; var6 <= this.maxY; var6++) {
             var5.set(var2, var6, var3);
-            AiPathfinder.CellInfo var7 = this.cellSource.putAt_FileStore_BitCache(var5);
+            AiPathfinder.CellInfo var7 = this.cellSource.cellAt(var5);
             int var8 = var1.index(var2, var6, var3, this.minY, var4);
             if (!var7.loaded()) {
                var1.shape()[var8] = 1;
@@ -7640,16 +7640,16 @@ public final class AiPathfinder {
       }
 
       interface CellSource {
-         AiPathfinder.CellInfo putAt_FileStore_BitCache(BlockPos var1);
+         AiPathfinder.CellInfo cellAt(BlockPos var1);
 
-         boolean putAt(int var1, int var2);
+         boolean isChunkLoaded(int var1, int var2);
 
          default short putAt_S(BlockPos var1) {
-            return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1));
+            return AiShapes.shapeIdOf(this.cellAt(var1));
          }
 
          default byte putAt_B(BlockPos var1) {
-            return AiSurface.init(this.putAt_FileStore_BitCache(var1)).init();
+            return AiSurface.init(this.cellAt(var1)).init();
          }
       }
    }

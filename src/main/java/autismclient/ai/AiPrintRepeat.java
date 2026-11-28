@@ -12,7 +12,7 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.world.level.GameType;
 
 final class AiPrintRepeat implements AiOperation {
-   private static final int push = 32;
+   private static final int MAX_REPORTED = 32;
    final Minecraft mc = Minecraft.getInstance();
    final AiBuilder.Blueprint base;
    final AiBuilder.BuildOptions options;
@@ -21,7 +21,7 @@ final class AiPrintRepeat implements AiOperation {
    int copiesBuilt;
    int placedTotal;
    int skippedTotal;
-   int write;
+   int failedTotal;
    final JsonArray failures = new JsonArray();
    AiOperation copyOp;
    boolean copyTicked;
@@ -40,12 +40,12 @@ final class AiPrintRepeat implements AiOperation {
    AiPrintRepeat.Inner_DataUtil preparedCopy;
    AiPrintPreparation.Inner_CachePool materialCheck;
    AiPrintPreparation.Inner_NetHelper stockSearch;
-   int update;
-   int sync;
-   int flush;
-   int close;
-   int open;
-   int poll;
+   int containersFilled;
+   int containersSkipped;
+   int savedSlotsVerified;
+   int savedSlotsSkipped;
+   int clocksVerified;
+   int clockItemsVerified;
    final JsonArray skippedContents = new JsonArray();
 
    AiPrintRepeat(
@@ -96,7 +96,7 @@ final class AiPrintRepeat implements AiOperation {
             AiOperation.Result r = this.receipt.tickChild(this.copyOp);
             this.copyTicked = true;
             if (!r.terminal()) {
-               return this.init("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
+               return this.running("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
             }
 
             this.collectCopyResult();
@@ -138,7 +138,7 @@ final class AiPrintRepeat implements AiOperation {
          this.firstActions = null;
          this.firstGeometry = null;
          this.copyOp = operation;
-         return this.init("Building copy 1 of " + this.copyCountLabel());
+         return this.running("Building copy 1 of " + this.copyCountLabel());
       } else {
          if (this.preparedCopy == null) {
             if (this.pendingCopy == null) {
@@ -159,11 +159,11 @@ final class AiPrintRepeat implements AiOperation {
                         );
                      }
                   );
-               return this.init("Preparing copy " + (this.copiesBuilt + 1));
+               return this.running("Preparing copy " + (this.copiesBuilt + 1));
             }
 
             if (!this.pendingCopy.isDone()) {
-               return this.init("Preparing copy " + (this.copiesBuilt + 1));
+               return this.running("Preparing copy " + (this.copiesBuilt + 1));
             }
 
             try {
@@ -190,7 +190,7 @@ final class AiPrintRepeat implements AiOperation {
          if (!creative) {
             if (!this.materialCheck.isDone()) {
                this.materialCheck.init(4096, System.nanoTime() + 2000000L, this.mc.level);
-               return this.init("Checking materials for copy " + (this.copiesBuilt + 1));
+               return this.running("Checking materials for copy " + (this.copiesBuilt + 1));
             }
 
             JsonObject missing = AiBuilder.missingMaterialsForContainer(
@@ -207,7 +207,7 @@ final class AiPrintRepeat implements AiOperation {
                   this.stockSearch
                      .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.mc.level, pos), this.mc.level::getBlockState);
                   if (!this.stockSearch.done && !this.stockSearch.isDone()) {
-                     return this.init("Checking stock for copy " + (this.copiesBuilt + 1));
+                     return this.running("Checking stock for copy " + (this.copiesBuilt + 1));
                   }
 
                   if (this.stockSearch.done) {
@@ -219,8 +219,8 @@ final class AiPrintRepeat implements AiOperation {
                   JsonObject data = this.progressData();
                   data.add("missing", missing);
                   return this.copiesBuilt > 0 && this.options.repeat().count() < 0
-                     ? this.init(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.copiesBuilt + " copies", data)
-                     : this.init(AiOperation.Status.FAILED, "Missing placement materials for copy " + (this.copiesBuilt + 1), data);
+                     ? this.finish(AiOperation.Status.SUCCEEDED, "Materials exhausted after " + this.copiesBuilt + " copies", data)
+                     : this.finish(AiOperation.Status.FAILED, "Missing placement materials for copy " + (this.copiesBuilt + 1), data);
                }
             }
          }
@@ -241,7 +241,7 @@ final class AiPrintRepeat implements AiOperation {
          this.preparedCopy = null;
          this.materialCheck = null;
          this.stockSearch = null;
-         return this.init("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
+         return this.running("Building copy " + (this.copiesBuilt + 1) + " of " + this.copyCountLabel());
       }
    }
 
@@ -261,17 +261,17 @@ final class AiPrintRepeat implements AiOperation {
          "failed",
          this.failures,
          "failedTotal",
-         this.write,
+         this.failedTotal,
          "cells",
          this.base.cells().size(),
          "containersFilled",
-         this.update,
+         this.containersFilled,
          "containersSkipped",
-         this.sync,
+         this.containersSkipped,
          "savedSlotsVerified",
-         this.flush,
+         this.savedSlotsVerified,
          "savedSlotsSkipped",
-         this.close,
+         this.savedSlotsSkipped,
          "machineComplete",
          false,
          "skippedContents",
@@ -281,7 +281,7 @@ final class AiPrintRepeat implements AiOperation {
       );
    }
 
-   AiOperation.Result init(String message) {
+   AiOperation.Result running(String message) {
       return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressData());
    }
 
@@ -291,19 +291,19 @@ final class AiPrintRepeat implements AiOperation {
       }
 
       this.cancel();
-      return this.init(status, message, this.progressData());
+      return this.finish(status, message, this.progressData());
    }
 
-   AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
+   AiOperation.Result finish(AiOperation.Status status, String message, JsonObject data) {
       if (this.finalResult != null) {
          return this.finalResult;
       }
 
       this.cancel();
       boolean pending = this.receipt.requiresReconciliation(null);
-      data.addProperty("clocksVerified", this.open);
-      data.addProperty("clockItemsVerified", this.poll);
-      data.addProperty("machineComplete", status == AiOperation.Status.SUCCEEDED && this.sync == 0 && !pending);
+      data.addProperty("clocksVerified", this.clocksVerified);
+      data.addProperty("clockItemsVerified", this.clockItemsVerified);
+      data.addProperty("machineComplete", status == AiOperation.Status.SUCCEEDED && this.containersSkipped == 0 && !pending);
       this.finalResult = withReceiptEvidence(AiGameOperations.result(status, message, data), this.receipt);
       return this.finalResult;
    }
@@ -343,13 +343,13 @@ final class AiPrintRepeat implements AiOperation {
             JsonObject legData = AiRunResources.parseEvidenceJson(this.receipt.lastChildResult().dataJson());
             this.placedTotal = this.placedTotal + AiJson.getInt(legData, "placed", 0);
             this.skippedTotal = this.skippedTotal + AiJson.getInt(legData, "skipped", 0);
-            this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
-            this.update = this.update + AiJson.getInt(legData, "containersFilled", 0);
-            this.sync = this.sync + AiJson.getInt(legData, "containersSkipped", 0);
-            this.flush = this.flush + AiJson.getInt(legData, "savedSlotsVerified", 0);
-            this.close = this.close + AiJson.getInt(legData, "savedSlotsSkipped", 0);
-            this.open = this.open + AiJson.getInt(legData, "clocksVerified", 0);
-            this.poll = this.poll + AiJson.getInt(legData, "clockItemsVerified", 0);
+            this.failedTotal = this.failedTotal + AiJson.getInt(legData, "failedTotal", 0);
+            this.containersFilled = this.containersFilled + AiJson.getInt(legData, "containersFilled", 0);
+            this.containersSkipped = this.containersSkipped + AiJson.getInt(legData, "containersSkipped", 0);
+            this.savedSlotsVerified = this.savedSlotsVerified + AiJson.getInt(legData, "savedSlotsVerified", 0);
+            this.savedSlotsSkipped = this.savedSlotsSkipped + AiJson.getInt(legData, "savedSlotsSkipped", 0);
+            this.clocksVerified = this.clocksVerified + AiJson.getInt(legData, "clocksVerified", 0);
+            this.clockItemsVerified = this.clockItemsVerified + AiJson.getInt(legData, "clockItemsVerified", 0);
             if (legData.has("skippedContents")) {
                for (JsonElement omission : legData.getAsJsonArray("skippedContents")) {
                   if (this.skippedContents.size() >= 32) {

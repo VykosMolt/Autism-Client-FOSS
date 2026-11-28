@@ -56,7 +56,7 @@ public final class NameTagsRenderer {
    private static int sync_I = -1;
    private static int flush_I = -5592406;
    private static int close_I = -1879048192;
-   private static int open = -1;
+   private static int lastSettingsRevision = -1;
    private static boolean enabled;
    private static boolean showPlayers;
    private static boolean showMobs;
@@ -102,7 +102,7 @@ public final class NameTagsRenderer {
                long perf = bK.load_J();
 
                try {
-                  init(context, module);
+                  renderTags(context, module);
                } finally {
                   bK.init("modules.nametags", perf);
                }
@@ -123,7 +123,7 @@ public final class NameTagsRenderer {
       lastLevel = null;
    }
 
-   private static void init(GuiGraphicsExtractor context, Module module) {
+   private static void renderTags(GuiGraphicsExtractor context, Module module) {
       if (WorldProjectionHelper.init(SCRATCH_MATRIX)) {
          if (lastLevel != mc.level) {
             reset();
@@ -189,7 +189,7 @@ public final class NameTagsRenderer {
                                  }
 
                                  tag.frame = frame;
-                                 tag.init(tick, revision, fontEpoch, showHealth, showDistance, dist, friend, showArmor, showHeldItem, showEnchantments);
+                                 tag.update(tick, revision, fontEpoch, showHealth, showDistance, dist, friend, showArmor, showHeldItem, showEnchantments);
                                  if (!(tag.init_aj_ConfigStore.width <= 0.0F)) {
                                     float tagScale = init(baseScale, distanceScale, dist);
                                     drawTag(context, screen[0], screen[1], tag, tagScale);
@@ -219,10 +219,10 @@ public final class NameTagsRenderer {
       }
    }
 
-   private static void load() {
+   private static void refreshSettings() {
       int revision = al.init_I();
-      if (revision != open) {
-         open = revision;
+      if (revision != lastSettingsRevision) {
+         lastSettingsRevision = revision;
          Module module = al.init_Module_Str("nametags");
          enabled = module != null && module.isEnabled();
          showPlayers = enabled && module.bool("players");
@@ -237,7 +237,7 @@ public final class NameTagsRenderer {
    }
 
    public static boolean overridesNameTag(Entity entity) {
-      load();
+      refreshSettings();
       if (!enabled) {
          return false;
       }
@@ -331,7 +331,7 @@ public final class NameTagsRenderer {
          Map<NameTagsRenderer.Inner_CachePool, List<Integer>> cells = new HashMap<>();
          if (group) {
             for (int i = 0; i < itemEntities.size(); i++) {
-               cells.computeIfAbsent(NameTagsRenderer.Inner_CachePool.init(itemEntities.get(i), groupRadius), key -> new ArrayList<>()).add(i);
+               cells.computeIfAbsent(NameTagsRenderer.Inner_CachePool.cellOf(itemEntities.get(i), groupRadius), key -> new ArrayList<>()).add(i);
             }
          }
 
@@ -345,7 +345,7 @@ public final class NameTagsRenderer {
                   List<ItemEntity> cluster = new ArrayList<>();
                   cluster.add(base);
                   if (group) {
-                     NameTagsRenderer.Inner_CachePool center = NameTagsRenderer.Inner_CachePool.init(base, groupRadius);
+                     NameTagsRenderer.Inner_CachePool center = NameTagsRenderer.Inner_CachePool.cellOf(base, groupRadius);
                      List<Integer> nearby = new ArrayList<>();
 
                      for (int dx = -1; dx <= 1; dx++) {
@@ -399,11 +399,11 @@ public final class NameTagsRenderer {
 
                      for (int k = 0; k < max; k++) {
                         NameTagsRenderer.Inner_DataUtil a = aggs.get(k);
-                        lines.add(NameTagsRenderer.Inner_ConfigStore.init(a.name.copy().append(Component.literal(" ×" + a.count).withStyle(countStyle))));
+                        lines.add(NameTagsRenderer.Inner_ConfigStore.fromComponent(a.name.copy().append(Component.literal(" ×" + a.count).withStyle(countStyle))));
                      }
 
                      if (aggs.size() > max) {
-                        lines.add(NameTagsRenderer.Inner_ConfigStore.init(Component.literal("+" + (aggs.size() - max) + " more")));
+                        lines.add(NameTagsRenderer.Inner_ConfigStore.fromComponent(Component.literal("+" + (aggs.size() - max) + " more")));
                      }
 
                      load_List.add(new NameTagsRenderer.Inner_BufferHelper(List.copyOf(cluster), List.copyOf(lines), content));
@@ -456,7 +456,7 @@ public final class NameTagsRenderer {
       return Math.max(0.05F, (float)(baseScale * (1.0 - 0.2 * eased)));
    }
 
-   private static int init(LivingEntity living) {
+   private static int healthColor(LivingEntity living) {
       float fraction = Mth.clamp(living.getHealth() / Math.max(1.0F, living.getMaxHealth()), 0.0F, 1.0F);
       return 0xFF000000 | Color.HSBtoRGB(fraction / 3.0F, 0.9F, 1.0F) & 16777215;
    }
@@ -496,7 +496,7 @@ public final class NameTagsRenderer {
             autismclient.gui.f.PacketUtil.init(context, 0.0F, ty, widths, lineH, read_Z ? lineH * 0.5F : 0.0F, close_I);
 
             for (NameTagsRenderer.Inner_ConfigStore line : lines) {
-               line.init(context, -line.width * 0.5F, ty, lineH, color);
+               line.render(context, -line.width * 0.5F, ty, lineH, color);
                ty += lineH;
             }
          } finally {
@@ -533,7 +533,7 @@ public final class NameTagsRenderer {
          int row = 0;
          float[] widths = new float[rows];
          float[] heights = new float[rows];
-         widths[row] = tag.init() + 4.0F;
+         widths[row] = tag.totalWidth() + 4.0F;
          heights[row++] = lineH;
          if (!gear.isEmpty()) {
             widths[row] = gearRowW + 4;
@@ -546,16 +546,16 @@ public final class NameTagsRenderer {
          }
 
          autismclient.gui.f.PacketUtil.init(context, 0.0F, ty, widths, heights, read_Z ? lineH * 0.5F : 0.0F, close_I);
-         float textX = -tag.init() * 0.5F;
-         tag.init_aj_ConfigStore.init(context, textX, ty, lineH, -1);
+         float textX = -tag.totalWidth() * 0.5F;
+         tag.init_aj_ConfigStore.render(context, textX, ty, lineH, -1);
          textX += tag.init_aj_ConfigStore.width;
          if (tag.hpSuffix != null) {
-            tag.hpSuffix.init(context, textX, ty, lineH, tag.sync);
+            tag.hpSuffix.render(context, textX, ty, lineH, tag.hpColor);
             textX += tag.hpSuffix.width;
          }
 
          if (tag.distanceSuffix != null) {
-            tag.distanceSuffix.init(context, textX, ty, lineH, sync_I);
+            tag.distanceSuffix.render(context, textX, ty, lineH, sync_I);
          }
 
          ty += lineH;
@@ -578,14 +578,14 @@ public final class NameTagsRenderer {
          }
 
          if (tag.write_aj_ConfigStore != null) {
-            tag.write_aj_ConfigStore.init(context, -tag.write_aj_ConfigStore.width * 0.5F, ty, lineH, flush_I);
+            tag.write_aj_ConfigStore.render(context, -tag.write_aj_ConfigStore.width * 0.5F, ty, lineH, flush_I);
          }
       } finally {
          context.pose().popMatrix();
       }
    }
 
-   private static String init(List<ItemStack> armor, int maxWidth) {
+   private static String enchantmentLine(List<ItemStack> armor, int maxWidth) {
       Map<String, Integer> maxLevelByPath = new LinkedHashMap<>();
 
       for (ItemStack stack : armor) {
@@ -611,7 +611,7 @@ public final class NameTagsRenderer {
       int shown = 0;
 
       for (java.util.Map.Entry<String, Integer> entry : entries) {
-         String part = abbreviate(entry.getKey()) + " " + init(entry.getValue());
+         String part = abbreviate(entry.getKey()) + " " + roman(entry.getValue());
          String candidate = line.length() == 0 ? part : line + "  " + part;
          if (shown > 0 && textWidth(candidate) > maxWidth) {
             break;
@@ -650,7 +650,7 @@ public final class NameTagsRenderer {
       return out.length() <= 5 ? out.toString() : out.substring(0, 5);
    }
 
-   static String init(int level) {
+   static String roman(int level) {
       String var10000;
       switch (level) {
          case 1:
@@ -715,7 +715,7 @@ public final class NameTagsRenderer {
    }
 
    private record Inner_CachePool(int init, int load, int read) {
-      static NameTagsRenderer.Inner_CachePool init(ItemEntity item, double radius) {
+      static NameTagsRenderer.Inner_CachePool cellOf(ItemEntity item, double radius) {
          return new NameTagsRenderer.Inner_CachePool(Mth.floor(item.getX() / radius), Mth.floor(item.getY() / radius), Mth.floor(item.getZ() / radius));
       }
    }
@@ -731,7 +731,7 @@ public final class NameTagsRenderer {
          this.width = width;
       }
 
-      static NameTagsRenderer.Inner_ConfigStore init(Component component) {
+      static NameTagsRenderer.Inner_ConfigStore fromComponent(Component component) {
          FormattedCharSequence visual = component.getVisualOrderText();
          if (NameTagsRenderer.vanillaFont) {
             return new NameTagsRenderer.Inner_ConfigStore(visual, List.of(), NameTagsRenderer.mc.font.width(visual));
@@ -744,7 +744,7 @@ public final class NameTagsRenderer {
             if (!style.isObfuscated() && !style.isUnderlined() && !style.isStrikethrough() && style.getFont().equals(Style.EMPTY.getFont())) {
                if (!style.equals(current[0])) {
                   if (!text.isEmpty()) {
-                     runs.add(NameTagsRenderer.Inner_NetHelper.init(text.toString(), current[0]));
+                     runs.add(NameTagsRenderer.Inner_NetHelper.run(text.toString(), current[0]));
                   }
 
                   text.setLength(0);
@@ -758,7 +758,7 @@ public final class NameTagsRenderer {
             }
          });
          if (!text.isEmpty()) {
-            runs.add(NameTagsRenderer.Inner_NetHelper.init(text.toString(), current[0]));
+            runs.add(NameTagsRenderer.Inner_NetHelper.run(text.toString(), current[0]));
          }
 
          if (supported && !runs.stream().anyMatch(runx -> !autismclient.gui.sdf.MsdfTextRenderer.canRender(runx.face, runx.text))) {
@@ -774,7 +774,7 @@ public final class NameTagsRenderer {
          }
       }
 
-      void init(GuiGraphicsExtractor context, float x, float rowTop, int rowHeight, int color) {
+      void render(GuiGraphicsExtractor context, float x, float rowTop, int rowHeight, int color) {
          if ((color & 0xFF000000) != 0) {
             if (this.runs.isEmpty()) {
                context.pose().pushMatrix();
@@ -831,7 +831,7 @@ public final class NameTagsRenderer {
    }
 
    private record Inner_NetHelper(String text, autismclient.gui.sdf.MsdfFontFace face, Integer color, float width, boolean italic) {
-      static NameTagsRenderer.Inner_NetHelper init(String text, Style style) {
+      static NameTagsRenderer.Inner_NetHelper run(String text, Style style) {
          autismclient.gui.sdf.MsdfFontFace face = style.isBold() ? autismclient.gui.sdf.MsdfFontFace.TITLE : autismclient.gui.sdf.MsdfFontFace.BODY;
          TextColor color = style.getColor();
          return new NameTagsRenderer.Inner_NetHelper(
@@ -854,8 +854,8 @@ public final class NameTagsRenderer {
       int epoch = -1;
       int meters = -1;
       int hp = -1;
-      int update;
-      int sync;
+      int lastTint;
+      int hpColor;
       boolean init_Z;
       Component label;
       NameTagsRenderer.Inner_ConfigStore init_aj_ConfigStore;
@@ -869,7 +869,7 @@ public final class NameTagsRenderer {
          this.entity = entity;
       }
 
-      void init(
+      void update(
          long now,
          int settings,
          int epoch,
@@ -885,7 +885,7 @@ public final class NameTagsRenderer {
          int tint = friend ? TeamsModule.friendColor() : 0;
          boolean fontChanged = this.epoch != epoch || this.init_Z != NameTagsRenderer.vanillaFont;
          boolean refreshGear = this.init_J != now || this.settings != settings || fontChanged;
-         if (refreshGear || meters != this.meters || tint != this.update) {
+         if (refreshGear || meters != this.meters || tint != this.lastTint) {
             Component label = NameTagsRenderer.labelFor(this.entity);
             if (friend) {
                label = label.copy().withStyle(style -> style.withColor(TextColor.fromRgb(tint & 16777215)));
@@ -893,17 +893,17 @@ public final class NameTagsRenderer {
 
             if (fontChanged || !label.equals(this.label)) {
                this.label = label;
-               this.init_aj_ConfigStore = NameTagsRenderer.Inner_ConfigStore.init(label);
+               this.init_aj_ConfigStore = NameTagsRenderer.Inner_ConfigStore.fromComponent(label);
             }
 
             int hp = showHealth && this.entity instanceof LivingEntity living ? (int)Math.ceil(living.getHealth()) : -1;
             if (fontChanged || hp != this.hp) {
-               this.hpSuffix = hp < 0 ? null : NameTagsRenderer.Inner_ConfigStore.init(Component.literal("  " + hp + "HP"));
+               this.hpSuffix = hp < 0 ? null : NameTagsRenderer.Inner_ConfigStore.fromComponent(Component.literal("  " + hp + "HP"));
             }
 
-            this.sync = hp < 0 ? 0 : NameTagsRenderer.init((LivingEntity)this.entity);
+            this.hpColor = hp < 0 ? 0 : NameTagsRenderer.healthColor((LivingEntity)this.entity);
             if (fontChanged || meters != this.meters) {
-               this.distanceSuffix = meters < 0 ? null : NameTagsRenderer.Inner_ConfigStore.init(Component.literal("  " + meters + "m"));
+               this.distanceSuffix = meters < 0 ? null : NameTagsRenderer.Inner_ConfigStore.fromComponent(Component.literal("  " + meters + "m"));
             }
 
             if (this.entity instanceof Player player && refreshGear) {
@@ -937,10 +937,10 @@ public final class NameTagsRenderer {
                   this.gear = equipment.stream().map(ItemStack::copy).toList();
                }
 
-               if (changed || fontChanged || this.settings != settings || this.init_F != this.init()) {
-                  String line = showEnchantments ? NameTagsRenderer.init(armor, Math.max(48, (int)Math.ceil(this.init()))) : "";
-                  this.write_aj_ConfigStore = line.isEmpty() ? null : NameTagsRenderer.Inner_ConfigStore.init(Component.literal(line));
-                  this.init_F = this.init();
+               if (changed || fontChanged || this.settings != settings || this.init_F != this.totalWidth()) {
+                  String line = showEnchantments ? NameTagsRenderer.enchantmentLine(armor, Math.max(48, (int)Math.ceil(this.totalWidth()))) : "";
+                  this.write_aj_ConfigStore = line.isEmpty() ? null : NameTagsRenderer.Inner_ConfigStore.fromComponent(Component.literal(line));
+                  this.init_F = this.totalWidth();
                }
             }
 
@@ -950,11 +950,11 @@ public final class NameTagsRenderer {
             this.init_Z = NameTagsRenderer.vanillaFont;
             this.meters = meters;
             this.hp = hp;
-            this.update = tint;
+            this.lastTint = tint;
          }
       }
 
-      float init() {
+      float totalWidth() {
          return this.init_aj_ConfigStore.width
             + (this.hpSuffix == null ? 0.0F : this.hpSuffix.width)
             + (this.distanceSuffix == null ? 0.0F : this.distanceSuffix.width);

@@ -339,7 +339,7 @@ final class AiGameplay {
       }
    }
 
-   static AiOperation read(final JsonObject args) {
+   static AiOperation unusedCraftOperation(final JsonObject args) {
       final String item = AiJson.getString(args, "item", "");
       final int recipe = AiJson.getInt(args, "recipeDisplayId", -1);
       final int amount = AiJson.getInt(args, "count", 1);
@@ -349,12 +349,12 @@ final class AiGameplay {
             final int startCount = AiGameState.countInventoryItem(item);
             final int targetCount = amount + (AiJson.getBoolean(args, "additional", false) ? this.startCount : 0);
             final long deadline = System.nanoTime() + 120000000000L;
-            int read = -1;
-            int write;
-            int update;
-            int sync;
-            int flush = this.startCount;
-            int close;
+            int containerId = -1;
+            int clickPhase;
+            int waitTicks;
+            int verifyTicks;
+            int lastCount = this.startCount;
+            int unusedCounter;
             long revisionAtResultClick;
             boolean cancelled;
 
@@ -362,82 +362,82 @@ final class AiGameplay {
             public AiOperation.Result tick() {
                if (!this.cancelled && this.mc.player != null) {
                   if (System.nanoTime() > this.deadline) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Craft target not observed before timeout; do not repeat uncertain clicks");
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Craft target not observed before timeout; do not repeat uncertain clicks");
                   }
 
                   int count = AiGameState.countInventoryItem(item);
                   if (count >= this.targetCount) {
-                     boolean confirmed = AiServerEvidence.containerRevision(this.read) > this.revisionAtResultClick;
-                     return ++this.sync >= (confirmed ? 10 : 20)
-                        ? this.init(AiOperation.Status.SUCCEEDED, "Crafted output inventory target observed")
-                        : this.init("Verifying crafted inventory");
+                     boolean confirmed = AiServerEvidence.containerRevision(this.containerId) > this.revisionAtResultClick;
+                     return ++this.verifyTicks >= (confirmed ? 10 : 20)
+                        ? this.finish(AiOperation.Status.SUCCEEDED, "Crafted output inventory target observed")
+                        : this.running("Verifying crafted inventory");
                   }
 
-                  this.close = 0;
-                  this.sync = 0;
+                  this.unusedCounter = 0;
+                  this.verifyTicks = 0;
                   if (this.mc.player.containerMenu instanceof AbstractCraftingMenu menu) {
-                     if (this.read == -1) {
-                        this.read = menu.containerId;
+                     if (this.containerId == -1) {
+                        this.containerId = menu.containerId;
                      }
 
-                     if (this.read != menu.containerId) {
-                        return this.init(AiOperation.Status.CANCELLED, "Crafting container changed");
+                     if (this.containerId != menu.containerId) {
+                        return this.finish(AiOperation.Status.CANCELLED, "Crafting container changed");
                      }
 
                      if (!menu.getCarried().isEmpty()) {
-                        return this.init(AiOperation.Status.FAILED, "Clear the carried cursor stack before crafting");
+                        return this.finish(AiOperation.Status.FAILED, "Clear the carried cursor stack before crafting");
                      }
 
-                     if (this.write == 0) {
-                        this.mc.gameMode.handlePlaceRecipe(this.read, new RecipeDisplayId(recipe), false);
-                        this.write = 1;
-                        this.update = 0;
-                        return this.init("Waiting for server recipe output");
+                     if (this.clickPhase == 0) {
+                        this.mc.gameMode.handlePlaceRecipe(this.containerId, new RecipeDisplayId(recipe), false);
+                        this.clickPhase = 1;
+                        this.waitTicks = 0;
+                        return this.running("Waiting for server recipe output");
                      }
 
-                     if (this.write == 1) {
+                     if (this.clickPhase == 1) {
                         ItemStack output = menu.getResultSlot().getItem();
                         if (!output.isEmpty() && BuiltInRegistries.ITEM.getKey(output.getItem()).toString().equals(item)) {
-                           this.revisionAtResultClick = AiServerEvidence.containerRevision(this.read);
-                           AiContainerTransactions.sendPredictedClick(this.read, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
-                           this.write = 2;
-                           this.update = 0;
-                           this.flush = count;
-                           return this.init("Waiting for crafted items in inventory");
+                           this.revisionAtResultClick = AiServerEvidence.containerRevision(this.containerId);
+                           AiContainerTransactions.sendPredictedClick(this.containerId, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
+                           this.clickPhase = 2;
+                           this.waitTicks = 0;
+                           this.lastCount = count;
+                           return this.running("Waiting for crafted items in inventory");
                         }
 
-                        if (++this.update > 100) {
-                           return this.init(AiOperation.Status.FAILED, "Server did not provide the requested recipe output; check ingredients and station");
+                        if (++this.waitTicks > 100) {
+                           return this.finish(AiOperation.Status.FAILED, "Server did not provide the requested recipe output; check ingredients and station");
                         }
                      } else {
-                        if (count > this.flush && ++this.update >= 10) {
-                           this.write = 0;
-                           return this.init("Craft progress observed");
+                        if (count > this.lastCount && ++this.waitTicks >= 10) {
+                           this.clickPhase = 0;
+                           return this.running("Craft progress observed");
                         }
 
-                        if (count <= this.flush && ++this.update > 100) {
-                           return this.init(
+                        if (count <= this.lastCount && ++this.waitTicks > 100) {
+                           return this.finish(
                               AiOperation.Status.UNCERTAIN, "Output click sent but inventory gain was not observed; inspect container before retrying"
                            );
                         }
                      }
 
-                     return this.init("Waiting for crafting state");
+                     return this.running("Waiting for crafting state");
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "Open the appropriate crafting table or player inventory first");
+                     return this.finish(AiOperation.Status.FAILED, "Open the appropriate crafting table or player inventory first");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Craft cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Craft cancelled");
                }
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return AiGameOperations.result(
                   AiOperation.Status.RUNNING, message, AiJson.objectOf("count", AiGameState.countInventoryItem(item), "target", this.targetCount)
                );
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                return AiGameOperations.result(status, message, AiJson.objectOf("item", item, "count", AiGameState.countInventoryItem(item), "target", this.targetCount));
             }
 
@@ -465,45 +465,45 @@ final class AiGameplay {
          final long deadline = System.nanoTime() + seconds * 1000000000L;
          AiOperation collection = new AiOperation() {
             boolean cancelled;
-            boolean load;
-            boolean read;
-            boolean write;
+            boolean mining;
+            boolean tidied;
+            boolean inventoryFullSeen;
             AiOperation mineOp;
-            AiGameplay.Inner_DataUtil capacityPrep = AiGameplay.init(ids, seconds, false);
+            AiGameplay.Inner_DataUtil capacityPrep = AiGameplay.prepareCapacity(ids, seconds, false);
             final AiPreparationReceipt preparation = new AiPreparationReceipt();
             final AiFireControl fireControl = new AiFireControl();
 
-            AiOperation init() {
-               return this.load ? this.mineOp : this.capacityPrep;
+            AiOperation currentChild() {
+               return this.mining ? this.mineOp : this.capacityPrep;
             }
 
             @Override
             public AiOperation.Result tick() {
                if (this.cancelled) {
-                  return this.init(AiGameOperations.result(AiOperation.Status.CANCELLED, "Drop collection cancelled", new JsonObject()));
+                  return this.finish(AiGameOperations.result(AiOperation.Status.CANCELLED, "Drop collection cancelled", new JsonObject()));
                }
 
                if (mc.player != player || mc.level != world || System.nanoTime() > deadline) {
-                  return this.init(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
+                  return this.finish(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
                }
 
-               if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.init()) && !this.fireControl.read()) {
-                  return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
+               if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.currentChild()) && !this.fireControl.read()) {
+                  return this.finish(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
                }
 
-               if (!this.load) {
+               if (!this.mining) {
                   AiOperation.Result r = this.preparation.tickChild(this.capacityPrep);
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  this.read = this.read | this.capacityPrep.tidyingStarted;
+                  this.tidied = this.tidied | this.capacityPrep.tidyingStarted;
                   this.preparation.cancelChild(this.capacityPrep);
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.init(r);
+                     return this.finish(r);
                   }
 
-                  this.load = true;
+                  this.mining = true;
                }
 
                if (this.mineOp == null) {
@@ -538,21 +538,21 @@ final class AiGameplay {
                   } else {
                      this.preparation.cancelChild(this.mineOp);
                      if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.mineOp)) {
-                        return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
-                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.preparation.requiresReconciliation(this.mineOp) && !this.read && !this.write) {
-                        this.write = true;
+                        return this.finish(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
+                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.preparation.requiresReconciliation(this.mineOp) && !this.tidied && !this.inventoryFullSeen) {
+                        this.inventoryFullSeen = true;
                         this.mineOp = null;
-                        this.load = false;
-                        this.capacityPrep = AiGameplay.init(ids, (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L), false);
+                        this.mining = false;
+                        this.capacityPrep = AiGameplay.prepareCapacity(ids, (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L), false);
                         return AiGameOperations.result(AiOperation.Status.RUNNING, "Making room for the observed drops", AiRunResources.parseEvidenceJson(r.dataJson()));
                      } else {
-                        return this.init(r);
+                        return this.finish(r);
                      }
                   }
                }
             }
 
-            AiOperation.Result init(AiOperation.Result result) {
+            AiOperation.Result finish(AiOperation.Result result) {
                result = this.preparation.finalizeResult(result, this.requiresReconciliationAfterEmergency());
                JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
                data.addProperty("item", item);
@@ -565,12 +565,12 @@ final class AiGameplay {
 
             @Override
             public boolean canInterruptNow() {
-               return !this.preparation.requiresReconciliation(this.init()) && this.fireControl.canInterrupt() && (this.init() == null || this.init().canInterruptNow());
+               return !this.preparation.requiresReconciliation(this.currentChild()) && this.fireControl.canInterrupt() && (this.currentChild() == null || this.currentChild().canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.preparation.requiresReconciliation(this.init()) || this.fireControl.read();
+               return this.preparation.requiresReconciliation(this.currentChild()) || this.fireControl.read();
             }
 
             @Override
@@ -591,15 +591,15 @@ final class AiGameplay {
    }
 
    static AiGameplay.Inner_DataUtil init(List<String> ids, int seconds) {
-      return init(ids, seconds, true);
+      return prepareCapacity(ids, seconds, true);
    }
 
-   private static AiGameplay.Inner_DataUtil init(List<String> ids, int seconds, boolean beforeBreak) {
+   private static AiGameplay.Inner_DataUtil prepareCapacity(List<String> ids, int seconds, boolean beforeBreak) {
       Minecraft mc = Minecraft.getInstance();
       Object world = mc.level;
       Object player = mc.player;
       return new AiGameplay.Inner_DataUtil(
-         () -> !beforeBreak && !matchingDropNearby(ids) || load(ids),
+         () -> !beforeBreak && !matchingDropNearby(ids) || dropEntityObserved(ids),
          () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && ensureInventoryMenu(mc),
          () -> AiTidy.init(
             AiJson.objectOf(
@@ -649,7 +649,7 @@ final class AiGameplay {
       }
    }
 
-   private static boolean load(List<String> ids) {
+   private static boolean dropEntityObserved(List<String> ids) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          boolean observed = false;
@@ -747,17 +747,17 @@ final class AiGameplay {
             int pendingWaitTicks;
             int pendingSlot = -1;
             int update;
-            int sync;
+            int outputCountBefore;
             int flush;
             long containerRevision;
-            final int close = AiGameState.countInventoryItem(output);
+            final int unusedInitialOutputCount = AiGameState.countInventoryItem(output);
             boolean cancelled;
             boolean ejecting;
             long replyCount;
-            int open;
+            int pendingClicks;
             final boolean loadOnly = AiJson.getBoolean(args, "loadOnly", false);
-            final int poll = Math.max(1, AiJson.getInt(args, "batchSize", 64));
-            final int push = Math.max(1, AiJson.getInt(args, "cookTicksPerItem", 200));
+            final int batchSize = Math.max(1, AiJson.getInt(args, "batchSize", 64));
+            final int cookTicksPerItem = Math.max(1, AiJson.getInt(args, "cookTicksPerItem", 200));
             final AiGameplay.Inner_StreamUtil fuelPlan = new AiGameplay.Inner_StreamUtil(fuel, AiJson.getBoolean(args, "collect", false));
             final boolean fuelFlexible = AiJson.getBoolean(args, "fuelFlexible", false);
 
@@ -768,37 +768,37 @@ final class AiGameplay {
                   || this.mc.level != this.level
                   || this.mc.getConnection() != this.connection
                   || this.mc.player != this.player) {
-                  return this.init(AiOperation.Status.CANCELLED, "Smelting world/player changed; committed furnace contents may continue processing");
+                  return this.finish(AiOperation.Status.CANCELLED, "Smelting world/player changed; committed furnace contents may continue processing");
                } else if (!this.mc.player.isAlive()) {
-                  return this.init(AiOperation.Status.FAILED, "Player died while smelting");
+                  return this.finish(AiOperation.Status.FAILED, "Player died while smelting");
                } else if (System.nanoTime() > this.deadline) {
-                  return this.init(
+                  return this.finish(
                      this.pendingSlot >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                      "Smelting target not reached; reobserve any pending transfer"
                   );
                } else if (AiGameState.countInventoryItem(output) >= this.targetCount && this.pendingSlot < 0) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Smelted output inventory target observed after transfer reconciliation");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Smelted output inventory target observed after transfer reconciliation");
                } else {
                   this.flush = 0;
                   this.update = 0;
                   if (!(this.mc.player.containerMenu instanceof AbstractFurnaceMenu menu)) {
-                     return this.init(AiOperation.Status.FAILED, "Open a furnace, smoker, or blast furnace appropriate to the input first");
+                     return this.finish(AiOperation.Status.FAILED, "Open a furnace, smoker, or blast furnace appropriate to the input first");
                   } else {
                      if (this.containerId == -1) {
                         this.containerId = menu.containerId;
                      }
 
                      if (this.containerId != menu.containerId) {
-                        return this.init(AiOperation.Status.CANCELLED, "Furnace container changed");
+                        return this.finish(AiOperation.Status.CANCELLED, "Furnace container changed");
                      }
 
                      if (this.pendingSlot >= 0) {
                         this.pendingWaitTicks++;
-                        boolean acknowledged = AiServerEvidence.containerReplyCount(this.containerId) - this.replyCount >= this.open;
-                        if (!acknowledged || !this.init(menu) || !menu.getCarried().isEmpty()) {
+                        boolean acknowledged = AiServerEvidence.containerReplyCount(this.containerId) - this.replyCount >= this.pendingClicks;
+                        if (!acknowledged || !this.pendingSlotSettled(menu) || !menu.getCarried().isEmpty()) {
                            return this.pendingWaitTicks > 100
-                              ? this.init(AiOperation.Status.UNCERTAIN, "Furnace transfer dispatched without observed slot change; inspect before repeating")
-                              : this.init("Waiting for server furnace state");
+                              ? this.finish(AiOperation.Status.UNCERTAIN, "Furnace transfer dispatched without observed slot change; inspect before repeating")
+                              : this.running("Waiting for server furnace state");
                         }
 
                         this.pendingSlot = -1;
@@ -807,11 +807,11 @@ final class AiGameplay {
                      }
 
                      if (AiGameState.countInventoryItem(output) >= this.targetCount) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Smelted output inventory target confirmed by server snapshots");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Smelted output inventory target confirmed by server snapshots");
                      }
 
                      if (!menu.getCarried().isEmpty()) {
-                        return this.init(AiOperation.Status.FAILED, "Clear the cursor stack before smelting");
+                        return this.finish(AiOperation.Status.FAILED, "Clear the cursor stack before smelting");
                      }
 
                      ItemStack result = menu.getSlot(2).getItem();
@@ -819,27 +819,27 @@ final class AiGameplay {
                         ItemStack inputStack = menu.getSlot(0).getItem();
                         if (!inputStack.isEmpty() && !BuiltInRegistries.ITEM.getKey(inputStack.getItem()).toString().equals(input)) {
                            this.markRevision();
-                           this.init(0, 0, ContainerInput.QUICK_MOVE);
+                           this.click(0, 0, ContainerInput.QUICK_MOVE);
                            this.pendingSlot = 0;
                            this.pendingWaitTicks = 0;
                            this.ejecting = true;
-                           return this.init("Ejecting foreign furnace input " + BuiltInRegistries.ITEM.getKey(inputStack.getItem()));
+                           return this.running("Ejecting foreign furnace input " + BuiltInRegistries.ITEM.getKey(inputStack.getItem()));
                         }
 
                         ItemStack fuelStack = menu.getSlot(1).getItem();
-                        this.fuelPlan.init(fuelStack, menu.isLit(), AiItems.fuelBurnTime(fuelStack), this::availableFuelId);
-                        if (this.fuelPlan.init(fuelStack)) {
+                        this.fuelPlan.observe(fuelStack, menu.isLit(), AiItems.fuelBurnTime(fuelStack), this::availableFuelId);
+                        if (this.fuelPlan.isForeign(fuelStack)) {
                            this.markRevision();
-                           this.init(1, 0, ContainerInput.QUICK_MOVE);
+                           this.click(1, 0, ContainerInput.QUICK_MOVE);
                            this.pendingSlot = 1;
                            this.pendingWaitTicks = 0;
                            this.ejecting = true;
-                           return this.init("Ejecting foreign furnace fuel " + BuiltInRegistries.ITEM.getKey(fuelStack.getItem()));
+                           return this.running("Ejecting foreign furnace fuel " + BuiltInRegistries.ITEM.getKey(fuelStack.getItem()));
                         }
 
                         for (int destination = 0; destination <= 1; destination++) {
                            if (menu.getSlot(destination).getItem().isEmpty() && (destination == 0 || !menu.isLit())) {
-                              String wanted = destination == 0 ? input : this.fuelPlan.init();
+                              String wanted = destination == 0 ? input : this.fuelPlan.selectedFuel();
                               int source = -1;
 
                               for (int slot = 3; slot < menu.slots.size(); slot++) {
@@ -852,12 +852,12 @@ final class AiGameplay {
                                  }
                               }
 
-                              if (source < 0 && destination == 1 && this.fuelFlexible && this.fuelPlan.init(this.availableFuelId())) {
-                                 return this.init("Switching fuel to " + this.fuelPlan.init());
+                              if (source < 0 && destination == 1 && this.fuelFlexible && this.fuelPlan.switchTo(this.availableFuelId())) {
+                                 return this.running("Switching fuel to " + this.fuelPlan.selectedFuel());
                               }
 
                               if (source < 0) {
-                                 return this.init(
+                                 return this.finish(
                                     AiOperation.Status.FAILED, "Missing compatible " + (destination == 0 ? "smelting input" : "fuel") + ": " + wanted
                                  );
                               }
@@ -867,61 +867,61 @@ final class AiGameplay {
                                  ItemStack stack = menu.getSlot(source).getItem();
                                  int burn = Math.max(1, AiItems.fuelBurnTime(stack) / Math.max(1, AiJson.getInt(args, "fuelBurnDivisor", 1)));
                                  int left = Math.max(1, this.targetCount - AiGameState.countInventoryItem(output));
-                                 int items = Math.max(1, Math.min(stack.getCount(), (left * this.push + burn - 1) / burn));
+                                 int items = Math.max(1, Math.min(stack.getCount(), (left * this.cookTicksPerItem + burn - 1) / burn));
                                  int spare = this.fuelFlexible ? AiSmelt.init(stack.getItem()) : Math.max(0, AiGameState.countMainInventoryItem(wanted) - AiRunResources.mandatoryReservedCount(stack.getItem()));
                                  if (spare <= 0) {
-                                    return this.init(AiOperation.Status.FAILED, "Fuel is reserved for the active survival run: " + wanted);
+                                    return this.finish(AiOperation.Status.FAILED, "Fuel is reserved for the active survival run: " + wanted);
                                  }
 
                                  items = Math.min(items, spare);
-                                 this.init(source, 0, ContainerInput.PICKUP);
+                                 this.click(source, 0, ContainerInput.PICKUP);
 
                                  for (int i = 0; i < items && !menu.getCarried().isEmpty(); i++) {
-                                    this.init(1, 1, ContainerInput.PICKUP);
+                                    this.click(1, 1, ContainerInput.PICKUP);
                                  }
 
                                  if (!menu.getCarried().isEmpty()) {
-                                    this.init(source, 0, ContainerInput.PICKUP);
+                                    this.click(source, 0, ContainerInput.PICKUP);
                                  }
                               } else {
                                  int items = Math.min(
-                                    menu.getSlot(source).getItem().getCount(), Math.min(this.poll, Math.max(1, this.targetCount - AiGameState.countInventoryItem(output)))
+                                    menu.getSlot(source).getItem().getCount(), Math.min(this.batchSize, Math.max(1, this.targetCount - AiGameState.countInventoryItem(output)))
                                  );
-                                 this.init(source, 0, ContainerInput.PICKUP);
+                                 this.click(source, 0, ContainerInput.PICKUP);
 
                                  for (int i = 0; i < items && !menu.getCarried().isEmpty(); i++) {
-                                    this.init(0, 1, ContainerInput.PICKUP);
+                                    this.click(0, 1, ContainerInput.PICKUP);
                                  }
 
                                  if (!menu.getCarried().isEmpty()) {
-                                    this.init(source, 0, ContainerInput.PICKUP);
+                                    this.click(source, 0, ContainerInput.PICKUP);
                                  }
                               }
 
                               this.pendingSlot = destination;
                               this.pendingWaitTicks = 0;
-                              return this.init("Loading furnace " + (destination == 0 ? "input" : "fuel"));
+                              return this.running("Loading furnace " + (destination == 0 ? "input" : "fuel"));
                            }
                         }
 
                         return this.loadOnly && !menu.getSlot(0).getItem().isEmpty() && (menu.isLit() || !menu.getSlot(1).getItem().isEmpty())
-                           ? this.init(AiOperation.Status.SUCCEEDED, "Loaded and burning; the output is collected later")
-                           : this.init("Waiting for furnace output (" + AiGameState.countInventoryItem(output) + "/" + this.targetCount + ")");
+                           ? this.finish(AiOperation.Status.SUCCEEDED, "Loaded and burning; the output is collected later")
+                           : this.running("Waiting for furnace output (" + AiGameState.countInventoryItem(output) + "/" + this.targetCount + ")");
                      } else if (!BuiltInRegistries.ITEM.getKey(result.getItem()).toString().equals(output)) {
                         String existing = BuiltInRegistries.ITEM.getKey(result.getItem()).toString();
                         this.markRevision();
-                        this.init(2, 0, ContainerInput.QUICK_MOVE);
+                        this.click(2, 0, ContainerInput.QUICK_MOVE);
                         this.pendingSlot = 2;
                         this.pendingWaitTicks = 0;
                         this.ejecting = true;
-                        return this.init("Collecting existing furnace output " + existing + " before the requested recipe");
+                        return this.running("Collecting existing furnace output " + existing + " before the requested recipe");
                      } else {
-                        this.sync = AiGameState.countInventoryItem(output);
+                        this.outputCountBefore = AiGameState.countInventoryItem(output);
                         this.markRevision();
-                        this.init(2, 0, ContainerInput.QUICK_MOVE);
+                        this.click(2, 0, ContainerInput.QUICK_MOVE);
                         this.pendingSlot = 2;
                         this.pendingWaitTicks = 0;
-                        return this.init("Collecting smelted output");
+                        return this.running("Collecting smelted output");
                      }
                   }
                }
@@ -930,7 +930,7 @@ final class AiGameplay {
             String availableFuelId() {
                Item inputItem = AiItems.resolveItem(input).items().iterator().next();
                int left = Math.max(1, this.targetCount - AiGameState.countInventoryItem(output));
-               Item available = AiSmelt.init(this.fuelPlan.init(), inputItem, left);
+               Item available = AiSmelt.init(this.fuelPlan.selectedFuel(), inputItem, left);
                if (available == null) {
                   available = AiSmelt.init("", inputItem, left);
                }
@@ -941,20 +941,20 @@ final class AiGameplay {
             void markRevision() {
                this.containerRevision = AiServerEvidence.containerRevision(this.containerId);
                this.replyCount = AiServerEvidence.containerReplyCount(this.containerId);
-               this.open = 0;
+               this.pendingClicks = 0;
             }
 
-            void init(int slot, int button, ContainerInput type) {
+            void click(int slot, int button, ContainerInput type) {
                AiContainerTransactions.sendPredictedClick(this.containerId, slot, button, type);
-               this.open++;
+               this.pendingClicks++;
             }
 
-            boolean init(AbstractFurnaceMenu menu) {
+            boolean pendingSlotSettled(AbstractFurnaceMenu menu) {
                if (this.ejecting) {
                   return menu.getSlot(this.pendingSlot).getItem().isEmpty();
                } else {
                   return this.pendingSlot == 2
-                     ? AiGameState.countInventoryItem(output) > this.sync
+                     ? AiGameState.countInventoryItem(output) > this.outputCountBefore
                      : !menu.getSlot(this.pendingSlot).getItem().isEmpty() || this.pendingSlot == 1 && menu.isLit();
                }
             }
@@ -968,13 +968,13 @@ final class AiGameplay {
                   "containerId",
                   this.containerId,
                   "fuel",
-                  this.fuelPlan.init(),
+                  this.fuelPlan.selectedFuel(),
                   "pendingSlot",
                   this.pendingSlot,
                   "ejecting",
                   this.ejecting,
                   "clicksDispatched",
-                  this.open,
+                  this.pendingClicks,
                   "repliesBefore",
                   this.replyCount,
                   "repliesNow",
@@ -1001,11 +1001,11 @@ final class AiGameplay {
                return data;
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                return AiGameOperations.result(status, message, this.progressJson());
             }
 
@@ -1045,11 +1045,11 @@ final class AiGameplay {
             final String dimensionId = AiWorldIdentity.currentDimensionId(this.mc);
             final int span = radius * 2 + 1;
             final int load_I = 49;
-            final int read = this.span * this.span * 49;
+            final int totalCells = this.span * this.span * 49;
             final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> scanHits = new ArrayList<>();
             final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> remembered = autismclient.ai.engine.AiChunkMemory.getInstance()
                .findRemembered(this.origin, radius, wanted::contains);
-            int write;
+            int scannedCells;
             boolean cancelled;
 
             @Override
@@ -1061,10 +1061,10 @@ final class AiGameplay {
                   && this.mc.getConnection() == this.connection) {
                   long stop = System.nanoTime() + 750000L;
 
-                  for (int budget = 0; budget < 4096 && this.write < this.read && ((budget & 63) != 0 || System.nanoTime() < stop); this.write++) {
+                  for (int budget = 0; budget < 4096 && this.scannedCells < this.totalCells && ((budget & 63) != 0 || System.nanoTime() < stop); this.scannedCells++) {
                      BlockPos p = this.origin
                         .offset(
-                           this.write % this.span - radius, this.write / (this.span * this.span) - 24, this.write / this.span % this.span - radius
+                           this.scannedCells % this.span - radius, this.scannedCells / (this.span * this.span) - 24, this.scannedCells / this.span % this.span - radius
                         );
                      if (AiTerrain.isLoaded(this.mc.level, p)) {
                         BlockState state = this.mc.level.getBlockState(p);
@@ -1077,9 +1077,9 @@ final class AiGameplay {
                      budget++;
                   }
 
-                  if (this.write < this.read) {
+                  if (this.scannedCells < this.totalCells) {
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, "Scanning loaded terrain", AiJson.objectOf("scanned", this.write, "total", this.read)
+                        AiOperation.Status.RUNNING, "Scanning loaded terrain", AiJson.objectOf("scanned", this.scannedCells, "total", this.totalCells)
                      );
                   }
 
@@ -1158,7 +1158,7 @@ final class AiGameplay {
       }
    }
 
-   private static Set<Block> init(Set<String> ids) {
+   private static Set<Block> blocksFor(Set<String> ids) {
       HashSet<Block> out = new HashSet<>();
 
       for (String id : ids) {
@@ -1191,10 +1191,10 @@ final class AiGameplay {
                final BlockPos origin = this.mc.player.blockPosition();
                final JsonArray found = new JsonArray();
                final int span = radius * 2 + 1;
-               final int load = this.span * this.span * 17;
-               int read;
+               final int totalCells = this.span * this.span * 17;
+               int surveyedCells;
                boolean cancelled;
-               final Set<Block> wantedBlocks = AiGameplay.init(wanted);
+               final Set<Block> wantedBlocks = AiGameplay.blocksFor(wanted);
 
                @Override
                public AiOperation.Result tick() {
@@ -1202,11 +1202,11 @@ final class AiGameplay {
                      long until = System.nanoTime() + 2000000L;
                      MutableBlockPos p = new MutableBlockPos();
 
-                     while (this.read < this.load && ((this.read & 1023) != 0 || System.nanoTime() < until)) {
+                     while (this.surveyedCells < this.totalCells && ((this.surveyedCells & 1023) != 0 || System.nanoTime() < until)) {
                         p.set(
-                           this.origin.getX() + this.read % this.span - radius,
-                           this.origin.getY() + this.read / (this.span * this.span) - 8,
-                           this.origin.getZ() + this.read / this.span % this.span - radius
+                           this.origin.getX() + this.surveyedCells % this.span - radius,
+                           this.origin.getY() + this.surveyedCells / (this.span * this.span) - 8,
+                           this.origin.getZ() + this.surveyedCells / this.span % this.span - radius
                         );
                         if (AiTerrain.isLoaded(this.mc.level, p)) {
                            BlockState state = this.mc.level.getBlockState(p);
@@ -1229,21 +1229,21 @@ final class AiGameplay {
                            }
                         }
 
-                        this.read++;
+                        this.surveyedCells++;
                      }
 
                      return AiGameOperations.result(
-                        this.read >= this.load ? AiOperation.Status.SUCCEEDED : AiOperation.Status.RUNNING,
-                        this.read >= this.load ? "Loaded terrain surveyed" : "Surveying loaded terrain",
+                        this.surveyedCells >= this.totalCells ? AiOperation.Status.SUCCEEDED : AiOperation.Status.RUNNING,
+                        this.surveyedCells >= this.totalCells ? "Loaded terrain surveyed" : "Surveying loaded terrain",
                         AiJson.objectOf(
                            "matches",
                            this.found,
                            "truncated",
                            this.found.size() >= 256,
                            "scanned",
-                           this.read,
+                           this.surveyedCells,
                            "total",
-                           this.load,
+                           this.totalCells,
                            "verticalRadius",
                            8
                         )
@@ -1293,7 +1293,7 @@ final class AiGameplay {
          }
 
          if (this.cancelled || this.clock.getAsLong() > this.deadline) {
-            return this.init(
+            return this.finishWith(
                AiGameOperations.result(
                   this.cancelled ? AiOperation.Status.CANCELLED : AiOperation.Status.TIMED_OUT, "Pickup capacity preparation stopped", new JsonObject()
                )
@@ -1301,7 +1301,7 @@ final class AiGameplay {
          }
 
          if (this.child == null && this.hasRoom.getAsBoolean()) {
-            return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", new JsonObject()));
+            return this.finishWith(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", new JsonObject()));
          }
 
          if ((this.child == null || this.child.canInterruptNow() && !this.preparation.requiresReconciliation(this.child))
@@ -1328,10 +1328,10 @@ final class AiGameplay {
             result = AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Pickup room was refilled before preparation completed", result.dataJson());
          }
 
-         return this.init(result);
+         return this.finishWith(result);
       }
 
-      AiOperation.Result init(AiOperation.Result result) {
+      AiOperation.Result finishWith(AiOperation.Result result) {
          this.childResult = this.preparation.finalizeResult(result, this.preparation.requiresReconciliation(this.child));
          this.cancel();
          return this.childResult;
@@ -1365,11 +1365,11 @@ final class AiGameplay {
          this.collect = collect;
       }
 
-      String init() {
+      String selectedFuel() {
          return this.selected;
       }
 
-      void init(ItemStack loaded, boolean burning, int burnTicks, Supplier<String> refill) {
+      void observe(ItemStack loaded, boolean burning, int burnTicks, Supplier<String> refill) {
          if (this.collect) {
             if (!loaded.isEmpty() && burnTicks > 0) {
                this.selected = BuiltInRegistries.ITEM.getKey(loaded.getItem()).toString();
@@ -1382,7 +1382,7 @@ final class AiGameplay {
          }
       }
 
-      boolean init(String available) {
+      boolean switchTo(String available) {
          if (available != null && !available.equals(this.selected)) {
             this.selected = available;
             return true;
@@ -1391,7 +1391,7 @@ final class AiGameplay {
          }
       }
 
-      boolean init(ItemStack loaded) {
+      boolean isForeign(ItemStack loaded) {
          return !loaded.isEmpty() && !BuiltInRegistries.ITEM.getKey(loaded.getItem()).toString().equals(this.selected);
       }
    }

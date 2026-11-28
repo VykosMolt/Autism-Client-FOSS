@@ -12,8 +12,8 @@ public final class RangeSliderRenderer {
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio, boolean hovered, int activeThumb
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
-      minRatio = init(minRatio);
-      maxRatio = init(maxRatio);
+      minRatio = clamp01(minRatio);
+      maxRatio = clamp01(maxRatio);
       if (maxRatio < minRatio) {
          double swap = minRatio;
          minRatio = maxRatio;
@@ -22,11 +22,11 @@ public final class RangeSliderRenderer {
 
       int radius = 3;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, colors.inputSurface, colors.borderControl);
-      autismclient.gui.f.NetHelper track = init(bounds);
+      autismclient.gui.f.NetHelper track = trackRect(bounds);
       int trackRadius = track.sync() / 2;
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), track, trackRadius, -869256388);
-      int lowX = init(track, minRatio);
-      int highX = init(track, maxRatio);
+      int lowX = xForRatio(track, minRatio);
+      int highX = xForRatio(track, maxRatio);
       if (highX > lowX) {
          autismclient.gui.f.PacketUtil.load(
             context.init_GuiGraphicsExtract(), autismclient.gui.f.NetHelper.init(lowX, track.write(), highX - lowX, track.sync()), trackRadius, colors.accent
@@ -53,7 +53,7 @@ public final class RangeSliderRenderer {
       );
    }
 
-   public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds) {
+   public static autismclient.gui.f.NetHelper trackRect(autismclient.gui.f.NetHelper bounds) {
       int inset = Math.max(4, bounds.sync() / 2 - 1);
       autismclient.gui.f.NetHelper track = bounds.load(3, inset, 3, inset);
       return track.sync() <= 0
@@ -61,14 +61,14 @@ public final class RangeSliderRenderer {
          : track;
    }
 
-   private static int init(autismclient.gui.f.NetHelper track, double ratio) {
-      return track.read() + (int)Math.round(track.update() * init(ratio));
+   private static int xForRatio(autismclient.gui.f.NetHelper track, double ratio) {
+      return track.read() + (int)Math.round(track.update() * clamp01(ratio));
    }
 
    public static int pickHandle(double mouseX, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio) {
-      autismclient.gui.f.NetHelper track = init(bounds);
-      int lowX = init(track, minRatio);
-      int highX = init(track, maxRatio);
+      autismclient.gui.f.NetHelper track = trackRect(bounds);
+      int lowX = xForRatio(track, minRatio);
+      int highX = xForRatio(track, maxRatio);
       double toLow = Math.abs(mouseX - lowX);
       double toHigh = Math.abs(mouseX - highX);
       if (Math.abs(toLow - toHigh) < 0.5) {
@@ -79,18 +79,18 @@ public final class RangeSliderRenderer {
    }
 
    public static double init(double value, double min, double max) {
-      return max <= min ? 0.0 : init((value - min) / (max - min));
+      return max <= min ? 0.0 : clamp01((value - min) / (max - min));
    }
 
-   public static double init(double mouseX, autismclient.gui.f.NetHelper bounds, double min, double max, double step) {
-      autismclient.gui.f.NetHelper track = init(bounds);
-      double ratio = track.update() <= 0 ? 0.0 : init((mouseX - track.read()) / track.update());
+   public static double valueAt(double mouseX, autismclient.gui.f.NetHelper bounds, double min, double max, double step) {
+      autismclient.gui.f.NetHelper track = trackRect(bounds);
+      double ratio = track.update() <= 0 ? 0.0 : clamp01((mouseX - track.read()) / track.update());
       double value = min + ratio * (max - min);
       double safeStep = Math.max(1.0E-4, step);
       return min + Math.round((value - min) / safeStep) * safeStep;
    }
 
-   private static double init(double value) {
+   private static double clamp01(double value) {
       return Math.max(0.0, Math.min(1.0, value));
    }
 }

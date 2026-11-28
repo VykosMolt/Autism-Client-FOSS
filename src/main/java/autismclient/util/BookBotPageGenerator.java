@@ -20,13 +20,13 @@ public final class BookBotPageGenerator {
    public static List<String> init(int requestedPages, int requestedCharsPerPage, String randomType, Random random) {
       String type = init(randomType);
       if ("PaperMC".equals(type)) {
-         return init(random);
+         return randomPages(random);
       }
 
       int pages = Math.max(1, Math.min(100, requestedPages));
       int charsPerPage = Math.max(1, Math.min(1024, requestedCharsPerPage));
       Random rng = random == null ? new Random() : random;
-      OfInt chars = "Ascii".equals(type) ? rng.ints(33, 128).filter(BookBotPageGenerator::init).iterator() : rng.ints(33, 55296).filter(BookBotPageGenerator::init).iterator();
+      OfInt chars = "Ascii".equals(type) ? rng.ints(33, 128).filter(BookBotPageGenerator::isPrintable).iterator() : rng.ints(33, 55296).filter(BookBotPageGenerator::isPrintable).iterator();
       List<String> out = new ArrayList<>(pages);
 
       for (int page = 0; page < pages; page++) {
@@ -63,13 +63,13 @@ public final class BookBotPageGenerator {
       return var10000;
    }
 
-   private static List<String> init(Random random) {
+   private static List<String> randomPages(Random random) {
       Random rng = random == null ? new Random() : random;
       List<String> pages = new ArrayList<>(100);
       StringBuilder page = new StringBuilder(1024);
-      OfInt oneByte = rng.ints(33, 128).filter(BookBotPageGenerator::init).iterator();
-      OfInt twoBytes = rng.ints(128, 2048).filter(BookBotPageGenerator::init).iterator();
-      OfInt threeBytes = rng.ints(2048, 55296).filter(BookBotPageGenerator::init).iterator();
+      OfInt oneByte = rng.ints(33, 128).filter(BookBotPageGenerator::isPrintable).iterator();
+      OfInt twoBytes = rng.ints(128, 2048).filter(BookBotPageGenerator::isPrintable).iterator();
+      OfInt threeBytes = rng.ints(2048, 55296).filter(BookBotPageGenerator::isPrintable).iterator();
 
       for (int pageIndex = 0; pageIndex < 100; pageIndex++) {
          if (pageIndex < 50) {
@@ -126,7 +126,7 @@ public final class BookBotPageGenerator {
       }
    }
 
-   private static boolean init(int value) {
+   private static boolean isPrintable(int value) {
       return !Character.isWhitespace(value) && value != 13 && value != 10;
    }
 }

@@ -73,7 +73,7 @@ final class SchematicPaste {
    private long done;
    private ChunkPos init_ChunkPos;
    private CompletableFuture<?> init_CompletableFuture;
-   private int close;
+   private int stallCheckTick;
    private long read_J;
    private LevelChunk cachedChunk;
    volatile boolean init_Z;
@@ -125,7 +125,7 @@ final class SchematicPaste {
                && this.entityIndex <= document.entities.size()
                && this.done >= 0L) {
                this.init_Future = SchematicLibrary.EXECUTOR.submit(() -> prepare(document, this.origin, rotation, mirror, includeAir));
-               this.load("");
+               this.writeCursor("");
             } else {
                throw new IllegalArgumentException("Invalid paste checkpoint");
             }
@@ -180,13 +180,13 @@ final class SchematicPaste {
             ServerTickEvents.END_SERVER_TICK.register(s -> {
                SchematicPaste current = active;
                if (current != null && current.server == s) {
-                  current.load();
+                  current.runSlice();
                }
             });
             ServerLifecycleEvents.SERVER_STOPPING.register(s -> {
                SchematicPaste current = active;
                if (current != null && current.server == s) {
-                  current.init("");
+                  current.finish("");
                }
             });
          }
@@ -202,7 +202,7 @@ final class SchematicPaste {
       this.init_Z = true;
    }
 
-   private void load() {
+   private void runSlice() {
       if (!this.init_Z && !this.progress.complete && !this.server.isPublished()) {
          long deadline = System.nanoTime() + Math.clamp(37000000L - this.server.getAverageTickTimeNanos(), 4000000L, 14000000L);
          this.cachedChunk = null;
@@ -248,7 +248,7 @@ final class SchematicPaste {
                            this.range = 0;
                         }
                      } else {
-                        if (!this.init(column.x, column.z)) {
+                        if (!this.loadChunk(column.x, column.z)) {
                            break;
                         }
 
@@ -300,7 +300,7 @@ final class SchematicPaste {
                      SchematicDocument.Inner_DataUtil saved = this.document.blockEntities.get(this.blockEntityIndex);
                      BlockPos local = this.document.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.rotation, this.mirror);
                      BlockPos at = this.origin.offset(local);
-                     if (!this.init(at.getX() >> 4, at.getZ() >> 4)) {
+                     if (!this.loadChunk(at.getX() >> 4, at.getZ() >> 4)) {
                         break;
                      }
 
@@ -320,14 +320,14 @@ final class SchematicPaste {
                   }
                } else {
                   if (this.phase != 2) {
-                     this.init("");
+                     this.finish("");
                      return;
                   }
 
                   if (this.includeEntities && this.entityIndex < this.document.entities.size()) {
                      SchematicDocument.Inner_BufferHelper saved = this.document.entities.get(this.entityIndex);
                      double[] at = this.transformPoint(saved.x(), saved.y(), saved.z());
-                     if (!this.init((int)Math.floor(at[0]) >> 4, (int)Math.floor(at[2]) >> 4)) {
+                     if (!this.loadChunk((int)Math.floor(at[0]) >> 4, (int)Math.floor(at[2]) >> 4)) {
                         break;
                      }
 
@@ -390,28 +390,28 @@ final class SchematicPaste {
                }
             }
 
-            this.load("");
+            this.writeCursor("");
          } catch (Exception e) {
-            this.init(SchematicLibrary.describeError(e));
+            this.finish(SchematicLibrary.describeError(e));
          }
       } else {
-         this.init("");
+         this.finish("");
       }
    }
 
-   private void init(String error) {
+   private void finish(String error) {
       if (!this.init_Future.isDone()) {
          this.init_Future.cancel(true);
       }
 
-      this.load(error);
+      this.writeCursor(error);
       this.finished = true;
       if (active == this) {
          active = null;
       }
    }
 
-   private boolean init(int x, int z) {
+   private boolean loadChunk(int x, int z) {
       long key = ChunkPos.pack(x, z);
       if (this.cachedChunk != null && this.read_J == key) {
          return true;
@@ -433,10 +433,10 @@ final class SchematicPaste {
                () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), SchematicLibrary.EXECUTOR
             )
             .thenCompose(future -> (CompletionStage<ChunkResult<ChunkAccess>>)future);
-         this.close = this.server.getTickCount();
+         this.stallCheckTick = this.server.getTickCount();
       }
 
-      if (this.server.getTickCount() - this.close > 1200) {
+      if (this.server.getTickCount() - this.stallCheckTick > 1200) {
          throw new IllegalStateException("Target chunk is still unavailable; paste can be resumed");
       }
 
@@ -507,7 +507,7 @@ final class SchematicPaste {
       return new double[]{this.origin.getX() + tx, this.origin.getY() + y, this.origin.getZ() + tz};
    }
 
-   private void load(String error) {
+   private void writeCursor(String error) {
       JsonObject cursor = AiJson.objectOf(
          "operation",
          this.operationId,
@@ -571,7 +571,7 @@ final class SchematicPaste {
    }
 
    static SchematicPaste.Inner_TableCache prepare(SchematicDocument doc, BlockPos origin, int rotation, String mirror, boolean includeAir) {
-      List<SchematicPaste.Inner_DataUtil> columns = init(doc, origin, rotation, mirror);
+      List<SchematicPaste.Inner_DataUtil> columns = columnsFor(doc, origin, rotation, mirror);
       Long2IntOpenHashMap columnIndex = new Long2IntOpenHashMap(columns.size());
       BitSet[][] occupied = new BitSet[columns.size()][];
       long work = 0L;
@@ -646,7 +646,7 @@ final class SchematicPaste {
       return new SchematicPaste.Inner_TableCache(columns, occupied, work);
    }
 
-   static List<SchematicPaste.Inner_DataUtil> init(SchematicDocument doc, BlockPos origin, int rotation, String mirror) {
+   static List<SchematicPaste.Inner_DataUtil> columnsFor(SchematicDocument doc, BlockPos origin, int rotation, String mirror) {
       TreeMap<Long, List<SchematicPaste.Inner_CachePool>> ranges = new TreeMap<>();
 
       for (SchematicDocument.Inner_CachePool r : doc.regions) {

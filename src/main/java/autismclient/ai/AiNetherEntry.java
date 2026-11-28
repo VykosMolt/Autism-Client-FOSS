@@ -39,7 +39,7 @@ final class AiNetherEntry {
    static final int poll = 300;
    static final int push = 180;
    static final int pop = 240;
-   static final int tick = 360;
+   static final int MAX_CAPPED_TIMEOUT_SECONDS = 360;
    static final long SLEEP_RETRY_DELAY_MS = 20000L;
    static final int run = 3;
    static final int get = 2;
@@ -54,7 +54,7 @@ final class AiNetherEntry {
    static final int next = 3;
    static final int prev = 48;
    static final int valid = 40;
-   static final int size = 14;
+   static final int SAFE_FOOD_TARGET = 14;
    static volatile boolean init_Z;
    static final int data = 12;
    static final int value = 3;
@@ -75,11 +75,11 @@ final class AiNetherEntry {
       return stonePickaxes >= 1;
    }
 
-   static boolean init(boolean openingDone, boolean legActive) {
+   static boolean shouldSkipOpening(boolean openingDone, boolean legActive) {
       return openingDone && !legActive;
    }
 
-   static boolean load(boolean nearby, boolean legActive) {
+   static boolean shouldSkipLavaSearch(boolean nearby, boolean legActive) {
       return nearby && !legActive;
    }
 
@@ -108,7 +108,7 @@ final class AiNetherEntry {
       unreachablePools.put(pos.immutable(), System.nanoTime());
    }
 
-   static void load(BlockPos pos) {
+   static void markCastFailed(BlockPos pos) {
       failedCastPools.put(pos.immutable(), System.nanoTime());
    }
 
@@ -144,7 +144,7 @@ final class AiNetherEntry {
       }
    }
 
-   static boolean init(long dayTime, boolean overworld, boolean nightActive, long handledDay, long dayIndex, long retryAtMs, long nowMs) {
+   static boolean shouldSleepNow(long dayTime, boolean overworld, boolean nightActive, long handledDay, long dayIndex, long retryAtMs, long nowMs) {
       if (!overworld || nightActive) {
          return false;
       } else if (dayTime >= 12500L && dayTime <= 23460L) {
@@ -154,7 +154,7 @@ final class AiNetherEntry {
       }
    }
 
-   static AiNetherEntry.Inner_CachePool init(
+   static AiNetherEntry.Inner_CachePool pickNextPhase(
       boolean inNether, boolean openingDone, boolean foodNeeded, boolean villageWanted, boolean ironFireDone, boolean portalNearby, boolean lavaNearby
    ) {
       if (inNether) {
@@ -197,7 +197,7 @@ final class AiNetherEntry {
       return var10000;
    }
 
-   static boolean init(AiNetherEntry.Inner_CachePool phase, AiFailure failure) {
+   static boolean canRetryPhase(AiNetherEntry.Inner_CachePool phase, AiFailure failure) {
       if (failure == AiFailure.MISSING_MATERIALS) {
          return false;
       }
@@ -236,11 +236,11 @@ final class AiNetherEntry {
       return !pending && framed == 0 && result != null && (result.status() == AiOperation.Status.FAILED || result.status() == AiOperation.Status.TIMED_OUT);
    }
 
-   static AiFailure init(AiOperation.Result r) {
+   static AiFailure failureForResult(AiOperation.Result r) {
       return r.status() == AiOperation.Status.TIMED_OUT ? AiFailure.TIMEOUT : AiFailure.MISSING_MATERIALS;
    }
 
-   static BlockPos init(List<BlockPos> sites, int attemptIndex) {
+   static BlockPos siteForAttempt(List<BlockPos> sites, int attemptIndex) {
       return sites.isEmpty() ? null : sites.get(Math.min(attemptIndex, sites.size() - 1));
    }
 
@@ -252,11 +252,11 @@ final class AiNetherEntry {
       return Math.max(300, Math.min(3600, seconds));
    }
 
-   static int load(int configured, int remaining) {
+   static int clampCappedTimeout(int configured, int remaining) {
       return Math.max(15, Math.min(configured, Math.min(360, remaining)));
    }
 
-   static int read(int configured, int remaining) {
+   static int clampUncappedTimeout(int configured, int remaining) {
       return Math.max(15, Math.min(configured, remaining));
    }
 
@@ -270,11 +270,11 @@ final class AiNetherEntry {
       }
    }
 
-   static int init() {
+   static int logsToChop() {
       return 5;
    }
 
-   static int load() {
+   static int minLogsNeeded() {
       return 4;
    }
 
@@ -387,7 +387,7 @@ final class AiNetherEntry {
       return var10000;
    }
 
-   static JsonObject init(String itemId, int count) {
+   static JsonObject missingItem(String itemId, int count) {
       JsonObject missing = new JsonObject();
       missing.addProperty(itemId, Math.max(1, count));
       return missing;
@@ -461,24 +461,24 @@ final class AiNetherEntry {
             final AiPreparationReceipt preparation = new AiPreparationReceipt();
             boolean travelTargetIsLava;
             int lavaExplorations;
-            int get;
-            int set;
-            int put;
+            int explorationHeading;
+            int poolFailures;
+            int portalScanCounter;
             boolean portalBuildStarted;
             boolean buildFromUncastablePool;
             boolean castablePoolOnly;
             boolean spareObsidianStarted;
             boolean returningToPortal;
             boolean portalReturnDone;
-            int add;
+            int portalReturnAttempts;
             long guardStartNanos;
             long guardCooldownUntil;
             AiOperation spareObsidianOp;
-            int clear;
+            int surfaceForWaterAttempts;
             BlockPos explorationTarget;
             BlockPos lavaPool;
             List<BlockPos> chests = List.of();
-            int reset;
+            int chestIndex;
             long nightDay = -1L;
             long nightHandledDay = -1L;
             long sleepFailedDay = -1L;
@@ -489,8 +489,8 @@ final class AiNetherEntry {
             AiOperation.Result uncertainLegResult;
             final AiNetherEntry.Inner_DataUtil childTracker = new AiNetherEntry.Inner_DataUtil();
             final AiNetherEntry.Inner_StreamUtil entryTimer = new AiNetherEntry.Inner_StreamUtil();
-            int start;
-            int stop;
+            int obsidianBeforeMining;
+            int obsidianShortfallRetries;
 
             double horizontalDistanceTo(BlockPos pos) {
                return Math.hypot(pos.getX() + 0.5 - mc.player.getX(), pos.getZ() + 0.5 - mc.player.getZ());
@@ -539,18 +539,18 @@ final class AiNetherEntry {
                      if (this.phase == AiNetherEntry.Inner_CachePool.ENTER && this.child != null && "game:dimension".equals(this.legId)) {
                         AiOperation.Result arrival = this.pollChild();
                         if (arrival == null) {
-                           return this.write("Verifying Nether arrival");
+                           return this.running("Verifying Nether arrival");
                         } else {
                            return arrival.status() != AiOperation.Status.SUCCEEDED
                               ? this.finish(arrival.status(), null, arrival.message())
-                              : this.read("Verified Nether arrival");
+                              : this.completeEntry("Verified Nether arrival");
                         }
                      } else {
                         return this.phase != null
                            ? this.finish(
                               AiOperation.Status.UNCERTAIN, null, "Entered the Nether outside the expected portal action"
                            )
-                           : this.read("Already in the Nether");
+                           : this.completeEntry("Already in the Nether");
                      }
                   } else {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
@@ -576,25 +576,25 @@ final class AiNetherEntry {
                      }
 
                      if (this.phase == null) {
-                        AiNetherEntry.Inner_CachePool next = AiNetherEntry.init(
+                        AiNetherEntry.Inner_CachePool next = AiNetherEntry.pickNextPhase(
                            false, this.hasStoneTier(), this.needsFood(), this.needsVillage(), this.hasIronFireGear(), this.portalNearby(), this.lavaNearby()
                         );
                         if ((next == AiNetherEntry.Inner_CachePool.LAVA || next == AiNetherEntry.Inner_CachePool.PORTAL) && !this.portalHistoryChecked) {
                            this.knownPortal = AiPortalLinks.init(192);
                            if (this.knownPortal == null && this.portalLookupRetries-- > 0) {
-                              return this.write("Checking observed portal history before making another frame");
+                              return this.running("Checking observed portal history before making another frame");
                            }
 
                            this.portalHistoryChecked = true;
                            if (this.knownPortal != null) {
                               this.rememberedPortalDeadline = System.nanoTime() + 120000000000L;
-                              this.init(AiNetherEntry.Inner_CachePool.LAVA);
+                              this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
                               this.step = this.knownPortal.getY() - mc.player.blockPosition().getY() > 16 && !this.skyVisibleWithin(3) ? 89 : 90;
-                              return this.write("Rechecking the remembered portal at " + this.knownPortal.toShortString());
+                              return this.running("Rechecking the remembered portal at " + this.knownPortal.toShortString());
                            }
                         }
 
-                        this.init(next);
+                        this.enterPhase(next);
                      }
 
                      AiOperation.Result var6;
@@ -675,11 +675,11 @@ final class AiNetherEntry {
 
                   this.guardOp = AiRunDiagnostics.trace("survival", this.guardReason, action);
                   this.guardStartNanos = System.nanoTime();
-                  return this.write("Interrupted: " + this.guardReason);
+                  return this.running("Interrupted: " + this.guardReason);
                } else {
                   AiOperation.Result r = this.childTracker.tick(this.guardOp);
                   if (!r.terminal()) {
-                     return this.write("Interrupted: " + this.guardReason + " - " + r.message());
+                     return this.running("Interrupted: " + this.guardReason + " - " + r.message());
                   }
 
                   this.childTracker.cancel(this.guardOp);
@@ -689,7 +689,7 @@ final class AiNetherEntry {
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   boolean quick = System.nanoTime() - this.guardStartNanos < 1000000000L;
@@ -701,7 +701,7 @@ final class AiNetherEntry {
                      AutismClientAddon.LOG.info("[AI] nether entry: guard {} after {}: {}", r.status(), this.guardReason, r.message());
                   }
 
-                  return this.write("Resuming after " + this.guardReason);
+                  return this.running("Resuming after " + this.guardReason);
                }
             }
 
@@ -713,7 +713,7 @@ final class AiNetherEntry {
                if (this.nightOp != null) {
                   AiOperation.Result r = this.childTracker.tick(this.nightOp);
                   if (!r.terminal()) {
-                     return this.write("Night: " + this.nightActionName + " - " + r.message());
+                     return this.running("Night: " + this.nightActionName + " - " + r.message());
                   }
 
                   this.childTracker.cancel(this.nightOp);
@@ -723,7 +723,7 @@ final class AiNetherEntry {
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
@@ -736,14 +736,14 @@ final class AiNetherEntry {
                      this.sleepRetryAtMillis = System.currentTimeMillis() + 20000L;
                   }
 
-                  return this.write("Resuming after the night (" + this.nightActionName + ")");
+                  return this.running("Resuming after the night (" + this.nightActionName + ")");
                } else {
                   boolean sleepable = this.bedCount() > 0 && this.sleepFailedDay != this.overworldDay();
                   if (AiOracle.isActive() && !sleepable) {
                      return null;
                   }
 
-                  if (!AiNetherEntry.init(AiSleep.dayTime(), this.inOverworld(), false, this.nightHandledDay, this.overworldDay(), this.sleepRetryAtMillis, System.currentTimeMillis())) {
+                  if (!AiNetherEntry.shouldSleepNow(AiSleep.dayTime(), this.inOverworld(), false, this.nightHandledDay, this.overworldDay(), this.sleepRetryAtMillis, System.currentTimeMillis())) {
                      return null;
                   }
 
@@ -765,34 +765,34 @@ final class AiNetherEntry {
                      this.nightOp = AiBurrow.init(AiJson.objectOf("timeoutSeconds", cap));
                   }
 
-                  return this.write("Night falls; " + ("sleep".equals(action) ? "sleeping until dawn" : "burrowing until dawn"));
+                  return this.running("Night falls; " + ("sleep".equals(action) ? "sleeping until dawn" : "burrowing until dawn"));
                }
             }
 
             AiOperation.Result runOpeningPhase() {
-               if (AiNetherEntry.init(this.hasStoneTier(), this.child != null)) {
-                  return this.init("skipped", "tools already present");
+               if (AiNetherEntry.shouldSkipOpening(this.hasStoneTier(), this.child != null)) {
+                  return this.finishPhase("skipped", "tools already present");
                }
 
                if (this.step == 0) {
-                  if (this.logCount() >= AiNetherEntry.init()) {
+                  if (this.logCount() >= AiNetherEntry.logsToChop()) {
                      this.step = 3;
-                     return this.write("Logs already in the bag");
+                     return this.running("Logs already in the bag");
                   }
 
-                  AiOperation.Result r = this.read("log", 4, 96);
+                  AiOperation.Result r = this.findBlocks("log", 4, 96);
                   if (r == null) {
-                     return this.write("Locating the nearest tree");
+                     return this.running("Locating the nearest tree");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   List<BlockPos> sites = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.positions(r.dataJson(), "results", 4) : List.of();
-                  this.openingSite = AiNetherEntry.init(sites, this.openingSiteIndex);
+                  this.openingSite = AiNetherEntry.siteForAttempt(sites, this.openingSiteIndex);
                   this.step = 1;
-                  return this.write(
+                  return this.running(
                      this.openingSite == null
                         ? "No log located within 96 blocks; chopping from here"
                         : "Tree site " + (sites.indexOf(this.openingSite) + 1) + "/" + sites.size() + " at " + this.openingSite.toShortString()
@@ -806,107 +806,107 @@ final class AiNetherEntry {
                   if (action != 0) {
                      this.drainChild();
                      this.step = 2;
-                     return this.write("At the woodline");
+                     return this.running("At the woodline");
                   }
 
                   AiOperation.Result r = this.walkTo(this.openingSite, 8.0, 300);
                   if (r == null) {
-                     return this.write("Travelling to the tree");
+                     return this.running("Travelling to the tree");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   this.step = 2;
-                  return this.write("At the woodline");
+                  return this.running("At the woodline");
                } else if (this.step == 2) {
-                  if (this.logCount() >= AiNetherEntry.init()) {
+                  if (this.logCount() >= AiNetherEntry.logsToChop()) {
                      this.drainChild();
                      this.step = 3;
-                     return this.write("Logs already in the bag");
+                     return this.running("Logs already in the bag");
                   }
 
                   if (this.child == null) {
-                     this.init("game:chop", AiJson.objectOf("block", "log", "count", AiNetherEntry.init(), "radius", 64, "timeoutSeconds", this.cappedTimeout(300)));
-                     return this.write("Felling trees for the opening");
+                     this.startLeg("game:chop", AiJson.objectOf("block", "log", "count", AiNetherEntry.logsToChop(), "radius", 64, "timeoutSeconds", this.cappedTimeout(300)));
+                     return this.running("Felling trees for the opening");
                   }
 
                   AiOperation.Result r = this.pollChild();
                   if (r == null) {
-                     return this.write("Felling trees for the opening");
+                     return this.running("Felling trees for the opening");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
-                  if (this.logCount() < AiNetherEntry.load()) {
+                  if (this.logCount() < AiNetherEntry.minLogsNeeded()) {
                      return this.retryOrFail(
                         AiFailure.TARGET_NOT_FOUND,
                         "Only " + this.logCount() + " log(s) after the wood run (" + r.message() + ")",
-                        AiNetherEntry.init("minecraft:oak_log", AiNetherEntry.load() - this.logCount())
+                        AiNetherEntry.missingItem("minecraft:oak_log", AiNetherEntry.minLogsNeeded() - this.logCount())
                      );
                   }
 
                   this.step = 3;
-                  return this.write("Logs gathered");
+                  return this.running("Logs gathered");
                } else if (this.step == 3) {
                   if (this.child != null || this.count("minecraft:wooden_pickaxe") <= 0 && this.count("minecraft:crafting_table") <= 0) {
                      AiOperation.Result r = this.obtainItem("minecraft:wooden_pickaxe", 1, this.attemptCap(300), this.isLateAttempt());
                      if (r == null) {
-                        return this.write("Obtaining the wooden pickaxe");
+                        return this.running("Obtaining the wooden pickaxe");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() != AiOperation.Status.SUCCEEDED) {
-                        return this.retryOrFail(AiNetherEntry.init(r), "Wooden pickaxe unobtainable: " + r.message(), AiNetherEntry.init("minecraft:wooden_pickaxe", 1));
+                        return this.retryOrFail(AiNetherEntry.failureForResult(r), "Wooden pickaxe unobtainable: " + r.message(), AiNetherEntry.missingItem("minecraft:wooden_pickaxe", 1));
                      }
 
                      this.step = 4;
-                     return this.write("Wooden pickaxe obtained");
+                     return this.running("Wooden pickaxe obtained");
                   } else {
                      this.step = 4;
-                     return this.write("Wooden pickaxe covered");
+                     return this.running("Wooden pickaxe covered");
                   }
                } else if (this.step == 4) {
                   if (this.child == null && this.count("minecraft:stone_pickaxe") > 0) {
                      this.step = 5;
-                     return this.write("Stone pickaxe covered");
+                     return this.running("Stone pickaxe covered");
                   }
 
                   AiOperation.Result r = this.obtainItem("minecraft:stone_pickaxe", 1, this.attemptCap(300), this.isLateAttempt());
                   if (r == null) {
-                     return this.write("Obtaining the stone pickaxe");
+                     return this.running("Obtaining the stone pickaxe");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.retryOrFail(AiNetherEntry.init(r), "Stone pickaxe unobtainable: " + r.message(), AiNetherEntry.init("minecraft:stone_pickaxe", 1));
+                     return this.retryOrFail(AiNetherEntry.failureForResult(r), "Stone pickaxe unobtainable: " + r.message(), AiNetherEntry.missingItem("minecraft:stone_pickaxe", 1));
                   }
 
                   this.step = 5;
-                  return this.write("Stone pickaxe obtained");
+                  return this.running("Stone pickaxe obtained");
                } else {
                   if (this.step == 5) {
                      if (this.child != null || this.count("minecraft:cobblestone") >= 3 && this.count("minecraft:stone_axe") <= 0) {
                         AiOperation.Result r = this.obtainItem("minecraft:stone_axe", 1, this.attemptCap(240), this.isLateAttempt());
                         if (r == null) {
-                           return this.write("Cheap stone axe");
+                           return this.running("Cheap stone axe");
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
                         this.step = 6;
-                        return this.write("Stone axe done");
+                        return this.running("Stone axe done");
                      }
 
                      this.step = 6;
@@ -916,30 +916,30 @@ final class AiNetherEntry {
                      if (this.child != null || this.count("minecraft:cobblestone") >= 2 && this.count("minecraft:stone_sword") <= 0) {
                         AiOperation.Result r = this.obtainItem("minecraft:stone_sword", 1, this.attemptCap(240), this.isLateAttempt());
                         if (r == null) {
-                           return this.write("Cheap stone sword");
+                           return this.running("Cheap stone sword");
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
                         this.step = 7;
-                        return this.write("Stone sword done");
+                        return this.running("Stone sword done");
                      }
 
                      this.step = 7;
                   }
 
                   return this.hasStoneTier()
-                     ? this.init("succeeded", "opening tools ready")
-                     : this.retryOrFail(AiFailure.MISSING_MATERIALS, "Opening did not produce the tools", AiNetherEntry.init("minecraft:stone_pickaxe", 1));
+                     ? this.finishPhase("succeeded", "opening tools ready")
+                     : this.retryOrFail(AiFailure.MISSING_MATERIALS, "Opening did not produce the tools", AiNetherEntry.missingItem("minecraft:stone_pickaxe", 1));
                }
             }
 
             AiOperation.Result runFoodPhase() {
                if (!this.needsFood()) {
                   this.foodDone = true;
-                  return this.init("skipped", "food is fine");
+                  return this.finishPhase("skipped", "food is fine");
                }
 
                if (this.step == 0) {
@@ -951,29 +951,29 @@ final class AiNetherEntry {
                   AiOperation hunt = AiSpeedrun.hunt(48.0, 12, this.cappedTimeout(180));
                   if (hunt == null) {
                      this.foodDone = true;
-                     return this.init("skipped", "no food animal in sight");
+                     return this.finishPhase("skipped", "no food animal in sight");
                   } else {
                      this.legId = "game:obtain";
-                     this.init(AiNetherEntry.legEvent(this.legId, "STARTED", "", null));
+                     this.recordLegEvent(AiNetherEntry.legEvent(this.legId, "STARTED", "", null));
                      this.child = hunt;
-                     return this.write("Hunting food");
+                     return this.running("Hunting food");
                   }
                } else {
                   AiOperation.Result r = this.pollChild();
                   if (r == null) {
-                     return this.write("Hunting food");
+                     return this.running("Hunting food");
                   } else if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   } else if (r.status() == AiOperation.Status.SUCCEEDED) {
                      this.foodDone = true;
-                     return this.init("succeeded", "food " + this.foodBefore + " -> " + this.safeFoodCount());
-                  } else if (this.attempt < AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) && AiNetherEntry.init(AiNetherEntry.Inner_CachePool.FOOD, r.failure())) {
+                     return this.finishPhase("succeeded", "food " + this.foodBefore + " -> " + this.safeFoodCount());
+                  } else if (this.attempt < AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) && AiNetherEntry.canRetryPhase(AiNetherEntry.Inner_CachePool.FOOD, r.failure())) {
                      this.attempt++;
                      this.step = 0;
-                     return this.write("The hunt came up short; hunting again (attempt " + this.attempt + "/" + AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) + ")");
+                     return this.running("The hunt came up short; hunting again (attempt " + this.attempt + "/" + AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) + ")");
                   } else {
                      this.foodDone = true;
-                     return this.init("failed", "food " + this.foodBefore + " -> " + this.safeFoodCount() + " (" + r.message() + ")");
+                     return this.finishPhase("failed", "food " + this.foodBefore + " -> " + this.safeFoodCount() + " (" + r.message() + ")");
                   }
                }
             }
@@ -982,35 +982,35 @@ final class AiNetherEntry {
                if (this.step == 0) {
                   this.step = 1;
                   if (explicitVillage != null) {
-                     if (!AiNetherEntry.shouldVisitVillage(skipVillage, this.load(explicitVillage), this.bedCount(), bedsTarget)) {
+                     if (!AiNetherEntry.shouldVisitVillage(skipVillage, this.cornerDistanceTo(explicitVillage), this.bedCount(), bedsTarget)) {
                         this.villageDone = true;
-                        return this.init("skipped", "village out of range or beds covered");
+                        return this.finishPhase("skipped", "village out of range or beds covered");
                      } else {
                         this.village = explicitVillage;
-                        return this.write("Village at " + this.village.toShortString());
+                        return this.running("Village at " + this.village.toShortString());
                      }
                   } else if (!skipVillage && this.bedCount() < bedsTarget) {
                      this.step = 1;
-                     return this.write("Predicting the nearest village");
+                     return this.running("Predicting the nearest village");
                   } else {
                      this.villageDone = true;
-                     return this.init("skipped", "village disabled or beds covered");
+                     return this.finishPhase("skipped", "village disabled or beds covered");
                   }
                } else if (this.step == 1) {
                   if (this.village == null) {
                      AiOperation.Result r = this.locate("structure:village");
                      if (r == null) {
-                        return this.write("Predicting the nearest village");
+                        return this.running("Predicting the nearest village");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      BlockPos hit = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.firstPosition(r.dataJson(), "positions", 750.0) : null;
                      if (hit == null) {
                         this.villageDone = true;
-                        return this.init(
+                        return this.finishPhase(
                            "skipped",
                            r.status() == AiOperation.Status.SUCCEEDED
                               ? "no village predicted within 750 blocks"
@@ -1022,141 +1022,141 @@ final class AiNetherEntry {
                   }
 
                   this.step = 2;
-                  return this.write("Travelling to the village at " + this.village.toShortString());
+                  return this.running("Travelling to the village at " + this.village.toShortString());
                } else if (this.step == 2) {
                   AiOperation.Result r = this.walkToUncapped(this.village, 14.0, 300);
                   if (r == null) {
-                     return this.write("Travelling to the village");
+                     return this.running("Travelling to the village");
                   } else if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   } else if (r.status() != AiOperation.Status.SUCCEEDED) {
                      this.villageDone = true;
-                     return this.init("failed", "no route to the village (" + r.message() + ")");
+                     return this.finishPhase("failed", "no route to the village (" + r.message() + ")");
                   } else {
                      this.step = 3;
-                     return this.write("At the village; scanning for chests");
+                     return this.running("At the village; scanning for chests");
                   }
                } else if (this.step == 3) {
-                  AiOperation.Result r = this.read("chest", 8, 48);
+                  AiOperation.Result r = this.findBlocks("chest", 8, 48);
                   if (r == null) {
-                     return this.write("Scanning the village for chests");
+                     return this.running("Scanning the village for chests");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   this.chests = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.positions(r.dataJson(), "results", 4) : List.of();
-                  this.reset = 0;
+                  this.chestIndex = 0;
                   this.step = 4;
-                  return this.write(this.chests.size() + " chest(s) to loot");
+                  return this.running(this.chests.size() + " chest(s) to loot");
                } else if (this.step == 4) {
-                  if (this.reset < this.chests.size()) {
-                     BlockPos chest = this.chests.get(this.reset);
+                  if (this.chestIndex < this.chests.size()) {
+                     BlockPos chest = this.chests.get(this.chestIndex);
                      if (this.child == null) {
-                        this.init(
+                        this.startLeg(
                            "game:container",
                            AiJson.objectOf(
                               "action", "loot", "x", chest.getX(), "y", chest.getY(), "z", chest.getZ(), "timeoutSeconds", Math.min(60, this.cappedTimeout(300))
                            )
                         );
-                        return this.write("Looting a village chest");
+                        return this.running("Looting a village chest");
                      }
 
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Looting a village chest");
+                        return this.running("Looting a village chest");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
                         this.chestsLooted++;
                      }
 
-                     this.reset++;
-                     return this.write("Chests looted: " + this.chestsLooted);
+                     this.chestIndex++;
+                     return this.running("Chests looted: " + this.chestsLooted);
                   } else {
                      this.step = 5;
-                     return this.write("Scanning for hay bales");
+                     return this.running("Scanning for hay bales");
                   }
                } else if (this.step == 5) {
-                  AiOperation.Result r = this.read("hay_block", 8, 48);
+                  AiOperation.Result r = this.findBlocks("hay_block", 8, 48);
                   if (r == null) {
-                     return this.write("Scanning for hay bales");
+                     return this.running("Scanning for hay bales");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   this.chests = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.positions(r.dataJson(), "results", 8) : List.of();
-                  this.reset = 0;
+                  this.chestIndex = 0;
                   this.step = 6;
-                  return this.write(this.chests.size() + " hay bale(s) to harvest");
+                  return this.running(this.chests.size() + " hay bale(s) to harvest");
                } else if (this.step == 6) {
-                  if (this.reset < this.chests.size()) {
-                     AiOperation.Result r = this.breakBlockAt(this.chests.get(this.reset));
+                  if (this.chestIndex < this.chests.size()) {
+                     AiOperation.Result r = this.breakBlockAt(this.chests.get(this.chestIndex));
                      if (r == null) {
-                        return this.write("Harvesting a hay bale");
+                        return this.running("Harvesting a hay bale");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
                         this.hayBalesHarvested++;
                      }
 
-                     this.reset++;
+                     this.chestIndex++;
                      this.lootDelayTicks = 20;
-                     return this.write("Hay bales harvested: " + this.hayBalesHarvested);
+                     return this.running("Hay bales harvested: " + this.hayBalesHarvested);
                   } else {
                      this.step = 7;
                      this.chests = List.of();
-                     this.reset = 0;
-                     return this.write(this.bedCount() < bedsTarget ? "Scanning for beds" : "Beds covered");
+                     this.chestIndex = 0;
+                     return this.running(this.bedCount() < bedsTarget ? "Scanning for beds" : "Beds covered");
                   }
                } else {
                   if (this.step == 7) {
                      if (this.bedCount() < bedsTarget && !this.bedsScanned) {
-                        AiOperation.Result r = this.read("bed", 8, 48);
+                        AiOperation.Result r = this.findBlocks("bed", 8, 48);
                         if (r == null) {
-                           return this.write("Scanning for beds");
+                           return this.running("Scanning for beds");
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
                         this.chests = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.positions(r.dataJson(), "results", 8) : List.of();
-                        this.reset = 0;
+                        this.chestIndex = 0;
                         this.bedsScanned = true;
                      }
 
-                     if (this.reset < this.chests.size() && this.bedCount() < bedsTarget) {
-                        AiOperation.Result r = this.breakBlockAt(this.chests.get(this.reset));
+                     if (this.chestIndex < this.chests.size() && this.bedCount() < bedsTarget) {
+                        AiOperation.Result r = this.breakBlockAt(this.chests.get(this.chestIndex));
                         if (r == null) {
-                           return this.write("Taking a village bed");
+                           return this.running("Taking a village bed");
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
-                        this.reset++;
+                        this.chestIndex++;
                         this.lootDelayTicks = 20;
-                        return this.write("Beds held: " + this.bedCount());
+                        return this.running("Beds held: " + this.bedCount());
                      }
 
                      this.step = 8;
                   }
 
                   this.villageDone = true;
-                  return this.init(
+                  return this.finishPhase(
                      "succeeded", "looted " + this.chestsLooted + " chest(s), " + this.hayBalesHarvested + " hay bale(s), beds " + this.bedCount() + "/" + bedsTarget
                   );
                }
@@ -1164,30 +1164,30 @@ final class AiNetherEntry {
 
             AiOperation.Result runIronFirePhase() {
                if (this.hasIronFireGear() && this.child == null) {
-                  return this.init("skipped", "iron and fire gear already present");
+                  return this.finishPhase("skipped", "iron and fire gear already present");
                }
 
                if (this.step == 0) {
                   int ironNeed = Math.max(AiNetherEntry.ironStillNeeded(0, this.bucketCount(), this.count("minecraft:flint_and_steel")), 0);
                   if (this.child == null && this.count("minecraft:iron_ingot") >= ironNeed) {
                      this.step = 1;
-                     return this.write("Iron already in the bag");
+                     return this.running("Iron already in the bag");
                   }
 
                   AiOperation.Result r = this.obtainItemUncapped("minecraft:iron_ingot", ironNeed, this.attemptCap(420));
                   if (r == null) {
-                     return this.write("Obtaining iron for the bucket and lighter");
+                     return this.running("Obtaining iron for the bucket and lighter");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
                      return this.retryOrFail(
-                        AiNetherEntry.init(r),
+                        AiNetherEntry.failureForResult(r),
                         "Iron unobtainable: " + r.message(),
-                        AiNetherEntry.init(
+                        AiNetherEntry.missingItem(
                            "minecraft:iron_ingot",
                            Math.max(1, AiNetherEntry.ironStillNeeded(this.count("minecraft:iron_ingot"), this.bucketCount(), this.count("minecraft:flint_and_steel")))
                         )
@@ -1195,76 +1195,76 @@ final class AiNetherEntry {
                   }
 
                   this.step = 1;
-                  return this.write("Iron obtained");
+                  return this.running("Iron obtained");
                } else if (this.step != 1) {
                   if (this.step == 2) {
                      if (this.child == null && this.bucketCount() > 0) {
                         this.step = 3;
-                        return this.write("Bucket already in the bag");
+                        return this.running("Bucket already in the bag");
                      }
 
-                     AiOperation.Result r = this.load("minecraft:bucket", this.attemptCap(420));
+                     AiOperation.Result r = this.craftItemUncapped("minecraft:bucket", this.attemptCap(420));
                      if (r == null) {
-                        return this.write("Crafting the bucket");
+                        return this.running("Crafting the bucket");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() != AiOperation.Status.SUCCEEDED) {
-                        return this.retryOrFail(AiNetherEntry.init(r), "Bucket not craftable: " + r.message(), this.init(r, "minecraft:bucket"));
+                        return this.retryOrFail(AiNetherEntry.failureForResult(r), "Bucket not craftable: " + r.message(), this.missingFromResult(r, "minecraft:bucket"));
                      }
 
                      this.step = 3;
-                     return this.write("Bucket crafted");
+                     return this.running("Bucket crafted");
                   } else if (this.step == 3) {
                      if (this.child == null && this.count("minecraft:flint_and_steel") > 0) {
                         this.step = 4;
-                        return this.write("Lighter already in the bag");
+                        return this.running("Lighter already in the bag");
                      }
 
-                     AiOperation.Result r = this.load("minecraft:flint_and_steel", this.attemptCap(420));
+                     AiOperation.Result r = this.craftItemUncapped("minecraft:flint_and_steel", this.attemptCap(420));
                      if (r == null) {
-                        return this.write("Crafting flint and steel");
+                        return this.running("Crafting flint and steel");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() != AiOperation.Status.SUCCEEDED) {
                         return this.retryOrFail(
-                           AiNetherEntry.init(r), "Flint and steel not craftable: " + r.message(), this.init(r, "minecraft:flint_and_steel")
+                           AiNetherEntry.failureForResult(r), "Flint and steel not craftable: " + r.message(), this.missingFromResult(r, "minecraft:flint_and_steel")
                         );
                      }
 
                      this.step = 4;
-                     return this.write("Flint and steel crafted");
+                     return this.running("Flint and steel crafted");
                   } else {
                      return this.hasIronFireGear()
-                        ? this.init("succeeded", "bucket and flint_and_steel ready")
-                        : this.retryOrFail(AiFailure.MISSING_MATERIALS, "Iron/fire gear incomplete", AiNetherEntry.init("minecraft:flint_and_steel", 1));
+                        ? this.finishPhase("succeeded", "bucket and flint_and_steel ready")
+                        : this.retryOrFail(AiFailure.MISSING_MATERIALS, "Iron/fire gear incomplete", AiNetherEntry.missingItem("minecraft:flint_and_steel", 1));
                   }
                } else if (this.child != null || this.count("minecraft:flint") <= 0 && this.count("minecraft:flint_and_steel") <= 0) {
                   AiOperation.Result r = this.obtainItemUncapped("minecraft:flint", 1, this.attemptCap(420));
                   if (r == null) {
-                     return this.write("Obtaining flint from gravel");
+                     return this.running("Obtaining flint from gravel");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.retryOrFail(AiNetherEntry.init(r), "Flint unobtainable: " + r.message(), AiNetherEntry.init("minecraft:flint", 1));
+                     return this.retryOrFail(AiNetherEntry.failureForResult(r), "Flint unobtainable: " + r.message(), AiNetherEntry.missingItem("minecraft:flint", 1));
                   }
 
                   this.step = 2;
-                  return this.write("Flint obtained");
+                  return this.running("Flint obtained");
                } else {
                   this.step = 2;
-                  return this.write("Flint already in the bag");
+                  return this.running("Flint already in the bag");
                }
             }
 
@@ -1272,19 +1272,19 @@ final class AiNetherEntry {
                if (this.step == 89) {
                   if (System.nanoTime() > this.rememberedPortalDeadline && this.canInterruptNow()) {
                      this.drainChild();
-                     return this.init("skipped", "remembered portal ascent exhausted its bounded budget; using local resources");
+                     return this.finishPhase("skipped", "remembered portal ascent exhausted its bounded budget; using local resources");
                   }
 
                   if (this.child == null) {
                      this.legId = "game:surface";
-                     this.init(AiNetherEntry.legEvent(this.legId, "STARTED", "", null));
+                     this.recordLegEvent(AiNetherEntry.legEvent(this.legId, "STARTED", "", null));
                      int seconds = (int)Math.max(1L, (this.rememberedPortalDeadline - System.nanoTime()) / 1000000000L);
                      this.child = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", Math.min(120, seconds)));
                   }
 
                   AiOperation.Result ascent = this.pollChild();
                   if (ascent == null) {
-                     return this.write("Surfacing toward the remembered portal at " + this.knownPortal.toShortString());
+                     return this.running("Surfacing toward the remembered portal at " + this.knownPortal.toShortString());
                   }
 
                   if (ascent.status() == AiOperation.Status.UNCERTAIN) {
@@ -1292,27 +1292,27 @@ final class AiNetherEntry {
                   }
 
                   if (ascent.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   if (ascent.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.init("skipped", "remembered portal ascent failed; using local resources (" + ascent.message() + ")");
+                     return this.finishPhase("skipped", "remembered portal ascent failed; using local resources (" + ascent.message() + ")");
                   }
 
                   this.step = 90;
-                  return this.write("Surface reached; rechecking the remembered portal");
+                  return this.running("Surface reached; rechecking the remembered portal");
                } else if (this.step == 90) {
                   if (System.nanoTime() > this.rememberedPortalDeadline && this.canInterruptNow()) {
                      this.drainChild();
-                     return this.init("skipped", "remembered portal walk exhausted its bounded budget; using local resources");
+                     return this.finishPhase("skipped", "remembered portal walk exhausted its bounded budget; using local resources");
                   } else {
                      AiOperation.Result route = this.walkTo(this.knownPortal, 4.0, 120);
                      if (route == null) {
-                        return this.write("Rechecking the remembered portal at " + this.knownPortal.toShortString());
+                        return this.running("Rechecking the remembered portal at " + this.knownPortal.toShortString());
                      } else {
                         return route.status() == AiOperation.Status.UNCERTAIN
                            ? route
-                           : this.init(
+                           : this.finishPhase(
                               "skipped",
                               this.portalNearby()
                                  ? "remembered portal re-observed; no new frame needed"
@@ -1322,39 +1322,39 @@ final class AiNetherEntry {
                   }
                } else {
                   if (this.step >= 40) {
-                     return this.run();
+                     return this.surfaceStep();
                   }
 
                   if (this.step >= 30) {
-                     return this.pop();
+                     return this.fetchWaterStep();
                   }
 
-                  if (this.step == 0 && this.clear == 0 && this.count("minecraft:water_bucket") == 0 && this.count("minecraft:bucket") > 0) {
+                  if (this.step == 0 && this.surfaceForWaterAttempts == 0 && this.count("minecraft:water_bucket") == 0 && this.count("minecraft:bucket") > 0) {
                      this.step = 30;
-                     return this.write("Filling a water bucket before the lava");
+                     return this.running("Filling a water bucket before the lava");
                   }
 
                   if (this.step == 0 && AiDimension.framedObsidian() > 0 && this.canBuildPortalFrame()) {
-                     this.init(AiNetherEntry.Inner_CachePool.PORTAL);
+                     this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
                      return this.startPortalBuild("the frame begun at " + AiDimension.frameOrigin.toShortString() + " holds " + AiDimension.framedObsidian() + " obsidian");
                   }
 
-                  if (AiNetherEntry.load(this.lavaNearby(), this.child != null)) {
+                  if (AiNetherEntry.shouldSkipLavaSearch(this.lavaNearby(), this.child != null)) {
                      if (this.buildFromUncastablePool) {
                         this.buildFromUncastablePool = false;
                         this.drainChild();
-                        this.init(AiNetherEntry.Inner_CachePool.PORTAL);
+                        this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
                         return this.startPortalBuild("no pool in loaded terrain takes a cast");
                      }
 
                      if (!this.castablePoolOnly || this.castableLavaPool() != null) {
-                        return this.init("skipped", "already at lava");
+                        return this.finishPhase("skipped", "already at lava");
                      }
                   }
 
                   if (this.step == 0) {
                      this.step = 1;
-                     return this.write("Scanning loaded terrain for lava");
+                     return this.running("Scanning loaded terrain for lava");
                   }
 
                   if (this.step == 1) {
@@ -1381,7 +1381,7 @@ final class AiNetherEntry {
                         this.travelTargetIsLava = true;
                         this.buildFromUncastablePool = true;
                         this.step = 3;
-                        return this.write("No castable pool; obsidian from the pool at " + open.toShortString());
+                        return this.running("No castable pool; obsidian from the pool at " + open.toShortString());
                      }
 
                      if (hit == null && !this.castablePoolOnly) {
@@ -1392,7 +1392,7 @@ final class AiNetherEntry {
                         this.travelTarget = hit;
                         this.travelTargetIsLava = true;
                         this.step = 3;
-                        return this.write("Open lava observed at " + hit.toShortString());
+                        return this.running("Open lava observed at " + hit.toShortString());
                      }
 
                      if (AiOracle.isActive()) {
@@ -1401,7 +1401,7 @@ final class AiNetherEntry {
                         }
 
                         this.step = 5;
-                        return this.write("No open lava in loaded terrain; exploring");
+                        return this.running("No open lava in loaded terrain; exploring");
                      } else {
                         if (this.ruinedPortalPredicted) {
                            return this.retryOrFail(
@@ -1410,16 +1410,16 @@ final class AiNetherEntry {
                         }
 
                         this.step = 2;
-                        return this.write("No lava in loaded terrain; predicting a ruined portal");
+                        return this.running("No lava in loaded terrain; predicting a ruined portal");
                      }
                   } else if (this.step == 2) {
                      AiOperation.Result r = this.locate("structure:ruined_portal");
                      if (r == null) {
-                        return this.write("Predicting a ruined portal");
+                        return this.running("Predicting a ruined portal");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      BlockPos hit = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.firstPosition(r.dataJson(), "positions", 1.7976931348623157E308) : null;
@@ -1431,18 +1431,18 @@ final class AiNetherEntry {
                      this.travelTarget = hit;
                      this.travelTargetIsLava = false;
                      this.step = 3;
-                     return this.write("Ruined portal predicted at " + hit.toShortString());
+                     return this.running("Ruined portal predicted at " + hit.toShortString());
                   } else {
                      if (this.step == 3) {
                         AiOperation.Result r = this.travelTargetIsLava
-                           ? this.init(this.travelTarget, 240)
+                           ? this.travelTo(this.travelTarget, 240)
                            : this.walkTo(this.travelTarget, 16.0, 240);
                         if (r == null) {
-                           return this.write("Travelling to " + (this.travelTargetIsLava ? "lava" : "the ruined portal"));
+                           return this.running("Travelling to " + (this.travelTargetIsLava ? "lava" : "the ruined portal"));
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
                         if (r.status() != AiOperation.Status.SUCCEEDED) {
@@ -1455,7 +1455,7 @@ final class AiNetherEntry {
 
                         if (!this.travelTargetIsLava) {
                            this.step = 0;
-                           return this.write("At the ruined portal; scanning for its lava");
+                           return this.running("At the ruined portal; scanning for its lava");
                         }
 
                         if (!this.lavaNearby()) {
@@ -1467,19 +1467,19 @@ final class AiNetherEntry {
                         this.step = 4;
                         if (this.buildFromUncastablePool) {
                            this.buildFromUncastablePool = false;
-                           this.init(AiNetherEntry.Inner_CachePool.PORTAL);
+                           this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
                            return this.startPortalBuild("no pool in loaded terrain takes a cast");
                         }
                      }
 
                      if (this.step == 5) {
                         if (this.child == null) {
-                           int dx = this.get == 0 ? 1 : (this.get == 2 ? -1 : 0);
-                           int dz = this.get == 1 ? 1 : (this.get == 3 ? -1 : 0);
+                           int dx = this.explorationHeading == 0 ? 1 : (this.explorationHeading == 2 ? -1 : 0);
+                           int dz = this.explorationHeading == 1 ? 1 : (this.explorationHeading == 3 ? -1 : 0);
                            BlockPos at = mc.player.blockPosition();
                            this.explorationTarget = new BlockPos(at.getX() + dx * 64, at.getY(), at.getZ() + dz * 64);
                            this.legId = "game:goto";
-                           this.init(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
+                           this.recordLegEvent(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
                            this.child = AiGoto.travelToCompat(
                               this.explorationTarget,
                               0.6,
@@ -1496,22 +1496,22 @@ final class AiNetherEntry {
 
                         AiOperation.Result r = this.pollChild();
                         if (r == null) {
-                           return this.write("Exploring for lava toward " + this.explorationTarget.toShortString());
+                           return this.running("Exploring for lava toward " + this.explorationTarget.toShortString());
                         }
 
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.get();
+                           return this.cancelEntry();
                         }
 
                         this.lavaExplorations++;
                         if (r.status() != AiOperation.Status.SUCCEEDED) {
-                           this.get = this.get + 1 & 3;
+                           this.explorationHeading = this.explorationHeading + 1 & 3;
                         }
 
                         this.step = 1;
-                        return this.write("Exploration leg " + this.lavaExplorations + " ended (" + r.status() + "); scanning again");
+                        return this.running("Exploration leg " + this.lavaExplorations + " ended (" + r.status() + "); scanning again");
                      } else {
-                        return this.init("succeeded", "at lava " + (this.travelTarget != null ? this.travelTarget.toShortString() : ""));
+                        return this.finishPhase("succeeded", "at lava " + (this.travelTarget != null ? this.travelTarget.toShortString() : ""));
                      }
                   }
                }
@@ -1519,61 +1519,61 @@ final class AiNetherEntry {
 
             AiOperation.Result runPortalPhase() {
                if (this.step >= 20) {
-                  return this.push();
+                  return this.mineObsidianStep();
                }
 
                if (this.step == 0
                   && this.child == null
                   && !this.castPending
-                  && this.clear == 0
+                  && this.surfaceForWaterAttempts == 0
                   && this.count("minecraft:water_bucket") == 0
                   && this.count("minecraft:bucket") > 0) {
-                  this.init(AiNetherEntry.Inner_CachePool.LAVA);
+                  this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
                   this.step = 30;
-                  return this.write("Filling a water bucket before the cast");
+                  return this.running("Filling a water bucket before the cast");
                }
 
                if (this.portalNearby()) {
-                  return this.init("skipped", "a lit portal is already here");
+                  return this.finishPhase("skipped", "a lit portal is already here");
                }
 
                if (this.step == 3) {
-                  AiOperation.Result r = this.init(this.lavaPool, 240);
+                  AiOperation.Result r = this.travelTo(this.lavaPool, 240);
                   if (r == null) {
-                     return this.write("Walking to the lava pool at " + this.lavaPool.toShortString());
+                     return this.running("Walking to the lava pool at " + this.lavaPool.toShortString());
                   } else if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   } else if (r.status() != AiOperation.Status.SUCCEEDED) {
                      AiNetherEntry.markUnreachablePool(this.lavaPool);
                      BlockPos left = this.lavaPool;
                      this.lavaPool = null;
-                     return this.set++ < 3
-                        ? this.init("failed", "no route to the pool at " + left.toShortString())
+                     return this.poolFailures++ < 3
+                        ? this.finishPhase("failed", "no route to the pool at " + left.toShortString())
                         : this.failPhase(AiFailure.UNREACHABLE, "No route to the lava pool at " + left.toShortString() + " (" + r.message() + ")", null);
                   } else {
                      this.step = 0;
-                     return this.write("At the lava pool");
+                     return this.running("At the lava pool");
                   }
                } else if (this.step != 0) {
                   if (this.step == 1) {
                      if (this.missingMaterials.isEmpty()) {
                         this.step = 0;
-                        return this.write("Re-issuing the portal cast");
+                        return this.running("Re-issuing the portal cast");
                      }
 
                      Entry<String, Integer> need = this.missingMaterials.get(0);
                      if (this.child == null) {
                         this.startSupplyLeg(need.getKey(), need.getValue());
-                        return this.write("Obtaining " + need.getKey() + " for the cast");
+                        return this.running("Obtaining " + need.getKey() + " for the cast");
                      }
 
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Obtaining " + need.getKey() + " for the cast");
+                        return this.running("Obtaining " + need.getKey() + " for the cast");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() != AiOperation.Status.SUCCEEDED && this.count(need.getKey()) <= 0) {
@@ -1583,9 +1583,9 @@ final class AiNetherEntry {
                      }
 
                      this.missingMaterials.remove(0);
-                     return this.write("Supplied " + need.getKey());
+                     return this.running("Supplied " + need.getKey());
                   } else {
-                     return this.init("succeeded", "portal cast and lit");
+                     return this.finishPhase("succeeded", "portal cast and lit");
                   }
                } else {
                   if (this.castAttempts >= 3 && !this.castPending) {
@@ -1611,7 +1611,7 @@ final class AiNetherEntry {
 
                      if (this.lavaPool != null && mc.player.blockPosition().distSqr(this.lavaPool) > 16.0) {
                         this.step = 3;
-                        return this.write("Walking to the lava pool at " + this.lavaPool.toShortString());
+                        return this.running("Walking to the lava pool at " + this.lavaPool.toShortString());
                      }
 
                      if (!this.castPending) {
@@ -1626,28 +1626,28 @@ final class AiNetherEntry {
                         castArgs.addProperty("z", this.lavaPool.getZ());
                      }
 
-                     this.init("game:portal_cast", castArgs);
-                     return this.write("Casting the portal (attempt " + this.castAttempts + ")");
+                     this.startLeg("game:portal_cast", castArgs);
+                     return this.running("Casting the portal (attempt " + this.castAttempts + ")");
                   } else {
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Casting the portal (attempt " + this.castAttempts + ")");
+                        return this.running("Casting the portal (attempt " + this.castAttempts + ")");
                      }
 
                      this.castPending = false;
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
                         this.step = 2;
-                        return this.write("Portal cast and lit");
+                        return this.running("Portal cast and lit");
                      }
 
                      JsonObject miss = AiNetherEntry.parseObject(r.dataJson());
                      if (miss == null) {
                         if (r.status() == AiOperation.Status.TIMED_OUT) {
-                           return this.write("Cast timed out; resuming (finished cells are skipped)");
+                           return this.running("Cast timed out; resuming (finished cells are skipped)");
                         } else {
                            BlockPos pool = this.lavaPool != null ? this.lavaPool : this.nearestOpenLava();
                            this.lavaPool = null;
@@ -1657,10 +1657,10 @@ final class AiNetherEntry {
                               return this.startPortalBuild(
                                  "the cast at " + (pool == null ? "the pool" : pool.toShortString()) + " failed (" + r.message() + ")"
                               );
-                           } else if (pool != null && this.set < 3) {
-                              this.set++;
-                              AiNetherEntry.load(pool);
-                              return this.init("failed", "pool at " + pool.toShortString() + " left (" + r.message() + ")");
+                           } else if (pool != null && this.poolFailures < 3) {
+                              this.poolFailures++;
+                              AiNetherEntry.markCastFailed(pool);
+                              return this.finishPhase("failed", "pool at " + pool.toShortString() + " left (" + r.message() + ")");
                            } else {
                               return this.canBuildPortalFrame()
                                  ? this.startPortalBuild("no pool took a cast (" + r.message() + ")")
@@ -1676,7 +1676,7 @@ final class AiNetherEntry {
                         }
 
                         this.step = 1;
-                        return this.write("Portal cast is missing " + miss + "; obtaining");
+                        return this.running("Portal cast is missing " + miss + "; obtaining");
                      }
                   }
                }
@@ -1718,21 +1718,21 @@ final class AiNetherEntry {
                         this.foodOp = AiSpeedrun.secureFood(AiRunResources.totalSafeFoodItems() + 12, 180);
                      }
 
-                     return this.write("Securing safe nutrition before Nether entry");
+                     return this.running("Securing safe nutrition before Nether entry");
                   }
 
                   if (mc.player.getHealth() < 16.0F || mc.player.getFoodData().getFoodLevel() < 18) {
                      this.foodOp = mc.player.getFoodData().getFoodLevel() < 18
                         ? AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20))
                         : AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90));
-                     return this.write("Restoring health and hunger before Nether entry");
+                     return this.running("Restoring health and hunger before Nether entry");
                   }
                }
 
                if (this.foodOp != null) {
                   AiOperation.Result f = this.preparation.tickChild(this.foodOp);
                   if (!f.terminal()) {
-                     return this.write("Food for the Nether: " + f.message());
+                     return this.running("Food for the Nether: " + f.message());
                   }
 
                   this.preparation.cancelChild(this.foodOp);
@@ -1746,14 +1746,14 @@ final class AiNetherEntry {
                   this.huntAttempts++;
                   this.foodOp = this.huntAttempts == 1 && this.skyVisibleWithin(8) ? AiSpeedrun.secureFood(14, 180) : AiSpeedrun.hunt(48.0, 14, 90);
                   if (this.foodOp != null) {
-                     return this.write("Food for the Nether");
+                     return this.running("Food for the Nether");
                   }
                }
 
                if (this.waterBucketOp != null) {
                   AiOperation.Result w = this.childTracker.tick(this.waterBucketOp);
                   if (!w.terminal()) {
-                     return this.write("Filling a water bucket before the Nether: " + w.message());
+                     return this.running("Filling a water bucket before the Nether: " + w.message());
                   }
 
                   if (w.status() == AiOperation.Status.UNCERTAIN) {
@@ -1771,7 +1771,7 @@ final class AiNetherEntry {
                   this.waterBucketOp = AiForage.init_AiOperation_Minecraft(mc, 32.0, 2);
                   if (this.waterBucketOp != null) {
                      this.waterBucketAttempts++;
-                     return this.write("Filling a water bucket before the Nether");
+                     return this.running("Filling a water bucket before the Nether");
                   }
                }
 
@@ -1784,7 +1784,7 @@ final class AiNetherEntry {
 
                   this.waterBucketAttempts++;
                   this.waterBucketOp = AiObsidian.init(2, 120);
-                  return this.write("Refilling both mandatory water buckets");
+                  return this.running("Refilling both mandatory water buckets");
                } else {
                   if (this.spareObsidianOp != null) {
                      BlockPos home = AiDimension.load_BlockPos;
@@ -1800,12 +1800,12 @@ final class AiNetherEntry {
                               this.count("minecraft:obsidian"),
                               (int)this.horizontalDistanceTo(home)
                            );
-                        return this.write("Spare obsidian given up; back to the portal");
+                        return this.running("Spare obsidian given up; back to the portal");
                      }
 
                      AiOperation.Result o = this.childTracker.tick(this.spareObsidianOp);
                      if (!o.terminal()) {
-                        return this.write("Spare obsidian for the way home (" + this.count("minecraft:obsidian") + "/10)");
+                        return this.running("Spare obsidian for the way home (" + this.count("minecraft:obsidian") + "/10)");
                      }
 
                      if (o.status() == AiOperation.Status.UNCERTAIN) {
@@ -1827,50 +1827,50 @@ final class AiNetherEntry {
                      this.spareObsidianStarted = true;
                      AiNetherEntry.init_Z = true;
                      this.spareObsidianOp = AiObsidian.load(10, 240);
-                     return this.write("Spare obsidian for the way home");
+                     return this.running("Spare obsidian for the way home");
                   }
 
                   BlockPos lit = AiDimension.load_BlockPos;
-                  if (this.child == null && lit != null && this.add < 3 && mc.player.blockPosition().distSqr(lit) > 1600.0) {
-                     this.add++;
+                  if (this.child == null && lit != null && this.portalReturnAttempts < 3 && mc.player.blockPosition().distSqr(lit) > 1600.0) {
+                     this.portalReturnAttempts++;
                      this.returningToPortal = true;
                      this.portalReturnDone = false;
                      this.legId = "game:goto";
-                     this.init(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
+                     this.recordLegEvent(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
                      this.child = AiGoto.travelToCompat(
                         lit, 3.0, true, true, true, this.uncappedTimeout(240), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0
                      );
-                     return this.write("Back to the portal built at " + lit.toShortString());
+                     return this.running("Back to the portal built at " + lit.toShortString());
                   }
 
                   if (this.child != null && "game:goto".equals(this.legId) && this.returningToPortal && !this.portalReturnDone) {
                      AiOperation.Result back = this.pollChild();
                      if (back == null) {
-                        return this.write("Back to the portal built at " + AiDimension.load_BlockPos.toShortString());
+                        return this.running("Back to the portal built at " + AiDimension.load_BlockPos.toShortString());
                      }
 
                      if (back.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      this.portalReturnDone = true;
-                     if (mc.player.blockPosition().distSqr(AiDimension.load_BlockPos) > 1600.0 && this.add < 3) {
-                        return this.write("Still far from the portal (" + back.message() + "); walking on");
+                     if (mc.player.blockPosition().distSqr(AiDimension.load_BlockPos) > 1600.0 && this.portalReturnAttempts < 3) {
+                        return this.running("Still far from the portal (" + back.message() + "); walking on");
                      }
                   }
 
                   if (this.child != null) {
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Entering the Nether");
+                        return this.running("Entering the Nether");
                      } else if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                      } else if (this.inNether() && r.status() == AiOperation.Status.SUCCEEDED) {
                         this.captureWarning(r.dataJson());
-                        return this.init("succeeded", "in the Nether" + (this.entryWarning != null ? " (" + this.entryWarning + ")" : ""));
+                        return this.finishPhase("succeeded", "in the Nether" + (this.entryWarning != null ? " (" + this.entryWarning + ")" : ""));
                      } else {
                         return r.status() == AiOperation.Status.CANCELLED
-                           ? this.get()
+                           ? this.cancelEntry()
                            : this.failPhase(r.failure(), "Dimension travel failed: " + r.message(), null);
                      }
                   } else {
@@ -1882,18 +1882,18 @@ final class AiNetherEntry {
                            mc.player.getFoodData().getFoodLevel(),
                            AiRunResources.countUsableItem("minecraft:water_bucket", 0)
                         )) {
-                        return this.write("Rechecking supplies and health before entering the Nether");
+                        return this.running("Rechecking supplies and health before entering the Nether");
                      }
 
-                     this.init("game:dimension", AiJson.objectOf("action", "enter", "target", "the_nether", "timeoutSeconds", this.uncappedTimeout(180)));
-                     return this.write("Entering the Nether");
+                     this.startLeg("game:dimension", AiJson.objectOf("action", "enter", "target", "the_nether", "timeoutSeconds", this.uncappedTimeout(180)));
+                     return this.running("Entering the Nether");
                   }
                }
             }
 
-            void init(String id, JsonObject legArgs) {
+            void startLeg(String id, JsonObject legArgs) {
                this.legId = id;
-               this.init(AiNetherEntry.legEvent(id, "STARTED", "", null));
+               this.recordLegEvent(AiNetherEntry.legEvent(id, "STARTED", "", null));
 
                try {
                   AiOperation var10004;
@@ -1947,7 +1947,7 @@ final class AiNetherEntry {
                return AiGuard.isLowHealthRecoveryOp(id, legArgs) ? AiGuard.allowDuringLowHealth(op) : op;
             }
 
-            void init(JsonObject detail) {
+            void recordLegEvent(JsonObject detail) {
                if (this.legEvents.size() >= 24) {
                   this.legEvents.remove(0);
                }
@@ -1964,7 +1964,7 @@ final class AiNetherEntry {
 
                this.childTracker.cancel(this.child);
                this.child = null;
-               this.init(AiNetherEntry.legEvent(this.legId, r.status().name(), r.message(), r.dataJson()));
+               this.recordLegEvent(AiNetherEntry.legEvent(this.legId, r.status().name(), r.message(), r.dataJson()));
                if (r.status() == AiOperation.Status.UNCERTAIN) {
                   this.uncertainLegResult = r;
                }
@@ -1982,7 +1982,7 @@ final class AiNetherEntry {
 
             AiOperation.Result obtainItem(String item, int amount, int cap, boolean uncapped) {
                if (this.child == null) {
-                  this.init(
+                  this.startLeg(
                      "game:obtain", AiJson.objectOf("item", item, "count", amount, "timeoutSeconds", uncapped ? this.uncappedTimeout(cap) : this.cappedTimeout(cap))
                   );
                }
@@ -1994,21 +1994,21 @@ final class AiNetherEntry {
                return this.craftItem(item, cap, false);
             }
 
-            AiOperation.Result load(String item, int cap) {
+            AiOperation.Result craftItemUncapped(String item, int cap) {
                return this.craftItem(item, cap, true);
             }
 
             AiOperation.Result craftItem(String item, int cap, boolean uncapped) {
                if (this.child == null) {
-                  this.init("game:craft", AiJson.objectOf("item", item, "count", 1, "timeoutSeconds", uncapped ? this.uncappedTimeout(cap) : this.cappedTimeout(cap)));
+                  this.startLeg("game:craft", AiJson.objectOf("item", item, "count", 1, "timeoutSeconds", uncapped ? this.uncappedTimeout(cap) : this.cappedTimeout(cap)));
                }
 
                return this.pollChild();
             }
 
-            AiOperation.Result read(String block, int limit, int radius) {
+            AiOperation.Result findBlocks(String block, int limit, int radius) {
                if (this.child == null) {
-                  this.init("game:find", AiJson.objectOf("block", block, "radius", radius, "limit", limit));
+                  this.startLeg("game:find", AiJson.objectOf("block", block, "radius", radius, "limit", limit));
                }
 
                return this.pollChild();
@@ -2016,7 +2016,7 @@ final class AiNetherEntry {
 
             AiOperation.Result locate(String query) {
                if (this.child == null) {
-                  this.init("game:oracle", AiJson.objectOf("query", query, "cap", 1));
+                  this.startLeg("game:oracle", AiJson.objectOf("query", query, "cap", 1));
                }
 
                return this.pollChild();
@@ -2033,17 +2033,17 @@ final class AiNetherEntry {
             AiOperation.Result walkTo(BlockPos target, double radius, int cap, boolean uncapped) {
                if (this.child == null) {
                   this.legId = "game:goto";
-                  this.init(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
+                  this.recordLegEvent(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
                   this.child = AiGoto.travelToCompat(target, radius, false, true, true, uncapped ? this.uncappedTimeout(cap) : this.cappedTimeout(cap));
                }
 
                return this.pollChild();
             }
 
-            AiOperation.Result init(BlockPos target, int cap) {
+            AiOperation.Result travelTo(BlockPos target, int cap) {
                if (this.child == null) {
                   this.legId = "game:goto";
-                  this.init(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
+                  this.recordLegEvent(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
                   this.child = AiGoto.travelToCompat(target, 3.0, true, true, true, this.cappedTimeout(cap), autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST);
                }
 
@@ -2057,7 +2057,7 @@ final class AiNetherEntry {
                }
 
                if (this.child == null) {
-                  this.init("game:break", AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ()));
+                  this.startLeg("game:break", AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ()));
                }
 
                return this.pollChild();
@@ -2076,16 +2076,16 @@ final class AiNetherEntry {
                int cap = this.cappedTimeout(120);
                switch (AiNetherEntry.obtainMethodFor(itemId)) {
                   case "fill_water":
-                     this.init("game:bucket", AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", cap));
+                     this.startLeg("game:bucket", AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", cap));
                      break;
                   case "fill_lava":
-                     this.init("game:bucket", AiJson.objectOf("action", "fill", "fluid", "lava", "timeoutSeconds", cap));
+                     this.startLeg("game:bucket", AiJson.objectOf("action", "fill", "fluid", "lava", "timeoutSeconds", cap));
                      break;
                   case "collect":
-                     this.init("game:collect", AiJson.objectOf("item", itemId, "count", amount, "radius", 32, "timeoutSeconds", cap));
+                     this.startLeg("game:collect", AiJson.objectOf("item", itemId, "count", amount, "radius", 32, "timeoutSeconds", cap));
                      break;
                   default:
-                     this.init("game:obtain", AiJson.objectOf("item", itemId, "count", amount, "timeoutSeconds", cap));
+                     this.startLeg("game:obtain", AiJson.objectOf("item", itemId, "count", amount, "timeoutSeconds", cap));
                }
             }
 
@@ -2100,7 +2100,7 @@ final class AiNetherEntry {
                if (this.child != null) {
                   this.childTracker.cancel(this.child);
                   this.child = null;
-                  this.init(AiNetherEntry.legEvent(this.legId, "CANCELLED", why, null));
+                  this.recordLegEvent(AiNetherEntry.legEvent(this.legId, "CANCELLED", why, null));
                }
             }
 
@@ -2152,11 +2152,11 @@ final class AiNetherEntry {
 
             boolean needsVillage() {
                return !this.villageDone && !skipVillage && this.bedCount() < bedsTarget
-                  ? explicitVillage == null || AiNetherEntry.shouldVisitVillage(false, this.load(explicitVillage), this.bedCount(), bedsTarget)
+                  ? explicitVillage == null || AiNetherEntry.shouldVisitVillage(false, this.cornerDistanceTo(explicitVillage), this.bedCount(), bedsTarget)
                   : false;
             }
 
-            double load(BlockPos pos) {
+            double cornerDistanceTo(BlockPos pos) {
                double dx = pos.getX() - mc.player.getX();
                double dz = pos.getZ() - mc.player.getZ();
                return Math.hypot(dx, dz);
@@ -2184,68 +2184,68 @@ final class AiNetherEntry {
                this.drainChild();
                this.step = 20;
                AutismClientAddon.LOG.info("[AI] nether entry: building the portal from obsidian: {}", why);
-               return this.write("Building the portal from obsidian: " + why);
+               return this.running("Building the portal from obsidian: " + why);
             }
 
-            AiOperation.Result push() {
+            AiOperation.Result mineObsidianStep() {
                if (this.step == 20) {
                   int framed = AiDimension.framedObsidian();
                   if (this.child == null && this.count("minecraft:obsidian") + framed >= 10) {
                      this.step = 21;
-                     return this.write(framed > 0 ? "Obsidian for the frame begun at " + AiDimension.frameOrigin.toShortString() : "Ten obsidian held");
+                     return this.running(framed > 0 ? "Obsidian for the frame begun at " + AiDimension.frameOrigin.toShortString() : "Ten obsidian held");
                   }
 
                   if (this.child == null) {
                      this.legId = "game:obtain";
-                     this.init(AiNetherEntry.legEvent("game:obtain", "STARTED", "", null));
-                     this.start = this.count("minecraft:obsidian");
+                     this.recordLegEvent(AiNetherEntry.legEvent("game:obtain", "STARTED", "", null));
+                     this.obsidianBeforeMining = this.count("minecraft:obsidian");
                      this.child = AiObsidian.load(Math.max(1, 10 - AiDimension.framedObsidian()), this.uncappedTimeout(300));
                   }
 
                   AiOperation.Result r = this.pollChild();
                   if (r == null) {
-                     return this.write("Mining obsidian for the frame (" + this.count("minecraft:obsidian") + "/10)");
+                     return this.running("Mining obsidian for the frame (" + this.count("minecraft:obsidian") + "/10)");
                   }
 
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   }
 
                   int held = this.count("minecraft:obsidian");
                   held += AiDimension.framedObsidian();
-                  if (held < 10 && held - AiDimension.framedObsidian() > this.start && this.stop < 4) {
-                     this.stop++;
+                  if (held < 10 && held - AiDimension.framedObsidian() > this.obsidianBeforeMining && this.obsidianShortfallRetries < 4) {
+                     this.obsidianShortfallRetries++;
                      AutismClientAddon.LOG.info("[AI] nether entry: obsidian {} of 10 ({}); casting on", held, r.message());
-                     return this.write("Obsidian " + held + "/10; casting on");
+                     return this.running("Obsidian " + held + "/10; casting on");
                   }
 
                   if (held < 10 && !this.castablePoolOnly) {
                      this.castablePoolOnly = true;
                      this.castAttempts = 0;
-                     this.set = 0;
+                     this.poolFailures = 0;
                      AutismClientAddon.LOG.info("[AI] nether entry: no obsidian ({}); looking for a castable pool from the surface", r.message());
-                     this.init(AiNetherEntry.Inner_CachePool.LAVA);
+                     this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
                      this.step = 40;
-                     return this.write("No obsidian (" + r.message() + "); up to the surface for a castable pool");
+                     return this.running("No obsidian (" + r.message() + "); up to the surface for a castable pool");
                   }
 
                   if (held < 10) {
-                     return this.failPhase(AiFailure.MISSING_MATERIALS, "Obsidian for the frame: " + r.message(), AiNetherEntry.init("minecraft:obsidian", 10 - held));
+                     return this.failPhase(AiFailure.MISSING_MATERIALS, "Obsidian for the frame: " + r.message(), AiNetherEntry.missingItem("minecraft:obsidian", 10 - held));
                   }
 
                   this.step = 21;
-                  return this.write("Ten obsidian held");
+                  return this.running("Ten obsidian held");
                } else if (this.step == 21) {
                   BlockPos begun = AiDimension.framedObsidian() > 0 ? AiDimension.frameOrigin : null;
                   if (begun != null && this.child == null && mc.player.blockPosition().distSqr(begun) <= 16.0) {
                      this.step = 22;
-                     return this.write("At the frame begun");
+                     return this.running("At the frame begun");
                   }
 
                   if (begun != null) {
                      if (this.child == null) {
                         this.legId = "game:goto";
-                        this.init(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
+                        this.recordLegEvent(AiNetherEntry.legEvent("game:goto", "STARTED", "", null));
                         this.child = AiGoto.travelToCompat(
                            begun,
                            3.0,
@@ -2264,44 +2264,44 @@ final class AiNetherEntry {
 
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Back to the frame begun at " + begun.toShortString());
+                        return this.running("Back to the frame begun at " + begun.toShortString());
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      this.step = 22;
-                     return this.write("Building the frame begun");
+                     return this.running("Building the frame begun");
                   } else {
                      if (this.child == null && this.skyVisibleWithin(3)) {
                         this.step = 22;
-                        return this.write("Under open sky");
+                        return this.running("Under open sky");
                      }
 
-                     if (this.child == null && !this.entryTimer.init() && mc.player.onGround() && this.canInterruptNow()) {
+                     if (this.child == null && !this.entryTimer.isStarted() && mc.player.onGround() && this.canInterruptNow()) {
                         this.entryTimer.start(this.deadline);
                         this.step = 23;
-                        return this.write("Trying a portal frame near the pool");
+                        return this.running("Trying a portal frame near the pool");
                      }
 
                      if (this.child == null) {
                         this.legId = "game:surface";
-                        this.init(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
+                        this.recordLegEvent(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
                         this.child = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", this.uncappedTimeout(240)));
                      }
 
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Up to open ground for the frame");
+                        return this.running("Up to open ground for the frame");
                      }
 
                      if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      }
 
                      this.step = 22;
-                     return this.write("Building the frame here");
+                     return this.running("Building the frame here");
                   }
                } else if (this.step == 23) {
                   if (this.findBlock(Blocks.NETHER_PORTAL, 8, 6) == null
@@ -2311,42 +2311,42 @@ final class AiNetherEntry {
                         int seconds = this.entryTimer.secondsLeft(this.deadline);
                         if (seconds == 0) {
                            this.step = AiDimension.framedObsidian() > 0 ? 22 : 21;
-                           return this.write(this.step == 22 ? "Finishing the local frame begun" : "Local frame budget exhausted; up to open ground");
+                           return this.running(this.step == 22 ? "Finishing the local frame begun" : "Local frame budget exhausted; up to open ground");
                         }
 
-                        this.init(
+                        this.startLeg(
                            "game:dimension", AiJson.objectOf("action", "enter", "target", "the_nether", "build", true, "timeoutSeconds", seconds)
                         );
                      }
 
                      AiOperation.Result r = this.pollChild();
                      if (r == null) {
-                        return this.write("Building the local portal frame");
+                        return this.running("Building the local portal frame");
                      } else if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return r;
                      } else if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.get();
+                        return this.cancelEntry();
                      } else if (this.findBlock(Blocks.NETHER_PORTAL, 8, 6) != null) {
-                        return this.init("succeeded", "portal built locally from obsidian");
+                        return this.finishPhase("succeeded", "portal built locally from obsidian");
                      } else if (AiDimension.framedObsidian() > 0) {
                         this.step = 22;
-                        return this.write("Finishing the local frame begun");
+                        return this.running("Finishing the local frame begun");
                      } else if (AiNetherEntry.shouldRetryBuildInOpen(r, 0, this.childTracker.requiresReconciliation())) {
                         this.step = 21;
-                        return this.write("No local frame completed (" + r.message() + "); up to open ground");
+                        return this.running("No local frame completed (" + r.message() + "); up to open ground");
                      } else {
                         return this.failPhase(r.failure(), "Local portal build failed: " + r.message(), null);
                      }
                   } else {
                      this.drainChild();
-                     return this.init("succeeded", "portal built locally from obsidian");
+                     return this.finishPhase("succeeded", "portal built locally from obsidian");
                   }
-               } else if (this.put++ % 5 != 0
+               } else if (this.portalScanCounter++ % 5 != 0
                   || this.findBlock(Blocks.NETHER_PORTAL, 8, 6) == null
                   || this.child != null
                      && (!this.child.canInterruptNow() || this.child.requiresReconciliationAfterEmergency())) {
                   if (this.child == null) {
-                     this.init(
+                     this.startLeg(
                         "game:dimension",
                         AiJson.objectOf("action", "enter", "target", "the_nether", "build", true, "timeoutSeconds", this.uncappedTimeout(300))
                      );
@@ -2354,24 +2354,24 @@ final class AiNetherEntry {
 
                   AiOperation.Result r = this.pollChild();
                   if (r == null) {
-                     return this.write("Building the portal frame");
+                     return this.running("Building the portal frame");
                   } else if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.get();
+                     return this.cancelEntry();
                   } else {
                      return this.findBlock(Blocks.NETHER_PORTAL, 8, 6) != null
-                        ? this.init("succeeded", "portal built from obsidian")
+                        ? this.finishPhase("succeeded", "portal built from obsidian")
                         : this.failPhase(r.failure(), "Portal build failed: " + r.message(), null);
                   }
                } else {
                   this.drainChild();
-                  return this.init("succeeded", "portal built from obsidian");
+                  return this.finishPhase("succeeded", "portal built from obsidian");
                }
             }
 
-            AiOperation.Result pop() {
+            AiOperation.Result fetchWaterStep() {
                if (this.child == null && this.count("minecraft:water_bucket") > 0) {
                   this.step = 0;
-                  return this.write("Water bucket held");
+                  return this.running("Water bucket held");
                }
 
                if (this.child == null) {
@@ -2379,61 +2379,61 @@ final class AiNetherEntry {
                      this.step = 31;
                   }
 
-                  this.clear++;
+                  this.surfaceForWaterAttempts++;
                   if (this.step == 31) {
                      this.legId = "game:surface";
-                     this.init(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
+                     this.recordLegEvent(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
                      this.child = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", this.uncappedTimeout(240)));
                   } else {
                      this.legId = "game:bucket";
-                     this.init(AiNetherEntry.legEvent("game:bucket", "STARTED", "", null));
+                     this.recordLegEvent(AiNetherEntry.legEvent("game:bucket", "STARTED", "", null));
                      this.child = AiObsidian.fetchOne(this.uncappedTimeout(240));
                   }
                }
 
                AiOperation.Result r = this.pollChild();
                if (r == null) {
-                  return this.write(this.step == 31 ? "Up to open ground for water" : "Filling a water bucket");
+                  return this.running(this.step == 31 ? "Up to open ground for water" : "Filling a water bucket");
                } else if (r.status() == AiOperation.Status.CANCELLED) {
-                  return this.get();
+                  return this.cancelEntry();
                } else if (this.count("minecraft:water_bucket") > 0) {
                   this.step = 0;
-                  return this.write("Water bucket held");
-               } else if (this.step == 30 && this.clear < 3) {
+                  return this.running("Water bucket held");
+               } else if (this.step == 30 && this.surfaceForWaterAttempts < 3) {
                   this.step = 31;
-                  return this.write("No water reachable here (" + r.message() + "); up to the surface");
+                  return this.running("No water reachable here (" + r.message() + "); up to the surface");
                } else if (this.step == 31) {
                   this.step = 30;
-                  return this.write("Under open sky; looking for water");
+                  return this.running("Under open sky; looking for water");
                } else {
                   this.step = 0;
-                  return this.write("No water bucket filled: " + r.message());
+                  return this.running("No water bucket filled: " + r.message());
                }
             }
 
-            AiOperation.Result run() {
+            AiOperation.Result surfaceStep() {
                if (this.child == null && this.skyVisibleWithin(3)) {
                   this.step = 1;
-                  return this.write("Under open sky; scanning for a castable pool");
+                  return this.running("Under open sky; scanning for a castable pool");
                }
 
                if (this.child == null) {
                   this.legId = "game:surface";
-                  this.init(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
+                  this.recordLegEvent(AiNetherEntry.legEvent("game:surface", "STARTED", "", null));
                   this.child = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", this.uncappedTimeout(240)));
                }
 
                AiOperation.Result r = this.pollChild();
                if (r == null) {
-                  return this.write("Up to the surface for a castable pool");
+                  return this.running("Up to the surface for a castable pool");
                }
 
                if (r.status() == AiOperation.Status.CANCELLED) {
-                  return this.get();
+                  return this.cancelEntry();
                }
 
                this.step = 1;
-               return this.write("Scanning for a castable pool");
+               return this.running("Scanning for a castable pool");
             }
 
             BlockPos castableLavaPool() {
@@ -2545,14 +2545,14 @@ final class AiNetherEntry {
                }
             }
 
-            void init(AiNetherEntry.Inner_CachePool next) {
+            void enterPhase(AiNetherEntry.Inner_CachePool next) {
                this.phase = next;
                this.phaseStartedMillis = System.currentTimeMillis();
                this.step = 0;
                this.attempt = 1;
                this.openingSiteIndex = 0;
                this.chests = List.of();
-               this.reset = 0;
+               this.chestIndex = 0;
                this.missingMaterials.clear();
 
                while (this.legEvents.size() > 0) {
@@ -2562,7 +2562,7 @@ final class AiNetherEntry {
                AiRunTrace.recordGlobalSplit("nether_entry_phase", next.name().toLowerCase(Locale.ROOT));
             }
 
-            void init(AiNetherEntry.Inner_CachePool p, String reason) {
+            void tracePhaseFailure(AiNetherEntry.Inner_CachePool p, String reason) {
                AiRunTrace.recordGlobalSplit(
                   "nether_entry_phase", "FAILED " + p.name().toLowerCase(Locale.ROOT) + ": " + (reason.length() > 80 ? reason.substring(0, 80) : reason)
                );
@@ -2592,23 +2592,23 @@ final class AiNetherEntry {
                return out;
             }
 
-            AiOperation.Result init(String status, String detail) {
+            AiOperation.Result finishPhase(String status, String detail) {
                this.drainChild();
                this.phaseHistory.add(this.phaseEntry(this.phase, status, detail));
                if ("failed".equals(status)) {
-                  this.init(this.phase, detail);
+                  this.tracePhaseFailure(this.phase, detail);
                }
 
                AiNetherEntry.Inner_CachePool finished = this.phase;
                this.phase = null;
-               return this.write("Phase " + finished.name().toLowerCase(Locale.ROOT) + " " + status + ": " + detail);
+               return this.running("Phase " + finished.name().toLowerCase(Locale.ROOT) + " " + status + ": " + detail);
             }
 
             AiOperation.Result retryOrFail(AiFailure failure, String reason, JsonObject miss) {
-               if (this.attempt < AiNetherEntry.maxAttempts(this.phase) && AiNetherEntry.init(this.phase, failure)) {
+               if (this.attempt < AiNetherEntry.maxAttempts(this.phase) && AiNetherEntry.canRetryPhase(this.phase, failure)) {
                   this.attempt++;
                   this.restartPhase();
-                  return this.write(
+                  return this.running(
                      "Phase "
                         + this.phase.name().toLowerCase(Locale.ROOT)
                         + ": attempt "
@@ -2641,7 +2641,7 @@ final class AiNetherEntry {
             AiOperation.Result failPhase(AiFailure failure, String reason, JsonObject miss) {
                this.drainChild();
                this.phaseHistory.add(this.phaseEntry(this.phase, "failed", reason));
-               this.init(this.phase, reason);
+               this.tracePhaseFailure(this.phase, reason);
                if (miss != null) {
                   this.missingMaterialsReport = miss;
                }
@@ -2649,7 +2649,7 @@ final class AiNetherEntry {
                if (!AiNetherEntry.isRequiredPhase(this.phase)) {
                   AiNetherEntry.Inner_CachePool failedPhase = this.phase;
                   this.phase = null;
-                  return this.write("Optional phase " + failedPhase.name().toLowerCase(Locale.ROOT) + " failed: " + reason);
+                  return this.running("Optional phase " + failedPhase.name().toLowerCase(Locale.ROOT) + " failed: " + reason);
                } else {
                   this.failedPhaseName = this.phase.name().toLowerCase(Locale.ROOT);
                   this.phase = null;
@@ -2657,7 +2657,7 @@ final class AiNetherEntry {
                }
             }
 
-            AiOperation.Result read(String message) {
+            AiOperation.Result completeEntry(String message) {
                if (this.phase != null) {
                   this.phaseHistory.add(this.phaseEntry(this.phase, "succeeded", ""));
                   this.phase = null;
@@ -2667,21 +2667,21 @@ final class AiNetherEntry {
                return this.finish(AiOperation.Status.SUCCEEDED, null, message);
             }
 
-            AiOperation.Result get() {
+            AiOperation.Result cancelEntry() {
                return this.finish(AiOperation.Status.CANCELLED, null, "Nether entry cancelled");
             }
 
-            JsonObject init(AiOperation.Result r, String itemId) {
+            JsonObject missingFromResult(AiOperation.Result r, String itemId) {
                JsonObject legMissing = AiNetherEntry.parseObject(r.dataJson());
-               return legMissing != null ? legMissing : AiNetherEntry.init(itemId, 1);
+               return legMissing != null ? legMissing : AiNetherEntry.missingItem(itemId, 1);
             }
 
             int cappedTimeout(int cap) {
-               return AiNetherEntry.load(cap, this.secondsLeft());
+               return AiNetherEntry.clampCappedTimeout(cap, this.secondsLeft());
             }
 
             int uncappedTimeout(int cap) {
-               return AiNetherEntry.read(cap, this.secondsLeft());
+               return AiNetherEntry.clampUncappedTimeout(cap, this.secondsLeft());
             }
 
             int secondsLeft() {
@@ -2757,7 +2757,7 @@ final class AiNetherEntry {
                }
             }
 
-            AiOperation.Result write(String message) {
+            AiOperation.Result running(String message) {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
@@ -2867,7 +2867,7 @@ final class AiNetherEntry {
       private final IdentityHashMap<AiOperation, AiOperation.Result> results = new IdentityHashMap<>();
       private AiOperation owner;
       private AiOperation.Result ownerResult;
-      private AiOperation.Result load;
+      private AiOperation.Result pendingChildResult;
       private boolean needsReconciliation;
 
       AiOperation.Result tick(AiOperation child) {
@@ -2903,7 +2903,7 @@ final class AiNetherEntry {
             }
 
             if (owner == this.owner && actual != null) {
-               this.load = actual;
+               this.pendingChildResult = actual;
             }
          }
       }
@@ -2934,17 +2934,17 @@ final class AiNetherEntry {
             data.addProperty("entryChildStatus", this.ownerResult.status().name());
          }
 
-         if (this.load != null) {
-            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.load.dataJson()));
-            data.addProperty("pendingChildStatus", this.load.status().name());
-            data.addProperty("pendingChildFailure", this.load.failure().name());
+         if (this.pendingChildResult != null) {
+            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.pendingChildResult.dataJson()));
+            data.addProperty("pendingChildStatus", this.pendingChildResult.status().name());
+            data.addProperty("pendingChildFailure", this.pendingChildResult.failure().name());
          }
       }
 
       AiOperation.Result withEvidence(AiOperation.Result boundary, AiFailure failure) {
          JsonObject data = AiRunResources.parseEvidenceJson(boundary.dataJson());
          this.appendEvidence(data);
-         AiOperation.Result actual = this.ownerResult != null ? this.ownerResult : this.load;
+         AiOperation.Result actual = this.ownerResult != null ? this.ownerResult : this.pendingChildResult;
          AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(boundary.status(), boundary.message(), data, this.needsReconciliation, actual);
          return new AiOperation.Result(
             result.status(),
@@ -2958,7 +2958,7 @@ final class AiNetherEntry {
 
    static final class Inner_StreamUtil {
       static final int ENTRY_WINDOW_SECONDS = 90;
-      static final int load = 10;
+      static final int MIN_REPORTED_SECONDS = 10;
       private final LongSupplier clock;
       private long deadline;
       private boolean started;
@@ -2971,7 +2971,7 @@ final class AiNetherEntry {
          this.clock = now;
       }
 
-      boolean init() {
+      boolean isStarted() {
          return this.started;
       }
 

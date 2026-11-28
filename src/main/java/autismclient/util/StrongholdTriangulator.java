@@ -47,11 +47,11 @@ public final class StrongholdTriangulator {
          this.legacy = legacy;
          this.ringEstimate = null;
          this.provisional = null;
-         this.load();
+         this.recompute();
       }
    }
 
-   private void load() {
+   private void recompute() {
       if (this.enabled && this.solution == null) {
          StrongholdRingEstimator.Inner_StreamUtil fresh = StrongholdRingEstimator.init(this.samples, this.legacy);
          if (fresh == null) {
@@ -135,7 +135,7 @@ public final class StrongholdTriangulator {
             }
          }
 
-         this.load();
+         this.recompute();
          return true;
       } else {
          return false;
@@ -153,11 +153,11 @@ public final class StrongholdTriangulator {
          for (int j = i + 1; j < rays.size(); j++) {
             StrongholdTriangulator.Inner_BufferHelper a = rays.get(i);
             StrongholdTriangulator.Inner_BufferHelper b = rays.get(j);
-            double cross = load(a.load, b.load);
+            double cross = cross2d(a.load, b.load);
             if (!(horizontalDistance(a.init, b.init) < 32.0) && !(Math.abs(cross) < 0.04)) {
                Vec3 separation = b.init.subtract(a.init);
-               double t = load(separation, b.load) / cross;
-               double u = load(separation, a.load) / cross;
+               double t = cross2d(separation, b.load) / cross;
+               double u = cross2d(separation, a.load) / cross;
                if (!(t < 0.0) && !(u < 0.0) && !(t > 25000.0) && !(u > 25000.0)) {
                   Vec3 point = a.init.add(a.load.scale(t));
                   double uncertainty = Math.max(16.0, (t + u) * 0.003 / Math.abs(cross));
@@ -185,7 +185,7 @@ public final class StrongholdTriangulator {
 
    private static boolean init_Z_Vec3_cS_BufferHelper(Vec3 point, StrongholdTriangulator.Inner_BufferHelper ray) {
       Vec3 delta = point.subtract(ray.init);
-      return delta.dot(ray.load) >= -8.0 && Math.abs(load(delta, ray.load)) <= Math.max(8.0, delta.horizontalDistance() * 0.008);
+      return delta.dot(ray.load) >= -8.0 && Math.abs(cross2d(delta, ray.load)) <= Math.max(8.0, delta.horizontalDistance() * 0.008);
    }
 
    public Vec3 destinationFor(Vec3 player) {
@@ -254,7 +254,7 @@ public final class StrongholdTriangulator {
       return List.copyOf(centers);
    }
 
-   private static double load(Vec3 a, Vec3 b) {
+   private static double cross2d(Vec3 a, Vec3 b) {
       return a.x * b.z - a.z * b.x;
    }
 
@@ -282,8 +282,8 @@ public final class StrongholdTriangulator {
       private double sumX;
       private double sumZ;
       private double sumXX;
-      private double write;
-      private double update;
+      private double sumZZ;
+      private double sumXZ;
       private int count;
       private boolean init_Z;
       private boolean load_Z;
@@ -323,12 +323,12 @@ public final class StrongholdTriangulator {
                this.sumX = this.sumX + travel.x;
                this.sumZ = this.sumZ + travel.z;
                this.sumXX = this.sumXX + travel.x * travel.x;
-               this.write = this.write + travel.z * travel.z;
-               this.update = this.update + travel.x * travel.z;
+               this.sumZZ = this.sumZZ + travel.z * travel.z;
+               this.sumXZ = this.sumXZ + travel.x * travel.z;
                if (!(length < 8.0) && this.count >= 6) {
                   double xx = this.sumXX - this.sumX * this.sumX / this.count;
-                  double zz = this.write - this.sumZ * this.sumZ / this.count;
-                  double xz = this.update - this.sumX * this.sumZ / this.count;
+                  double zz = this.sumZZ - this.sumZ * this.sumZ / this.count;
+                  double xz = this.sumXZ - this.sumX * this.sumZ / this.count;
                   double angle = 0.5 * Math.atan2(2.0 * xz, xx - zz);
                   double x = Math.cos(angle);
                   double z = Math.sin(angle);

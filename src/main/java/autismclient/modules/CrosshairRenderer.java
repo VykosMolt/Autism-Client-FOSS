@@ -34,10 +34,10 @@ public final class CrosshairRenderer {
    private static final int load_I = 1;
    private static final int read = 2;
    private static final int write = 3;
-   private static final int update = 4;
+   private static final int BYTES_PER_PIXEL = 4;
    private static final CrosshairRenderer.Inner_BufferHelper init_o_BufferHelper = new CrosshairRenderer.Inner_BufferHelper("hud", 0L);
    private static final CrosshairRenderer.Inner_BufferHelper load_o_BufferHelper = new CrosshairRenderer.Inner_BufferHelper("preview", 80L);
-   private static int sync;
+   private static int textureCounter;
 
    private CrosshairRenderer() {
    }
@@ -62,7 +62,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      CrosshairRenderer.Inner_DataUtil entry = init_o_BufferHelper.init(look, guiScale, 0);
+      CrosshairRenderer.Inner_DataUtil entry = init_o_BufferHelper.entryFor(look, guiScale, 0);
       if (entry == null) {
          return false;
       }
@@ -81,7 +81,7 @@ public final class CrosshairRenderer {
       return true;
    }
 
-   public static void init(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, double centerX, double centerY, float pixelsPerUnit) {
+   public static void renderAt(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, double centerX, double centerY, float pixelsPerUnit) {
       render(graphics, look, centerX, centerY, pixelsPerUnit, 0);
    }
 
@@ -103,7 +103,7 @@ public final class CrosshairRenderer {
             }
          }
 
-         CrosshairRenderer.Inner_DataUtil entry = load_o_BufferHelper.init(look, guiScale, maxPixels);
+         CrosshairRenderer.Inner_DataUtil entry = load_o_BufferHelper.entryFor(look, guiScale, maxPixels);
          if (entry != null) {
             int x = (int)Math.round(centerX * pixelsPerUnit - entry.width() / 2.0);
             int y = (int)Math.round(centerY * pixelsPerUnit - entry.width() / 2.0);
@@ -129,22 +129,22 @@ public final class CrosshairRenderer {
       }
 
       if (look.load_Z()) {
-         init(graphics, RenderPipelines.GUI_TEXTURED, entry, 3, x, y, init(look.load_I(), opacity));
+         blitCell(graphics, RenderPipelines.GUI_TEXTURED, entry, 3, x, y, withOpacity(look.load_I(), opacity));
       }
 
       if (target != 0) {
-         init(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, init(target, opacity));
+         blitCell(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, withOpacity(target, opacity));
       } else if (look.init_Z()) {
          if (look.load_Z()) {
             graphics.nextStratum();
          }
 
          int level = Math.round(255.0F * opacity);
-         init(graphics, RenderPipelines.CROSSHAIR, entry, 2, x, y, 0xFF000000 | level << 16 | level << 8 | level);
+         blitCell(graphics, RenderPipelines.CROSSHAIR, entry, 2, x, y, 0xFF000000 | level << 16 | level << 8 | level);
       } else if (look.style() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM) {
-         init(graphics, RenderPipelines.GUI_TEXTURED, entry, 0, x, y, init(-1, opacity));
+         blitCell(graphics, RenderPipelines.GUI_TEXTURED, entry, 0, x, y, withOpacity(-1, opacity));
       } else {
-         init(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, init(look.init_I(), opacity));
+         blitCell(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, withOpacity(look.init_I(), opacity));
       }
 
       if (invert) {
@@ -152,12 +152,12 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static void init(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.Inner_DataUtil entry, int cell, int x, int y, int color) {
+   private static void blitCell(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.Inner_DataUtil entry, int cell, int x, int y, int color) {
       int size = entry.width();
       graphics.blit(pipeline, entry.texture(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.load(), entry.read(), color);
    }
 
-   private static int init(int argb, float opacity) {
+   private static int withOpacity(int argb, float opacity) {
       int alpha = Math.round((argb >>> 24 & 0xFF) * Math.max(0.0F, Math.min(1.0F, opacity)));
       return alpha << 24 | argb & 16777215;
    }
@@ -215,14 +215,14 @@ public final class CrosshairRenderer {
       private final String name;
       private final long throttleMillis;
       private CrosshairRenderer.Inner_DataUtil cached;
-      private long load;
+      private long lastBuildMillis;
 
       Inner_BufferHelper(String name, long throttleMillis) {
          this.name = name;
          this.throttleMillis = throttleMillis;
       }
 
-      CrosshairRenderer.Inner_DataUtil init(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
+      CrosshairRenderer.Inner_DataUtil entryFor(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
          boolean custom = look.style() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
          int outlinePx = look.load_Z() ? Math.max(1, (int)Math.round(look.write_D() * guiScale)) : 0;
          CrosshairRenderer.Inner_StreamUtil key = new CrosshairRenderer.Inner_StreamUtil(
@@ -240,7 +240,7 @@ public final class CrosshairRenderer {
          }
 
          long now = System.currentTimeMillis();
-         if (this.cached != null && now - this.load < this.throttleMillis) {
+         if (this.cached != null && now - this.lastBuildMillis < this.throttleMillis) {
             return this.cached;
          }
 
@@ -258,14 +258,14 @@ public final class CrosshairRenderer {
                ? CrosshairPresetGeometry.rasterize(look.art(), unit, border, border + 1)
                : CrosshairPresetGeometry.init(look.style(), unit, look.load_D(), look.read_D(), border, border + 1);
             if (maxPixels <= 0 || raster.pixelCount() <= maxPixels || attempt == 3) {
-               CrosshairRenderer.Inner_DataUtil built = this.init(key, raster);
+               CrosshairRenderer.Inner_DataUtil built = this.build(key, raster);
                if (built == null) {
                   return this.cached;
                }
 
-               this.init();
+               this.releaseCached();
                this.cached = built;
-               this.load = now;
+               this.lastBuildMillis = now;
                return this.cached;
             }
 
@@ -274,7 +274,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      private CrosshairRenderer.Inner_DataUtil init(CrosshairRenderer.Inner_StreamUtil key, CrosshairPresetGeometry.Inner_CachePool raster) {
+      private CrosshairRenderer.Inner_DataUtil build(CrosshairRenderer.Inner_StreamUtil key, CrosshairPresetGeometry.Inner_CachePool raster) {
          int size = raster.pixelCount();
          int stride = size + 2;
          int width = stride * 4;
@@ -299,7 +299,7 @@ public final class CrosshairRenderer {
                }
             }
 
-            Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/crosshair/" + this.name + "_" + ++CrosshairRenderer.sync);
+            Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/crosshair/" + this.name + "_" + ++CrosshairRenderer.textureCounter);
             CrosshairRenderer.MINECRAFT.getTextureManager().register(id, new CrosshairRenderer.Inner_CachePool(this.name, image));
             return new CrosshairRenderer.Inner_DataUtil(key, id, size, width, height);
          } catch (Throwable t) {
@@ -308,7 +308,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      private void init() {
+      private void releaseCached() {
          if (this.cached != null) {
             Identifier id = this.cached.texture();
             this.cached = null;

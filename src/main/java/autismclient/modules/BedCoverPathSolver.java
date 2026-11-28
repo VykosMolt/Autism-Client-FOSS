@@ -20,14 +20,14 @@ final class BedCoverPathSolver {
    static final int read = 2;
    static final int write = 3;
    static final int update = 5;
-   private static final Direction[] init_DirectionArr = Direction.values();
-   private static final BitSet init_BitSet = new BitSet();
-   private static final BedCoverPathSolver.Inner_StreamUtil init_RefQueue_StreamUti = new BedCoverPathSolver.Inner_StreamUtil(1, 1.0 / 0.0, -1);
-   private static final BedCoverPathSolver.Inner_StreamUtil load_RefQueue_StreamUti = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
-   private static final double[] init_DArr = new double[]{1.62, 1.27};
-   private static final int[] init_IArr = new int[]{0, 1, -1};
+   private static final Direction[] DIRECTIONS = Direction.values();
+   private static final BitSet NO_REMOVED = new BitSet();
+   private static final BedCoverPathSolver.Inner_StreamUtil OUT_OF_BOUNDS_NODE = new BedCoverPathSolver.Inner_StreamUtil(1, 1.0 / 0.0, -1);
+   private static final BedCoverPathSolver.Inner_StreamUtil UNUSED_EMPTY_NODE = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
+   private static final double[] EYE_HEIGHTS = new double[]{1.62, 1.27};
+   private static final int[] STEP_DYS = new int[]{0, 1, -1};
 
-   static BedCoverPathSolver.Inner_NetHelper init_RefQueue_NetHelper_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach) {
+   static BedCoverPathSolver.Inner_NetHelper plan(BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach) {
       return plan(g, observer, reach, minimalCover(g));
    }
 
@@ -43,14 +43,14 @@ final class BedCoverPathSolver {
       }
 
       PriorityQueue<Inner_DataUtil> queue = new PriorityQueue<>(Comparator.comparingDouble(Inner_DataUtil::init_D).thenComparingInt(Inner_DataUtil::init_I));
-      int own = g.init(BlockPos.containing(observer));
+      int own = g.indexOf(BlockPos.containing(observer));
       int seed = -1;
       double nearest = 1.0 / 0.0;
-      if (g.init(own, false)) {
+      if (g.canStand(own, false)) {
          seed = own;
       } else {
          for (int i = 0; i < g.write; i++) {
-            if (g.init(i, false) && (g.init_I(i) == 0 || g.init_I(i) == g.sx - 1 || g.read_I(i) == 0 || g.read_I(i) == g.read - 1)) {
+            if (g.canStand(i, false) && (g.xOf(i) == 0 || g.xOf(i) == g.sx - 1 || g.zOf(i) == 0 || g.zOf(i) == g.sizeZ - 1)) {
                double d = g.posAt(i).distToCenterSqr(observer);
                if (d < nearest) {
                   nearest = d;
@@ -68,7 +68,7 @@ final class BedCoverPathSolver {
       List<Vec3> targets = new ArrayList<>();
 
       for (int bed : g.init_List) {
-         targets.addAll(init(g.posAt(bed)));
+         targets.addAll(bedAimPoints(g.posAt(bed)));
       }
 
       double best = 1.0 / 0.0;
@@ -82,37 +82,37 @@ final class BedCoverPathSolver {
          if (visit.init_D == distance[i] && !(visit.init_D >= best)) {
             BlockPos feet = g.posAt(i);
 
-            for (double height : init_DArr) {
+            for (double height : EYE_HEIGHTS) {
                Vec3 eye = new Vec3(feet.getX() + 0.5, feet.getY() + height, feet.getZ() + 0.5);
 
                for (Vec3 target : targets) {
                   if (!(eye.distanceToSqr(target) > reach * reach)) {
-                     List<Integer> ray = init_List_RefQueue_ConfigSto(g, eye, target);
+                     List<Integer> ray = traceRay(g, eye, target);
                      if (ray != null) {
                         double cost = visit.init_D;
 
                         for (int block : ray) {
-                           if (block != i && block != g.init(i, Direction.UP)) {
-                              cost += g.init_RefQueue_StreamUti(block).init_D + 5.0;
+                           if (block != i && block != g.neighbor(i, Direction.UP)) {
+                              cost += g.nodeAt(block).breakCost + 5.0;
                            }
                         }
 
                         if (!(cost >= best)) {
-                           BedCoverPathSolver.Inner_TaskQueue proof = init_RefQueue_TaskQueue_RefQueue_ConfigSto(g, parent, i, reach);
+                           BedCoverPathSolver.Inner_TaskQueue proof = planBreakRoute(g, parent, i, reach);
                            if (proof != null) {
-                              List<Integer> remaining = init_List_RefQueue_ConfigSto(g, eye, target, -1, proof.init_BitSet);
+                              List<Integer> remaining = traceRay(g, eye, target, -1, proof.removed);
                               if (remaining != null) {
                                  for (int block : remaining) {
-                                    if (!proof.init_BitSet.get(block)) {
-                                       proof.init_BitSet.set(block);
-                                       proof.init_LinkedHashSet.add(g.posAt(block));
+                                    if (!proof.removed.get(block)) {
+                                       proof.removed.set(block);
+                                       proof.breakBlocks.add(g.posAt(block));
                                     }
                                  }
 
-                                 if (load(g, i, proof.init_BitSet)) {
-                                    double actual = proof.init_LinkedHashSet.stream().mapToDouble(p -> g.init_RefQueue_StreamUti(g.init(p)).init_D).sum()
-                                       + Math.max(0, proof.init_LinkedHashSet.size() - 1) * 5;
-                                    double score = actual + (proof.init_LinkedHashSet.isEmpty() ? 0 : 5) + proof.init_List.size() * 0.001;
+                                 if (canStandAt(g, i, proof.removed)) {
+                                    double actual = proof.breakBlocks.stream().mapToDouble(p -> g.nodeAt(g.indexOf(p)).breakCost).sum()
+                                       + Math.max(0, proof.breakBlocks.size() - 1) * 5;
+                                    double score = actual + (proof.breakBlocks.isEmpty() ? 0 : 5) + proof.route.size() * 0.001;
                                     if (score < best) {
                                        best = score;
                                        winner = proof;
@@ -129,16 +129,16 @@ final class BedCoverPathSolver {
             }
 
             for (Direction d : Plane.HORIZONTAL) {
-               for (int dy : init_IArr) {
-                  int n = g.init(g.init_I(i) + d.getStepX(), g.load_I(i) + dy, g.read_I(i) + d.getStepZ());
-                  if (g.init(n, true) && g.init_RefQueue_StreamUti(n).init_I != 3 && g.init_RefQueue_StreamUti(g.init(n, Direction.UP)).init_I != 3) {
-                     int extra = init_I_RefQueue_ConfigSto(g, i, n);
-                     if (extra < 0 || g.read_Z(extra)) {
+               for (int dy : STEP_DYS) {
+                  int n = g.index(g.xOf(i) + d.getStepX(), g.yOf(i) + dy, g.zOf(i) + d.getStepZ());
+                  if (g.canStand(n, true) && g.nodeAt(n).kind != 3 && g.nodeAt(g.neighbor(n, Direction.UP)).kind != 3) {
+                     int extra = stepUpHeadCell(g, i, n);
+                     if (extra < 0 || g.isBreakable(extra)) {
                         double cost = visit.init_D + 0.001;
 
-                        for (int block : new int[]{n, g.init(n, Direction.UP), extra}) {
-                           if (block >= 0 && block != i && block != g.init(i, Direction.UP) && g.init_RefQueue_StreamUti(block).init_I == 2) {
-                              cost += g.init_RefQueue_StreamUti(block).init_D + 5.0;
+                        for (int block : new int[]{n, g.neighbor(n, Direction.UP), extra}) {
+                           if (block >= 0 && block != i && block != g.neighbor(i, Direction.UP) && g.nodeAt(block).kind == 2) {
+                              cost += g.nodeAt(block).breakCost + 5.0;
                            }
                         }
 
@@ -158,34 +158,34 @@ final class BedCoverPathSolver {
          return new BedCoverPathSolver.Inner_NetHelper(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
       }
 
-      double ticks = winner.init_LinkedHashSet.stream().mapToDouble(p -> g.init_RefQueue_StreamUti(g.init(p)).init_D).sum()
-         + Math.max(0, winner.init_LinkedHashSet.size() - 1) * 5;
+      double ticks = winner.breakBlocks.stream().mapToDouble(p -> g.nodeAt(g.indexOf(p)).breakCost).sum()
+         + Math.max(0, winner.breakBlocks.size() - 1) * 5;
       return new BedCoverPathSolver.Inner_NetHelper(
-         cover.cells, List.copyOf(winner.init_LinkedHashSet), List.copyOf(winner.init_List), ticks, true, cover.init_I, winnerEye, winnerAim
+         cover.cells, List.copyOf(winner.breakBlocks), List.copyOf(winner.route), ticks, true, cover.init_I, winnerEye, winnerAim
       );
    }
 
-   private static int init_I_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, int from, int to) {
-      return g.load_I(to) > g.load_I(from)
-         ? g.init(g.init_I(from), g.load_I(from) + 2, g.read_I(from))
-         : (g.load_I(to) < g.load_I(from) ? g.init(g.init_I(to), g.load_I(from) + 1, g.read_I(to)) : -1);
+   private static int stepUpHeadCell(BedCoverPathSolver.Inner_ConfigStore g, int from, int to) {
+      return g.yOf(to) > g.yOf(from)
+         ? g.index(g.xOf(from), g.yOf(from) + 2, g.zOf(from))
+         : (g.yOf(to) < g.yOf(from) ? g.index(g.xOf(to), g.yOf(from) + 1, g.zOf(to)) : -1);
    }
 
-   private static boolean init_Z_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
-      return i >= 0 && (g.init_RefQueue_StreamUti(i).init_I == 0 || removed.get(i));
+   private static boolean isOpenCell(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
+      return i >= 0 && (g.nodeAt(i).kind == 0 || removed.get(i));
    }
 
-   private static boolean load(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
-      int floor = g.init(i, Direction.DOWN);
-      return init_Z_RefQueue_ConfigSto(g, i, removed)
-         && init_Z_RefQueue_ConfigSto(g, g.init(i, Direction.UP), removed)
+   private static boolean canStandAt(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
+      int floor = g.neighbor(i, Direction.DOWN);
+      return isOpenCell(g, i, removed)
+         && isOpenCell(g, g.neighbor(i, Direction.UP), removed)
          && floor >= 0
          && !removed.get(floor)
-         && g.init_RefQueue_StreamUti(floor).init_I != 0
-         && g.init_RefQueue_StreamUti(floor).init_I != 3;
+         && g.nodeAt(floor).kind != 0
+         && g.nodeAt(floor).kind != 3;
    }
 
-   private static BedCoverPathSolver.Inner_TaskQueue init_RefQueue_TaskQueue_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, int[] parent, int finish, double reach) {
+   private static BedCoverPathSolver.Inner_TaskQueue planBreakRoute(BedCoverPathSolver.Inner_ConfigStore g, int[] parent, int finish, double reach) {
       ArrayList<Integer> route = new ArrayList<>();
       int i = finish;
 
@@ -203,8 +203,8 @@ final class BedCoverPathSolver {
             int previous = route.get(at - 1);
             ArrayList<Integer> pending = new ArrayList<>();
 
-            for (int block : new int[]{init_I_RefQueue_ConfigSto(g, previous, ix), g.init(ix, Direction.UP), ix}) {
-               if (block >= 0 && g.init_RefQueue_StreamUti(block).init_I == 2 && !proof.init_BitSet.get(block) && !pending.contains(block)) {
+            for (int block : new int[]{stepUpHeadCell(g, previous, ix), g.neighbor(ix, Direction.UP), ix}) {
+               if (block >= 0 && g.nodeAt(block).kind == 2 && !proof.removed.get(block) && !pending.contains(block)) {
                   pending.add(block);
                }
             }
@@ -213,7 +213,7 @@ final class BedCoverPathSolver {
                int selected = -1;
 
                for (int block : pending) {
-                  if (init_Z_RefQueue_ConfigSto(g, previous, block, reach, proof.init_BitSet)) {
+                  if (canReachBlock(g, previous, block, reach, proof.removed)) {
                      selected = block;
                      break;
                   }
@@ -223,32 +223,32 @@ final class BedCoverPathSolver {
                   return null;
                }
 
-               proof.init_BitSet.set(selected);
-               proof.init_LinkedHashSet.add(g.posAt(selected));
+               proof.removed.set(selected);
+               proof.breakBlocks.add(g.posAt(selected));
                pending.remove(Integer.valueOf(selected));
             }
          }
 
-         if (!load(g, ix, proof.init_BitSet)) {
+         if (!canStandAt(g, ix, proof.removed)) {
             return null;
          }
 
-         proof.init_List.add(g.posAt(ix));
+         proof.route.add(g.posAt(ix));
       }
 
       return proof;
    }
 
-   private static boolean init_Z_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, int stance, int block, double reach, BitSet removed) {
+   private static boolean canReachBlock(BedCoverPathSolver.Inner_ConfigStore g, int stance, int block, double reach, BitSet removed) {
       BlockPos feet = g.posAt(stance);
       BlockPos target = g.posAt(block);
 
-      for (double height : init_DArr) {
+      for (double height : EYE_HEIGHTS) {
          Vec3 eye = new Vec3(feet.getX() + 0.5, feet.getY() + height, feet.getZ() + 0.5);
 
-         for (Vec3 point : init(target)) {
+         for (Vec3 point : bedAimPoints(target)) {
             if (!(eye.distanceToSqr(point) > reach * reach)) {
-               List<Integer> hit = init_List_RefQueue_ConfigSto(g, eye, point, block, removed);
+               List<Integer> hit = traceRay(g, eye, point, block, removed);
                if (hit != null && hit.size() == 1 && hit.getFirst() == block) {
                   return true;
                }
@@ -259,7 +259,7 @@ final class BedCoverPathSolver {
       return false;
    }
 
-   private static List<Vec3> init(BlockPos p) {
+   private static List<Vec3> bedAimPoints(BlockPos p) {
       return List.of(
          new Vec3(p.getX() + 0.5, p.getY() + 0.52, p.getZ() + 0.5),
          new Vec3(p.getX() + 0.08, p.getY() + 0.4, p.getZ() + 0.5),
@@ -269,11 +269,11 @@ final class BedCoverPathSolver {
       );
    }
 
-   static List<Integer> init_List_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end) {
-      return init_List_RefQueue_ConfigSto(g, start, end, -1, init_BitSet);
+   static List<Integer> traceRay(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end) {
+      return traceRay(g, start, end, -1, NO_REMOVED);
    }
 
-   private static List<Integer> init_List_RefQueue_ConfigSto(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end, int goal, BitSet removed) {
+   private static List<Integer> traceRay(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end, int goal, BitSet removed) {
       Vec3 delta = end.subtract(start);
       int x = (int)Math.floor(start.x);
       int y = (int)Math.floor(start.y);
@@ -281,26 +281,26 @@ final class BedCoverPathSolver {
       int dx = Double.compare(delta.x, 0.0);
       int dy = Double.compare(delta.y, 0.0);
       int dz = Double.compare(delta.z, 0.0);
-      double tx = init_D_D(start.x, delta.x, x, dx);
-      double ty = init_D_D(start.y, delta.y, y, dy);
-      double tz = init_D_D(start.z, delta.z, z, dz);
+      double tx = firstBoundaryT(start.x, delta.x, x, dx);
+      double ty = firstBoundaryT(start.y, delta.y, y, dy);
+      double tz = firstBoundaryT(start.z, delta.z, z, dz);
       double ix = dx == 0 ? 1.0 / 0.0 : Math.abs(1.0 / delta.x);
       double iy = dy == 0 ? 1.0 / 0.0 : Math.abs(1.0 / delta.y);
       double iz = dz == 0 ? 1.0 / 0.0 : Math.abs(1.0 / delta.z);
       ArrayList<Integer> result = new ArrayList<>();
 
       for (int step = 0; step < 80; step++) {
-         int i = g.init(x - g.origin.getX(), y - g.origin.getY(), z - g.origin.getZ());
-         BedCoverPathSolver.Inner_StreamUtil cell = g.init_RefQueue_StreamUti(i);
-         if (cell.init_I == 1) {
+         int i = g.index(x - g.origin.getX(), y - g.origin.getY(), z - g.origin.getZ());
+         BedCoverPathSolver.Inner_StreamUtil cell = g.nodeAt(i);
+         if (cell.kind == 1) {
             return null;
          }
 
-         if (cell.init_I == 3) {
+         if (cell.kind == 3) {
             return goal < 0 ? result : null;
          }
 
-         if (cell.init_I == 2 && !removed.get(i) && !result.contains(i)) {
+         if (cell.kind == 2 && !removed.get(i) && !result.contains(i)) {
             result.add(i);
          }
 
@@ -320,17 +320,17 @@ final class BedCoverPathSolver {
          if (Integer.bitCount(mask) > 1) {
             for (int subset = 1; subset < 8; subset++) {
                if ((subset & mask) == subset && subset != mask) {
-                  int side = g.init(
+                  int side = g.index(
                      x + ((subset & 1) != 0 ? dx : 0) - g.origin.getX(),
                      y + ((subset & 2) != 0 ? dy : 0) - g.origin.getY(),
                      z + ((subset & 4) != 0 ? dz : 0) - g.origin.getZ()
                   );
-                  BedCoverPathSolver.Inner_StreamUtil edge = g.init_RefQueue_StreamUti(side);
-                  if (edge.init_I == 1) {
+                  BedCoverPathSolver.Inner_StreamUtil edge = g.nodeAt(side);
+                  if (edge.kind == 1) {
                      return null;
                   }
 
-                  if (edge.init_I == 2 && !removed.get(side) && !result.contains(side)) {
+                  if (edge.kind == 2 && !removed.get(side) && !result.contains(side)) {
                      result.add(side);
                   }
                }
@@ -356,11 +356,11 @@ final class BedCoverPathSolver {
       return null;
    }
 
-   private static double init_D_D(double start, double delta, int cell, int sign) {
+   private static double firstBoundaryT(double start, double delta, int cell, int sign) {
       return sign == 0 ? 1.0 / 0.0 : ((sign > 0 ? cell + 1 : cell) - start) / delta;
    }
 
-   static Set<BlockPos> init_Set(BedCoverPathSolver.Inner_ConfigStore g) {
+   static Set<BlockPos> coverCells(BedCoverPathSolver.Inner_ConfigStore g) {
       return minimalCover(g).cells;
    }
 
@@ -376,35 +376,35 @@ final class BedCoverPathSolver {
          int sink = source + 1;
 
          for (int i = 0; i < g.write; i++) {
-            if (g.init_RefQueue_StreamUti(i).init_I != 1) {
-               flow.init_V(i * 2, i * 2 + 1, g.init_RefQueue_StreamUti(i).init_I == 2 && !removed.get(i) ? 1 : 10000);
-               if (g.init_RefQueue_StreamUti(i).init_I == 3) {
-                  flow.init_V(source, i * 2, 10000);
+            if (g.nodeAt(i).kind != 1) {
+               flow.addEdge(i * 2, i * 2 + 1, g.nodeAt(i).kind == 2 && !removed.get(i) ? 1 : 10000);
+               if (g.nodeAt(i).kind == 3) {
+                  flow.addEdge(source, i * 2, 10000);
                }
 
-               if (g.init_Z(i)) {
-                  flow.init_V(i * 2 + 1, sink, 10000);
+               if (g.isBoundary(i)) {
+                  flow.addEdge(i * 2 + 1, sink, 10000);
                }
 
-               for (Direction d : init_DirectionArr) {
-                  int n = g.init(i, d);
-                  if (n >= 0 && g.init_RefQueue_StreamUti(n).init_I != 1) {
-                     flow.init_V(i * 2 + 1, n * 2, 10000);
+               for (Direction d : DIRECTIONS) {
+                  int n = g.neighbor(i, d);
+                  if (n >= 0 && g.nodeAt(n).kind != 1) {
+                     flow.addEdge(i * 2 + 1, n * 2, 10000);
                   }
                }
             }
          }
 
-         int cut = flow.init_I(source, sink, 10000);
+         int cut = flow.maxFlow(source, sink, 10000);
          if (cut == 0 || cut >= 10000) {
             break;
          }
 
-         boolean[] reachable = flow.init(source);
+         boolean[] reachable = flow.reachableFrom(source);
          int added = 0;
 
          for (int i = 0; i < g.write; i++) {
-            if (g.init_RefQueue_StreamUti(i).init_I == 2 && reachable[i * 2] && !reachable[i * 2 + 1] && !removed.get(i)) {
+            if (g.nodeAt(i).kind == 2 && reachable[i * 2] && !reachable[i * 2 + 1] && !removed.get(i)) {
                removed.set(i);
                result.add(g.posAt(i));
                added++;
@@ -422,57 +422,57 @@ final class BedCoverPathSolver {
    }
 
    private static final class Inner_BufferHelper {
-      final int[] init_IArr;
-      final int[] load;
-      final int[] read;
-      final int[] write;
-      int[] update;
-      int[] sync;
-      int[] flush;
-      int init_I;
+      final int[] head;
+      final int[] level;
+      final int[] currentArc;
+      final int[] queue;
+      int[] edgeTo;
+      int[] nextEdge;
+      int[] capacity;
+      int edgeCount;
 
       Inner_BufferHelper(int size) {
-         this.init_IArr = new int[size];
-         Arrays.fill(this.init_IArr, -1);
-         this.load = new int[size];
-         this.read = new int[size];
-         this.write = new int[size];
-         this.update = new int[size * 8];
-         this.sync = new int[this.update.length];
-         this.flush = new int[this.update.length];
+         this.head = new int[size];
+         Arrays.fill(this.head, -1);
+         this.level = new int[size];
+         this.currentArc = new int[size];
+         this.queue = new int[size];
+         this.edgeTo = new int[size * 8];
+         this.nextEdge = new int[this.edgeTo.length];
+         this.capacity = new int[this.edgeTo.length];
       }
 
-      void init_V(int a, int b, int cap) {
-         if (this.init_I + 2 > this.update.length) {
-            int size = this.update.length * 2;
-            this.update = Arrays.copyOf(this.update, size);
-            this.sync = Arrays.copyOf(this.sync, size);
-            this.flush = Arrays.copyOf(this.flush, size);
+      void addEdge(int a, int b, int cap) {
+         if (this.edgeCount + 2 > this.edgeTo.length) {
+            int size = this.edgeTo.length * 2;
+            this.edgeTo = Arrays.copyOf(this.edgeTo, size);
+            this.nextEdge = Arrays.copyOf(this.nextEdge, size);
+            this.capacity = Arrays.copyOf(this.capacity, size);
          }
 
-         this.load_V(a, b, cap);
-         this.load_V(b, a, 0);
+         this.addArc(a, b, cap);
+         this.addArc(b, a, 0);
       }
 
-      void load_V(int a, int b, int cap) {
-         this.update[this.init_I] = b;
-         this.flush[this.init_I] = cap;
-         this.sync[this.init_I] = this.init_IArr[a];
-         this.init_IArr[a] = this.init_I++;
+      void addArc(int a, int b, int cap) {
+         this.edgeTo[this.edgeCount] = b;
+         this.capacity[this.edgeCount] = cap;
+         this.nextEdge[this.edgeCount] = this.head[a];
+         this.head[a] = this.edgeCount++;
       }
 
-      boolean[] init(int source) {
-         boolean[] seen = new boolean[this.init_IArr.length];
+      boolean[] reachableFrom(int source) {
+         boolean[] seen = new boolean[this.head.length];
          int read = 0;
          int write = 0;
-         this.write[write++] = source;
+         this.queue[write++] = source;
          seen[source] = true;
 
          while (read < write) {
-            for (int e = this.init_IArr[this.write[read++]]; e >= 0; e = this.sync[e]) {
-               if (this.flush[e] > 0 && !seen[this.update[e]]) {
-                  seen[this.update[e]] = true;
-                  this.write[write++] = this.update[e];
+            for (int e = this.head[this.queue[read++]]; e >= 0; e = this.nextEdge[e]) {
+               if (this.capacity[e] > 0 && !seen[this.edgeTo[e]]) {
+                  seen[this.edgeTo[e]] = true;
+                  this.queue[write++] = this.edgeTo[e];
                }
             }
          }
@@ -480,35 +480,35 @@ final class BedCoverPathSolver {
          return seen;
       }
 
-      int init_I(int source, int sink, int limit) {
+      int maxFlow(int source, int sink, int limit) {
          int total = 0;
 
          while (total < limit) {
-            Arrays.fill(this.load, -1);
+            Arrays.fill(this.level, -1);
             int read = 0;
             int write = 0;
-            this.write[write++] = source;
-            this.load[source] = 0;
+            this.queue[write++] = source;
+            this.level[source] = 0;
 
             while (read < write) {
-               int at = this.write[read++];
+               int at = this.queue[read++];
 
-               for (int e = this.init_IArr[at]; e >= 0; e = this.sync[e]) {
-                  if (this.flush[e] > 0 && this.load[this.update[e]] < 0) {
-                     this.load[this.update[e]] = this.load[at] + 1;
-                     this.write[write++] = this.update[e];
+               for (int e = this.head[at]; e >= 0; e = this.nextEdge[e]) {
+                  if (this.capacity[e] > 0 && this.level[this.edgeTo[e]] < 0) {
+                     this.level[this.edgeTo[e]] = this.level[at] + 1;
+                     this.queue[write++] = this.edgeTo[e];
                   }
                }
             }
 
-            if (this.load[sink] < 0) {
+            if (this.level[sink] < 0) {
                break;
             }
 
-            System.arraycopy(this.init_IArr, 0, this.read, 0, this.init_IArr.length);
+            System.arraycopy(this.head, 0, this.currentArc, 0, this.head.length);
 
             int sent;
-            while (total < limit && (sent = this.load_I(source, sink, limit - total)) > 0) {
+            while (total < limit && (sent = this.pushFlow(source, sink, limit - total)) > 0) {
                total += sent;
             }
          }
@@ -516,17 +516,17 @@ final class BedCoverPathSolver {
          return total;
       }
 
-      int load_I(int at, int sink, int amount) {
+      int pushFlow(int at, int sink, int amount) {
          if (at == sink) {
             return amount;
          }
 
-         for (int e = this.read[at]; e >= 0; this.read[at] = e = this.sync[e]) {
-            if (this.flush[e] > 0 && this.load[this.update[e]] == this.load[at] + 1) {
-               int sent = this.load_I(this.update[e], sink, Math.min(amount, this.flush[e]));
+         for (int e = this.currentArc[at]; e >= 0; this.currentArc[at] = e = this.nextEdge[e]) {
+            if (this.capacity[e] > 0 && this.level[this.edgeTo[e]] == this.level[at] + 1) {
+               int sent = this.pushFlow(this.edgeTo[e], sink, Math.min(amount, this.capacity[e]));
                if (sent > 0) {
-                  this.flush[e] = this.flush[e] - sent;
-                  this.flush[e ^ 1] = this.flush[e ^ 1] + sent;
+                  this.capacity[e] = this.capacity[e] - sent;
+                  this.capacity[e ^ 1] = this.capacity[e ^ 1] + sent;
                   return sent;
                }
             }
@@ -542,8 +542,8 @@ final class BedCoverPathSolver {
    static final class Inner_ConfigStore {
       final BlockPos origin;
       final int sx;
-      final int load;
-      final int read;
+      final int sizeY;
+      final int sizeZ;
       final int write;
       final BedCoverPathSolver.Inner_StreamUtil[] nodes;
       final List<Integer> init_List = new ArrayList<>();
@@ -551,69 +551,69 @@ final class BedCoverPathSolver {
       Inner_ConfigStore(BlockPos origin, int sx, int sy, int sz) {
          this.origin = origin;
          this.sx = sx;
-         this.load = sy;
-         this.read = sz;
+         this.sizeY = sy;
+         this.sizeZ = sz;
          this.write = sx * sy * sz;
          this.nodes = new BedCoverPathSolver.Inner_StreamUtil[this.write];
-         Arrays.fill(this.nodes, BedCoverPathSolver.init_RefQueue_StreamUti);
+         Arrays.fill(this.nodes, BedCoverPathSolver.OUT_OF_BOUNDS_NODE);
       }
 
-      int init(int x, int y, int z) {
-         return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.load && z < this.read ? (y * this.read + z) * this.sx + x : -1;
+      int index(int x, int y, int z) {
+         return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.sizeY && z < this.sizeZ ? (y * this.sizeZ + z) * this.sx + x : -1;
       }
 
-      int init(BlockPos p) {
-         return this.init(p.getX() - this.origin.getX(), p.getY() - this.origin.getY(), p.getZ() - this.origin.getZ());
+      int indexOf(BlockPos p) {
+         return this.index(p.getX() - this.origin.getX(), p.getY() - this.origin.getY(), p.getZ() - this.origin.getZ());
       }
 
-      int init_I(int i) {
+      int xOf(int i) {
          return i % this.sx;
       }
 
-      int load_I(int i) {
-         return i / (this.sx * this.read);
+      int yOf(int i) {
+         return i / (this.sx * this.sizeZ);
       }
 
-      int read_I(int i) {
-         return i / this.sx % this.read;
+      int zOf(int i) {
+         return i / this.sx % this.sizeZ;
       }
 
       BlockPos posAt(int i) {
-         return this.origin.offset(this.init_I(i), this.load_I(i), this.read_I(i));
+         return this.origin.offset(this.xOf(i), this.yOf(i), this.zOf(i));
       }
 
-      int init(int i, Direction d) {
-         return this.init(this.init_I(i) + d.getStepX(), this.load_I(i) + d.getStepY(), this.read_I(i) + d.getStepZ());
+      int neighbor(int i, Direction d) {
+         return this.index(this.xOf(i) + d.getStepX(), this.yOf(i) + d.getStepY(), this.zOf(i) + d.getStepZ());
       }
 
-      boolean init_Z(int i) {
-         return this.init_I(i) == 0
-            || this.init_I(i) == this.sx - 1
-            || this.read_I(i) == 0
-            || this.read_I(i) == this.read - 1
-            || this.load_I(i) == 0
-            || this.load_I(i) == this.load - 1;
+      boolean isBoundary(int i) {
+         return this.xOf(i) == 0
+            || this.xOf(i) == this.sx - 1
+            || this.zOf(i) == 0
+            || this.zOf(i) == this.sizeZ - 1
+            || this.yOf(i) == 0
+            || this.yOf(i) == this.sizeY - 1;
       }
 
-      BedCoverPathSolver.Inner_StreamUtil init_RefQueue_StreamUti(int i) {
-         return i < 0 ? BedCoverPathSolver.init_RefQueue_StreamUti : this.nodes[i];
+      BedCoverPathSolver.Inner_StreamUtil nodeAt(int i) {
+         return i < 0 ? BedCoverPathSolver.OUT_OF_BOUNDS_NODE : this.nodes[i];
       }
 
       boolean load_Z(int i) {
-         return i >= 0 && (this.nodes[i].init_I == 0 || this.nodes[i].init_I == 3);
+         return i >= 0 && (this.nodes[i].kind == 0 || this.nodes[i].kind == 3);
       }
 
-      boolean read_Z(int i) {
-         return i >= 0 && this.nodes[i].init_I != 1 && Double.isFinite(this.nodes[i].init_D);
+      boolean isBreakable(int i) {
+         return i >= 0 && this.nodes[i].kind != 1 && Double.isFinite(this.nodes[i].breakCost);
       }
 
-      boolean init(int i, boolean dig) {
-         if (i >= 0 && this.load_I(i) != 0 && this.load_I(i) < this.load - 1) {
-            int head = this.init(i, Direction.UP);
-            int floor = this.init(i, Direction.DOWN);
-            return (dig ? this.read_Z(i) && this.read_Z(head) : this.init_RefQueue_StreamUti(i).init_I == 0 && this.init_RefQueue_StreamUti(head).init_I == 0)
-               && this.init_RefQueue_StreamUti(floor).init_I != 0
-               && this.init_RefQueue_StreamUti(floor).init_I != 3;
+      boolean canStand(int i, boolean dig) {
+         if (i >= 0 && this.yOf(i) != 0 && this.yOf(i) < this.sizeY - 1) {
+            int head = this.neighbor(i, Direction.UP);
+            int floor = this.neighbor(i, Direction.DOWN);
+            return (dig ? this.isBreakable(i) && this.isBreakable(head) : this.nodeAt(i).kind == 0 && this.nodeAt(head).kind == 0)
+               && this.nodeAt(floor).kind != 0
+               && this.nodeAt(floor).kind != 3;
          } else {
             return false;
          }
@@ -621,10 +621,10 @@ final class BedCoverPathSolver {
    }
 
    record Inner_NetHelper(
-      Set<BlockPos> init_Set, List<BlockPos> path, List<BlockPos> load_List, double init_D, boolean init_Z, int init_I, Vec3 init_Vec3, Vec3 load_Vec3
+      Set<BlockPos> init_Set, List<BlockPos> path, List<BlockPos> load_List, double breakTicks, boolean init_Z, int coverCut, Vec3 init_Vec3, Vec3 load_Vec3
    ) {
       boolean init_Z_2() {
-         return this.init_Z && this.init_I > 1 && this.path.size() > 1;
+         return this.init_Z && this.coverCut > 1 && this.path.size() > 1;
       }
 
       public boolean load_Z() {
@@ -632,9 +632,9 @@ final class BedCoverPathSolver {
       }
    }
 
-   record Inner_StreamUtil(int init_I, double init_D, int load) {
+   record Inner_StreamUtil(int kind, double breakCost, int load) {
    }
 
-   private record Inner_TaskQueue(BitSet init_BitSet, LinkedHashSet<BlockPos> init_LinkedHashSet, List<BlockPos> init_List) {
+   private record Inner_TaskQueue(BitSet removed, LinkedHashSet<BlockPos> breakBlocks, List<BlockPos> route) {
    }
 }

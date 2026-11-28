@@ -21,7 +21,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    public boolean waitForGui = false;
    public String guiName = "";
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -69,7 +69,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       tag.putBoolean("sneak", this.sneak);
       tag.putBoolean("waitForGui", this.waitForGui);
       tag.putString("guiName", this.guiName == null ? "" : this.guiName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -112,7 +112,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       this.waitForGui = tag.getBooleanOr("waitForGui", false);
       this.guiName = tag.getStringOr("guiName", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
@@ -172,12 +172,12 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    private MacroItemTarget resolvedTarget() {

@@ -19,11 +19,11 @@ final class AiTranscriptLayout {
    private final Map<AiService.TranscriptEntry, AiTranscriptLayout.Inner_StateCache> wrapCache = new IdentityHashMap<>();
    private List<AiTranscriptLayout.Inner_BufferHelper> lines = List.of();
    private List<AiTranscriptLayout.Inner_DataUtil> blocks = List.of();
-   private int push;
-   private int pop = -1;
-   private int tick = -1;
-   private int run;
-   private int get = -1;
+   private int contentHeight;
+   private int cachedSize = -1;
+   private int cachedWidth = -1;
+   private int cachedEpoch;
+   private int cachedToggleRevision = -1;
    private AiService.TranscriptEntry firstEntry;
    private AiService.TranscriptEntry lastEntry;
    private AiTranscriptLayout.Inner_TaskQueue lastMetrics;
@@ -37,7 +37,7 @@ final class AiTranscriptLayout {
    }
 
    int height() {
-      return this.push;
+      return this.contentHeight;
    }
 
    boolean init(
@@ -52,29 +52,29 @@ final class AiTranscriptLayout {
       int size = messages.size();
       AiService.TranscriptEntry first = size == 0 ? null : messages.get(0);
       AiService.TranscriptEntry last = size == 0 ? null : messages.get(size - 1);
-      if (size == this.pop
+      if (size == this.cachedSize
          && first == this.firstEntry
          && last == this.lastEntry
-         && width == this.tick
-         && epoch == this.run
-         && toggleRevision == this.get
+         && width == this.cachedWidth
+         && epoch == this.cachedEpoch
+         && toggleRevision == this.cachedToggleRevision
          && metrics.equals(this.lastMetrics)) {
          return false;
       }
 
-      this.pop = size;
+      this.cachedSize = size;
       this.firstEntry = first;
       this.lastEntry = last;
-      this.tick = width;
-      this.run = epoch;
-      this.get = toggleRevision;
+      this.cachedWidth = width;
+      this.cachedEpoch = epoch;
+      this.cachedToggleRevision = toggleRevision;
       this.lastMetrics = metrics;
       this.rebuild(messages, Math.max(20, width), epoch, metrics, pinned, measure);
       return true;
    }
 
    void invalidate() {
-      this.pop = -1;
+      this.cachedSize = -1;
    }
 
    int firstLineAt(int y) {
@@ -150,16 +150,16 @@ final class AiTranscriptLayout {
 
    static String init_Str_Str(String text) {
       int colon = text.indexOf(": ");
-      return init(colon > 0 ? text.substring(0, colon).trim() : text.replace('\n', ' ').trim(), 80);
+      return truncate(colon > 0 ? text.substring(0, colon).trim() : text.replace('\n', ' ').trim(), 80);
    }
 
    static String load_Str_Str(String text) {
       int colon = text.indexOf(": ");
       String summary = colon > 0 ? text.substring(colon + 2, Math.min(text.length(), colon + 2 + 400)) : "";
-      return init(summary.replace('\n', ' ').trim(), 300);
+      return truncate(summary.replace('\n', ' ').trim(), 300);
    }
 
-   private static String init(String text, int max) {
+   private static String truncate(String text, int max) {
       return text.length() <= max ? text : text.substring(0, max);
    }
 
@@ -187,7 +187,7 @@ final class AiTranscriptLayout {
       for (AiService.TranscriptEntry message : messages) {
          AiTranscriptLayout.Inner_CachePool kind = init_cC_CachePool_Str(message.role());
          if (previous != null) {
-            y += init(previous, kind) ? m.groupGap() : m.blockGap();
+            y += sameGroup(previous, kind) ? m.groupGap() : m.blockGap();
          }
 
          previous = kind;
@@ -198,7 +198,7 @@ final class AiTranscriptLayout {
             case USER:
                y += m.userPad();
 
-               for (String text : init(wrap, message.text(), width - m.userIndent() - m.userPad(), epoch, measure)) {
+               for (String text : wrapCached(wrap, message.text(), width - m.userIndent() - m.userPad(), epoch, measure)) {
                   nextLines.add(new AiTranscriptLayout.Inner_BufferHelper(message, AiTranscriptLayout.Inner_CachePool.USER, text, "", m.userIndent(), y, m.line(), false));
                   y += m.line();
                }
@@ -254,7 +254,7 @@ final class AiTranscriptLayout {
                );
                y += m.tool();
                if (expanded && !message.detail().isBlank()) {
-                  List<String> detail = load(wrap, message.detail(), width - m.toolIndent(), epoch, measure);
+                  List<String> detail = wrapExpandedCached(wrap, message.detail(), width - m.toolIndent(), epoch, measure);
                   int shown = Math.min(8, detail.size());
 
                   for (int i = 0; i < shown; i++) {
@@ -280,7 +280,7 @@ final class AiTranscriptLayout {
                }
                break;
             default:
-               for (String text : init(wrap, message.text(), width, epoch, measure)) {
+               for (String text : wrapCached(wrap, message.text(), width, epoch, measure)) {
                   nextLines.add(new AiTranscriptLayout.Inner_BufferHelper(message, kind, text, "", 0, y, m.line(), false));
                   y += m.line();
                }
@@ -291,7 +291,7 @@ final class AiTranscriptLayout {
 
       this.lines = List.copyOf(nextLines);
       this.blocks = List.copyOf(nextBlocks);
-      this.push = y;
+      this.contentHeight = y;
       if (this.wrapCache.size() > messages.size() + 32) {
          Map<AiService.TranscriptEntry, Boolean> live = new IdentityHashMap<>();
 
@@ -303,13 +303,13 @@ final class AiTranscriptLayout {
       }
    }
 
-   private static boolean init(AiTranscriptLayout.Inner_CachePool previous, AiTranscriptLayout.Inner_CachePool next) {
+   private static boolean sameGroup(AiTranscriptLayout.Inner_CachePool previous, AiTranscriptLayout.Inner_CachePool next) {
       return previous == next || previous == AiTranscriptLayout.Inner_CachePool.TOOL && next == AiTranscriptLayout.Inner_CachePool.TOOL;
    }
 
-   private static List<String> init(AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, AiTranscriptLayout.Inner_ConfigStore measure) {
+   private static List<String> wrapCached(AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, AiTranscriptLayout.Inner_ConfigStore measure) {
       if (wrap.width != width || wrap.epoch != epoch) {
-         wrap.init_List = init(text, width, measure);
+         wrap.init_List = wrapPlain(text, width, measure);
          wrap.width = width;
          wrap.epoch = epoch;
       }
@@ -320,17 +320,17 @@ final class AiTranscriptLayout {
    private static List<AiTranscriptLayout.Inner_NetHelper> init_List_cC_StateCache(
       AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, int line, AiTranscriptLayout.Inner_ConfigStore measure
    ) {
-      if (wrap.update != width || wrap.sync != epoch || wrap.flush != line) {
-         wrap.read_List = init(text, width, line, measure);
-         wrap.update = width;
-         wrap.sync = epoch;
-         wrap.flush = line;
+      if (wrap.rowsWidth != width || wrap.rowsEpoch != epoch || wrap.rowsLineHeight != line) {
+         wrap.read_List = layoutRows(text, width, line, measure);
+         wrap.rowsWidth = width;
+         wrap.rowsEpoch = epoch;
+         wrap.rowsLineHeight = line;
       }
 
       return wrap.read_List;
    }
 
-   static List<AiTranscriptLayout.Inner_NetHelper> init(String text, int width, int line, AiTranscriptLayout.Inner_ConfigStore measure) {
+   static List<AiTranscriptLayout.Inner_NetHelper> layoutRows(String text, int width, int line, AiTranscriptLayout.Inner_ConfigStore measure) {
       List<AiTranscriptLayout.Inner_NetHelper> out = new ArrayList<>();
 
       for (AiMarkdown.Inner_DataUtil block : AiMarkdown.parse(text == null ? "" : text)) {
@@ -399,8 +399,8 @@ final class AiTranscriptLayout {
             }
 
             if (out.size() > first) {
-               out.set(first, init(out.get(first), 1));
-               out.set(out.size() - 1, init(out.get(out.size() - 1), 2));
+               out.set(first, withFlag(out.get(first), 1));
+               out.set(out.size() - 1, withFlag(out.get(out.size() - 1), 2));
             }
          }
       }
@@ -412,14 +412,14 @@ final class AiTranscriptLayout {
       return out;
    }
 
-   private static AiTranscriptLayout.Inner_NetHelper init(AiTranscriptLayout.Inner_NetHelper row, int flag) {
+   private static AiTranscriptLayout.Inner_NetHelper withFlag(AiTranscriptLayout.Inner_NetHelper row, int flag) {
       return new AiTranscriptLayout.Inner_NetHelper(row.text(), row.spans(), row.deco(), row.marker(), row.indent(), row.flags() | flag, row.height());
    }
 
    static int init_I(String text, byte[] styles, int start, int end, AiTranscriptLayout.Inner_ConfigStore measure) {
       int total = 0;
 
-      for (int[] run : init(styles, start, end)) {
+      for (int[] run : styleRuns(styles, start, end)) {
          total += measure.init(text, run[0], run[1], run[2]);
       }
 
@@ -429,14 +429,14 @@ final class AiTranscriptLayout {
    static List<AiTranscriptLayout.Inner_JsonUtil> init_List(String text, byte[] styles, int start, int end, AiTranscriptLayout.Inner_ConfigStore measure) {
       List<AiTranscriptLayout.Inner_JsonUtil> out = new ArrayList<>();
 
-      for (int[] run : init(styles, start, end)) {
+      for (int[] run : styleRuns(styles, start, end)) {
          out.add(new AiTranscriptLayout.Inner_JsonUtil(text.substring(run[0], run[1]), run[2], measure.init(text, run[0], run[1], run[2])));
       }
 
       return List.copyOf(out);
    }
 
-   private static List<int[]> init(byte[] styles, int start, int end) {
+   private static List<int[]> styleRuns(byte[] styles, int start, int end) {
       List<int[]> out = new ArrayList<>();
       int from = start;
 
@@ -450,17 +450,17 @@ final class AiTranscriptLayout {
       return out;
    }
 
-   private static List<String> load(AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, AiTranscriptLayout.Inner_ConfigStore measure) {
-      if (wrap.read_I != width || wrap.write != epoch) {
-         wrap.load_List = init(text, width, measure);
+   private static List<String> wrapExpandedCached(AiTranscriptLayout.Inner_StateCache wrap, String text, int width, int epoch, AiTranscriptLayout.Inner_ConfigStore measure) {
+      if (wrap.read_I != width || wrap.plainEpoch != epoch) {
+         wrap.load_List = wrapPlain(text, width, measure);
          wrap.read_I = width;
-         wrap.write = epoch;
+         wrap.plainEpoch = epoch;
       }
 
       return wrap.load_List;
    }
 
-   static List<String> init(String text, int width, AiTranscriptLayout.Inner_ConfigStore measure) {
+   static List<String> wrapPlain(String text, int width, AiTranscriptLayout.Inner_ConfigStore measure) {
       String safe = text == null ? "" : text.replace("\r", "").replace('\t', ' ');
       List<String> out = new ArrayList<>();
 
@@ -534,11 +534,11 @@ final class AiTranscriptLayout {
       int epoch;
       List<String> init_List = List.of();
       int read_I = -1;
-      int write;
+      int plainEpoch;
       List<String> load_List = List.of();
-      int update = -1;
-      int sync;
-      int flush;
+      int rowsWidth = -1;
+      int rowsEpoch;
+      int rowsLineHeight;
       List<AiTranscriptLayout.Inner_NetHelper> read_List = List.of();
    }
 

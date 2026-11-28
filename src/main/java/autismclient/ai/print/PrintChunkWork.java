@@ -13,8 +13,8 @@ final class PrintChunkWork {
    final Long2ObjectLinkedOpenHashMap<PrintChunkWork.Inner_StreamUtil> chunks = new Long2ObjectLinkedOpenHashMap<>();
    boolean init_Z;
    int init_I;
-   int load;
-   private int read = -1;
+   int unusedVisits;
+   private int lastIndex = -1;
 
    PrintChunkWork(PrintCore core) {
       this.core = core;
@@ -73,7 +73,7 @@ final class PrintChunkWork {
       }
 
       if (chunk.init_Z
-         || i != this.read && chunk.read > 0 && Arrays.binarySearch(chunk.cells.elements(), 0, chunk.cells.size(), i) < chunk.read) {
+         || i != this.lastIndex && chunk.scanned > 0 && Arrays.binarySearch(chunk.cells.elements(), 0, chunk.cells.size(), i) < chunk.scanned) {
          chunk.init_V();
       }
    }
@@ -144,7 +144,7 @@ final class PrintChunkWork {
    PrintChunkWork.Inner_DataUtil auditChunks(IntConsumer refresh, int budget) {
       if (!this.init_Z) {
          this.init_Z = true;
-         this.load++;
+         this.unusedVisits++;
 
          for (PrintChunkWork.Inner_StreamUtil chunk : this.chunks.values()) {
             chunk.init_V();
@@ -153,20 +153,20 @@ final class PrintChunkWork {
 
       for (PrintChunkWork.Inner_StreamUtil chunk : this.chunks.values()) {
          if (!chunk.init_Z && this.init_Z_CachePool_StreamUt(chunk)) {
-            while (chunk.read < chunk.cells.size() && budget-- > 0) {
-               int i = chunk.cells.getInt(chunk.read++);
-               this.read = i;
+            while (chunk.scanned < chunk.cells.size() && budget-- > 0) {
+               int i = chunk.cells.getInt(chunk.scanned++);
+               this.lastIndex = i;
 
                try {
                   refresh.accept(i);
                } finally {
-                  this.read = -1;
+                  this.lastIndex = -1;
                }
 
                this.init_I++;
                if (this.core.cellStates[i] != 3) {
                   if (this.core.targets[i].kind() == PrintTarget.Inner_DataUtil.FLOW) {
-                     chunk.sync++;
+                     chunk.flowCells++;
                   } else if (this.core.cellStates[i] == 5) {
                      chunk.update++;
                   } else {
@@ -175,9 +175,9 @@ final class PrintChunkWork {
                }
             }
 
-            if (chunk.read == chunk.cells.size()) {
-               if (chunk.write + chunk.update + chunk.sync > 0) {
-                  PrintChunkWork.Inner_DataUtil result = new PrintChunkWork.Inner_DataUtil(false, chunk.write, chunk.update, chunk.sync);
+            if (chunk.scanned == chunk.cells.size()) {
+               if (chunk.write + chunk.update + chunk.flowCells > 0) {
+                  PrintChunkWork.Inner_DataUtil result = new PrintChunkWork.Inner_DataUtil(false, chunk.write, chunk.update, chunk.flowCells);
                   chunk.init_V();
                   return result;
                }
@@ -202,10 +202,10 @@ final class PrintChunkWork {
       final IntArrayList cells;
       int unfinishedCells;
       int load;
-      int read;
+      int scanned;
       int write;
       int update;
-      int sync;
+      int flowCells;
       boolean init_Z;
 
       Inner_StreamUtil(long key) {
@@ -233,7 +233,7 @@ final class PrintChunkWork {
 
       void init_V() {
          this.init_Z = false;
-         this.read = this.write = this.update = this.sync = 0;
+         this.scanned = this.write = this.update = this.flowCells = 0;
       }
    }
 }

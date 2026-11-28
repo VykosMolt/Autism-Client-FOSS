@@ -13,26 +13,26 @@ import java.util.Locale;
 import java.util.Set;
 
 public final class AiToolCallParser {
-   public static final String init_Str = "Usage: .tools goto <x> <y> <z> [radius] [strategy] | goto <direction> <blocks> | goto <waypoint>";
-   static final String load = "nofall";
+   public static final String GOTO_USAGE = "Usage: .tools goto <x> <y> <z> [radius] [strategy] | goto <direction> <blocks> | goto <waypoint>";
+   static final String NOFALL_FLAG = "nofall";
    static final List<String> parkourSpeedFlags = List.of("speed0", "speed1", "speed2");
-   public static final String read = "Usage: .tools parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]. Flags can go before or after the destination. Omit the destination to pick checkpoints in Freecam.";
+   public static final String PARKOUR_USAGE = "Usage: .tools parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]. Flags can go before or after the destination. Omit the destination to pick checkpoints in Freecam.";
    static final int maxParkourDestinations = 32;
-   public static final String write = "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]";
-   public static final String update = "Usage: .tools chop <block> [count]";
-   public static final String sync = "Usage: .tools follow [type]";
-   public static final String flush = "Usage: .tools fight <type> [count]";
-   public static final String close = "Usage: .tools fill <x> <y> <z> <x2> <y2> <z2> <block> [hollow|solid]";
-   public static final String open = "Usage: .tools dig tunnel <north|south|east|west> [length]";
-   public static final String poll = "Usage: .tools smelt <item> [count]";
-   public static final String push = "Usage: .tools craft <item> [count]";
-   public static final String pop = "Usage: .tools obtain <item> [count]";
-   public static final String tick = "Usage: .tools collect <item> [count]";
-   public static final String run = "Usage: .tools trade <index|item>";
-   public static final String get = "Usage: .tools events [since]";
-   public static final String set = "Usage: .tools build <schematic name|blueprint file|{inline json}>";
-   public static final String put = "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]";
-   private static final Set<String> init_Set = Set.of(
+   public static final String MINE_USAGE = "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]";
+   public static final String CHOP_USAGE = "Usage: .tools chop <block> [count]";
+   public static final String FOLLOW_USAGE = "Usage: .tools follow [type]";
+   public static final String FIGHT_USAGE = "Usage: .tools fight <type> [count]";
+   public static final String FILL_USAGE = "Usage: .tools fill <x> <y> <z> <x2> <y2> <z2> <block> [hollow|solid]";
+   public static final String DIG_USAGE = "Usage: .tools dig tunnel <north|south|east|west> [length]";
+   public static final String SMELT_USAGE = "Usage: .tools smelt <item> [count]";
+   public static final String CRAFT_USAGE = "Usage: .tools craft <item> [count]";
+   public static final String OBTAIN_USAGE = "Usage: .tools obtain <item> [count]";
+   public static final String COLLECT_USAGE = "Usage: .tools collect <item> [count]";
+   public static final String TRADE_USAGE = "Usage: .tools trade <index|item>";
+   public static final String EVENTS_USAGE = "Usage: .tools events [since]";
+   public static final String BUILD_USAGE = "Usage: .tools build <schematic name|blueprint file|{inline json}>";
+   public static final String FARM_USAGE = "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]";
+   private static final Set<String> DIRECTION_WORDS = Set.of(
       "north", "south", "east", "west", "forward", "forwards", "ahead", "back", "backward", "backwards", "left", "right", "up", "down", "n", "s", "e", "w"
    );
 
@@ -109,14 +109,14 @@ public final class AiToolCallParser {
    }
 
    public static JsonObject parse(String input) {
-      return init_JsonObject(tokenize(input));
+      return parseTokens(tokenize(input));
    }
 
-   public static JsonObject init_JsonObject(List<String> tokens) {
+   public static JsonObject parseTokens(List<String> tokens) {
       JsonObject out = new JsonObject();
 
       for (String token : tokens) {
-         int eq = init_I(token);
+         int eq = topLevelEquals(token);
          if (eq < 0) {
             throw new IllegalArgumentException("Expected k=v, got '" + token + "'");
          }
@@ -131,13 +131,13 @@ public final class AiToolCallParser {
             throw new IllegalArgumentException("Missing value for '" + key + "'");
          }
 
-         out.add(key, init_JsonElement_Str_I(raw, 0));
+         out.add(key, parseValue(raw, 0));
       }
 
       return out;
    }
 
-   private static int init_I(String token) {
+   private static int topLevelEquals(String token) {
       int depth = 0;
       boolean quoted = false;
       boolean escaped = false;
@@ -168,11 +168,11 @@ public final class AiToolCallParser {
       return -1;
    }
 
-   public static JsonElement init_JsonElement(String raw) {
-      return init_JsonElement_Str_I(raw, 0);
+   public static JsonElement parseValue(String raw) {
+      return parseValue(raw, 0);
    }
 
-   private static JsonElement init_JsonElement_Str_I(String raw, int depth) {
+   private static JsonElement parseValue(String raw, int depth) {
       if (depth > 16) {
          throw new IllegalArgumentException("Value nested too deeply (max 16)");
       }
@@ -182,17 +182,17 @@ public final class AiToolCallParser {
             char first = raw.charAt(0);
             if (first == '[') {
                if (!raw.endsWith("]")) {
-                  throw new IllegalArgumentException("Unclosed '[' in " + load_Str(raw));
+                  throw new IllegalArgumentException("Unclosed '[' in " + abbreviate(raw));
                }
 
                JsonArray array = new JsonArray();
 
-               for (String element : init_List_Str_C(raw.substring(1, raw.length() - 1), ',')) {
+               for (String element : splitTopLevel(raw.substring(1, raw.length() - 1), ',')) {
                   if (element.isBlank()) {
-                     throw new IllegalArgumentException("Empty array element in " + load_Str(raw));
+                     throw new IllegalArgumentException("Empty array element in " + abbreviate(raw));
                   }
 
-                  array.add(init_JsonElement_Str_I(element.trim(), depth + 1));
+                  array.add(parseValue(element.trim(), depth + 1));
                }
 
                return array;
@@ -227,32 +227,32 @@ public final class AiToolCallParser {
                }
             } else {
                if (!raw.endsWith("}")) {
-                  throw new IllegalArgumentException("Unclosed '{' in " + load_Str(raw));
+                  throw new IllegalArgumentException("Unclosed '{' in " + abbreviate(raw));
                }
 
                JsonObject object = new JsonObject();
                String body = raw.substring(1, raw.length() - 1);
 
-               for (String entry : init_List_Str_C(body, ',')) {
+               for (String entry : splitTopLevel(body, ',')) {
                   if (entry.isBlank()) {
                      if (!body.isBlank()) {
-                        throw new IllegalArgumentException("Empty object entry in " + load_Str(raw));
+                        throw new IllegalArgumentException("Empty object entry in " + abbreviate(raw));
                      }
                      break;
                   }
 
-                  int colon = load_I(entry);
+                  int colon = topLevelColon(entry);
                   if (colon < 0) {
                      throw new IllegalArgumentException("Expected k:v in object entry '" + entry.trim() + "'");
                   }
 
                   String key = entry.substring(0, colon).trim();
                   if (key.length() >= 2 && key.startsWith("\"") && key.endsWith("\"")) {
-                     key = init_Str(key.substring(1, key.length() - 1));
+                     key = unescape(key.substring(1, key.length() - 1));
                   }
 
                   if (key.isEmpty()) {
-                     throw new IllegalArgumentException("Empty object key in " + load_Str(raw));
+                     throw new IllegalArgumentException("Empty object key in " + abbreviate(raw));
                   }
 
                   String value = entry.substring(colon + 1).trim();
@@ -260,7 +260,7 @@ public final class AiToolCallParser {
                      throw new IllegalArgumentException("Missing value for object key '" + key + "'");
                   }
 
-                  object.add(key, init_JsonElement_Str_I(value, depth + 1));
+                  object.add(key, parseValue(value, depth + 1));
                }
 
                return object;
@@ -268,14 +268,14 @@ public final class AiToolCallParser {
          } else if (!raw.endsWith("\"")) {
             throw new IllegalArgumentException("Unterminated \" in " + raw);
          } else {
-            return new JsonPrimitive(init_Str(raw.substring(1, raw.length() - 1)));
+            return new JsonPrimitive(unescape(raw.substring(1, raw.length() - 1)));
          }
       } else {
          throw new IllegalArgumentException("Empty value");
       }
    }
 
-   private static int load_I(String token) {
+   private static int topLevelColon(String token) {
       int depth = 0;
       boolean quoted = false;
       boolean escaped = false;
@@ -306,7 +306,7 @@ public final class AiToolCallParser {
       return -1;
    }
 
-   private static List<String> init_List_Str_C(String body, char separator) {
+   private static List<String> splitTopLevel(String body, char separator) {
       List<String> parts = new ArrayList<>();
       if (body.isEmpty()) {
          return parts;
@@ -354,7 +354,7 @@ public final class AiToolCallParser {
       return parts;
    }
 
-   private static String init_Str(String body) {
+   private static String unescape(String body) {
       StringBuilder out = new StringBuilder(body.length());
       boolean escaped = false;
 
@@ -389,26 +389,26 @@ public final class AiToolCallParser {
       return out.toString();
    }
 
-   private static String load_Str(String raw) {
+   private static String abbreviate(String raw) {
       return raw.length() <= 24 ? raw : raw.substring(0, 21) + "...";
    }
 
-   public static double init_D_Str_D(String token, double base) {
+   public static double parseRelativeCoord(String token, double base) {
       if (token != null && !token.isBlank()) {
          String text = token.trim();
          if (text.startsWith("~")) {
             String offset = text.substring(1);
-            double value = offset.isEmpty() ? 0.0 : init_D_Str_Str(offset, token);
+            double value = offset.isEmpty() ? 0.0 : parseCoordOffset(offset, token);
             return base + value;
          } else {
-            return init_D_Str_Str(text, token);
+            return parseCoordOffset(text, token);
          }
       } else {
          throw new IllegalArgumentException("Missing coordinate");
       }
    }
 
-   private static double init_D_Str_Str(String text, String token) {
+   private static double parseCoordOffset(String text, String token) {
       double value;
       try {
          value = Double.parseDouble(text);
@@ -424,72 +424,72 @@ public final class AiToolCallParser {
    }
 
    public static int parseBlockCoord(String token, double base) {
-      return (int)Math.floor(init_D_Str_D(token, base));
+      return (int)Math.floor(parseRelativeCoord(token, base));
    }
 
    public static AiToolCallParser.Inner_StreamUtil init(String sub, List<String> args, double px, double py, double pz) {
       AiToolCallParser.Inner_StreamUtil var10000;
       switch (sub) {
          case "goto":
-            var10000 = load(args, px, py, pz);
+            var10000 = gotoCall(args, px, py, pz);
             break;
          case "parkour":
-            var10000 = init(args, px, py, pz);
+            var10000 = parkourCall(args, px, py, pz);
             break;
          case "mine":
-            AiToolCallParser.Inner_StreamUtil mine = init(args, "game:mine", "block", "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]");
+            AiToolCallParser.Inner_StreamUtil mine = targetCountCall(args, "game:mine", "block", "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]");
             var10000 = new AiToolCallParser.Inner_StreamUtil("game:mine", AiMiningQuota.normalizeArgs(mine.arguments()));
             break;
          case "chop":
-            var10000 = init(args, "game:chop", "block", "Usage: .tools chop <block> [count]");
+            var10000 = targetCountCall(args, "game:chop", "block", "Usage: .tools chop <block> [count]");
             break;
          case "farm":
-            AiToolCallParser.Inner_StreamUtil farm = init(args, "game:farm", "crop", "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]");
+            AiToolCallParser.Inner_StreamUtil farm = targetCountCall(args, "game:farm", "crop", "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]");
             farm.arguments().addProperty("action", "build");
             var10000 = farm;
             break;
          case "follow":
             JsonObject out = new JsonObject();
             if (!args.isEmpty()) {
-               out.addProperty("type", init_Str_List_I(args, args.size()));
+               out.addProperty("type", joinArgs(args, args.size()));
             }
 
             var10000 = new AiToolCallParser.Inner_StreamUtil("game:follow", out);
             break;
          case "fight":
-            var10000 = init(args, "game:fight", "target", "Usage: .tools fight <type> [count]");
+            var10000 = targetCountCall(args, "game:fight", "target", "Usage: .tools fight <type> [count]");
             break;
          case "fill":
-            var10000 = read(args, px, py, pz);
+            var10000 = fillCall(args, px, py, pz);
             break;
          case "dig":
-            var10000 = init_cy_StreamUtil(args);
+            var10000 = digCall(args);
             break;
          case "surface":
-            var10000 = init(args, "game:surface", "Usage: .tools surface");
+            var10000 = noArgCall(args, "game:surface", "Usage: .tools surface");
             break;
          case "cave":
-            var10000 = init(args, "game:cave", "Usage: .tools cave");
+            var10000 = noArgCall(args, "game:cave", "Usage: .tools cave");
             break;
          case "eat":
-            var10000 = init(args, "game:eat", "Usage: .tools eat");
+            var10000 = noArgCall(args, "game:eat", "Usage: .tools eat");
             break;
          case "sleep":
-            var10000 = init(args, "game:sleep", "Usage: .tools sleep");
+            var10000 = noArgCall(args, "game:sleep", "Usage: .tools sleep");
             break;
          case "smelt":
-            var10000 = init(args, "game:smelt_auto", "item", "Usage: .tools smelt <item> [count]");
+            var10000 = targetCountCall(args, "game:smelt_auto", "item", "Usage: .tools smelt <item> [count]");
             break;
          case "craft":
-            var10000 = init(args, "game:craft", "item", "Usage: .tools craft <item> [count]");
+            var10000 = targetCountCall(args, "game:craft", "item", "Usage: .tools craft <item> [count]");
             break;
          case "obtain":
          case "get":
-            var10000 = init(args, "game:obtain", "item", "Usage: .tools obtain <item> [count]");
+            var10000 = targetCountCall(args, "game:obtain", "item", "Usage: .tools obtain <item> [count]");
             break;
          case "collect":
          case "gather":
-            AiToolCallParser.Inner_StreamUtil collect = init(args, "game:collect", "item", "Usage: .tools collect <item> [count]");
+            AiToolCallParser.Inner_StreamUtil collect = targetCountCall(args, "game:collect", "item", "Usage: .tools collect <item> [count]");
             if (!collect.arguments().has("count")) {
                collect.arguments().addProperty("count", 1);
             }
@@ -503,7 +503,7 @@ public final class AiToolCallParser {
 
             JsonObject out2 = new JsonObject();
             out2.addProperty("action", "trade");
-            String value = init_Str_List_I(args, args.size());
+            String value = joinArgs(args, args.size());
             if (value.matches("\\d+")) {
                out2.addProperty("tradeIndex", Integer.parseInt(value));
             } else {
@@ -520,7 +520,7 @@ public final class AiToolCallParser {
 
             JsonObject out3 = new JsonObject();
             if (!args.isEmpty()) {
-               int since = init_I_Str_Str(args.get(0), "Usage: .tools events [since]");
+               int since = parseCount(args.get(0), "Usage: .tools events [since]");
                if (since < 0) {
                   throw new IllegalArgumentException("since must be >= 0\nUsage: .tools events [since]");
                }
@@ -538,9 +538,9 @@ public final class AiToolCallParser {
       return var10000;
    }
 
-   private static AiToolCallParser.Inner_StreamUtil init(List<String> args, double px, double py, double pz) {
+   private static AiToolCallParser.Inner_StreamUtil parkourCall(List<String> args, double px, double py, double pz) {
       AiToolCallParser.Inner_CachePool options = parseParkourFlags(args);
-      String usage = read;
+      String usage = PARKOUR_USAGE;
       args = args.stream().filter(arg -> !isParkourFlag(arg)).toList();
 
       AiToolCallParser.Inner_StreamUtil trip;
@@ -568,10 +568,10 @@ public final class AiToolCallParser {
             dest.addProperty("allowInventory", false);
             trip = new AiToolCallParser.Inner_StreamUtil("game:goto", dest);
          } else {
-            trip = load(args, px, py, pz);
+            trip = gotoCall(args, px, py, pz);
          }
       } catch (IllegalArgumentException e) {
-         throw new IllegalArgumentException(e.getMessage().replace(init_Str, usage));
+         throw new IllegalArgumentException(e.getMessage().replace(GOTO_USAGE, usage));
       }
 
       return new AiToolCallParser.Inner_StreamUtil(trip.id(), init_JsonObject_JsonObject_ParkourOptions(trip.arguments(), options));
@@ -585,12 +585,12 @@ public final class AiToolCallParser {
       return out;
    }
 
-   public static boolean init_Z(String token) {
+   public static boolean isNoFallFlag(String token) {
       return "nofall".equalsIgnoreCase(token) || "--no-fall-damage".equalsIgnoreCase(token);
    }
 
    public static boolean isParkourFlag(String token) {
-      return init_Z(token) || parkourSpeedFlags.contains(token.toLowerCase(Locale.ROOT));
+      return isNoFallFlag(token) || parkourSpeedFlags.contains(token.toLowerCase(Locale.ROOT));
    }
 
    public static AiToolCallParser.Inner_CachePool parseParkourFlags(List<String> args) {
@@ -598,7 +598,7 @@ public final class AiToolCallParser {
       int speed = -1;
 
       for (String token : args) {
-         if (init_Z(token)) {
+         if (isNoFallFlag(token)) {
             noFall = true;
          }
 
@@ -615,7 +615,7 @@ public final class AiToolCallParser {
       return new AiToolCallParser.Inner_CachePool(noFall, speed);
    }
 
-   static JsonObject init_JsonObject_JsonObject_Z(JsonObject destination, boolean assumeNoDamage) {
+   static JsonObject withParkourOptions(JsonObject destination, boolean assumeNoDamage) {
       return init_JsonObject_JsonObject_ParkourOptions(destination, new AiToolCallParser.Inner_CachePool(assumeNoDamage, -1));
    }
 
@@ -643,7 +643,7 @@ public final class AiToolCallParser {
    public record Inner_CachePool(boolean noFall, int speedLevel) {
    }
 
-   private static AiToolCallParser.Inner_StreamUtil load(List<String> args, double px, double py, double pz) {
+   private static AiToolCallParser.Inner_StreamUtil gotoCall(List<String> args, double px, double py, double pz) {
       if (args.size() >= 2 && args.get(0).equalsIgnoreCase("to")) {
          args = args.subList(1, args.size());
       }
@@ -651,11 +651,11 @@ public final class AiToolCallParser {
       if (args.size() == 2) {
          String a = args.get(0).toLowerCase(Locale.ROOT);
          String b = args.get(1).toLowerCase(Locale.ROOT);
-         if (init_Set.contains(a) && b.matches("\\d+(\\.\\d+)?")) {
+         if (DIRECTION_WORDS.contains(a) && b.matches("\\d+(\\.\\d+)?")) {
             return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", a, "distance", Double.parseDouble(b)));
          }
 
-         if (init_Set.contains(b) && a.matches("\\d+(\\.\\d+)?")) {
+         if (DIRECTION_WORDS.contains(b) && a.matches("\\d+(\\.\\d+)?")) {
             return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", b, "distance", Double.parseDouble(a)));
          }
       }
@@ -707,7 +707,7 @@ public final class AiToolCallParser {
       }
    }
 
-   private static AiToolCallParser.Inner_StreamUtil init(List<String> args, String id, String key, String usage) {
+   private static AiToolCallParser.Inner_StreamUtil targetCountCall(List<String> args, String id, String key, String usage) {
       if (args.isEmpty()) {
          throw new IllegalArgumentException(usage);
       }
@@ -717,23 +717,23 @@ public final class AiToolCallParser {
       JsonObject out = new JsonObject();
       if (!counted && args.size() > 1 && args.get(0).matches("\\d+")) {
          out.addProperty(key, String.join("_", args.subList(1, args.size())));
-         out.addProperty("count", init_I_Str_Str(args.get(0), usage));
+         out.addProperty("count", parseCount(args.get(0), usage));
          return new AiToolCallParser.Inner_StreamUtil(id, out);
       }
 
-      out.addProperty(key, init_Str_List_I(args, counted ? args.size() - 1 : args.size()));
+      out.addProperty(key, joinArgs(args, counted ? args.size() - 1 : args.size()));
       if (counted) {
-         out.addProperty("count", init_I_Str_Str(args.get(args.size() - 1), usage));
+         out.addProperty("count", parseCount(args.get(args.size() - 1), usage));
       }
 
       return new AiToolCallParser.Inner_StreamUtil(id, out);
    }
 
-   static String init_Str_List_I(List<String> args, int end) {
+   static String joinArgs(List<String> args, int end) {
       return String.join("_", args.subList(0, end));
    }
 
-   private static AiToolCallParser.Inner_StreamUtil read(List<String> args, double px, double py, double pz) {
+   private static AiToolCallParser.Inner_StreamUtil fillCall(List<String> args, double px, double py, double pz) {
       if (args.size() >= 7 && args.size() <= 8) {
          JsonObject out = new JsonObject();
          out.addProperty("x", parseBlockCoord(args.get(0), px));
@@ -764,7 +764,7 @@ public final class AiToolCallParser {
       }
    }
 
-   private static AiToolCallParser.Inner_StreamUtil init_cy_StreamUtil(List<String> args) {
+   private static AiToolCallParser.Inner_StreamUtil digCall(List<String> args) {
       if (args.isEmpty() || !args.get(0).equalsIgnoreCase("tunnel") || args.size() > 3) {
          throw new IllegalArgumentException("Usage: .tools dig tunnel <north|south|east|west> [length]");
       }
@@ -784,7 +784,7 @@ public final class AiToolCallParser {
       out.addProperty("shape", "tunnel");
       out.addProperty("direction", direction);
       if (args.size() == 3) {
-         int length = init_I_Str_Str(args.get(2), "Usage: .tools dig tunnel <north|south|east|west> [length]");
+         int length = parseCount(args.get(2), "Usage: .tools dig tunnel <north|south|east|west> [length]");
          if (length < 1 || length > 128) {
             throw new IllegalArgumentException("Length must be 1..128\nUsage: .tools dig tunnel <north|south|east|west> [length]");
          }
@@ -795,7 +795,7 @@ public final class AiToolCallParser {
       return new AiToolCallParser.Inner_StreamUtil("game:dig", out);
    }
 
-   private static AiToolCallParser.Inner_StreamUtil init(List<String> args, String id, String usage) {
+   private static AiToolCallParser.Inner_StreamUtil noArgCall(List<String> args, String id, String usage) {
       if (!args.isEmpty()) {
          throw new IllegalArgumentException(usage);
       } else {
@@ -803,7 +803,7 @@ public final class AiToolCallParser {
       }
    }
 
-   private static int init_I_Str_Str(String token, String usage) {
+   private static int parseCount(String token, String usage) {
       if (!token.matches("\\d+")) {
          throw new IllegalArgumentException("Bad count '" + token + "'\n" + usage);
       }
@@ -840,7 +840,7 @@ public final class AiToolCallParser {
                if (lower.startsWith(needle) || local.startsWith(needleLocal)) {
                   score = 1000L + Math.abs(lower.length() - needle.length());
                } else if (!lower.contains(needle) && !local.contains(needleLocal)) {
-                  int distance = init(needleLocal, local, 3);
+                  int distance = boundedEditDistance(needleLocal, local, 3);
                   if (distance > 3) {
                      continue;
                   }
@@ -865,7 +865,7 @@ public final class AiToolCallParser {
       }
    }
 
-   static int init(String a, String b, int limit) {
+   static int boundedEditDistance(String a, String b, int limit) {
       int[] previous = new int[b.length() + 1];
       int j = 0;
 

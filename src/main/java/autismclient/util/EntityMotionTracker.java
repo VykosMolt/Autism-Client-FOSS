@@ -11,7 +11,7 @@ public final class EntityMotionTracker {
    public static final int MAX_LOOKAHEAD = 3;
    private int load_I = -2147483648;
    private Vec3 init_Vec3;
-   private int read;
+   private int lastSampleTick;
    private Vec3 load_Vec3 = Vec3.ZERO;
    private final Vec3[] positions = new Vec3[32];
    private final int[] ticks = new int[32];
@@ -23,21 +23,21 @@ public final class EntityMotionTracker {
          this.load_Vec3 = Vec3.ZERO;
          Arrays.fill(this.positions, null);
       } else {
-         this.init(target.getId(), observedPosition(target), tick);
+         this.sample(target.getId(), observedPosition(target), tick);
       }
    }
 
-   void init(int targetId, Vec3 now, int tick) {
+   void sample(int targetId, Vec3 now, int tick) {
       if (targetId != this.load_I || this.init_Vec3 == null) {
          this.load_I = targetId;
          Arrays.fill(this.positions, null);
          this.load_Vec3 = Vec3.ZERO;
          this.init_Vec3 = now;
-         this.read = tick;
+         this.lastSampleTick = tick;
       } else if (!now.equals(this.init_Vec3)) {
-         this.load_Vec3 = now.subtract(this.init_Vec3).scale(1.0 / Math.max(1, Math.min(4, tick - this.read)));
+         this.load_Vec3 = now.subtract(this.init_Vec3).scale(1.0 / Math.max(1, Math.min(4, tick - this.lastSampleTick)));
          this.init_Vec3 = now;
-         this.read = tick;
+         this.lastSampleTick = tick;
       }
 
       int slot = tick & this.positions.length - 1;
@@ -64,7 +64,7 @@ public final class EntityMotionTracker {
    }
 
    public Vec3 init_Vec3_I(int tick) {
-      int ahead = Math.min(3, tick - this.read + 1);
+      int ahead = Math.min(3, tick - this.lastSampleTick + 1);
       return this.init_Vec3.add(this.load_Vec3.scale(ahead));
    }
 

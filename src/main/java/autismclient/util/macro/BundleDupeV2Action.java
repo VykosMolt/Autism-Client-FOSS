@@ -21,7 +21,7 @@ public class BundleDupeV2Action implements MacroAction {
    public int hotbarSlot = 0;
    public int bundleIndex = -1;
    public int maxCycles = 0;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -33,31 +33,31 @@ public class BundleDupeV2Action implements MacroAction {
                return;
             }
 
-            if (!this.load(mc)) {
+            if (!this.canSend(mc)) {
                return;
             }
 
-            int handlerSlot = this.init();
-            this.init(mc, handlerSlot, 1);
-            this.init(mc, handlerSlot);
-            if (!this.init(this.delayAfterPickingUpMs)) {
+            int handlerSlot = this.handlerSlot();
+            this.clickSlot(mc, handlerSlot, 1);
+            this.sendBundlePackets(mc, handlerSlot);
+            if (!this.sleepInterruptible(this.delayAfterPickingUpMs)) {
                return;
             }
 
-            this.init(mc, handlerSlot, 0);
-            if (!this.init(this.delayAfterPuttingBackMs)) {
+            this.clickSlot(mc, handlerSlot, 0);
+            if (!this.sleepInterruptible(this.delayAfterPuttingBackMs)) {
                return;
             }
 
             ItemStack firstStack = this.init_ItemStack(mc);
             if (!firstStack.isEmpty() && !firstStack.is(Items.BUNDLE)) {
-               this.init(mc, handlerSlot, 1);
-               if (!this.init(this.dropDelayMs)) {
+               this.clickSlot(mc, handlerSlot, 1);
+               if (!this.sleepInterruptible(this.dropDelayMs)) {
                   return;
                }
 
-               this.init(mc, -999, 0);
-               if (!this.init(this.dropDelayMs)) {
+               this.clickSlot(mc, -999, 0);
+               if (!this.sleepInterruptible(this.dropDelayMs)) {
                   return;
                }
 
@@ -76,7 +76,7 @@ public class BundleDupeV2Action implements MacroAction {
    }
 
    private boolean init_Z(Minecraft mc) {
-      if (this.load(mc) && mc.player.containerMenu instanceof InventoryMenu) {
+      if (this.canSend(mc) && mc.player.containerMenu instanceof InventoryMenu) {
          ItemStack stack = this.init_ItemStack(mc);
          if (!stack.isEmpty() && stack.is(Items.BUNDLE)) {
             BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
@@ -89,7 +89,7 @@ public class BundleDupeV2Action implements MacroAction {
       }
    }
 
-   private boolean load(Minecraft mc) {
+   private boolean canSend(Minecraft mc) {
       return mc != null && mc.player != null && mc.getConnection() != null;
    }
 
@@ -102,11 +102,11 @@ public class BundleDupeV2Action implements MacroAction {
       }
    }
 
-   private int init() {
+   private int handlerSlot() {
       return 36 + Math.max(0, Math.min(8, this.hotbarSlot));
    }
 
-   private void init(Minecraft mc, int handlerSlot) {
+   private void sendBundlePackets(Minecraft mc, int handlerSlot) {
       int count = Math.max(1, Math.min(10000, this.bundlePacketCount));
 
       for (int i = 0; i < count && MacroExecutor.isCurrentRunActive(); i++) {
@@ -114,8 +114,8 @@ public class BundleDupeV2Action implements MacroAction {
       }
    }
 
-   private void init(Minecraft mc, int slot, int button) {
-      if (this.load(mc) && mc.player.containerMenu != null) {
+   private void clickSlot(Minecraft mc, int slot, int button) {
+      if (this.canSend(mc) && mc.player.containerMenu != null) {
          mc.getConnection()
             .send(
                new ServerboundContainerClickPacket(
@@ -131,7 +131,7 @@ public class BundleDupeV2Action implements MacroAction {
       }
    }
 
-   private boolean init(int ms) {
+   private boolean sleepInterruptible(int ms) {
       int remaining = Math.max(0, ms);
       long deadline = System.currentTimeMillis() + remaining;
 
@@ -163,7 +163,7 @@ public class BundleDupeV2Action implements MacroAction {
       tag.putInt("hotbarSlot", Math.max(0, Math.min(8, this.hotbarSlot)));
       tag.putInt("bundleIndex", this.bundleIndex);
       tag.putInt("maxCycles", Math.max(0, this.maxCycles));
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -177,7 +177,7 @@ public class BundleDupeV2Action implements MacroAction {
       this.bundleIndex = tag.getIntOr("bundleIndex", -1);
       this.maxCycles = Math.max(0, tag.getIntOr("maxCycles", 0));
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -198,11 +198,11 @@ public class BundleDupeV2Action implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 }

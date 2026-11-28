@@ -25,18 +25,18 @@ public final class TradeAction implements ContextMacroAction {
    public int emeraldBudget;
    public int keepEmeralds;
    public boolean closeWhenDone;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public autismclient.util.villager.TradeOfferFilter init() {
       return new autismclient.util.villager.TradeOfferFilter(
-         this.selection == TradeAction.Inner_DataUtil.OFFER ? init(this.offerNumber, 1, 512) : 0,
+         this.selection == TradeAction.Inner_DataUtil.OFFER ? clamp(this.offerNumber, 1, 512) : 0,
          this.selection == TradeAction.Inner_DataUtil.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.init(this.resultItem)) : List.of(),
          List.of(),
          this.selection == TradeAction.Inner_DataUtil.BOOK
-            ? List.of(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(this.enchantment, init(this.minLevel, 1, 255), 0))
+            ? List.of(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(this.enchantment, clamp(this.minLevel, 1, 255), 0))
             : List.of(),
          this.exactLevel,
-         init(this.maxEmeralds, 0, 128)
+         clamp(this.maxEmeralds, 0, 128)
       );
    }
 
@@ -44,7 +44,7 @@ public final class TradeAction implements ContextMacroAction {
    public void run(MacroExecutionContext ctx) {
       if (this.selection != TradeAction.Inner_DataUtil.ITEM || this.resultItem != null && !this.resultItem.isBlank()) {
          autismclient.util.villager.VillagerTradeSession session = new autismclient.util.villager.VillagerTradeSession(
-            this.init(), this.untilUnavailable ? 10000 : init(this.amount, 1, 10000), this.delayTicks, this.timeoutTicks, this.emeraldBudget, this.keepEmeralds
+            this.init(), this.untilUnavailable ? 10000 : clamp(this.amount, 1, 10000), this.delayTicks, this.timeoutTicks, this.emeraldBudget, this.keepEmeralds
          );
 
          try {
@@ -145,20 +145,20 @@ public final class TradeAction implements ContextMacroAction {
       tag.putString("target", this.target.name());
       tag.putDouble("range", Double.isFinite(this.range) ? Math.clamp(this.range, 1.0, 6.0) : 4.0);
       tag.putString("selection", this.selection.name());
-      tag.putInt("offerNumber", init(this.offerNumber, 1, 512));
+      tag.putInt("offerNumber", clamp(this.offerNumber, 1, 512));
       tag.putString("resultItem", this.resultItem == null ? "" : this.resultItem.strip());
       tag.putString("enchantment", this.enchantment == null ? "" : this.enchantment.strip());
-      tag.putInt("minLevel", init(this.minLevel, 1, 255));
+      tag.putInt("minLevel", clamp(this.minLevel, 1, 255));
       tag.putBoolean("exactLevel", this.exactLevel);
-      tag.putInt("maxEmeralds", init(this.maxEmeralds, 0, 128));
-      tag.putInt("amount", init(this.amount, 1, 10000));
+      tag.putInt("maxEmeralds", clamp(this.maxEmeralds, 0, 128));
+      tag.putInt("amount", clamp(this.amount, 1, 10000));
       tag.putBoolean("untilUnavailable", this.untilUnavailable);
-      tag.putInt("delayTicks", init(this.delayTicks, 1, 200));
-      tag.putInt("timeoutTicks", init(this.timeoutTicks, 20, 1200));
-      tag.putInt("emeraldBudget", init(this.emeraldBudget, 0, 1000000));
-      tag.putInt("keepEmeralds", init(this.keepEmeralds, 0, 2304));
+      tag.putInt("delayTicks", clamp(this.delayTicks, 1, 200));
+      tag.putInt("timeoutTicks", clamp(this.timeoutTicks, 20, 1200));
+      tag.putInt("emeraldBudget", clamp(this.emeraldBudget, 0, 1000000));
+      tag.putInt("keepEmeralds", clamp(this.keepEmeralds, 0, 2304));
       tag.putBoolean("closeWhenDone", this.closeWhenDone);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -179,20 +179,20 @@ public final class TradeAction implements ContextMacroAction {
          this.selection = TradeAction.Inner_DataUtil.OFFER;
       }
 
-      this.offerNumber = init(tag.getIntOr("offerNumber", 1), 1, 512);
+      this.offerNumber = clamp(tag.getIntOr("offerNumber", 1), 1, 512);
       this.resultItem = tag.getStringOr("resultItem", "minecraft:emerald").strip();
       this.enchantment = tag.getStringOr("enchantment", "minecraft:mending").strip();
-      this.minLevel = init(tag.getIntOr("minLevel", 1), 1, 255);
+      this.minLevel = clamp(tag.getIntOr("minLevel", 1), 1, 255);
       this.exactLevel = tag.getBooleanOr("exactLevel", false);
-      this.maxEmeralds = init(tag.getIntOr("maxEmeralds", 64), 0, 128);
-      this.amount = init(tag.getIntOr("amount", 1), 1, 10000);
+      this.maxEmeralds = clamp(tag.getIntOr("maxEmeralds", 64), 0, 128);
+      this.amount = clamp(tag.getIntOr("amount", 1), 1, 10000);
       this.untilUnavailable = tag.getBooleanOr("untilUnavailable", false);
-      this.delayTicks = init(tag.getIntOr("delayTicks", 4), 1, 200);
-      this.timeoutTicks = init(tag.getIntOr("timeoutTicks", 100), 20, 1200);
-      this.emeraldBudget = init(tag.getIntOr("emeraldBudget", 0), 0, 1000000);
-      this.keepEmeralds = init(tag.getIntOr("keepEmeralds", 0), 0, 2304);
+      this.delayTicks = clamp(tag.getIntOr("delayTicks", 4), 1, 200);
+      this.timeoutTicks = clamp(tag.getIntOr("timeoutTicks", 100), 20, 1200);
+      this.emeraldBudget = clamp(tag.getIntOr("emeraldBudget", 0), 0, 1000000);
+      this.keepEmeralds = clamp(tag.getIntOr("keepEmeralds", 0), 0, 2304);
       this.closeWhenDone = tag.getBooleanOr("closeWhenDone", false);
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    @Override
@@ -227,15 +227,15 @@ public final class TradeAction implements ContextMacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean value) {
-      this.init = value;
+      this.enabled = value;
    }
 
-   private static int init(int n, int min, int max) {
+   private static int clamp(int n, int min, int max) {
       return Math.max(min, Math.min(max, n));
    }
 

@@ -44,12 +44,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class AiDanger {
-   static final String init_Str = "end_crystal";
-   static final String load_Str = "primed_tnt";
-   static final String read_Str = "tnt_minecart";
-   static final String write_Str = "creeper";
-   static final String update_Str = "bed";
-   static final String sync = "respawn_anchor";
+   static final String END_CRYSTAL = "end_crystal";
+   static final String PRIMED_TNT = "primed_tnt";
+   static final String TNT_MINECART = "tnt_minecart";
+   static final String CREEPER = "creeper";
+   static final String BED = "bed";
+   static final String RESPAWN_ANCHOR = "respawn_anchor";
    static final int init_I = 12;
    static final int load_I = 2;
    static final int read_I = 20;
@@ -58,19 +58,19 @@ final class AiDanger {
    static final int write_I = 30;
    static final double read_D = 0.91;
    static final double write_D = 0.98;
-   private static final List<BlockPos> init_List = init_List_F(10.0F);
-   static final String flush = "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively";
+   private static final List<BlockPos> BLOCK_SCAN_OFFSETS = sphereOffsets(10.0F);
+   static final String PREDICTION_NOTE = "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively";
    private static final AiDanger.Inner_DataUtil assess = new AiDanger.Inner_DataUtil(
       List.of(), 0.0F, 0.0F, 0.0F, 0, 0, 0, 0.0, -1, false, 0.0F, "", 0.0F, 0.0F, false, false, false
    );
-   private static final AiDanger.Inner_BufferHelper init_i_BufferHelper = new AiDanger.Inner_BufferHelper(assess, -1, null);
-   private static AiDanger.Inner_BufferHelper load_i_BufferHelper;
-   private static int update_I = -2;
+   private static final AiDanger.Inner_BufferHelper EMPTY_SNAPSHOT = new AiDanger.Inner_BufferHelper(assess, -1, null);
+   private static AiDanger.Inner_BufferHelper cachedSnapshot;
+   private static int cachedSnapshotTick = -2;
 
    private AiDanger() {
    }
 
-   static float init_F_Str(String kind, boolean creeperPowered, double minecartHorizontalSpeed) {
+   static float explosionPower(String kind, boolean creeperPowered, double minecartHorizontalSpeed) {
       float var10000;
       switch (kind) {
          case "end_crystal":
@@ -102,11 +102,11 @@ final class AiDanger {
       return var10000;
    }
 
-   static boolean init_Z_Z(boolean bedRuleExplodes) {
+   static boolean bedExplodes(boolean bedRuleExplodes) {
       return bedRuleExplodes;
    }
 
-   static boolean init_Z_Z_I(boolean respawnAnchorWorks, int charge) {
+   static boolean anchorExplodes(boolean respawnAnchorWorks, int charge) {
       return !respawnAnchorWorks && charge > 0;
    }
 
@@ -136,11 +136,11 @@ final class AiDanger {
       }
    }
 
-   static int init_I_I(int fuseTicks) {
+   static int tntEtaTicks(int fuseTicks) {
       return Math.max(0, fuseTicks);
    }
 
-   static int init_I_F(float swelling) {
+   static int creeperEtaTicks(float swelling) {
       float clamped = Math.max(0.0F, Math.min(1.0F, swelling));
       return Math.round((1.0F - clamped) * 30.0F);
    }
@@ -150,7 +150,7 @@ final class AiDanger {
       return my * 0.98;
    }
 
-   static float init_F_List(List<AiDanger.Inner_ConfigStore> sources) {
+   static float worstSourceDamage(List<AiDanger.Inner_ConfigStore> sources) {
       float worst = 0.0F;
 
       for (AiDanger.Inner_ConfigStore s : sources) {
@@ -160,19 +160,19 @@ final class AiDanger {
       return worst;
    }
 
-   static float init_F_F_F(float worstSource, float fallDamage) {
+   static float totalPredictedDamage(float worstSource, float fallDamage) {
       return Math.max(0.0F, worstSource) + Math.max(0.0F, fallDamage);
    }
 
-   static AiDanger.Inner_TaskQueue init_i_TaskQueue_F_i_CachePool(float totalPredicted, AiDanger.Inner_CachePool evaluator) {
-      return new AiDanger.Inner_TaskQueue(evaluator.init(totalPredicted), evaluator.load(totalPredicted));
+   static AiDanger.Inner_TaskQueue verdict(float totalPredicted, AiDanger.Inner_CachePool evaluator) {
+      return new AiDanger.Inner_TaskQueue(evaluator.popsOrKills(totalPredicted), evaluator.killsWithoutTotem(totalPredicted));
    }
 
-   static AiDanger.Inner_TaskQueue init_i_TaskQueue_F(float totalPredicted, boolean voidFall, AiDanger.Inner_CachePool evaluator) {
-      return voidFall ? new AiDanger.Inner_TaskQueue(true, true) : init_i_TaskQueue_F_i_CachePool(totalPredicted, evaluator);
+   static AiDanger.Inner_TaskQueue verdict(float totalPredicted, boolean voidFall, AiDanger.Inner_CachePool evaluator) {
+      return voidFall ? new AiDanger.Inner_TaskQueue(true, true) : verdict(totalPredicted, evaluator);
    }
 
-   static List<AiDanger.Inner_ConfigStore> init_List_List_I(List<AiDanger.Inner_ConfigStore> sources, int cap) {
+   static List<AiDanger.Inner_ConfigStore> topSources(List<AiDanger.Inner_ConfigStore> sources, int cap) {
       int limit = Math.max(0, Math.min(12, cap));
       List<AiDanger.Inner_ConfigStore> sorted = new ArrayList<>(sources);
       sorted.sort(
@@ -182,7 +182,7 @@ final class AiDanger {
       return List.copyOf(sorted.size() <= limit ? sorted : sorted.subList(0, limit));
    }
 
-   static JsonArray init_JsonArray_List(List<AiDanger.Inner_ConfigStore> sources) {
+   static JsonArray sourcesJson(List<AiDanger.Inner_ConfigStore> sources) {
       JsonArray out = new JsonArray();
 
       for (AiDanger.Inner_ConfigStore s : sources) {
@@ -194,7 +194,7 @@ final class AiDanger {
 
    static AiDanger.Inner_DataUtil assess(Minecraft mc) {
       try {
-         return init_i_BufferHelper_Minecraft(mc).assessment();
+         return snapshot(mc).assessment();
       } catch (Throwable t) {
          return assess;
       }
@@ -202,11 +202,11 @@ final class AiDanger {
 
    static JsonObject snapshotJson(Minecraft mc, int cap) {
       try {
-         AiDanger.Inner_BufferHelper snap = init_i_BufferHelper_Minecraft(mc);
+         AiDanger.Inner_BufferHelper snap = snapshot(mc);
          AiDanger.Inner_DataUtil a = snap.assessment();
          return AiJson.objectOf(
             "sources",
-            init_JsonArray_List(init_List_List_I(a.sources(), cap)),
+            sourcesJson(topSources(a.sources(), cap)),
             "worstSource",
             a.worstSource(),
             "fallDamage",
@@ -256,44 +256,44 @@ final class AiDanger {
       return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", snapshotJson(Minecraft.getInstance(), cap));
    }
 
-   private static AiDanger.Inner_BufferHelper init_i_BufferHelper_Minecraft(Minecraft mc) {
+   private static AiDanger.Inner_BufferHelper snapshot(Minecraft mc) {
       if (mc == null) {
          mc = Minecraft.getInstance();
       }
 
       if (mc.player != null && mc.level != null) {
          int now = autismclient.util.AutismSessionState.getInstance().getClientTick();
-         AiDanger.Inner_BufferHelper cached = load_i_BufferHelper;
-         if (cached != null && cached.player() == mc.player && now - update_I < 2) {
+         AiDanger.Inner_BufferHelper cached = cachedSnapshot;
+         if (cached != null && cached.player() == mc.player && now - cachedSnapshotTick < 2) {
             return cached;
          }
 
          List<AiDanger.Inner_ConfigStore> sources = new ArrayList<>();
-         init_V_Minecraft_List(mc, sources);
-         load(mc, sources);
-         read(mc, sources);
-         AiDanger.Inner_StreamUtil fall = init_i_StreamUtil_Minecraft(mc);
+         collectEntitySources(mc, sources);
+         collectBlockSources(mc, sources);
+         collectProjectileSources(mc, sources);
+         AiDanger.Inner_StreamUtil fall = predictFall(mc);
          float fallDamage = fall == null ? 0.0F : fall.damage();
          boolean voidFall = fall != null && fall.voidFall();
-         AiDanger.Inner_BufferHelper snap = new AiDanger.Inner_BufferHelper(init(mc, sources, fallDamage, voidFall), fall == null ? -1 : fall.etaTicks(), mc.player);
-         load_i_BufferHelper = snap;
-         update_I = now;
+         AiDanger.Inner_BufferHelper snap = new AiDanger.Inner_BufferHelper(assess(mc, sources, fallDamage, voidFall), fall == null ? -1 : fall.etaTicks(), mc.player);
+         cachedSnapshot = snap;
+         cachedSnapshotTick = now;
          return snap;
       } else {
-         return init_i_BufferHelper;
+         return EMPTY_SNAPSHOT;
       }
    }
 
-   private static AiDanger.Inner_DataUtil init(Minecraft mc, List<AiDanger.Inner_ConfigStore> sources, float fallDamage, boolean voidFall) {
+   private static AiDanger.Inner_DataUtil assess(Minecraft mc, List<AiDanger.Inner_ConfigStore> sources, float fallDamage, boolean voidFall) {
       LocalPlayer player = mc.player;
-      float worst = init_F_List(sources);
-      float total = init_F_F_F(worst, fallDamage);
-      int held = (init_Z_ItemStack(player.getMainHandItem()) ? 1 : 0) + (init_Z_ItemStack(player.getOffhandItem()) ? 1 : 0);
+      float worst = worstSourceDamage(sources);
+      float total = totalPredictedDamage(worst, fallDamage);
+      int held = (isTotem(player.getMainHandItem()) ? 1 : 0) + (isTotem(player.getOffhandItem()) ? 1 : 0);
       int inventory = 0;
 
       for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
          ItemStack stack = player.getInventory().getItem(i);
-         if (init_Z_ItemStack(stack)) {
+         if (isTotem(stack)) {
             inventory += stack.getCount();
          }
       }
@@ -301,7 +301,7 @@ final class AiDanger {
       MobEffectInstance resistance = player.getEffect(MobEffects.RESISTANCE);
       ItemStack blocking = player.getItemBlockingWith();
       float effectiveHealth = (float)autismclient.util.ExplosionDamageCalculator.effectiveHealth(player);
-      AiDanger.Inner_TaskQueue verdict = init_i_TaskQueue_F(total, voidFall, AiDanger.Inner_CachePool.init);
+      AiDanger.Inner_TaskQueue verdict = verdict(total, voidFall, AiDanger.Inner_CachePool.VANILLA);
       return new AiDanger.Inner_DataUtil(
          List.copyOf(sources),
          worst,
@@ -323,11 +323,11 @@ final class AiDanger {
       );
    }
 
-   private static boolean init_Z_ItemStack(ItemStack stack) {
+   private static boolean isTotem(ItemStack stack) {
       return !stack.isEmpty() && stack.has(DataComponents.DEATH_PROTECTION);
    }
 
-   private static void init_V_Minecraft_List(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+   private static void collectEntitySources(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
       float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
       for (Entity entity : mc.level.entitiesForRendering()) {
@@ -338,17 +338,17 @@ final class AiDanger {
          if (entity instanceof EndCrystal) {
             kind = "end_crystal";
             pos = entity.position();
-            power = init_F_Str(kind, false, 0.0);
+            power = explosionPower(kind, false, 0.0);
             eta = -1;
          } else if (entity instanceof PrimedTnt tnt) {
             kind = "primed_tnt";
             pos = entity.position().add(0.0, 0.0625, 0.0);
-            power = init_F_Str(kind, false, 0.0);
-            eta = init_I_I(tnt.getFuse());
+            power = explosionPower(kind, false, 0.0);
+            eta = tntEtaTicks(tnt.getFuse());
          } else if (entity instanceof MinecartTNT cart) {
             kind = "tnt_minecart";
             pos = cart.position();
-            power = init_F_Str(kind, false, Math.sqrt(cart.getDeltaMovement().horizontalDistanceSqr()));
+            power = explosionPower(kind, false, Math.sqrt(cart.getDeltaMovement().horizontalDistanceSqr()));
             eta = -1;
          } else {
             if (!(entity instanceof Creeper creeper)) {
@@ -357,9 +357,9 @@ final class AiDanger {
 
             kind = "creeper";
             pos = creeper.position();
-            power = init_F_Str(kind, creeper.isPowered(), 0.0);
+            power = explosionPower(kind, creeper.isPowered(), 0.0);
             float swell = creeper.getSwelling(partialTick);
-            eta = !creeper.isIgnited() && !(swell > 0.001F) ? -1 : init_I_F(swell);
+            eta = !creeper.isIgnited() && !(swell > 0.001F) ? -1 : creeperEtaTicks(swell);
          }
 
          float damage = (float)autismclient.util.ExplosionDamageCalculator.calculateSelfDamage(
@@ -371,22 +371,22 @@ final class AiDanger {
       }
    }
 
-   private static void load(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+   private static void collectBlockSources(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
       boolean bedsExplode = mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse();
       boolean anchorWorks = mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS);
       if (bedsExplode || !anchorWorks) {
          BlockPos center = mc.player.blockPosition();
 
-         for (BlockPos offset : init_List) {
+         for (BlockPos offset : BLOCK_SCAN_OFFSETS) {
             BlockPos pos = center.offset(offset);
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
             String kind = null;
             List<BlockPos> exclude = List.of();
-            if (block instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.HEAD && init_Z_Z(bedsExplode)) {
+            if (block instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.HEAD && bedExplodes(bedsExplode)) {
                kind = "bed";
                exclude = List.of(pos, pos.relative(state.getValue(HorizontalDirectionalBlock.FACING).getOpposite()));
-            } else if (block instanceof RespawnAnchorBlock && init_Z_Z_I(anchorWorks, state.getValue(RespawnAnchorBlock.CHARGE))) {
+            } else if (block instanceof RespawnAnchorBlock && anchorExplodes(anchorWorks, state.getValue(RespawnAnchorBlock.CHARGE))) {
                kind = "respawn_anchor";
                exclude = List.of(pos);
             }
@@ -395,7 +395,7 @@ final class AiDanger {
                Vec3 blast = Vec3.atCenterOf(pos);
                float damage = (float)autismclient.util.ExplosionDamageCalculator.calculateSelfDamage(
                   blast,
-                  init_F_Str(kind, false, 0.0),
+                  explosionPower(kind, false, 0.0),
                   autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withExcludedBlocks(exclude).withDamageSource(autismclient.util.ExplosionDamageCalculator.bedAnchorDamageSource(mc.level, blast))
                );
                if (damage > 0.0F) {
@@ -406,11 +406,11 @@ final class AiDanger {
       }
    }
 
-   private static void read(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+   private static void collectProjectileSources(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
       for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
          String type = t.type();
          String kind = type.indexOf(58) >= 0 ? type.substring(type.indexOf(58) + 1) : type;
-         float power = init_F_Str(kind, false, 0.0);
+         float power = explosionPower(kind, false, 0.0);
          if (!(power <= 0.0F) && !(t.secondsToClosest() < 0.0)) {
             double ticks = t.secondsToClosest() * 20.0;
             Vec3 impact = new Vec3(t.x() + t.vx() * ticks, t.y() + t.vy() * ticks, t.z() + t.vz() * ticks);
@@ -422,7 +422,7 @@ final class AiDanger {
       }
    }
 
-   private static AiDanger.Inner_StreamUtil init_i_StreamUtil_Minecraft(Minecraft mc) {
+   private static AiDanger.Inner_StreamUtil predictFall(Minecraft mc) {
       LocalPlayer player = mc.player;
       Vec3 delta = player.getDeltaMovement();
       if (player.fallDistance <= 3.0 && delta.y >= -0.08) {
@@ -465,7 +465,7 @@ final class AiDanger {
          y += my;
          z += mz;
          AABB swept = player.getDimensions(player.getPose()).makeBoundingBox(start).expandTowards(new Vec3(x, y, z).subtract(start));
-         if (init_Z_Minecraft_AABB(mc, swept)) {
+         if (sweptTouchesWater(mc, swept)) {
             return new AiDanger.Inner_StreamUtil(0.0F, tick, false);
          }
 
@@ -478,16 +478,16 @@ final class AiDanger {
             }
 
             float amount = ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, multiplier);
-            return new AiDanger.Inner_StreamUtil(init_F_Minecraft(mc, player.damageSources().fall(), amount), tick, false);
+            return new AiDanger.Inner_StreamUtil(damageAfterReductions(mc, player.damageSources().fall(), amount), tick, false);
          }
       }
 
       boolean voidFall = y < mc.level.getMinY();
       float amount = ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, 1.0F);
-      return new AiDanger.Inner_StreamUtil(init_F_Minecraft(mc, player.damageSources().fall(), amount), -1, voidFall);
+      return new AiDanger.Inner_StreamUtil(damageAfterReductions(mc, player.damageSources().fall(), amount), -1, voidFall);
    }
 
-   private static boolean init_Z_Minecraft_AABB(Minecraft mc, AABB swept) {
+   private static boolean sweptTouchesWater(Minecraft mc, AABB swept) {
       MutableBlockPos p = new MutableBlockPos();
 
       for (int bx = (int)Math.floor(swept.minX); bx <= (int)Math.floor(swept.maxX); bx++) {
@@ -503,7 +503,7 @@ final class AiDanger {
       return false;
    }
 
-   private static float init_F_Minecraft(Minecraft mc, DamageSource source, float damage) {
+   private static float damageAfterReductions(Minecraft mc, DamageSource source, float damage) {
       LocalPlayer player = mc.player;
       if (!((AutismEntityAccessor)player).autism$isInvulnerableToBase(source) && !player.isDeadOrDying()) {
          float amount = damage;
@@ -530,7 +530,7 @@ final class AiDanger {
             return 0.0F;
          }
 
-         amount -= init_F_LocalPlayer(player, source, amount);
+         amount -= shieldBlockedAmount(player, source, amount);
          if (amount == 0.0F) {
             return 0.0F;
          }
@@ -542,7 +542,7 @@ final class AiDanger {
       }
    }
 
-   private static float init_F_LocalPlayer(LocalPlayer player, DamageSource source, float amount) {
+   private static float shieldBlockedAmount(LocalPlayer player, DamageSource source, float amount) {
       if (amount <= 0.0F) {
          return 0.0F;
       } else {
@@ -561,7 +561,7 @@ final class AiDanger {
                float horizontalAngle = 3.1415927F;
                Vec3 sourcePosition = source.getSourcePosition();
                if (sourcePosition != null) {
-                  Vec3 view = init_Vec3_LocalPlayer(player);
+                  Vec3 view = lookVector(player);
                   Vec3 direction = sourcePosition.subtract(player.position());
                   direction = new Vec3(direction.x, 0.0, direction.z).normalize();
                   horizontalAngle = (float)Math.acos(direction.dot(view));
@@ -573,12 +573,12 @@ final class AiDanger {
       }
    }
 
-   private static Vec3 init_Vec3_LocalPlayer(LocalPlayer player) {
+   private static Vec3 lookVector(LocalPlayer player) {
       float yaw = player.getYHeadRot() * 0.017453292F;
       return new Vec3(-Mth.sin(yaw), 0.0, Mth.cos(yaw));
    }
 
-   private static List<BlockPos> init_List_F(float radius) {
+   private static List<BlockPos> sphereOffsets(float radius) {
       List<BlockPos> out = new ArrayList<>();
       int r = Mth.ceil(radius);
       float rSq = radius * radius;
@@ -601,21 +601,21 @@ final class AiDanger {
    }
 
    interface Inner_CachePool {
-      AiDanger.Inner_CachePool init = new AiDanger.Inner_CachePool() {
+      AiDanger.Inner_CachePool VANILLA = new AiDanger.Inner_CachePool() {
          @Override
-         public boolean init(float totalPredicted) {
+         public boolean popsOrKills(float totalPredicted) {
             return autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(totalPredicted);
          }
 
          @Override
-         public boolean load(float totalPredicted) {
+         public boolean killsWithoutTotem(float totalPredicted) {
             return autismclient.util.ExplosionDamageCalculator.wouldSelfDamageKillWithoutTotem(totalPredicted);
          }
       };
 
-      boolean init(float var1);
+      boolean popsOrKills(float var1);
 
-      boolean load(float var1);
+      boolean killsWithoutTotem(float var1);
    }
 
    record Inner_ConfigStore(String kind, double x, double y, double z, float damage, int etaTicks) {

@@ -100,31 +100,31 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    private long badgeCountAt;
    private boolean layoutDirty = true;
    private int layoutWidth = -1;
-   private int set = -1;
+   private int layoutHeight = -1;
    private final long openedAt = System.nanoTime();
-   private int put;
-   private int add;
-   private int clear;
-   private int reset;
-   private int start;
-   private int stop;
-   private int next;
-   private int prev;
-   private int valid;
-   private int size;
-   private int data;
-   private int value;
-   private int cache;
-   private int state;
-   private int queue;
-   private int buffer;
-   private int entry;
+   private int stackX;
+   private int stackY;
+   private int stackW;
+   private int cardH;
+   private int supportX;
+   private int supportY;
+   private int supportW;
+   private int supportH;
+   private int statusX;
+   private int statusY;
+   private int statusW;
+   private int statusH;
+   private int statusLabelW;
+   private int modulesX;
+   private int modulesY;
+   private int modulesW;
+   private int modulesH;
    private boolean flush_Z;
-   private int node;
+   private int utilityRowW;
    private final List<AutismTitleScreen.Inner_ConfigStore> statusRows = new ArrayList<>();
    private final List<AutismTitleScreen.Inner_DataUtil> moduleRows = new ArrayList<>();
-   private int index;
-   private int count;
+   private int totalModules;
+   private int activeModules;
    private static final Component COPYRIGHT = Component.translatable("title.credits");
    private static final Random RANDOM = new Random();
    private static List<String> splashPool;
@@ -229,9 +229,9 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
 
       try {
          if (this.flush_Z) {
-            this.load(graphics);
-            this.read(graphics);
-            this.write(graphics);
+            this.drawSupportPanel(graphics);
+            this.drawStatusPanel(graphics);
+            this.drawModulesPanel(graphics);
          }
 
          this.renderLogo(graphics);
@@ -251,7 +251,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             this.renderTooltip(graphics, hoveredTooltip, uiMouseX, uiMouseY);
          }
 
-         this.update(graphics);
+         this.drawModCount(graphics);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
          bK.init("title.render", perf);
@@ -263,10 +263,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       if (ScreenMacroStopWidget.isVisible(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
          List<autismclient.gui.f.NetHelper> avoid = new ArrayList<>();
-         avoid.add(autismclient.gui.f.NetHelper.init(this.put, this.add, this.clear, this.reset));
+         avoid.add(autismclient.gui.f.NetHelper.init(this.stackX, this.stackY, this.stackW, this.cardH));
          if (this.flush_Z) {
-            avoid.add(autismclient.gui.f.NetHelper.init(this.valid, this.size, this.data, this.value));
-            avoid.add(autismclient.gui.f.NetHelper.init(this.state, this.queue, this.buffer, this.entry));
+            avoid.add(autismclient.gui.f.NetHelper.init(this.statusX, this.statusY, this.statusW, this.statusH));
+            avoid.add(autismclient.gui.f.NetHelper.init(this.modulesX, this.modulesY, this.modulesW, this.modulesH));
          }
 
          for (AutismTitleScreen.Inner_StreamUtil button : this.buttons) {
@@ -346,7 +346,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       this.layout();
 
       for (AutismTitleScreen.Inner_StreamUtil button : this.buttons) {
-         if (button.load(uiMouseX, uiMouseY)) {
+         if (button.handleClick(uiMouseX, uiMouseY)) {
             return true;
          }
       }
@@ -390,26 +390,26 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    private void layout() {
       int screenW = cA.init_I();
       int screenH = cA.load_I();
-      if (this.layoutDirty || screenW != this.layoutWidth || screenH != this.set) {
+      if (this.layoutDirty || screenW != this.layoutWidth || screenH != this.layoutHeight) {
          this.layoutDirty = false;
          this.layoutWidth = screenW;
-         this.set = screenH;
+         this.layoutHeight = screenH;
          boolean compact = screenH < 320;
          int margin = 8;
-         this.clear = Math.min(296, Math.max(180, screenW - margin * 2));
-         this.reset = Math.max(20, Math.round(144.0F * Math.min(1.0F, (this.clear - 16) / 516.0F)));
-         int rowW = Math.min(this.clear - 28, compact ? 220 : 240);
+         this.stackW = Math.min(296, Math.max(180, screenW - margin * 2));
+         this.cardH = Math.max(20, Math.round(144.0F * Math.min(1.0F, (this.stackW - 16) / 516.0F)));
+         int rowW = Math.min(this.stackW - 28, compact ? 220 : 240);
          int rowH = compact ? 18 : 22;
          int rowGap = compact ? 3 : 5;
          int cardToRows = compact ? 6 : 10;
-         int stackH = this.reset + cardToRows + rowH * 5 + rowGap * 4;
+         int stackH = this.cardH + cardToRows + rowH * 5 + rowGap * 4;
          int utilitySize = compact ? 16 : 20;
          int bottomBarH = utilitySize + margin + 14;
-         this.put = (screenW - this.clear) / 2;
-         this.add = Math.max(margin, (screenH - stackH - bottomBarH) / 2);
-         int rowTop = this.add + this.reset + cardToRows;
-         int rowX = this.put + (this.clear - rowW) / 2;
-         int sideW = Math.min(172, (screenW - this.clear) / 2 - margin * 2);
+         this.stackX = (screenW - this.stackW) / 2;
+         this.stackY = Math.max(margin, (screenH - stackH - bottomBarH) / 2);
+         int rowTop = this.stackY + this.cardH + cardToRows;
+         int rowX = this.stackX + (this.stackW - rowW) / 2;
+         int sideW = Math.min(172, (screenW - this.stackW) / 2 - margin * 2);
          this.flush_Z = sideW >= 104 && screenH >= 250;
          Component disabledReason = this.multiplayerDisabledReason();
          boolean multiplayerAllowed = disabledReason == null;
@@ -417,8 +417,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          AutismTitleScreen.Inner_StreamUtil singleplayer = new AutismTitleScreen.Inner_StreamUtil(
                rowX, rowTop, rowW, rowH, Component.translatable("menu.singleplayer"), true, () -> this.minecraft.gui.setScreen(new SelectWorldScreen(this))
             )
-            .init(1);
-         singleplayer.init(SINGLEPLAYER_TEXTURE, 248, 24, 124, 12);
+            .withRowIndex(1);
+         singleplayer.withLabelTexture(SINGLEPLAYER_TEXTURE, 248, 24, 124, 12);
          this.buttons.add(singleplayer);
          AutismTitleScreen.Inner_StreamUtil multiplayer = new AutismTitleScreen.Inner_StreamUtil(
                rowX, rowTop + rowH + rowGap, rowW, rowH, Component.translatable("menu.multiplayer"), multiplayerAllowed, () -> {
@@ -426,10 +426,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                   this.minecraft.gui.setScreen(next);
                }
             )
-            .init(disabledReason)
-            .init(this.badgeText())
-            .init(2);
-         multiplayer.init(MULTIPLAYER_TEXTURE, 222, 24, 111, 12);
+            .withTooltip(disabledReason)
+            .withRightBadge(this.badgeText())
+            .withRowIndex(2);
+         multiplayer.withLabelTexture(MULTIPLAYER_TEXTURE, 222, 24, 111, 12);
          this.buttons.add(multiplayer);
          AutismTitleScreen.Inner_StreamUtil realms = new AutismTitleScreen.Inner_StreamUtil(
                rowX,
@@ -440,9 +440,9 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                multiplayerAllowed,
                () -> this.minecraft.gui.setScreen(new RealmsMainScreen(this))
             )
-            .init(disabledReason)
-            .init(3);
-         realms.init(REALMS_TEXTURE, 136, 24, 68, 12);
+            .withTooltip(disabledReason)
+            .withRowIndex(3);
+         realms.withLabelTexture(REALMS_TEXTURE, 136, 24, 68, 12);
          this.buttons.add(realms);
          AutismTitleScreen.Inner_StreamUtil options = new AutismTitleScreen.Inner_StreamUtil(
                rowX,
@@ -453,37 +453,37 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                true,
                () -> this.minecraft.gui.setScreen(Compat263.newOptionsScreen(this, this.minecraft.options, false))
             )
-            .init(4);
-         options.init(OPTIONS_TEXTURE, 138, 24, 69, 12);
+            .withRowIndex(4);
+         options.withLabelTexture(OPTIONS_TEXTURE, 138, 24, 69, 12);
          this.buttons.add(options);
          AutismTitleScreen.Inner_StreamUtil quit = new AutismTitleScreen.Inner_StreamUtil(
                rowX, rowTop + (rowH + rowGap) * 4, rowW, rowH, Component.translatable("menu.quit"), true, () -> this.minecraft.stop()
             )
-            .init(5);
-         quit.init(QUIT_TEXTURE, 74, 24, 37, 12);
+            .withRowIndex(5);
+         quit.withLabelTexture(QUIT_TEXTURE, 74, 24, 37, 12);
          this.buttons.add(quit);
          this.layoutUtilityButtons(screenW, screenH, margin, utilitySize);
          if (!this.flush_Z) {
             this.statusRows.clear();
             this.moduleRows.clear();
          } else {
-            int maxModulesPanelH = screenH - bottomBarH - this.add;
+            int maxModulesPanelH = screenH - bottomBarH - this.stackY;
             int fixedModulesH = 44;
             int maxCategoryRows = Math.max(1, (maxModulesPanelH - fixedModulesH - 3) / 12);
             this.buildModuleRows(maxCategoryRows);
-            this.write();
-            this.cache = 0;
+            this.rebuildStatusRows();
+            this.statusLabelW = 0;
             int statusValueW = 0;
 
             for (AutismTitleScreen.Inner_ConfigStore row : this.statusRows) {
-               this.cache = Math.max(this.cache, k.init(this.font, row.label(), autismclient.gui.f.a.DataUtil.load, 0));
+               this.statusLabelW = Math.max(this.statusLabelW, k.init(this.font, row.label(), autismclient.gui.f.a.DataUtil.load, 0));
                statusValueW = Math.max(statusValueW, k.init(this.font, row.value().get(), autismclient.gui.f.a.DataUtil.init, 0));
             }
 
-            this.data = this.cache + statusValueW + 24;
-            this.value = 5 + this.statusRows.size() * 11 + 5 - 1;
-            this.valid = margin;
-            this.size = this.add;
+            this.statusW = this.statusLabelW + statusValueW + 24;
+            this.statusH = 5 + this.statusRows.size() * 11 + 5 - 1;
+            this.statusX = margin;
+            this.statusY = this.stackY;
             int supportRowH = Math.max(compact ? 16 : 20, k.init(autismclient.gui.f.a.DataUtil.load) + 8);
             int supportRowGap = 3;
             int supportIcon = Math.min(14, supportRowH - 6);
@@ -494,33 +494,33 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                supportTextW = Math.max(supportTextW, k.init(this.font, label, autismclient.gui.f.a.DataUtil.load, 0));
             }
 
-            this.next = supportTextW + supportIcon + 22;
-            this.prev = 5 + 2 * supportRowH + supportRowGap + 5;
-            this.start = margin;
-            this.stop = this.size + this.value + 6;
-            int supportRowY = this.stop + 5;
-            this.init(
-               this.start + 4,
+            this.supportW = supportTextW + supportIcon + 22;
+            this.supportH = 5 + 2 * supportRowH + supportRowGap + 5;
+            this.supportX = margin;
+            this.supportY = this.statusY + this.statusH + 6;
+            int supportRowY = this.supportY + 5;
+            this.addLinkButton(
+               this.supportX + 4,
                supportRowY,
-               this.next - 8,
+               this.supportW - 8,
                supportRowH,
                supportLabels[0],
                pop_Identifier,
                () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
                "https://discord.gg/V8GsKP6k5u"
             );
-            this.init(
-               this.start + 4,
+            this.addLinkButton(
+               this.supportX + 4,
                supportRowY + supportRowH + supportRowGap,
-               this.next - 8,
+               this.supportW - 8,
                supportRowH,
                supportLabels[1],
                pop_Identifier,
                () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu"),
                "https://discord.com/invite/JZ7XgUCtBu"
             );
-            String activeText = Integer.toString(this.count);
-            String activeSuffix = " / " + this.index + " ACTIVE";
+            String activeText = Integer.toString(this.activeModules);
+            String activeSuffix = " / " + this.totalModules + " ACTIVE";
             int modulesContentW = 7
                + k.init(this.font, activeText, autismclient.gui.f.a.DataUtil.read, 0)
                + 3
@@ -544,18 +544,18 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             }
 
             modulesContentW = Math.max(modulesContentW, 10 + k.init(this.font, "OPEN MANAGER", autismclient.gui.f.a.DataUtil.load, 0) + 20);
-            this.buffer = Math.min(sideW, modulesContentW);
-            this.entry = fixedModulesH + 3 + this.moduleRows.size() * 12;
-            this.state = screenW - margin - this.buffer;
-            this.queue = this.add;
+            this.modulesW = Math.min(sideW, modulesContentW);
+            this.modulesH = fixedModulesH + 3 + this.moduleRows.size() * 12;
+            this.modulesX = screenW - margin - this.modulesW;
+            this.modulesY = this.stackY;
             AutismTitleScreen.Inner_StreamUtil openManager = new AutismTitleScreen.Inner_StreamUtil(
-                  this.state + 5, this.queue + this.entry - 5 - 16, this.buffer - 10, 16, Component.literal("OPEN MANAGER"), true, () -> {
+                  this.modulesX + 5, this.modulesY + this.modulesH - 5 - 16, this.modulesW - 10, 16, Component.literal("OPEN MANAGER"), true, () -> {
                      if (!aD.read_Z()) {
                         this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.Inner_DataUtil.TITLE_SETUP));
                      }
                   }
                )
-               .init(0)
+               .withRowIndex(0)
                .animated(260, true);
             openManager.write_Z = false;
             this.buttons.add(openManager);
@@ -563,20 +563,20 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
    }
 
-   private void init(int x, int y, int w, int h, String text, Identifier icon, Runnable action, String url) {
+   private void addLinkButton(int x, int y, int w, int h, String text, Identifier icon, Runnable action, String url) {
       this.buttons
          .add(
             new AutismTitleScreen.Inner_StreamUtil(x, y, w, h, Component.literal(text), true, action)
                .init_UtilCore_StreamUti_Identifier(icon, 32, 32, 14)
-               .init()
-               .init(Component.literal(url))
+               .asCompact()
+               .withTooltip(Component.literal(url))
          );
    }
 
    private void layoutUtilityButtons(int screenW, int screenH, int margin, int utilitySize) {
       List<AutismTitleScreen.Inner_TaskQueue> all = new ArrayList<>();
       if (this.modMenuLoaded) {
-         all.add(new AutismTitleScreen.Inner_TaskQueue("MODS", "", MODS_ICON, null, 32, () -> this.update(), Component.literal("Mod Menu")));
+         all.add(new AutismTitleScreen.Inner_TaskQueue("MODS", "", MODS_ICON, null, 32, () -> this.openModsScreen(), Component.literal("Mod Menu")));
       }
 
       all.add(
@@ -619,8 +619,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          )
       );
       int gap = 4;
-      this.node = all.isEmpty() ? 0 : all.size() * utilitySize + (all.size() - 1) * gap;
-      int x = screenW - margin - this.node;
+      this.utilityRowW = all.isEmpty() ? 0 : all.size() * utilitySize + (all.size() - 1) * gap;
+      int x = screenW - margin - this.utilityRowW;
       int y = screenH - margin - utilitySize;
 
       for (int i = 0; i < all.size(); i++) {
@@ -632,10 +632,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       AutismTitleScreen.Inner_StreamUtil button = new AutismTitleScreen.Inner_StreamUtil(
             x, y, size, size, Component.literal(spec.label()), spec.action() != null, spec.action()
          )
-         .load(spec.load_Str())
-         .init(spec.tooltip());
+         .withSubtitle(spec.load_Str())
+         .withTooltip(spec.tooltip());
       if (spec.load_Identifier() != null) {
-         button.load(spec.load_Identifier());
+         button.withSprite(spec.load_Identifier());
       } else if (spec.icon() != null) {
          button.withIcon(spec.icon(), spec.iconSize());
       }
@@ -660,7 +660,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
    }
 
-   private void write() {
+   private void rebuildStatusRows() {
       this.statusRows.clear();
       this.statusRows.add(new AutismTitleScreen.Inner_ConfigStore("USER:", () -> this.minecraft.getUser().getName()));
       this.statusRows.add(new AutismTitleScreen.Inner_ConfigStore("BUILD:", AutismTitleScreen::buildVersion));
@@ -689,8 +689,8 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          }
       }
 
-      this.index = total;
-      this.count = active;
+      this.totalModules = total;
+      this.activeModules = active;
       if (all.size() <= maxCategoryRows) {
          this.moduleRows.addAll(all);
       } else {
@@ -723,18 +723,18 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       return Math.round((1.0F - progress) * 5.0F);
    }
 
-   private static int init(int color, float progress) {
+   private static int fadeColor(int color, float progress) {
       return autismclient.gui.f.PacketUtil.init(color, progress);
    }
 
    private void renderLogo(GuiGraphicsExtractor graphics) {
       float p = this.introProgress(0);
       if (!(p <= 0.0F)) {
-         float scale = Math.min(1.0F, (this.clear - 16) / 516.0F);
+         float scale = Math.min(1.0F, (this.stackW - 16) / 516.0F);
          int drawW = Math.max(1, Math.round(516.0F * scale));
          int drawH = Math.max(1, Math.round(144.0F * scale));
-         int logoX = UiLayoutMath.centerOffset(this.put, this.clear, drawW);
-         int logoY = this.add + introOffset(p) + Math.max(0, (this.reset - drawH) / 2);
+         int logoX = UiLayoutMath.centerOffset(this.stackX, this.stackW, drawW);
+         int logoY = this.stackY + introOffset(p) + Math.max(0, (this.cardH - drawH) / 2);
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
             ThemeTextureRecolorer.init(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT),
@@ -753,57 +753,57 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
    }
 
-   private void load(GuiGraphicsExtractor graphics) {
+   private void drawSupportPanel(GuiGraphicsExtractor graphics) {
       float p = this.introProgress(140);
       if (!(p <= 0.0F)) {
-         this.init(graphics, this.start, this.stop + introOffset(p), this.next, this.prev, null, p);
+         this.drawPanel(graphics, this.supportX, this.supportY + introOffset(p), this.supportW, this.supportH, null, p);
       }
    }
 
-   private void read(GuiGraphicsExtractor graphics) {
+   private void drawStatusPanel(GuiGraphicsExtractor graphics) {
       float p = this.introProgress(200);
       if (!(p <= 0.0F)) {
-         int x = this.valid;
-         int y = this.size + introOffset(p);
-         this.init(graphics, x, y, this.data, this.value, null, p);
+         int x = this.statusX;
+         int y = this.statusY + introOffset(p);
+         this.drawPanel(graphics, x, y, this.statusW, this.statusH, null, p);
          int rowY = y + 5;
-         int labelColor = init(this.theme.load(l.update), p * 0.85F);
-         int valueColor = init(this.theme.load(l.read), p);
+         int labelColor = fadeColor(this.theme.load(l.update), p * 0.85F);
+         int valueColor = fadeColor(this.theme.load(l.read), p);
 
          for (AutismTitleScreen.Inner_ConfigStore row : this.statusRows) {
             k.init(graphics, this.font, row.label(), autismclient.gui.f.a.DataUtil.load, labelColor, x + 6, rowY, false);
-            int valueX = x + 12 + this.cache;
-            String value = this.ellipsize(row.value().get(), x + this.data - 6 - valueX, autismclient.gui.f.a.DataUtil.init, valueColor);
+            int valueX = x + 12 + this.statusLabelW;
+            String value = this.ellipsize(row.value().get(), x + this.statusW - 6 - valueX, autismclient.gui.f.a.DataUtil.init, valueColor);
             k.init(graphics, this.font, value, autismclient.gui.f.a.DataUtil.init, valueColor, valueX, rowY + 1, false);
             rowY += 11;
          }
       }
    }
 
-   private void write(GuiGraphicsExtractor graphics) {
+   private void drawModulesPanel(GuiGraphicsExtractor graphics) {
       float p = this.introProgress(260);
       if (!(p <= 0.0F)) {
-         int x = this.state;
-         int y = this.queue + introOffset(p);
-         this.init(graphics, x, y, this.buffer, this.entry, null, p);
-         int accent = init(this.theme.load(l.update), p);
-         int muted = init(this.theme.load(l.write), p);
-         int body = init(this.theme.load(l.read), p);
+         int x = this.modulesX;
+         int y = this.modulesY + introOffset(p);
+         this.drawPanel(graphics, x, y, this.modulesW, this.modulesH, null, p);
+         int accent = fadeColor(this.theme.load(l.update), p);
+         int muted = fadeColor(this.theme.load(l.write), p);
+         int body = fadeColor(this.theme.load(l.read), p);
          int bigY = y + 5;
-         String activeText = Integer.toString(this.count);
+         String activeText = Integer.toString(this.activeModules);
          k.init(graphics, this.font, activeText, autismclient.gui.f.a.DataUtil.read, accent, x + 7, bigY, false);
          int activeW = k.init(this.font, activeText, autismclient.gui.f.a.DataUtil.read, accent);
          k.init(
             graphics,
             this.font,
-            " / " + this.index + " ACTIVE",
+            " / " + this.totalModules + " ACTIVE",
             autismclient.gui.f.a.DataUtil.init,
             muted,
             x + 7 + activeW + 3,
             bigY + (k.init(autismclient.gui.f.a.DataUtil.read) - k.init(autismclient.gui.f.a.DataUtil.init)),
             false
          );
-         autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(graphics, x + 5, bigY + 15, this.buffer - 10, init(this.theme.set(), p));
+         autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(graphics, x + 5, bigY + 15, this.modulesW - 10, fadeColor(this.theme.set(), p));
          int rowY = bigY + 15 + 3;
 
          for (AutismTitleScreen.Inner_DataUtil row : this.moduleRows) {
@@ -813,9 +813,9 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                String count = row.active() + "/" + row.load();
                int countColor = row.active() > 0 ? accent : muted;
                int countW = k.init(this.font, count, autismclient.gui.f.a.DataUtil.init, countColor);
-               String name = this.ellipsize(row.label(), this.buffer - countW - 20, autismclient.gui.f.a.DataUtil.init, body);
+               String name = this.ellipsize(row.label(), this.modulesW - countW - 20, autismclient.gui.f.a.DataUtil.init, body);
                k.init(graphics, this.font, name, autismclient.gui.f.a.DataUtil.init, body, x + 6, rowY + 2, false);
-               k.init(graphics, this.font, count, autismclient.gui.f.a.DataUtil.init, countColor, x + this.buffer - 6 - countW, rowY + 2, false);
+               k.init(graphics, this.font, count, autismclient.gui.f.a.DataUtil.init, countColor, x + this.modulesW - 6 - countW, rowY + 2, false);
             }
 
             rowY += 12;
@@ -823,11 +823,11 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, String header, float p) {
+   private void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int w, int h, String header, float p) {
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), init(this.theme.poll(), p), init(this.theme.set(), p)
+         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fadeColor(this.theme.poll(), p), fadeColor(this.theme.set(), p)
       );
-      int accent = init(this.theme.load(l.update), p);
+      int accent = fadeColor(this.theme.load(l.update), p);
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(graphics, x + 1, y + 1, 5, accent);
       autismclient.gui.f.PacketUtil.load(graphics, x + 1, y + 1, 5, accent);
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(graphics, x + w - 6, y + 1, 5, accent);
@@ -843,15 +843,15 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, Identifier fontId) {
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, Identifier fontId) {
       k.init(graphics, this.font, text == null ? "" : text, fontId, color, x, y, false);
    }
 
-   private void update(GuiGraphicsExtractor graphics) {
+   private void drawModCount(GuiGraphicsExtractor graphics) {
       float p = this.introProgress(320);
       if (!(p <= 0.0F)) {
          Identifier fontId = autismclient.gui.f.a.DataUtil.init;
-         int muted = init(this.theme.load(l.write), p);
+         int muted = fadeColor(this.theme.load(l.write), p);
          int y = cA.load_I() - k.init(fontId) - 3;
          k.init(graphics, this.font, this.modCountText, fontId, muted, 4, y, false);
       }
@@ -875,7 +875,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       return trimmed + ".";
    }
 
-   private void update() {
+   private void openModsScreen() {
       try {
          Class<?> apiClass = Class.forName("com.terraformersmc.modmenu.api.ModMenuApi");
          Method createMethod = apiClass.getMethod("createModsScreen", Screen.class);
@@ -946,22 +946,22 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       private int iconTextureSize = 32;
       private Identifier sprite;
       private Identifier read_Identifier;
-      private int sync = 32;
-      private int flush = 32;
-      private int close = 14;
+      private int iconTextureW = 32;
+      private int iconTextureH = 32;
+      private int iconDrawSize = 14;
       private Identifier labelTexture;
-      private int open;
-      private int poll;
-      private int push;
-      private int pop;
+      private int labelTextureW;
+      private int labelTextureH;
+      private int labelDrawW;
+      private int labelDrawH;
       private Component tooltip;
       private String rightBadge;
-      private int tick = -1;
+      private int unusedRowIndex = -1;
       private boolean load_Z;
       private String subtitle = "";
       private boolean read_Z;
       private boolean write_Z = true;
-      private int run = 320;
+      private int introDelayMs = 320;
       private boolean update_Z;
 
       private Inner_StreamUtil(int x, int y, int width, int height, Component label, boolean enabled, Runnable onPress) {
@@ -974,17 +974,17 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          this.onPress = onPress;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init(Component tooltip) {
+      private AutismTitleScreen.Inner_StreamUtil withTooltip(Component tooltip) {
          this.tooltip = tooltip;
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init(String rightBadge) {
+      private AutismTitleScreen.Inner_StreamUtil withRightBadge(String rightBadge) {
          this.rightBadge = rightBadge;
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init(Identifier icon) {
+      private AutismTitleScreen.Inner_StreamUtil unusedWithIcon(Identifier icon) {
          return this.withIcon(icon, 32);
       }
 
@@ -994,51 +994,51 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil load(Identifier sprite) {
+      private AutismTitleScreen.Inner_StreamUtil withSprite(Identifier sprite) {
          this.sprite = sprite;
          return this;
       }
 
       private AutismTitleScreen.Inner_StreamUtil init_UtilCore_StreamUti_Identifier(Identifier icon, int textureWidth, int textureHeight, int drawSize) {
          this.read_Identifier = icon;
-         this.sync = Math.max(1, textureWidth);
-         this.flush = Math.max(1, textureHeight);
-         this.close = Math.max(1, drawSize);
+         this.iconTextureW = Math.max(1, textureWidth);
+         this.iconTextureH = Math.max(1, textureHeight);
+         this.iconDrawSize = Math.max(1, drawSize);
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init(Identifier labelTexture, int labelTextureWidth, int labelTextureHeight, int labelDrawWidth, int labelDrawHeight) {
+      private AutismTitleScreen.Inner_StreamUtil withLabelTexture(Identifier labelTexture, int labelTextureWidth, int labelTextureHeight, int labelDrawWidth, int labelDrawHeight) {
          this.labelTexture = labelTexture;
-         this.open = labelTextureWidth;
-         this.poll = labelTextureHeight;
-         this.push = labelDrawWidth;
-         this.pop = labelDrawHeight;
+         this.labelTextureW = labelTextureWidth;
+         this.labelTextureH = labelTextureHeight;
+         this.labelDrawW = labelDrawWidth;
+         this.labelDrawH = labelDrawHeight;
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init(int rowIndex) {
-         this.tick = rowIndex;
+      private AutismTitleScreen.Inner_StreamUtil withRowIndex(int rowIndex) {
+         this.unusedRowIndex = rowIndex;
          if (rowIndex > 0) {
-            this.run = 60 + rowIndex * 50;
+            this.introDelayMs = 60 + rowIndex * 50;
          }
 
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil init() {
+      private AutismTitleScreen.Inner_StreamUtil asCompact() {
          this.read_Z = true;
-         this.run = 140;
+         this.introDelayMs = 140;
          this.update_Z = true;
          return this;
       }
 
       private AutismTitleScreen.Inner_StreamUtil animated(int delayMs, boolean slide) {
-         this.run = delayMs;
+         this.introDelayMs = delayMs;
          this.update_Z = slide;
          return this;
       }
 
-      private AutismTitleScreen.Inner_StreamUtil load(String subtitle) {
+      private AutismTitleScreen.Inner_StreamUtil withSubtitle(String subtitle) {
          this.load_Z = true;
          this.subtitle = subtitle == null ? "" : subtitle;
          return this;
@@ -1048,12 +1048,12 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          return mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
       }
 
-      private boolean load(float mouseX, float mouseY) {
+      private boolean handleClick(float mouseX, float mouseY) {
          if (!this.contains(mouseX, mouseY)) {
             return false;
          }
 
-         if (AutismTitleScreen.this.introProgress(this.run) < 1.0F) {
+         if (AutismTitleScreen.this.introProgress(this.introDelayMs) < 1.0F) {
             return false;
          }
 
@@ -1070,27 +1070,27 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
       }
 
       private void render(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float delta) {
-         float p = AutismTitleScreen.this.introProgress(this.run);
+         float p = AutismTitleScreen.this.introProgress(this.introDelayMs);
          if (!(p <= 0.0F)) {
             if (this.load_Z) {
-               this.write(graphics, mouseX, mouseY, p);
+               this.renderSubtitled(graphics, mouseX, mouseY, p);
             } else if (this.read_Z) {
-               this.read(graphics, mouseX, mouseY, p);
+               this.renderCompact(graphics, mouseX, mouseY, p);
             } else {
-               this.load(graphics, mouseX, mouseY, p);
+               this.renderStandard(graphics, mouseX, mouseY, p);
             }
          }
       }
 
-      private void load(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
+      private void renderStandard(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.enabled && this.contains(mouseX, mouseY);
          int yDraw = this.y + (this.update_Z ? AutismTitleScreen.introOffset(p) : 0);
          int border = ThemePaletteManager.recolor(this.enabled ? -1721357268 : 1430596138, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.x, yDraw, this.width, this.height),
-            AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -1207302650 : -1873801200, ThemePaletteManager.ColorRole.BUTTON), p),
-            AutismTitleScreen.init(border, p)
+            AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -1207302650 : -1873801200, ThemePaletteManager.ColorRole.BUTTON), p),
+            AutismTitleScreen.fadeColor(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
             autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.x, this.y, this.width, this.height)), hovered
@@ -1103,10 +1103,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             );
             int accent = AutismTitleScreen.this.theme.load(l.update);
             autismclient.gui.f.PacketUtil.load(
-               graphics, autismclient.gui.f.NetHelper.init(this.x, yDraw, this.width, this.height), AutismTitleScreen.init(accent, hoverT * 0.8F * p)
+               graphics, autismclient.gui.f.NetHelper.init(this.x, yDraw, this.width, this.height), AutismTitleScreen.fadeColor(accent, hoverT * 0.8F * p)
             );
             autismclient.gui.f.PacketUtil.init(
-               graphics, autismclient.gui.f.NetHelper.init(this.x, yDraw, 2, this.height), AutismTitleScreen.init(accent, hoverT * p)
+               graphics, autismclient.gui.f.NetHelper.init(this.x, yDraw, 2, this.height), AutismTitleScreen.fadeColor(accent, hoverT * p)
             );
             if (this.write_Z) {
                int slide = Math.round(hoverT * 3.0F);
@@ -1114,21 +1114,21 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                   graphics,
                   autismclient.gui.f.NetHelper.init(this.x + 4 + slide, yDraw + (this.height - 8) / 2, 7, 8),
                   false,
-                  AutismTitleScreen.init(accent, hoverT * p)
+                  AutismTitleScreen.fadeColor(accent, hoverT * p)
                );
             }
          }
 
          String marker = this.rightBadge != null && !this.rightBadge.isBlank() ? this.rightBadge : null;
-         if (this.labelTexture != null && this.open > 0 && this.poll > 0 && this.push > 0 && this.pop > 0) {
+         if (this.labelTexture != null && this.labelTextureW > 0 && this.labelTextureH > 0 && this.labelDrawW > 0 && this.labelDrawH > 0) {
             int maxW = Math.max(1, this.width - 8);
             int maxH = Math.max(1, this.height <= 18 ? this.height - 4 : this.height - 8);
-            float scale = Math.min(1.0F, Math.min((float)maxW / this.push, (float)maxH / this.pop));
-            int drawW = Math.max(1, Math.round(this.push * scale));
-            int drawH = Math.max(1, Math.round(this.pop * scale));
+            float scale = Math.min(1.0F, Math.min((float)maxW / this.labelDrawW, (float)maxH / this.labelDrawH));
+            int drawW = Math.max(1, Math.round(this.labelDrawW * scale));
+            int drawH = Math.max(1, Math.round(this.labelDrawH * scale));
             int textX = this.x + (this.width - drawW) / 2;
             int textY = yDraw + (this.height - drawH) / 2;
-            int textColor = AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
+            int textColor = AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                this.labelTexture,
@@ -1138,21 +1138,21 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                0.0F,
                drawW,
                drawH,
-               this.open,
-               this.poll,
-               this.open,
-               this.poll,
+               this.labelTextureW,
+               this.labelTextureH,
+               this.labelTextureW,
+               this.labelTextureH,
                textColor
             );
          } else if (this.label != null) {
             String text = this.label.getString();
-            int textColor = AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
+            int textColor = AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
             int textY = UiLayoutMath.centerTextY(yDraw, this.height, k.init(fontId), 1);
             String drawText = text;
             int textX;
             if (this.read_Identifier != null) {
-               int iconSize = Math.min(this.close, Math.max(1, Math.min(this.height - 2, this.width - 12)));
+               int iconSize = Math.min(this.iconDrawSize, Math.max(1, Math.min(this.height - 2, this.width - 12)));
                int iconX = this.x + 3;
                int iconY = yDraw + (this.height - iconSize) / 2;
                graphics.blit(
@@ -1164,11 +1164,11 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                   0.0F,
                   iconSize,
                   iconSize,
-                  this.sync,
-                  this.flush,
-                  this.sync,
-                  this.flush,
-                  AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p)
+                  this.iconTextureW,
+                  this.iconTextureH,
+                  this.iconTextureW,
+                  this.iconTextureH,
+                  AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p)
                );
                textX = iconX + iconSize + 4;
                int maxTextW = Math.max(1, this.x + this.width - 4 - textX);
@@ -1183,23 +1183,23 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
 
          if (marker != null && !marker.isBlank()) {
             Identifier fontId = autismclient.gui.f.a.DataUtil.load;
-            int markerColor = AutismTitleScreen.init(this.enabled ? ThemePaletteManager.recolor(-11052, ThemePaletteManager.ColorRole.ACCENT) : -8362651, p);
+            int markerColor = AutismTitleScreen.fadeColor(this.enabled ? ThemePaletteManager.recolor(-11052, ThemePaletteManager.ColorRole.ACCENT) : -8362651, p);
             int markerW = k.init(AutismTitleScreen.this.font, marker, fontId, markerColor);
             int markerX = this.x + this.width - markerW - 6;
             int markerY = UiLayoutMath.centerTextY(yDraw, this.height, k.init(fontId), 1);
-            AutismTitleScreen.this.init(graphics, marker, markerX, markerY, markerColor, fontId);
+            AutismTitleScreen.this.drawText(graphics, marker, markerX, markerY, markerColor, fontId);
          }
       }
 
-      private void read(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
+      private void renderCompact(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.enabled && this.contains(mouseX, mouseY);
          int yDraw = this.y + (this.update_Z ? AutismTitleScreen.introOffset(p) : 0);
          int border = ThemePaletteManager.recolor(-1721357268, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.x, yDraw, this.width, this.height),
-            AutismTitleScreen.init(ThemePaletteManager.recolor(-1878391290, ThemePaletteManager.ColorRole.BUTTON), p),
-            AutismTitleScreen.init(border, p)
+            AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(-1878391290, ThemePaletteManager.ColorRole.BUTTON), p),
+            AutismTitleScreen.fadeColor(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
             autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.x, this.y, this.width, this.height)), hovered
@@ -1213,15 +1213,15 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             autismclient.gui.f.PacketUtil.load(
                graphics,
                autismclient.gui.f.NetHelper.init(this.x, yDraw, this.width, this.height),
-               AutismTitleScreen.init(AutismTitleScreen.this.theme.load(l.update), hoverT * 0.8F * p)
+               AutismTitleScreen.fadeColor(AutismTitleScreen.this.theme.load(l.update), hoverT * 0.8F * p)
             );
          }
 
          if (this.read_Identifier != null) {
-            int iconSize = Math.min(this.close, Math.max(1, this.height - 6));
+            int iconSize = Math.min(this.iconDrawSize, Math.max(1, this.height - 6));
             int iconX = this.x + 5;
             int iconY = yDraw + (this.height - iconSize) / 2;
-            int tint = AutismTitleScreen.init(ThemePaletteManager.recolor(-528658, ThemePaletteManager.ColorRole.TEXT), p);
+            int tint = AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(-528658, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                ThemeTextureRecolorer.themed(this.read_Identifier),
@@ -1231,10 +1231,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                0.0F,
                iconSize,
                iconSize,
-               this.sync,
-               this.flush,
-               this.sync,
-               this.flush,
+               this.iconTextureW,
+               this.iconTextureH,
+               this.iconTextureW,
+               this.iconTextureH,
                tint
             );
             if (hoverT > 0.001F) {
@@ -1247,31 +1247,31 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                   0.0F,
                   iconSize,
                   iconSize,
-                  this.sync,
-                  this.flush,
-                  this.sync,
-                  this.flush,
-                  AutismTitleScreen.init(AutismTitleScreen.this.theme.load(l.update), hoverT * p)
+                  this.iconTextureW,
+                  this.iconTextureH,
+                  this.iconTextureW,
+                  this.iconTextureH,
+                  AutismTitleScreen.fadeColor(AutismTitleScreen.this.theme.load(l.update), hoverT * p)
                );
             }
          }
 
-         int textX = this.x + 5 + Math.min(this.close, Math.max(1, this.height - 6)) + 5;
+         int textX = this.x + 5 + Math.min(this.iconDrawSize, Math.max(1, this.height - 6)) + 5;
          int maxTextW = Math.max(1, this.x + this.width - 4 - textX);
-         int lineColor = AutismTitleScreen.init(AutismTitleScreen.this.theme.load(l.read), p);
+         int lineColor = AutismTitleScreen.fadeColor(AutismTitleScreen.this.theme.load(l.read), p);
          String line = k.init(AutismTitleScreen.this.font, this.label.getString(), maxTextW, autismclient.gui.f.a.DataUtil.load, lineColor);
          int lineY = UiLayoutMath.centerTextY(yDraw, this.height, k.init(autismclient.gui.f.a.DataUtil.load), 1);
          k.init(graphics, AutismTitleScreen.this.font, line, autismclient.gui.f.a.DataUtil.load, lineColor, textX, lineY, false);
       }
 
-      private void write(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
+      private void renderSubtitled(GuiGraphicsExtractor graphics, float mouseX, float mouseY, float p) {
          boolean hovered = this.enabled && this.contains(mouseX, mouseY);
          int border = ThemePaletteManager.recolor(this.enabled ? -1721357268 : 1430596138, ThemePaletteManager.ColorRole.OUTLINE);
          autismclient.gui.f.PacketUtil.init(
             graphics,
             autismclient.gui.f.NetHelper.init(this.x, this.y, this.width, this.height),
-            AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -1727527675 : 1716523024, ThemePaletteManager.ColorRole.BUTTON), p),
-            AutismTitleScreen.init(border, p)
+            AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -1727527675 : 1716523024, ThemePaletteManager.ColorRole.BUTTON), p),
+            AutismTitleScreen.fadeColor(border, p)
          );
          float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(
             autismclient.gui.ui.HoverTransitionCache.boundsKey(autismclient.gui.f.NetHelper.init(this.x, this.y, this.width, this.height)), hovered
@@ -1294,7 +1294,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
             int iconSize = Math.min(16, Math.max(12, this.height - 7));
             int iconX = this.x + (this.width - iconSize) / 2;
             int iconY = this.y + (this.height - iconSize) / 2;
-            int iconTint = AutismTitleScreen.init(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
+            int iconTint = AutismTitleScreen.fadeColor(ThemePaletteManager.recolor(this.enabled ? -528658 : -8362651, ThemePaletteManager.ColorRole.TEXT), p);
             graphics.blit(
                RenderPipelines.GUI_TEXTURED,
                ThemeTextureRecolorer.themed(this.icon),

@@ -9,21 +9,21 @@ import net.minecraft.resources.ResourceKey;
 public final class RegistryCompatGuard {
    private static final int MAX_WARNINGS = 64;
    private static final ThreadLocal<RegistryCompatGuard.Inner_DataUtil> STATE = new ThreadLocal<>();
-   private static final ThreadLocal<ConnectionPrivacyRegistry.ConnectionSession> load = new ThreadLocal<>();
+   private static final ThreadLocal<ConnectionPrivacyRegistry.ConnectionSession> currentSession = new ThreadLocal<>();
 
    private RegistryCompatGuard() {
    }
 
    public static void enter(ConnectionPrivacyRegistry.ConnectionSession context) {
-      load.set(context);
+      currentSession.set(context);
    }
 
    public static void exit() {
-      load.remove();
+      currentSession.remove();
    }
 
    public static ConnectionPrivacyRegistry.ConnectionSession current() {
-      ConnectionPrivacyRegistry.ConnectionSession context = load.get();
+      ConnectionPrivacyRegistry.ConnectionSession context = currentSession.get();
       if (context == null || context.isLocalOrMemory()) {
          return null;
       }
@@ -32,7 +32,7 @@ public final class RegistryCompatGuard {
          return context;
       }
 
-      load.remove();
+      currentSession.remove();
       return null;
    }
 
@@ -82,7 +82,7 @@ public final class RegistryCompatGuard {
       RegistryCompatGuard.Inner_DataUtil state = init_TaskTimer_DataUtil();
       if (valueKey != null && state != null) {
          String id = valueKey.identifier().toString();
-         if (init(state.init_Set, id)) {
+         if (addWarning(state.init_Set, id)) {
             AutismClientAddon.LOG
                .warn("[Autism] Server registry is missing trim material '{}'; omitted that item component so configuration can continue.", id);
          }
@@ -106,7 +106,7 @@ public final class RegistryCompatGuard {
       RegistryCompatGuard.Inner_DataUtil state = init_TaskTimer_DataUtil();
       if (state != null) {
          String message = error != null && error.getMessage() != null ? error.getMessage() : "unknown";
-         if (init(state.load, message)) {
+         if (addWarning(state.load, message)) {
             AutismClientAddon.LOG
                .warn(
                   "[Autism] Server registry is missing data for a delayed item component ({}); omitted that component so configuration can continue.", message
@@ -125,7 +125,7 @@ public final class RegistryCompatGuard {
       return state != null && state.init_I > 0 ? state : null;
    }
 
-   private static boolean init(Set<String> warnings, String warning) {
+   private static boolean addWarning(Set<String> warnings, String warning) {
       if (!warnings.contains(warning) && warnings.size() < 64) {
          warnings.add(warning);
          return true;

@@ -17,16 +17,16 @@ import net.minecraft.network.chat.contents.SelectorContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 public final class PacketComponentOriginTracker {
-   private static final ThreadLocal<int[]> init = new ThreadLocal<>();
+   private static final ThreadLocal<int[]> depthCounter = new ThreadLocal<>();
 
    private PacketComponentOriginTracker() {
    }
 
    public static PacketComponentOriginTracker.Inner_DataUtil init_StreamUtil_DataUti() {
-      int[] depth = init.get();
+      int[] depth = depthCounter.get();
       if (depth == null) {
          depth = new int[1];
-         init.set(depth);
+         depthCounter.set(depth);
       }
 
       depth[0]++;
@@ -34,7 +34,7 @@ public final class PacketComponentOriginTracker {
    }
 
    public static boolean isDecoding() {
-      int[] depth = init.get();
+      int[] depth = depthCounter.get();
       return depth != null && depth[0] != 0;
    }
 
@@ -54,20 +54,20 @@ public final class PacketComponentOriginTracker {
    }
 
    public static void init(Component component, ConnectionPrivacyRegistry.ConnectionSession origin) {
-      init(component, Collections.newSetFromMap(new IdentityHashMap<>()), origin);
+      markTreeFromPacket(component, Collections.newSetFromMap(new IdentityHashMap<>()), origin);
    }
 
    public static boolean init_Z(Component component) {
-      return init(component, Collections.newSetFromMap(new IdentityHashMap<>()));
+      return treeFromPacket(component, Collections.newSetFromMap(new IdentityHashMap<>()));
    }
 
-   public static boolean init(ComponentContents contents) {
-      return init(contents, Collections.newSetFromMap(new IdentityHashMap<>()));
+   public static boolean isFromPacket(ComponentContents contents) {
+      return treeFromPacket(contents, Collections.newSetFromMap(new IdentityHashMap<>()));
    }
 
    public static void init(ComponentContents source, Component result) {
       if (source != null && result != null) {
-         if (init(source)) {
+         if (isFromPacket(source)) {
             init(result, init_BufferHelper_Strea(source));
          } else {
             init_Z((Object)result);
@@ -99,21 +99,21 @@ public final class PacketComponentOriginTracker {
          Object current = pending.pop();
          if (visited.add(current)) {
             if (current instanceof Component component) {
-               init(component, pending);
+               pushComponent(component, pending);
             } else if (current instanceof ComponentContents contents) {
                if (contents instanceof PacketOriginDuck access) {
                   if (!marking && access.autism$isFromPacket()) {
                      marking = true;
 
                      for (Object seen : visited) {
-                        init(seen, origin);
+                        markFromPacket(seen, origin);
                      }
                   } else if (marking) {
                      access.autism$setFromPacket(origin);
                   }
                }
 
-               init(contents, pending);
+               pushContents(contents, pending);
             }
          }
       }
@@ -121,13 +121,13 @@ public final class PacketComponentOriginTracker {
       return marking;
    }
 
-   private static void init(Object value, ConnectionPrivacyRegistry.ConnectionSession origin) {
+   private static void markFromPacket(Object value, ConnectionPrivacyRegistry.ConnectionSession origin) {
       if (value instanceof ComponentContents contents && contents instanceof PacketOriginDuck access) {
          access.autism$setFromPacket(origin);
       }
    }
 
-   private static void init(Object root, Set<Object> visited, ConnectionPrivacyRegistry.ConnectionSession origin) {
+   private static void markTreeFromPacket(Object root, Set<Object> visited, ConnectionPrivacyRegistry.ConnectionSession origin) {
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
          pending.push(root);
@@ -137,13 +137,13 @@ public final class PacketComponentOriginTracker {
          Object current = pending.pop();
          if (visited.add(current)) {
             if (current instanceof Component component) {
-               init(component, pending);
+               pushComponent(component, pending);
             } else if (current instanceof ComponentContents contents) {
                if (contents instanceof PacketOriginDuck access) {
                   access.autism$setFromPacket(origin);
                }
 
-               init(contents, pending);
+               pushContents(contents, pending);
             }
          }
       }
@@ -162,7 +162,7 @@ public final class PacketComponentOriginTracker {
          Object current = pending.pop();
          if (visited.add(current)) {
             if (current instanceof Component component) {
-               init(component, pending);
+               pushComponent(component, pending);
             } else if (current instanceof ComponentContents contents) {
                if (contents instanceof PacketOriginDuck access && access.autism$isFromPacket()) {
                   ConnectionPrivacyRegistry.ConnectionSession candidate = access.autism$packetOrigin();
@@ -175,7 +175,7 @@ public final class PacketComponentOriginTracker {
                   }
                }
 
-               init(contents, pending);
+               pushContents(contents, pending);
             }
          }
       }
@@ -183,7 +183,7 @@ public final class PacketComponentOriginTracker {
       return origin;
    }
 
-   private static boolean init(Object root, Set<Object> visited) {
+   private static boolean treeFromPacket(Object root, Set<Object> visited) {
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
          pending.push(root);
@@ -193,13 +193,13 @@ public final class PacketComponentOriginTracker {
          Object current = pending.pop();
          if (visited.add(current)) {
             if (current instanceof Component component) {
-               init(component, pending);
+               pushComponent(component, pending);
             } else if (current instanceof ComponentContents contents) {
                if (contents instanceof PacketOriginDuck access && access.autism$isFromPacket()) {
                   return true;
                }
 
-               init(contents, pending);
+               pushContents(contents, pending);
             }
          }
       }
@@ -207,44 +207,44 @@ public final class PacketComponentOriginTracker {
       return false;
    }
 
-   private static void init(Component component, ArrayDeque<Object> pending) {
-      init((Object)component.getContents(), pending);
+   private static void pushComponent(Component component, ArrayDeque<Object> pending) {
+      push((Object)component.getContents(), pending);
 
       for (Component sibling : component.getSiblings()) {
-         init((Object)sibling, pending);
+         push((Object)sibling, pending);
       }
 
       HoverEvent hover = component.getStyle().getHoverEvent();
       if (hover instanceof ShowText showText) {
-         init((Object)showText.value(), pending);
+         push((Object)showText.value(), pending);
       } else if (hover instanceof ShowEntity showEntity) {
-         init(showEntity.entity().name, pending);
+         pushOptional(showEntity.entity().name, pending);
       }
    }
 
-   private static void init(ComponentContents contents, ArrayDeque<Object> pending) {
+   private static void pushContents(ComponentContents contents, ArrayDeque<Object> pending) {
       if (contents instanceof TranslatableContents translatable) {
          for (Object argument : translatable.getArgs()) {
             if (argument instanceof Component component) {
-               init((Object)component, pending);
+               push((Object)component, pending);
             }
          }
       } else if (contents instanceof NbtContents nbt) {
-         init(nbt.separator(), pending);
+         pushOptional(nbt.separator(), pending);
       } else if (contents instanceof SelectorContents selector) {
-         init(selector.separator(), pending);
+         pushOptional(selector.separator(), pending);
       } else if (contents instanceof ObjectContents object) {
-         init(object.fallback(), pending);
+         pushOptional(object.fallback(), pending);
       }
    }
 
-   private static void init(Optional<Component> component, ArrayDeque<Object> pending) {
+   private static void pushOptional(Optional<Component> component, ArrayDeque<Object> pending) {
       if (component != null && component.isPresent()) {
-         init((Object)component.get(), pending);
+         push((Object)component.get(), pending);
       }
    }
 
-   private static void init(Object value, ArrayDeque<Object> pending) {
+   private static void push(Object value, ArrayDeque<Object> pending) {
       if (value != null) {
          pending.push(value);
       }
@@ -260,14 +260,14 @@ public final class PacketComponentOriginTracker {
       public void close() {
          if (!this.init) {
             this.init = true;
-            int[] depth = PacketComponentOriginTracker.init.get();
+            int[] depth = PacketComponentOriginTracker.depthCounter.get();
             if (depth != null) {
                if (depth[0] > 0) {
                   depth[0]--;
                }
 
                if (depth[0] == 0) {
-                  PacketComponentOriginTracker.init.remove();
+                  PacketComponentOriginTracker.depthCounter.remove();
                }
             }
          }

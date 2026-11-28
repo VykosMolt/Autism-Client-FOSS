@@ -19,22 +19,22 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private static final int flowTemp = 4096;
    private static final int readEx_I = 4096;
    private static final int value_I = 4096;
-   private final AiPathfinder.GridView putAt_FileStore_TextStor;
-   private final AiPathfinder.MoveGenerator.CachedGrid putAt_FileStore_IoHelper;
-   private double putAt_D;
+   private final AiPathfinder.GridView grid;
+   private final AiPathfinder.MoveGenerator.CachedGrid cachedGrid;
+   private double speed;
    private static final AABB[] putAt_AABBArr = new AABB[0];
    private final AABB[][] putAt_AABBArr2 = new AABB[4096][];
-   private final long[] putAt_JArr = new long[4096];
+   private final long[] blockBoxKeys = new long[4096];
    private final AABB[][] fill_AABBArr2 = new AABB[4096][];
-   private final long[] fill_JArr = new long[4096];
-   private final int[] putAt_IArr = new int[4096];
-   private boolean putAt_Z;
-   private int prevEx_I;
-   private int prev_I;
-   private int chunkAt_I;
-   private int state_I;
-   private int closeOf_I;
-   private int pollAt;
+   private final long[] rangeBoxKeys = new long[4096];
+   private final int[] rangeBoxSpans = new int[4096];
+   private boolean cachedBoxValid;
+   private int cachedMinX;
+   private int cachedMinY;
+   private int cachedMinZ;
+   private int cachedMaxX;
+   private int cachedMaxY;
+   private int cachedMaxZ;
    private AABB[] fill_AABBArr;
    final double[] putAt_DArr = new double[3];
    final double[] fill_DArr = new double[3];
@@ -51,7 +51,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private final byte[] fill_BArr = new byte[4096];
    private final Long2IntOpenHashMap putAt_Long2IntOpenHashMa = new Long2IntOpenHashMap();
    private final long[] prev_JArr = new long[4096];
-   private final int[] readEx_IArr = new int[4096];
+   private final int[] columnHashSpans = new int[4096];
    private final long[] chunkAt_JArr = new long[4096];
    private final long[] state_JArr = new long[4096];
    private final long[] closeOf_JArr = new long[4096];
@@ -61,33 +61,33 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private final LongArrayList putAt_LongArrayList = new LongArrayList();
    private final IntArrayList putAt_IntArrayList = new IntArrayList();
    private final LongOpenHashSet putAt_LongOpenHashSet = new LongOpenHashSet();
-   private AiPathfinder.UiHelper putAt_FileStore_PacketHe;
-   private NavigationOpenSet.Inner_DataUtil putAt_DataCodec_CacheHel;
+   private AiPathfinder.UiHelper seenIncomingMove;
+   private NavigationOpenSet.Inner_DataUtil seenActiveNode;
    private boolean readEx_Z;
    long putAt_J;
 
    @Override
    public double putAt_D() {
-      return this.putAt_FileStore_IoHelper == null ? AiPhysics.PhysicsWorld.super.putAt_D() : this.putAt_FileStore_IoHelper.fallPolicy.maxDropBlocks;
+      return this.cachedGrid == null ? AiPhysics.PhysicsWorld.super.putAt_D() : this.cachedGrid.fallPolicy.maxDropBlocks;
    }
 
    @Override
    public double movementSpeed() {
-      return this.putAt_D;
+      return this.speed;
    }
 
    void putAt(double var1) {
-      this.putAt_D = var1;
+      this.speed = var1;
    }
 
    boolean fill() {
-      return this.putAt_FileStore_IoHelper != null && this.putAt_FileStore_IoHelper.allowManeuverShortcuts;
+      return this.cachedGrid != null && this.cachedGrid.allowManeuverShortcuts;
    }
 
    AiPlannerWorld(AiPathfinder.GridView var1, AiPathfinder.MoveGenerator.CachedGrid var2) {
-      this.putAt_FileStore_TextStor = var1;
-      this.putAt_FileStore_IoHelper = var2;
-      this.putAt_D = var2 == null ? var1.movementSpeed() : var2.movementSpeed;
+      this.grid = var1;
+      this.cachedGrid = var2;
+      this.speed = var2 == null ? var1.movementSpeed() : var2.movementSpeed;
       this.putAt_Long2ShortOpenHash.defaultReturnValue((short)-32768);
       this.putAt_Long2ByteOpenHashM.defaultReturnValue((byte)-1);
       this.fill_Long2ByteOpenHashM.defaultReturnValue((byte)-1);
@@ -101,7 +101,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    public List<AABB> collisions(AABB var1) {
       ArrayList var2 = null;
 
-      for (AABB var6 : this.fill(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ)) {
+      for (AABB var6 : this.boxesInRange(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ)) {
          if (var6.intersects(var1)) {
             if (var2 == null) {
                var2 = new ArrayList(4);
@@ -210,17 +210,17 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       int var38 = (int)Math.floor(var24);
       int var39 = (int)Math.floor(var30);
       AABB[] var40 = this.putAt_AABBArr_I(var34, var36, var38, var35, var37, var39);
-      if (this.putAt_FileStore_IoHelper != null && this.putAt_J == var32) {
-         this.putAt_Z = true;
-         this.prevEx_I = var34;
-         this.prev_I = var36;
-         this.chunkAt_I = var38;
-         this.state_I = var35;
-         this.closeOf_I = var37;
-         this.pollAt = var39;
+      if (this.cachedGrid != null && this.putAt_J == var32) {
+         this.cachedBoxValid = true;
+         this.cachedMinX = var34;
+         this.cachedMinY = var36;
+         this.cachedMinZ = var38;
+         this.cachedMaxX = var35;
+         this.cachedMaxY = var37;
+         this.cachedMaxZ = var39;
          this.fill_AABBArr = var40;
       } else {
-         this.putAt_Z = false;
+         this.cachedBoxValid = false;
          this.fill_AABBArr = null;
       }
 
@@ -265,40 +265,40 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    AABB[] putAt_AABBArr_D(double var1, double var3, double var5, double var7, double var9, double var11) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       int var13 = (int)Math.floor(var1);
       int var14 = (int)Math.floor(var7);
       int var15 = (int)Math.floor(var3) - 1;
       int var16 = (int)Math.floor(var9);
       int var17 = (int)Math.floor(var5);
       int var18 = (int)Math.floor(var11);
-      return this.putAt_Z
-            && var13 >= this.prevEx_I
-            && var14 <= this.state_I
-            && var15 >= this.prev_I
-            && var16 <= this.closeOf_I
-            && var17 >= this.chunkAt_I
-            && var18 <= this.pollAt
+      return this.cachedBoxValid
+            && var13 >= this.cachedMinX
+            && var14 <= this.cachedMaxX
+            && var15 >= this.cachedMinY
+            && var16 <= this.cachedMaxY
+            && var17 >= this.cachedMinZ
+            && var18 <= this.cachedMaxZ
          ? this.fill_AABBArr
          : this.putAt_AABBArr_I(var13, var15, var17, var14, var16, var18);
    }
 
-   private AABB[] fill(double var1, double var3, double var5, double var7, double var9, double var11) {
+   private AABB[] boxesInRange(double var1, double var3, double var5, double var7, double var9, double var11) {
       return this.putAt_AABBArr_I(
          (int)Math.floor(var1), (int)Math.floor(var3) - 1, (int)Math.floor(var5), (int)Math.floor(var7), (int)Math.floor(var9), (int)Math.floor(var11)
       );
    }
 
    private AABB[] putAt_AABBArr_I(int var1, int var2, int var3, int var4, int var5, int var6) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       int var7 = var4 - var1;
       int var8 = var5 - var2;
       int var9 = var6 - var3;
-      boolean var10 = this.putAt_FileStore_IoHelper != null && (var7 | var8 | var9) < 16;
+      boolean var10 = this.cachedGrid != null && (var7 | var8 | var9) < 16;
       long var11 = BlockPos.asLong(var1, var2, var3);
       int var13 = var7 << 8 | var8 << 4 | var9;
       int var14 = (int)HashCommon.mix(var11 ^ var13 * -7046029254386353131L) & this.fill_AABBArr2.length - 1;
-      if (var10 && this.fill_AABBArr2[var14] != null && this.fill_JArr[var14] == var11 && this.putAt_IArr[var14] == var13) {
+      if (var10 && this.fill_AABBArr2[var14] != null && this.rangeBoxKeys[var14] == var11 && this.rangeBoxSpans[var14] == var13) {
          return this.fill_AABBArr2[var14];
       }
 
@@ -338,24 +338,24 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       AABB[] var28 = var17 == null ? putAt_AABBArr : ((java.util.Collection<AABB>)var17).toArray(putAt_AABBArr);
       if (var10 && this.putAt_J == var15) {
          this.fill_AABBArr2[var14] = var28;
-         this.fill_JArr[var14] = var11;
-         this.putAt_IArr[var14] = var13;
+         this.rangeBoxKeys[var14] = var11;
+         this.rangeBoxSpans[var14] = var13;
       }
 
       return var28;
    }
 
-   private void putAt_V_2() {
-      if (this.putAt_FileStore_IoHelper != null
+   private void invalidateIfMoveChanged() {
+      if (this.cachedGrid != null
          && (
-            this.putAt_FileStore_IoHelper.incomingMove != this.putAt_FileStore_PacketHe
-               || this.putAt_FileStore_IoHelper.activeNode != this.putAt_DataCodec_CacheHel
+            this.cachedGrid.incomingMove != this.seenIncomingMove
+               || this.cachedGrid.activeNode != this.seenActiveNode
          )) {
-         boolean var1 = this.putAt_FileStore_IoHelper.hasActiveEdits();
+         boolean var1 = this.cachedGrid.hasActiveEdits();
          if (this.readEx_Z || var1) {
             Arrays.fill(this.putAt_AABBArr2, null);
             Arrays.fill(this.fill_AABBArr2, null);
-            this.putAt_Z = false;
+            this.cachedBoxValid = false;
             this.fill_AABBArr = null;
             this.putAt_Long2ShortOpenHash.clear();
             this.fill_Long2IntOpenHashMa.clear();
@@ -369,22 +369,22 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
             this.putAt_LongArrayList.clear();
             this.putAt_IntArrayList.clear();
             this.putAt_LongOpenHashSet.clear();
-            Arrays.fill(this.readEx_IArr, 0);
+            Arrays.fill(this.columnHashSpans, 0);
             Arrays.fill(this.readEx_BArr, (byte)0);
             Arrays.fill(this.fill_IArr, 0);
          }
 
          this.readEx_Z = var1;
-         this.putAt_FileStore_PacketHe = this.putAt_FileStore_IoHelper.incomingMove;
-         this.putAt_DataCodec_CacheHel = this.putAt_FileStore_IoHelper.activeNode;
+         this.seenIncomingMove = this.cachedGrid.incomingMove;
+         this.seenActiveNode = this.cachedGrid.activeNode;
       }
    }
 
    private AABB[] putAt_AABBArr_I(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
-      int var6 = putAt_I_I(var1, var2, var3);
+      int var6 = localIndex(var1, var2, var3);
       AABB[] var7 = this.putAt_AABBArr2[var6];
-      if (var7 != null && this.putAt_JArr[var6] == var4) {
+      if (var7 != null && this.blockBoxKeys[var6] == var4) {
          return var7;
       }
 
@@ -398,19 +398,19 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       }
 
       if (this.putAt_J == var8) {
-         this.putAt_JArr[var6] = var4;
+         this.blockBoxKeys[var6] = var4;
          this.putAt_AABBArr2[var6] = var12;
       }
 
       return var12;
    }
 
-   private static int putAt_I_I(int var0, int var1, int var2) {
+   private static int localIndex(int var0, int var1, int var2) {
       return (var0 & 15) << 8 | (var1 & 15) << 4 | var2 & 15;
    }
 
    short putAt_S_I(int var1, int var2, int var3) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       return this.putAt_S_I(var1, var2, var3, BlockPos.asLong(var1, var2, var3));
    }
 
@@ -448,12 +448,12 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    private int flowTemp(int var1, int var2, int var3) {
-      if (this.putAt_FileStore_IoHelper != null
-         && this.putAt_FileStore_IoHelper.incomingMove != null
-         && this.putAt_FileStore_IoHelper.incomingMove.cellsToBreak().contains(new BlockPos(var1, var2, var3))) {
+      if (this.cachedGrid != null
+         && this.cachedGrid.incomingMove != null
+         && this.cachedGrid.incomingMove.cellsToBreak().contains(new BlockPos(var1, var2, var3))) {
          return 0;
       } else {
-         AiPathfinder.CellInfo var4 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+         AiPathfinder.CellInfo var4 = this.grid.probe(var1, var2, var3);
          if (var4 == null) {
             return 0;
          } else {
@@ -464,27 +464,27 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean state(int var1, int var2, int var3) {
-      if (this.putAt_FileStore_IoHelper == null) {
-         AiPathfinder.CellInfo var9 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+      if (this.cachedGrid == null) {
+         AiPathfinder.CellInfo var9 = this.grid.probe(var1, var2, var3);
          return var9 != null && var9.climbable();
       }
 
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       if (this.readEx_Z
-         && this.putAt_FileStore_IoHelper.incomingMove != null
-         && !this.putAt_FileStore_IoHelper.incomingMove.cellsToBreak().isEmpty()
-         && this.putAt_FileStore_IoHelper.incomingMove.cellsToBreak().contains(new BlockPos(var1, var2, var3))) {
+         && this.cachedGrid.incomingMove != null
+         && !this.cachedGrid.incomingMove.cellsToBreak().isEmpty()
+         && this.cachedGrid.incomingMove.cellsToBreak().contains(new BlockPos(var1, var2, var3))) {
          return false;
       }
 
       long var4 = BlockPos.asLong(var1, var2, var3);
-      int var6 = putAt_I_I(var1, var2, var3);
+      int var6 = localIndex(var1, var2, var3);
       byte var7 = this.fill_BArr[var6];
       if (var7 >= 0 && this.prevEx_JArr[var6] == var4) {
          return var7 != 0;
       }
 
-      AiPathfinder.CellInfo var8 = this.putAt_FileStore_TextStor.probe(var1, var2, var3);
+      AiPathfinder.CellInfo var8 = this.grid.probe(var1, var2, var3);
       if (var8 != null && var8.loaded()) {
          this.prevEx_JArr[var6] = var4;
          this.fill_BArr[var6] = (byte)(var8.climbable() ? 1 : 0);
@@ -495,17 +495,17 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean fill_Z(int var1, int var2, int var3) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
-      byte var6 = this.putAt_FileStore_IoHelper == null ? -1 : this.fill_Long2ByteOpenHashM.get(var4);
+      byte var6 = this.cachedGrid == null ? -1 : this.fill_Long2ByteOpenHashM.get(var4);
       if (var6 >= 0) {
          return var6 != 0;
       }
 
-      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
-      if (this.putAt_FileStore_IoHelper != null && var7 != null && var7.loaded()) {
+      AiPathfinder.CellInfo var7 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
+      if (this.cachedGrid != null && var7 != null && var7.loaded()) {
          if (this.fill_Long2ByteOpenHashM.size() >= 65536) {
             this.fill_Long2ByteOpenHashM.clear();
          }
@@ -518,22 +518,22 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean putAt_Z_I_2(int var1, int var2, int var3) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
-      byte var6 = this.putAt_FileStore_IoHelper == null ? -1 : this.putAt_Long2ByteOpenHashM.get(var4);
+      byte var6 = this.cachedGrid == null ? -1 : this.putAt_Long2ByteOpenHashM.get(var4);
       if (var6 >= 0) {
          return var6 != 0;
       }
 
-      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      AiPathfinder.CellInfo var7 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
       if (var7 != null && var7.loaded()) {
          if (this.putAt_Long2ByteOpenHashM.size() >= 65536) {
             this.putAt_Long2ByteOpenHashM.clear();
          }
 
-         if (this.putAt_FileStore_IoHelper != null) {
+         if (this.cachedGrid != null) {
             this.putAt_Long2ByteOpenHashM.put(var4, (byte)(var7.lava() ? 1 : 0));
          }
 
@@ -546,19 +546,19 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean prevEx(int var1, int var2, int var3) {
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
-      byte var6 = this.putAt_FileStore_IoHelper == null ? -1 : this.readEx_Long2ByteOpenHashM.get(var4);
+      byte var6 = this.cachedGrid == null ? -1 : this.readEx_Long2ByteOpenHashM.get(var4);
       if (var6 >= 0) {
          return var6 != 0;
       }
 
-      AiPathfinder.CellInfo var7 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      AiPathfinder.CellInfo var7 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
       if (var7 != null && var7.loaded()) {
          boolean var8 = var7.hazardFeet() || var7.floorContactHazard() || var7.thorny();
-         if (this.putAt_FileStore_IoHelper != null) {
+         if (this.cachedGrid != null) {
             if (this.readEx_Long2ByteOpenHashM.size() >= 65536) {
                this.readEx_Long2ByteOpenHashM.clear();
             }
@@ -575,10 +575,10 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean prev(int var1, int var2, int var3) {
-      this.putAt_V_2();
-      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      this.invalidateIfMoveChanged();
+      AiPathfinder.CellInfo var4 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
       if (var4 != null && var4.loaded()) {
          return var4.hazardFeet() || var4.thorny() || !var4.passable() && var4.floorContactHazard() && var4.top16() == 15;
       }
@@ -589,10 +589,10 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean readEx_Z(int var1, int var2, int var3) {
-      this.putAt_V_2();
-      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      this.invalidateIfMoveChanged();
+      AiPathfinder.CellInfo var4 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
       if (var4 != null && var4.loaded()) {
          return var4.feetTrigger();
       }
@@ -603,16 +603,16 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean value_Z(int var1, int var2, int var3) {
-      this.putAt_V_2();
-      AiPathfinder.CellInfo var4 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.probe(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      this.invalidateIfMoveChanged();
+      AiPathfinder.CellInfo var4 = this.cachedGrid == null
+         ? this.grid.probe(var1, var2, var3)
+         : this.cachedGrid.probe(var1, var2, var3);
       return var4 != null && var4.loaded() && var4.pressurePlate();
    }
 
    @Override
    public boolean putAt(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
-      if (this.putAt_FileStore_IoHelper == null) {
+      if (this.cachedGrid == null) {
          return false;
       }
 
@@ -624,7 +624,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          return false;
       }
 
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var12 = BlockPos.asLong(var1, var2, var3);
       int var14 = 1 + (var8 << 12 | var9 << 8 | var10 << 4 | var11);
       int var15 = (int)HashCommon.mix(var12 ^ var14 * -7046029254386353131L) & 4095;
@@ -635,7 +635,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       for (int var16 = var1; var16 <= var4; var16++) {
          for (int var17 = var2; var17 <= var5; var17++) {
             for (int var18 = var3; var18 <= var6; var18++) {
-               AiPathfinder.CellInfo var19 = this.putAt_FileStore_IoHelper.probe(var16, var17, var18);
+               AiPathfinder.CellInfo var19 = this.cachedGrid.probe(var16, var17, var18);
                if (!var19.loaded() || var19.hazardFeet() || var19.thorny() || var19.feetTrigger()) {
                   return false;
                }
@@ -717,8 +717,8 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    private short fill_S(int var1, int var2, int var3) {
-      if (this.putAt_FileStore_IoHelper != null && this.putAt_FileStore_IoHelper.incomingMove != null) {
-         AiPathfinder.UiHelper var4 = this.putAt_FileStore_IoHelper.incomingMove;
+      if (this.cachedGrid != null && this.cachedGrid.incomingMove != null) {
+         AiPathfinder.UiHelper var4 = this.cachedGrid.incomingMove;
          BlockPos var5 = new BlockPos(var1, var2, var3);
          if (var4.cellsToBreak().contains(var5)) {
             return 0;
@@ -737,13 +737,13 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          }
       }
 
-      short var6 = this.putAt_FileStore_IoHelper == null
-         ? this.putAt_FileStore_TextStor.putAt_S_I(var1, var2, var3)
-         : this.putAt_FileStore_IoHelper.putAt_S_I(var1, var2, var3);
+      short var6 = this.cachedGrid == null
+         ? this.grid.putAt_S_I(var1, var2, var3)
+         : this.cachedGrid.putAt_S_I(var1, var2, var3);
       if (var6 < 0) {
          this.putAt_J++;
-         if (this.putAt_FileStore_IoHelper != null) {
-            this.putAt_FileStore_IoHelper.queryFlags |= 1;
+         if (this.cachedGrid != null) {
+            this.cachedGrid.queryFlags |= 1;
          }
 
          return 1;
@@ -757,11 +757,11 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    boolean putAt_Z_I(int var1, int var2, double var3) {
-      if (this.putAt_FileStore_IoHelper == null) {
+      if (this.cachedGrid == null) {
          return AiJumpSolver.computeFullFlatSupport(this, var1, var2, var3);
       }
 
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var5 = BlockPos.asLong(var1, 0, var2);
       long var7 = Double.doubleToLongBits(var3);
       int var9 = (int)HashCommon.mix(var5 ^ Long.rotateLeft(var7, 17)) & 4095;
@@ -788,7 +788,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       int var8 = Math.max(var1.getZ() + var4, var2.getZ() + 1);
       int var9 = Math.min(var1.getY(), var2.getY()) - 1;
       int var10 = Math.max(var1.getY(), var2.getY()) + 3;
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var11 = -7046029254386353131L;
 
       for (int var13 = var5; var13 <= var6; var13++) {
@@ -804,7 +804,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       int var5 = var4 - var3 + 1;
       long var6 = BlockPos.asLong(var1, var2, var3);
       int var8 = (int)HashCommon.mix(var6 ^ var5 * -7046029254386353131L) & 4095;
-      if (this.putAt_FileStore_IoHelper != null && this.readEx_IArr[var8] == var5 && this.prev_JArr[var8] == var6) {
+      if (this.cachedGrid != null && this.columnHashSpans[var8] == var5 && this.prev_JArr[var8] == var6) {
          return this.chunkAt_JArr[var8];
       }
 
@@ -815,9 +815,9 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var11 = (var11 ^ HashCommon.mix((long)this.readEx_I(var1, var2, var13))) * 1099511628211L;
       }
 
-      if (this.putAt_FileStore_IoHelper != null && this.putAt_J == var9) {
+      if (this.cachedGrid != null && this.putAt_J == var9) {
          this.prev_JArr[var8] = var6;
-         this.readEx_IArr[var8] = var5;
+         this.columnHashSpans[var8] = var5;
          this.chunkAt_JArr[var8] = var11;
       }
 
@@ -826,7 +826,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    private int readEx_I(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
-      int var6 = this.putAt_FileStore_IoHelper == null ? -1 : this.putAt_Long2IntOpenHashMa.get(var4);
+      int var6 = this.cachedGrid == null ? -1 : this.putAt_Long2IntOpenHashMa.get(var4);
       if (var6 >= 0) {
          return var6;
       }
@@ -851,7 +851,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var9 |= 536870912;
       }
 
-      if (this.putAt_FileStore_IoHelper != null && this.putAt_J == var7) {
+      if (this.cachedGrid != null && this.putAt_J == var7) {
          if (this.putAt_Long2IntOpenHashMa.size() >= 65536) {
             this.putAt_Long2IntOpenHashMa.clear();
          }
@@ -867,19 +867,19 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    byte putAt_B_I(int var1, int var2, int var3) {
-      if (this.putAt_FileStore_IoHelper == null) {
-         return this.putAt_FileStore_TextStor.putAt_B_I(var1, var2, var3);
+      if (this.cachedGrid == null) {
+         return this.grid.putAt_B_I(var1, var2, var3);
       }
 
-      this.putAt_V_2();
+      this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
-      int var6 = putAt_I_I(var1, var2, var3);
+      int var6 = localIndex(var1, var2, var3);
       if (this.value_JArr[var6] == var4 && this.putAt_BArr[var6] >= 0) {
          return this.putAt_BArr[var6];
       }
 
-      byte var7 = this.putAt_FileStore_TextStor.putAt_B_I(var1, var2, var3);
-      AiPathfinder.CellInfo var8 = this.putAt_FileStore_IoHelper.probe(var1, var2, var3);
+      byte var7 = this.grid.putAt_B_I(var1, var2, var3);
+      AiPathfinder.CellInfo var8 = this.cachedGrid.probe(var1, var2, var3);
       if (var8 != null && var8.loaded()) {
          this.value_JArr[var6] = var4;
          this.putAt_BArr[var6] = var7;

@@ -85,7 +85,7 @@ final class TriggerBotModule extends Module {
    private int followUpClickTick = -2147483648;
    private double swingOffset;
    private double edgeTolerance;
-   private double open = 0.0 / 0.0;
+   private double extraReach = 0.0 / 0.0;
    private long edgeRerollAt = -9223372036854775808L;
    private boolean physicalPressed;
    private float lastHealth = -1.0F;
@@ -147,7 +147,7 @@ final class TriggerBotModule extends Module {
 
    @Override
    public void onEnable() {
-      this.read();
+      this.resetState();
    }
 
    @Override
@@ -189,7 +189,7 @@ final class TriggerBotModule extends Module {
          this.physicalPressed = physical;
          autismclient.util.clicker.ClickProfile profile = this.combatClicker.profile();
          this.patternEngine.setPersonality(this.combatClicker.init_DataUtil_ConfigSto());
-         LivingEntity target = this.init(now, noCooldown, rage);
+         LivingEntity target = this.pickTarget(now, noCooldown, rage);
          boolean engaged = false;
          if (target == null && !timed && !rage) {
             target = this.resolveTarget(now);
@@ -220,7 +220,7 @@ final class TriggerBotModule extends Module {
                   this.swingOffset = this.swingOffset + (40.0 + 80.0 * this.random.nextDouble());
                }
 
-               this.init(now, reacted, target);
+               this.tryAttack(now, reacted, target);
                this.keyOutput.read(now);
             } else {
                this.keyOutput.read(now);
@@ -232,14 +232,14 @@ final class TriggerBotModule extends Module {
 
    private LivingEntity resolveTarget(long now) {
       if (this.lastTargetId >= 0 && MC.level != null) {
-         if (!(MC.level.getEntity(this.lastTargetId) instanceof LivingEntity living && this.init(living))) {
+         if (!(MC.level.getEntity(this.lastTargetId) instanceof LivingEntity living && this.isValidTarget(living))) {
             return null;
          } else if (autismclient.util.RecentCombatTracker.init(living, now)) {
             return null;
          } else {
             Vec3 eyes = MC.player.getEyePosition();
             AABB box = living.getBoundingBox();
-            double near = autismclient.util.AttackReachHelper.maxReach(MC.player) + (Double.isNaN(this.open) ? 0.0 : this.open) + 1.5;
+            double near = autismclient.util.AttackReachHelper.maxReach(MC.player) + (Double.isNaN(this.extraReach) ? 0.0 : this.extraReach) + 1.5;
             if (box.distanceToSqr(eyes) > near * near) {
                return null;
             } else {
@@ -275,19 +275,19 @@ final class TriggerBotModule extends Module {
          || !this.heldItemFilter.accepts(MC.player.getMainHandItem());
    }
 
-   private LivingEntity init(long now, boolean noCooldown, boolean rage) {
+   private LivingEntity pickTarget(long now, boolean noCooldown, boolean rage) {
       if (now >= this.edgeRerollAt) {
          this.edgeTolerance = ValueRange.parse(this.value("edge-tolerance"), EDGE_TOLERANCE_DEFAULT).random(this.random);
          this.edgeRerollAt = now + 80000000L + (long)(this.random.nextDouble() * 8.0E7);
       }
 
-      if (Double.isNaN(this.open)) {
+      if (Double.isNaN(this.extraReach)) {
          this.rollPreReach();
       }
 
       HitResult live = MC.player.raycastHitResult(1.0F, MC.getCameraEntity() == null ? MC.player : MC.getCameraEntity());
       MC.hitResult = live;
-      if (live instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity living && this.init(living)) {
+      if (live instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity living && this.isValidTarget(living)) {
          return !MC.player.getMainHandItem().has(DataComponents.PIERCING_WEAPON)
                && !autismclient.util.AttackReachHelper.attackRange(MC.player).isInRange(MC.player, entityHit.getLocation())
             ? null
@@ -305,7 +305,7 @@ final class TriggerBotModule extends Module {
             }
          }
 
-         LivingEntity poke = noCooldown ? this.findGrazeTarget(reach + this.open, 0.0) : null;
+         LivingEntity poke = noCooldown ? this.findGrazeTarget(reach + this.extraReach, 0.0) : null;
          return poke != null && !autismclient.util.RecentCombatTracker.init(poke, now) ? poke : null;
       }
    }
@@ -318,7 +318,7 @@ final class TriggerBotModule extends Module {
       double bestDistance = 1.7976931348623157E308;
 
       for (Entity entity : MC.level.entitiesForRendering()) {
-         if (entity instanceof LivingEntity living && living.isPickable() && this.init(living)) {
+         if (entity instanceof LivingEntity living && living.isPickable() && this.isValidTarget(living)) {
             AABB box = living.getBoundingBox().inflate(living.getPickRadius() + grow);
             if (!box.contains(eyes)) {
                Optional<Vec3> hit = box.clip(eyes, end);
@@ -336,7 +336,7 @@ final class TriggerBotModule extends Module {
       return best;
    }
 
-   private void init(long now, boolean reacted, LivingEntity target) {
+   private void tryAttack(long now, boolean reacted, LivingEntity target) {
       int ticker = ((AutismLivingEntityAccessor)MC.player).autism$getAttackStrengthTicker();
       int tick = AutismSessionState.getInstance().getClientTick();
       if (this.lastAttackTicker >= 0 && ticker < this.lastAttackTicker + (tick - this.lastTickerTick)) {
@@ -407,7 +407,7 @@ final class TriggerBotModule extends Module {
    }
 
    private void rollPreReach() {
-      this.open = ValueRange.parse(this.value("pre-reach"), update_ValueRange).random(this.random);
+      this.extraReach = ValueRange.parse(this.value("pre-reach"), update_ValueRange).random(this.random);
    }
 
    private void rollSwingOffset() {
@@ -448,7 +448,7 @@ final class TriggerBotModule extends Module {
       return autismclient.util.clicker.ReactionDelayModel.init(this.random, reaction.min(), reaction.max(), bias, angle);
    }
 
-   private boolean init(Entity entity) {
+   private boolean isValidTarget(Entity entity) {
       if (entity == null || entity == MC.player || !entity.isAlive() || entity.isSpectator()) {
          return false;
       }
@@ -500,10 +500,10 @@ final class TriggerBotModule extends Module {
    private void resetState(long now) {
       this.patternEngine.init_V_J_DataUtil_NetHelper(now, this.keyOutput);
       this.keyOutput.release();
-      this.read();
+      this.resetState();
    }
 
-   private void read() {
+   private void resetState() {
       this.lastTargetId = -1;
       this.reactAt = 0L;
       this.targetLostAt = -9223372036854775808L;
@@ -511,7 +511,7 @@ final class TriggerBotModule extends Module {
       this.awaitingSwing = false;
       this.lastClickTick = -2147483648;
       this.followUpTick = -2147483648;
-      this.open = 0.0 / 0.0;
+      this.extraReach = 0.0 / 0.0;
       this.physicalPressed = false;
    }
 }

@@ -21,7 +21,7 @@ public interface AimTargetAction {
          return entity == null ? null : new AimTargetAction.AimTarget(null, entity, null);
       }
 
-      public static AimTargetAction.AimTarget init(Vec3 point) {
+      public static AimTargetAction.AimTarget ofPoint(Vec3 point) {
          return point == null ? null : new AimTargetAction.AimTarget(null, null, point);
       }
    }

@@ -86,7 +86,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.portField = this.createField(inputX + nameW + gap + addressW + gap, this.firstInputY(), portW, "Port");
       this.usernameField = this.createField(inputX, this.secondInputY(), halfW, "Username");
       this.passwordField = this.createField(inputX + halfW + gap, this.secondInputY(), Math.max(1, inputW - halfW - gap), "Password");
-      this.searchField = this.createField(this.clear(), this.searchY(), this.reset(), "Search proxies");
+      this.searchField = this.createField(this.searchX(), this.searchY(), this.searchWidth(), "Search proxies");
       this.searchField.setHint(Component.literal("Search name/address..."));
       this.searchField.setResponder(value -> {
          this.searchQuery = trim(value);
@@ -217,12 +217,12 @@ public class ProxiesScreen extends VirtualScaledScreen {
          List<bW> proxies = this.orderedProxies();
          boolean hasActiveSection = proxies.size() > this.filteredProxies().size();
          int maxScroll = this.maxScroll(proxies.size());
-         this.update_I = load(this.update_I, maxScroll);
+         this.update_I = clampScroll(this.update_I, maxScroll);
          this.scroll.jumpTo(this.update_I, maxScroll);
          int pitch = this.rowPitch();
          int rowH = this.rowHeight();
-         int top = this.valid();
-         int bottom = this.size();
+         int top = this.listTop();
+         int bottom = this.listBottom();
          int firstVisible = this.update_I / pitch;
          int rowY = top - this.update_I % pitch;
 
@@ -243,7 +243,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int btnY = rowY + (this.rowHeight() - btnH) / 2;
       int toggleW = Math.max(this.buttonWidth("ON"), this.buttonWidth("OFF"));
       autismclient.gui.ui.widgets.OverlayActionButton toggle = autismclient.gui.ui.widgets.OverlayActionButton.create(
-         this.cache() + 4, btnY, toggleW, btnH, Component.literal(proxy.init_Z ? "ON" : "OFF"), b -> this.toggleProxy(proxy)
+         this.rowLeft() + 4, btnY, toggleW, btnH, Component.literal(proxy.init_Z ? "ON" : "OFF"), b -> this.toggleProxy(proxy)
       );
       toggle.setTone(
             proxy.init_Z ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER
@@ -251,7 +251,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          .setToggleState(proxy.init_Z)
          .setAnimationKey("proxy-enabled:" + proxy.read + ":" + proxy.init_I);
       int checkW = this.buttonWidth("Check");
-      int deleteX = this.state() - 1 - btnH;
+      int deleteX = this.rowRight() - 1 - btnH;
       int checkX = deleteX - 2 - checkW;
       autismclient.gui.ui.widgets.OverlayActionButton check = autismclient.gui.ui.widgets.OverlayActionButton.create(
          checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING ? "..." : "Check"), b -> this.checkProxy(proxy)
@@ -280,7 +280,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    public void tick() {
       super.tick();
       int maxScroll = this.maxScroll(this.orderedProxies().size());
-      this.update_I = load(this.update_I, maxScroll);
+      this.update_I = clampScroll(this.update_I, maxScroll);
       this.scroll.jumpTo(this.update_I, maxScroll);
       ProxyListManager.Inner_TaskQueue status = ProxyListManager.getInstance().getRefreshStatus();
       if (status.revision() != this.seenRefreshRevision) {
@@ -340,7 +340,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int sectionsAfter = this.orderedProxies().size() - this.filteredProxies().size();
       if (sectionsAfter != sectionsBefore) {
          int maxScroll = this.maxScroll(this.orderedProxies().size());
-         this.update_I = load(this.update_I + (sectionsAfter - sectionsBefore) * this.rowPitch(), maxScroll);
+         this.update_I = clampScroll(this.update_I + (sectionsAfter - sectionsBefore) * this.rowPitch(), maxScroll);
          this.scroll.jumpTo(this.update_I, maxScroll);
       }
    }
@@ -633,10 +633,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
       try {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
          int panelX = this.panelX();
-         this.drawCard(graphics, panelX, this.panelY(), this.panelWidth(), this.put(), -401402080);
-         this.drawCard(graphics, this.stop(), this.start(), this.next(), this.prev(), -1206840035);
+         this.drawCard(graphics, panelX, this.panelY(), this.panelWidth(), this.headerCardHeight(), -401402080);
+         this.drawCard(graphics, this.listCardX(), this.listCardY(), this.listCardWidth(), this.listCardHeight(), -1206840035);
          int headerTextY = this.centeredTextY(this.searchY(), this.controlHeight());
-         this.init_V_GuiGraphicsExtract(graphics, "Proxies", this.add(), headerTextY, GuiColorPalette.flush, false);
+         this.init_V_GuiGraphicsExtract(graphics, "Proxies", this.titleX(), headerTextY, GuiColorPalette.flush, false);
          if (this.isCompact()) {
             this.init_V_GuiGraphicsExtract(
                graphics, "Window too small.", this.inputX(), this.centeredTextY(this.firstInputY(), 12), GuiColorPalette.close, false, this.inputWidth()
@@ -657,19 +657,19 @@ public class ProxiesScreen extends VirtualScaledScreen {
             workColor = refreshStatus.canceling() ? -14249 : -7429889;
          }
 
-         int listInnerW = this.next() - 8;
+         int listInnerW = this.listCardWidth() - 8;
          int workLabelW = workLabel.isBlank() ? 0 : Math.min(160, listInnerW / 2);
-         int listHeaderY = this.centeredTextY(this.start() + 4, 12);
-         this.init_V_GuiGraphicsExtract(graphics, summary, this.stop() + 4, listHeaderY, GuiColorPalette.flush, false, listInnerW - workLabelW - 4);
+         int listHeaderY = this.centeredTextY(this.listCardY() + 4, 12);
+         this.init_V_GuiGraphicsExtract(graphics, summary, this.listCardX() + 4, listHeaderY, GuiColorPalette.flush, false, listInnerW - workLabelW - 4);
          if (!workLabel.isBlank()) {
-            this.init_V_GuiGraphicsExtract(graphics, workLabel, this.stop() + this.next() - 4 - workLabelW, listHeaderY, workColor, false, workLabelW);
+            this.init_V_GuiGraphicsExtract(graphics, workLabel, this.listCardX() + this.listCardWidth() - 4 - workLabelW, listHeaderY, workColor, false, workLabelW);
          }
 
          this.renderWorkStatus(graphics, refreshStatus, importStatus);
          autismclient.gui.ui.UiClipStack.getInstance()
             .push(
                graphics,
-               autismclient.gui.f.NetHelper.init(this.cache(), this.valid(), Math.max(0, this.state() - this.cache()), Math.max(0, this.size() - this.valid()))
+               autismclient.gui.f.NetHelper.init(this.rowLeft(), this.listTop(), Math.max(0, this.rowRight() - this.rowLeft()), Math.max(0, this.listBottom() - this.listTop()))
             );
 
          try {
@@ -684,21 +684,21 @@ public class ProxiesScreen extends VirtualScaledScreen {
             this.init_V_GuiGraphicsExtract(
                graphics,
                "No proxies saved yet. Add one manually or import a .txt list.",
-               this.cache() + 4,
-               this.centeredTextY(this.valid(), this.rowHeight()),
+               this.rowLeft() + 4,
+               this.centeredTextY(this.listTop(), this.rowHeight()),
                GuiColorPalette.close,
                false,
-               this.queue() - 4
+               this.rowWidth() - 4
             );
          } else if (proxies.isEmpty()) {
             this.init_V_GuiGraphicsExtract(
                graphics,
                "No proxies match the current search or filter.",
-               this.cache() + 4,
-               this.centeredTextY(this.valid(), this.rowHeight()),
+               this.rowLeft() + 4,
+               this.centeredTextY(this.listTop(), this.rowHeight()),
                GuiColorPalette.close,
                false,
-               this.queue() - 4
+               this.rowWidth() - 4
             );
          }
 
@@ -728,9 +728,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void renderRow(GuiGraphicsExtractor graphics, ProxiesScreen.Inner_StreamUtil row, int mouseX, int mouseY) {
       bW proxy = row.proxy;
       boolean selected = proxy.equals(this.editingProxy);
-      int x = this.cache();
+      int x = this.rowLeft();
       int y = row.y;
-      int w = this.queue();
+      int w = this.rowWidth();
       int h = this.rowHeight();
       int fill = proxy.init_Z ? successColor(858052714) : (selected ? outlineColor(606804509) : 403771667);
       autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), 4, fill);
@@ -820,7 +820,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             this.sync_I = scrollbar.containsThumb(virtualEvent.x(), virtualEvent.y())
                ? Math.max(0, (int)Math.round(virtualEvent.y()) - scrollbar.thumbY())
                : scrollbar.thumbHeight() / 2;
-            this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
+            this.update_I = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
             this.scroll.jumpTo(this.update_I, scrollbar.maxScroll());
             this.rebuildButtons();
             this.unfocusFields();
@@ -850,8 +850,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
 
       if (!this.isOver(row.toggleButton, x, y) && !this.isOver(row.load, x, y) && !this.isOver(row.read, x, y)) {
-         if (x >= this.cache() && x < this.state() && y >= row.y && y < row.y + this.rowHeight()) {
-            this.write(row.proxy);
+         if (x >= this.rowLeft() && x < this.rowRight() && y >= row.y && y < row.y + this.rowHeight()) {
+            this.startEditing(row.proxy);
             return true;
          } else {
             return false;
@@ -888,7 +888,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       MouseButtonEvent virtualEvent = toVirtual(event);
       if (this.init_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbar = this.scrollbarMetrics(this.orderedProxies().size());
-         this.update_I = load(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
+         this.update_I = clampScroll(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbar, virtualEvent.y(), this.sync_I), scrollbar.maxScroll());
          this.scroll.jumpTo(this.update_I, scrollbar.maxScroll());
          this.rebuildButtons();
          return true;
@@ -905,14 +905,14 @@ public class ProxiesScreen extends VirtualScaledScreen {
          return super.mouseScrolled(x, y, scrollX, scrollY);
       }
 
-      if (!(x < this.stop()) && !(x >= this.stop() + this.next()) && !(y < this.start()) && !(y >= this.start() + this.prev())) {
+      if (!(x < this.listCardX()) && !(x >= this.listCardX() + this.listCardWidth()) && !(y < this.listCardY()) && !(y >= this.listCardY() + this.listCardHeight())) {
          int maxScroll = this.maxScroll(this.orderedProxies().size());
          if (maxScroll <= 0) {
             return true;
          }
 
          int next = this.update_I - (int)Math.signum(scrollY) * this.rowPitch();
-         this.update_I = load(next, maxScroll);
+         this.update_I = clampScroll(next, maxScroll);
          this.scroll.setOffset(this.update_I, maxScroll);
          this.rebuildButtons();
          return true;
@@ -926,7 +926,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.minecraft.gui.setScreen(this.parent);
    }
 
-   private void write(bW proxy) {
+   private void startEditing(bW proxy) {
       this.editingProxy = proxy;
       if (proxy != null) {
          this.nameField.setValue(trim(proxy.load_Str));
@@ -1101,9 +1101,9 @@ public class ProxiesScreen extends VirtualScaledScreen {
       boolean importing = importStatus != null && importStatus.running();
       boolean refreshing = refreshStatus != null && refreshStatus.running();
       if (importing || refreshing) {
-         int trackX = this.stop() + 4;
-         int trackY = this.start() + 4 + 12 + 1;
-         int trackW = Math.max(1, this.next() - 8);
+         int trackX = this.listCardX() + 4;
+         int trackY = this.listCardY() + 4 + 12 + 1;
+         int trackW = Math.max(1, this.listCardWidth() - 8);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(trackX, trackY, trackW, 2), outlineColor(1429414952));
          if (refreshing) {
             int total = Math.max(1, refreshStatus.totalCount());
@@ -1186,87 +1186,87 @@ public class ProxiesScreen extends VirtualScaledScreen {
       return this.actionRowY() + this.controlHeight() + 2;
    }
 
-   private int put() {
+   private int headerCardHeight() {
       return this.filterRowY() + this.controlHeight() + 4 - this.panelY();
    }
 
-   private int add() {
+   private int titleX() {
       return this.inputX() + this.buttonWidth("Back") + 4;
    }
 
-   private int clear() {
-      return this.add() + this.textWidth("Proxies") + 8;
+   private int searchX() {
+      return this.titleX() + this.textWidth("Proxies") + 8;
    }
 
-   private int reset() {
-      return Math.max(40, this.inputX() + this.inputWidth() - this.clear());
+   private int searchWidth() {
+      return Math.max(40, this.inputX() + this.inputWidth() - this.searchX());
    }
 
-   private int start() {
-      return this.panelY() + this.put() + 4;
+   private int listCardY() {
+      return this.panelY() + this.headerCardHeight() + 4;
    }
 
-   private int stop() {
+   private int listCardX() {
       return this.panelX();
    }
 
-   private int next() {
+   private int listCardWidth() {
       return Math.max(1, this.panelWidth());
    }
 
-   private int prev() {
-      int header = this.valid() - this.start();
+   private int listCardHeight() {
+      int header = this.listTop() - this.listCardY();
       int cap = Math.max(3, this.virtualHeight() * 65 / 100 / this.rowPitch());
       int shown = Math.max(3, Math.min(cap, this.orderedProxies().size()));
       int content = header + shown * this.rowPitch() - 2 + 4;
-      int available = Math.max(1, this.virtualHeight() - 6 - this.start());
+      int available = Math.max(1, this.virtualHeight() - 6 - this.listCardY());
       return Math.min(available, content);
    }
 
-   private int valid() {
-      return this.start() + 4 + 12 + 4;
+   private int listTop() {
+      return this.listCardY() + 4 + 12 + 4;
    }
 
-   private int size() {
-      return this.start() + this.prev() - 4;
+   private int listBottom() {
+      return this.listCardY() + this.listCardHeight() - 4;
    }
 
-   private int data() {
-      return Math.max(this.rowHeight(), Math.max(1, this.size() - this.valid()));
+   private int listViewportHeight() {
+      return Math.max(this.rowHeight(), Math.max(1, this.listBottom() - this.listTop()));
    }
 
    private int maxScroll(int rows) {
-      return Math.max(0, rows * this.rowPitch() - 2 - this.data());
+      return Math.max(0, rows * this.rowPitch() - 2 - this.listViewportHeight());
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int rows) {
       int contentPixels = Math.max(0, rows * this.rowPitch() - 2);
-      int trackY = this.valid();
-      int trackHeight = this.data();
+      int trackY = this.listTop();
+      int trackHeight = this.listViewportHeight();
       int maxScroll = this.maxScroll(rows);
-      this.update_I = load(this.update_I, maxScroll);
+      this.update_I = clampScroll(this.update_I, maxScroll);
       this.scroll.jumpTo(this.update_I, maxScroll);
-      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.data(), this.value(), trackY, 6, trackHeight, this.update_I);
+      return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentPixels, this.listViewportHeight(), this.scrollbarX(), trackY, 6, trackHeight, this.update_I);
    }
 
-   private int value() {
-      return this.stop() + this.next() - 4 - 6;
+   private int scrollbarX() {
+      return this.listCardX() + this.listCardWidth() - 4 - 6;
    }
 
-   private int cache() {
-      return this.stop() + 4;
+   private int rowLeft() {
+      return this.listCardX() + 4;
    }
 
-   private int state() {
-      return this.value() - 2;
+   private int rowRight() {
+      return this.scrollbarX() - 2;
    }
 
-   private int queue() {
-      return Math.max(1, this.state() - this.cache());
+   private int rowWidth() {
+      return Math.max(1, this.rowRight() - this.rowLeft());
    }
 
    private boolean isCompact() {
-      return this.panelWidth() < 300 || this.virtualHeight() < this.valid() + this.rowPitch() * 2;
+      return this.panelWidth() < 300 || this.virtualHeight() < this.listTop() + this.rowPitch() * 2;
    }
 
    private void setInputsVisible(boolean visible) {
@@ -1382,7 +1382,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
    }
 
-   private static int load(int value, int maxScroll) {
+   private static int clampScroll(int value, int maxScroll) {
       return Math.max(0, Math.min(maxScroll, value));
    }
 

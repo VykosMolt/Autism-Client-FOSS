@@ -121,7 +121,7 @@ public final class OreBlockCatalog {
       private Inner_StreamUtil() {
       }
 
-      private static synchronized int init(BlockState state, OreBlockCatalog.Inner_DataUtil kind) {
+      private static synchronized int idFor(BlockState state, OreBlockCatalog.Inner_DataUtil kind) {
          Integer existing = stateIds.get(state);
          if (existing != null) {
             return existing;
@@ -156,7 +156,7 @@ public final class OreBlockCatalog {
          if (state != null && OreBlockCatalog.init(state.getBlock())) {
             Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             OreBlockCatalog.Inner_DataUtil kind = id == null ? null : OreBlockCatalog.init(id.toString());
-            return kind == null ? -1 : init(state, kind);
+            return kind == null ? -1 : idFor(state, kind);
          } else {
             return -1;
          }

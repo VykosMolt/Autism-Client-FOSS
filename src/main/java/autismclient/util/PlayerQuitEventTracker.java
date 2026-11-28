@@ -18,11 +18,11 @@ public final class PlayerQuitEventTracker {
    public static final long load = 20000L;
    public static final long read = 3000L;
    private static final long write = 500L;
-   private static final List<String> init_List = List.of(
+   private static final List<String> QUIT_MESSAGE_ENDINGS = List.of(
       " has left the game", " has left the server", " left the game", " left the server", " has quit", " quit", " disconnected", " logged out"
    );
-   private final Map<UUID, PlayerQuitEventTracker.Inner_StreamUtil> init_Map = new HashMap<>();
-   private final ArrayDeque<PlayerQuitEventTracker.Inner_CachePool> init_ArrayDeque = new ArrayDeque<>();
+   private final Map<UUID, PlayerQuitEventTracker.Inner_StreamUtil> members = new HashMap<>();
+   private final ArrayDeque<PlayerQuitEventTracker.Inner_CachePool> recentRemovals = new ArrayDeque<>();
 
    public void updateRoster(Collection<AntiVanishRosterTracker.Inner_ConfigStore> profiles, long now) {
       if (profiles.size() > 4096) {
@@ -39,8 +39,8 @@ public final class PlayerQuitEventTracker {
                   duplicateIds.add(p.uuid());
                }
 
-               if (!names.add(init_Str_Str(p.name()))) {
-                  duplicates.add(init_Str_Str(p.name()));
+               if (!names.add(lower(p.name()))) {
+                  duplicates.add(lower(p.name()));
                }
             }
          }
@@ -48,11 +48,11 @@ public final class PlayerQuitEventTracker {
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
             if (p.load()
                && p.name().matches("[A-Za-z0-9_]{1,16}")
-               && !duplicates.contains(init_Str_Str(p.name()))
+               && !duplicates.contains(lower(p.name()))
                && !duplicateIds.contains(p.uuid())) {
-               PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(p.uuid());
+               PlayerQuitEventTracker.Inner_StreamUtil m = this.members.get(p.uuid());
                if (m != null && !m.name.equals(p.name())) {
-                  this.init_Map.remove(p.uuid());
+                  this.members.remove(p.uuid());
                   m = null;
                }
 
@@ -62,62 +62,62 @@ public final class PlayerQuitEventTracker {
                   }
 
                   m = new PlayerQuitEventTracker.Inner_StreamUtil(p.uuid(), p.name());
-                  this.init_Map.put(p.uuid(), m);
+                  this.members.put(p.uuid(), m);
                }
 
                if (p.listed()) {
-                  m.init(now);
+                  m.markListed(now);
                } else {
-                  this.init_V_StreamUtil_StreamU_J(m, now);
+                  this.onRemoved(m, now);
                }
             } else {
-               this.init_Map.remove(p.uuid());
+               this.members.remove(p.uuid());
             }
          }
 
          Map<String, UUID> owners = new HashMap<>();
 
          for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
-            owners.put(init_Str_Str(p.name()), p.uuid());
+            owners.put(lower(p.name()), p.uuid());
          }
 
-         this.init_Map.values().removeIf(mx -> !live.containsKey(mx.id) && owners.containsKey(init_Str_Str(mx.name)));
+         this.members.values().removeIf(mx -> !live.containsKey(mx.id) && owners.containsKey(lower(mx.name)));
 
-         for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
+         for (PlayerQuitEventTracker.Inner_StreamUtil m : this.members.values()) {
             if (!live.containsKey(m.id)) {
-               this.init_V_StreamUtil_StreamU_J(m, now);
+               this.onRemoved(m, now);
             }
          }
 
-         while (!this.init_ArrayDeque.isEmpty() && now - this.init_ArrayDeque.peekFirst().init_J > 500L) {
-            this.init_ArrayDeque.removeFirst();
+         while (!this.recentRemovals.isEmpty() && now - this.recentRemovals.peekFirst().at > 500L) {
+            this.recentRemovals.removeFirst();
          }
 
-         if (this.init_ArrayDeque.stream().map(PlayerQuitEventTracker.Inner_CachePool::init_UUID).distinct().count() >= 4L) {
-            for (PlayerQuitEventTracker.Inner_CachePool r : this.init_ArrayDeque) {
-               PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(r.init_UUID);
-               if (m != null && m.read_J == r.init_J) {
-                  m.write_Z = true;
+         if (this.recentRemovals.stream().map(PlayerQuitEventTracker.Inner_CachePool::uuid).distinct().count() >= 4L) {
+            for (PlayerQuitEventTracker.Inner_CachePool r : this.recentRemovals) {
+               PlayerQuitEventTracker.Inner_StreamUtil m = this.members.get(r.uuid);
+               if (m != null && m.removedAt == r.at) {
+                  m.massRemoval = true;
                }
             }
          }
 
-         this.init_Map.values().removeIf(mx -> now - mx.load_J > 30000L);
-         if (this.init_Map.size() > 4096) {
+         this.members.values().removeIf(mx -> now - mx.lastSeenAt > 30000L);
+         if (this.members.size() > 4096) {
             this.init();
          }
       }
    }
 
-   private void init_V_StreamUtil_StreamU_J(PlayerQuitEventTracker.Inner_StreamUtil m, long now) {
-      if (m.init_Z) {
-         m.load_Z = now - m.init_J >= 3000L;
-         m.init_Z = false;
-         m.read_J = now;
-         m.read_Z = false;
-         m.write_Z = false;
-         if (m.load_Z) {
-            this.init_ArrayDeque.addLast(new PlayerQuitEventTracker.Inner_CachePool(m.id, now));
+   private void onRemoved(PlayerQuitEventTracker.Inner_StreamUtil m, long now) {
+      if (m.listed) {
+         m.wasEstablished = now - m.listedSince >= 3000L;
+         m.listed = false;
+         m.removedAt = now;
+         m.alerted = false;
+         m.massRemoval = false;
+         if (m.wasEstablished) {
+            this.recentRemovals.addLast(new PlayerQuitEventTracker.Inner_CachePool(m.id, now));
          }
       }
    }
@@ -141,9 +141,9 @@ public final class PlayerQuitEventTracker {
                   Object argument = translated.getArgs()[0];
                   String display = argument instanceof Component c ? c.getString(96) : (argument instanceof String s ? s : "");
                   if (display.length() <= 96) {
-                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.init_Map.values().stream().filter(mx -> NormalizedTextMatcher.matchesName(display, mx.name)).toList();
+                     List<PlayerQuitEventTracker.Inner_StreamUtil> matches = this.members.values().stream().filter(mx -> NormalizedTextMatcher.matchesName(display, mx.name)).toList();
                      if (matches.size() == 1) {
-                        matches.getFirst().write_J = now;
+                        matches.getFirst().quitMessageAt = now;
                      }
                   }
                }
@@ -161,13 +161,13 @@ public final class PlayerQuitEventTracker {
             if (raw.length() <= 256) {
                String line = NormalizedTextMatcher.normalize(raw);
 
-               for (String ending : init_List) {
+               for (String ending : QUIT_MESSAGE_ENDINGS) {
                   if (line.endsWith(ending)) {
                      String name = line.substring(0, line.length() - ending.length());
 
-                     for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
-                        if (m.load_Str.equals(name)) {
-                           m.write_J = now;
+                     for (PlayerQuitEventTracker.Inner_StreamUtil m : this.members.values()) {
+                        if (m.normalizedName.equals(name)) {
+                           m.quitMessageAt = now;
                         }
                      }
                   }
@@ -180,10 +180,10 @@ public final class PlayerQuitEventTracker {
    public List<PlayerQuitEventTracker.Inner_DataUtil> collectAlerts(long now) {
       List<PlayerQuitEventTracker.Inner_DataUtil> alerts = new ArrayList<>();
 
-      for (PlayerQuitEventTracker.Inner_StreamUtil m : this.init_Map.values()) {
-         if (init_Z_StreamUtil_StreamU_J(m, now) && !m.read_Z) {
-            m.read_Z = true;
-            alerts.add(new PlayerQuitEventTracker.Inner_DataUtil(m.id, m.name, m.read_J + 3000L + 20000L));
+      for (PlayerQuitEventTracker.Inner_StreamUtil m : this.members.values()) {
+         if (isSuspectEntry(m, now) && !m.alerted) {
+            m.alerted = true;
+            alerts.add(new PlayerQuitEventTracker.Inner_DataUtil(m.id, m.name, m.removedAt + 3000L + 20000L));
          }
       }
 
@@ -191,31 +191,31 @@ public final class PlayerQuitEventTracker {
    }
 
    public boolean isSuspect(UUID id, long now) {
-      PlayerQuitEventTracker.Inner_StreamUtil m = this.init_Map.get(id);
-      return m != null && init_Z_StreamUtil_StreamU_J(m, now);
+      PlayerQuitEventTracker.Inner_StreamUtil m = this.members.get(id);
+      return m != null && isSuspectEntry(m, now);
    }
 
-   private static boolean init_Z_StreamUtil_StreamU_J(PlayerQuitEventTracker.Inner_StreamUtil m, long now) {
-      return m.load_Z
-         && !m.init_Z
-         && !m.write_Z
-         && m.read_J >= 0L
-         && now - m.read_J >= 3000L
-         && now - m.read_J < 23000L
-         && now - m.load_J <= 30000L
-         && (m.write_J < 0L || m.write_J < m.read_J - 3000L);
+   private static boolean isSuspectEntry(PlayerQuitEventTracker.Inner_StreamUtil m, long now) {
+      return m.wasEstablished
+         && !m.listed
+         && !m.massRemoval
+         && m.removedAt >= 0L
+         && now - m.removedAt >= 3000L
+         && now - m.removedAt < 23000L
+         && now - m.lastSeenAt <= 30000L
+         && (m.quitMessageAt < 0L || m.quitMessageAt < m.removedAt - 3000L);
    }
 
    public void init() {
-      this.init_Map.clear();
-      this.init_ArrayDeque.clear();
+      this.members.clear();
+      this.recentRemovals.clear();
    }
 
-   private static String init_Str_Str(String text) {
+   private static String lower(String text) {
       return text.toLowerCase(Locale.ROOT);
    }
 
-   private record Inner_CachePool(UUID init_UUID, long init_J) {
+   private record Inner_CachePool(UUID uuid, long at) {
    }
 
    public record Inner_DataUtil(UUID uuid, String name, long expiresAt) {
@@ -224,32 +224,32 @@ public final class PlayerQuitEventTracker {
    private static final class Inner_StreamUtil {
       final UUID id;
       final String name;
-      final String load_Str;
-      long init_J = -1L;
-      long load_J;
-      long read_J = -1L;
-      long write_J = -1L;
-      boolean init_Z;
-      boolean load_Z;
-      boolean read_Z;
-      boolean write_Z;
+      final String normalizedName;
+      long listedSince = -1L;
+      long lastSeenAt;
+      long removedAt = -1L;
+      long quitMessageAt = -1L;
+      boolean listed;
+      boolean wasEstablished;
+      boolean alerted;
+      boolean massRemoval;
 
       Inner_StreamUtil(UUID id, String name) {
          this.id = id;
          this.name = name;
-         this.load_Str = NormalizedTextMatcher.normalize(name);
+         this.normalizedName = NormalizedTextMatcher.normalize(name);
       }
 
-      void init(long now) {
-         if (!this.init_Z) {
-            this.init_J = now;
-            this.read_J = -1L;
-            this.write_J = -1L;
-            this.load_Z = this.read_Z = this.write_Z = false;
+      void markListed(long now) {
+         if (!this.listed) {
+            this.listedSince = now;
+            this.removedAt = -1L;
+            this.quitMessageAt = -1L;
+            this.wasEstablished = this.alerted = this.massRemoval = false;
          }
 
-         this.init_Z = true;
-         this.load_J = now;
+         this.listed = true;
+         this.lastSeenAt = now;
       }
    }
 }

@@ -32,11 +32,11 @@ public final class GifImageDecoder {
          if (bytes.length > 67108864) {
             throw new GifImageDecoder.Inner_CachePool("file too large (max 25 MB)");
          } else if (isGif(bytes)) {
-            return read_DataUtil_DataUtil(bytes);
+            return decodeGif(bytes);
          } else if (!isPng(bytes) && !isJpeg(bytes)) {
             throw new GifImageDecoder.Inner_CachePool("unsupported image format");
          } else {
-            return load_DataUtil_DataUtil(bytes);
+            return decodeStatic(bytes);
          }
       } else {
          throw new GifImageDecoder.Inner_CachePool("no image data");
@@ -55,12 +55,12 @@ public final class GifImageDecoder {
       return b.length >= 2 && (b[0] & 255) == 255 && (b[1] & 255) == 216;
    }
 
-   private static GifImageDecoder.Inner_DataUtil load_DataUtil_DataUtil(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   private static GifImageDecoder.Inner_DataUtil decodeStatic(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
       if (isPng(bytes) && bytes.length >= 24) {
-         int w = load(bytes, 16);
-         int h = load(bytes, 20);
+         int w = u32be(bytes, 16);
+         int h = u32be(bytes, 20);
          if (w > 0 && h > 0) {
-            init(w, h);
+            checkDimensions(w, h);
          }
       }
 
@@ -68,7 +68,7 @@ public final class GifImageDecoder {
       try {
          image = ImageIO.read(new ByteArrayInputStream(bytes));
       } catch (IOException | RuntimeException e) {
-         throw new GifImageDecoder.Inner_CachePool("could not decode image: " + init(e));
+         throw new GifImageDecoder.Inner_CachePool("could not decode image: " + describe(e));
       }
 
       if (image == null) {
@@ -76,8 +76,8 @@ public final class GifImageDecoder {
       } else {
          int w = image.getWidth();
          int h = image.getHeight();
-         init(w, h);
-         double scale = init(w, h, 1);
+         checkDimensions(w, h);
+         double scale = downscaleFactor(w, h, 1);
          if (scale < 1.0) {
             int outW = Math.max(1, (int)Math.round(w * scale));
             int outH = Math.max(1, (int)Math.round(h * scale));
@@ -97,7 +97,7 @@ public final class GifImageDecoder {
       }
    }
 
-   private static double init(int w, int h, int frames) {
+   private static double downscaleFactor(int w, int h, int frames) {
       double scale = 1.0;
       int maxSide = Math.max(w, h);
       if (maxSide > 2048) {
@@ -112,15 +112,15 @@ public final class GifImageDecoder {
       return scale;
    }
 
-   private static GifImageDecoder.Inner_DataUtil read_DataUtil_DataUtil(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   private static GifImageDecoder.Inner_DataUtil decodeGif(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
       if (bytes.length < 13) {
          throw new GifImageDecoder.Inner_CachePool("corrupt GIF header");
       }
 
-      int screenW = init(bytes, 6);
-      int screenH = init(bytes, 8);
+      int screenW = u16le(bytes, 6);
+      int screenH = u16le(bytes, 8);
       if (screenW > 0 && screenH > 0) {
-         init(screenW, screenH);
+         checkDimensions(screenW, screenH);
          ImageReader reader = null;
          MemoryCacheImageInputStream input = new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes));
 
@@ -143,7 +143,7 @@ public final class GifImageDecoder {
 
             int outW = screenW;
             int outH = screenH;
-            double scale = init(screenW, screenH, frames);
+            double scale = downscaleFactor(screenW, screenH, frames);
             if (scale < 1.0) {
                outW = Math.max(1, (int)Math.round(screenW * scale));
                outH = Math.max(1, (int)Math.round(screenH * scale));
@@ -165,11 +165,11 @@ public final class GifImageDecoder {
                graphics.setBackground(new Color(0, 0, 0, 0));
 
                for (int i = 0; i < frames; i++) {
-                  GifImageDecoder.Inner_StreamUtil info = init(reader.getImageMetadata(i), screenW, screenH);
-                  int[] previous = info.load_Z ? canvas.getRGB(0, 0, screenW, screenH, null, 0, screenW) : null;
+                  GifImageDecoder.Inner_StreamUtil info = frameInfo(reader.getImageMetadata(i), screenW, screenH);
+                  int[] previous = info.restoreToPrevious ? canvas.getRGB(0, 0, screenW, screenH, null, 0, screenW) : null;
                   BufferedImage sub = reader.read(i);
                   if (sub != null) {
-                     graphics.drawImage(sub, info.init_I, info.load_I, null);
+                     graphics.drawImage(sub, info.x, info.y, null);
                   }
 
                   int[] argb;
@@ -184,10 +184,10 @@ public final class GifImageDecoder {
                   }
 
                   outFrames[i] = argb;
-                  delays[i] = info.update;
-                  if (info.init_Z) {
-                     graphics.clearRect(info.init_I, info.load_I, info.read, info.write);
-                  } else if (info.load_Z) {
+                  delays[i] = info.delayMs;
+                  if (info.restoreToBackground) {
+                     graphics.clearRect(info.x, info.y, info.width, info.height);
+                  } else if (info.restoreToPrevious) {
                      canvas.setRGB(0, 0, screenW, screenH, previous, 0, screenW);
                   }
                }
@@ -209,7 +209,7 @@ public final class GifImageDecoder {
          } catch (GifImageDecoder.Inner_CachePool e) {
             throw e;
          } catch (IOException | RuntimeException e) {
-            throw new GifImageDecoder.Inner_CachePool("could not decode GIF: " + init(e));
+            throw new GifImageDecoder.Inner_CachePool("could not decode GIF: " + describe(e));
          } finally {
             if (reader != null) {
                reader.dispose();
@@ -225,7 +225,7 @@ public final class GifImageDecoder {
       }
    }
 
-   private static GifImageDecoder.Inner_StreamUtil init(IIOMetadata metadata, int screenW, int screenH) throws GifImageDecoder.Inner_CachePool {
+   private static GifImageDecoder.Inner_StreamUtil frameInfo(IIOMetadata metadata, int screenW, int screenH) throws GifImageDecoder.Inner_CachePool {
       GifImageDecoder.Inner_StreamUtil info = new GifImageDecoder.Inner_StreamUtil();
       Node root = null;
       if (metadata != null) {
@@ -243,48 +243,48 @@ public final class GifImageDecoder {
             Node node = children.item(n);
             String name = node.getNodeName();
             if ("GraphicControlExtension".equals(name)) {
-               int centiseconds = init(init(node, "delayTime"), -1);
-               info.update = centiseconds > 0 ? centiseconds * 10 : 100;
-               String disposal = init(node, "disposalMethod");
+               int centiseconds = parseIntOr(attribute(node, "delayTime"), -1);
+               info.delayMs = centiseconds > 0 ? centiseconds * 10 : 100;
+               String disposal = attribute(node, "disposalMethod");
                if ("restoreToBackgroundColor".equals(disposal)) {
-                  info.init_Z = true;
+                  info.restoreToBackground = true;
                } else if ("restoreToPrevious".equals(disposal)) {
-                  info.load_Z = true;
+                  info.restoreToPrevious = true;
                }
             } else if ("ImageDescriptor".equals(name)) {
-               info.init_I = init(init(node, "imageLeftPosition"), 0);
-               info.load_I = init(init(node, "imageTopPosition"), 0);
-               info.read = init(init(node, "imageWidth"), screenW);
-               info.write = init(init(node, "imageHeight"), screenH);
+               info.x = parseIntOr(attribute(node, "imageLeftPosition"), 0);
+               info.y = parseIntOr(attribute(node, "imageTopPosition"), 0);
+               info.width = parseIntOr(attribute(node, "imageWidth"), screenW);
+               info.height = parseIntOr(attribute(node, "imageHeight"), screenH);
             }
          }
       }
 
-      if (info.read <= 0) {
-         info.read = screenW;
+      if (info.width <= 0) {
+         info.width = screenW;
       }
 
-      if (info.write <= 0) {
-         info.write = screenH;
+      if (info.height <= 0) {
+         info.height = screenH;
       }
 
-      if (info.read <= 4096 && info.write <= 4096) {
-         info.init_I = Math.max(0, Math.min(info.init_I, screenW));
-         info.load_I = Math.max(0, Math.min(info.load_I, screenH));
-         info.read = Math.max(0, Math.min(info.read, screenW - info.init_I));
-         info.write = Math.max(0, Math.min(info.write, screenH - info.load_I));
+      if (info.width <= 4096 && info.height <= 4096) {
+         info.x = Math.max(0, Math.min(info.x, screenW));
+         info.y = Math.max(0, Math.min(info.y, screenH));
+         info.width = Math.max(0, Math.min(info.width, screenW - info.x));
+         info.height = Math.max(0, Math.min(info.height, screenH - info.y));
          return info;
       } else {
          throw new GifImageDecoder.Inner_CachePool("GIF frame too large (max 4096×4096)");
       }
    }
 
-   private static String init(Node node, String name) {
+   private static String attribute(Node node, String name) {
       Node attribute = node.getAttributes() == null ? null : node.getAttributes().getNamedItem(name);
       return attribute == null ? null : attribute.getNodeValue();
    }
 
-   private static int init(String value, int fallback) {
+   private static int parseIntOr(String value, int fallback) {
       if (value == null) {
          return fallback;
       }
@@ -296,7 +296,7 @@ public final class GifImageDecoder {
       }
    }
 
-   private static void init(int w, int h) throws GifImageDecoder.Inner_CachePool {
+   private static void checkDimensions(int w, int h) throws GifImageDecoder.Inner_CachePool {
       if (w <= 0 || h <= 0) {
          throw new GifImageDecoder.Inner_CachePool("corrupt image (bad dimensions)");
       } else if (w > 4096 || h > 4096) {
@@ -304,15 +304,15 @@ public final class GifImageDecoder {
       }
    }
 
-   private static int init(byte[] b, int offset) {
+   private static int u16le(byte[] b, int offset) {
       return b[offset] & 0xFF | (b[offset + 1] & 0xFF) << 8;
    }
 
-   private static int load(byte[] b, int offset) {
+   private static int u32be(byte[] b, int offset) {
       return (b[offset] & 0xFF) << 24 | (b[offset + 1] & 0xFF) << 16 | (b[offset + 2] & 0xFF) << 8 | b[offset + 3] & 0xFF;
    }
 
-   private static String init(Throwable t) {
+   private static String describe(Throwable t) {
       String message = t.getMessage();
       if (message != null && !message.isBlank()) {
          message = message.replace('\n', ' ').trim();
@@ -332,12 +332,12 @@ public final class GifImageDecoder {
    }
 
    private static final class Inner_StreamUtil {
-      int init_I;
-      int load_I;
-      int read;
-      int write;
-      int update = 100;
-      boolean init_Z;
-      boolean load_Z;
+      int x;
+      int y;
+      int width;
+      int height;
+      int delayMs = 100;
+      boolean restoreToBackground;
+      boolean restoreToPrevious;
    }
 }

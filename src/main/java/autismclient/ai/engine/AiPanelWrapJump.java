@@ -10,8 +10,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 
 final class AiPanelWrapJump {
-   private static final int flowState = 720;
-   private static final int flowTemp = 11;
+   private static final int MAX_CANDIDATES = 720;
+   private static final int MAX_STEPS = 11;
    private static final int[] putAt_IArr = new int[]{0, -1, 1};
    private static final int[] fill_IArr = new int[]{0, -4, 4, -10, 10};
    private static final int[] readEx = new int[]{0, -30, 30};

@@ -16,9 +16,9 @@ import net.minecraft.network.protocol.configuration.ConfigurationProtocols;
 import net.minecraft.network.protocol.game.GameProtocols;
 
 public final class PacketWireCaptureStore {
-   private static final Map<Packet<?>, PacketWireCaptureStore.Inner_StreamUtil> init = Collections.synchronizedMap(new WeakHashMap<>());
-   private static final Map<Channel, PacketWireCaptureStore.Inner_DataUtil> load = Collections.synchronizedMap(new WeakHashMap<>());
-   private static final Map<String, Map<String, Integer>> read = new ConcurrentHashMap<>();
+   private static final Map<Packet<?>, PacketWireCaptureStore.Inner_StreamUtil> packetCaptures = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<Channel, PacketWireCaptureStore.Inner_DataUtil> channelStates = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<String, Map<String, Integer>> packetIdsByPhase = new ConcurrentHashMap<>();
 
    private PacketWireCaptureStore() {
    }
@@ -31,12 +31,12 @@ public final class PacketWireCaptureStore {
 
    public static void init(Packet<?> packet, String direction, String protocolPhase, PacketType<?> packetType, byte[] bytes) {
       if (packet != null && bytes != null) {
-         int numericPacketId = init(bytes);
+         int numericPacketId = readVarInt(bytes);
          if (numericPacketId < 0) {
             numericPacketId = init(protocolPhase, direction, packetType);
          }
 
-         init.put(
+         packetCaptures.put(
             packet,
             new PacketWireCaptureStore.Inner_StreamUtil(
                direction,
@@ -52,29 +52,29 @@ public final class PacketWireCaptureStore {
    }
 
    public static PacketWireCaptureStore.Inner_StreamUtil init(Packet<?> packet) {
-      return packet == null ? null : init.get(packet);
+      return packet == null ? null : packetCaptures.get(packet);
    }
 
    public static void markEncrypted(Channel channel) {
       if (channel != null) {
-         PacketWireCaptureStore.Inner_DataUtil previous = load.get(channel);
-         load.put(channel, previous == null ? PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil() : previous.init(true));
+         PacketWireCaptureStore.Inner_DataUtil previous = channelStates.get(channel);
+         channelStates.put(channel, previous == null ? PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil() : previous.withEnabled(true));
       }
    }
 
    public static void init(Channel channel, String direction, ByteBuf source) {
       if (channel != null && source != null) {
-         PacketWireCaptureStore.Inner_DataUtil previous = load.get(channel);
+         PacketWireCaptureStore.Inner_DataUtil previous = channelStates.get(channel);
          if (previous == null) {
             previous = PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil();
          }
 
-         load.put(channel, previous.init(direction, init(source)));
+         channelStates.put(channel, previous.withCapture(direction, init(source)));
       }
    }
 
    public static PacketWireCaptureStore.Inner_DataUtil init_bn_DataUtil(Channel channel) {
-      return channel == null ? null : load.get(channel);
+      return channel == null ? null : channelStates.get(channel);
    }
 
    public static byte[] init(ByteBuf source) {
@@ -96,7 +96,7 @@ public final class PacketWireCaptureStore {
       return AutismPayloadSupport.toHexPreview(bytes, maxBytes);
    }
 
-   private static int init(byte[] bytes) {
+   private static int readVarInt(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
          int value = 0;
          int shift = 0;
@@ -121,10 +121,10 @@ public final class PacketWireCaptureStore {
       if (packetType == null) {
          return -1;
       } else {
-         String phase = init(protocolPhase);
-         String flow = load(direction);
+         String phase = normalizePhase(protocolPhase);
+         String flow = normalizeDirection(direction);
          if (!phase.isBlank() && !flow.isBlank()) {
-            Map<String, Integer> ids = read.computeIfAbsent(phase + "|" + flow, key -> packetIds(phase, flow));
+            Map<String, Integer> ids = packetIdsByPhase.computeIfAbsent(phase + "|" + flow, key -> packetIds(phase, flow));
             Integer id = ids.get(packetType.toString());
             return id == null ? -1 : id;
          } else {
@@ -165,7 +165,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   private static String init(String protocolPhase) {
+   private static String normalizePhase(String protocolPhase) {
       if (protocolPhase != null && !protocolPhase.isBlank()) {
          String value = protocolPhase.strip().toUpperCase(Locale.ROOT);
          if (value.contains("CONFIG")) {
@@ -178,7 +178,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   private static String load(String direction) {
+   private static String normalizeDirection(String direction) {
       if (direction != null && !direction.isBlank()) {
          String value = direction.strip().toUpperCase(Locale.ROOT);
          if (!value.contains("SERVERBOUND") && !value.contains("OUT") && !value.contains("C2S")) {
@@ -196,13 +196,13 @@ public final class PacketWireCaptureStore {
          return new PacketWireCaptureStore.Inner_DataUtil(true, System.currentTimeMillis(), new byte[0], new byte[0], 0L, 0L);
       }
 
-      PacketWireCaptureStore.Inner_DataUtil init(boolean value) {
+      PacketWireCaptureStore.Inner_DataUtil withEnabled(boolean value) {
          return new PacketWireCaptureStore.Inner_DataUtil(
             value, value && this.init_J == 0L ? System.currentTimeMillis() : this.init_J, this.init_BArr, this.load_BArr, this.load_J, this.read
          );
       }
 
-      PacketWireCaptureStore.Inner_DataUtil init(String direction, byte[] bytes) {
+      PacketWireCaptureStore.Inner_DataUtil withCapture(String direction, byte[] bytes) {
          long now = System.currentTimeMillis();
          return !"C2S".equalsIgnoreCase(direction) && !"OUT".equalsIgnoreCase(direction)
             ? new PacketWireCaptureStore.Inner_DataUtil(this.init_Z, this.init_J, bytes == null ? new byte[0] : (byte[])bytes.clone(), this.load_BArr, now, this.read)

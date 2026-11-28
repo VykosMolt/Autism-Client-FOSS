@@ -41,75 +41,75 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiLiveGrid implements AiPathfinder.GridView {
-   static final int flowState = 6;
-   private final Minecraft putAt_Minecraft;
-   private final boolean putAt_Z;
-   private final ClientLevel putAt_ClientLevel;
-   private final AiChunkMemory putAt_PacketHelper;
-   private final int fill;
-   private final int readEx;
+   static final int MAX_FALLING_STACK = 6;
+   private final Minecraft mc;
+   private final boolean nether;
+   private final ClientLevel level;
+   private final AiChunkMemory chunkMemory;
+   private final int minY;
+   private final int maxY;
    private volatile AiLiveGrid.Inner_DataUtil putAt_PoolStore_CacheHel;
    private static final AtomicReferenceArray<AiLiveGrid.Inner_StreamUtil> putAt_AtomicReferenceArr = new AtomicReferenceArray<>(
       Math.max(1, Block.BLOCK_STATE_REGISTRY.size())
    );
-   private static final long putAt_J = 30000000000L;
+   private static final long CHUNK_RESCAN_NANOS = 30000000000L;
    private static final int value = 4;
-   private static final int prevEx = 40;
-   private static final Map<Long, Long> putAt_Map = new HashMap<>();
-   private static Object putAt_Obj;
+   private static final int SCAN_Y_RADIUS = 40;
+   private static final Map<Long, Long> chunkScanTimes = new HashMap<>();
+   private static Object scannedLevel;
 
    public AiLiveGrid(Minecraft var1, ItemStack[] var2, AiChunkMemory var3) {
-      this.putAt_Minecraft = var1;
-      this.putAt_ClientLevel = var1.level;
-      this.putAt_PacketHelper = var3;
-      this.fill = this.putAt_ClientLevel.getMinY();
-      this.readEx = this.putAt_ClientLevel.getMaxY() - 1;
-      this.putAt_Z = this.putAt_ClientLevel.dimension() == Level.NETHER;
+      this.mc = var1;
+      this.level = var1.level;
+      this.chunkMemory = var3;
+      this.minY = this.level.getMinY();
+      this.maxY = this.level.getMaxY() - 1;
+      this.nether = this.level.dimension() == Level.NETHER;
       this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.Inner_DataUtil.of(var1), 0L);
    }
 
    public ClientLevel putAt_ClientLevel() {
-      return this.putAt_ClientLevel;
+      return this.level;
    }
 
    @Override
    public double movementSpeed() {
-      return this.putAt_Minecraft.player == null ? 0.1 : AiLiveWorld.putAt_D_LivingEntity(this.putAt_Minecraft.player);
+      return this.mc.player == null ? 0.1 : AiLiveWorld.putAt_D_LivingEntity(this.mc.player);
    }
 
    public void putAt_V_ItemStackArr_2(ItemStack[] var1) {
       AiLiveGrid.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
-      MiningCost.Inner_DataUtil var3 = MiningCost.Inner_DataUtil.of(this.putAt_Minecraft);
-      if (!putAt(var2.putAt_ItemStackArr, var1) || !var3.equals(var2.putAt_ByteWorker_CacheHe)) {
-         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.putAt_J + 1L, var2.putAt_BiPredicate);
+      MiningCost.Inner_DataUtil var3 = MiningCost.Inner_DataUtil.of(this.mc);
+      if (!sameHotbar(var2.hotbar, var1) || !var3.equals(var2.putAt_ByteWorker_CacheHe)) {
+         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.revision + 1L, var2.toolPredicate);
       }
    }
 
    public void putAt_V_BiPredicate_2(BiPredicate<BlockState, ItemStack> var1) {
       AiLiveGrid.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
-      if (var2.putAt_BiPredicate != var1) {
-         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(var2.putAt_ItemStackArr, var2.putAt_ByteWorker_CacheHe, var2.putAt_J + 1L, var1);
+      if (var2.toolPredicate != var1) {
+         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(var2.hotbar, var2.putAt_ByteWorker_CacheHe, var2.revision + 1L, var1);
       }
    }
 
    @Override
    public long putAt_J() {
-      return this.putAt_PoolStore_CacheHel.putAt_J;
+      return this.putAt_PoolStore_CacheHel.revision;
    }
 
    @Override
    public AiPathfinder.CellInfo probe(int var1, int var2, int var3) {
-      if (var2 < this.fill) {
+      if (var2 < this.minY) {
          return AiPathfinder.CellInfo.UNLOADED;
       }
 
-      if (var2 > this.readEx) {
+      if (var2 > this.maxY) {
          return AiPathfinder.CellInfo.air();
       }
 
-      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      BlockState var4 = this.blockAt(var1, var2, var3);
       if (var4 == null) {
-         return this.putAt_FileStore_BitCache(var1, var2, var3);
+         return this.memoryCell(var1, var2, var3);
       }
 
       AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
@@ -117,30 +117,30 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          return AiPathfinder.CellInfo.UNLOADED;
       }
 
-      AiPathfinder.CellInfo var6 = !var5.diggableKind() ? var5.probe() : putAt(var5.probe(), this.putAt(var4, var5, var1, var2, var3));
-      if (var5.falling() && var2 - 1 >= this.fill) {
-         BlockState var7 = this.putAt_BlockState(var1, var2 - 1, var3);
+      AiPathfinder.CellInfo var6 = !var5.diggableKind() ? var5.probe() : withDigCost(var5.probe(), this.digCost(var4, var5, var1, var2, var3));
+      if (var5.falling() && var2 - 1 >= this.minY) {
+         BlockState var7 = this.blockAt(var1, var2 - 1, var3);
          if (var7 != null && FallingBlock.isFree(var7)) {
             var6 = putAt_FileStore_BitCache_FileStore_BitCache(var6);
          }
       }
 
-      if (!var6.climbable() && var4.getBlock() instanceof TrapDoorBlock && var2 - 1 >= this.fill) {
-         BlockState var8 = this.putAt_BlockState(var1, var2 - 1, var3);
+      if (!var6.climbable() && var4.getBlock() instanceof TrapDoorBlock && var2 - 1 >= this.minY) {
+         BlockState var8 = this.blockAt(var1, var2 - 1, var3);
          if (AiPathfinder.LiveGridView.isClimbableTrapdoor(var4, var8)) {
             var6 = fill(var6);
          }
       }
 
-      return putAt(var6, AiEnvironmentHazards.init(this.putAt_ClientLevel, new BlockPos(var1, var2, var3)));
+      return withFeetHazard(var6, AiEnvironmentHazards.init(this.level, new BlockPos(var1, var2, var3)));
    }
 
    @Override
    public AiPathfinder.CellOccupancy putAt_FileStore_IoCodec_I(int var1, int var2, int var3, boolean var4) {
-      if (this.putAt_ClientLevel.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var6) {
+      if (this.level.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var6) {
          long var7 = 0L;
-         int var9 = Math.max(var2, this.fill);
-         int var10 = Math.min(var2 + 64 - 1, this.readEx);
+         int var9 = Math.max(var2, this.minY);
+         int var10 = Math.min(var2 + 64 - 1, this.maxY);
 
          try {
             LevelChunkSection[] var11 = var6.getSections();
@@ -171,13 +171,13 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             return AiPathfinder.GridView.super.putAt_FileStore_IoCodec_I(var1, var2, var3, var4);
          }
       } else {
-         return !var4 && this.putAt_PacketHelper != null
+         return !var4 && this.chunkMemory != null
             ? AiPathfinder.GridView.super.putAt_FileStore_IoCodec_I(var1, var2, var3, false)
             : new AiPathfinder.CellOccupancy(0L, false);
       }
    }
 
-   static AiPathfinder.CellInfo putAt(AiPathfinder.CellInfo var0, boolean var1) {
+   static AiPathfinder.CellInfo withFeetHazard(AiPathfinder.CellInfo var0, boolean var1) {
       return var1 && !var0.hazardFeet() ? var0.withHazards(true, var0.hazardFloor()) : var0;
    }
 
@@ -239,20 +239,20 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
    @Override
    public short putAt_S_I(int var1, int var2, int var3) {
-      if (var2 < this.fill) {
+      if (var2 < this.minY) {
          return 1;
-      } else if (var2 > this.readEx) {
+      } else if (var2 > this.maxY) {
          return 0;
       } else {
-         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         BlockState var4 = this.blockAt(var1, var2, var3);
          if (var4 == null) {
-            return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1, var2, var3));
+            return AiShapes.shapeIdOf(this.memoryCell(var1, var2, var3));
          } else {
             AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
             if (var5 == null) {
                return 1;
             } else {
-               return !var5.dynamicShape() ? var5.shape() : putAt(var4, new BlockPos(var1, var2, var3));
+               return !var5.dynamicShape() ? var5.shape() : dynamicShapeId(var4, new BlockPos(var1, var2, var3));
             }
          }
       }
@@ -260,8 +260,8 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
    @Override
    public byte putAt_B_I(int var1, int var2, int var3) {
-      if (var2 >= this.fill && var2 <= this.readEx) {
-         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      if (var2 >= this.minY && var2 <= this.maxY) {
+         BlockState var4 = this.blockAt(var1, var2, var3);
          if (var4 == null) {
             return AiSurface.NORMAL.init();
          }
@@ -275,17 +275,17 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
    @Override
    public short fill_S(int var1, int var2, int var3) {
-      if (var2 < this.fill) {
+      if (var2 < this.minY) {
          return 1;
       }
 
-      if (var2 > this.readEx) {
+      if (var2 > this.maxY) {
          return 0;
       }
 
-      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      BlockState var4 = this.blockAt(var1, var2, var3);
       if (var4 == null) {
-         return AiShapes.shapeIdOf(this.putAt_FileStore_BitCache(var1, var2, var3));
+         return AiShapes.shapeIdOf(this.memoryCell(var1, var2, var3));
       }
 
       AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
@@ -304,9 +304,9 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   BlockState putAt_BlockState(int var1, int var2, int var3) {
-      if (var2 >= this.fill && var2 <= this.readEx) {
-         if (this.putAt_ClientLevel.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var5) {
+   BlockState blockAt(int var1, int var2, int var3) {
+      if (var2 >= this.minY && var2 <= this.maxY) {
+         if (this.level.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var5) {
             try {
                LevelChunkSection[] var6 = var5.getSections();
                int var7 = var5.getSectionIndex(var2);
@@ -327,39 +327,39 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private AiPathfinder.CellInfo putAt_FileStore_BitCache(int var1, int var2, int var3) {
-      return this.putAt_PacketHelper == null ? AiPathfinder.CellInfo.UNLOADED : this.putAt_PacketHelper.probeCell(var1, var2, var3);
+   private AiPathfinder.CellInfo memoryCell(int var1, int var2, int var3) {
+      return this.chunkMemory == null ? AiPathfinder.CellInfo.UNLOADED : this.chunkMemory.probeCell(var1, var2, var3);
    }
 
-   private double putAt(BlockState var1, AiLiveGrid.Inner_StreamUtil var2, int var3, int var4, int var5) {
+   private double digCost(BlockState var1, AiLiveGrid.Inner_StreamUtil var2, int var3, int var4, int var5) {
       AiLiveGrid.Inner_DataUtil var6 = this.putAt_PoolStore_CacheHel;
       if (var2.requiresTool()
          && !var6.putAt_ByteWorker_CacheHe.creative()
-         && !var6.fill.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.hasCorrectToolInHotbar(var1x, var6.putAt_ItemStackArr))) {
+         && !var6.correctToolCache.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.hasCorrectToolInHotbar(var1x, var6.hotbar))) {
          return 1.0 / 0.0;
       }
 
-      if (!this.value(var3, var4, var5) && !this.prevEx(var3, var4, var5) && !this.fill_Z(var3, var4, var5)) {
-         if (!this.putAt_Z || !var1.is(Blocks.NETHER_GOLD_ORE) && !var1.is(Blocks.GILDED_BLACKSTONE)) {
-            if ((var1.is(Blocks.ICE) || var1.is(Blocks.FROSTED_ICE)) && !this.putAt_Z) {
-               BlockState var7 = this.putAt_BlockState(var3, var4 - 1, var5);
+      if (!this.nextToLava(var3, var4, var5) && !this.nextToWater(var3, var4, var5) && !this.nextToPortal(var3, var4, var5)) {
+         if (!this.nether || !var1.is(Blocks.NETHER_GOLD_ORE) && !var1.is(Blocks.GILDED_BLACKSTONE)) {
+            if ((var1.is(Blocks.ICE) || var1.is(Blocks.FROSTED_ICE)) && !this.nether) {
+               BlockState var7 = this.blockAt(var3, var4 - 1, var5);
                if (var7 == null || AiPathfinder.LiveGridView.isDangerousToBreak(true, var7.isSolid(), var7.liquid(), false)) {
                   return 1.0 / 0.0;
                }
             }
 
-            if (!this.putAt_Z
-               || !this.chunkAt(var3, var4 + 2, var5)
-                  && !this.chunkAt(var3 + 1, var4 + 1, var5)
-                  && !this.chunkAt(var3 - 1, var4 + 1, var5)
-                  && !this.chunkAt(var3, var4 + 1, var5 + 1)
-                  && !this.chunkAt(var3, var4 + 1, var5 - 1)) {
-               double var13 = this.putAt(var6, var1, var2);
+            if (!this.nether
+               || !this.isLavaOrUnloaded(var3, var4 + 2, var5)
+                  && !this.isLavaOrUnloaded(var3 + 1, var4 + 1, var5)
+                  && !this.isLavaOrUnloaded(var3 - 1, var4 + 1, var5)
+                  && !this.isLavaOrUnloaded(var3, var4 + 1, var5 + 1)
+                  && !this.isLavaOrUnloaded(var3, var4 + 1, var5 - 1)) {
+               double var13 = this.cachedBreakCost(var6, var1, var2);
                int var9 = 0;
                int var10 = var4 + 1;
 
-               while (var10 <= this.readEx) {
-                  BlockState var11 = this.putAt_BlockState(var3, var10, var5);
+               while (var10 <= this.maxY) {
+                  BlockState var11 = this.blockAt(var3, var10, var5);
                   if (var11 == null) {
                      return 1.0 / 0.0;
                   }
@@ -367,11 +367,11 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                   AiLiveGrid.Inner_StreamUtil var12 = putAt_PoolStore_TableCac_BlockState(var11);
                   if (var12 != null && var12.falling()) {
                      if (++var9 <= 6 && var12.diggableKind()) {
-                        if (this.prevEx(var3, var10, var5)) {
+                        if (this.nextToWater(var3, var10, var5)) {
                            return 1.0 / 0.0;
                         }
 
-                        var13 += this.putAt(var6, var11, var12);
+                        var13 += this.cachedBreakCost(var6, var11, var12);
                         var10++;
                         continue;
                      }
@@ -393,65 +393,65 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private double putAt(AiLiveGrid.Inner_DataUtil var1, BlockState var2, AiLiveGrid.Inner_StreamUtil var3) {
-      return var1.putAt_ConcurrentHashMap
+   private double cachedBreakCost(AiLiveGrid.Inner_DataUtil var1, BlockState var2, AiLiveGrid.Inner_StreamUtil var3) {
+      return var1.breakCosts
          .computeIfAbsent(
             var2,
-            var3x -> var1.putAt_BiPredicate == null
-               ? AiPathfinder.LiveGridView.fastestBreakTicks(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
+            var3x -> var1.toolPredicate == null
+               ? AiPathfinder.LiveGridView.fastestBreakTicks(this.mc, var3x, var3.hardness(), var1.hotbar, var1.putAt_ByteWorker_CacheHe)
                : AiPathfinder.LiveGridView.fastestBreakTicks(
-                  this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe, var1.putAt_BiPredicate
+                  this.mc, var3x, var3.hardness(), var1.hotbar, var1.putAt_ByteWorker_CacheHe, var1.toolPredicate
                )
          );
    }
 
-   private boolean fill_Z(int var1, int var2, int var3) {
-      return this.readEx(var1 + 1, var2, var3)
-         || this.readEx(var1 - 1, var2, var3)
-         || this.readEx(var1, var2 + 1, var3)
-         || this.readEx(var1, var2 - 1, var3)
-         || this.readEx(var1, var2, var3 + 1)
-         || this.readEx(var1, var2, var3 - 1);
+   private boolean nextToPortal(int var1, int var2, int var3) {
+      return this.isPortal(var1 + 1, var2, var3)
+         || this.isPortal(var1 - 1, var2, var3)
+         || this.isPortal(var1, var2 + 1, var3)
+         || this.isPortal(var1, var2 - 1, var3)
+         || this.isPortal(var1, var2, var3 + 1)
+         || this.isPortal(var1, var2, var3 - 1);
    }
 
-   private boolean readEx(int var1, int var2, int var3) {
-      if (var2 >= this.fill && var2 <= this.readEx) {
-         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+   private boolean isPortal(int var1, int var2, int var3) {
+      if (var2 >= this.minY && var2 <= this.maxY) {
+         BlockState var4 = this.blockAt(var1, var2, var3);
          return var4 != null && var4.is(Blocks.NETHER_PORTAL);
       } else {
          return false;
       }
    }
 
-   private boolean value(int var1, int var2, int var3) {
-      return this.chunkAt(var1 + 1, var2, var3)
-         || this.chunkAt(var1 - 1, var2, var3)
-         || this.chunkAt(var1, var2 + 1, var3)
-         || this.chunkAt(var1, var2 - 1, var3)
-         || this.chunkAt(var1, var2, var3 + 1)
-         || this.chunkAt(var1, var2, var3 - 1);
+   private boolean nextToLava(int var1, int var2, int var3) {
+      return this.isLavaOrUnloaded(var1 + 1, var2, var3)
+         || this.isLavaOrUnloaded(var1 - 1, var2, var3)
+         || this.isLavaOrUnloaded(var1, var2 + 1, var3)
+         || this.isLavaOrUnloaded(var1, var2 - 1, var3)
+         || this.isLavaOrUnloaded(var1, var2, var3 + 1)
+         || this.isLavaOrUnloaded(var1, var2, var3 - 1);
    }
 
-   private boolean prevEx(int var1, int var2, int var3) {
-      return this.prev(var1 + 1, var2, var3)
-         || this.prev(var1 - 1, var2, var3)
-         || this.prev(var1, var2 + 1, var3)
-         || this.prev(var1, var2, var3 + 1)
-         || this.prev(var1, var2, var3 - 1);
+   private boolean nextToWater(int var1, int var2, int var3) {
+      return this.isWater(var1 + 1, var2, var3)
+         || this.isWater(var1 - 1, var2, var3)
+         || this.isWater(var1, var2 + 1, var3)
+         || this.isWater(var1, var2, var3 + 1)
+         || this.isWater(var1, var2, var3 - 1);
    }
 
-   private boolean prev(int var1, int var2, int var3) {
-      if (var2 >= this.fill && var2 <= this.readEx) {
-         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+   private boolean isWater(int var1, int var2, int var3) {
+      if (var2 >= this.minY && var2 <= this.maxY) {
+         BlockState var4 = this.blockAt(var1, var2, var3);
          return var4 != null && var4.getFluidState().is(FluidTags.WATER);
       } else {
          return false;
       }
    }
 
-   private boolean chunkAt(int var1, int var2, int var3) {
-      if (var2 >= this.fill && var2 <= this.readEx) {
-         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+   private boolean isLavaOrUnloaded(int var1, int var2, int var3) {
+      if (var2 >= this.minY && var2 <= this.maxY) {
+         BlockState var4 = this.blockAt(var1, var2, var3);
          return var4 == null ? true : var4.getFluidState().is(FluidTags.LAVA);
       } else {
          return false;
@@ -459,7 +459,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    public boolean putAt_Z_2(int var1, int var2, int var3) {
-      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      BlockState var4 = this.blockAt(var1, var2, var3);
       if (var4 == null) {
          return false;
       }
@@ -468,7 +468,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       return var5 != null && var5.falling();
    }
 
-   static AiPathfinder.CellInfo putAt(AiPathfinder.CellInfo var0, double var1) {
+   static AiPathfinder.CellInfo withDigCost(AiPathfinder.CellInfo var0, double var1) {
       return new AiPathfinder.CellInfo(
          var0.loaded(),
          var0.passable(),
@@ -504,18 +504,18 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             return var2;
          }
 
-         AiLiveGrid.Inner_StreamUtil var3 = fill(var0);
+         AiLiveGrid.Inner_StreamUtil var3 = classify(var0);
          if (var3 != null) {
             putAt_AtomicReferenceArr.compareAndSet(var1, null, var3);
          }
 
          return var3;
       } else {
-         return fill(var0);
+         return classify(var0);
       }
    }
 
-   private static AiLiveGrid.Inner_StreamUtil fill(BlockState var0) {
+   private static AiLiveGrid.Inner_StreamUtil classify(BlockState var0) {
       try {
          if (var0.isAir()) {
             return new AiLiveGrid.Inner_StreamUtil(
@@ -616,7 +616,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private static short putAt(BlockState var0, BlockPos var1) {
+   private static short dynamicShapeId(BlockState var0, BlockPos var1) {
       try {
          VoxelShape var2 = var0.getCollisionShape(EmptyBlockGetter.INSTANCE, var1);
          if (var2.isEmpty()) {
@@ -639,7 +639,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       return var1;
    }
 
-   static boolean putAt(ItemStack[] var0, ItemStack[] var1) {
+   static boolean sameHotbar(ItemStack[] var0, ItemStack[] var1) {
       if (var0 != null && var1 != null && var0.length == var1.length) {
          for (int var2 = 0; var2 < var0.length; var2++) {
             ItemStack var3 = var0[var2] == null ? ItemStack.EMPTY : var0[var2];
@@ -661,7 +661,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                   return false;
                }
 
-               if (fill(var3) != fill(var4)) {
+               if (isLowDurability(var3) != isLowDurability(var4)) {
                   return false;
                }
             } else if (var3.isEmpty() != var4.isEmpty()) {
@@ -679,15 +679,15 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       return !var0.isEmpty() && var0.has(DataComponents.TOOL);
    }
 
-   private static boolean fill(ItemStack var0) {
+   private static boolean isLowDurability(ItemStack var0) {
       return var0.isDamageableItem() && !AiItems.hasEnoughDurability(var0, 2);
    }
 
    public static void putAt(Minecraft var0, AiChunkMemory var1) {
       if (var1 != null && var0.level != null && var0.player != null) {
-         if (putAt_Obj != var0.level) {
-            putAt_Map.clear();
-            putAt_Obj = var0.level;
+         if (scannedLevel != var0.level) {
+            chunkScanTimes.clear();
+            scannedLevel = var0.level;
          }
 
          long var2 = System.nanoTime();
@@ -701,15 +701,15 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                      int var9 = var4 + var7;
                      int var10 = var5 + var8;
                      long var11 = AiGridRevisions.chunkKey(var9, var10);
-                     Long var13 = putAt_Map.get(var11);
+                     Long var13 = chunkScanTimes.get(var11);
                      if ((var13 == null || var2 - var13 >= 30000000000L)
                         && var0.level.getChunkSource().getChunk(var9, var10, ChunkStatus.FULL, false) instanceof LevelChunk var14) {
-                        putAt_Map.put(var11, var2);
-                        if (putAt_Map.size() > 4096) {
-                           putAt_Map.clear();
+                        chunkScanTimes.put(var11, var2);
+                        if (chunkScanTimes.size() > 4096) {
+                           chunkScanTimes.clear();
                         }
 
-                        putAt(var0.level, var1, var14, var9, var10, var0.player.getBlockY());
+                        scanChunk(var0.level, var1, var14, var9, var10, var0.player.getBlockY());
                         return;
                      }
                   }
@@ -719,7 +719,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private static void putAt(ClientLevel var0, AiChunkMemory var1, LevelChunk var2, int var3, int var4, int var5) {
+   private static void scanChunk(ClientLevel var0, AiChunkMemory var1, LevelChunk var2, int var3, int var4, int var5) {
       int var6 = Math.max(var0.getMinY(), var5 - 40);
       int var7 = Math.min(var0.getMaxY() - 1, var5 + 40);
       int var8 = var7 - var6 + 1;
@@ -775,22 +775,22 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    static final class Inner_DataUtil {
-      final ItemStack[] putAt_ItemStackArr;
+      final ItemStack[] hotbar;
       final MiningCost.Inner_DataUtil putAt_ByteWorker_CacheHe;
-      final long putAt_J;
-      final BiPredicate<BlockState, ItemStack> putAt_BiPredicate;
-      final ConcurrentHashMap<BlockState, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
-      final ConcurrentHashMap<BlockState, Boolean> fill = new ConcurrentHashMap<>();
+      final long revision;
+      final BiPredicate<BlockState, ItemStack> toolPredicate;
+      final ConcurrentHashMap<BlockState, Double> breakCosts = new ConcurrentHashMap<>();
+      final ConcurrentHashMap<BlockState, Boolean> correctToolCache = new ConcurrentHashMap<>();
 
       Inner_DataUtil(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3) {
          this(var1, var2, var3, null);
       }
 
       Inner_DataUtil(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
-         this.putAt_ItemStackArr = var1;
+         this.hotbar = var1;
          this.putAt_ByteWorker_CacheHe = var2;
-         this.putAt_J = var3;
-         this.putAt_BiPredicate = var5;
+         this.revision = var3;
+         this.toolPredicate = var5;
       }
    }
 

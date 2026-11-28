@@ -14,19 +14,19 @@ public final class AsyncTraceLogger {
 
    public static void init(String line) {
       if (line != null) {
-         init();
+         ensureWriter();
          if (!QUEUE.offer(line)) {
             dropped++;
          }
       }
    }
 
-   private static void init() {
+   private static void ensureWriter() {
       if (!init_Z) {
          synchronized (AsyncTraceLogger.class) {
             if (!init_Z) {
                init_Z = true;
-               Thread writer = new Thread(AsyncTraceLogger::load, "autism-trace-log");
+               Thread writer = new Thread(AsyncTraceLogger::drainQueue, "autism-trace-log");
                writer.setDaemon(true);
                writer.setPriority(1);
                writer.start();
@@ -35,7 +35,7 @@ public final class AsyncTraceLogger {
       }
    }
 
-   private static void load() {
+   private static void drainQueue() {
       while (true) {
          try {
             System.out.println(QUEUE.take());

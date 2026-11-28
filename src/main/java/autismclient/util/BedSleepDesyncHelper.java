@@ -23,13 +23,13 @@ public final class BedSleepDesyncHelper {
          if (player != null) {
             sleepingPos = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
             init_Z = true;
-            init(player);
-            load(mc);
+            standUp(player);
+            closeBedChat(mc);
          }
       }
    }
 
-   public static void load() {
+   public static void reset() {
       init_Z = false;
       sleepingPos = -9223372036854775808L;
    }
@@ -42,28 +42,28 @@ public final class BedSleepDesyncHelper {
       if (init_Z) {
          LocalPlayer player = mc == null ? null : mc.player;
          if (player == null) {
-            load();
+            reset();
          } else if (player.isSleeping()) {
             long current = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
             if (current != sleepingPos) {
-               load();
+               reset();
                return;
             }
 
-            init(player);
-            load(mc);
+            standUp(player);
+            closeBedChat(mc);
          } else if (sleepingPos != -9223372036854775808L && player.blockPosition().distSqr(BlockPos.of(sleepingPos)) > 25.0) {
-            load();
+            reset();
          }
       }
    }
 
-   private static void init(LocalPlayer player) {
+   private static void standUp(LocalPlayer player) {
       player.clearSleepingPos();
       player.setPose(Pose.STANDING);
    }
 
-   private static void load(Minecraft mc) {
+   private static void closeBedChat(Minecraft mc) {
       if (mc.gui.screen() instanceof InBedChatScreen) {
          mc.gui.setScreen(null);
       }

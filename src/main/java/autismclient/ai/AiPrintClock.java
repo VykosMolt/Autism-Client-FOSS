@@ -19,7 +19,7 @@ final class AiPrintClock {
       final Minecraft mc = Minecraft.getInstance();
       final LocalPlayer originalPlayer = mc.player;
       return new autismclient.ai.print.PrintClockSequence(env, spec, new autismclient.ai.print.PrintClockSequence.Inner_DataUtil() {
-         private Boolean init;
+         private Boolean creative;
 
          @Override
          public autismclient.ai.print.PrintMachineJob init(BlockPos at, BlockState source) {
@@ -59,11 +59,11 @@ final class AiPrintClock {
          @Override
          public boolean load() {
             if (mc.player == originalPlayer && originalPlayer != null) {
-               if (this.init == null) {
-                  this.init = env.isCreativeMode();
+               if (this.creative == null) {
+                  this.creative = env.isCreativeMode();
                }
 
-               return this.init == env.isCreativeMode();
+               return this.creative == env.isCreativeMode();
             } else {
                return false;
             }

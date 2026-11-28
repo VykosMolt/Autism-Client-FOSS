@@ -14,8 +14,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public class SimpleVoiceChatDetectedScreen extends Screen {
-   private static final Identifier init_Identifier = autismclient.gui.f.a.DataUtil.read;
-   private static final Identifier load_Identifier = autismclient.gui.f.a.DataUtil.load;
+   private static final Identifier TITLE_FONT = autismclient.gui.f.a.DataUtil.read;
+   private static final Identifier BODY_FONT = autismclient.gui.f.a.DataUtil.load;
    private static final long init_J = 5000L;
    private static final int init_I = -2828;
    private static final int load_I = -45747;
@@ -27,7 +27,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    private static final int close = 340;
    private static final int open = 2;
    private static final String init_Str = "Simple Voice Chat detected";
-   private static final String[][] init_StrArr2 = new String[][]{
+   private static final String[][] SECTIONS = new String[][]{
       {"Voice chat won't fucking work right now", "Client fakes being vanilla so servers can't see it", "That hides the voicechat channel, so it can't connect"},
       {
             "Switch to Modded and here's what changes",
@@ -38,24 +38,24 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       }
    };
    private final Screen parent;
-   private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private final long load_J = System.currentTimeMillis();
-   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil init_a_DataUtil = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Keep Vanilla", () -> this.init(true));
-   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil load_a_DataUtil = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Switch to Modded", () -> this.init(false));
-   private int poll = -1;
-   private int push = -1;
-   private int pop = -1;
-   private int tick = -1;
-   private List<List<String>> init_List = List.of();
-   private int run = -1;
-   private int get;
+   private final autismclient.gui.f.b.CharEncoder styleTheme = new autismclient.gui.f.b.CharEncoder();
+   private final long openedAtMillis = System.currentTimeMillis();
+   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil keepVanillaButton = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Keep Vanilla", () -> this.applyChoice(true));
+   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil switchModdedButton = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Switch to Modded", () -> this.applyChoice(false));
+   private int layoutScreenW = -1;
+   private int layoutScreenH = -1;
+   private int layoutScaleKey = -1;
+   private int wrappedWidth = -1;
+   private List<List<String>> wrappedSections = List.of();
+   private int widthScaleKey = -1;
+   private int cachedContentWidth;
 
    public SimpleVoiceChatDetectedScreen(Screen parent) {
       super(Component.literal("Simple Voice Chat detected"));
       this.parent = parent;
    }
 
-   private void init(boolean keepVanillaMode) {
+   private void applyChoice(boolean keepVanillaMode) {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (module != null) {
          module.setSpoofClientVanilla(keepVanillaMode);
@@ -79,11 +79,11 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private boolean isReady() {
-      return System.currentTimeMillis() - this.load_J >= 5000L;
+      return System.currentTimeMillis() - this.openedAtMillis >= 5000L;
    }
 
-   private int init_I() {
-      long remaining = 5000L - (System.currentTimeMillis() - this.load_J);
+   private int countdownSeconds() {
+      long remaining = 5000L - (System.currentTimeMillis() - this.openedAtMillis);
       return (int)Math.max(1.0, Math.ceil(remaining / 1000.0));
    }
 
@@ -91,40 +91,40 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
       float uiMouseX = (float)cA.init_D_D(mouseX);
       float uiMouseY = (float)cA.init_D_D(mouseY);
-      this.load_V();
+      this.layoutButtons();
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
          int screenW = cA.init_I();
          int screenH = cA.load_I();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, screenW, screenH), -939524096);
-         int cardW = this.write();
+         int cardW = this.cardWidth();
          int cardX = (screenW - cardW) / 2;
-         int cardH = this.sync();
-         int cardY = this.init_I(cardH);
+         int cardH = this.cardHeight();
+         int cardY = this.cardY(cardH);
          int innerW = cardW - 12;
          int x = cardX + 6;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(cardX, cardY, cardW, cardH), -234223092);
          init_V_GuiGraphicsExtract(graphics, cardX, cardY, cardW, cardH, ThemePaletteManager.recolor(-46518, ThemePaletteManager.ColorRole.OUTLINE), 2);
          int y = cardY + 6;
-         this.init_V_GuiGraphicsExtract_2(
-            graphics, "Simple Voice Chat detected", init_Identifier, ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT), x, innerW, y
+         this.drawCentered(
+            graphics, "Simple Voice Chat detected", TITLE_FONT, ThemePaletteManager.recolor(-2828, ThemePaletteManager.ColorRole.TEXT), x, innerW, y
          );
-         y += k.init(init_Identifier) + 4;
+         y += k.init(TITLE_FONT) + 4;
          autismclient.gui.f.PacketUtil.init(
             graphics, autismclient.gui.f.NetHelper.init(x, y, innerW, 1), ThemePaletteManager.recolor(1728006730, ThemePaletteManager.ColorRole.OUTLINE)
          );
          y += 5;
          int lineH = this.lineHeight();
-         int bodyColor = this.init_CharEncoder.load(l.write);
-         List<List<String>> linesBySection = this.init_List(innerW);
+         int bodyColor = this.styleTheme.load(l.write);
+         List<List<String>> linesBySection = this.wrapSections(innerW);
 
-         for (int i = 0; i < init_StrArr2.length; i++) {
-            k.init(graphics, this.font, init_StrArr2[i][0], load_Identifier, ThemePaletteManager.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y, false);
+         for (int i = 0; i < SECTIONS.length; i++) {
+            k.init(graphics, this.font, SECTIONS[i][0], BODY_FONT, ThemePaletteManager.recolor(-45747, ThemePaletteManager.ColorRole.ACCENT), x, y, false);
             y += lineH;
 
             for (String line : linesBySection.get(i)) {
-               k.init(graphics, this.font, line, load_Identifier, bodyColor, x, y, false);
+               k.init(graphics, this.font, line, BODY_FONT, bodyColor, x, y, false);
                y += lineH;
             }
 
@@ -132,9 +132,9 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          }
 
          boolean ready = this.isReady();
-         this.load_a_DataUtil.label = ready ? "Switch to Modded" : "Switch to Modded (" + this.init_I() + ")";
-         this.init(graphics, this.init_a_DataUtil, uiMouseX, uiMouseY, ready);
-         this.init(graphics, this.load_a_DataUtil, uiMouseX, uiMouseY, ready);
+         this.switchModdedButton.label = ready ? "Switch to Modded" : "Switch to Modded (" + this.countdownSeconds() + ")";
+         this.renderButton(graphics, this.keepVanillaButton, uiMouseX, uiMouseY, ready);
+         this.renderButton(graphics, this.switchModdedButton, uiMouseX, uiMouseY, ready);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -145,12 +145,12 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       if (Compat263.mouseEventGlfwButton(event) == 0 && this.isReady()) {
          float mx = (float)cA.init_D_D(event.x());
          float my = (float)cA.init_D_D(event.y());
-         this.load_V();
-         if (this.init_a_DataUtil.init(mx, my)) {
-            this.init_a_DataUtil.action.run();
+         this.layoutButtons();
+         if (this.keepVanillaButton.contains(mx, my)) {
+            this.keepVanillaButton.action.run();
             return true;
-         } else if (this.load_a_DataUtil.init(mx, my)) {
-            this.load_a_DataUtil.action.run();
+         } else if (this.switchModdedButton.contains(mx, my)) {
+            this.switchModdedButton.action.run();
             return true;
          } else {
             return false;
@@ -161,75 +161,75 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private int lineHeight() {
-      return k.init(load_Identifier) + 2;
+      return k.init(BODY_FONT) + 2;
    }
 
-   private int read() {
+   private int buttonHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int write() {
+   private int cardWidth() {
       int screenW = cA.init_I();
-      return Math.max(1, Math.min(Math.max(1, screenW - 12), Math.min(340, this.update())));
+      return Math.max(1, Math.min(Math.max(1, screenW - 12), Math.min(340, this.contentWidth())));
    }
 
-   private int update() {
+   private int contentWidth() {
       int scaleKey = Math.round(autismclient.gui.sdf.MsdfTextRenderer.fontScale() * 100.0F);
-      if (scaleKey != this.run) {
-         int widest = k.init(this.font, "Simple Voice Chat detected", init_Identifier, -1);
+      if (scaleKey != this.widthScaleKey) {
+         int widest = k.init(this.font, "Simple Voice Chat detected", TITLE_FONT, -1);
 
-         for (String[] section : init_StrArr2) {
-            widest = Math.max(widest, k.init(this.font, section[0], load_Identifier, -1));
+         for (String[] section : SECTIONS) {
+            widest = Math.max(widest, k.init(this.font, section[0], BODY_FONT, -1));
 
             for (int b = 1; b < section.length; b++) {
-               widest = Math.max(widest, k.init(this.font, "- " + section[b], load_Identifier, -1));
+               widest = Math.max(widest, k.init(this.font, "- " + section[b], BODY_FONT, -1));
             }
          }
 
-         this.run = scaleKey;
-         this.get = widest + 12;
+         this.widthScaleKey = scaleKey;
+         this.cachedContentWidth = widest + 12;
       }
 
-      return this.get;
+      return this.cachedContentWidth;
    }
 
-   private int init_I(int cardH) {
+   private int cardY(int cardH) {
       int screenH = cA.load_I();
       return Math.max(6, (screenH - cardH) / 2);
    }
 
-   private int sync() {
-      int innerW = Math.max(1, this.write() - 12);
+   private int cardHeight() {
+      int innerW = Math.max(1, this.cardWidth() - 12);
       int lineH = this.lineHeight();
-      int h = 6 + k.init(init_Identifier) + 4 + 1 + 4;
-      List<List<String>> linesBySection = this.init_List(innerW);
+      int h = 6 + k.init(TITLE_FONT) + 4 + 1 + 4;
+      List<List<String>> linesBySection = this.wrapSections(innerW);
 
-      for (int i = 0; i < init_StrArr2.length; i++) {
+      for (int i = 0; i < SECTIONS.length; i++) {
          h += lineH + linesBySection.get(i).size() * lineH + 4;
       }
 
-      return h + this.read() + 6;
+      return h + this.buttonHeight() + 6;
    }
 
-   private void load_V() {
+   private void layoutButtons() {
       int screenW = cA.init_I();
       int screenH = cA.load_I();
       int scaleKey = Math.round(autismclient.gui.sdf.MsdfTextRenderer.fontScale() * 100.0F);
-      if (this.poll != screenW || this.push != screenH || this.pop != scaleKey) {
-         this.poll = screenW;
-         this.push = screenH;
-         this.pop = scaleKey;
-         int cardW = this.write();
+      if (this.layoutScreenW != screenW || this.layoutScreenH != screenH || this.layoutScaleKey != scaleKey) {
+         this.layoutScreenW = screenW;
+         this.layoutScreenH = screenH;
+         this.layoutScaleKey = scaleKey;
+         int cardW = this.cardWidth();
          int cardX = (screenW - cardW) / 2;
-         int cardH = this.sync();
-         int cardY = this.init_I(cardH);
+         int cardH = this.cardHeight();
+         int cardY = this.cardY(cardH);
          int innerW = Math.max(1, cardW - 12);
-         int btnH = this.read();
+         int btnH = this.buttonHeight();
          int btnW = Math.max(1, (innerW - 2) / 2);
          int btnY = cardY + cardH - 6 - btnH;
          int bx = cardX + 6;
-         this.init_a_DataUtil.init(bx, btnY, btnW, btnH);
-         this.load_a_DataUtil.init(bx + btnW + 2, btnY, cardX + cardW - 6 - (bx + btnW + 2), btnH);
+         this.keepVanillaButton.setBounds(bx, btnY, btnW, btnH);
+         this.switchModdedButton.setBounds(bx + btnW + 2, btnY, cardX + cardW - 6 - (bx + btnW + 2), btnH);
       }
    }
 
@@ -239,7 +239,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
 
       for (String word : text.split(" ")) {
          String candidate = current.length() == 0 ? word : current + " " + word;
-         if (current.length() != 0 && k.init(this.font, candidate, load_Identifier, -1) > maxWidth) {
+         if (current.length() != 0 && k.init(this.font, candidate, BODY_FONT, -1) > maxWidth) {
             lines.add(current.toString());
             current.setLength(0);
             current.append(word);
@@ -256,14 +256,14 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       return lines;
    }
 
-   private List<List<String>> init_List(int innerWidth) {
-      if (this.tick == innerWidth && this.init_List.size() == init_StrArr2.length) {
-         return this.init_List;
+   private List<List<String>> wrapSections(int innerWidth) {
+      if (this.wrappedWidth == innerWidth && this.wrappedSections.size() == SECTIONS.length) {
+         return this.wrappedSections;
       }
 
-      List<List<String>> next = new ArrayList<>(init_StrArr2.length);
+      List<List<String>> next = new ArrayList<>(SECTIONS.length);
 
-      for (String[] section : init_StrArr2) {
+      for (String[] section : SECTIONS) {
          List<String> lines = new ArrayList<>();
 
          for (int b = 1; b < section.length; b++) {
@@ -273,20 +273,20 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
          next.add(List.copyOf(lines));
       }
 
-      this.tick = innerWidth;
-      this.init_List = List.copyOf(next);
-      return this.init_List;
+      this.wrappedWidth = innerWidth;
+      this.wrappedSections = List.copyOf(next);
+      return this.wrappedSections;
    }
 
-   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, String text, Identifier fontId, int color, int x, int width, int y) {
+   private void drawCentered(GuiGraphicsExtractor graphics, String text, Identifier fontId, int color, int x, int width, int y) {
       int textW = k.init(this.font, text, fontId, color);
       k.init(graphics, this.font, text, fontId, color, x + (width - textW) / 2, y, false);
    }
 
-   private void init(GuiGraphicsExtractor graphics, SimpleVoiceChatDetectedScreen.Inner_DataUtil btn, float mouseX, float mouseY, boolean enabled) {
-      boolean hovered = enabled && btn.init(mouseX, mouseY);
+   private void renderButton(GuiGraphicsExtractor graphics, SimpleVoiceChatDetectedScreen.Inner_DataUtil btn, float mouseX, float mouseY, boolean enabled) {
+      boolean hovered = enabled && btn.contains(mouseX, mouseY);
       autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, this.font, (int)mouseX, (int)mouseY);
-      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(btn.init_I, btn.load, btn.read, btn.write);
+      autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(btn.x, btn.y, btn.width, btn.height);
       autismclient.gui.f.b.CachePool.init(ctx, bounds, btn.label, autismclient.gui.f.b.CachePool.Inner_DataUtil.load, hovered, false);
       if (!enabled) {
          autismclient.gui.f.PacketUtil.init(graphics, bounds, 1711276032);
@@ -305,25 +305,25 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    private static final class Inner_DataUtil {
       private String label;
       private final Runnable action;
-      private int init_I;
-      private int load;
-      private int read;
-      private int write;
+      private int x;
+      private int y;
+      private int width;
+      private int height;
 
       private Inner_DataUtil(String label, Runnable action) {
          this.label = label;
          this.action = action;
       }
 
-      private void init(int x, int y, int w, int h) {
-         this.init_I = x;
-         this.load = y;
-         this.read = w;
-         this.write = h;
+      private void setBounds(int x, int y, int w, int h) {
+         this.x = x;
+         this.y = y;
+         this.width = w;
+         this.height = h;
       }
 
-      private boolean init(float mx, float my) {
-         return mx >= this.init_I && my >= this.load && mx < this.init_I + this.read && my < this.load + this.write;
+      private boolean contains(float mx, float my) {
+         return mx >= this.x && my >= this.y && mx < this.x + this.width && my < this.y + this.height;
       }
    }
 }
