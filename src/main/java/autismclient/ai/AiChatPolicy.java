@@ -30,7 +30,7 @@ final class AiChatPolicy {
    private static final int get = 8000;
    private static final int set = 400;
    private static final int put = 12;
-   private static final Set<String> init_Set = Set.of(
+   private static final Set<String> GENERIC_SENDER_NAMES = Set.of(
       "chat",
       "say",
       "msg",
@@ -50,17 +50,17 @@ final class AiChatPolicy {
       "people",
       "anyone"
    );
-   private static final Pattern init_Pattern = Pattern.compile("(?i)\\b(?:don['’]?t|do\\s+not|never|not\\s+to|can['’]?t|cannot)\\s*$");
-   private static final Pattern load_Pattern = Pattern.compile(
+   private static final Pattern NEGATION_BEFORE = Pattern.compile("(?i)\\b(?:don['’]?t|do\\s+not|never|not\\s+to|can['’]?t|cannot)\\s*$");
+   private static final Pattern TASK_REQUEST = Pattern.compile(
       "(?i)(?:^|[,;.!]|\\b(?:and|then|also|while)\\b)\\s*(?:(?:please|also|you|keep|continue|start|go|on|to)\\s+)*(?:mine|dig|build|craft|smelt|cook|gather|collect|obtain|fetch|get|bring|walk|move|run|go|follow|fight|kill|attack|farm|harvest|plant|fish|chop|place|break|fill|travel|explore|eat|equip|mining|digging|building|crafting|smelting|walking|moving|running|following|fighting|fishing)\\b"
    );
-   private static final Pattern read_Pattern = Pattern.compile(
+   private static final Pattern KEEP_CHATTING = Pattern.compile(
       "(?is)(?:\\bkeep\\s+(?:on\\s+)?(?:chatting|talking)\\b|\\bkeep\\s+(?:the\\s+)?(?:chat|conversation)\\s+(?:going|alive)\\b|\\bcontinue\\s+(?:chatting|talking|the\\s+conversation)\\b|\\b(?:respond|reply)\\s+to\\s+(?:the\\s+)?(?:chat|messages|people|players)\\b|\\btalk\\s+to\\s+(?:people|players|everyone|the\\s+chat)\\b|\\bchat\\s+with\\s+(?:people|players|everyone)\\b|\\bstay\\s+in\\s+(?:the\\s+)?chat\\b|\\b(?:don['’]?t|do\\s+not|never)\\s+stop\\s+(?:chatting|talking)\\b|\\bkeep\\s+up\\s+(?:the\\s+)?conversation\\b|\\b(?:start|begin)\\s+chatting\\s+with\\s+(?:people|players|everyone)\\b)"
    );
-   private static final Pattern write_Pattern = Pattern.compile(
+   private static final Pattern STOP_CHATTING = Pattern.compile(
       "(?is)\\b(?:stop|end|quit|finish)\\s+(?:the\\s+)?(?:chat|chatting|talking|conversation)\\b|\\bthat'?s\\s+enough\\s+chat\\b|\\bno\\s+more\\s+chatting\\b|\\bchat\\s+mode\\s+off\\b"
    );
-   private static final Set<String> load_Set = Set.of(
+   private static final Set<String> NON_NAME_WORDS = Set.of(
       "people",
       "players",
       "everyone",
@@ -105,7 +105,7 @@ final class AiChatPolicy {
 
          boolean playerSource = source.equals("PLAYER") || source.equals("DISGUISED") || privateSource;
          String sender = init(entry);
-         boolean genericSender = sync(sender);
+         boolean genericSender = isGenericSender(sender);
          if (!playerSource) {
             if (!config.includeServerChat()) {
                if (sender.isEmpty() || genericSender) {
@@ -132,7 +132,7 @@ final class AiChatPolicy {
                return null;
             }
 
-            if (config.onlyMentions() && config.players().isEmpty() && !init_Z(text, selfName)) {
+            if (config.onlyMentions() && config.players().isEmpty() && !mentions(text, selfName)) {
                return null;
             }
 
@@ -140,7 +140,7 @@ final class AiChatPolicy {
                resolvedSender = playerSource ? "someone" : "server";
             }
 
-            text = init_Str(text, resolvedSender);
+            text = stripSenderPrefix(text, resolvedSender);
             return new AiChatPolicy.Inner_StreamUtil(entry.revision(), source, resolvedSender, text);
          } else {
             return null;
@@ -174,10 +174,10 @@ final class AiChatPolicy {
       }
 
       String resolved = sender.isEmpty() ? "someone" : sender;
-      return new AiChatPolicy.Inner_StreamUtil(entry.revision(), entry.source(), resolved, init_Str(text, resolved));
+      return new AiChatPolicy.Inner_StreamUtil(entry.revision(), entry.source(), resolved, stripSenderPrefix(text, resolved));
    }
 
-   static String init_Str(String text, String sender) {
+   static String stripSenderPrefix(String text, String sender) {
       if (text != null && !text.isEmpty() && sender != null && !sender.isBlank()) {
          String prefix = "<" + sender + ">";
          return text.regionMatches(true, 0, prefix, 0, prefix.length()) ? text.substring(prefix.length()).strip() : text;
@@ -191,7 +191,7 @@ final class AiChatPolicy {
          return "";
       }
 
-      String explicit = init_Str(entry.sender());
+      String explicit = normalizeSender(entry.sender());
       if (!explicit.isEmpty()) {
          return explicit;
       }
@@ -202,10 +202,10 @@ final class AiChatPolicy {
       }
 
       int close = text.indexOf(62);
-      return text.startsWith("<") && close > 1 && close <= 80 ? init_Str(text.substring(1, close)) : "";
+      return text.startsWith("<") && close > 1 && close <= 80 ? normalizeSender(text.substring(1, close)) : "";
    }
 
-   static String init_Str(String raw) {
+   static String normalizeSender(String raw) {
       if (raw == null) {
          return "";
       }
@@ -215,7 +215,7 @@ final class AiChatPolicy {
          return "";
       }
 
-      if (init_Set.contains(value.toLowerCase(Locale.ROOT).replace(' ', '_'))) {
+      if (GENERIC_SENDER_NAMES.contains(value.toLowerCase(Locale.ROOT).replace(' ', '_'))) {
          return "";
       }
 
@@ -247,18 +247,18 @@ final class AiChatPolicy {
       }
 
       String cleaned = out.toString();
-      return init_Set.contains(cleaned.toLowerCase(Locale.ROOT)) ? "" : cleaned;
+      return GENERIC_SENDER_NAMES.contains(cleaned.toLowerCase(Locale.ROOT)) ? "" : cleaned;
    }
 
    static boolean isPlayerName(String value) {
       return value != null && value.matches("[A-Za-z_][A-Za-z0-9_]{2,15}");
    }
 
-   private static boolean sync(String sender) {
-      return sender.isEmpty() || init_Set.contains(sender.toLowerCase(Locale.ROOT));
+   private static boolean isGenericSender(String sender) {
+      return sender.isEmpty() || GENERIC_SENDER_NAMES.contains(sender.toLowerCase(Locale.ROOT));
    }
 
-   static boolean init_Z(String text, String name) {
+   static boolean mentions(String text, String name) {
       if (text != null && !text.isEmpty() && name != null && !name.isBlank()) {
          Pattern pattern = Pattern.compile("(?i)(?<![A-Za-z0-9_])" + Pattern.quote(name) + "(?![A-Za-z0-9_])");
          return pattern.matcher(text).find();
@@ -268,16 +268,16 @@ final class AiChatPolicy {
    }
 
    static boolean load_Z(String objective) {
-      return objective != null && !objective.isBlank() ? read_Pattern.matcher(objective).find() : false;
+      return objective != null && !objective.isBlank() ? KEEP_CHATTING.matcher(objective).find() : false;
    }
 
    static boolean read(String objective) {
       if (objective != null && !objective.isBlank()) {
-         Matcher matcher = write_Pattern.matcher(objective);
+         Matcher matcher = STOP_CHATTING.matcher(objective);
 
          while (matcher.find()) {
             String before = objective.substring(0, matcher.start());
-            if (!init_Pattern.matcher(before).find()) {
+            if (!NEGATION_BEFORE.matcher(before).find()) {
                return true;
             }
          }
@@ -289,7 +289,7 @@ final class AiChatPolicy {
    }
 
    static boolean write(String objective) {
-      return objective != null && load_Pattern.matcher(objective).find();
+      return objective != null && TASK_REQUEST.matcher(objective).find();
    }
 
    static List<String> init_List(String objective) {
@@ -303,7 +303,7 @@ final class AiChatPolicy {
          while (matcher.find()) {
             for (String candidate : matcher.group(1).split("(?i)\\s*(?:,|and|&)\\s+")) {
                String name = candidate.trim();
-               if (!name.isEmpty() && !load_Set.contains(name.toLowerCase(Locale.ROOT)) && !write("and " + name)) {
+               if (!name.isEmpty() && !NON_NAME_WORDS.contains(name.toLowerCase(Locale.ROOT)) && !write("and " + name)) {
                   boolean seen = false;
 
                   for (String existing : out) {
@@ -363,7 +363,7 @@ final class AiChatPolicy {
       int used = 0;
 
       for (int i = from; i < recent.size(); i++) {
-         String line = init(recent.get(i), selfName);
+         String line = formatLine(recent.get(i), selfName);
          if (used + line.length() > 8000) {
             break;
          }
@@ -384,7 +384,7 @@ final class AiChatPolicy {
       }
 
       for (int i = start; i < newest.size(); i++) {
-         out.append(init(newest.get(i), selfName)).append('\n');
+         out.append(formatLine(newest.get(i), selfName)).append('\n');
       }
 
       out.append("\nReply as ")
@@ -393,7 +393,7 @@ final class AiChatPolicy {
       return out.toString();
    }
 
-   private static String init(AiChatPolicy.Inner_StreamUtil line, String selfName) {
+   private static String formatLine(AiChatPolicy.Inner_StreamUtil line, String selfName) {
       String text = line.text();
       if (text.length() > 400) {
          text = text.substring(0, 400) + "...";
@@ -466,7 +466,7 @@ final class AiChatPolicy {
       if (config == null) {
          return 1200L;
       } else {
-         return pending != null && !pending.isEmpty() && init_Z(pending.getLast().text(), selfName) ? Math.min(config.debounceMs(), 350) : config.debounceMs();
+         return pending != null && !pending.isEmpty() && mentions(pending.getLast().text(), selfName) ? Math.min(config.debounceMs(), 350) : config.debounceMs();
       }
    }
 
@@ -582,7 +582,7 @@ final class AiChatPolicy {
       }
 
       private static void addPlayer(List<String> out, String raw) {
-         String player = AiChatPolicy.init_Str(raw);
+         String player = AiChatPolicy.normalizeSender(raw);
          if (!player.isEmpty() && AiChatPolicy.isPlayerName(player)) {
             for (String seen : out) {
                if (seen.equalsIgnoreCase(player)) {

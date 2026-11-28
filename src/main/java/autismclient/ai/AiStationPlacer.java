@@ -20,19 +20,19 @@ final class AiStationPlacer {
    static final int init_I = 60;
    private final Item item;
    private final String name;
-   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
-   private List<BlockPos> init_List;
-   private int load_I;
-   private int read_I;
-   private boolean init_Z;
-   private boolean load_Z;
-   private AiOperation init_AiOperation;
-   private AiOperation load_AiOperation;
-   private boolean read_Z;
-   private BlockPos init_BlockPos;
+   private final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
+   private List<BlockPos> candidates;
+   private int candidateIndex;
+   private int placeTicks;
+   private boolean placing;
+   private boolean relocationTried;
+   private AiOperation travel;
+   private AiOperation clearOp;
+   private boolean digOutTried;
+   private BlockPos clearedCell;
    private BlockPos placed;
    private String failureReason = "";
-   private String read_Str = "";
+   private String statusText = "";
 
    AiStationPlacer(Item item, String name) {
       this.item = item;
@@ -44,74 +44,74 @@ final class AiStationPlacer {
          return AiStationPlacer.Inner_DataUtil.PLACED;
       }
 
-      if (this.load_AiOperation != null) {
-         AiOperation.Result r = this.load_AiOperation.tick();
+      if (this.clearOp != null) {
+         AiOperation.Result r = this.clearOp.tick();
          if (!r.terminal()) {
-            this.read_Str = "Making room for the " + this.name + ": " + r.message();
+            this.statusText = "Making room for the " + this.name + ": " + r.message();
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
-         this.load_AiOperation.cancel();
-         this.load_AiOperation = null;
-         this.init_List = null;
-         this.load_I = 0;
+         this.clearOp.cancel();
+         this.clearOp = null;
+         this.candidates = null;
+         this.candidateIndex = 0;
       }
 
-      if (this.init_AiOperation != null) {
-         AiOperation.Result r = this.init_AiOperation.tick();
+      if (this.travel != null) {
+         AiOperation.Result r = this.travel.tick();
          if (!r.terminal()) {
-            this.read_Str = "Moving to open ground for the " + this.name + ": " + r.message();
+            this.statusText = "Moving to open ground for the " + this.name + ": " + r.message();
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
-         this.init_AiOperation.cancel();
-         this.init_AiOperation = null;
-         this.init_List = null;
+         this.travel.cancel();
+         this.travel = null;
+         this.candidates = null;
       }
 
-      if (!this.init_Z) {
-         if (this.init_List == null && !this.load_Z && AiCraft.isStandingOnLeaves() && this.read()) {
+      if (!this.placing) {
+         if (this.candidates == null && !this.relocationTried && AiCraft.isStandingOnLeaves() && this.moveToOpenSpot()) {
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
-         if (this.init_List == null) {
-            this.init_List = new ArrayList<>(AiCraft.candidatePlacementSpots());
-            this.load_I = 0;
-            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(spotx, this.item));
-            if (this.init_BlockPos != null && this.init_List.remove(this.init_BlockPos)) {
-               this.init_List = new ArrayList<>(this.init_List);
-               this.init_List.add(0, this.init_BlockPos);
+         if (this.candidates == null) {
+            this.candidates = new ArrayList<>(AiCraft.candidatePlacementSpots());
+            this.candidateIndex = 0;
+            this.candidates.removeIf(spotx -> !spotx.equals(this.clearedCell) && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(spotx, this.item));
+            if (this.clearedCell != null && this.candidates.remove(this.clearedCell)) {
+               this.candidates = new ArrayList<>(this.candidates);
+               this.candidates.add(0, this.clearedCell);
             }
 
-            boolean allOurs = !this.init_List.isEmpty();
+            boolean allOurs = !this.candidates.isEmpty();
 
-            for (BlockPos spot : this.init_List) {
+            for (BlockPos spot : this.candidates) {
                if (!autismclient.ai.engine.AiEditLedger.hasBreakRecord(spot)) {
                   allOurs = false;
                   break;
                }
             }
 
-            if (allOurs && this.write()) {
-               this.init_List = null;
+            if (allOurs && this.digOutSpot()) {
+               this.candidates = null;
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
          }
 
-         if (this.load_I >= Math.min(this.init_List.size(), 8)) {
+         if (this.candidateIndex >= Math.min(this.candidates.size(), 8)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null
                && mc.level != null
                && init(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
-               && this.write()) {
+               && this.digOutSpot()) {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
-            if (this.read()) {
+            if (this.moveToOpenSpot()) {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
-            if (this.write()) {
+            if (this.digOutSpot()) {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
@@ -122,29 +122,29 @@ final class AiStationPlacer {
             return AiStationPlacer.Inner_DataUtil.FAILED;
          }
 
-         this.init_DataPipe.start(this.init_List.get(this.load_I), this.item);
-         this.init_Z = true;
-         this.read_I = 0;
+         this.placer.start(this.candidates.get(this.candidateIndex), this.item);
+         this.placing = true;
+         this.placeTicks = 0;
       }
 
-      autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+      autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
       if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-         this.init_Z = false;
-         this.placed = this.init_DataPipe.targetPos();
+         this.placing = false;
+         this.placed = this.placer.targetPos();
          return AiStationPlacer.Inner_DataUtil.PLACED;
-      } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.read_I <= 60) {
-         this.read_Str = "Placing a " + this.name;
+      } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks <= 60) {
+         this.statusText = "Placing a " + this.name;
          return AiStationPlacer.Inner_DataUtil.WORKING;
       } else {
-         this.init_Z = false;
+         this.placing = false;
          this.failureReason = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
-            ? this.init_DataPipe.failureReason()
-            : "not placed within 60 ticks: " + this.init_DataPipe.statusSummary();
-         this.init_DataPipe.reset();
+            ? this.placer.failureReason()
+            : "not placed within 60 ticks: " + this.placer.statusSummary();
+         this.placer.reset();
          AutismClientAddon.LOG
-            .info("[AI] {} spot {} unusable after {} ticks: {}", this.name, this.init_List.get(this.load_I).toShortString(), this.read_I, this.failureReason);
-         this.load_I++;
-         this.read_Str = this.name + " spot unusable (" + this.failureReason + "); trying the next spot";
+            .info("[AI] {} spot {} unusable after {} ticks: {}", this.name, this.candidates.get(this.candidateIndex).toShortString(), this.placeTicks, this.failureReason);
+         this.candidateIndex++;
+         this.statusText = this.name + " spot unusable (" + this.failureReason + "); trying the next spot";
          return AiStationPlacer.Inner_DataUtil.WORKING;
       }
    }
@@ -160,12 +160,12 @@ final class AiStationPlacer {
       return true;
    }
 
-   private boolean read() {
-      if (this.load_Z) {
+   private boolean moveToOpenSpot() {
+      if (this.relocationTried) {
          return false;
       }
 
-      this.load_Z = true;
+      this.relocationTried = true;
       BlockPos open = AiCraft.findOpenStationSpot(6);
       if (open == null) {
          open = AiCraft.findFlatStationSpot(3);
@@ -177,8 +177,8 @@ final class AiStationPlacer {
 
       AutismClientAddon.LOG.info("[AI] no spot for a {} here, moving to {}", this.name, open.toShortString());
       this.init(open);
-      this.init_AiOperation = AiGoto.travelToCompat(open, 0.6, true, false, false, 30);
-      this.read_Str = "No room for a " + this.name + " here; moving to " + open.toShortString();
+      this.travel = AiGoto.travelToCompat(open, 0.6, true, false, false, 30);
+      this.statusText = "No room for a " + this.name + " here; moving to " + open.toShortString();
       return true;
    }
 
@@ -216,7 +216,7 @@ final class AiStationPlacer {
 
                if (landing) {
                   AutismClientAddon.LOG.info("[AI] clearing a leaf exit for the {} at {}", this.name, cell.toShortString());
-                  this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(upperLeaf ? above : cell, 10);
+                  this.clearOp = lowerLeaf && upperLeaf ? breakUpperThenLower(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(upperLeaf ? above : cell, 10);
                   return;
                }
             }
@@ -224,12 +224,12 @@ final class AiStationPlacer {
       }
    }
 
-   private boolean write() {
-      if (this.read_Z) {
+   private boolean digOutSpot() {
+      if (this.digOutTried) {
          return false;
       }
 
-      this.read_Z = true;
+      this.digOutTried = true;
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -242,9 +242,9 @@ final class AiStationPlacer {
                boolean clearHead = !mc.level.getBlockState(above).getCollisionShape(mc.level, above).isEmpty();
                if (!clearHead || init(mc, above)) {
                   AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.name, cell.toShortString());
-                  this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
-                  this.init_BlockPos = cell.immutable();
-                  this.read_Str = "Digging out a spot for the " + this.name;
+                  this.clearOp = clearHead ? breakUpperThenLower(above, cell) : autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
+                  this.clearedCell = cell.immutable();
+                  this.statusText = "Digging out a spot for the " + this.name;
                   return true;
                }
             }
@@ -279,19 +279,19 @@ final class AiStationPlacer {
       }
    }
 
-   private static AiOperation init(final BlockPos above, final BlockPos cell) {
+   private static AiOperation breakUpperThenLower(final BlockPos above, final BlockPos cell) {
       return new AiOperation() {
-         AiOperation init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10);
-         boolean init_Z = true;
+         AiOperation child = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10);
+         boolean breakingUpper = true;
 
          @Override
          public AiOperation.Result tick() {
-            AiOperation.Result result = this.init_AiOperation.tick();
-            if (result.terminal() && result.status() == AiOperation.Status.SUCCEEDED && this.init_Z) {
-               this.init_AiOperation.cancel();
-               this.init_Z = false;
-               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
-               return this.init_AiOperation.tick();
+            AiOperation.Result result = this.child.tick();
+            if (result.terminal() && result.status() == AiOperation.Status.SUCCEEDED && this.breakingUpper) {
+               this.child.cancel();
+               this.breakingUpper = false;
+               this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 10);
+               return this.child.tick();
             } else {
                return result;
             }
@@ -299,17 +299,17 @@ final class AiStationPlacer {
 
          @Override
          public void cancel() {
-            this.init_AiOperation.cancel();
+            this.child.cancel();
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation.canInterruptNow();
+            return this.child.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.child.requiresReconciliationAfterEmergency();
          }
       };
    }
@@ -319,7 +319,7 @@ final class AiStationPlacer {
    }
 
    String getStatus() {
-      return this.read_Str;
+      return this.statusText;
    }
 
    String getFailureReason() {
@@ -327,27 +327,27 @@ final class AiStationPlacer {
    }
 
    boolean canInterrupt() {
-      return !this.init_DataPipe.needsReconciliation()
-         && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-         && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
+      return !this.placer.needsReconciliation()
+         && (this.travel == null || this.travel.canInterruptNow())
+         && (this.clearOp == null || this.clearOp.canInterruptNow());
    }
 
    boolean needsReconciliation() {
-      return this.init_DataPipe.needsReconciliation()
-         || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
+      return this.placer.needsReconciliation()
+         || this.travel != null && this.travel.requiresReconciliationAfterEmergency()
+         || this.clearOp != null && this.clearOp.requiresReconciliationAfterEmergency();
    }
 
    void cancel() {
-      this.init_DataPipe.reset();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
-         this.init_AiOperation = null;
+      this.placer.reset();
+      if (this.travel != null) {
+         this.travel.cancel();
+         this.travel = null;
       }
 
-      if (this.load_AiOperation != null) {
-         this.load_AiOperation.cancel();
-         this.load_AiOperation = null;
+      if (this.clearOp != null) {
+         this.clearOp.cancel();
+         this.clearOp = null;
       }
    }
 

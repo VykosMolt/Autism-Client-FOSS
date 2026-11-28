@@ -186,7 +186,7 @@ final class AiDimension {
                Direction axis;
                boolean update_Z;
                boolean sync_Z;
-               int open;
+               int siteClearFailures;
                boolean flush_Z;
                final Set<BlockPos> load_Set;
                AiOperation read_AiOperation;
@@ -194,12 +194,12 @@ final class AiDimension {
                final Set<BlockPos> read_Set;
                BlockPos sync_BlockPos;
                final Set<BlockPos> write_Set;
-               int poll;
-               int push;
-               int pop;
-               int tick;
-               int run;
-               int get;
+               int bodyOverlapRetries;
+               int frameRepairs;
+               int lightingClicks;
+               int lightingAimTicks;
+               int lightingStanceMoves;
+               int lightingFaceIndex;
 
                {
                   this.init_Set = AiDimension.init_Set;
@@ -239,7 +239,7 @@ final class AiDimension {
                   return best;
                }
 
-               AiOperation init(BlockPos targetCell, double radius, int seconds) {
+               AiOperation travelProtectingPortal(BlockPos targetCell, double radius, int seconds) {
                   HashSet<Long> keep = new HashSet<>();
 
                   for (BlockPos cell : BlockPos.betweenClosed(this.load_BlockPos.offset(-3, -5, -3), this.load_BlockPos.offset(3, 5, 3))) {
@@ -271,23 +271,23 @@ final class AiDimension {
                public AiOperation.Result tick() {
                   if (!this.write_Z && mc.player != null && mc.level != null) {
                      if (!this.startWorldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.startConnection != mc.getConnection()) {
-                        return this.init(AiOperation.Status.CANCELLED, "World or connection identity changed during portal travel");
+                        return this.finish(AiOperation.Status.CANCELLED, "World or connection identity changed during portal travel");
                      }
 
                      if (!mc.player.isAlive()) {
-                        return this.init(AiOperation.Status.FAILED, "Player died during portal travel");
+                        return this.finish(AiOperation.Status.FAILED, "Player died during portal travel");
                      }
 
                      if (System.nanoTime() > this.deadline) {
-                        return this.init(AiOperation.Status.TIMED_OUT, "Still in " + AiDimension.currentDimension() + " at the deadline");
+                        return this.finish(AiOperation.Status.TIMED_OUT, "Still in " + AiDimension.currentDimension() + " at the deadline");
                      }
 
                      if (this.children.hasUnresolved()) {
-                        return this.init(AiOperation.Status.UNCERTAIN, "Portal work has pending changes that need observation");
+                        return this.finish(AiOperation.Status.UNCERTAIN, "Portal work has pending changes that need observation");
                      }
 
                      if (action == AiDimension.Inner_DataUtil.FIND) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Read portals in loaded terrain");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Read portals in loaded terrain");
                      }
 
                      if (!AiDimension.currentDimension().equals(this.startDimension)) {
@@ -299,22 +299,22 @@ final class AiDimension {
                         }
 
                         if (++this.flush_I < 40) {
-                           return this.init("Arrived in " + AiDimension.currentDimension() + "; waiting for the world");
+                           return this.running("Arrived in " + AiDimension.currentDimension() + "; waiting for the world");
                         } else {
                            String hazard = this.arrivalHazard();
                            AiPortalLinks.init(this.startDimension, this.load_BlockPos, AiDimension.currentDimension(), mc.player.blockPosition(), hazard == null, this.load_JsonObject);
                            if (!AiDimension.currentDimension().equals(target)) {
-                              return this.init(AiOperation.Status.UNCERTAIN, "Portal led to " + AiDimension.currentDimension() + " rather than " + target);
+                              return this.finish(AiOperation.Status.UNCERTAIN, "Portal led to " + AiDimension.currentDimension() + " rather than " + target);
                            } else {
                               return hazard != null
-                                 ? this.init(AiOperation.Status.UNCERTAIN, "Arrived in " + target + " but " + hazard, this.init_JsonObject_59())
-                                 : this.init(AiOperation.Status.SUCCEEDED, "Arrived in " + target, this.init_JsonObject_59());
+                                 ? this.finishWith(AiOperation.Status.UNCERTAIN, "Arrived in " + target + " but " + hazard, this.init_JsonObject_59())
+                                 : this.finishWith(AiOperation.Status.SUCCEEDED, "Arrived in " + target, this.init_JsonObject_59());
                            }
                         }
                      } else {
                         this.flush_I = 0;
                         if (AiDimension.currentDimension().equals(target)) {
-                           return this.init(AiOperation.Status.SUCCEEDED, "Already in " + target);
+                           return this.finish(AiOperation.Status.SUCCEEDED, "Already in " + target);
                         }
 
                         if (this.load_AiOperation != null || !this.init_ArrayDeque.isEmpty()) {
@@ -332,12 +332,12 @@ final class AiDimension {
                         }
 
                         if ((this.load_BlockPos == null || mc.level.getBlockState(this.load_BlockPos).getBlock() != portalBlock) && this.sync_I-- <= 0) {
-                           this.load_BlockPos = this.init(portalBlock);
+                           this.load_BlockPos = this.findNearestBlock(portalBlock);
                            this.sync_I = 40;
                         }
 
                         if (this.load_BlockPos == null && this.sync_I < 40) {
-                           return this.init("Looking for a portal");
+                           return this.running("Looking for a portal");
                         }
 
                         if (this.load_BlockPos != null) {
@@ -362,21 +362,21 @@ final class AiDimension {
                                           stance.toShortString()
                                        );
                                     this.update_I = 0;
-                                    this.init_AiOperation = this.init(stance, 0.5, Math.min(60, this.secondsLeft()));
+                                    this.init_AiOperation = this.travelProtectingPortal(stance, 0.5, Math.min(60, this.secondsLeft()));
                                  } else {
-                                    this.init_AiOperation = this.init(bottom, 1.6, Math.min(180, this.secondsLeft()));
+                                    this.init_AiOperation = this.travelProtectingPortal(bottom, 1.6, Math.min(180, this.secondsLeft()));
                                  }
                               }
 
                               AiOperation.Result legResult = this.children.tickChild(this.init_AiOperation);
                               if (!legResult.terminal()) {
-                                 return this.init("Walking into the portal");
+                                 return this.running("Walking into the portal");
                               }
 
                               this.children.cancelChild(this.init_AiOperation);
                               this.init_AiOperation = null;
                               if (legResult.status() == AiOperation.Status.UNCERTAIN || legResult.status() == AiOperation.Status.CANCELLED) {
-                                 return this.init(legResult.status(), "Portal approach interrupted: " + legResult.message());
+                                 return this.finish(legResult.status(), "Portal approach interrupted: " + legResult.message());
                               }
 
                               if (legResult.status() != AiOperation.Status.SUCCEEDED) {
@@ -389,20 +389,20 @@ final class AiDimension {
                                           mc.player.blockPosition().toShortString(),
                                           stance.toShortString()
                                        );
-                                    this.init_AiOperation = this.init(stance, 0.5, Math.min(60, this.secondsLeft()));
-                                    return this.init("To a stance by the portal");
+                                    this.init_AiOperation = this.travelProtectingPortal(stance, 0.5, Math.min(60, this.secondsLeft()));
+                                    return this.running("To a stance by the portal");
                                  } else {
-                                    return this.init(AiOperation.Status.FAILED, "No route into the portal: " + legResult.message());
+                                    return this.finish(AiOperation.Status.FAILED, "No route into the portal: " + legResult.message());
                                  }
                               } else {
-                                 return this.init("At the portal");
+                                 return this.running("At the portal");
                               }
                            } else {
                               if (this.init_AiOperation != null) {
                                  this.children.cancelChild(this.init_AiOperation);
                                  this.init_AiOperation = null;
                                  if (this.children.hasUnresolved()) {
-                                    return this.init(AiOperation.Status.UNCERTAIN, "Portal approach needs observation before stepping in");
+                                    return this.finish(AiOperation.Status.UNCERTAIN, "Portal approach needs observation before stepping in");
                                  }
                               }
 
@@ -419,14 +419,14 @@ final class AiDimension {
                                     mc.options.keyUp.setDown(false);
                                     mc.options.keyJump.setDown(false);
                                     this.load_BlockPos = null;
-                                    return this.init("Lost the portal's plane; looking again");
+                                    return this.running("Lost the portal's plane; looking again");
                                  } else {
                                     this.load_DataUtil.aimAt(Vec3.atCenterOf(bottom));
                                     this.load_DataUtil.tick();
                                     mc.options.keyUp.setDown(true);
                                     mc.options.keyJump.setDown(mc.player.horizontalCollision && mc.player.onGround());
                                     this.read_I = 0;
-                                    return this.init("Stepping into the portal");
+                                    return this.running("Stepping into the portal");
                                  }
                               } else {
                                  if (this.write_I > 0) {
@@ -438,7 +438,7 @@ final class AiDimension {
 
                                  if (this.read_I > 200 && this.read_I % 20 < 2 && mc.player.onGround()) {
                                     mc.options.keyJump.setDown(true);
-                                    return this.init("In the portal, waiting for the transfer (" + this.read_I / 20 + "s); hopping through the plane");
+                                    return this.running("In the portal, waiting for the transfer (" + this.read_I / 20 + "s); hopping through the plane");
                                  } else {
                                     mc.options.keyJump.setDown(false);
                                     if (++this.read_I > 400) {
@@ -458,31 +458,31 @@ final class AiDimension {
                                              bottom.toShortString(),
                                              (int)Math.sqrt(mc.player.blockPosition().distSqr(bottom))
                                           );
-                                       return this.init(AiOperation.Status.FAILED, "Stood in the portal for 20s without transferring");
+                                       return this.finish(AiOperation.Status.FAILED, "Stood in the portal for 20s without transferring");
                                     } else {
-                                       return this.init("In the portal, waiting for the transfer (" + this.read_I / 20 + "s)");
+                                       return this.running("In the portal, waiting for the transfer (" + this.read_I / 20 + "s)");
                                     }
                                  }
                               }
                            }
                         } else {
                            if (!build) {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  "No " + BuiltInRegistries.BLOCK.getKey(portalBlock) + " within 48 blocks; set build:true to construct one"
                               );
                            }
 
                            if (portalBlock != Blocks.NETHER_PORTAL) {
-                              return this.init(AiOperation.Status.FAILED, "Only nether portals can be constructed; an end portal must be found");
+                              return this.finish(AiOperation.Status.FAILED, "Only nether portals can be constructed; an end portal must be found");
                            }
 
                            AiOperation.Result prepared = this.init_AiOperation_Result_41();
-                           return prepared != null ? prepared : this.init("Building a nether portal");
+                           return prepared != null ? prepared : this.running("Building a nether portal");
                         }
                      }
                   } else {
-                     return this.init(AiOperation.Status.CANCELLED, "Dimension travel cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Dimension travel cancelled");
                   }
                }
 
@@ -514,7 +514,7 @@ final class AiDimension {
                   if (obsidian < needed) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty("minecraft:obsidian", needed - obsidian);
-                     return this.init(
+                     return this.finishWith(
                         AiOperation.Status.FAILED,
                         "A nether portal needs " + needed + " more obsidian; holding " + obsidian,
                         AiJson.objectOf("missing", missing)
@@ -524,16 +524,16 @@ final class AiDimension {
                   if (AiGameState.countInventoryItem("minecraft:flint_and_steel") <= 0 && AiGameState.countInventoryItem("minecraft:fire_charge") <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty("minecraft:flint_and_steel", 1);
-                     return this.init(AiOperation.Status.FAILED, "Nothing to light the portal with", AiJson.objectOf("missing", missing));
+                     return this.finishWith(AiOperation.Status.FAILED, "Nothing to light the portal with", AiJson.objectOf("missing", missing));
                   }
 
                   BlockPos site = this.findReusableFrame();
-                  if (site == null && this.origin != null && this.init(this.origin, this.axis, true) && !this.sync_Z) {
+                  if (site == null && this.origin != null && this.frameFits(this.origin, this.axis, true) && !this.sync_Z) {
                      this.sync_Z = true;
                      BlockPos stand = this.init_BlockPos(this.origin, this.axis);
                      if (stand != null) {
                         this.load_AiOperation = AiGoto.travelToCompat(stand, 0.5, false, true, false, 20);
-                        return this.init("Stepping out of the dug portal site");
+                        return this.running("Stepping out of the dug portal site");
                      }
                   }
 
@@ -544,12 +544,12 @@ final class AiDimension {
                         this.init_ArrayDeque.addAll(digs);
                         AutismClientAddon.LOG
                            .info("[AI] dimension: digging {} blocks out for a portal site at {}", digs.size(), this.origin.toShortString());
-                        return this.init("Clearing a site for the portal frame");
+                        return this.running("Clearing a site for the portal frame");
                      }
                   }
 
                   if (site == null) {
-                     return this.init(AiOperation.Status.FAILED, "No clear 4x5 space near the player for a portal frame");
+                     return this.finish(AiOperation.Status.FAILED, "No clear 4x5 space near the player for a portal frame");
                   }
 
                   this.site = site;
@@ -562,7 +562,7 @@ final class AiDimension {
                   this.init_List.addAll(AiDimension.frameBlocks(site, this.init_Direction));
                   this.read_Set.clear();
 
-                  for (BlockPos corner : AiDimension.load(site, this.init_Direction)) {
+                  for (BlockPos corner : AiDimension.frameCorners(site, this.init_Direction)) {
                      if (this.isPlaceable(corner)) {
                         this.read_Set.add(corner.immutable());
                      }
@@ -587,7 +587,7 @@ final class AiDimension {
                         .info(
                            "[AI] dimension: {} blocks in the frame's interior at {}; digging them out first", this.init_ArrayDeque.size(), site.toShortString()
                         );
-                     return this.init("Clearing the frame's interior");
+                     return this.running("Clearing the frame's interior");
                   } else {
                      return null;
                   }
@@ -597,13 +597,13 @@ final class AiDimension {
                   if (this.read_AiOperation != null) {
                      AiOperation.Result r = this.children.tickChild(this.read_AiOperation);
                      if (!r.terminal()) {
-                        return this.init("Moving to reach a frame block");
+                        return this.running("Moving to reach a frame block");
                      }
 
                      this.children.cancelChild(this.read_AiOperation);
                      this.read_AiOperation = null;
                      if (r.status() == AiOperation.Status.UNCERTAIN || r.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(r.status(), "Frame approach interrupted: " + r.message());
+                        return this.finish(r.status(), "Frame approach interrupted: " + r.message());
                      }
                   }
 
@@ -615,12 +615,12 @@ final class AiDimension {
                      )) {
                      AiOperation.Result r = this.children.tickChild(this.init_n_BufferHelper);
                      if (!r.terminal()) {
-                        return this.init("Waiting for the portal frame placement acknowledgement");
+                        return this.running("Waiting for the portal frame placement acknowledgement");
                      }
 
                      this.load_V_14();
                      if (r.status() != AiOperation.Status.SUCCEEDED) {
-                        return this.init(r.status(), "Portal frame placement interrupted: " + r.message());
+                        return this.finish(r.status(), "Portal frame placement interrupted: " + r.message());
                      }
                   }
 
@@ -633,21 +633,21 @@ final class AiDimension {
                         }
 
                         Item block = AiShield.init(mc);
-                        if (block != null && this.update(cell)) {
-                           this.init(cell, block);
+                        if (block != null && this.canPlaceNow(cell)) {
+                           this.startPlacing(cell, block);
                            AiOperation.Result placed = this.children.tickChild(this.init_n_BufferHelper);
                            if (placed.status() == AiOperation.Status.UNCERTAIN) {
-                              return this.init(placed.status(), placed.message());
+                              return this.finish(placed.status(), placed.message());
                            }
 
-                           autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init(placed);
+                           autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placeStatusOf(placed);
                            if ((status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED || this.load_I + 1 > 120) && this.load_Set.add(cell)) {
                               this.load_V_14();
                               this.load_I = 0;
                               this.read_AiOperation = AiGoto.approachToPlaceCompat(
                                  cell, block, 20, null, false, AiDimension.frameCells(this.site, this.init_Direction), this.init_Set_8()
                               );
-                              return this.init("Moving to reach the frame's corner " + cell.toShortString());
+                              return this.running("Moving to reach the frame's corner " + cell.toShortString());
                            }
 
                            if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED
@@ -658,15 +658,15 @@ final class AiDimension {
                               this.load_I = 0;
                            }
 
-                           return this.init("Placing the frame's corner " + cell.toShortString());
+                           return this.running("Placing the frame's corner " + cell.toShortString());
                         } else {
                            this.load_V_14();
                            this.init_I++;
                            this.load_I = 0;
-                           return this.init("Corner " + cell.toShortString() + " skipped");
+                           return this.running("Corner " + cell.toShortString() + " skipped");
                         }
                      } else {
-                        if (this.sync_BlockPos == null && !mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.write(cell) && this.write_Set.add(cell)) {
+                        if (this.sync_BlockPos == null && !mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.hasSolidNeighbour(cell) && this.write_Set.add(cell)) {
                            this.sync_BlockPos = this.load_BlockPos_4(cell);
                         }
 
@@ -677,14 +677,14 @@ final class AiDimension {
                            }
 
                            Item block = AiShield.init(mc);
-                           if (block != null && this.update(this.sync_BlockPos)) {
-                              this.init(this.sync_BlockPos, block);
+                           if (block != null && this.canPlaceNow(this.sync_BlockPos)) {
+                              this.startPlacing(this.sync_BlockPos, block);
                               AiOperation.Result placed = this.children.tickChild(this.init_n_BufferHelper);
                               if (placed.status() == AiOperation.Status.UNCERTAIN) {
-                                 return this.init(placed.status(), placed.message());
+                                 return this.finish(placed.status(), placed.message());
                               }
 
-                              autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init(placed);
+                              autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placeStatusOf(placed);
                               if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED
                                  || status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
                                  || ++this.load_I > 120) {
@@ -693,7 +693,7 @@ final class AiDimension {
                                  this.load_I = 0;
                               }
 
-                              return this.init("Placing a support for frame block " + (this.init_I + 1));
+                              return this.running("Placing a support for frame block " + (this.init_I + 1));
                            }
 
                            this.load_V_14();
@@ -704,7 +704,7 @@ final class AiDimension {
                            this.load_V_14();
                            this.init_I++;
                            this.load_I = 0;
-                           return this.init("Frame " + this.init_I + "/" + this.init_List.size());
+                           return this.running("Frame " + this.init_I + "/" + this.init_List.size());
                         }
 
                         AiOperation.Result out = this.init_AiOperation_Result_4(cell);
@@ -712,22 +712,22 @@ final class AiDimension {
                            return out;
                         }
 
-                        this.init(cell, Items.OBSIDIAN);
+                        this.startPlacing(cell, Items.OBSIDIAN);
                         AiOperation.Result placed = this.children.tickChild(this.init_n_BufferHelper);
                         if (placed.status() == AiOperation.Status.UNCERTAIN) {
-                           return this.init(placed.status(), placed.message());
+                           return this.finish(placed.status(), placed.message());
                         }
 
-                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init(placed);
+                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placeStatusOf(placed);
                         if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                            this.load_V_14();
                            this.init_I++;
                            this.load_I = 0;
-                           return this.init("Frame " + this.init_I + "/" + this.init_List.size());
+                           return this.running("Frame " + this.init_I + "/" + this.init_List.size());
                         }
 
                         if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.load_I <= 120) {
-                           return this.init("Placing frame block " + (this.init_I + 1) + "/" + this.init_List.size());
+                           return this.running("Placing frame block " + (this.init_I + 1) + "/" + this.init_List.size());
                         }
 
                         if (this.load_Set.add(cell)) {
@@ -736,7 +736,7 @@ final class AiDimension {
                            this.read_AiOperation = AiGoto.approachToPlaceCompat(
                               cell, Items.OBSIDIAN, 20, null, false, AiDimension.frameCells(this.site, this.init_Direction), this.init_Set_8()
                            );
-                           return this.init("Moving to reach frame block " + (this.init_I + 1));
+                           return this.running("Moving to reach frame block " + (this.init_I + 1));
                         }
 
                         this.load_Z = false;
@@ -744,24 +744,24 @@ final class AiDimension {
                            this.init_Set.add(this.site.asLong());
                         }
 
-                        return this.init(AiOperation.Status.FAILED, "Could not place the portal frame: " + this.placer.failureReason());
+                        return this.finish(AiOperation.Status.FAILED, "Could not place the portal frame: " + this.placer.failureReason());
                      }
                   } else {
                      this.init_V_31();
                      if (this.ignitionReceipt.isPending()) {
                         return ++this.close_I > 120
-                           ? this.init(AiOperation.Status.TIMED_OUT, "Portal lighting use was not acknowledged by the server")
-                           : this.init("Waiting for the portal lighting acknowledgement");
+                           ? this.finish(AiOperation.Status.TIMED_OUT, "Portal lighting use was not acknowledged by the server")
+                           : this.running("Waiting for the portal lighting acknowledgement");
                      }
 
                      if (!mc.level.getBlockState(this.site).is(Blocks.NETHER_PORTAL)
                         || this.init_BlockPos != null
-                           && !this.ignitionReceipt.load()
+                           && !this.ignitionReceipt.isPortalConfirmed()
                            && AiServerEvidence.blockRevision(this.site) <= this.ignitionReceipt.getRevision()) {
-                        if (this.close_I % 20 == 0 && this.push < 3) {
+                        if (this.close_I % 20 == 0 && this.frameRepairs < 3) {
                            List<BlockPos> missing = this.missingFrameCells();
                            if (!missing.isEmpty()) {
-                              this.push++;
+                              this.frameRepairs++;
                               this.load_Set.removeAll(missing);
                               this.write_Set.removeAll(missing);
                               int first = this.init_List.size();
@@ -777,7 +777,7 @@ final class AiDimension {
                               if (first < this.init_List.size()) {
                                  this.init_I = first;
                                  this.close_I = 0;
-                                 return this.init("Placing the frame's missing blocks");
+                                 return this.running("Placing the frame's missing blocks");
                               }
                            }
                         }
@@ -796,7 +796,7 @@ final class AiDimension {
                                  this.close_I = 0;
                                  AutismClientAddon.LOG
                                     .info("[AI] dimension: {} blocks in the portal's interior; digging them out", this.init_ArrayDeque.size());
-                                 return this.init("Clearing the portal's interior");
+                                 return this.running("Clearing the portal's interior");
                               }
                            }
 
@@ -805,14 +805,14 @@ final class AiDimension {
                               .info(
                                  "[AI] dimension: the portal at {} did not light after {} clicks:{}",
                                  this.site.toShortString(),
-                                 this.pop,
+                                 this.lightingClicks,
                                  this.describeFrame()
                               );
-                           return this.init(AiOperation.Status.FAILED, "The frame is complete but the portal did not light");
+                           return this.finish(AiOperation.Status.FAILED, "The frame is complete but the portal did not light");
                         } else {
                            if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:flint_and_steel")) < 0 && AiItems.equipHotbar(AiItems.resolveItem("minecraft:fire_charge")) < 0) {
                               this.load_Z = false;
-                              return this.init(AiOperation.Status.FAILED, "Lost the lighter before the portal was lit");
+                              return this.finish(AiOperation.Status.FAILED, "Lost the lighter before the portal was lit");
                            }
 
                            BlockPos[] blocks = new BlockPos[]{
@@ -822,20 +822,20 @@ final class AiDimension {
                               this.site.relative(this.init_Direction, 2)
                            };
                            Direction[] faces = new Direction[]{Direction.UP, Direction.UP, this.init_Direction, this.init_Direction.getOpposite()};
-                           int k = Math.floorMod(this.get, 4);
+                           int k = Math.floorMod(this.lightingFaceIndex, 4);
                            BlockPos floor = blocks[k];
                            this.aim.aimAt(autismclient.ai.engine.AiAim.aimPointForBlockFace(floor, faces[k]));
                            this.aim.tick();
                            BlockHitResult seen = autismclient.ai.engine.AiAim.raycastLookBlock();
                            boolean onFace = seen != null && seen.getBlockPos().equals(floor) && seen.getDirection() == faces[k];
                            if (!onFace) {
-                              if (this.tick % 10 == 9) {
-                                 this.get++;
+                              if (this.lightingAimTicks % 10 == 9) {
+                                 this.lightingFaceIndex++;
                               }
 
-                              if (++this.tick > 40 && this.run < 3) {
+                              if (++this.lightingAimTicks > 40 && this.lightingStanceMoves < 3) {
                                  BlockPos stand = this.read_BlockPos_4();
-                                 if (stand == null && this.tick % 100 == 41) {
+                                 if (stand == null && this.lightingAimTicks % 100 == 41) {
                                     AutismClientAddon.LOG
                                        .info(
                                           "[AI] dimension: no view of the portal's floor or jambs from {}, and no stance to light from",
@@ -844,8 +844,8 @@ final class AiDimension {
                                  }
 
                                  if (stand != null) {
-                                    this.run++;
-                                    this.tick = 0;
+                                    this.lightingStanceMoves++;
+                                    this.lightingAimTicks = 0;
                                     this.close_I = 0;
                                     AutismClientAddon.LOG
                                        .info(
@@ -854,29 +854,29 @@ final class AiDimension {
                                           stand.toShortString()
                                        );
                                     this.read_AiOperation = AiGoto.travelToCompat(stand, 0.4, false, false, false, 15);
-                                    return this.init("Moving in front of the frame to light it");
+                                    return this.running("Moving in front of the frame to light it");
                                  }
                               }
 
-                              return this.init("Turning to light the portal");
+                              return this.running("Turning to light the portal");
                            } else {
                               BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                               if (hit == null) {
-                                 return this.init("Turning to light the portal");
+                                 return this.running("Turning to light the portal");
                               }
 
                               this.init_BlockPos = hit.getBlockPos().relative(hit.getDirection()).immutable();
                               this.init_BlockState = mc.level.getBlockState(this.init_BlockPos);
                               BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
-                              this.ignitionReceipt.init(prediction.currentSequence(), AiServerEvidence.blockRevision(this.init_BlockPos));
+                              this.ignitionReceipt.beginUse(prediction.currentSequence(), AiServerEvidence.blockRevision(this.init_BlockPos));
                               InteractionResult used = mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-                              this.ignitionReceipt.init(prediction.currentSequence());
+                              this.ignitionReceipt.markSent(prediction.currentSequence());
                               Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-                              if (this.pop++ % 10 == 0) {
+                              if (this.lightingClicks++ % 10 == 0) {
                                  AutismClientAddon.LOG
                                     .info(
                                        "[AI] dimension: lighting click {} on {} {} -> {}",
-                                       this.pop,
+                                       this.lightingClicks,
                                        hit.getBlockPos().toShortString(),
                                        hit.getDirection(),
                                        used
@@ -884,10 +884,10 @@ final class AiDimension {
                               }
 
                               if (!this.ignitionReceipt.isPending()) {
-                                 this.get++;
+                                 this.lightingFaceIndex++;
                               }
 
-                              return this.init("Lighting the portal");
+                              return this.running("Lighting the portal");
                            }
                         }
                      } else {
@@ -895,7 +895,7 @@ final class AiDimension {
                         this.read_Z = true;
                         this.load_BlockPos = this.site;
                         AiDimension.load_BlockPos = this.site.immutable();
-                        return this.init("Portal lit");
+                        return this.running("Portal lit");
                      }
                   }
                }
@@ -904,20 +904,20 @@ final class AiDimension {
                   if (this.ignitionReceipt.isPending() && this.init_BlockPos != null && mc.level == this.startLevel) {
                      BlockState state = mc.level.getBlockState(this.init_BlockPos);
                      this.ignitionReceipt
-                        .init(
+                        .observe(
                            state.is(Blocks.NETHER_PORTAL),
                            state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE),
                            state == this.init_BlockState,
                            AiServerEvidence.blockRevision(this.init_BlockPos),
                            autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(mc.level, this.ignitionReceipt.init_I())
                         );
-                     if (!this.ignitionReceipt.isPending() && !this.ignitionReceipt.load()) {
-                        this.get++;
+                     if (!this.ignitionReceipt.isPending() && !this.ignitionReceipt.isPortalConfirmed()) {
+                        this.lightingFaceIndex++;
                      }
                   }
                }
 
-               void init(BlockPos cell, Item item) {
+               void startPlacing(BlockPos cell, Item item) {
                   if (this.init_n_BufferHelper == null || !cell.equals(this.placer.targetPos())) {
                      this.load_V_14();
                      long before = AiServerEvidence.blockRevision(cell);
@@ -947,7 +947,7 @@ final class AiDimension {
                   }
                }
 
-               autismclient.ai.engine.AiPlacer.PlaceStatus init(AiOperation.Result result) {
+               autismclient.ai.engine.AiPlacer.PlaceStatus placeStatusOf(AiOperation.Result result) {
                   return result.status() == AiOperation.Status.RUNNING
                      ? autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING
                      : (
@@ -959,7 +959,7 @@ final class AiDimension {
 
                void load_V_14() {
                   if (this.init_n_BufferHelper != null) {
-                     this.init_JsonObject = this.init_n_BufferHelper.init();
+                     this.init_JsonObject = this.init_n_BufferHelper.receiptJson();
                   }
 
                   this.children.cancelChild(this.init_n_BufferHelper);
@@ -1026,12 +1026,12 @@ final class AiDimension {
                   site.addAll(AiDimension.write(origin, axis));
 
                   for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
-                     if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.write(cell)) {
+                     if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.hasSolidNeighbour(cell)) {
                         boolean supportable = false;
 
                         for (Direction d : Direction.values()) {
                            BlockPos side = cell.relative(d);
-                           if (!site.contains(side) && this.isPlaceable(side) && this.write(side)) {
+                           if (!site.contains(side) && this.isPlaceable(side) && this.hasSolidNeighbour(side)) {
                               supportable = true;
                               break;
                            }
@@ -1044,7 +1044,7 @@ final class AiDimension {
                   }
 
                   for (BlockPos cell : AiDimension.write(origin, axis)) {
-                     if (!this.isPlaceable(cell) && !this.read(cell)) {
+                     if (!this.isPlaceable(cell) && !this.isClearableForFrame(cell)) {
                         return false;
                      }
                   }
@@ -1062,7 +1062,7 @@ final class AiDimension {
                               for (int dy : AiDimension.init_IArr) {
                                  for (Direction axis : List.of(Direction.EAST, Direction.SOUTH)) {
                                     BlockPos candidate = feet.offset(dx, dy, dz);
-                                    if (!this.init_Set.contains(candidate.asLong()) && this.load(candidate, axis)) {
+                                    if (!this.init_Set.contains(candidate.asLong()) && this.frameFitsNow(candidate, axis)) {
                                        this.init_Direction = axis;
                                        return candidate;
                                     }
@@ -1076,24 +1076,24 @@ final class AiDimension {
                   return null;
                }
 
-               boolean load(BlockPos origin, Direction axis) {
-                  return this.init(origin, axis, false);
+               boolean frameFitsNow(BlockPos origin, Direction axis) {
+                  return this.frameFits(origin, axis, false);
                }
 
-               boolean init(BlockPos origin, Direction axis, boolean ignorePlayer) {
+               boolean frameFits(BlockPos origin, Direction axis, boolean ignorePlayer) {
                   for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
-                     if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && (ignorePlayer ? !this.isPlaceable(cell) : !this.update(cell))) {
+                     if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && (ignorePlayer ? !this.isPlaceable(cell) : !this.canPlaceNow(cell))) {
                         return false;
                      }
                   }
 
                   for (BlockPos cell : AiDimension.write(origin, axis)) {
-                     if (ignorePlayer ? !this.isPlaceable(cell) : !this.update(cell)) {
+                     if (ignorePlayer ? !this.isPlaceable(cell) : !this.canPlaceNow(cell)) {
                         return false;
                      }
                   }
 
-                  for (BlockPos support : AiDimension.read(origin, axis)) {
+                  for (BlockPos support : AiDimension.frameFloorSupports(origin, axis)) {
                      if (!AiTerrain.isLoaded(mc.level, support)) {
                         return false;
                      }
@@ -1120,7 +1120,7 @@ final class AiDimension {
                   return state.isAir() || state.is(BlockTags.FIRE) || state.is(Blocks.NETHER_PORTAL);
                }
 
-               boolean read(BlockPos cell) {
+               boolean isClearableForFrame(BlockPos cell) {
                   BlockState state = mc.level.getBlockState(cell);
                   if (state.getFluidState().isEmpty()
                      && !state.hasBlockEntity()
@@ -1185,7 +1185,7 @@ final class AiDimension {
                                        }
 
                                        if (!this.isPlaceable(cell)) {
-                                          if (!this.read(cell)) {
+                                          if (!this.isClearableForFrame(cell)) {
                                              ok = false;
                                              break;
                                           }
@@ -1195,7 +1195,7 @@ final class AiDimension {
                                     }
 
                                     if (ok && digs.size() <= 20) {
-                                       for (BlockPos support : AiDimension.read(origin, axis)) {
+                                       for (BlockPos support : AiDimension.frameFloorSupports(origin, axis)) {
                                           if (mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
                                              ok = false;
                                              break;
@@ -1230,7 +1230,7 @@ final class AiDimension {
                   if (this.load_AiOperation != null) {
                      AiOperation.Result r = this.children.tickChild(this.load_AiOperation);
                      if (!r.terminal()) {
-                        return this.init(
+                        return this.running(
                            this.init_ArrayDeque.isEmpty()
                               ? "Stepping out of the dug portal site"
                               : "Clearing a site for the portal (" + (this.init_ArrayDeque.size() + 1) + " left)"
@@ -1240,12 +1240,12 @@ final class AiDimension {
                      this.children.cancelChild(this.load_AiOperation);
                      this.load_AiOperation = null;
                      if (r.status() == AiOperation.Status.UNCERTAIN || r.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(r.status(), "Portal excavation interrupted: " + r.message());
+                        return this.finish(r.status(), "Portal excavation interrupted: " + r.message());
                      }
 
-                     if (r.status() != AiOperation.Status.SUCCEEDED && !this.init_ArrayDeque.isEmpty() && ++this.open > 3) {
+                     if (r.status() != AiOperation.Status.SUCCEEDED && !this.init_ArrayDeque.isEmpty() && ++this.siteClearFailures > 3) {
                         this.init_ArrayDeque.clear();
-                        return this.init(AiOperation.Status.FAILED, "Could not clear a portal site: " + r.message());
+                        return this.finish(AiOperation.Status.FAILED, "Could not clear a portal site: " + r.message());
                      }
                   }
 
@@ -1259,13 +1259,13 @@ final class AiDimension {
 
                   BlockPos cell = this.init_ArrayDeque.poll();
                   this.load_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, 20, false);
-                  return this.init("Clearing a site for the portal at " + cell.toShortString());
+                  return this.running("Clearing a site for the portal at " + cell.toShortString());
                }
 
                BlockPos init_BlockPos(BlockPos origin, Direction axis) {
                   Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(origin, axis));
                   site.addAll(AiDimension.write(origin, axis));
-                  site.addAll(AiDimension.load(origin, axis));
+                  site.addAll(AiDimension.frameCorners(origin, axis));
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
 
@@ -1296,7 +1296,7 @@ final class AiDimension {
                   Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(this.site, this.init_Direction));
                   site.addAll(AiDimension.write(this.site, this.init_Direction));
                   BlockPos below = cell.below();
-                  if (!site.contains(below) && this.isPlaceable(below) && this.write(below)) {
+                  if (!site.contains(below) && this.isPlaceable(below) && this.hasSolidNeighbour(below)) {
                      return below;
                   }
 
@@ -1305,7 +1305,7 @@ final class AiDimension {
 
                   for (Direction d : Direction.values()) {
                      BlockPos side = cell.relative(d);
-                     if (d != Direction.DOWN && !site.contains(side) && this.update(side) && this.write(side)) {
+                     if (d != Direction.DOWN && !site.contains(side) && this.canPlaceNow(side) && this.hasSolidNeighbour(side)) {
                         double distance = mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(side));
                         if (distance < bestDistance) {
                            bestDistance = distance;
@@ -1317,7 +1317,7 @@ final class AiDimension {
                   return best;
                }
 
-               boolean write(BlockPos cell) {
+               boolean hasSolidNeighbour(BlockPos cell) {
                   for (Direction d : Direction.values()) {
                      BlockPos side = cell.relative(d);
                      if (!mc.level.getBlockState(side).getCollisionShape(mc.level, side).isEmpty()) {
@@ -1329,17 +1329,17 @@ final class AiDimension {
                }
 
                AiOperation.Result init_AiOperation_Result_4(BlockPos cell) {
-                  if (this.poll < 6 && mc.player.getBoundingBox().intersects(new AABB(cell))) {
+                  if (this.bodyOverlapRetries < 6 && mc.player.getBoundingBox().intersects(new AABB(cell))) {
                      BlockPos stand = this.init_BlockPos(this.site, this.init_Direction);
                      if (stand == null) {
                         return null;
                      }
 
-                     this.poll++;
+                     this.bodyOverlapRetries++;
                      this.load_V_14();
                      this.load_I = 0;
                      this.read_AiOperation = AiGoto.travelToCompat(stand, 0.5, false, true, false, 20);
-                     return this.init("Stepping out of frame cell " + cell.toShortString());
+                     return this.running("Stepping out of frame cell " + cell.toShortString());
                   } else {
                      return null;
                   }
@@ -1348,7 +1348,7 @@ final class AiDimension {
                Set<Long> init_Set_8() {
                   Set<Long> cells = AiDimension.frameCells(this.site, this.init_Direction);
 
-                  for (BlockPos corner : AiDimension.load(this.site, this.init_Direction)) {
+                  for (BlockPos corner : AiDimension.frameCorners(this.site, this.init_Direction)) {
                      cells.add(corner.asLong());
                   }
 
@@ -1365,7 +1365,7 @@ final class AiDimension {
                      for (int step = 0; step < 2; step++) {
                         for (int out = 1; out <= 2; out++) {
                            BlockPos stand = this.site.relative(this.init_Direction, step).relative(normal, side * out);
-                           if (!stand.equals(at) || this.run <= 0) {
+                           if (!stand.equals(at) || this.lightingStanceMoves <= 0) {
                               BlockPos below = stand.below();
                               if (this.isPlaceable(stand)
                                  && this.isPlaceable(stand.above())
@@ -1416,7 +1416,7 @@ final class AiDimension {
                   return sb.length() == 0 ? " frame and interior as planned" : sb.toString();
                }
 
-               boolean update(BlockPos cell) {
+               boolean canPlaceNow(BlockPos cell) {
                   if (!AiTerrain.isLoaded(mc.level, cell)) {
                      return false;
                   }
@@ -1425,7 +1425,7 @@ final class AiDimension {
                   return state.canBeReplaced() && state.getFluidState().isEmpty() ? !mc.player.getBoundingBox().intersects(new AABB(cell)) : false;
                }
 
-               BlockPos init(Block wanted) {
+               BlockPos findNearestBlock(Block wanted) {
                   BlockPos origin = mc.player.blockPosition();
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
@@ -1474,7 +1474,7 @@ final class AiDimension {
 
                   this.children.addChildEvidence(out);
                   if (this.init_n_BufferHelper != null) {
-                     out.add("placementReceipt", this.init_n_BufferHelper.init());
+                     out.add("placementReceipt", this.init_n_BufferHelper.receiptJson());
                   } else if (this.init_JsonObject != null) {
                      out.add("placementReceipt", this.init_JsonObject);
                   }
@@ -1496,7 +1496,7 @@ final class AiDimension {
                   JsonArray found = new JsonArray();
 
                   for (Block candidate : List.of(Blocks.NETHER_PORTAL, Blocks.END_PORTAL, Blocks.END_GATEWAY)) {
-                     BlockPos nearest = this.init(candidate);
+                     BlockPos nearest = this.findNearestBlock(candidate);
                      if (nearest != null) {
                         found.add(
                            AiJson.objectOf(
@@ -1518,15 +1518,15 @@ final class AiDimension {
                   return found;
                }
 
-               AiOperation.Result init(String message) {
+               AiOperation.Result running(String message) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusJson().toString(), List.of());
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message) {
-                  return this.init(status, message, null);
+               AiOperation.Result finish(AiOperation.Status status, String message) {
+                  return this.finishWith(status, message, null);
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+               AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject extra) {
                   this.read_V_9();
                   JsonObject data = this.statusJson();
                   if (extra != null) {
@@ -1618,11 +1618,11 @@ final class AiDimension {
       return cells;
    }
 
-   static List<BlockPos> load(BlockPos origin, Direction axis) {
+   static List<BlockPos> frameCorners(BlockPos origin, Direction axis) {
       return List.of(origin.relative(axis, -1).below(), origin.relative(axis, 2).below(), origin.relative(axis, -1).above(3), origin.relative(axis, 2).above(3));
    }
 
-   static List<BlockPos> read(BlockPos origin, Direction axis) {
+   static List<BlockPos> frameFloorSupports(BlockPos origin, Direction axis) {
       List<BlockPos> cells = new ArrayList<>(2);
 
       for (int step = 0; step < 2; step++) {
@@ -1680,7 +1680,7 @@ final class AiDimension {
       private final Supplier<autismclient.ai.engine.AiPlacer.PlaceStatus> work;
       private final BooleanSupplier pending;
       private final Supplier<JsonObject> receipt;
-      private final Supplier<String> read;
+      private final Supplier<String> failureReason;
       private final Runnable release;
       private boolean init_Z = true;
       private boolean load_Z;
@@ -1696,7 +1696,7 @@ final class AiDimension {
          this.work = work;
          this.pending = pending;
          this.receipt = receipt;
-         this.read = failure;
+         this.failureReason = failure;
          this.release = release;
       }
 
@@ -1721,7 +1721,7 @@ final class AiDimension {
             status == autismclient.ai.engine.AiPlacer.PlaceStatus.WORKING
                ? AiOperation.Status.RUNNING
                : (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED),
-            status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.read.get() : "Portal frame placement",
+            status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.failureReason.get() : "Portal frame placement",
             AiJson.objectOf("placementReceipt", this.receipt.get()).toString(),
             List.of()
          );
@@ -1745,19 +1745,19 @@ final class AiDimension {
          }
       }
 
-      JsonObject init() {
+      JsonObject receiptJson() {
          return this.receipt.get();
       }
    }
 
    static final class Inner_CachePool {
       private int sequence;
-      private int load = -1;
+      private int sentSequence = -1;
       private long revision;
       private boolean pending;
       private String outcome = "unsent";
 
-      void init(int sequence, long revision) {
+      void beginUse(int sequence, long revision) {
          if (this.pending) {
             throw new IllegalStateException("The previous portal lighting use is still unacknowledged");
          }
@@ -1766,13 +1766,13 @@ final class AiDimension {
          this.revision = revision;
       }
 
-      void init(int sequence) {
-         this.load = sequence;
+      void markSent(int sequence) {
+         this.sentSequence = sequence;
          this.pending = sequence > this.sequence;
          this.outcome = this.pending ? "awaiting-server" : "unsent";
       }
 
-      void init(boolean portal, boolean fire, boolean unchanged, long revision, boolean acknowledged) {
+      void observe(boolean portal, boolean fire, boolean unchanged, long revision, boolean acknowledged) {
          if (this.pending) {
             if (portal && revision > this.revision) {
                this.pending = false;
@@ -1788,7 +1788,7 @@ final class AiDimension {
          return this.pending;
       }
 
-      boolean load() {
+      boolean isPortalConfirmed() {
          return this.outcome.equals("portal-confirmed");
       }
 
@@ -1797,12 +1797,12 @@ final class AiDimension {
       }
 
       int init_I() {
-         return this.load;
+         return this.sentSequence;
       }
 
       JsonObject toReceipt() {
          return AiJson.objectOf(
-            "beforeSequence", this.sequence, "sentSequence", this.load, "blockRevisionBefore", this.revision, "pending", this.pending, "outcome", this.outcome
+            "beforeSequence", this.sequence, "sentSequence", this.sentSequence, "blockRevisionBefore", this.revision, "pending", this.pending, "outcome", this.outcome
          );
       }
    }
@@ -1816,7 +1816,7 @@ final class AiDimension {
       private final IdentityHashMap<AiOperation, AiOperation.Result> lastResults = new IdentityHashMap<>();
       private AiOperation child;
       private AiOperation.Result actual;
-      private AiOperation.Result load;
+      private AiOperation.Result unresolvedResult;
       private boolean unresolved;
 
       AiOperation.Result tickChild(AiOperation child) {
@@ -1852,7 +1852,7 @@ final class AiDimension {
             }
 
             if (child == this.child && actual != null) {
-               this.load = actual;
+               this.unresolvedResult = actual;
             }
          }
       }
@@ -1883,17 +1883,17 @@ final class AiDimension {
             data.addProperty("dimensionChildStatus", this.actual.status().name());
          }
 
-         if (this.load != null) {
-            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.load.dataJson()));
-            data.addProperty("pendingChildStatus", this.load.status().name());
-            data.addProperty("pendingChildFailure", this.load.failure().name());
+         if (this.unresolvedResult != null) {
+            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.unresolvedResult.dataJson()));
+            data.addProperty("pendingChildStatus", this.unresolvedResult.status().name());
+            data.addProperty("pendingChildFailure", this.unresolvedResult.failure().name());
          }
       }
 
       AiOperation.Result init_AiOperation_Result_AiOperation_Result_Z(AiOperation.Result boundary, boolean interactionPending) {
          JsonObject data = AiRunResources.parseEvidenceJson(boundary.dataJson());
          this.addChildEvidence(data);
-         AiOperation.Result actual = this.actual != null ? this.actual : this.load;
+         AiOperation.Result actual = this.actual != null ? this.actual : this.unresolvedResult;
          AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
             boundary.status(), boundary.message(), data, this.unresolved || interactionPending, actual
          );

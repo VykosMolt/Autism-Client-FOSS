@@ -44,7 +44,7 @@ public final class AiExcavate {
    private static final int flush = 12;
    private static final int[][] NEIGHBOR_OFFSETS = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
-   static boolean init(BlockState state) {
+   static boolean isNonOre(BlockState state) {
       String path = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
       return !path.endsWith("_ore") && !path.equals("ancient_debris") ? state.getBlock().defaultDestroyTime() >= 5.0F : true;
    }
@@ -52,7 +52,7 @@ public final class AiExcavate {
    private AiExcavate() {
    }
 
-   static List<BlockPos> init(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockPos anchor) {
+   static List<BlockPos> areaCells(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockPos anchor) {
       List<BlockPos> out = new ArrayList<>();
 
       for (int y = maxY; y >= minY; y--) {
@@ -72,7 +72,7 @@ public final class AiExcavate {
       return out;
    }
 
-   static List<BlockPos> init(BlockPos origin, int stepX, int stepZ, int length, int width, int height) {
+   static List<BlockPos> tunnelCells(BlockPos origin, int stepX, int stepZ, int length, int width, int height) {
       int perpX = -stepZ;
       int perpZ = stepX;
       List<BlockPos> out = new ArrayList<>();
@@ -93,7 +93,7 @@ public final class AiExcavate {
       return out;
    }
 
-   static List<BlockPos> init(BlockPos origin, int stepX, int stepZ, int targetY) {
+   static List<BlockPos> staircaseCells(BlockPos origin, int stepX, int stepZ, int targetY) {
       List<BlockPos> out = new ArrayList<>();
       int steps = Math.max(1, origin.getY() - targetY);
 
@@ -108,17 +108,17 @@ public final class AiExcavate {
       return out;
    }
 
-   static int init(int originY, int cleared) {
+   static int reachedY(int originY, int cleared) {
       return originY - Math.max(0, cleared - 1);
    }
 
-   static int[] init(int x, int y, int z, int dx, int dy, int dz) {
+   static int[] centredBox(int x, int y, int z, int dx, int dy, int dz) {
       int minX = x - (dx - 1) / 2;
       int minZ = z - (dz - 1) / 2;
       return new int[]{minX, y, minZ, minX + dx - 1, y + dy - 1, minZ + dz - 1};
    }
 
-   static int[] init(String name) {
+   static int[] directionStep(String name) {
       int[] var10000;
       switch (name == null ? "" : name.trim().toLowerCase(Locale.ROOT)) {
          case "north":
@@ -140,7 +140,7 @@ public final class AiExcavate {
       return var10000;
    }
 
-   static int[] init(float yaw) {
+   static int[] yawStep(float yaw) {
       int[] var10000;
       switch (Math.floorMod(Math.round(yaw / 90.0F), 4)) {
          case 0:
@@ -204,7 +204,7 @@ public final class AiExcavate {
          int maxBlocks = Math.max(1, Math.min(4096, AiJson.getInt(args, "maxBlocks", 1024)));
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          return new AiExcavate.Inner_CachePool(
-            "mine_area", init(minX, minY, minZ, maxX, maxY, maxZ, client.player.blockPosition()), maxY - minY + 1, collect, maxBlocks, timeoutSeconds, backfill
+            "mine_area", areaCells(minX, minY, minZ, maxX, maxY, maxZ, client.player.blockPosition()), maxY - minY + 1, collect, maxBlocks, timeoutSeconds, backfill
          );
       } else {
          throw new IllegalArgumentException("Explicit first corner x,y,z required");
@@ -223,8 +223,8 @@ public final class AiExcavate {
          switch (shape) {
             case "tunnel":
                int[] step = args.has("direction")
-                  ? init(AiJson.getString(args, "direction", ""))
-                  : init((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
+                  ? directionStep(AiJson.getString(args, "direction", ""))
+                  : yawStep((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
                if (step == null) {
                   throw new IllegalArgumentException("direction must be north, south, east or west (or pass yaw)");
                }
@@ -233,16 +233,16 @@ public final class AiExcavate {
                int width = Math.max(1, Math.min(3, AiJson.getInt(args, "width", 1)));
                int height = Math.max(1, Math.min(3, AiJson.getInt(args, "height", 2)));
                var10000 = new AiExcavate.Inner_CachePool(
-                  "dig:tunnel", init(origin, step[0], step[1], length, width, height), length, collect, length * width * height, timeoutSeconds, backfill
+                  "dig:tunnel", tunnelCells(origin, step[0], step[1], length, width, height), length, collect, length * width * height, timeoutSeconds, backfill
                );
                break;
             case "room":
                int dx = Math.max(1, Math.min(16, AiJson.getInt(args, "dx", 4)));
                int dy = Math.max(1, Math.min(16, AiJson.getInt(args, "dy", 4)));
                int dz = Math.max(1, Math.min(16, AiJson.getInt(args, "dz", 4)));
-               int[] box = init(origin.getX(), origin.getY(), origin.getZ(), dx, dy, dz);
+               int[] box = centredBox(origin.getX(), origin.getY(), origin.getZ(), dx, dy, dz);
                var10000 = new AiExcavate.Inner_CachePool(
-                  "dig:room", init(box[0], box[1], box[2], box[3], box[4], box[5], origin), dy, collect, dx * dy * dz, timeoutSeconds, backfill
+                  "dig:room", areaCells(box[0], box[1], box[2], box[3], box[4], box[5], origin), dy, collect, dx * dy * dz, timeoutSeconds, backfill
                );
                break;
             case "staircase":
@@ -262,15 +262,15 @@ public final class AiExcavate {
                }
 
                int[] step2 = args.has("direction")
-                  ? init(AiJson.getString(args, "direction", ""))
-                  : init((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
+                  ? directionStep(AiJson.getString(args, "direction", ""))
+                  : yawStep((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
                if (step2 == null) {
                   throw new IllegalArgumentException("direction must be north, south, east or west (or pass yaw)");
                }
 
                var10000 = new AiExcavate.Inner_CachePool(
                   "dig:staircase",
-                  init(origin, step2[0], step2[1], targetY),
+                  staircaseCells(origin, step2[0], step2[1], targetY),
                   origin.getY() - targetY + 1,
                   collect,
                   2 * (origin.getY() - targetY + 1),
@@ -319,15 +319,15 @@ public final class AiExcavate {
       final ItemStack[] hotbar = new ItemStack[9];
       int dug;
       int update_I;
-      int sync;
-      int flush;
-      int close;
-      int open;
+      int skippedLava;
+      int unusedTickCounter;
+      int dropPickupTicks;
+      int dropWaitTicks;
       BlockPos currentCell;
       AiOperation dropTravel;
       boolean read_Z;
-      int poll = -1;
-      int push;
+      int trackedDropId = -1;
+      int dropChaseTicks;
       List<ItemEntity> drops = new ArrayList<>();
       boolean write_Z;
       boolean update_Z;
@@ -377,20 +377,20 @@ public final class AiExcavate {
             }
 
             if (System.nanoTime() > this.deadline) {
-               return this.init(AiOperation.Status.TIMED_OUT, this.label + " deadline reached");
+               return this.finish(AiOperation.Status.TIMED_OUT, this.label + " deadline reached");
             }
 
-            this.flush++;
+            this.unusedTickCounter++;
             if (this.dropTravel != null) {
                AiOperation.Result r = this.dropTravel.tick();
                if (!r.terminal()) {
-                  return this.load("Moving to the next cell");
+                  return this.running("Moving to the next cell");
                }
 
                this.dropTravel.cancel();
                this.dropTravel = null;
                if (r.status() == AiOperation.Status.SUCCEEDED) {
-                  return this.load("Arrived; digging");
+                  return this.running("Arrived; digging");
                }
 
                if (this.read_Z) {
@@ -399,20 +399,20 @@ public final class AiExcavate {
                      this.drops.remove(0);
                   }
 
-                  return this.load("Drop unreachable; continuing");
+                  return this.running("Drop unreachable; continuing");
                } else {
-                  this.init(this.currentCell, "unreachable");
+                  this.recordSkip(this.currentCell, "unreachable");
                   this.currentCell = null;
-                  return this.load("Cell unreachable; continuing");
+                  return this.running("Cell unreachable; continuing");
                }
             } else if (this.currentCell != null) {
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = AiBreakBlock.breakBlock(this.currentCell, this.init(60), AiExcavate.init(this.stateAt(this.currentCell)));
+                  this.init_AiOperation = AiBreakBlock.breakBlock(this.currentCell, this.secondsLeft(60), AiExcavate.isNonOre(this.stateAt(this.currentCell)));
                }
 
                AiOperation.Result result = this.init_AiOperation.tick();
                if (!result.terminal()) {
-                  return this.load("Clearing " + this.currentCell.toShortString() + ": " + result.message());
+                  return this.running("Clearing " + this.currentCell.toShortString() + ": " + result.message());
                }
 
                this.init_AiOperation.cancel();
@@ -429,18 +429,18 @@ public final class AiExcavate {
                      return AiOperation.Result.failed(result.failure(), result.message(), failureData.toString());
                   }
 
-                  if (this.init_ByteReader_DataUti.init(this.currentCell, 3)) {
-                     this.orderCursor.init(this.currentCell);
+                  if (this.init_ByteReader_DataUti.allowAttempt(this.currentCell, 3)) {
+                     this.orderCursor.defer(this.currentCell);
                   } else {
                      if (this.stair != null) {
-                        return this.init("Could not break a staircase cell", AiFailure.NO_REACHABLE_TARGET);
+                        return this.fail("Could not break a staircase cell", AiFailure.NO_REACHABLE_TARGET);
                      }
 
-                     this.init(this.currentCell, "break_failed");
+                     this.recordSkip(this.currentCell, "break_failed");
                   }
 
                   this.currentCell = null;
-                  return this.load("Break failed; continuing");
+                  return this.running("Break failed; continuing");
                } else {
                   this.dug++;
                   if (this.backfill != null) {
@@ -449,12 +449,12 @@ public final class AiExcavate {
 
                   if (this.collect) {
                      this.write_Z = true;
-                     this.open = 0;
+                     this.dropWaitTicks = 0;
                      this.collectDrops(this.currentCell);
                   }
 
                   this.currentCell = null;
-                  return this.load("Dug " + this.dug + "/" + this.init_I_13() + " cells");
+                  return this.running("Dug " + this.dug + "/" + this.init_I_13() + " cells");
                }
             } else {
                if (this.collect && (this.write_Z || !this.drops.isEmpty())) {
@@ -467,7 +467,7 @@ public final class AiExcavate {
                if (this.backfill != null && !this.backfill.isIdle()) {
                   this.backfill.tick();
                   if (this.backfill.isBackfilling()) {
-                     return this.load("Backfilling behind the dig");
+                     return this.running("Backfilling behind the dig");
                   }
                }
 
@@ -475,20 +475,20 @@ public final class AiExcavate {
 
                while (this.orderCursor.hasNext() && System.nanoTime() < sweepDeadline) {
                   if (this.dug >= this.maxBlocks) {
-                     return this.init("maxBlocks cap reached; cleared " + this.dug + " of " + this.init_I_13() + " cells");
+                     return this.completeWithBackfill("maxBlocks cap reached; cleared " + this.dug + " of " + this.init_I_13() + " cells");
                   }
 
                   BlockPos cell = this.orderCursor.next();
                   AiPathfinder.CellInfo probe = this.classifyCell(cell);
                   if (!probe.loaded()) {
-                     this.orderCursor.init(cell);
+                     this.orderCursor.defer(cell);
                   } else if (!this.stateAt(cell).isAir()) {
                      if (AiExcavate.init((x, y, z) -> this.classifyCell(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
                         if (this.stair != null) {
-                           return this.init("Lava beside the staircase", AiFailure.LAVA_DETECTED);
+                           return this.fail("Lava beside the staircase", AiFailure.LAVA_DETECTED);
                         }
 
-                        this.sync++;
+                        this.skippedLava++;
                      } else if (!(this.stateAt(cell).getDestroySpeed(this.mc.level, cell) < 0.0F)
                         && !this.stateAt(cell).hasBlockEntity()
                         && this.stateAt(cell).getFluidState().isEmpty()
@@ -499,64 +499,64 @@ public final class AiExcavate {
                               cellState.requiresCorrectToolForDrops(), AiPathfinder.LiveGridView.hasCorrectToolInSlotsCompat(this.mc, cellState, 36)
                            )) {
                            if (this.stair != null) {
-                              return this.init("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
+                              return this.fail("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
                            }
 
-                           this.init(cell, "no_tool");
+                           this.recordSkip(cell, "no_tool");
                         } else {
                            if (!cell.equals(this.mc.player.blockPosition().below()) || !this.classifyCell(cell.below(2)).passable()) {
                               this.currentCell = cell;
-                              return this.load("Digging " + cell.toShortString());
+                              return this.running("Digging " + cell.toShortString());
                            }
 
                            if (this.stair != null) {
-                              return this.init("No floor under the staircase", AiFailure.NO_REACHABLE_TARGET);
+                              return this.fail("No floor under the staircase", AiFailure.NO_REACHABLE_TARGET);
                            }
 
-                           this.init(cell, "footing");
+                           this.recordSkip(cell, "footing");
                         }
                      } else {
                         if (this.stair != null) {
-                           return this.init("An undiggable or fluid cell blocks the staircase", AiFailure.UNBREAKABLE_OBSTACLE);
+                           return this.fail("An undiggable or fluid cell blocks the staircase", AiFailure.UNBREAKABLE_OBSTACLE);
                         }
 
-                        this.init(cell, "unbreakable");
+                        this.recordSkip(cell, "unbreakable");
                      }
                   }
                }
 
                if (this.orderCursor.hasNext()) {
-                  return this.load("Scanning for the next cell");
+                  return this.running("Scanning for the next cell");
                }
 
                int waiting = this.orderCursor.init_List().size();
                if (waiting > 0) {
-                  if (this.orderCursor.init(this.dug, 100)) {
-                     return this.load("Re-sweeping " + waiting + " deferred cells");
+                  if (this.orderCursor.retryDeferred(this.dug, 100)) {
+                     return this.running("Re-sweeping " + waiting + " deferred cells");
                   }
 
                   for (BlockPos cell : this.orderCursor.init_List()) {
-                     this.init(cell, "unreachable");
+                     this.recordSkip(cell, "unreachable");
                   }
                }
 
-               if (this.dug == 0 && this.update_I == 0 && this.sync == 0) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Nothing to dig: every cell is already air");
+               if (this.dug == 0 && this.update_I == 0 && this.skippedLava == 0) {
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Nothing to dig: every cell is already air");
                }
 
-               if (this.update_I <= 0 && this.sync <= 0) {
-                  return this.init("Excavation complete: dug " + this.dug + " of " + this.init_I_13() + " cells");
+               if (this.update_I <= 0 && this.skippedLava <= 0) {
+                  return this.completeWithBackfill("Excavation complete: dug " + this.dug + " of " + this.init_I_13() + " cells");
                }
 
                this.cancel();
                return AiOperation.Result.failed(AiFailure.NO_REACHABLE_TARGET, "Excavation incomplete; some cells could not be cleared", this.statusJson().toString());
             }
          } else {
-            return this.init(AiOperation.Status.CANCELLED, this.label + " cancelled");
+            return this.finish(AiOperation.Status.CANCELLED, this.label + " cancelled");
          }
       }
 
-      AiOperation.Result init(String message) {
+      AiOperation.Result completeWithBackfill(String message) {
          if (this.backfill != null && !this.backfill.isIdle()) {
             if (!this.load_Z) {
                if (this.load_AiOperation == null) {
@@ -597,16 +597,16 @@ public final class AiExcavate {
                this.aim.aimAt(this.init_Vec3);
                this.aim.tick();
                this.backfill.tick();
-               return this.load("Backfilling behind the dig");
+               return this.running("Backfilling behind the dig");
             }
          }
 
-         return this.init(AiOperation.Status.SUCCEEDED, message);
+         return this.finish(AiOperation.Status.SUCCEEDED, message);
       }
 
       AiOperation.Result init_AiOperation_Result_12() {
          if (this.drops.isEmpty()) {
-            if (++this.open > 12) {
+            if (++this.dropWaitTicks > 12) {
                this.write_Z = false;
                return null;
             }
@@ -615,26 +615,26 @@ public final class AiExcavate {
                this.backfill.tick();
             }
 
-            return this.load("Waiting for drops");
+            return this.running("Waiting for drops");
          } else {
             this.write_Z = false;
             ItemEntity drop = this.drops.get(0);
             if (!drop.isAlive()) {
                this.drops.remove(0);
-               this.close = 0;
-               this.poll = -1;
-               return this.load("Collecting drops");
+               this.dropPickupTicks = 0;
+               this.trackedDropId = -1;
+               return this.running("Collecting drops");
             }
 
-            if (this.poll != drop.getId()) {
-               this.poll = drop.getId();
-               this.push = 0;
+            if (this.trackedDropId != drop.getId()) {
+               this.trackedDropId = drop.getId();
+               this.dropChaseTicks = 0;
             }
 
-            if (++this.push > 120) {
+            if (++this.dropChaseTicks > 120) {
                this.drops.remove(0);
-               this.poll = -1;
-               return this.load("Drop unreachable; continuing");
+               this.trackedDropId = -1;
+               return this.running("Drop unreachable; continuing");
             }
 
             if (this.mc.player.distanceToSqr(drop) <= 2.25) {
@@ -642,17 +642,17 @@ public final class AiExcavate {
                   this.backfill.tick();
                }
 
-               if (++this.close > 20) {
+               if (++this.dropPickupTicks > 20) {
                   this.drops.remove(0);
-                  this.close = 0;
+                  this.dropPickupTicks = 0;
                }
 
-               return this.load("Waiting for drop pickup; check inventory space");
+               return this.running("Waiting for drop pickup; check inventory space");
             } else {
-               this.close = 0;
+               this.dropPickupTicks = 0;
                this.read_Z = true;
-               this.dropTravel = AiGoto.travelToCompat(drop.blockPosition(), 1.2, true, true, true, this.init(8));
-               return this.load("Collecting drops");
+               this.dropTravel = AiGoto.travelToCompat(drop.blockPosition(), 1.2, true, true, true, this.secondsLeft(8));
+               return this.running("Collecting drops");
             }
          }
       }
@@ -672,7 +672,7 @@ public final class AiExcavate {
          }
 
          this.drops.sort(Comparator.comparingDouble(this.mc.player::distanceToSqr));
-         this.close = 0;
+         this.dropPickupTicks = 0;
       }
 
       AiPathfinder.CellInfo classifyCell(BlockPos pos) {
@@ -683,7 +683,7 @@ public final class AiExcavate {
          return this.mc.level == null ? null : this.mc.level.getBlockState(pos);
       }
 
-      void init(BlockPos cell, String reason) {
+      void recordSkip(BlockPos cell, String reason) {
          if (this.skipped.size() < 32) {
             this.skipped.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
          }
@@ -695,7 +695,7 @@ public final class AiExcavate {
          return this.order.size();
       }
 
-      int init(int cap) {
+      int secondsLeft(int cap) {
          return (int)Math.max(1L, Math.min(cap, (this.deadline - System.nanoTime()) / 1000000000L));
       }
 
@@ -723,8 +723,8 @@ public final class AiExcavate {
          return out;
       }
 
-      AiOperation.Result init(String why, AiFailure code) {
-         int reachedY = AiExcavate.init(this.stair.origin().getY(), this.clearedSteps());
+      AiOperation.Result fail(String why, AiFailure code) {
+         int reachedY = AiExcavate.reachedY(this.stair.origin().getY(), this.clearedSteps());
          this.cancel();
          return AiOperation.Result.failed(
             code,
@@ -769,7 +769,7 @@ public final class AiExcavate {
             "skippedTotal",
             this.update_I,
             "skippedLava",
-            this.sync,
+            this.skippedLava,
             "maxBlocks",
             this.maxBlocks,
             "drops",
@@ -781,17 +781,17 @@ public final class AiExcavate {
          );
          if (this.stair != null) {
             out.addProperty("targetY", this.stair.targetY());
-            out.addProperty("reachedY", AiExcavate.init(this.stair.origin().getY(), this.clearedSteps()));
+            out.addProperty("reachedY", AiExcavate.reachedY(this.stair.origin().getY(), this.clearedSteps()));
          }
 
          return out;
       }
 
-      AiOperation.Result load(String message) {
+      AiOperation.Result running(String message) {
          return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusJson().toString(), List.of());
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message) {
+      AiOperation.Result finish(AiOperation.Status status, String message) {
          this.cancel();
          return new AiOperation.Result(status, message, this.statusJson().toString(), List.of());
       }
@@ -842,10 +842,10 @@ public final class AiExcavate {
    }
 
    static final class Inner_DataUtil {
-      private final Map<BlockPos, Integer> init = new HashMap<>();
+      private final Map<BlockPos, Integer> attempts = new HashMap<>();
 
-      boolean init(BlockPos cell, int maxAttempts) {
-         return this.init.merge(cell, 1, Integer::sum) < maxAttempts;
+      boolean allowAttempt(BlockPos cell, int maxAttempts) {
+         return this.attempts.merge(cell, 1, Integer::sum) < maxAttempts;
       }
    }
 
@@ -854,7 +854,7 @@ public final class AiExcavate {
       private final List<BlockPos> load_List = new ArrayList<>();
       private int cursor;
       private int dug = -1;
-      private int read;
+      private int dryPasses;
 
       Inner_StreamUtil(List<BlockPos> order) {
          this.order = order;
@@ -868,7 +868,7 @@ public final class AiExcavate {
          return this.order.get(this.cursor++);
       }
 
-      void init(BlockPos cell) {
+      void defer(BlockPos cell) {
          this.load_List.add(cell);
       }
 
@@ -876,15 +876,15 @@ public final class AiExcavate {
          return this.load_List;
       }
 
-      boolean init(int dug, int maxDryPasses) {
+      boolean retryDeferred(int dug, int maxDryPasses) {
          if (this.load_List.isEmpty()) {
             return false;
          }
 
          if (dug > this.dug) {
             this.dug = dug;
-            this.read = 0;
-         } else if (++this.read > maxDryPasses) {
+            this.dryPasses = 0;
+         } else if (++this.dryPasses > maxDryPasses) {
             return false;
          }
 

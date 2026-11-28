@@ -111,7 +111,7 @@ final class AiSchematicActions {
       }
    }
 
-   static LevelReader init(LevelReader world, BlockPos cell, BlockState replacement) {
+   static LevelReader withReplacedBlock(LevelReader world, BlockPos cell, BlockState replacement) {
       return (LevelReader)Proxy.newProxyInstance(LevelReader.class.getClassLoader(), new Class[]{LevelReader.class}, (proxy, method, args) -> {
          if (args != null && args.length > 0 && cell.equals(args[0])) {
             if (method.getName().equals("getBlockState")) {
@@ -143,7 +143,7 @@ final class AiSchematicActions {
          BlockPos below = target.below();
          BlockState live = world.getBlockState(below);
          if (!sourceCells.contains(below.asLong()) && live.canBeReplaced() && live.getFluidState().isEmpty()) {
-            return requested.canSurvive(init(world, below, Blocks.DIRT.defaultBlockState()), target) ? below : null;
+            return requested.canSurvive(withReplacedBlock(world, below, Blocks.DIRT.defaultBlockState()), target) ? below : null;
          } else {
             return null;
          }
@@ -160,7 +160,7 @@ final class AiSchematicActions {
             AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
             if (wanted != null
                && !AiBuilder.matchesIgnoringUnpairedChest(wanted, world.getBlockState(neighbour))
-               && !requested.canSurvive(init(world, neighbour, Blocks.AIR.defaultBlockState()), target)) {
+               && !requested.canSurvive(withReplacedBlock(world, neighbour, Blocks.AIR.defaultBlockState()), target)) {
                return neighbour;
             }
          }
@@ -170,7 +170,7 @@ final class AiSchematicActions {
          for (Direction direction : Direction.values()) {
             BlockPos neighbour = target.relative(direction);
             AiBuilder.CellSpec wanted = source.get(neighbour.asLong());
-            if (wanted != null && requested.canSurvive(init(world, neighbour, AiBuilder.toBlockState(wanted)), target)) {
+            if (wanted != null && requested.canSurvive(withReplacedBlock(world, neighbour, AiBuilder.toBlockState(wanted)), target)) {
                return neighbour;
             }
          }
@@ -213,7 +213,7 @@ final class AiSchematicActions {
 
                if (requested.canSurvive(world, dependent)) {
                   if (removed == null) {
-                     removed = init(world, candidate, Blocks.AIR.defaultBlockState());
+                     removed = withReplacedBlock(world, candidate, Blocks.AIR.defaultBlockState());
                   }
 
                   if (!requested.canSurvive(removed, dependent)) {
@@ -227,7 +227,7 @@ final class AiSchematicActions {
       return false;
    }
 
-   static AiOperation init(final BlockPos top, final BlockPos bottom, final Set<Long> protectedCells) {
+   static AiOperation descendAccessShaft(final BlockPos top, final BlockPos bottom, final Set<Long> protectedCells) {
       return init_AiOperation_BlockPos_2(top, bottom, protectedCells, protectedCells);
    }
 
@@ -236,27 +236,27 @@ final class AiSchematicActions {
    ) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         AiOperation init_AiOperation = AiGoto.travelToCompat(top, 0.25, false, false, false, 20);
-         final long init_J = System.nanoTime() + 40000000000L;
-         boolean init_Z;
+         AiOperation child = AiGoto.travelToCompat(top, 0.25, false, false, false, 20);
+         final long deadline = System.nanoTime() + 40000000000L;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
-               if (System.nanoTime() > this.init_J) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Shaft descent deadline");
+            if (!this.cancelled && mc.player != null && mc.level != null) {
+               if (System.nanoTime() > this.deadline) {
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Shaft descent deadline");
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.child != null) {
+                  AiOperation.Result r = this.child.tick();
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.child.cancel();
+                  this.child = null;
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.init(r.status(), r.message());
+                     return this.finish(r.status(), r.message());
                   }
                }
 
@@ -266,7 +266,7 @@ final class AiSchematicActions {
                }
 
                if (mc.player.getY() <= bottom.getY() + 0.25 && mc.player.blockPosition().equals(bottom)) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Buried construction stance reached");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Buried construction stance reached");
                }
 
                Vec3 centre = Vec3.atBottomCenterOf(bottom);
@@ -281,12 +281,12 @@ final class AiSchematicActions {
                      || floor.getY() < bottom.getY()
                      || floor.getY() >= top.getY()
                      || protectedCells.contains(floor.asLong())) {
-                     return this.init(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
+                     return this.finish(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
                   } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.isSafeToBreakSupport(floor)) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, digProtected, false);
+                     this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "The access shaft has no safe landing after its floor is removed");
+                     return this.finish(AiOperation.Status.FAILED, "The access shaft has no safe landing after its floor is removed");
                   }
                } else {
                   mc.player.setSprinting(false);
@@ -304,25 +304,25 @@ final class AiSchematicActions {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Centering on the access shaft before removing its floor", "{}", List.of());
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Shaft descent cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Shaft descent cancelled");
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             this.cancel();
             return new AiOperation.Result(status, message, "{}", List.of());
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null ? autismclient.ai.engine.AiMotionSafety.isPlayerSupported() : this.init_AiOperation.canInterruptNow();
+            return this.child == null ? autismclient.ai.engine.AiMotionSafety.isPlayerSupported() : this.child.canInterruptNow();
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            if (this.child != null) {
+               this.child.cancel();
             }
 
             autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
@@ -355,44 +355,44 @@ final class AiSchematicActions {
                }
 
                return new AiOperation() {
-                  final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-                  int init_I;
+                  final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+                  int ticks;
 
                   @Override
                   public AiOperation.Result tick() {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
-                     if (mc.player.onGround() && ++this.init_I <= 60) {
+                     if (mc.player.onGround() && ++this.ticks <= 60) {
                         if (autismclient.ai.engine.PlacementGoal.init(mc, target, AiBuilder.toBlockState(cell).getBlock().asItem(), constraint, 72) != null) {
-                           return this.init(AiOperation.Status.SUCCEEDED, "Support side exposed");
+                           return this.finish(AiOperation.Status.SUCCEEDED, "Support side exposed");
                         }
 
                         Vec3 remaining = edge.subtract(mc.player.position());
                         if (!autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), edge)) {
-                           return this.init(AiOperation.Status.FAILED, "Support-edge alignment would touch lava");
+                           return this.finish(AiOperation.Status.FAILED, "Support-edge alignment would touch lava");
                         }
 
                         if (remaining.lengthSqr() < 0.0025) {
-                           return this.init(AiOperation.Status.FAILED, "Support side is occluded");
+                           return this.finish(AiOperation.Status.FAILED, "Support side is occluded");
                         }
 
                         for (int i = 1; i <= 4; i++) {
                            if (!mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(remaining.scale(i / 4.0)).deflate(0.001))) {
-                              return this.init(AiOperation.Status.FAILED, "Support-edge alignment is obstructed");
+                              return this.finish(AiOperation.Status.FAILED, "Support-edge alignment is obstructed");
                            }
                         }
 
-                        this.init_DataUtil.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
-                        this.init_DataUtil.tick();
-                        mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
+                        this.aim.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
+                        this.aim.tick();
+                        mc.options.keyUp.setDown(this.aim.isSettled());
                         return new AiOperation.Result(AiOperation.Status.RUNNING, "Exposing the support side", "{}", List.of());
                      } else {
-                        return this.init(AiOperation.Status.FAILED, "Support-edge alignment failed");
+                        return this.finish(AiOperation.Status.FAILED, "Support-edge alignment failed");
                      }
                   }
 
-                  AiOperation.Result init(AiOperation.Status status, String message) {
+                  AiOperation.Result finish(AiOperation.Status status, String message) {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return new AiOperation.Result(status, message, "{}", List.of());
                   }
@@ -466,7 +466,7 @@ final class AiSchematicActions {
       return List.copyOf(result);
    }
 
-   static AiOperation init(AiBuilder.Blueprint blueprint, Set<Long> protectedCells, Set<Long> owned) {
+   static AiOperation buildAccessStairs(AiBuilder.Blueprint blueprint, Set<Long> protectedCells, Set<Long> owned) {
       return init_AiOperation_TableIndex_DataUti(
          blueprint, protectedCells, owned, blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).max().orElse(0)
       );
@@ -486,62 +486,62 @@ final class AiSchematicActions {
                )
          ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Existing access stairs verified", new JsonObject())
          : new AiOperation() {
-            AiOperation init_AiOperation;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            int init_I = 1;
-            int load_I;
-            int read;
-            boolean init_Z;
-            boolean load_Z;
-            String init_Str;
-            final long init_J = System.nanoTime() + 600000000000L;
+            AiOperation child;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            int stepIndex = 1;
+            int phase;
+            int alignTicks;
+            boolean cancelled;
+            boolean placingLanding;
+            String failure;
+            final long deadline = System.nanoTime() + 600000000000L;
 
             @Override
             public AiOperation.Result tick() {
-               if (this.init_Str != null) {
-                  return this.init(AiOperation.Status.FAILED, this.init_Str);
+               if (this.failure != null) {
+                  return this.finish(AiOperation.Status.FAILED, this.failure);
                }
 
-               if (!this.init_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Access construction deadline");
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Access construction deadline");
                   }
 
-                  if (!steps.isEmpty() && this.init_I < steps.size()) {
-                     if (this.init_AiOperation != null) {
-                        AiOperation.Result r = this.init_AiOperation.tick();
+                  if (!steps.isEmpty() && this.stepIndex < steps.size()) {
+                     if (this.child != null) {
+                        AiOperation.Result r = this.child.tick();
                         if (!r.terminal()) {
-                           return this.init(r.message());
+                           return this.running(r.message());
                         }
 
-                        this.init_AiOperation.cancel();
-                        this.init_AiOperation = null;
-                        if (r.status() != AiOperation.Status.SUCCEEDED && !this.load_Z) {
-                           return this.init(r.status(), r.message());
+                        this.child.cancel();
+                        this.child = null;
+                        if (r.status() != AiOperation.Status.SUCCEEDED && !this.placingLanding) {
+                           return this.finish(r.status(), r.message());
                         }
 
-                        this.load_Z = false;
-                        this.load_I++;
-                        this.read = 0;
+                        this.placingLanding = false;
+                        this.phase++;
+                        this.alignTicks = 0;
                      }
 
-                     BlockPos previous = steps.get(this.init_I - 1);
-                     BlockPos top = steps.get(this.init_I);
+                     BlockPos previous = steps.get(this.stepIndex - 1);
+                     BlockPos top = steps.get(this.stepIndex);
                      BlockPos under = top.below();
                      HashSet<Long> keep = new HashSet<>(protectedCells);
                      keep.addAll(owned);
-                     if (this.load_I == 0) {
-                        this.init_AiOperation = this.init(previous.above(), keep);
-                        return this.init("Approaching access step " + this.init_I);
+                     if (this.phase == 0) {
+                        this.child = this.walkTo(previous.above(), keep);
+                        return this.running("Approaching access step " + this.stepIndex);
                      }
 
-                     if (this.load_I == 1) {
+                     if (this.phase == 1) {
                         if (this.init(top)) {
-                           this.load_I = 5;
-                           this.read = 0;
+                           this.phase = 5;
+                           this.alignTicks = 0;
                         } else if (this.init(under)) {
-                           this.load_I = 3;
-                           this.read = 0;
+                           this.phase = 3;
+                           this.alignTicks = 0;
                         } else {
                            Direction direction = Direction.getNearest(top.getX() - previous.getX(), 0, top.getZ() - previous.getZ(), Direction.NORTH);
                            Vec3 edge = Vec3.atBottomCenterOf(previous.above()).add(direction.getStepX() * 0.7, 0.0, direction.getStepZ() * 0.7);
@@ -549,52 +549,52 @@ final class AiSchematicActions {
                            Vec3 delta = mc.player.position().subtract(centre);
                            double along = delta.x * direction.getStepX() + delta.z * direction.getStepZ();
                            double across = delta.x * direction.getStepZ() - delta.z * direction.getStepX();
-                           if ((along < 0.67 || Math.abs(across) > 0.1) && !this.init(edge, true)) {
-                              return this.init("Exposing the next step's support face");
+                           if ((along < 0.67 || Math.abs(across) > 0.1) && !this.alignTo(edge, true)) {
+                              return this.running("Exposing the next step's support face");
                            }
 
                            autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                            mc.options.keyShift.setDown(true);
-                           this.load_I = 2;
-                           this.read = 0;
+                           this.phase = 2;
+                           this.alignTicks = 0;
                         }
                      }
 
-                     if (this.load_I == 2) {
+                     if (this.phase == 2) {
                         mc.options.keyShift.setDown(true);
                         if (!this.init(under)) {
-                           this.init_AiOperation = this.load(under, keep);
-                           return this.init("Placing the access step's lower support");
+                           this.child = this.placeSupport(under, keep);
+                           return this.running("Placing the access step's lower support");
                         }
 
-                        this.load_I = 3;
+                        this.phase = 3;
                      }
 
-                     if (this.load_I == 3) {
-                        if (!this.init(Vec3.atBottomCenterOf(previous.above()), false)) {
-                           return this.init("Returning onto the access tread");
+                     if (this.phase == 3) {
+                        if (!this.alignTo(Vec3.atBottomCenterOf(previous.above()), false)) {
+                           return this.running("Returning onto the access tread");
                         }
 
-                        this.load_I = 4;
-                        this.read = 0;
+                        this.phase = 4;
+                        this.alignTicks = 0;
                      }
 
-                     if (this.load_I == 4) {
+                     if (this.phase == 4) {
                         if (!this.init(top)) {
-                           this.init_AiOperation = this.load(top, keep);
-                           return this.init("Placing the access tread");
+                           this.child = this.placeSupport(top, keep);
+                           return this.running("Placing the access tread");
                         }
 
-                        this.load_I = 5;
+                        this.phase = 5;
                      }
 
-                     if (this.load_I == 5) {
-                        this.init_AiOperation = this.init(top.above(), keep);
-                        return this.init("Climbing access step " + this.init_I);
+                     if (this.phase == 5) {
+                        this.child = this.walkTo(top.above(), keep);
+                        return this.running("Climbing access step " + this.stepIndex);
                      }
 
-                     if (this.load_I == 6) {
-                        BlockPos landing = this.init(this.init_I);
+                     if (this.phase == 6) {
+                        BlockPos landing = this.turnLandingAt(this.stepIndex);
                         if (landing != null && !this.init(landing) && mc.level.getBlockState(landing).canBeReplaced()) {
                            Direction direction = Direction.getNearest(landing.getX() - top.getX(), 0, landing.getZ() - top.getZ(), Direction.NORTH);
                            Vec3 centre = Vec3.atBottomCenterOf(top.above());
@@ -602,28 +602,28 @@ final class AiSchematicActions {
                            Vec3 delta = mc.player.position().subtract(centre);
                            double along = delta.x * direction.getStepX() + delta.z * direction.getStepZ();
                            double across = delta.x * direction.getStepZ() - delta.z * direction.getStepX();
-                           if ((along < 0.67 || Math.abs(across) > 0.1) && !this.init(edge, true)) {
-                              return this.init("Leaning out for the stair landing");
+                           if ((along < 0.67 || Math.abs(across) > 0.1) && !this.alignTo(edge, true)) {
+                              return this.running("Leaning out for the stair landing");
                            }
 
                            autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                            mc.options.keyShift.setDown(true);
-                           this.load_Z = true;
-                           this.init_AiOperation = this.load(landing, keep);
-                           return this.init("Placing the access stair landing");
+                           this.placingLanding = true;
+                           this.child = this.placeSupport(landing, keep);
+                           return this.running("Placing the access stair landing");
                         }
 
-                        this.load_I = 7;
+                        this.phase = 7;
                      }
 
-                     this.init_I++;
-                     this.load_I = 0;
-                     return this.init("Access step verified");
+                     this.stepIndex++;
+                     this.phase = 0;
+                     return this.running("Access step verified");
                   } else {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Access stairs verified");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Access stairs verified");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Access construction cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Access construction cancelled");
                }
             }
 
@@ -631,7 +631,7 @@ final class AiSchematicActions {
                return Block.isShapeFullBlock(mc.level.getBlockState(pos).getCollisionShape(mc.level, pos));
             }
 
-            BlockPos init(int at) {
+            BlockPos turnLandingAt(int at) {
                if (at >= 1 && at + 1 < steps.size()) {
                   BlockPos before = steps.get(at - 1);
                   BlockPos tread = steps.get(at);
@@ -646,7 +646,7 @@ final class AiSchematicActions {
                }
             }
 
-            AiOperation init(BlockPos feet, Set<Long> keep) {
+            AiOperation walkTo(BlockPos feet, Set<Long> keep) {
                return AiGoto.travelToCompat(
                   feet,
                   0.25,
@@ -663,7 +663,7 @@ final class AiSchematicActions {
                );
             }
 
-            AiOperation load(final BlockPos pos, Set<Long> keep) {
+            AiOperation placeSupport(final BlockPos pos, Set<Long> keep) {
                BlockState state = mc.level.getBlockState(pos);
                if (state.canBeReplaced() && state.getFluidState().isEmpty()) {
                   final AiOperation build = AiBuilder.buildSchematicSneaking(
@@ -691,9 +691,9 @@ final class AiSchematicActions {
                }
             }
 
-            boolean init(Vec3 point, boolean sneak) {
+            boolean alignTo(Vec3 point, boolean sneak) {
                if (!autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), point)) {
-                  this.init_Str = "Access alignment would touch lava";
+                  this.failure = "Access alignment would touch lava";
                   return false;
                } else {
                   double dx = point.x - mc.player.getX();
@@ -701,8 +701,8 @@ final class AiSchematicActions {
                   if (dx * dx + dz * dz < (sneak ? 1.0E-4 : 0.01)) {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return true;
-                  } else if (++this.read > 90) {
-                     this.init_Str = "Access alignment could not reach " + point + " from " + mc.player.position();
+                  } else if (++this.alignTicks > 90) {
+                     this.failure = "Access alignment could not reach " + point + " from " + mc.player.position();
                      return false;
                   } else {
                      mc.player.setSprinting(false);
@@ -712,28 +712,28 @@ final class AiSchematicActions {
                      mc.options.keyDown.setDown(false);
                      mc.options.keyLeft.setDown(false);
                      mc.options.keyRight.setDown(false);
-                     this.init_DataUtil.aimAt(point.add(0.0, mc.player.getEyeHeight(), 0.0));
-                     this.init_DataUtil.tick();
-                     mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
+                     this.aim.aimAt(point.add(0.0, mc.player.getEyeHeight(), 0.0));
+                     this.aim.tick();
+                     mc.options.keyUp.setDown(this.aim.isSettled());
                      return false;
                   }
                }
             }
 
-            AiOperation.Result init(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, "Step " + this.init_I + "/" + (steps.size() - 1) + ": " + message, new JsonObject());
+            AiOperation.Result running(String message) {
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Step " + this.stepIndex + "/" + (steps.size() - 1) + ": " + message, new JsonObject());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
                return AiGameOperations.result(status, message, new JsonObject());
             }
 
             @Override
             public void cancel() {
-               this.init_Z = true;
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
+               this.cancelled = true;
+               if (this.child != null) {
+                  this.child.cancel();
                }
 
                autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
@@ -844,7 +844,7 @@ final class AiSchematicActions {
       return true;
    }
 
-   static List<BlockPos> init(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
+   static List<BlockPos> cellsToClear(AiBuilder.Blueprint blueprint, Map<Long, AiBuilder.CellSpec> wanted, BlockGetter world) {
       return cellsToClear(blueprint, wanted, world, AiSchematicActions::init);
    }
 
@@ -1028,7 +1028,7 @@ final class AiSchematicActions {
       return block instanceof FlowerPotBlock pot ? pot.getPotted().asItem() : Items.AIR;
    }
 
-   static String init_Str(AiBuilder.CellSpec cell, BlockState live) {
+   static String postInteractItemSpec(AiBuilder.CellSpec cell, BlockState live) {
       if (!BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString().equals(cell.block())) {
          return null;
       }
@@ -1078,21 +1078,21 @@ final class AiSchematicActions {
    static AiOperation init(final AiBuilder.CellSpec cell, final BlockPos target, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         AiOperation init_AiOperation;
-         int init_I;
+         AiOperation child;
+         int attempts;
 
          @Override
          public AiOperation.Result tick() {
             if (mc.player != null && mc.level != null) {
                mc.options.keyShift.setDown(false);
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.child != null) {
+                  AiOperation.Result r = this.child.tick();
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.child.cancel();
+                  this.child = null;
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
                      return r;
                   }
@@ -1103,14 +1103,14 @@ final class AiSchematicActions {
                   return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Interaction state verified", new JsonObject());
                }
 
-               if (++this.init_I > (cell.properties().containsKey("note") ? 30 : (cell.properties().containsKey("delay") ? 6 : 2))) {
+               if (++this.attempts > (cell.properties().containsKey("note") ? 30 : (cell.properties().containsKey("delay") ? 6 : 2))) {
                   return AiGameOperations.result(AiOperation.Status.FAILED, "Interaction state did not settle", new JsonObject());
                }
 
                if (AiBuilder.needsWaterlogToggleOnly(cell, live)) {
                   BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);
                   if (hit != null && !(mc.player.getEyePosition().distanceToSqr(hit.getLocation()) > 16.0)) {
-                     this.init_AiOperation = AiBucket.init(
+                     this.child = AiBucket.init(
                         AiJson.objectOf(
                            "action",
                            "true".equals(cell.properties().get("waterlogged")) ? "empty" : "fill",
@@ -1128,12 +1128,12 @@ final class AiSchematicActions {
                      );
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Restoring waterlogging with a bucket", new JsonObject());
                   } else {
-                     this.init_AiOperation = AiGoto.approachBlockCompat(target, 30, protectedCells);
+                     this.child = AiGoto.approachBlockCompat(target, 30, protectedCells);
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Approaching the waterlogged block", new JsonObject());
                   }
                } else {
                   JsonObject args = AiJson.objectOf("x", target.getX(), "y", target.getY(), "z", target.getZ());
-                  String itemSpec = AiSchematicActions.init_Str(cell, live);
+                  String itemSpec = AiSchematicActions.postInteractItemSpec(cell, live);
                   if (itemSpec != null) {
                      int slot = AiItems.equipHotbar(AiItems.resolveItem(itemSpec));
                      if (slot < 0) {
@@ -1143,7 +1143,7 @@ final class AiSchematicActions {
                      args.addProperty("slot", slot);
                   }
 
-                  this.init_AiOperation = AiGameOperations.blockAction("interact", args, protectedCells);
+                  this.child = AiGameOperations.blockAction("interact", args, protectedCells);
                   return AiGameOperations.result(AiOperation.Status.RUNNING, "Approaching the block's interaction face", new JsonObject());
                }
             } else {
@@ -1153,18 +1153,18 @@ final class AiSchematicActions {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+            return this.child == null || this.child.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.child != null && this.child.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            if (this.child != null) {
+               this.child.cancel();
             }
          }
       };
@@ -1174,21 +1174,21 @@ final class AiSchematicActions {
       return AiCellMaterials.init(cell);
    }
 
-   static List<AiCellMaterials.Inner_CachePool> init(AiBuilder.CellSpec cell, BlockPos target) {
+   static List<AiCellMaterials.Inner_CachePool> materialPlans(AiBuilder.CellSpec cell, BlockPos target) {
       Minecraft mc = Minecraft.getInstance();
       boolean waterAbove = mc.level.getFluidState(target.above()).is(FluidTags.WATER);
       return AiCellMaterials.init(cell, mc.level.getBlockState(target), waterAbove);
    }
 
    static List<Item> materials(AiBuilder.CellSpec cell) {
-      return init(materialPlans(cell));
+      return distinctItems(materialPlans(cell));
    }
 
    static List<Item> load(AiBuilder.CellSpec cell, BlockPos target) {
-      return init(init(cell, target));
+      return distinctItems(materialPlans(cell, target));
    }
 
-   private static List<Item> init(List<AiCellMaterials.Inner_CachePool> requirements) {
+   private static List<Item> distinctItems(List<AiCellMaterials.Inner_CachePool> requirements) {
       return requirements.stream().map(AiCellMaterials.Inner_CachePool::item).distinct().toList();
    }
 
@@ -1196,62 +1196,62 @@ final class AiSchematicActions {
       final Minecraft mc = Minecraft.getInstance();
       final HashSet<Long> protectedCells = new HashSet<>(shared);
       return new AiOperation() {
-         AiOperation init_AiOperation;
-         boolean init_Z;
-         int init_I;
-         int load;
-         int read;
-         AiOperation.Result init_AiOperation_Result;
-         final long init_J = System.nanoTime() + 120000000000L;
+         AiOperation child;
+         boolean cancelled;
+         int attempts;
+         int waterState;
+         int soilApproaches;
+         AiOperation.Result deferredResult;
+         final long deadline = System.nanoTime() + 120000000000L;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
-               if (System.nanoTime() > this.init_J && this.load != 3) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Special placement deadline");
+            if (!this.cancelled && mc.player != null && mc.level != null) {
+               if (System.nanoTime() > this.deadline && this.waterState != 3) {
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Special placement deadline");
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.child != null) {
+                  AiOperation.Result r = this.child.tick();
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.child.cancel();
+                  this.child = null;
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     if (this.load == 3) {
-                        this.load = 0;
-                        return this.init(r.status(), "Water restoration failed: " + r.message());
+                     if (this.waterState == 3) {
+                        this.waterState = 0;
+                        return this.finish(r.status(), "Water restoration failed: " + r.message());
                      }
 
-                     return this.init(r.status(), r.message());
+                     return this.finish(r.status(), r.message());
                   }
 
-                  if (this.load == 1) {
-                     this.load = 2;
-                  } else if (this.load == 3) {
-                     this.load = 0;
+                  if (this.waterState == 1) {
+                     this.waterState = 2;
+                  } else if (this.waterState == 3) {
+                     this.waterState = 0;
                   }
 
-                  if (this.init_AiOperation_Result != null && this.load == 0) {
-                     return this.init(this.init_AiOperation_Result.status(), this.init_AiOperation_Result.message());
+                  if (this.deferredResult != null && this.waterState == 0) {
+                     return this.finish(this.deferredResult.status(), this.deferredResult.message());
                   }
                }
 
                BlockState live = mc.level.getBlockState(target);
-               if (this.load == 2 && live.getBlock() == BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()))) {
-                  this.load = 3;
-                  this.init_AiOperation = this.init_AiOperation("empty");
-                  return this.init_AiOperation_Result_11("Restoring water above the converted soil");
+               if (this.waterState == 2 && live.getBlock() == BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()))) {
+                  this.waterState = 3;
+                  this.child = this.waterBucketAbove("empty");
+                  return this.running("Restoring water above the converted soil");
                }
 
                if (AiBuilder.matchesSchematicCell(cell, live)) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Special cell verified");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Special cell verified");
                }
 
-               if (++this.init_I > 20) {
-                  return this.init(AiOperation.Status.FAILED, "Special cell state could not be achieved: " + live);
+               if (++this.attempts > 20) {
+                  return this.finish(AiOperation.Status.FAILED, "Special cell state could not be achieved: " + live);
                }
 
                String id = cell.block();
@@ -1261,10 +1261,10 @@ final class AiSchematicActions {
                      BlockPos foot = target.relative(facing.getOpposite());
                      if (!live.canBeReplaced()) {
                         if ((!live.hasBlockEntity() || live.getBlock() instanceof BedBlock) && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                           return this.init_AiOperation_Result_11("Clearing the bed's head cell");
+                           this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
+                           return this.running("Clearing the bed's head cell");
                         } else {
-                           return this.init(AiOperation.Status.FAILED, "The bed's head cell is occupied by protected contents");
+                           return this.finish(AiOperation.Status.FAILED, "The bed's head cell is occupied by protected contents");
                         }
                      } else {
                         BlockState footState = mc.level.getBlockState(foot);
@@ -1272,44 +1272,44 @@ final class AiSchematicActions {
                            LinkedHashMap<String, String> props = new LinkedHashMap<>(cell.properties());
                            props.put("part", "foot");
                            protectedCells.add(foot.asLong());
-                           this.init_AiOperation = AiBuilder.buildSchematicSubtask(
+                           this.child = AiBuilder.buildSchematicSubtask(
                               new AiBuilder.Blueprint(foot, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
-                           return this.init_AiOperation_Result_11("Placing the bed's foot, which makes its head");
+                           return this.running("Placing the bed's foot, which makes its head");
                         } else if ((!footState.hasBlockEntity() || footState.getBlock() instanceof BedBlock) && footState.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(foot, 30, true, protectedCells);
-                           return this.init_AiOperation_Result_11("Clearing the bed's foot cell");
+                           this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(foot, 30, true, protectedCells);
+                           return this.running("Clearing the bed's foot cell");
                         } else {
-                           return this.init(AiOperation.Status.FAILED, "The bed's foot cell is occupied by protected contents");
+                           return this.finish(AiOperation.Status.FAILED, "The bed's foot cell is occupied by protected contents");
                         }
                      }
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "A bed head needs a horizontal facing");
+                     return this.finish(AiOperation.Status.FAILED, "A bed head needs a horizontal facing");
                   }
                } else if (AiSchematicActions.isFilledComposter(cell)) {
                   if (live.is(Blocks.COMPOSTER)) {
                      int level = live.getValue(ComposterBlock.LEVEL);
                      int wanted = Integer.parseInt(cell.properties().get("level"));
                      if (level > wanted) {
-                        this.init_AiOperation = level == 8
-                           ? this.init(target, "minecraft:dirt", false)
+                        this.child = level == 8
+                           ? this.useItemOn(target, "minecraft:dirt", false)
                            : autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                        return this.init_AiOperation_Result_11("Emptying the overfilled composter");
+                        return this.running("Emptying the overfilled composter");
                      } else if (level == 7 && wanted == 8) {
-                        this.init_I--;
-                        return this.init_AiOperation_Result_11("Waiting for the full composter to turn ready");
+                        this.attempts--;
+                        return this.running("Waiting for the full composter to turn ready");
                      } else {
-                        this.init_AiOperation = this.init(target, "minecraft:pumpkin_pie", false);
-                        return this.init_AiOperation_Result_11("Composting a pumpkin pie");
+                        this.child = this.useItemOn(target, "minecraft:pumpkin_pie", false);
+                        return this.running("Composting a pumpkin pie");
                      }
                   } else if (live.canBeReplaced()) {
-                     this.init_AiOperation = this.init(target, "minecraft:composter");
-                     return this.init_AiOperation_Result_11("Placing the composter");
+                     this.child = this.placeBlock(target, "minecraft:composter");
+                     return this.running("Placing the composter");
                   } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                     return this.init_AiOperation_Result_11("Clearing the composter cell");
+                     this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
+                     return this.running("Clearing the composter cell");
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "The composter cell is occupied by protected contents");
+                     return this.finish(AiOperation.Status.FAILED, "The composter cell is occupied by protected contents");
                   }
                } else if (!AiSchematicActions.write(cell)) {
                   if ("upper".equals(cell.properties().get("half"))) {
@@ -1321,62 +1321,62 @@ final class AiSchematicActions {
                               && live.getBlock() == lower.getBlock()
                               && !String.valueOf(lower.getValue(DoorBlock.OPEN)).equals(cell.properties().getOrDefault("open", "false"))) {
                               mc.options.keyShift.setDown(false);
-                              this.init_AiOperation = AiGameOperations.blockAction(
+                              this.child = AiGameOperations.blockAction(
                                  "interact", AiJson.objectOf("x", root.getX(), "y", root.getY(), "z", root.getZ()), protectedCells
                               );
-                              return this.init_AiOperation_Result_11("Restoring the paired door's open state");
+                              return this.running("Restoring the paired door's open state");
                            } else {
-                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
-                              return this.init_AiOperation_Result_11("Recovering the conflicting paired block");
+                              this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
+                              return this.running("Recovering the conflicting paired block");
                            }
                         } else if (!lower.canBeReplaced()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
-                           return this.init_AiOperation_Result_11("Clearing the missing lower half");
+                           this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(root, 30, true, protectedCells);
+                           return this.running("Clearing the missing lower half");
                         } else if (mc.level.getBlockState(root.below()).isAir()) {
-                           this.init_AiOperation = this.init(root.below(), "minecraft:dirt");
-                           return this.init_AiOperation_Result_11("Supporting the lower half");
+                           this.child = this.placeBlock(root.below(), "minecraft:dirt");
+                           return this.running("Supporting the lower half");
                         } else {
                            LinkedHashMap<String, String> props = new LinkedHashMap<>(cell.properties());
                            props.put("half", "lower");
                            protectedCells.add(root.asLong());
-                           this.init_AiOperation = AiBuilder.buildSchematicSubtask(
+                           this.child = AiBuilder.buildSchematicSubtask(
                               new AiBuilder.Blueprint(root, List.of(new AiBuilder.CellSpec(0, 0, 0, id, props))), protectedCells
                            );
-                           return this.init_AiOperation_Result_11("Placing the lower half to create the requested upper half");
+                           return this.running("Placing the lower half to create the requested upper half");
                         }
                      } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                        return this.init_AiOperation_Result_11("Clearing the occupied upper half");
+                        this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
+                        return this.running("Clearing the occupied upper half");
                      } else {
-                        return this.init(AiOperation.Status.FAILED, "The upper half is occupied by protected contents");
+                        return this.finish(AiOperation.Status.FAILED, "The upper half is occupied by protected contents");
                      }
                   } else if (AiBuilder.fluidOfCell(cell) != null) {
                      String fluid = id.equals("minecraft:lava") ? "lava" : "water";
                      if (!"0".equals(cell.properties().getOrDefault("level", "0"))) {
-                        return this.init(AiOperation.Status.FAILED, "Flowing " + fluid + " must be produced by surrounding source cells");
+                        return this.finish(AiOperation.Status.FAILED, "Flowing " + fluid + " must be produced by surrounding source cells");
                      }
 
                      if (live.isAir() || live.canBeReplaced() || !live.getFluidState().isEmpty()) {
                         if (AiBucket.init(mc, target, false, fluid.equals("water")) == null) {
-                           this.init_AiOperation = AiGoto.approachBlockToInteractCompat(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
-                           return this.init_AiOperation_Result_11("Approaching a visible receiving face for the water cell");
+                           this.child = AiGoto.approachBlockToInteractCompat(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
+                           return this.running("Approaching a visible receiving face for the water cell");
                         } else {
-                           this.init_AiOperation = AiBucket.init(
+                           this.child = AiBucket.init(
                               AiJson.objectOf("action", "empty", "fluid", fluid, "x", target.getX(), "y", target.getY(), "z", target.getZ())
                            );
-                           return this.init_AiOperation_Result_11("Emptying a " + fluid + " bucket");
+                           return this.running("Emptying a " + fluid + " bucket");
                         }
                      } else {
                         if (live.hasBlockEntity()) {
-                           return this.init(AiOperation.Status.FAILED, "The water cell is occupied by protected contents");
+                           return this.finish(AiOperation.Status.FAILED, "The water cell is occupied by protected contents");
                         }
 
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, false, protectedCells);
-                        return this.init_AiOperation_Result_11("Clearing the block where the water goes");
+                        this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, false, protectedCells);
+                        return this.running("Clearing the block where the water goes");
                      }
                   } else if (id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path")) {
                      if (live.getBlock() == BuiltInRegistries.BLOCK.getValue(Identifier.parse(id))) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Soil converted; moisture settles from surrounding water");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Soil converted; moisture settles from surrounding water");
                      }
 
                      if (!live.isAir() && !live.canBeReplaced()) {
@@ -1391,24 +1391,24 @@ final class AiSchematicActions {
                            if (cover.isAir()) {
                               BlockHitResult top = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target, Direction.UP);
                               if ((top == null || mc.player.getEyePosition().distanceTo(top.getLocation()) > mc.player.blockInteractionRange() - 0.3)
-                                 && this.read++ < 3) {
-                                 this.init_AiOperation = AiGoto.approachBlockToInteractCompat(target, 30, protectedCells, true, Direction.UP, 1.25);
-                                 return this.init_AiOperation_Result_11("Approaching the soil's top face");
+                                 && this.soilApproaches++ < 3) {
+                                 this.child = AiGoto.approachBlockToInteractCompat(target, 30, protectedCells, true, Direction.UP, 1.25);
+                                 return this.running("Approaching the soil's top face");
                               } else {
-                                 this.init_AiOperation = this.init(target, id.equals("minecraft:farmland") ? "hoe" : "shovel", true);
-                                 return this.init_AiOperation_Result_11("Converting the soil");
+                                 this.child = this.useItemOn(target, id.equals("minecraft:farmland") ? "hoe" : "shovel", true);
+                                 return this.running("Converting the soil");
                               }
-                           } else if (cover.getFluidState().is(FluidTags.WATER) && cover.getFluidState().isSource() && this.load == 0) {
+                           } else if (cover.getFluidState().is(FluidTags.WATER) && cover.getFluidState().isSource() && this.waterState == 0) {
                               Vec3 eye = mc.player.getEyePosition();
                               Vec3 centre = Vec3.atCenterOf(above);
                               BlockHitResult hit = mc.level
                                  .clip(new ClipContext(eye, centre, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.SOURCE_ONLY, mc.player));
                               if (!(eye.distanceToSqr(centre) > 16.0) && hit.getBlockPos().equals(above)) {
-                                 this.load = 1;
-                                 this.init_AiOperation = this.init_AiOperation("fill");
-                                 return this.init_AiOperation_Result_11("Lifting the water to expose the soil");
+                                 this.waterState = 1;
+                                 this.child = this.waterBucketAbove("fill");
+                                 return this.running("Lifting the water to expose the soil");
                               } else {
-                                 this.init_AiOperation = AiGoto.travelToCompat(
+                                 this.child = AiGoto.travelToCompat(
                                     above,
                                     0.45,
                                     false,
@@ -1424,13 +1424,13 @@ final class AiSchematicActions {
                                        target.getY()
                                     )
                                  );
-                                 return this.init_AiOperation_Result_11("Approaching the water above the soil");
+                                 return this.running("Approaching the water above the soil");
                               }
                            } else if (!cover.hasBlockEntity() && cover.getFluidState().isEmpty() && !protectedCells.contains(above.asLong())) {
-                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10, true, protectedCells, false);
-                              return this.init_AiOperation_Result_11("Clearing the temporary obstruction above the soil");
+                              this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(above, 10, true, protectedCells, false);
+                              return this.running("Clearing the temporary obstruction above the soil");
                            } else {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  "The soil's top face is occupied by protected contents ("
                                     + BuiltInRegistries.BLOCK.getKey(cover.getBlock())
@@ -1439,82 +1439,82 @@ final class AiSchematicActions {
                               );
                            }
                         } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                           return this.init_AiOperation_Result_11("Clearing the non-soil block before planting");
+                           this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
+                           return this.running("Clearing the non-soil block before planting");
                         } else {
-                           return this.init(AiOperation.Status.FAILED, "The soil cell is occupied by protected contents");
+                           return this.finish(AiOperation.Status.FAILED, "The soil cell is occupied by protected contents");
                         }
                      } else {
-                        this.init_AiOperation = this.init(target, "minecraft:dirt");
-                        return this.init_AiOperation_Result_11("Placing soil");
+                        this.child = this.placeBlock(target, "minecraft:dirt");
+                        return this.running("Placing soil");
                      }
                   } else if (id.startsWith("minecraft:potted_")) {
                      Item plant = AiSchematicActions.init(AiBuilder.toBlockState(cell).getBlock());
                      if (plant == Items.AIR) {
-                        return this.init(AiOperation.Status.FAILED, "No plant item for " + id);
+                        return this.finish(AiOperation.Status.FAILED, "No plant item for " + id);
                      } else if (!live.is(Blocks.FLOWER_POT)) {
-                        this.init_AiOperation = this.init(target, "minecraft:flower_pot");
-                        return this.init_AiOperation_Result_11("Placing a flower pot");
+                        this.child = this.placeBlock(target, "minecraft:flower_pot");
+                        return this.running("Placing a flower pot");
                      } else {
-                        this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(plant).toString(), false);
-                        return this.init_AiOperation_Result_11("Planting the pot");
+                        this.child = this.useItemOn(target, BuiltInRegistries.ITEM.getKey(plant).toString(), false);
+                        return this.running("Planting the pot");
                      }
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "No survival construction strategy for " + id);
+                     return this.finish(AiOperation.Status.FAILED, "No survival construction strategy for " + id);
                   }
                } else if (live.getBlock() instanceof AbstractCauldronBlock) {
                   Block wanted = BuiltInRegistries.BLOCK.getValue(Identifier.parse(id));
                   if (live.getBlock() != wanted && !live.is(Blocks.CAULDRON)) {
-                     this.init_AiOperation = this.init(target, "minecraft:bucket", false);
-                     return this.init_AiOperation_Result_11("Emptying the cauldron's wrong contents");
+                     this.child = this.useItemOn(target, "minecraft:bucket", false);
+                     return this.running("Emptying the cauldron's wrong contents");
                   }
 
                   if (live.is(Blocks.CAULDRON)) {
-                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
-                     return this.init_AiOperation_Result_11("Filling the cauldron");
+                     this.child = this.useItemOn(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
+                     return this.running("Filling the cauldron");
                   }
 
                   if (AiSchematicActions.isPartialFill(cell, live)) {
-                     this.init_AiOperation = this.init(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
-                     return this.init_AiOperation_Result_11("Refilling the cauldron");
+                     this.child = this.useItemOn(target, BuiltInRegistries.ITEM.getKey(AiSchematicActions.cauldronFillItem(cell)).toString(), false);
+                     return this.running("Refilling the cauldron");
                   }
 
                   if (live.is(Blocks.WATER_CAULDRON)) {
                      int current = live.getValue(LayeredCauldronBlock.LEVEL);
                      int wantedLevel = Integer.parseInt(cell.properties().getOrDefault("level", "3"));
                      if (current > wantedLevel) {
-                        this.init_AiOperation = this.init(target, "minecraft:glass_bottle", false);
-                        return this.init_AiOperation_Result_11("Taking a bottle of water out of the cauldron");
+                        this.child = this.useItemOn(target, "minecraft:glass_bottle", false);
+                        return this.running("Taking a bottle of water out of the cauldron");
                      }
                   }
 
-                  return this.init(AiOperation.Status.FAILED, "The cauldron's contents cannot be set to " + cell.properties());
+                  return this.finish(AiOperation.Status.FAILED, "The cauldron's contents cannot be set to " + cell.properties());
                } else if (live.canBeReplaced()) {
-                  this.init_AiOperation = this.init(target, "minecraft:cauldron");
-                  return this.init_AiOperation_Result_11("Placing the cauldron");
+                  this.child = this.placeBlock(target, "minecraft:cauldron");
+                  return this.running("Placing the cauldron");
                } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
-                  return this.init_AiOperation_Result_11("Clearing the cauldron cell");
+                  this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(target, 30, true, protectedCells);
+                  return this.running("Clearing the cauldron cell");
                } else {
-                  return this.init(AiOperation.Status.FAILED, "The cauldron cell is occupied by protected contents");
+                  return this.finish(AiOperation.Status.FAILED, "The cauldron cell is occupied by protected contents");
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Special placement cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Special placement cancelled");
             }
          }
 
-         AiOperation init(BlockPos pos, String id) {
+         AiOperation placeBlock(BlockPos pos, String id) {
             return AiBuilder.buildSchematicSubtask(new AiBuilder.Blueprint(pos, List.of(new AiBuilder.CellSpec(0, 0, 0, id))), protectedCells);
          }
 
-         AiOperation init_AiOperation(String action) {
+         AiOperation waterBucketAbove(String action) {
             BlockPos pos = target.above();
             return AiBucket.init(
                AiJson.objectOf("action", action, "fluid", "water", "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 10)
             );
          }
 
-         AiOperation init(BlockPos pos, String item, boolean top) {
+         AiOperation useItemOn(BlockPos pos, String item, boolean top) {
             if (!top && mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > 16.0) {
                return AiGoto.approachBlockCompat(pos, 30, protectedCells);
             }
@@ -1532,20 +1532,20 @@ final class AiSchematicActions {
             return AiGameOperations.blockAction(top ? "use" : "interact", args, protectedCells);
          }
 
-         AiOperation.Result init_AiOperation_Result_11(String message) {
+         AiOperation.Result running(String message) {
             return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            if (this.load == 2 && mc.player != null && mc.level != null) {
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            if (this.waterState == 2 && mc.player != null && mc.level != null) {
+               if (this.child != null) {
+                  this.child.cancel();
                }
 
-               this.init_AiOperation_Result = AiGameOperations.result(status, message, new JsonObject());
-               this.load = 3;
-               this.init_AiOperation = this.init_AiOperation("empty");
-               return this.init_AiOperation_Result_11("Restoring borrowed water before reporting the failed soil conversion");
+               this.deferredResult = AiGameOperations.result(status, message, new JsonObject());
+               this.waterState = 3;
+               this.child = this.waterBucketAbove("empty");
+               return this.running("Restoring borrowed water before reporting the failed soil conversion");
             } else {
                this.cancel();
                return AiGameOperations.result(status, message, new JsonObject());
@@ -1554,29 +1554,29 @@ final class AiSchematicActions {
 
          @Override
          public boolean canInterruptNow() {
-            return this.load == 0 && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return this.waterState == 0 && (this.child == null || this.child.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.load != 0 || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.waterState != 0 || this.child != null && this.child.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            if (this.child != null) {
+               this.child.cancel();
             }
          }
       };
    }
 
-   static boolean init_Z_Z(boolean clicked, Block live, long beforeRevision, long currentRevision) {
+   static boolean clickCreatedDirt(boolean clicked, Block live, long beforeRevision, long currentRevision) {
       return clicked && currentRevision > beforeRevision && AiScaffold.init(Blocks.DIRT, live);
    }
 
-   static boolean init(AiOperation.Result result) {
+   static boolean resultPlacedBlocks(AiOperation.Result result) {
       if (result.status() != AiOperation.Status.SUCCEEDED) {
          return false;
       }
@@ -1588,7 +1588,7 @@ final class AiSchematicActions {
       }
    }
 
-   static void init(BlockPos support, Block block, boolean createdByOperation) {
+   static void markScaffoldIfCreated(BlockPos support, Block block, boolean createdByOperation) {
       if (createdByOperation && !AiScaffold.isScaffold(support)) {
          AiScaffold.init(support, block);
       }
@@ -1603,127 +1603,127 @@ final class AiSchematicActions {
          support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true, 2.0, goal
       );
       return new AiOperation() {
-         AiOperation init_AiOperation;
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
-         final long init_J = System.nanoTime() + 120000000000L;
-         int init_I;
-         boolean init_Z;
-         boolean load_Z;
-         boolean read;
-         boolean write;
-         boolean update;
-         long load_J;
+         AiOperation child;
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
+         final long deadline = System.nanoTime() + 120000000000L;
+         int leanTicks;
+         boolean cancelled;
+         boolean directAttempted;
+         boolean placingDirectly;
+         boolean fallbackBuilding;
+         boolean directPlaceClicked;
+         long supportRevisionBefore;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
-               if (System.nanoTime() > this.init_J) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Scaffold construction deadline");
+            if (!this.cancelled && mc.player != null && mc.level != null) {
+               if (System.nanoTime() > this.deadline) {
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Scaffold construction deadline");
                }
 
-               if (!this.load_Z) {
-                  this.load_Z = true;
+               if (!this.directAttempted) {
+                  this.directAttempted = true;
                   if (!mc.player.getBoundingBox().intersects(new AABB(support))
                      && mc.level.getBlockState(support).canBeReplaced()
                      && mc.level.getBlockState(support).getFluidState().isEmpty()
                      && autismclient.ai.engine.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
-                     this.load_J = AiServerEvidence.blockRevision(support);
-                     this.init_DataPipe.start(support, Items.DIRT);
-                     this.read = true;
+                     this.supportRevisionBefore = AiServerEvidence.blockRevision(support);
+                     this.placer.start(support, Items.DIRT);
+                     this.placingDirectly = true;
                   } else {
-                     this.init_AiOperation = climb.get();
+                     this.child = climb.get();
                   }
                }
 
-               if (this.read) {
-                  switch (this.init_DataPipe.tick()) {
+               if (this.placingDirectly) {
+                  switch (this.placer.tick()) {
                      case WORKING:
-                        return this.init("Placing the reachable temporary support without climbing onto it");
+                        return this.running("Placing the reachable temporary support without climbing onto it");
                      case PLACED:
                         Block live = mc.level.getBlockState(support).getBlock();
-                        AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.hasClicked(), live, this.load_J, AiServerEvidence.blockRevision(support)));
-                        return this.init(AiOperation.Status.SUCCEEDED, "Reachable temporary support verified");
+                        AiSchematicActions.markScaffoldIfCreated(support, live, AiSchematicActions.clickCreatedDirt(this.placer.hasClicked(), live, this.supportRevisionBefore, AiServerEvidence.blockRevision(support)));
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Reachable temporary support verified");
                      case FAILED:
-                        this.update = this.init_DataPipe.hasClicked();
-                        this.init_DataPipe.reset();
-                        this.read = false;
-                        this.init_AiOperation = climb.get();
+                        this.directPlaceClicked = this.placer.hasClicked();
+                        this.placer.reset();
+                        this.placingDirectly = false;
+                        this.child = climb.get();
                   }
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.child != null) {
+                  AiOperation.Result r = this.child.tick();
                   if (!r.terminal()) {
                      return r;
                   }
 
-                  boolean createdByFallback = this.write && AiSchematicActions.init(r);
-                  this.write = false;
+                  boolean createdByFallback = this.fallbackBuilding && AiSchematicActions.resultPlacedBlocks(r);
+                  this.fallbackBuilding = false;
                   if (createdByFallback) {
                      Block live = mc.level.getBlockState(support).getBlock();
-                     AiSchematicActions.init(support, live, AiScaffold.init(Blocks.DIRT, live));
+                     AiSchematicActions.markScaffoldIfCreated(support, live, AiScaffold.init(Blocks.DIRT, live));
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.child.cancel();
+                  this.child = null;
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
-                     return this.init(r.status(), r.message());
+                     return this.finish(r.status(), r.message());
                   }
                }
 
                if (mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty()) {
-                  this.init_AiOperation = AiBuilder.buildSchematicSubtask(
+                  this.child = AiBuilder.buildSchematicSubtask(
                      new AiBuilder.Blueprint(support, List.of(new AiBuilder.CellSpec(0, 0, 0, "minecraft:dirt"))), protectedCells
                   );
-                  this.write = true;
-                  return this.init("Placing the temporary support");
+                  this.fallbackBuilding = true;
+                  return this.running("Placing the temporary support");
                }
 
                Block live = mc.level.getBlockState(support).getBlock();
-               AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.update, live, this.load_J, AiServerEvidence.blockRevision(support)));
+               AiSchematicActions.markScaffoldIfCreated(support, live, AiSchematicActions.clickCreatedDirt(this.directPlaceClicked, live, this.supportRevisionBefore, AiServerEvidence.blockRevision(support)));
                if (support.getY() == target.getY()) {
                   Direction side = Direction.getNearest(target.getX() - support.getX(), 0, target.getZ() - support.getZ(), Direction.NORTH);
                   Vec3 edge = Vec3.atBottomCenterOf(support.above()).add(side.getStepX() * 0.7, 0.0, side.getStepZ() * 0.7);
                   if (mc.player.position().distanceToSqr(edge) > 1.0E-4) {
                      AABB edgeBody = mc.player.getBoundingBox().move(edge.subtract(mc.player.position()));
-                     if (mc.level.noCollision(mc.player, edgeBody) && ++this.init_I <= 45) {
+                     if (mc.level.noCollision(mc.player, edgeBody) && ++this.leanTicks <= 45) {
                         mc.options.keyShift.setDown(true);
                         mc.options.keyJump.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
                         mc.options.keyRight.setDown(false);
-                        this.init_DataUtil.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
-                        this.init_DataUtil.tick();
-                        mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
-                        return this.init("Leaning over the scaffold to expose its side face");
+                        this.aim.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
+                        this.aim.tick();
+                        mc.options.keyUp.setDown(this.aim.isSettled());
+                        return this.running("Leaning over the scaffold to expose its side face");
                      }
 
-                     return this.init(AiOperation.Status.SUCCEEDED, "Support ready; the edge needs a different stance");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Support ready; the edge needs a different stance");
                   }
                }
 
-               return this.init(AiOperation.Status.SUCCEEDED, "Temporary support ready");
+               return this.finish(AiOperation.Status.SUCCEEDED, "Temporary support ready");
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Scaffold construction cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Scaffold construction cancelled");
             }
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             this.cancel();
             return AiGameOperations.result(status, message, new JsonObject());
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            this.init_DataPipe.reset();
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            this.placer.reset();
+            if (this.child != null) {
+               this.child.cancel();
             }
 
             if (mc.player != null) {

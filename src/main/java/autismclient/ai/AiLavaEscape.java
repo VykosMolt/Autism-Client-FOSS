@@ -34,7 +34,7 @@ final class AiLavaEscape {
       return mc.player != null && mc.player.isInLava();
    }
 
-   static BlockPos init_BlockPos(Minecraft mc) {
+   static BlockPos nearestShore(Minecraft mc) {
       BlockPos feet = mc.player.blockPosition();
       BlockPos best = null;
       double bestScore = 1.7976931348623157E308;
@@ -78,14 +78,14 @@ final class AiLavaEscape {
       return best;
    }
 
-   static double init(List<BlockPos> path, Vec3 at) {
+   static double pathCost(List<BlockPos> path, Vec3 at) {
       BlockPos end = path.getLast();
       return Math.max(0, path.size() - 1) + Math.max(0.0, end.getY() - at.y) * 0.5 + Math.hypot(end.getX() + 0.5 - at.x, end.getZ() + 0.5 - at.z) * 1.0E-4;
    }
 
-   static List<BlockPos> init_List(Minecraft mc) {
+   static List<BlockPos> escapePath(Minecraft mc) {
       BlockPos start = mc.player.blockPosition();
-      BlockPos shore = init_BlockPos(mc);
+      BlockPos shore = nearestShore(mc);
       Vec3 look = mc.player.getLookAngle();
       ToDoubleFunction<BlockPos> guide = cell -> {
          if (shore == null) {
@@ -133,10 +133,10 @@ final class AiLavaEscape {
 
                for (int up = 0; up <= 1; up++) {
                   BlockPos g = side.above(up);
-                  if (load(mc, g) && (up != 1 || init(mc, n.above()))) {
-                     List<BlockPos> path = init(parent, start, n);
+                  if (isSafeStand(mc, g) && (up != 1 || isPassable(mc, n.above()))) {
+                     List<BlockPos> path = tracePath(parent, start, n);
                      path.add(g);
-                     double score = init(path, mc.player.position());
+                     double score = pathCost(path, mc.player.position());
                      if (score < bestScore) {
                         bestScore = score;
                         best = path;
@@ -144,7 +144,7 @@ final class AiLavaEscape {
                   }
                }
 
-               if (Math.abs(side.getX() - start.getX()) <= 16 && Math.abs(side.getZ() - start.getZ()) <= 16 && init(mc, side)) {
+               if (Math.abs(side.getX() - start.getX()) <= 16 && Math.abs(side.getZ() - start.getZ()) <= 16 && isPassable(mc, side)) {
                   int next = node.cost() + 1;
                   if (next < costs.getOrDefault(side, 2147483647)) {
                      costs.put(side, next);
@@ -155,7 +155,7 @@ final class AiLavaEscape {
             }
 
             BlockPos up = n.above();
-            if (up.getY() <= start.getY() + 3 && init(mc, up)) {
+            if (up.getY() <= start.getY() + 3 && isPassable(mc, up)) {
                int next = node.cost() + 2;
                if (next < costs.getOrDefault(up, 2147483647)) {
                   costs.put(up, next);
@@ -166,10 +166,10 @@ final class AiLavaEscape {
          }
       }
 
-      return best != null ? best : (closest.equals(start) ? null : init(parent, start, closest));
+      return best != null ? best : (closest.equals(start) ? null : tracePath(parent, start, closest));
    }
 
-   static List<BlockPos> init(Map<BlockPos, BlockPos> parent, BlockPos start, BlockPos end) {
+   static List<BlockPos> tracePath(Map<BlockPos, BlockPos> parent, BlockPos start, BlockPos end) {
       List<BlockPos> path = new ArrayList<>();
       BlockPos cell = end;
 
@@ -183,12 +183,12 @@ final class AiLavaEscape {
       }
    }
 
-   static boolean init(Minecraft mc, BlockPos p) {
+   static boolean isPassable(Minecraft mc, BlockPos p) {
       return mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
          && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty();
    }
 
-   static boolean load(Minecraft mc, BlockPos p) {
+   static boolean isSafeStand(Minecraft mc, BlockPos p) {
       BlockPos below = p.below();
       BlockState floor = mc.level.getBlockState(below);
       if (!floor.getCollisionShape(mc.level, below).isEmpty() && !floor.getFluidState().is(FluidTags.LAVA)) {
@@ -212,7 +212,7 @@ final class AiLavaEscape {
       }
    }
 
-   static int init(List<BlockPos> path, BlockPos at, int previous) {
+   static int nearestPathIndex(List<BlockPos> path, BlockPos at, int previous) {
       if (path.isEmpty()) {
          return -1;
       }
@@ -242,75 +242,75 @@ final class AiLavaEscape {
    static AiOperation init() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().fast();
-         BlockPos init_BlockPos;
-         List<BlockPos> init_List;
-         int init_I = -1;
-         int load_I;
-         int read_I;
-         int write_I;
-         boolean init_Z;
-         boolean load_Z;
-         boolean read_Z;
-         boolean write_Z;
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
+         BlockPos waypoint;
+         List<BlockPos> path;
+         int pathIndex = -1;
+         int ticks;
+         int airTicks;
+         int placeTicks;
+         boolean cancelled;
+         boolean pathEndsSafe;
+         boolean placingBlock;
+         boolean bridgeTried;
 
          {
-            this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
+            this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
          }
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                if (!mc.player.isInLava()) {
-                  if (mc.player.onGround() || ++this.read_I > 20) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Out of the lava");
+                  if (mc.player.onGround() || ++this.airTicks > 20) {
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Out of the lava");
                   }
                } else {
-                  this.read_I = 0;
+                  this.airTicks = 0;
                }
 
-               if (++this.load_I > 600) {
-                  return this.init(AiOperation.Status.FAILED, "Could not swim out of the lava");
+               if (++this.ticks > 600) {
+                  return this.finish(AiOperation.Status.FAILED, "Could not swim out of the lava");
                }
 
                BlockPos at = mc.player.blockPosition();
-               if (this.read_Z) {
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+               if (this.placingBlock) {
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_DataPipe.reset();
-                     this.read_Z = false;
-                     this.write_Z = true;
-                     this.load_Z = false;
+                     this.placer.reset();
+                     this.placingBlock = false;
+                     this.bridgeTried = true;
+                     this.pathEndsSafe = false;
                   } else {
-                     if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.write_I < 12) {
+                     if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks < 12) {
                         return AiGameOperations.result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
                      }
 
                      if (Boolean.getBoolean("autism.ai.quick")) {
-                        System.out.println("[AI quick] lava refuge stopped: " + this.init_DataPipe.statusSummary() + "; " + this.init_DataPipe.failureReason());
+                        System.out.println("[AI quick] lava refuge stopped: " + this.placer.statusSummary() + "; " + this.placer.failureReason());
                      }
 
-                     this.init_DataPipe.reset();
-                     this.read_Z = false;
-                     this.write_Z = true;
+                     this.placer.reset();
+                     this.placingBlock = false;
+                     this.bridgeTried = true;
                   }
                }
 
-               if (!this.read_Z && !this.write_Z && this.init_List != null && AiLavaEscape.init(this.init_List, mc.player.position()) > 1.0) {
-                  for (int slot = 0; slot < 36 && !this.read_Z; slot++) {
+               if (!this.placingBlock && !this.bridgeTried && this.path != null && AiLavaEscape.pathCost(this.path, mc.player.position()) > 1.0) {
+                  for (int slot = 0; slot < 36 && !this.placingBlock; slot++) {
                      ItemStack stack = mc.player.getInventory().getItem(slot);
                      if (stack.getItem() instanceof BlockItem block
                         && !stack.isEmpty()
                         && autismclient.ai.engine.AiRestock.canSpendStack(stack, mc.player.getInventory(), true)
                         && autismclient.ai.engine.AiRestock.scaffoldRank(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0) {
-                        for (BlockPos refuge : this.init_List) {
+                        for (BlockPos refuge : this.path) {
                            if (!refuge.equals(at)
                               && !mc.level.getBlockState(refuge.below()).getCollisionShape(mc.level, refuge.below()).isEmpty()
                               && mc.level.isUnobstructed(block.getBlock().defaultBlockState(), refuge, CollisionContext.placementContext(mc.player))) {
-                              this.init_DataPipe.startWithExactStack(refuge, stack.copy());
-                              this.read_Z = true;
-                              this.write_I = 0;
+                              this.placer.startWithExactStack(refuge, stack.copy());
+                              this.placingBlock = true;
+                              this.placeTicks = 0;
                               return AiGameOperations.result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
                            }
                         }
@@ -318,29 +318,29 @@ final class AiLavaEscape {
                   }
                }
 
-               if (this.init_List == null || this.load_I % 20 == 0) {
-                  List<BlockPos> next = AiLavaEscape.init_List(mc);
+               if (this.path == null || this.ticks % 20 == 0) {
+                  List<BlockPos> next = AiLavaEscape.escapePath(mc);
                   if (next != null) {
-                     this.init_List = next;
-                     this.load_Z = AiLavaEscape.load(mc, next.getLast());
-                     this.init_I = AiLavaEscape.init(this.init_List, at, this.init_I);
+                     this.path = next;
+                     this.pathEndsSafe = AiLavaEscape.isSafeStand(mc, next.getLast());
+                     this.pathIndex = AiLavaEscape.nearestPathIndex(this.path, at, this.pathIndex);
                   }
                }
 
-               if (this.init_List != null && !this.init_List.isEmpty()) {
-                  this.init_I = AiLavaEscape.init(this.init_List, at, this.init_I);
-                  this.init_BlockPos = this.init_List.get(Math.min(this.init_I, this.init_List.size() - 1));
-                  if (this.load_Z && this.init_I == this.init_List.size() - 1 && !AiLavaEscape.load(mc, this.init_BlockPos)) {
-                     this.init_List = null;
-                     this.load_Z = false;
-                     this.init_I = -1;
-                     this.init_BlockPos = null;
+               if (this.path != null && !this.path.isEmpty()) {
+                  this.pathIndex = AiLavaEscape.nearestPathIndex(this.path, at, this.pathIndex);
+                  this.waypoint = this.path.get(Math.min(this.pathIndex, this.path.size() - 1));
+                  if (this.pathEndsSafe && this.pathIndex == this.path.size() - 1 && !AiLavaEscape.isSafeStand(mc, this.waypoint)) {
+                     this.path = null;
+                     this.pathEndsSafe = false;
+                     this.pathIndex = -1;
+                     this.waypoint = null;
                   }
-               } else if (this.init_BlockPos == null || !AiLavaEscape.load(mc, this.init_BlockPos)) {
-                  this.init_BlockPos = AiLavaEscape.init_BlockPos(mc);
+               } else if (this.waypoint == null || !AiLavaEscape.isSafeStand(mc, this.waypoint)) {
+                  this.waypoint = AiLavaEscape.nearestShore(mc);
                }
 
-               if (this.load_I % 5 == 0 && Boolean.getBoolean("autism.ai.quick")) {
+               if (this.ticks % 5 == 0 && Boolean.getBoolean("autism.ai.quick")) {
                   System.out
                      .println(
                         "[AI quick] lava escape at "
@@ -348,21 +348,21 @@ final class AiLavaEscape {
                            + " health "
                            + mc.player.getHealth()
                            + " target "
-                           + this.init_BlockPos
+                           + this.waypoint
                            + " standable "
-                           + (this.init_BlockPos != null && AiLavaEscape.load(mc, this.init_BlockPos))
+                           + (this.waypoint != null && AiLavaEscape.isSafeStand(mc, this.waypoint))
                            + " waypoint "
-                           + this.init_I
+                           + this.pathIndex
                            + " path "
-                           + this.init_List
+                           + this.path
                      );
                }
 
-               if (this.init_BlockPos != null) {
-                  this.init_DataUtil.aimAt(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.6, this.init_BlockPos.getZ() + 0.5));
-                  this.init_DataUtil.tick();
+               if (this.waypoint != null) {
+                  this.aim.aimAt(new Vec3(this.waypoint.getX() + 0.5, this.waypoint.getY() + 0.6, this.waypoint.getZ() + 0.5));
+                  this.aim.tick();
                } else {
-                  this.init_DataUtil.clear();
+                  this.aim.clear();
                }
 
                mc.options.keyUp.setDown(true);
@@ -371,30 +371,30 @@ final class AiLavaEscape {
                mc.options.keyShift.setDown(false);
                return AiGameOperations.result(
                   AiOperation.Status.RUNNING,
-                  this.init_BlockPos == null ? "In lava; swimming outward" : "In lava; swimming to " + this.init_BlockPos.toShortString(),
+                  this.waypoint == null ? "In lava; swimming outward" : "In lava; swimming to " + this.waypoint.toShortString(),
                   new JsonObject()
                );
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Lava escape cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Lava escape cancelled");
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            this.init();
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            this.releaseKeys();
             return AiGameOperations.result(status, message, new JsonObject());
          }
 
-         void init() {
+         void releaseKeys() {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
             mc.options.keySprint.setDown(false);
-            this.init_DataUtil.clear();
+            this.aim.clear();
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            this.init();
+            this.cancelled = true;
+            this.releaseKeys();
          }
       };
    }

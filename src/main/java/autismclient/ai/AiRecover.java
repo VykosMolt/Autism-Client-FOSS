@@ -35,37 +35,37 @@ final class AiRecover {
          final int timeoutSeconds = Math.max(15, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 300)));
          final boolean allowDig = AiJson.getBoolean(args, "allowDig", true);
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final Map<String, Integer> init_Map = this.init_Map_3();
-            final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
-            AiOperation init_AiOperation;
-            AiOperation load_AiOperation;
-            String init_Str = "";
-            int init_I;
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final Map<String, Integer> startCounts = this.inventoryCounts();
+            final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
+            AiOperation child;
+            AiOperation guardOp;
+            String guardReason = "";
+            int guardInterrupts;
             int load_I;
-            boolean init_Z;
-            boolean load_Z;
+            boolean atGrave;
+            boolean cancelled;
             boolean read;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.load_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Recovery deadline reached; " + this.init_Str_15());
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Recovery deadline reached; " + this.recoveredText());
                   }
 
                   String dimension = mc.level.dimension().identifier().toString();
                   if (!dimension.equals(death.dimension())) {
-                     return this.init(
+                     return this.finishWith(
                         AiOperation.Status.FAILED,
                         "The grave is in " + death.dimension() + " and the player is in " + dimension + "; travel there first with game:dimension",
                         AiJson.objectOf("needsDimension", death.dimension())
                      );
                   }
 
-                  if (death.expired() && !this.init_Z) {
+                  if (death.expired() && !this.atGrave) {
                      if (AiTerrain.isLoaded(mc.level, death.position())) {
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.FAILED,
                            "The five-minute despawn window closed "
                               + (death.ageMillis() - 300000L) / 1000L
@@ -81,31 +81,31 @@ final class AiRecover {
                      return guarded;
                   }
 
-                  if (this.init_AiOperation != null) {
-                     AiOperation.Result result = this.init_AiOperation.tick();
+                  if (this.child != null) {
+                     AiOperation.Result result = this.child.tick();
                      if (!result.terminal()) {
-                        return this.init(result.message());
+                        return this.running(result.message());
                      }
 
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                     this.child.cancel();
+                     this.child = null;
                      if (result.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(AiOperation.Status.CANCELLED, "Recovery cancelled");
+                        return this.finish(AiOperation.Status.CANCELLED, "Recovery cancelled");
                      }
 
                      if (result.status() != AiOperation.Status.SUCCEEDED) {
-                        return this.init(AiOperation.Status.FAILED, "No route back to the grave: " + result.message());
+                        return this.finish(AiOperation.Status.FAILED, "No route back to the grave: " + result.message());
                      }
 
-                     this.init_Z = true;
-                     return this.init("Arrived at the grave; sweeping drops");
-                  } else if (!this.init_Z) {
+                     this.atGrave = true;
+                     return this.running("Arrived at the grave; sweeping drops");
+                  } else if (!this.atGrave) {
                      if (mc.player.blockPosition().distSqr(death.position()) <= 4.0) {
-                        this.init_Z = true;
-                        return this.init("Already at the grave; sweeping drops");
+                        this.atGrave = true;
+                        return this.running("Already at the grave; sweeping drops");
                      } else {
-                        this.init_AiOperation = AiTravelFar.init(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.secondsLeft()));
-                        return this.init(
+                        this.child = AiTravelFar.init(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.secondsLeft()));
+                        return this.running(
                            "Travelling to the grave at "
                               + death.position().toShortString()
                               + (
@@ -116,67 +116,67 @@ final class AiRecover {
                         );
                      }
                   } else {
-                     ItemEntity nearest = this.init_ItemEntity();
+                     ItemEntity nearest = this.nearestDrop();
                      if (nearest != null && mc.player.distanceToSqr(nearest) > 2.25) {
-                        this.init_AiOperation = AiGoto.travelToCompat(
+                        this.child = AiGoto.travelToCompat(
                            nearest.blockPosition(), 1.0, false, false, true, Math.min(30, this.secondsLeft())
                         );
-                        return this.init("Collecting a straggler drop");
+                        return this.running("Collecting a straggler drop");
                      }
 
                      if (nearest != null) {
                         this.load_I = 0;
-                        return this.init("Standing on the drops");
+                        return this.running("Standing on the drops");
                      }
 
                      if (++this.load_I < 20) {
-                        return this.init("Waiting for pickups to settle");
+                        return this.running("Waiting for pickups to settle");
                      }
 
                      AiDeathLog.init_V();
-                     Map<String, Integer> recovered = this.load();
-                     return this.init(
+                     Map<String, Integer> recovered = this.recoveredCounts();
+                     return this.finish(
                         recovered.isEmpty() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
                         recovered.isEmpty()
                            ? "Reached the grave but recovered nothing; the drops may have despawned or been taken"
-                           : "Recovered " + recovered.size() + " item type(s); " + this.init_Str_15()
+                           : "Recovered " + recovered.size() + " item type(s); " + this.recoveredText()
                      );
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Recovery cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Recovery cancelled");
                }
             }
 
             AiOperation.Result init_AiOperation_Result_23() {
-               if (this.load_AiOperation != null) {
-                  AiOperation.Result result = this.load_AiOperation.tick();
+               if (this.guardOp != null) {
+                  AiOperation.Result result = this.guardOp.tick();
                   if (!result.terminal()) {
-                     return this.init("Interrupted: " + this.init_Str + " - " + result.message());
+                     return this.running("Interrupted: " + this.guardReason + " - " + result.message());
                   }
 
-                  this.load_AiOperation.cancel();
-                  this.load_AiOperation = null;
-                  return this.init("Resuming recovery after " + this.init_Str);
+                  this.guardOp.cancel();
+                  this.guardOp = null;
+                  return this.running("Resuming recovery after " + this.guardReason);
                } else {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
-                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.secondsLeft());
+                  AiOperation action = AiGuard.createResponseOperation(this.guardPolicy, vitals, this.secondsLeft());
                   if (action == null) {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
-                  this.init_I++;
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                  this.guardReason = AiGuard.decisionReason(this.guardPolicy, vitals);
+                  this.guardInterrupts++;
+                  if (this.child != null) {
+                     this.child.cancel();
+                     this.child = null;
                   }
 
-                  this.load_AiOperation = action;
-                  return this.init("Interrupted: " + this.init_Str);
+                  this.guardOp = action;
+                  return this.running("Interrupted: " + this.guardReason);
                }
             }
 
-            ItemEntity init_ItemEntity() {
+            ItemEntity nearestDrop() {
                ItemEntity best = null;
                double bestDistance = 144.0;
 
@@ -193,7 +193,7 @@ final class AiRecover {
                return best;
             }
 
-            Map<String, Integer> init_Map_3() {
+            Map<String, Integer> inventoryCounts() {
                Map<String, Integer> counts = new LinkedHashMap<>();
                if (mc.player == null) {
                   return counts;
@@ -209,11 +209,11 @@ final class AiRecover {
                return counts;
             }
 
-            Map<String, Integer> load() {
-               Map<String, Integer> now = this.init_Map_3();
+            Map<String, Integer> recoveredCounts() {
+               Map<String, Integer> now = this.inventoryCounts();
                Map<String, Integer> gained = new LinkedHashMap<>();
                now.forEach((item, count) -> {
-                  int delta = count - this.init_Map.getOrDefault(item, 0);
+                  int delta = count - this.startCounts.getOrDefault(item, 0);
                   if (delta > 0) {
                      gained.put(item, delta);
                   }
@@ -221,8 +221,8 @@ final class AiRecover {
                return gained;
             }
 
-            String init_Str_15() {
-               Map<String, Integer> gained = this.load();
+            String recoveredText() {
+               Map<String, Integer> gained = this.recoveredCounts();
                int missing = 0;
 
                for (Entry<String, Integer> entry : death.inventory().entrySet()) {
@@ -233,11 +233,11 @@ final class AiRecover {
             }
 
             int secondsLeft() {
-               return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+               return (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
             }
 
-            JsonObject init_JsonObject_39() {
-               JsonObject out = AiJson.objectOf("grave", AiDeathLog.statusJson(), "arrived", this.init_Z);
+            JsonObject progressJson() {
+               JsonObject out = AiJson.objectOf("grave", AiDeathLog.statusJson(), "arrived", this.atGrave);
                if (this.read) {
                   out.addProperty(
                      "warning",
@@ -246,10 +246,10 @@ final class AiRecover {
                }
 
                JsonArray gained = new JsonArray();
-               this.load().forEach((item, count) -> gained.add(AiJson.objectOf("item", item, "count", count)));
+               this.recoveredCounts().forEach((item, count) -> gained.add(AiJson.objectOf("item", item, "count", count)));
                out.add("recovered", gained);
                JsonArray stillMissing = new JsonArray();
-               Map<String, Integer> have = this.load();
+               Map<String, Integer> have = this.recoveredCounts();
                death.inventory().forEach((item, count) -> {
                   int shortfall = count - have.getOrDefault(item, 0);
                   if (shortfall > 0) {
@@ -257,20 +257,20 @@ final class AiRecover {
                   }
                });
                out.add("stillMissing", stillMissing);
-               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.guardInterrupts, this.guardReason));
                return out;
             }
 
-            AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_39().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finishWith(status, message, null);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_39();
+            AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject extra) {
+               JsonObject data = this.progressJson();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -283,16 +283,16 @@ final class AiRecover {
 
             @Override
             public void cancel() {
-               if (!this.load_Z) {
-                  this.load_Z = true;
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  if (this.guardOp != null) {
+                     this.guardOp.cancel();
+                     this.guardOp = null;
                   }
 
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                  if (this.child != null) {
+                     this.child.cancel();
+                     this.child = null;
                   }
                }
             }

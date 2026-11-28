@@ -18,43 +18,43 @@ import net.minecraft.world.level.block.Blocks;
 
 final class AiParallelSmelt implements AiOperation {
    static final int MAX_FURNACES = 8;
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final Object init_Obj = this.init_Minecraft.level;
-   private final Object load_Obj = this.init_Minecraft.getConnection();
-   private final Object read_Obj = this.init_Minecraft.player;
+   private final Minecraft mc = Minecraft.getInstance();
+   private final Object startLevel = this.mc.level;
+   private final Object startConnection = this.mc.getConnection();
+   private final Object startPlayer = this.mc.player;
    private final AiSmelt.Inner_CachePool recipe;
-   private final String init_Str;
-   private final String load_Str;
-   private final String read_Str;
+   private final String outputId;
+   private final String inputId;
+   private final String label;
    private final int target;
    private final int cookTicks;
-   private final long init_J;
-   private final List<BlockPos> init_List = new ArrayList<>();
-   private final JsonArray init_JsonArray = new JsonArray();
-   private final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard(), "smelt");
-   private List<Integer> load_List = List.of();
-   private final List<Integer> read_List = new ArrayList<>();
-   private AiOperation init_AiOperation;
-   private AiStationPlacer init_cn;
-   private boolean init_Z;
-   private boolean load_Z;
-   private boolean read_Z;
-   private boolean write_Z;
-   private boolean update_Z;
-   private boolean sync_Z;
-   private int write_I;
-   private int update_I;
-   private int sync_I;
-   private int flush;
-   private int close;
-   private int open;
-   private String write_Str = "Choose nearby furnaces before making any";
+   private final long deadline;
+   private final List<BlockPos> furnaces = new ArrayList<>();
+   private final JsonArray receipts = new JsonArray();
+   private final AiGuardLayer guard = new AiGuardLayer(AiGuard.GuardPolicy.standard(), "smelt");
+   private List<Integer> batches = List.of();
+   private final List<Integer> collected = new ArrayList<>();
+   private AiOperation child;
+   private AiStationPlacer stationPlacer;
+   private boolean furnacesReady;
+   private boolean cancelled;
+   private boolean collecting;
+   private boolean furnaceSetupDone;
+   private boolean obtainingFirstFurnace;
+   private boolean keepCollectBaseline;
+   private int furnaceIndex;
+   private int builtFurnaces;
+   private int reusedFurnaces;
+   private int furnaceGoal;
+   private int collectTarget;
+   private int outputBaseline;
+   private String activity = "Choose nearby furnaces before making any";
 
    static int furnaceCountFor(int items) {
       return Math.max(1, Math.min(8, items / 16));
    }
 
-   static List<Integer> init_List_I_I(int items, int furnaces) {
+   static List<Integer> batchSizes(int items, int furnaces) {
       int count = Math.max(1, Math.min(8, furnaces));
       int batch = Math.min(items, count * 64);
       List<Integer> out = new ArrayList<>();
@@ -66,7 +66,7 @@ final class AiParallelSmelt implements AiOperation {
       return List.copyOf(out);
    }
 
-   static boolean init_Z(int items, int existing, int cookTicks, int setupTicks) {
+   static boolean worthAnotherFurnace(int items, int existing, int cookTicks, int setupTicks) {
       int before = (items + Math.max(1, existing) - 1) / Math.max(1, existing);
       int after = (items + existing) / (existing + 1);
       return existing < furnaceCountFor(items) && (long)(before - after) * cookTicks > setupTicks;
@@ -80,7 +80,7 @@ final class AiParallelSmelt implements AiOperation {
       int total = 0;
 
       while (items > 0) {
-         List<Integer> wave = init_List_I_I(items, furnaces);
+         List<Integer> wave = batchSizes(items, furnaces);
 
          for (int batch : wave) {
             total += (int)(((long)batch * cookTicks + burnTicks - 1L) / burnTicks);
@@ -96,176 +96,176 @@ final class AiParallelSmelt implements AiOperation {
       this.recipe = recipe;
       this.target = target;
       this.cookTicks = cookTicks;
-      this.init_Str = BuiltInRegistries.ITEM.getKey(recipe.output()).toString();
-      this.read_Str = "Smelting " + recipe.output().getDefaultInstance().getHoverName().getString();
-      this.load_Str = BuiltInRegistries.ITEM.getKey(recipe.input()).toString();
-      this.init_J = System.nanoTime() + seconds * 1000000000L;
-      this.flush = furnaceCountFor(target - AiGameState.countInventoryItem(this.init_Str));
-      BlockPos origin = this.init_Minecraft.player.blockPosition();
+      this.outputId = BuiltInRegistries.ITEM.getKey(recipe.output()).toString();
+      this.label = "Smelting " + recipe.output().getDefaultInstance().getHoverName().getString();
+      this.inputId = BuiltInRegistries.ITEM.getKey(recipe.input()).toString();
+      this.deadline = System.nanoTime() + seconds * 1000000000L;
+      this.furnaceGoal = furnaceCountFor(target - AiGameState.countInventoryItem(this.outputId));
+      BlockPos origin = this.mc.player.blockPosition();
       Block block = AiCraft.requireBlock(recipe.stationId());
 
       for (BlockPos p : BlockPos.betweenClosed(origin.offset(-16, -8, -16), origin.offset(16, 8, 16))) {
-         if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() == block) {
-            this.init_List.add(p.immutable());
+         if (AiTerrain.isLoaded(this.mc.level, p) && this.mc.level.getBlockState(p).getBlock() == block) {
+            this.furnaces.add(p.immutable());
          }
       }
 
-      this.init_List.sort(Comparator.comparingDouble(px -> px.distSqr(origin)));
-      if (this.init_List.size() > this.flush) {
-         this.init_List.subList(this.flush, this.init_List.size()).clear();
+      this.furnaces.sort(Comparator.comparingDouble(px -> px.distSqr(origin)));
+      if (this.furnaces.size() > this.furnaceGoal) {
+         this.furnaces.subList(this.furnaceGoal, this.furnaces.size()).clear();
       }
 
-      this.sync_I = this.init_List.size();
+      this.reusedFurnaces = this.furnaces.size();
    }
 
    @Override
    public AiOperation.Result tick() {
-      if (this.load_Z
-         || this.init_Minecraft.player == null
-         || this.init_Minecraft.player != this.read_Obj
-         || this.init_Minecraft.level != this.init_Obj
-         || this.init_Minecraft.getConnection() != this.load_Obj) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str_6(
+      if (this.cancelled
+         || this.mc.player == null
+         || this.mc.player != this.startPlayer
+         || this.mc.level != this.startLevel
+         || this.mc.getConnection() != this.startConnection) {
+         return this.finish(
             AiOperation.Status.CANCELLED, "Smelting world/player changed; loaded furnaces keep cooking"
          );
       }
 
-      if (!this.init_Minecraft.player.isAlive()) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status.FAILED, "Player died while smelting");
+      if (!this.mc.player.isAlive()) {
+         return this.finish(AiOperation.Status.FAILED, "Player died while smelting");
       }
 
-      if (System.nanoTime() >= this.init_J) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str_6(
+      if (System.nanoTime() >= this.deadline) {
+         return this.finish(
             this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Smelting deadline reached"
          );
       }
 
-      AiOperation.Result reflex = this.init_Y.tick(this, () -> {
-         if (this.init_AiOperation != null) {
-            this.init_AiOperation.cancel();
-            this.init_AiOperation = null;
-            this.sync_Z = this.init_Z;
+      AiOperation.Result reflex = this.guard.tick(this, () -> {
+         if (this.child != null) {
+            this.child.cancel();
+            this.child = null;
+            this.keepCollectBaseline = this.furnacesReady;
          }
 
-         if (this.init_cn != null) {
-            this.init_cn.cancel();
-            this.init_cn = null;
+         if (this.stationPlacer != null) {
+            this.stationPlacer.cancel();
+            this.stationPlacer = null;
          }
 
-         if (this.init_Minecraft.player.containerMenu instanceof AbstractFurnaceMenu) {
-            this.init_Minecraft.player.closeContainer();
+         if (this.mc.player.containerMenu instanceof AbstractFurnaceMenu) {
+            this.mc.player.closeContainer();
          }
-      }, this::init_I_20);
+      }, this::secondsLeft);
       if (reflex != null) {
          return reflex.terminal()
-            ? this.init_AiOperation_Result_AiOperation_Status_Str_6(reflex.status(), reflex.message())
-            : this.init_AiOperation_Result_Str_8(reflex.message());
+            ? this.finish(reflex.status(), reflex.message())
+            : this.running(reflex.message());
       }
 
-      if (this.init_AiOperation != null) {
-         AiOperation.Result r = this.init_AiOperation.tick();
+      if (this.child != null) {
+         AiOperation.Result r = this.child.tick();
          if (!r.terminal()) {
-            return this.init_AiOperation_Result_Str_8(this.write_Str + ": " + r.message());
+            return this.running(this.activity + ": " + r.message());
          }
 
-         boolean uncertain = r.status() == AiOperation.Status.UNCERTAIN || this.init_AiOperation.requiresReconciliationAfterEmergency();
-         this.init_AiOperation.cancel();
-         this.init_AiOperation = null;
-         this.init_JsonArray
-            .add(AiJson.objectOf("activity", this.write_Str, "status", r.status().name(), "receipt", AiRunResources.parseEvidenceJson(r.dataJson())));
+         boolean uncertain = r.status() == AiOperation.Status.UNCERTAIN || this.child.requiresReconciliationAfterEmergency();
+         this.child.cancel();
+         this.child = null;
+         this.receipts
+            .add(AiJson.objectOf("activity", this.activity, "status", r.status().name(), "receipt", AiRunResources.parseEvidenceJson(r.dataJson())));
          if (uncertain) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status.UNCERTAIN, r.message());
+            return this.finish(AiOperation.Status.UNCERTAIN, r.message());
          }
 
          if (r.status() == AiOperation.Status.CANCELLED) {
-            return this.init_AiOperation_Result_AiOperation_Status_Str_6(r.status(), r.message());
+            return this.finish(r.status(), r.message());
          }
 
          if (r.status() != AiOperation.Status.SUCCEEDED) {
-            if (!this.init_Z && this.update_Z && this.init_List.isEmpty()) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str_6(r.status(), r.message());
+            if (!this.furnacesReady && this.obtainingFirstFurnace && this.furnaces.isEmpty()) {
+               return this.finish(r.status(), r.message());
             }
 
-            if (this.init_Z) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str_6(r.status(), "Furnace " + (this.write_I + 1) + ": " + r.message());
+            if (this.furnacesReady) {
+               return this.finish(r.status(), "Furnace " + (this.furnaceIndex + 1) + ": " + r.message());
             }
 
-            this.write_Z = true;
-            this.flush = Math.max(1, this.init_List.size());
-         } else if (this.init_Z) {
-            if (!this.read_Z) {
-               this.read_List
+            this.furnaceSetupDone = true;
+            this.furnaceGoal = Math.max(1, this.furnaces.size());
+         } else if (this.furnacesReady) {
+            if (!this.collecting) {
+               this.collected
                   .set(
-                     this.write_I,
-                     Math.min(this.load_List.get(this.write_I), this.read_List.get(this.write_I) + Math.max(0, AiGameState.countInventoryItem(this.init_Str) - this.open))
+                     this.furnaceIndex,
+                     Math.min(this.batches.get(this.furnaceIndex), this.collected.get(this.furnaceIndex) + Math.max(0, AiGameState.countInventoryItem(this.outputId) - this.outputBaseline))
                   );
             }
 
-            this.write_I++;
-            this.close = 0;
+            this.furnaceIndex++;
+            this.collectTarget = 0;
          }
       }
 
-      if (!this.init_Z) {
-         return this.init_AiOperation_Result_19();
+      if (!this.furnacesReady) {
+         return this.placeFurnaceStep();
       }
 
-      if (AiGameState.countInventoryItem(this.init_Str) >= this.target) {
-         return this.init_AiOperation_Result_AiOperation_Status_Str_6(
-            AiOperation.Status.SUCCEEDED, "Smelted " + this.init_Str + " using " + this.init_List.size() + " furnaces"
+      if (AiGameState.countInventoryItem(this.outputId) >= this.target) {
+         return this.finish(
+            AiOperation.Status.SUCCEEDED, "Smelted " + this.outputId + " using " + this.furnaces.size() + " furnaces"
          );
       }
 
-      if (this.load_List.isEmpty()) {
-         this.load_List = init_List_I_I(this.target - AiGameState.countInventoryItem(this.init_Str), this.init_List.size());
-         this.write_I = 0;
-         this.read_Z = false;
-         this.read_List.clear();
+      if (this.batches.isEmpty()) {
+         this.batches = batchSizes(this.target - AiGameState.countInventoryItem(this.outputId), this.furnaces.size());
+         this.furnaceIndex = 0;
+         this.collecting = false;
+         this.collected.clear();
 
-         for (int ignored : this.load_List) {
-            this.read_List.add(0);
+         for (int ignored : this.batches) {
+            this.collected.add(0);
          }
       }
 
-      if (this.write_I >= this.load_List.size()) {
-         if (this.read_Z) {
-            this.load_List = List.of();
+      if (this.furnaceIndex >= this.batches.size()) {
+         if (this.collecting) {
+            this.batches = List.of();
             return this.tick();
          }
 
-         this.read_Z = true;
-         this.write_I = 0;
+         this.collecting = true;
+         this.furnaceIndex = 0;
       }
 
-      int amount = this.load_List.get(this.write_I) - (this.read_Z ? this.read_List.get(this.write_I) : 0);
+      int amount = this.batches.get(this.furnaceIndex) - (this.collecting ? this.collected.get(this.furnaceIndex) : 0);
       if (amount == 0) {
-         this.write_I++;
-         this.close = 0;
+         this.furnaceIndex++;
+         this.collectTarget = 0;
          return this.tick();
       }
 
-      BlockPos station = this.init_List.get(this.write_I);
-      if (this.read_Z && this.close == 0) {
-         this.close = Math.min(this.target, AiGameState.countInventoryItem(this.init_Str) + amount);
+      BlockPos station = this.furnaces.get(this.furnaceIndex);
+      if (this.collecting && this.collectTarget == 0) {
+         this.collectTarget = Math.min(this.target, AiGameState.countInventoryItem(this.outputId) + amount);
       }
 
-      Item availableFuel = this.read_Z ? this.recipe.fuel() : AiSmelt.init("", this.recipe.input(), amount);
+      Item availableFuel = this.collecting ? this.recipe.fuel() : AiSmelt.init("", this.recipe.input(), amount);
       String fuel = BuiltInRegistries.ITEM.getKey(availableFuel == null ? this.recipe.fuel() : availableFuel).toString();
-      if (!this.sync_Z) {
-         this.open = AiGameState.countInventoryItem(this.init_Str);
+      if (!this.keepCollectBaseline) {
+         this.outputBaseline = AiGameState.countInventoryItem(this.outputId);
       }
 
-      this.sync_Z = false;
-      this.init_AiOperation = AiSmelt.load(
+      this.keepCollectBaseline = false;
+      this.child = AiSmelt.load(
          AiJson.objectOf(
             "item",
-            this.init_Str,
+            this.outputId,
             "input",
-            this.load_Str,
+            this.inputId,
             "fuel",
             fuel,
             "count",
-            this.read_Z ? this.close : AiGameState.countInventoryItem(this.init_Str) + amount,
+            this.collecting ? this.collectTarget : AiGameState.countInventoryItem(this.outputId) + amount,
             "batchSize",
             amount,
             "x",
@@ -277,73 +277,73 @@ final class AiParallelSmelt implements AiOperation {
             "station",
             this.recipe.stationId(),
             "collect",
-            this.read_Z,
+            this.collecting,
             "loadOnly",
-            !this.read_Z,
+            !this.collecting,
             "singleFurnace",
             true,
             "timeoutSeconds",
-            this.init_I_20()
+            this.secondsLeft()
          )
       );
-      this.write_Str = (this.read_Z ? "Wait and collect at furnace " : "Load furnace ") + (this.write_I + 1) + "/" + this.load_List.size();
-      return this.init_AiOperation_Result_Str_8(this.write_Str);
+      this.activity = (this.collecting ? "Wait and collect at furnace " : "Load furnace ") + (this.furnaceIndex + 1) + "/" + this.batches.size();
+      return this.running(this.activity);
    }
 
-   private AiOperation.Result init_AiOperation_Result_19() {
-      if (this.init_cn != null) {
-         AiStationPlacer.Inner_DataUtil state = this.init_cn.tick();
+   private AiOperation.Result placeFurnaceStep() {
+      if (this.stationPlacer != null) {
+         AiStationPlacer.Inner_DataUtil state = this.stationPlacer.tick();
          if (state == AiStationPlacer.Inner_DataUtil.PLACED) {
-            this.init_List.add(this.init_cn.getPlaced());
-            this.init_cn = null;
-            this.update_I++;
+            this.furnaces.add(this.stationPlacer.getPlaced());
+            this.stationPlacer = null;
+            this.builtFurnaces++;
          } else {
             if (state != AiStationPlacer.Inner_DataUtil.FAILED) {
-               return this.init_AiOperation_Result_Str_8(this.init_cn.getStatus());
+               return this.running(this.stationPlacer.getStatus());
             }
 
-            String why = this.init_cn.getFailureReason();
-            this.init_cn.cancel();
-            this.init_cn = null;
-            if (this.init_List.isEmpty()) {
-               return this.init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status.FAILED, "Cannot place furnace: " + why);
+            String why = this.stationPlacer.getFailureReason();
+            this.stationPlacer.cancel();
+            this.stationPlacer = null;
+            if (this.furnaces.isEmpty()) {
+               return this.finish(AiOperation.Status.FAILED, "Cannot place furnace: " + why);
             }
 
-            this.write_Z = true;
-            this.flush = this.init_List.size();
+            this.furnaceSetupDone = true;
+            this.furnaceGoal = this.furnaces.size();
          }
       }
 
-      if (this.init_List.size() >= this.flush) {
-         this.init_Z = true;
+      if (this.furnaces.size() >= this.furnaceGoal) {
+         this.furnacesReady = true;
          return this.tick();
       }
 
       if (AiGameState.countInventoryItem(this.recipe.stationId()) > 0) {
-         this.init_cn = new AiStationPlacer(
+         this.stationPlacer = new AiStationPlacer(
             this.recipe.stationId().equals("minecraft:furnace")
                ? Items.FURNACE
                : BuiltInRegistries.ITEM.getValue(Identifier.parse(this.recipe.stationId())),
             "smelting station"
          );
-         return this.init_AiOperation_Result_Str_8("Place a carried smelting station");
+         return this.running("Place a carried smelting station");
       }
 
-      int missing = this.target - AiGameState.countInventoryItem(this.init_Str);
-      int neededCobble = 8 + (this.load_Str.equals("minecraft:cobblestone") ? missing : 0);
+      int missing = this.target - AiGameState.countInventoryItem(this.outputId);
+      int neededCobble = 8 + (this.inputId.equals("minecraft:cobblestone") ? missing : 0);
       int deficit = Math.max(0, neededCobble - AiCraft.countItem("minecraft:cobblestone"));
       boolean tableEasy = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.init(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
-      double stoneDistance = deficit == 0 ? 0.0 : AiTerrain.nearestBlockDistSqr(this.init_Minecraft, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8);
+      double stoneDistance = deficit == 0 ? 0.0 : AiTerrain.nearestBlockDistSqr(this.mc, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8);
       boolean localStone = deficit == 0 || stoneDistance <= 64.0 && AiItems.hasUsableToolFor(Blocks.STONE.defaultBlockState());
       int setupTicks = 100 + deficit * 40 + (tableEasy ? 0 : 200);
       boolean easy = this.recipe.stationId().equals("minecraft:furnace")
          && tableEasy
          && localStone
-         && (this.init_List.isEmpty() || !this.write_Z && init_Z(missing, this.init_List.size(), this.cookTicks, setupTicks));
+         && (this.furnaces.isEmpty() || !this.furnaceSetupDone && worthAnotherFurnace(missing, this.furnaces.size(), this.cookTicks, setupTicks));
       if (easy) {
          if (deficit > 0) {
-            this.write_Str = "Mine nearby cobblestone for a faster smelt without spending the requested input";
-            this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
+            this.activity = "Mine nearby cobblestone for a faster smelt without spending the requested input";
+            this.child = autismclient.ai.engine.AiBlockMine.create(
                AiJson.objectOf(
                   "blocks",
                   autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
@@ -356,100 +356,100 @@ final class AiParallelSmelt implements AiOperation {
                   "explore",
                   false,
                   "timeoutSeconds",
-                  Math.min(30, this.init_I_20())
+                  Math.min(30, this.secondsLeft())
                )
             );
          } else {
-            this.write_Str = "Craft another furnace; its setup costs less than the cooking time saved";
-            this.init_AiOperation = AiCraft.craft(
-               AiJson.objectOf("item", this.recipe.stationId(), "count", 1, "timeoutSeconds", Math.min(30, this.init_I_20()))
+            this.activity = "Craft another furnace; its setup costs less than the cooking time saved";
+            this.child = AiCraft.craft(
+               AiJson.objectOf("item", this.recipe.stationId(), "count", 1, "timeoutSeconds", Math.min(30, this.secondsLeft()))
             );
          }
 
-         return this.init_AiOperation_Result_Str_8(this.write_Str);
-      } else if (this.init_List.isEmpty()) {
-         this.write_Str = "Obtain the first furnace and its prerequisites";
-         this.init_AiOperation = AiObtain.init(
-            AiJson.objectOf("item", this.recipe.stationId(), "count", 1, "staged", true, "timeoutSeconds", this.init_I_20())
+         return this.running(this.activity);
+      } else if (this.furnaces.isEmpty()) {
+         this.activity = "Obtain the first furnace and its prerequisites";
+         this.child = AiObtain.init(
+            AiJson.objectOf("item", this.recipe.stationId(), "count", 1, "staged", true, "timeoutSeconds", this.secondsLeft())
          );
-         this.update_Z = true;
-         this.write_Z = true;
-         this.flush = 1;
-         return this.init_AiOperation_Result_Str_8(this.write_Str);
+         this.obtainingFirstFurnace = true;
+         this.furnaceSetupDone = true;
+         this.furnaceGoal = 1;
+         return this.running(this.activity);
       } else {
-         this.flush = this.init_List.size();
-         this.init_Z = true;
+         this.furnaceGoal = this.furnaces.size();
+         this.furnacesReady = true;
          return this.tick();
       }
    }
 
-   private int init_I_20() {
-      return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+   private int secondsLeft() {
+      return (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
    }
 
-   private JsonObject init_JsonObject_34() {
+   private JsonObject progressJson() {
       return AiJson.objectOf(
          "item",
-         this.init_Str,
+         this.outputId,
          "target",
          this.target,
          "held",
-         AiGameState.countInventoryItem(this.init_Str),
+         AiGameState.countInventoryItem(this.outputId),
          "furnaceCount",
-         this.init_List.size(),
+         this.furnaces.size(),
          "builtFurnaces",
-         this.update_I,
+         this.builtFurnaces,
          "reusedFurnaces",
-         this.sync_I,
+         this.reusedFurnaces,
          "maximumFurnaces",
          8,
          "batches",
-         this.load_List,
+         this.batches,
          "collecting",
-         this.read_Z,
+         this.collecting,
          "activity",
-         this.write_Str,
+         this.activity,
          "receipts",
-         this.init_JsonArray
+         this.receipts
       );
    }
 
-   private AiOperation.Result init_AiOperation_Result_Str_8(String message) {
-      AiVisualization.init(this, this.read_Str, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.init_Str), this.target);
-      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_34());
+   private AiOperation.Result running(String message) {
+      AiVisualization.init(this, this.label, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.outputId), this.target);
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
    }
 
-   private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status status, String message) {
-      JsonObject receipt = this.init_JsonObject_34();
+   private AiOperation.Result finish(AiOperation.Status status, String message) {
+      JsonObject receipt = this.progressJson();
       this.cancel();
       return AiGameOperations.result(status, message, receipt);
    }
 
    @Override
    public boolean canInterruptNow() {
-      return this.init_Y.canInterruptNow()
-         && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-         && (this.init_cn == null || this.init_cn.canInterrupt());
+      return this.guard.canInterruptNow()
+         && (this.child == null || this.child.canInterruptNow())
+         && (this.stationPlacer == null || this.stationPlacer.canInterrupt());
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_Y.requiresReconciliation()
-         || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-         || this.init_cn != null && this.init_cn.needsReconciliation();
+      return this.guard.requiresReconciliation()
+         || this.child != null && this.child.requiresReconciliationAfterEmergency()
+         || this.stationPlacer != null && this.stationPlacer.needsReconciliation();
    }
 
    @Override
    public void cancel() {
-      this.load_Z = true;
+      this.cancelled = true;
       AiVisualization.clearOwner(this);
-      this.init_Y.cancel();
-      if (this.init_AiOperation != null) {
-         this.init_AiOperation.cancel();
+      this.guard.cancel();
+      if (this.child != null) {
+         this.child.cancel();
       }
 
-      if (this.init_cn != null) {
-         this.init_cn.cancel();
+      if (this.stationPlacer != null) {
+         this.stationPlacer.cancel();
       }
    }
 }

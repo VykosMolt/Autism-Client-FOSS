@@ -153,63 +153,63 @@ final class AiEndRun {
    static AiOperation init(final Minecraft mc, final BlockPos portal) {
       final ResourceKey<Level> from = mc.level == null ? null : mc.level.dimension();
       return new AiOperation() {
-         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-         int init_I;
-         boolean init_Z;
-         final String init_Str = AiWorldIdentity.currentWorldKey(mc);
-         final Object init_Obj = mc.getConnection();
+         final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+         int ticks;
+         boolean cancelled;
+         final String worldKey = AiWorldIdentity.currentWorldKey(mc);
+         final Object connection = mc.getConnection();
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
-               if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection() || !mc.player.isAlive()) {
-                  return this.init(AiOperation.Status.CANCELLED, "Portal traversal player or world changed");
+            if (!this.cancelled && mc.player != null && mc.level != null) {
+               if (!this.worldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.connection != mc.getConnection() || !mc.player.isAlive()) {
+                  return this.finish(AiOperation.Status.CANCELLED, "Portal traversal player or world changed");
                }
 
                if (mc.level.dimension() != from || mc.gui.screen() instanceof WinScreen) {
                   boolean expected = from == Level.END
                      ? mc.level.dimension() == Level.OVERWORLD || mc.gui.screen() instanceof WinScreen
                      : mc.level.dimension() == Level.END;
-                  return this.init(
+                  return this.finish(
                      expected ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
                      expected ? "through the expected End portal" : "Unexpected dimension transition"
                   );
                }
 
                if (!mc.level.getBlockState(portal).is(Blocks.END_PORTAL)) {
-                  return this.init(AiOperation.Status.FAILED, "The expected portal block is no longer active");
+                  return this.finish(AiOperation.Status.FAILED, "The expected portal block is no longer active");
                }
 
                if (mc.player.distanceToSqr(Vec3.atCenterOf(portal)) > 64.0) {
-                  return this.init(AiOperation.Status.FAILED, "Direct portal step requires a nearby verified stance");
+                  return this.finish(AiOperation.Status.FAILED, "Direct portal step requires a nearby verified stance");
                }
 
-               if (++this.init_I > 60) {
-                  return this.init(AiOperation.Status.FAILED, "did not reach the portal");
+               if (++this.ticks > 60) {
+                  return this.finish(AiOperation.Status.FAILED, "did not reach the portal");
                }
 
-               this.init_DataUtil.aimAt(new Vec3(portal.getX() + 0.5, portal.getY(), portal.getZ() + 0.5));
-               this.init_DataUtil.tick();
+               this.aim.aimAt(new Vec3(portal.getX() + 0.5, portal.getY(), portal.getZ() + 0.5));
+               this.aim.tick();
                AiFallGuard.load();
                mc.options.keyUp.setDown(true);
                mc.options.keyJump.setDown(mc.player.onGround() && mc.player.horizontalCollision);
                return AiGameOperations.result(AiOperation.Status.RUNNING, "stepping onto the portal", new JsonObject());
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "cancelled");
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
-            this.init_DataUtil.clear();
+            this.aim.clear();
             return AiGameOperations.result(status, message, new JsonObject());
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            this.init_DataUtil.clear();
+            this.cancelled = true;
+            this.aim.clear();
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
          }
@@ -221,81 +221,81 @@ final class AiEndRun {
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(120, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800)));
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final String init_Str = AiWorldIdentity.currentWorldKey(mc);
-            final Object init_Obj = mc.getConnection();
-            final UUID init_UUID = mc.player.getUUID();
-            final long load_J = AiServerEvidence.deathRevision();
-            final JsonArray init_JsonArray = new JsonArray();
-            final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee(), "end");
-            AiOperation init_AiOperation;
-            AiOperation.Result init_AiOperation_Result;
-            JsonObject init_JsonObject;
-            boolean init_Z;
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final String worldKey = AiWorldIdentity.currentWorldKey(mc);
+            final Object connection = mc.getConnection();
+            final UUID playerId = mc.player.getUUID();
+            final long deathRevisionAtStart = AiServerEvidence.deathRevision();
+            final JsonArray steps = new JsonArray();
+            final AiGuardLayer guard = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee(), "end");
+            AiOperation child;
+            AiOperation.Result lastChildResult;
+            JsonObject pendingChildEvidence;
+            boolean reconcilePending;
             String label = "";
-            boolean load_Z;
-            boolean read_Z;
-            boolean write_Z;
-            BlockPos init_BlockPos;
-            JsonObject load_JsonObject;
-            int init_I;
-            int load_I;
-            BlockPos load_BlockPos;
-            int read_I;
-            long read_J;
-            long write_J;
-            long update;
-            BlockPos read_BlockPos;
-            final Set<Long> init_Set = new HashSet<>();
-            int write_I;
-            float init_F = 16.0F;
+            boolean dragonDead;
+            boolean centralExitAttempted;
+            boolean creditsSeen;
+            BlockPos exitPortal;
+            JsonObject exitLinkEvidence;
+            int arrivalTicks;
+            int armorAttempts;
+            BlockPos fountain;
+            int fights;
+            long burrowCooldownUntil;
+            long healWalkWaitUntil;
+            long lowHealthBurrowCooldownUntil;
+            BlockPos healSpot;
+            final Set<Long> rejectedHealSpots = new HashSet<>();
+            int exitAttempts;
+            float healThreshold = 16.0F;
 
-            AiOperation init(BlockPos portal) {
+            AiOperation stepIntoPortal(BlockPos portal) {
                return AiEndRun.init(mc, portal);
             }
 
             @Override
             public AiOperation.Result tick() {
                if (mc.player != null && mc.level != null) {
-                  if (!this.init_Str.equals(AiWorldIdentity.currentWorldKey(mc)) || this.init_Obj != mc.getConnection()) {
-                     return this.init(AiOperation.Status.CANCELLED, "End run connection changed");
+                  if (!this.worldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.connection != mc.getConnection()) {
+                     return this.finish(AiOperation.Status.CANCELLED, "End run connection changed");
                   }
 
-                  if (!mc.player.getUUID().equals(this.init_UUID)) {
-                     return this.init(AiOperation.Status.UNCERTAIN, "Player changed during End traversal");
+                  if (!mc.player.getUUID().equals(this.playerId)) {
+                     return this.finish(AiOperation.Status.UNCERTAIN, "Player changed during End traversal");
                   }
 
-                  if (mc.player.isAlive() && this.load_J == AiServerEvidence.deathRevision()) {
+                  if (mc.player.isAlive() && this.deathRevisionAtStart == AiServerEvidence.deathRevision()) {
                      if (mc.gui.screen() instanceof WinScreen credits) {
-                        if (this.load_Z && this.read_Z) {
-                           this.write_Z = true;
+                        if (this.dragonDead && this.centralExitAttempted) {
+                           this.creditsSeen = true;
                            credits.onClose();
                            AiSpeedrun.log("[AI] end: credits closed; respawning in the overworld");
-                           return this.init("Past the credits");
+                           return this.running("Past the credits");
                         } else {
-                           return this.init(AiOperation.Status.UNCERTAIN, "Credits appeared without a verified central-exit attempt");
+                           return this.finish(AiOperation.Status.UNCERTAIN, "Credits appeared without a verified central-exit attempt");
                         }
                      } else if (mc.level.dimension() != Level.END) {
-                        this.init_V_33();
-                        if (!this.load_Z || !this.read_Z || this.init_BlockPos == null || mc.level.dimension() != Level.OVERWORLD) {
-                           return this.init(AiOperation.Status.UNCERTAIN, "Left the End without a verified dragon defeat and central exit transition");
+                        this.stopChild();
+                        if (!this.dragonDead || !this.centralExitAttempted || this.exitPortal == null || mc.level.dimension() != Level.OVERWORLD) {
+                           return this.finish(AiOperation.Status.UNCERTAIN, "Left the End without a verified dragon defeat and central exit transition");
                         }
 
-                        if (++this.init_I < 20) {
-                           return this.init("Verifying supported Overworld arrival after the central exit");
+                        if (++this.arrivalTicks < 20) {
+                           return this.running("Verifying supported Overworld arrival after the central exit");
                         }
 
                         String hazard = AiPortalLinks.arrivalHazard();
-                        AiPortalLinks.init("minecraft:the_end", this.init_BlockPos, "minecraft:overworld", mc.player.blockPosition(), hazard == null, this.load_JsonObject);
-                        return this.init(
+                        AiPortalLinks.init("minecraft:the_end", this.exitPortal, "minecraft:overworld", mc.player.blockPosition(), hazard == null, this.exitLinkEvidence);
+                        return this.finish(
                            hazard == null ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
                            hazard == null
                               ? "Dragon defeated and central exit to the Overworld verified"
                               : "Central exit reached; arrival requires recovery: " + hazard
                         );
                      } else {
-                        if (System.nanoTime() > this.init_J) {
-                           return this.init(this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Out of time in the End");
+                        if (System.nanoTime() > this.deadline) {
+                           return this.finish(this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN, "Out of time in the End");
                         }
 
                         autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(5000000000L);
@@ -304,68 +304,68 @@ final class AiEndRun {
                            AiMlg.init(mc.player, Items.WATER_BUCKET);
                         }
 
-                        if (this.load_BlockPos == null) {
-                           this.load_BlockPos = this.read();
+                        if (this.fountain == null) {
+                           this.fountain = this.findFountain();
                         }
 
                         boolean liveDragon = !AiWorldScan.findEntitiesByType("minecraft:ender_dragon", 256.0).isEmpty();
-                        this.load_Z = this.load_Z | (!liveDragon && this.load_BlockPos_7() != null);
+                        this.dragonDead = this.dragonDead | (!liveDragon && this.findActiveExitPortal() != null);
                         if (!this.label.startsWith("fight the dragon")) {
-                           AiOperation.Result g = this.init_Y
+                           AiOperation.Result g = this.guard
                               .tick(
-                                 this.init_AiOperation, this::init_V_33, () -> (int)Math.max(10L, (this.init_J - System.nanoTime()) / 1000000000L)
+                                 this.child, this::stopChild, () -> (int)Math.max(10L, (this.deadline - System.nanoTime()) / 1000000000L)
                               );
                            if (g != null) {
-                              return g.terminal() ? this.init(g.status(), g.message(), g) : g;
+                              return g.terminal() ? this.finishWithChild(g.status(), g.message(), g) : g;
                            }
                         }
 
-                        if (this.init_AiOperation != null) {
-                           AiOperation.Result r = this.init_AiOperation.tick();
-                           this.init_AiOperation_Result = r;
+                        if (this.child != null) {
+                           AiOperation.Result r = this.child.tick();
+                           this.lastChildResult = r;
                            if (!r.terminal()) {
-                              return this.init(this.label + ": " + r.message());
+                              return this.running(this.label + ": " + r.message());
                            }
 
-                           r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, r);
-                           this.init_AiOperation_Result = r;
-                           this.init_AiOperation = null;
+                           r = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.child, r);
+                           this.lastChildResult = r;
+                           this.child = null;
                            AiSpeedrun.log("[AI] end step {}: {} - {}", r.status(), this.label, AiSpeedrun.clip(r.message()));
-                           this.init_JsonArray
+                           this.steps
                               .add(AiJson.objectOf("step", this.label, "status", r.status().name(), "message", AiSpeedrun.clip(r.message())));
                            if (r.status() == AiOperation.Status.CANCELLED) {
-                              return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.label, r);
+                              return this.finishWithChild(AiOperation.Status.CANCELLED, "Cancelled at " + this.label, r);
                            }
 
                            if (r.status() == AiOperation.Status.UNCERTAIN) {
-                              return this.init(AiOperation.Status.UNCERTAIN, this.label + ": " + r.message(), r);
+                              return this.finishWithChild(AiOperation.Status.UNCERTAIN, this.label + ": " + r.message(), r);
                            }
 
                            if (this.label.startsWith("fight the dragon") && r.status() == AiOperation.Status.SUCCEEDED) {
-                              this.load_Z = this.load_Z | AiJson.getBoolean(AiRunResources.parseEvidenceJson(r.dataJson()), "dragonDead", false);
+                              this.dragonDead = this.dragonDead | AiJson.getBoolean(AiRunResources.parseEvidenceJson(r.dataJson()), "dragonDead", false);
                            }
 
-                           if (this.label.equals("heal in a hole") && r.status() != AiOperation.Status.SUCCEEDED && this.read_BlockPos != null) {
-                              this.init_Set.add(this.read_BlockPos.below().asLong());
-                              this.read_BlockPos = null;
-                              this.read_J = 0L;
+                           if (this.label.equals("heal in a hole") && r.status() != AiOperation.Status.SUCCEEDED && this.healSpot != null) {
+                              this.rejectedHealSpots.add(this.healSpot.below().asLong());
+                              this.healSpot = null;
+                              this.burrowCooldownUntil = 0L;
                            }
 
                            if (this.label.startsWith("fight the dragon") && r.failure() == AiFailure.LOW_HEALTH) {
-                              this.init_F = Math.min(20.0F, mc.player.getMaxHealth()) - 0.01F;
+                              this.healThreshold = Math.min(20.0F, mc.player.getMaxHealth()) - 0.01F;
                            }
 
                            if (this.label.startsWith("fight the dragon")
                               && r.status() != AiOperation.Status.SUCCEEDED
                               && r.failure() != AiFailure.LOW_HEALTH
-                              && ++this.read_I >= 3
-                              && !this.load_Z) {
-                              return this.init(AiOperation.Status.FAILED, "The dragon fight failed " + this.read_I + " times: " + AiSpeedrun.clip(r.message()));
+                              && ++this.fights >= 3
+                              && !this.dragonDead) {
+                              return this.finish(AiOperation.Status.FAILED, "The dragon fight failed " + this.fights + " times: " + AiSpeedrun.clip(r.message()));
                            }
                         }
 
                         if (!mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
-                           return this.init("Landing");
+                           return this.running("Landing");
                         }
 
                         if ((mc.player.isOnFire() || AiEndRun.init_Z(mc)) && !mc.player.isInWater()) {
@@ -375,70 +375,70 @@ final class AiEndRun {
                            }
 
                            if (out != null) {
-                              return this.init("put the fire out", out);
+                              return this.startStep("put the fire out", out);
                            }
                         }
 
-                        return this.load_AiOperation_Result_20();
+                        return this.planNextStep();
                      }
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "Player died in the End; no completion credited");
+                     return this.finish(AiOperation.Status.FAILED, "Player died in the End; no completion credited");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Left the world");
+                  return this.finish(AiOperation.Status.CANCELLED, "Left the world");
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_43() {
-               if (mc.player.getHealth() + mc.player.getAbsorptionAmount() >= this.init_F) {
-                  this.init_F = 16.0F;
-                  this.read_BlockPos = null;
+            AiOperation.Result healBeforeFight() {
+               if (mc.player.getHealth() + mc.player.getAbsorptionAmount() >= this.healThreshold) {
+                  this.healThreshold = 16.0F;
+                  this.healSpot = null;
                   return null;
                }
 
-               if (this.read_BlockPos == null) {
-                  this.read_BlockPos = this.init_BlockPos_20();
+               if (this.healSpot == null) {
+                  this.healSpot = this.findHealSpot();
                }
 
-               if (mc.player.getHealth() <= 6.0F && System.nanoTime() > this.read_J && System.nanoTime() > this.update) {
-                  this.update = System.nanoTime() + 15000000000L;
-                  return this.init(
+               if (mc.player.getHealth() <= 6.0F && System.nanoTime() > this.burrowCooldownUntil && System.nanoTime() > this.lowHealthBurrowCooldownUntil) {
+                  this.lowHealthBurrowCooldownUntil = System.nanoTime() + 15000000000L;
+                  return this.startStep(
                      "heal in a hole here",
-                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                }
 
-               if (this.read_BlockPos != null
-                  && Math.hypot(mc.player.getX() - (this.read_BlockPos.getX() + 0.5), mc.player.getZ() - (this.read_BlockPos.getZ() + 0.5)) > 1.2) {
-                  if (System.nanoTime() < this.write_J) {
-                     return this.init(
+               if (this.healSpot != null
+                  && Math.hypot(mc.player.getX() - (this.healSpot.getX() + 0.5), mc.player.getZ() - (this.healSpot.getZ() + 0.5)) > 1.2) {
+                  if (System.nanoTime() < this.healWalkWaitUntil) {
+                     return this.startStep(
                         "wait to walk to the heal spot (health " + String.format("%.0f", mc.player.getHealth()) + ")",
                         AiNetherRun.delayThen(20, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "waited", new JsonObject()))
                      );
                   }
 
-                  this.write_J = System.nanoTime() + 3000000000L;
-                  return this.init(
-                     "to the heal spot at " + this.read_BlockPos.toShortString(),
-                     AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
+                  this.healWalkWaitUntil = System.nanoTime() + 3000000000L;
+                  return this.startStep(
+                     "to the heal spot at " + this.healSpot.toShortString(),
+                     AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(this.healSpot, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
                   );
                } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
-                  return this.init("eat before the fight", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
-               } else if (System.nanoTime() > this.read_J) {
-                  this.read_J = System.nanoTime() + 20000000000L;
-                  return this.init(
+                  return this.startStep("eat before the fight", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
+               } else if (System.nanoTime() > this.burrowCooldownUntil) {
+                  this.burrowCooldownUntil = System.nanoTime() + 20000000000L;
+                  return this.startStep(
                      "heal in a hole",
-                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                } else {
-                  return this.init(
+                  return this.startStep(
                      "rest to heal (health " + String.format("%.0f", mc.player.getHealth()) + ")",
                      AiNetherRun.delayThen(100, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "rested", new JsonObject()))
                   );
                }
             }
 
-            BlockPos init_BlockPos_20() {
+            BlockPos findHealSpot() {
                double px = mc.player.getX();
                double pz = mc.player.getZ();
                BlockPos best = null;
@@ -447,10 +447,10 @@ final class AiEndRun {
                for (int r = 17; r <= 23; r += 3) {
                   for (int k = 0; k < 24; k++) {
                      double a = 6.283185307179586 * k / 24.0;
-                     int x = (this.load_BlockPos == null ? 0 : this.load_BlockPos.getX()) + (int)Math.floor(Math.cos(a) * r);
-                     int z = (this.load_BlockPos == null ? 0 : this.load_BlockPos.getZ()) + (int)Math.floor(Math.sin(a) * r);
-                     BlockPos top = this.init(x, z);
-                     if (top != null && !this.init_Set.contains(top.asLong()) && mc.level.getBlockState(top).is(Blocks.END_STONE)) {
+                     int x = (this.fountain == null ? 0 : this.fountain.getX()) + (int)Math.floor(Math.cos(a) * r);
+                     int z = (this.fountain == null ? 0 : this.fountain.getZ()) + (int)Math.floor(Math.sin(a) * r);
+                     BlockPos top = this.surfaceAt(x, z);
+                     if (top != null && !this.rejectedHealSpots.contains(top.asLong()) && mc.level.getBlockState(top).is(Blocks.END_STONE)) {
                         boolean solid = true;
 
                         for (int d = 1; d <= 4 && solid; d++) {
@@ -461,7 +461,7 @@ final class AiEndRun {
 
                         for (int dx = -3; dx <= 3 && solid; dx++) {
                            for (int dz = -3; dz <= 3 && solid; dz++) {
-                              BlockPos t = this.init(x + dx, z + dz);
+                              BlockPos t = this.surfaceAt(x + dx, z + dz);
                               if (t == null || Math.abs(t.getY() - top.getY()) > 2) {
                                  solid = false;
                               }
@@ -482,7 +482,7 @@ final class AiEndRun {
                return best == null ? null : best.above();
             }
 
-            BlockPos init(int x, int z) {
+            BlockPos surfaceAt(int x, int z) {
                BlockPos probe = new BlockPos(x, 64, z);
                if (!AiTerrain.isLoaded(mc.level, probe)) {
                   return null;
@@ -492,21 +492,21 @@ final class AiEndRun {
                return y <= mc.level.getMinY() ? null : new BlockPos(x, y, z);
             }
 
-            AiOperation.Result load_AiOperation_Result_20() {
-               BlockPos portal = this.load_BlockPos_7();
-               if (this.load_Z && portal != null) {
-                  this.init_BlockPos = portal.immutable();
-                  this.load_JsonObject = AiJson.objectOf(
+            AiOperation.Result planNextStep() {
+               BlockPos portal = this.findActiveExitPortal();
+               if (this.dragonDead && portal != null) {
+                  this.exitPortal = portal.immutable();
+                  this.exitLinkEvidence = AiJson.objectOf(
                      "kind",
                      "central_end_exit",
                      "dimension",
                      "minecraft:the_end",
                      "world",
-                     this.init_Str,
+                     this.worldKey,
                      "entrance",
                      portal.toShortString(),
                      "fountain",
-                     this.load_BlockPos.toShortString(),
+                     this.fountain.toShortString(),
                      "active",
                      true,
                      "observedTick",
@@ -514,16 +514,16 @@ final class AiEndRun {
                   );
                }
 
-               if (this.load_Z && portal != null && this.write_I >= 1) {
-                  this.read_Z = true;
-                  this.write_I++;
-                  return this.init("onto the exit portal at " + portal.toShortString(), this.init(portal));
+               if (this.dragonDead && portal != null && this.exitAttempts >= 1) {
+                  this.centralExitAttempted = true;
+                  this.exitAttempts++;
+                  return this.startStep("onto the exit portal at " + portal.toShortString(), this.stepIntoPortal(portal));
                }
 
-               if (this.load_Z && portal != null) {
-                  this.read_Z = true;
-                  this.write_I++;
-                  return this.init(
+               if (this.dragonDead && portal != null) {
+                  this.centralExitAttempted = true;
+                  this.exitAttempts++;
+                  return this.startStep(
                      "into the exit portal at " + portal.toShortString(),
                      AiGoto.travelToCompat(
                         portal,
@@ -541,30 +541,30 @@ final class AiEndRun {
                   );
                }
 
-               if (this.load_Z) {
-                  return this.init("Waiting for the exit portal to open");
+               if (this.dragonDead) {
+                  return this.running("Waiting for the exit portal to open");
                }
 
                if (AiRunResources.isCampaignActive()) {
                   Map<String, Integer> missing = AiRunResources.missingMandatoryGear();
                   if (!missing.isEmpty()) {
-                     return this.init(AiOperation.Status.FAILED, "Required campaign equipment is unavailable in the End: " + missing);
+                     return this.finish(AiOperation.Status.FAILED, "Required campaign equipment is unavailable in the End: " + missing);
                   }
 
                   if (!AiRunResources.isMandatoryArmorEquipped()) {
-                     if (this.load_I++ >= 2) {
-                        return this.init(AiOperation.Status.FAILED, "Required End armor could not be equipped; readiness remains unresolved");
+                     if (this.armorAttempts++ >= 2) {
+                        return this.finish(AiOperation.Status.FAILED, "Required End armor could not be equipped; readiness remains unresolved");
                      }
 
-                     return this.init("equip the required End armor", AiEquip.init(AiJson.objectOf("what", "armor")));
+                     return this.startStep("equip the required End armor", AiEquip.init(AiJson.objectOf("what", "armor")));
                   }
                }
 
-               int fx = this.load_BlockPos == null ? 0 : this.load_BlockPos.getX();
-               int fz = this.load_BlockPos == null ? 0 : this.load_BlockPos.getZ();
+               int fx = this.fountain == null ? 0 : this.fountain.getX();
+               int fz = this.fountain == null ? 0 : this.fountain.getZ();
                double fromCentre = Math.hypot(mc.player.getX() - fx, mc.player.getZ() - fz);
                if (fromCentre > 32.0) {
-                  return this.init(
+                  return this.startStep(
                      "cross to the main island",
                      AiGoto.travelToCompat(
                         new BlockPos(fx, (int)mc.player.getY(), fz),
@@ -582,13 +582,13 @@ final class AiEndRun {
                   );
                }
 
-               AiOperation.Result healed = this.init_AiOperation_Result_43();
+               AiOperation.Result healed = this.healBeforeFight();
                if (healed != null) {
                   return healed;
                }
 
                int beds = AiItems.countInInventory(AiItems.resolve("bed"));
-               return this.init(
+               return this.startStep(
                   "fight the dragon",
                   AiDragon.create(
                      AiJson.objectOf(
@@ -599,18 +599,18 @@ final class AiEndRun {
                         "bow",
                         true,
                         "timeoutSeconds",
-                        (int)Math.max(60L, Math.min(1500L, (this.init_J - System.nanoTime()) / 1000000000L))
+                        (int)Math.max(60L, Math.min(1500L, (this.deadline - System.nanoTime()) / 1000000000L))
                      )
                   )
                );
             }
 
-            BlockPos load_BlockPos_7() {
-               if (this.load_BlockPos == null) {
+            BlockPos findActiveExitPortal() {
+               if (this.fountain == null) {
                   return null;
                }
 
-               for (BlockPos p : BlockPos.betweenClosed(this.load_BlockPos.offset(-4, -4, -4), this.load_BlockPos.offset(4, 3, 4))) {
+               for (BlockPos p : BlockPos.betweenClosed(this.fountain.offset(-4, -4, -4), this.fountain.offset(4, 3, 4))) {
                   if (mc.level.getBlockState(p).is(Blocks.END_PORTAL)) {
                      int active = 0;
 
@@ -629,7 +629,7 @@ final class AiEndRun {
                return null;
             }
 
-            BlockPos read() {
+            BlockPos findFountain() {
                BlockPos rock = AiWorldScan.findNearestBlock(s -> s.is(Blocks.BEDROCK), 12);
                if (rock != null && !(Math.hypot(rock.getX(), rock.getZ()) > 32.0)) {
                   for (BlockPos p : BlockPos.betweenClosed(rock.offset(-4, -5, -4), rock.offset(4, 5, 4))) {
@@ -646,79 +646,79 @@ final class AiEndRun {
                }
             }
 
-            AiOperation.Result init(String label, AiOperation op) {
+            AiOperation.Result startStep(String label, AiOperation op) {
                this.label = label;
-               this.init_AiOperation_Result = null;
+               this.lastChildResult = null;
                AiSpeedrun.log("[AI] end: {}", label);
-               this.init_AiOperation = AiRunDiagnostics.trace("end", label, op);
-               return this.init(label);
+               this.child = AiRunDiagnostics.trace("end", label, op);
+               return this.running(label);
             }
 
-            JsonObject init_JsonObject_61() {
+            JsonObject progressJson() {
                return AiJson.objectOf(
                   "dragonDead",
-                  this.load_Z,
+                  this.dragonDead,
                   "centralExitAttempted",
-                  this.read_Z,
+                  this.centralExitAttempted,
                   "creditsSeen",
-                  this.write_Z,
+                  this.creditsSeen,
                   "fountain",
-                  this.load_BlockPos == null ? "" : this.load_BlockPos.toShortString(),
+                  this.fountain == null ? "" : this.fountain.toShortString(),
                   "fights",
-                  this.read_I,
+                  this.fights,
                   "steps",
-                  this.init_JsonArray,
+                  this.steps,
                   "pendingChild",
-                  this.init_JsonObject == null ? new JsonObject() : this.init_JsonObject
+                  this.pendingChildEvidence == null ? new JsonObject() : this.pendingChildEvidence
                );
             }
 
-            AiOperation.Result init(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_61());
+            AiOperation.Result running(String message) {
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
-            void init_V_33() {
-               if (this.init_AiOperation != null) {
-                  boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
-                  this.init_Z |= pending;
-                  if (pending && this.init_AiOperation_Result != null) {
-                     this.init_JsonObject = AiRunResources.compactEvidenceJson(this.init_AiOperation_Result.dataJson());
+            void stopChild() {
+               if (this.child != null) {
+                  boolean pending = this.child.requiresReconciliationAfterEmergency();
+                  this.reconcilePending |= pending;
+                  if (pending && this.lastChildResult != null) {
+                     this.pendingChildEvidence = AiRunResources.compactEvidenceJson(this.lastChildResult.dataJson());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.child.cancel();
+                  this.child = null;
                }
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, this.init_AiOperation_Result);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finishWithChild(status, message, this.lastChildResult);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, AiOperation.Result child) {
+            AiOperation.Result finishWithChild(AiOperation.Status status, String message, AiOperation.Result child) {
                boolean pending = this.requiresReconciliationAfterEmergency();
-               AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.init_JsonObject_61(), pending, child);
-               this.init_Z = this.init_Z | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
-               this.init_V_33();
-               this.init_Y.cancel();
+               AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.progressJson(), pending, child);
+               this.reconcilePending = this.reconcilePending | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
+               this.stopChild();
+               this.guard.cancel();
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
                return result;
             }
 
             @Override
             public boolean canInterruptNow() {
-               return !this.init_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow()) && this.init_Y.canInterruptNow();
+               return !this.reconcilePending && (this.child == null || this.child.canInterruptNow()) && this.guard.canInterruptNow();
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.init_Z || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency() || this.init_Y.requiresReconciliation();
+               return this.reconcilePending || this.child != null && this.child.requiresReconciliationAfterEmergency() || this.guard.requiresReconciliation();
             }
 
             @Override
             public void cancel() {
-               this.init_Z = this.init_Z | this.requiresReconciliationAfterEmergency();
-               this.init_V_33();
-               this.init_Y.cancel();
+               this.reconcilePending = this.reconcilePending | this.requiresReconciliationAfterEmergency();
+               this.stopChild();
+               this.guard.cancel();
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
             }
          };

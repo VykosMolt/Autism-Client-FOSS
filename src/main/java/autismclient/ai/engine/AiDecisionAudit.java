@@ -25,39 +25,39 @@ public final class AiDecisionAudit {
    private static BlockState breakState;
    private static float maxProgress;
    private static float lastProgress;
-   private static int close;
+   private static int breakTicks;
    private static String breakStep = "";
    private static BlockPos lookPos;
-   private static int open;
+   private static int stareTicks;
    private static String lookStep = "";
    private static float startYaw;
    private static float startPitch;
    private static Vec3 startPosition;
    private static final ArrayDeque<AiDecisionAudit.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
-   private static int poll;
-   private static int push = -1000;
-   private static int pop;
-   private static int tick;
-   private static int run;
-   private static int get;
-   private static int set;
-   private static int put;
-   private static int add;
+   private static int tickCount;
+   private static int lastBacktrackTick = -1000;
+   private static int breaks;
+   private static int abandonedDigs;
+   private static int abandonedDigTicks;
+   private static int stares;
+   private static int stareTotalTicks;
+   private static int backtracks;
+   private static int loggedLines;
    static final int init_I = 7;
-   private static int clear = -1;
+   private static int lastBreakTick = -1;
    private static String read_Str = "";
    private static final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
-   private static int reset;
-   private static int start;
+   private static int longGaps;
+   private static int longGapTicks;
    static final float init_F = 2.5F;
    static final float load_F = 1.0F;
    static final int load_I = 10;
    private static final float[] init_FArr = new float[11];
    private static final float[] load_FArr = new float[11];
    private static final String[] init_StrArr = new String[11];
-   private static int stop;
-   private static int next;
-   private static int prev;
+   private static int ringFilled;
+   private static int ringNext;
+   private static int flips;
    public static volatile AiDecisionAudit.Inner_StreamUtil init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(0, 0, 0, 0, 0, 0, 0);
 
    public static boolean isDigging(Minecraft mc) {
@@ -79,18 +79,18 @@ public final class AiDecisionAudit {
    static void init(Minecraft mc, String step) {
       LocalPlayer player = mc.player;
       if (player != null && mc.level != null) {
-         poll++;
-         load(mc, step);
-         init(player.getYRot(), player.getXRot(), step);
-         read(mc, step);
-         init(player.position(), step);
+         tickCount++;
+         auditBreaking(mc, step);
+         auditFlips(player.getYRot(), player.getXRot(), step);
+         auditStare(mc, step);
+         auditBacktrack(player.position(), step);
          startYaw = player.getYRot();
          startPitch = player.getXRot();
          startPosition = player.position();
       }
    }
 
-   private static void load(Minecraft mc, String step) {
+   private static void auditBreaking(Minecraft mc, String step) {
       BlockPos now = null;
       float progress = 0.0F;
       if (mc.gameMode instanceof AutismMultiPlayerGameModeAccessor dig
@@ -105,24 +105,24 @@ public final class AiDecisionAudit {
          BlockState there = mc.level.getBlockState(breakPos);
          boolean gone = there.isAir() || there.getBlock() != breakState.getBlock();
          if (gone) {
-            pop++;
-            load(String.format(Locale.ROOT, "break %s at %s in %d ticks during '%s'", init(breakState), breakPos.toShortString(), close, breakStep));
-            clear = poll;
-            read_Str = init(breakState) + " " + breakPos.toShortString();
+            breaks++;
+            log(String.format(Locale.ROOT, "break %s at %s in %d ticks during '%s'", blockName(breakState), breakPos.toShortString(), breakTicks, breakStep));
+            lastBreakTick = tickCount;
+            read_Str = blockName(breakState) + " " + breakPos.toShortString();
             init_LinkedHashSet.clear();
             breakPos = null;
          } else if (now == null || !now.equals(breakPos)) {
             if (maxProgress >= 0.05F) {
-               tick++;
-               run = run + close;
-               load(
+               abandonedDigs++;
+               abandonedDigTicks = abandonedDigTicks + breakTicks;
+               log(
                   String.format(
                      Locale.ROOT,
                      "abandoned %s at %s at %.0f%% after %d ticks during '%s', now '%s'%s",
-                     init(breakState),
+                     blockName(breakState),
                      breakPos.toShortString(),
                      maxProgress * 100.0F,
-                     close,
+                     breakTicks,
                      breakStep,
                      step,
                      now == null ? "" : " digging " + now.toShortString()
@@ -134,47 +134,47 @@ public final class AiDecisionAudit {
          }
       }
 
-      if (now == null && clear >= 0) {
-         if (poll - clear > 200) {
-            clear = -1;
+      if (now == null && lastBreakTick >= 0) {
+         if (tickCount - lastBreakTick > 200) {
+            lastBreakTick = -1;
          } else if (init_LinkedHashSet.size() < 5) {
             init_LinkedHashSet.add(step.length() > 70 ? step.substring(0, 70) : step);
          }
       }
 
       if (now != null) {
-         if (breakPos == null && clear >= 0) {
-            int gap = poll - clear;
+         if (breakPos == null && lastBreakTick >= 0) {
+            int gap = tickCount - lastBreakTick;
             if (gap - 7 >= 3) {
-               reset++;
-               start += gap - 7;
-               load(
+               longGaps++;
+               longGapTicks += gap - 7;
+               log(
                   String.format(
                      Locale.ROOT,
                      "gap %d ticks (%d over the floor): %s -> %s %s, through %s",
                      gap,
                      gap - 7,
                      read_Str,
-                     init(mc.level.getBlockState(now)),
+                     blockName(mc.level.getBlockState(now)),
                      now.toShortString(),
                      init_LinkedHashSet
                   )
                );
             }
 
-            clear = -1;
+            lastBreakTick = -1;
          }
 
          if (breakPos == null) {
             breakPos = now;
             breakState = mc.level.getBlockState(now);
             maxProgress = 0.0F;
-            close = 0;
+            breakTicks = 0;
             breakStep = step;
          }
 
-         if (progress != lastProgress || close == 0) {
-            close++;
+         if (progress != lastProgress || breakTicks == 0) {
+            breakTicks++;
          }
 
          lastProgress = progress;
@@ -182,9 +182,9 @@ public final class AiDecisionAudit {
       }
    }
 
-   private static void init(float yaw, float pitch, String step) {
+   private static void auditFlips(float yaw, float pitch, String step) {
       int n = init_FArr.length;
-      int[] flip = auditFlip(init_FArr, load_FArr, next, stop, 10, 1.0F, 2.5F, yaw, pitch);
+      int[] flip = auditFlip(init_FArr, load_FArr, ringNext, ringFilled, 10, 1.0F, 2.5F, yaw, pitch);
       if (flip != null) {
          int k = flip[0];
          int then = flip[1];
@@ -192,12 +192,12 @@ public final class AiDecisionAudit {
          String during = init_StrArr[peak] == null ? "" : init_StrArr[peak];
          String lower = during.toLowerCase(Locale.ROOT);
          if (!lower.contains("bridge") && !lower.contains("telly") && !lower.contains("| cap ")) {
-            prev++;
-            load(
+            flips++;
+            log(
                String.format(
                   Locale.ROOT,
                   "flip %.1f deg over %d ticks (yaw %.1f pitch %.1f -> yaw %.1f pitch %.1f -> back) out during '%s', back during '%s'",
-                  init(init_FArr[peak], load_FArr[peak], init_FArr[then], load_FArr[then]),
+                  angleBetween(init_FArr[peak], load_FArr[peak], init_FArr[then], load_FArr[then]),
                   k,
                   init_FArr[then],
                   load_FArr[then],
@@ -209,14 +209,14 @@ public final class AiDecisionAudit {
             );
          }
 
-         stop = 0;
+         ringFilled = 0;
       }
 
-      init_FArr[next] = yaw;
-      load_FArr[next] = pitch;
-      init_StrArr[next] = step;
-      next = (next + 1) % n;
-      stop = Math.min(stop + 1, n);
+      init_FArr[ringNext] = yaw;
+      load_FArr[ringNext] = pitch;
+      init_StrArr[ringNext] = step;
+      ringNext = (ringNext + 1) % n;
+      ringFilled = Math.min(ringFilled + 1, n);
    }
 
    // Newest there-and-back turn in the ring: {ticks, then, peak}, or null. Shared with TaskTimer.
@@ -225,13 +225,13 @@ public final class AiDecisionAudit {
 
       for (int k = 2; k <= Math.min(filled, maxTicks); k++) {
          int then = Math.floorMod(next - k, n);
-         if (!(init(yaw, pitch, yaws[then], pitches[then]) > backWithin)) {
+         if (!(angleBetween(yaw, pitch, yaws[then], pitches[then]) > backWithin)) {
             float out = 0.0F;
             int peak = then;
 
             for (int j = 1; j < k; j++) {
                int at = Math.floorMod(next - j, n);
-               float a = init(yaws[at], pitches[at], yaws[then], pitches[then]);
+               float a = angleBetween(yaws[at], pitches[at], yaws[then], pitches[then]);
                if (a > out) {
                   out = a;
                   peak = at;
@@ -247,13 +247,13 @@ public final class AiDecisionAudit {
       return null;
    }
 
-   private static float init(float yawA, float pitchA, float yawB, float pitchB) {
+   private static float angleBetween(float yawA, float pitchA, float yawB, float pitchB) {
       float dy = Mth.wrapDegrees(yawA - yawB);
       float dp = pitchA - pitchB;
       return (float)Math.sqrt(dy * dy + dp * dp);
    }
 
-   private static void read(Minecraft mc, String step) {
+   private static void auditStare(Minecraft mc, String step) {
       LocalPlayer player = mc.player;
       boolean still = startPosition != null
          && player.position().distanceToSqr(startPosition) < 1.0E-4
@@ -274,41 +274,41 @@ public final class AiDecisionAudit {
             lookStep = step;
          }
 
-         open++;
+         stareTicks++;
       } else {
          init_V(mc);
       }
    }
 
    private static void init_V(Minecraft mc) {
-      if (lookPos != null && open >= 10) {
-         get++;
-         set = set + open;
-         load(
+      if (lookPos != null && stareTicks >= 10) {
+         stares++;
+         stareTotalTicks = stareTotalTicks + stareTicks;
+         log(
             String.format(
                Locale.ROOT,
                "stare %s at %s for %d ticks during '%s'",
-               mc.level == null ? "?" : init(mc.level.getBlockState(lookPos)),
+               mc.level == null ? "?" : blockName(mc.level.getBlockState(lookPos)),
                lookPos.toShortString(),
-               open,
+               stareTicks,
                lookStep
             )
          );
       }
 
       lookPos = null;
-      open = 0;
+      stareTicks = 0;
    }
 
-   private static void init(Vec3 pos, String step) {
-      if (poll % 10 == 0) {
-         init_ArrayDeque.addLast(new AiDecisionAudit.Inner_DataUtil(pos, poll, step));
+   private static void auditBacktrack(Vec3 pos, String step) {
+      if (tickCount % 10 == 0) {
+         init_ArrayDeque.addLast(new AiDecisionAudit.Inner_DataUtil(pos, tickCount, step));
 
          while (init_ArrayDeque.size() > 60) {
             init_ArrayDeque.removeFirst();
          }
 
-         if (poll - push >= 100) {
+         if (tickCount - lastBacktrackTick >= 100) {
             AiDecisionAudit.Inner_DataUtil[] all = init_ArrayDeque.toArray(new AiDecisionAudit.Inner_DataUtil[0]);
 
             for (int i = 0; i < all.length - 4; i++) {
@@ -326,16 +326,16 @@ public final class AiDecisionAudit {
                   }
 
                   if (!(far < 4.0)) {
-                     put++;
-                     push = poll;
-                     load(
+                     backtracks++;
+                     lastBacktrackTick = tickCount;
+                     log(
                         String.format(
                            Locale.ROOT,
                            "backtrack: back at %s after %.1f blocks away (to %s) over %.1f s; went out during '%s', came back during '%s'",
                            BlockPos.containing(start.pos).toShortString(),
                            far,
                            BlockPos.containing(peak.pos).toShortString(),
-                           (poll - start.tick) / 20.0,
+                           (tickCount - start.tick) / 20.0,
                            peak.step,
                            step
                         )
@@ -350,55 +350,55 @@ public final class AiDecisionAudit {
    }
 
    static void init(String op) {
-      if (poll > 0) {
+      if (tickCount > 0) {
          AutismClientAddon.LOG
             .info(
                String.format(
                   Locale.ROOT,
                   "[AI] decide %s: %d breaks, %d abandoned digs (%.1f s), %d stares (%.1f s), %d backtracks, %d long gaps (%.1f s over the floor), %d flips",
                   op,
-                  pop,
-                  tick,
-                  run / 20.0,
-                  get,
-                  set / 20.0,
-                  put,
-                  reset,
-                  start / 20.0,
-                  prev
+                  breaks,
+                  abandonedDigs,
+                  abandonedDigTicks / 20.0,
+                  stares,
+                  stareTotalTicks / 20.0,
+                  backtracks,
+                  longGaps,
+                  longGapTicks / 20.0,
+                  flips
                )
             );
-         init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(pop, tick, get, put, reset, start, prev);
+         init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(breaks, abandonedDigs, stares, backtracks, longGaps, longGapTicks, flips);
       }
 
       breakPos = null;
       lookPos = null;
-      open = 0;
+      stareTicks = 0;
       init_ArrayDeque.clear();
       startPosition = null;
-      add = 0;
-      put = 0;
-      set = 0;
-      get = 0;
-      run = 0;
-      tick = 0;
-      pop = 0;
-      poll = 0;
-      stop = 0;
-      prev = 0;
-      start = 0;
-      reset = 0;
-      clear = -1;
+      loggedLines = 0;
+      backtracks = 0;
+      stareTotalTicks = 0;
+      stares = 0;
+      abandonedDigTicks = 0;
+      abandonedDigs = 0;
+      breaks = 0;
+      tickCount = 0;
+      ringFilled = 0;
+      flips = 0;
+      longGapTicks = 0;
+      longGaps = 0;
+      lastBreakTick = -1;
       init_LinkedHashSet.clear();
-      push = -1000;
+      lastBacktrackTick = -1000;
    }
 
-   private static String init(BlockState state) {
+   private static String blockName(BlockState state) {
       return state == null ? "?" : BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
    }
 
-   private static void load(String line) {
-      if (++add <= 600) {
+   private static void log(String line) {
+      if (++loggedLines <= 600) {
          AutismClientAddon.LOG.info("[AI] decide " + line);
       }
    }

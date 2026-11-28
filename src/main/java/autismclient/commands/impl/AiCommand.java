@@ -25,7 +25,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 
 public final class AiCommand extends Command {
    private static final int init_I = 45;
-   private static final List<String> init_List = AiSettings.EFFORTS;
+   private static final List<String> EFFORTS = AiSettings.EFFORTS;
 
    public AiCommand() {
       super("ai", "Control the AI assistant: objectives, provider settings, speedrun, run trace.");
@@ -33,92 +33,92 @@ public final class AiCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(ctx -> this.init_I_2());
+      root.executes(ctx -> this.showHelp());
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("start")
-               .executes(ctx -> this.sync("Missing objective\nUsage: " + load_Str_2() + "ai start <objective...>")))
+               .executes(ctx -> this.sendError("Missing objective\nUsage: " + commandPrefix() + "ai start <objective...>")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("objective", StringArgumentType.greedyString())
-                  .executes(ctx -> this.init_I_Str_2(StringArgumentType.getString(ctx, "objective")))
+                  .executes(ctx -> this.start(StringArgumentType.getString(ctx, "objective")))
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
          AiService.getInstance().stopTask();
-         init_V_Str_2("§7AI task stopped.");
+         sendLine("§7AI task stopped.");
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("pause").executes(ctx -> {
          AiService.getInstance().pauseTask();
-         init_V_Str_2("§7AI task paused.");
+         sendLine("§7AI task paused.");
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("resume").executes(ctx -> {
          AiService.getInstance().resumeTask();
-         init_V_Str_2("§7AI task resumed (when one was paused).");
+         sendLine("§7AI task resumed (when one was paused).");
          return 1;
       }));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("status").executes(ctx -> this.load_I_2()));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("status").executes(ctx -> this.status()));
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("chat").executes(ctx -> this.load((String)null)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("chat").executes(ctx -> this.chat((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("instructions", StringArgumentType.greedyString())
-                  .executes(ctx -> this.load(StringArgumentType.getString(ctx, "instructions")))
+                  .executes(ctx -> this.chat(StringArgumentType.getString(ctx, "instructions")))
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("provider").executes(ctx -> this.read((String)null)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("provider").executes(ctx -> this.provider((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.word())
-                  .suggests(AiCommand::load)
-                  .executes(ctx -> this.read(StringArgumentType.getString(ctx, "name")))
+                  .suggests(AiCommand::suggestProviders)
+                  .executes(ctx -> this.provider(StringArgumentType.getString(ctx, "name")))
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("model").executes(ctx -> this.write((String)null)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("model").executes(ctx -> this.model((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("id", StringArgumentType.greedyString())
-                  .suggests(AiCommand::init_CompletableFuture_CommandContext_SuggestionsBuilder_2)
-                  .executes(ctx -> this.write(StringArgumentType.getString(ctx, "id")))
+                  .suggests(AiCommand::suggestModels)
+                  .executes(ctx -> this.model(StringArgumentType.getString(ctx, "id")))
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("effort").executes(ctx -> this.update((String)null)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("effort").executes(ctx -> this.effort((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("level", StringArgumentType.word())
-                  .suggests(AiCommand::read)
-                  .executes(ctx -> this.update(StringArgumentType.getString(ctx, "level")))
+                  .suggests(AiCommand::suggestEfforts)
+                  .executes(ctx -> this.effort(StringArgumentType.getString(ctx, "level")))
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("key").executes(ctx -> this.sync("Usage: " + load_Str_2() + "ai key <provider> <keyvalue>")))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("key").executes(ctx -> this.sendError("Usage: " + commandPrefix() + "ai key <provider> <keyvalue>")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("provider", StringArgumentType.word())
-                  .suggests(AiCommand::load)
+                  .suggests(AiCommand::suggestProviders)
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, String>argument("value", StringArgumentType.greedyString())
-                        .executes(ctx -> this.init_I_Str_Str_2(StringArgumentType.getString(ctx, "provider"), StringArgumentType.getString(ctx, "value")))
+                        .executes(ctx -> this.setKey(StringArgumentType.getString(ctx, "provider"), StringArgumentType.getString(ctx, "value")))
                   )
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("speedrun").executes(ctx -> this.init_I_I(45)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("speedrun").executes(ctx -> this.speedrun(45)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("minutes", IntegerArgumentType.integer(1))
                   .suggests(autismclient.commands.CommandSuggestions::poll)
-                  .executes(ctx -> this.init_I_I(IntegerArgumentType.getInteger(ctx, "minutes")))
+                  .executes(ctx -> this.speedrun(IntegerArgumentType.getInteger(ctx, "minutes")))
             )
       );
       root.then(
-         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("trace").executes(ctx -> this.load(10)))
+         ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("trace").executes(ctx -> this.trace(10)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("n", IntegerArgumentType.integer(1, 50))
                   .suggests(autismclient.commands.CommandSuggestions::push)
-                  .executes(ctx -> this.load(IntegerArgumentType.getInteger(ctx, "n")))
+                  .executes(ctx -> this.trace(IntegerArgumentType.getInteger(ctx, "n")))
             )
       );
    }
 
-   private static CompletableFuture<Suggestions> init_CompletableFuture_CommandContext_SuggestionsBuilder_2(
+   private static CompletableFuture<Suggestions> suggestModels(
       CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder
    ) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
@@ -150,36 +150,36 @@ public final class AiCommand extends Command {
       return builder.buildFuture();
    }
 
-   private int init_I_2() {
-      String t = load_Str_2() + "ai";
-      init_V_Str_2("§e" + t + " §7- drive the AI assistant");
-      init_V_Str_2("§7" + t + " start <objective...> §8· §7" + t + " stop §8· §7" + t + " pause §8· §7" + t + " resume §8· §7" + t + " status");
-      init_V_Str_2("§7" + t + " chat [instructions|stop|status] §8- keep a background conversation going without ending the task");
-      init_V_Str_2("§7" + t + " provider [name] §8· §7" + t + " model [id] §8· §7" + t + " effort [low|medium|high|max] §8· §7" + t + " key <provider> <key>");
-      init_V_Str_2("§7" + t + " speedrun [minutes] §8- beat the Ender Dragon in under N minutes (default 45)");
-      init_V_Str_2("§7" + t + " trace [n] §8- last n run-trace events (default 10, max 50)");
+   private int showHelp() {
+      String t = commandPrefix() + "ai";
+      sendLine("§e" + t + " §7- drive the AI assistant");
+      sendLine("§7" + t + " start <objective...> §8· §7" + t + " stop §8· §7" + t + " pause §8· §7" + t + " resume §8· §7" + t + " status");
+      sendLine("§7" + t + " chat [instructions|stop|status] §8- keep a background conversation going without ending the task");
+      sendLine("§7" + t + " provider [name] §8· §7" + t + " model [id] §8· §7" + t + " effort [low|medium|high|max] §8· §7" + t + " key <provider> <key>");
+      sendLine("§7" + t + " speedrun [minutes] §8- beat the Ender Dragon in under N minutes (default 45)");
+      sendLine("§7" + t + " trace [n] §8- last n run-trace events (default 10, max 50)");
       return 1;
    }
 
-   private int init_I_Str_2(String objective) {
+   private int start(String objective) {
       AiService service = AiService.getInstance();
-      if (init_Z_cc(service)) {
-         return this.sync("An objective is already executing - " + load_Str_2() + "ai stop first.");
+      if (isBusy(service)) {
+         return this.sendError("An objective is already executing - " + commandPrefix() + "ai stop first.");
       }
 
       service.submitPrompt(objective);
-      init_V_Str_2("§7Objective submitted: §f" + init_Str_Str_I(objective.trim(), 80));
+      sendLine("§7Objective submitted: §f" + flatClip(objective.trim(), 80));
       return 1;
    }
 
-   private int load(String instructions) {
+   private int chat(String instructions) {
       AiService service = AiService.getInstance();
       String text = instructions == null ? "" : instructions.trim();
       if (text.isEmpty() || text.equalsIgnoreCase("status")) {
-         init_V_Str_2("§eChat mode §7- " + (service.isChatModeActive() ? "§aactive" : "§7off") + "§7: §f" + init_Str_Str_I(service.getChatModeSummary(), 140));
+         sendLine("§eChat mode §7- " + (service.isChatModeActive() ? "§aactive" : "§7off") + "§7: §f" + flatClip(service.getChatModeSummary(), 140));
          JsonObject status = service.getChatModeStatusJson();
          if (status.has("replies")) {
-            init_V_Str_2(
+            sendLine(
                "§7replies: §f" + status.get("replies") + " §8· §7pending: §f" + status.get("pending") + " §8· §7requests: §f" + status.get("requests")
             );
          }
@@ -187,100 +187,100 @@ public final class AiCommand extends Command {
          return 1;
       } else if (!text.equalsIgnoreCase("stop") && !text.equalsIgnoreCase("off")) {
          JsonObject result = service.startChatMode(text);
-         if ("FAILED".equalsIgnoreCase(init_Str_JsonObject_Str(result, "status"))) {
-            return this.sync(init_Str_JsonObject_Str(result, "error"));
+         if ("FAILED".equalsIgnoreCase(stringField(result, "status"))) {
+            return this.sendError(stringField(result, "error"));
          }
 
-         init_V_Str_2("§7Chat mode started/updated: §f" + init_Str_Str_I(service.getChatModeSummary(), 120));
-         init_V_Str_2("§8It answers players in the background and never owns movement; " + load_Str_2() + "ai chat stop ends it.");
+         sendLine("§7Chat mode started/updated: §f" + flatClip(service.getChatModeSummary(), 120));
+         sendLine("§8It answers players in the background and never owns movement; " + commandPrefix() + "ai chat stop ends it.");
          return 1;
       } else {
          service.stopChatMode("Chat mode stopped by user");
-         init_V_Str_2("§7Chat mode stopped. The current objective, if any, keeps running.");
+         sendLine("§7Chat mode stopped. The current objective, if any, keeps running.");
          return 1;
       }
    }
 
-   private static String init_Str_JsonObject_Str(JsonObject object, String key) {
+   private static String stringField(JsonObject object, String key) {
       return object != null && object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString() : "";
    }
 
-   private int load_I_2() {
+   private int status() {
       AiService service = AiService.getInstance();
       AiSettings settings = service.getSettings();
-      init_V_Str_2("§eAI Assistant §7- state: §f" + service.getRunState());
-      init_V_Str_2("§7progress: §f" + (service.getStatusLine().isBlank() ? "-" : init_Str_Str_I(service.getStatusLine(), 100)));
-      init_V_Str_2("§7provider: §f" + settings.provider + " §8· §7model: §f" + settings.model + " §8· §7effort: §f" + settings.effort);
+      sendLine("§eAI Assistant §7- state: §f" + service.getRunState());
+      sendLine("§7progress: §f" + (service.getStatusLine().isBlank() ? "-" : flatClip(service.getStatusLine(), 100)));
+      sendLine("§7provider: §f" + settings.provider + " §8· §7model: §f" + settings.model + " §8· §7effort: §f" + settings.effort);
       String objective = service.getObjective();
-      init_V_Str_2("§7elapsed: §f" + init_Str_J(service.getElapsedTaskMillis()) + " §8· §7objective: §f" + (objective.isBlank() ? "-" : init_Str_Str_I(objective, 80)));
+      sendLine("§7elapsed: §f" + formatDuration(service.getElapsedTaskMillis()) + " §8· §7objective: §f" + (objective.isBlank() ? "-" : flatClip(objective, 80)));
       if (service.isChatModeActive()) {
-         init_V_Str_2("§7chat: §aactive §8· §f" + init_Str_Str_I(service.getChatModeSummary(), 120));
+         sendLine("§7chat: §aactive §8· §f" + flatClip(service.getChatModeSummary(), 120));
       }
 
       return 1;
    }
 
-   private int read(String name) {
+   private int provider(String name) {
       AiService service = AiService.getInstance();
       if (name == null) {
-         init_V_Str_2("§7provider: §f" + service.getSettings().provider + " §8(providers: " + init_Str_2() + ")");
+         sendLine("§7provider: §f" + service.getSettings().provider + " §8(providers: " + providerList() + ")");
          return 1;
       }
 
       String normalized = name.trim().toUpperCase(Locale.ROOT);
       if (!service.selectProvider(normalized)) {
-         return this.sync("Unknown provider '" + name + "'\nProviders: " + init_Str_2());
+         return this.sendError("Unknown provider '" + name + "'\nProviders: " + providerList());
       }
 
-      init_V_Str_2("§7Provider set to §f" + normalized + "§7 (stock endpoint/model restored); saving and testing the connection in the background.");
+      sendLine("§7Provider set to §f" + normalized + "§7 (stock endpoint/model restored); saving and testing the connection in the background.");
       return 1;
    }
 
-   private int write(String id) {
+   private int model(String id) {
       AiService service = AiService.getInstance();
       if (id == null) {
-         init_V_Str_2("§7model: §f" + service.getSettings().model);
+         sendLine("§7model: §f" + service.getSettings().model);
          return 1;
       }
 
       if (id.isBlank()) {
-         return this.sync("Model id is blank; nothing changed.");
+         return this.sendError("Model id is blank; nothing changed.");
       }
 
       service.selectModel(id.trim());
-      init_V_Str_2("§7Model set to §f" + id.trim() + "§7; saving in the background.");
+      sendLine("§7Model set to §f" + id.trim() + "§7; saving in the background.");
       return 1;
    }
 
-   private int update(String level) {
+   private int effort(String level) {
       AiService service = AiService.getInstance();
       if (level == null) {
-         init_V_Str_2("§7effort: §f" + service.getSettings().effort);
+         sendLine("§7effort: §f" + service.getSettings().effort);
          return 1;
       }
 
       String normalized = level.trim().toLowerCase(Locale.ROOT);
-      if (!init_List.contains(normalized)) {
-         return this.sync("Unknown effort '" + level + "' (low|medium|high|max)");
+      if (!EFFORTS.contains(normalized)) {
+         return this.sendError("Unknown effort '" + level + "' (low|medium|high|max)");
       }
 
       service.setEffortLevel(normalized);
-      init_V_Str_2("§7Effort set to §f" + normalized);
+      sendLine("§7Effort set to §f" + normalized);
       return 1;
    }
 
-   private int init_I_Str_Str_2(String provider, String value) {
+   private int setKey(String provider, String value) {
       if (value != null && !value.isBlank()) {
          auditForgetKeyLine(value.trim());
          String normalized = provider.trim().toUpperCase(Locale.ROOT);
          if (!AiService.getInstance().setProviderKey(normalized, value.trim())) {
-            return this.sync("Could not set the key for '" + provider + "' (unknown provider, or protected credential storage unavailable).");
+            return this.sendError("Could not set the key for '" + provider + "' (unknown provider, or protected credential storage unavailable).");
          }
 
-         init_V_Str_2("§7Key sealed and saved for §f" + normalized + "§7; it is never shown again.");
+         sendLine("§7Key sealed and saved for §f" + normalized + "§7; it is never shown again.");
          return 1;
       } else {
-         return this.sync("Key value is blank; nothing changed.");
+         return this.sendError("Key value is blank; nothing changed.");
       }
    }
 
@@ -300,47 +300,47 @@ public final class AiCommand extends Command {
       });
    }
 
-   private int init_I_I(int minutes) {
+   private int speedrun(int minutes) {
       AiService service = AiService.getInstance();
-      if (init_Z_cc(service)) {
-         return this.sync("An objective is already executing - " + load_Str_2() + "ai stop first.");
+      if (isBusy(service)) {
+         return this.sendError("An objective is already executing - " + commandPrefix() + "ai stop first.");
       }
 
       String objective = "Beat the Ender Dragon in this survival world in under "
          + minutes
          + " minutes, using only legitimate survival actions (no cheats): gear up, obtain blaze rods and ender pearls, find and light the End portal, and kill the Ender Dragon. Move fast, skip anything that does not shorten the run, and when the dragon is dead finish with outcome completed and postcondition {\"kind\":\"beat_game\"}.";
       service.submitPrompt(objective);
-      init_V_Str_2("§7Speedrun submitted: beat the Ender Dragon in under §f" + minutes + " minutes§7.");
+      sendLine("§7Speedrun submitted: beat the Ender Dragon in under §f" + minutes + " minutes§7.");
       return 1;
    }
 
-   private int load(int n) {
+   private int trace(int n) {
       AiRunTrace trace = AiRunTrace.current();
       if (trace == null) {
-         init_V_Str_2("§7No run trace yet - start an objective first.");
+         sendLine("§7No run trace yet - start an objective first.");
          return 1;
       }
 
       List<String> lines = trace.tailLines(Math.min(50, Math.max(1, n)));
       if (lines.isEmpty()) {
-         init_V_Str_2("§7Trace is empty (" + trace.filePath().getFileName() + ").");
+         sendLine("§7Trace is empty (" + trace.filePath().getFileName() + ").");
          return 1;
       }
 
-      init_V_Str_2("§eLast " + lines.size() + " trace events §8(" + trace.filePath().getFileName() + "):");
+      sendLine("§eLast " + lines.size() + " trace events §8(" + trace.filePath().getFileName() + "):");
 
       for (String line : lines) {
-         init_V_Str_2("§8" + init_Str_Str_I(line, 220));
+         sendLine("§8" + flatClip(line, 220));
       }
 
       return 1;
    }
 
-   private static boolean init_Z_cc(AiService service) {
+   private static boolean isBusy(AiService service) {
       return service.getRunState() == AiService.RunState.RUNNING || service.getRunState() == AiService.RunState.PLANNING;
    }
 
-   private static String init_Str_2() {
+   private static String providerList() {
       StringBuilder out = new StringBuilder();
 
       for (AiSettings.Provider provider : AiSettings.Provider.values()) {
@@ -354,12 +354,12 @@ public final class AiCommand extends Command {
       return out.toString();
    }
 
-   private static String init_Str_Str_I(String text, int max) {
+   private static String flatClip(String text, int max) {
       String flat = text.replaceAll("\\s+", " ").trim();
       return flat.length() <= max ? flat : flat.substring(0, max - 1) + "…";
    }
 
-   private static String init_Str_J(long millis) {
+   private static String formatDuration(long millis) {
       long seconds = Math.max(0L, millis / 1000L);
       if (seconds >= 3600L) {
          return seconds / 3600L + "h " + seconds % 3600L / 60L + "m";
@@ -368,7 +368,7 @@ public final class AiCommand extends Command {
       }
    }
 
-   private static CompletableFuture<Suggestions> load(CommandContext<AutismCommandSource> context, SuggestionsBuilder builder) {
+   private static CompletableFuture<Suggestions> suggestProviders(CommandContext<AutismCommandSource> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (AiSettings.Provider provider : AiSettings.Provider.values()) {
@@ -380,10 +380,10 @@ public final class AiCommand extends Command {
       return builder.buildFuture();
    }
 
-   private static CompletableFuture<Suggestions> read(CommandContext<AutismCommandSource> context, SuggestionsBuilder builder) {
+   private static CompletableFuture<Suggestions> suggestEfforts(CommandContext<AutismCommandSource> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (String effort : init_List) {
+      for (String effort : EFFORTS) {
          if (effort.startsWith(remaining)) {
             builder.suggest(effort);
          }
@@ -392,19 +392,19 @@ public final class AiCommand extends Command {
       return builder.buildFuture();
    }
 
-   private int sync(String message) {
+   private int sendError(String message) {
       for (String line : (message == null ? "error" : message).split("\n")) {
-         AutismClientMessaging.sendPrefixed((line.startsWith("Usage:") ? "§e" : "§c") + line.replace(".ai", load_Str_2() + "ai"));
+         AutismClientMessaging.sendPrefixed((line.startsWith("Usage:") ? "§e" : "§c") + line.replace(".ai", commandPrefix() + "ai"));
       }
 
       return 1;
    }
 
-   private static void init_V_Str_2(String line) {
-      AutismClientMessaging.sendPrefixed(line.replace(".ai", load_Str_2() + "ai"));
+   private static void sendLine(String line) {
+      AutismClientMessaging.sendPrefixed(line.replace(".ai", commandPrefix() + "ai"));
    }
 
-   private static String load_Str_2() {
+   private static String commandPrefix() {
       return autismclient.commands.CommandManager.getPrefix();
    }
 }

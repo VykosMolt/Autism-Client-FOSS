@@ -31,7 +31,7 @@ final class AiTrade {
    private static final int read = 30;
    private static final double init_D = 32.0;
    private static final int write = 3000;
-   static final Set<String> init_Set = Set.of(
+   static final Set<String> JOB_SITE_BLOCKS = Set.of(
       "minecraft:lectern",
       "minecraft:composter",
       "minecraft:barrel",
@@ -53,7 +53,7 @@ final class AiTrade {
    private AiTrade() {
    }
 
-   static boolean init(List<Integer> offerUses) {
+   static boolean isUntraded(List<Integer> offerUses) {
       for (int uses : offerUses) {
          if (uses > 0) {
             return false;
@@ -66,7 +66,7 @@ final class AiTrade {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiTrade.Inner_DataUtil action = init(AiJson.getString(args, "action", "inspect"));
+         final AiTrade.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
          final int entityId = AiJson.getInt(args, "entityId", -1);
          final int tradeIndex = AiJson.getInt(args, "tradeIndex", -1);
          final String wanted = AiJson.getString(args, "item", "");
@@ -81,84 +81,84 @@ final class AiTrade {
 
          final AiItems.ItemSpec wantedTarget = wanted.isBlank() ? null : AiItems.resolveItem(wanted);
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
             final autismclient.ai.engine.AiBlockDigger init_RefQueue_DataUtil = new autismclient.ai.engine.AiBlockDigger(
-               mc, this::init, this.init_DataUtil::aimAt, true, true, this.init_DataUtil::tick
+               mc, this::selectSlot, this.aim::aimAt, true, true, this.aim::tick
             );
-            AiOperation init_AiOperation;
-            Entity init_Entity;
-            int init_I = -1;
-            int load_I;
-            int read_I = -1;
-            int write;
-            int update;
-            int sync;
-            long load_J = -1L;
-            final int flush = mc.player.getInventory().getSelectedSlot();
-            ItemStack init_ItemStack = ItemStack.EMPTY;
-            int close;
-            boolean init_Z;
-            boolean load_Z;
-            boolean read_Z;
-            int open;
-            int poll;
-            int push;
-            int pop;
-            BlockPos init_BlockPos;
-            Item init_Item;
+            AiOperation leg;
+            Entity trader;
+            int menuContainerId = -1;
+            int openAttempts;
+            int offerIndex = -1;
+            int resultWaitTicks;
+            int serverWaitTicks;
+            int completedTrades;
+            long pendingRevision = -1L;
+            final int originalSlot = mc.player.getInventory().getSelectedSlot();
+            ItemStack pendingResult = ItemStack.EMPTY;
+            int resultCountBefore;
+            boolean cancelled;
+            boolean waitingRestock;
+            boolean restocked;
+            int restockWaitTicks;
+            int rerolls;
+            int rerollPhase;
+            int rerollPhaseTicks;
+            BlockPos jobSite;
+            Item jobSiteItem;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Trade deadline reached after " + this.sync + " trade(s)");
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Trade deadline reached after " + this.completedTrades + " trade(s)");
                   }
 
                   if (!(mc.player.containerMenu instanceof MerchantMenu)) {
-                     if (this.init_I >= 0) {
-                        return this.init(
-                           this.sync > 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "The trade screen closed after " + this.sync + " trade(s)"
+                     if (this.menuContainerId >= 0) {
+                        return this.finish(
+                           this.completedTrades > 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "The trade screen closed after " + this.completedTrades + " trade(s)"
                         );
                      }
 
-                     AiOperation.Result open = this.init_AiOperation_Result_30();
+                     AiOperation.Result open = this.openTradeScreen();
                      if (open != null) {
                         return open;
                      }
                   }
 
                   MerchantMenu menu = (MerchantMenu)mc.player.containerMenu;
-                  this.init_I = menu.containerId;
+                  this.menuContainerId = menu.containerId;
                   if (menu.getOffers().isEmpty()) {
-                     return this.init(AiOperation.Status.FAILED, "This trader has no offers");
+                     return this.finish(AiOperation.Status.FAILED, "This trader has no offers");
                   }
 
                   if (action == AiTrade.Inner_DataUtil.INSPECT) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Read " + menu.getOffers().size() + " offer(s)");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Read " + menu.getOffers().size() + " offer(s)");
                   }
 
-                  if (this.load_Z) {
-                     MerchantOffer offer = menu.getOffers().get(this.read_I);
+                  if (this.waitingRestock) {
+                     MerchantOffer offer = menu.getOffers().get(this.offerIndex);
                      if (!offer.isOutOfStock()) {
-                        this.load_Z = false;
-                        this.open = 0;
-                        this.read_Z = true;
-                        return this.init_AiOperation_Result_12("Offer restocked");
-                     } else if (++this.open <= 3000) {
-                        return this.init_AiOperation_Result_12("Waiting for the trader to restock");
+                        this.waitingRestock = false;
+                        this.restockWaitTicks = 0;
+                        this.restocked = true;
+                        return this.running("Offer restocked");
+                     } else if (++this.restockWaitTicks <= 3000) {
+                        return this.running("Waiting for the trader to restock");
                      } else {
-                        return this.sync > 0
-                           ? this.init(AiOperation.Status.SUCCEEDED, "Offer did not restock within the wait cap after " + this.sync + " trade(s)")
-                           : this.init(AiFailure.OUT_OF_STOCK, "Offer did not restock within the wait cap after " + this.sync + " trade(s)");
+                        return this.completedTrades > 0
+                           ? this.finish(AiOperation.Status.SUCCEEDED, "Offer did not restock within the wait cap after " + this.completedTrades + " trade(s)")
+                           : this.fail(AiFailure.OUT_OF_STOCK, "Offer did not restock within the wait cap after " + this.completedTrades + " trade(s)");
                      }
                   } else {
-                     if (this.read_I < 0) {
-                        this.read_I = this.init_I(menu);
-                        if (this.read_I < 0) {
+                     if (this.offerIndex < 0) {
+                        this.offerIndex = this.findOfferIndex(menu);
+                        if (this.offerIndex < 0) {
                            if (wantedTarget == null || !reroll) {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  wantedTarget == null
                                     ? "Trade index " + tradeIndex + " is not an offer on this trader"
@@ -166,119 +166,119 @@ final class AiTrade {
                               );
                            }
 
-                           AiOperation.Result rolling = this.init_AiOperation_Result(menu);
+                           AiOperation.Result rolling = this.rerollStep(menu);
                            if (rolling != null) {
                               return rolling;
                            }
 
-                           this.read_I = this.init_I(menu);
-                           if (this.read_I < 0) {
-                              if (this.poll >= rerollAttempts) {
-                                 return this.init(AiFailure.OUT_OF_STOCK, "No offer on this trader produces " + wanted + " after " + this.poll + " reroll(s)");
+                           this.offerIndex = this.findOfferIndex(menu);
+                           if (this.offerIndex < 0) {
+                              if (this.rerolls >= rerollAttempts) {
+                                 return this.fail(AiFailure.OUT_OF_STOCK, "No offer on this trader produces " + wanted + " after " + this.rerolls + " reroll(s)");
                               }
 
-                              return this.init_AiOperation_Result_12("Rerolled offers lack " + wanted + "; rolling again");
+                              return this.running("Rerolled offers lack " + wanted + "; rolling again");
                            }
                         }
 
-                        MerchantOffer offer = menu.getOffers().get(this.read_I);
+                        MerchantOffer offer = menu.getOffers().get(this.offerIndex);
                         if (offer.isOutOfStock()) {
                            if (waitRestock) {
-                              this.load_Z = true;
-                              this.open = 0;
-                              return this.init_AiOperation_Result_12("Offer is out of stock; waiting for the trader to restock");
+                              this.waitingRestock = true;
+                              this.restockWaitTicks = 0;
+                              return this.running("Offer is out of stock; waiting for the trader to restock");
                            }
 
-                           return this.init(AiFailure.OUT_OF_STOCK, "Offer " + this.read_I + " is out of stock until the trader restocks");
+                           return this.fail(AiFailure.OUT_OF_STOCK, "Offer " + this.offerIndex + " is out of stock until the trader restocks");
                         }
 
-                        if (!this.init_Z(offer)) {
-                           return this.init(AiOperation.Status.FAILED, "Cannot afford offer " + this.read_I + ": needs " + this.init_Str(offer));
+                        if (!this.canAfford(offer)) {
+                           return this.finish(AiOperation.Status.FAILED, "Cannot afford offer " + this.offerIndex + ": needs " + this.costText(offer));
                         }
                      }
 
-                     if (this.sync >= count) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Completed " + this.sync + " trade(s)");
+                     if (this.completedTrades >= count) {
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Completed " + this.completedTrades + " trade(s)");
                      }
 
-                     MerchantOffer offer = menu.getOffers().get(this.read_I);
+                     MerchantOffer offer = menu.getOffers().get(this.offerIndex);
                      if (offer.isOutOfStock()) {
                         if (waitRestock) {
-                           this.load_Z = true;
-                           this.open = 0;
-                           return this.init_AiOperation_Result_12("Offer ran out of stock; waiting for the trader to restock");
+                           this.waitingRestock = true;
+                           this.restockWaitTicks = 0;
+                           return this.running("Offer ran out of stock; waiting for the trader to restock");
                         } else {
-                           return this.sync > 0
-                              ? this.init(AiOperation.Status.SUCCEEDED, "Offer ran out of stock after " + this.sync + " of " + count + " trade(s)")
-                              : this.init(AiFailure.OUT_OF_STOCK, "Offer ran out of stock after " + this.sync + " of " + count + " trade(s)");
+                           return this.completedTrades > 0
+                              ? this.finish(AiOperation.Status.SUCCEEDED, "Offer ran out of stock after " + this.completedTrades + " of " + count + " trade(s)")
+                              : this.fail(AiFailure.OUT_OF_STOCK, "Offer ran out of stock after " + this.completedTrades + " of " + count + " trade(s)");
                         }
                      } else {
-                        if (!this.init_Z(offer)) {
-                           return this.init(
-                              this.sync > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                              "Ran out of payment after " + this.sync + " of " + count + " trade(s); needs " + this.init_Str(offer)
+                        if (!this.canAfford(offer)) {
+                           return this.finish(
+                              this.completedTrades > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
+                              "Ran out of payment after " + this.completedTrades + " of " + count + " trade(s); needs " + this.costText(offer)
                            );
                         }
 
-                        if (this.load_J < 0L) {
-                           mc.getConnection().send(new ServerboundSelectTradePacket(this.read_I));
-                           menu.setSelectionHint(this.read_I);
-                           menu.tryMoveItems(this.read_I);
+                        if (this.pendingRevision < 0L) {
+                           mc.getConnection().send(new ServerboundSelectTradePacket(this.offerIndex));
+                           menu.setSelectionHint(this.offerIndex);
+                           menu.tryMoveItems(this.offerIndex);
                            ItemStack result = menu.getSlot(2).getItem();
                            if (!result.isEmpty()) {
-                              this.write = 0;
-                              if (!this.init_Z_2(result)) {
-                                 return this.init(
-                                    this.sync > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                                    "No inventory room for the trade result after " + this.sync + " of " + count + " trade(s)"
+                              this.resultWaitTicks = 0;
+                              if (!this.hasRoomFor(result)) {
+                                 return this.finish(
+                                    this.completedTrades > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
+                                    "No inventory room for the trade result after " + this.completedTrades + " of " + count + " trade(s)"
                                  );
                               }
 
-                              this.load_J = AiServerEvidence.containerRevision(this.init_I);
-                              this.init_ItemStack = result.copy();
-                              this.close = this.init_I(result);
-                              AiContainerTransactions.sendPredictedClick(this.init_I, 2, 0, ContainerInput.QUICK_MOVE);
-                              return this.init_AiOperation_Result_12("Taking trade " + (this.sync + 1) + "/" + count);
+                              this.pendingRevision = AiServerEvidence.containerRevision(this.menuContainerId);
+                              this.pendingResult = result.copy();
+                              this.resultCountBefore = this.countHeld(result);
+                              AiContainerTransactions.sendPredictedClick(this.menuContainerId, 2, 0, ContainerInput.QUICK_MOVE);
+                              return this.running("Taking trade " + (this.completedTrades + 1) + "/" + count);
                            } else {
-                              return ++this.write > 30
-                                 ? this.init(
-                                    this.sync > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                                    "The trader did not fill the result slot after " + this.sync + " trade(s)"
+                              return ++this.resultWaitTicks > 30
+                                 ? this.finish(
+                                    this.completedTrades > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
+                                    "The trader did not fill the result slot after " + this.completedTrades + " trade(s)"
                                  )
-                                 : this.init_AiOperation_Result_12("Selecting offer " + this.read_I);
+                                 : this.running("Selecting offer " + this.offerIndex);
                            }
-                        } else if (AiServerEvidence.containerRevision(this.init_I) <= this.load_J) {
-                           return ++this.update > 40
-                              ? this.init(AiOperation.Status.UNCERTAIN, "A trade was not confirmed by the server; reobserve before repeating")
-                              : this.init_AiOperation_Result_12("Waiting for the server to apply the trade");
-                        } else if (this.init_I(this.init_ItemStack) > this.close) {
-                           this.sync++;
-                           this.load_J = -1L;
-                           this.init_ItemStack = ItemStack.EMPTY;
-                           this.update = 0;
-                           this.write = 0;
-                           return this.init_AiOperation_Result_12("Trade " + this.sync + "/" + count + " confirmed");
+                        } else if (AiServerEvidence.containerRevision(this.menuContainerId) <= this.pendingRevision) {
+                           return ++this.serverWaitTicks > 40
+                              ? this.finish(AiOperation.Status.UNCERTAIN, "A trade was not confirmed by the server; reobserve before repeating")
+                              : this.running("Waiting for the server to apply the trade");
+                        } else if (this.countHeld(this.pendingResult) > this.resultCountBefore) {
+                           this.completedTrades++;
+                           this.pendingRevision = -1L;
+                           this.pendingResult = ItemStack.EMPTY;
+                           this.serverWaitTicks = 0;
+                           this.resultWaitTicks = 0;
+                           return this.running("Trade " + this.completedTrades + "/" + count + " confirmed");
                         } else {
-                           this.load_J = -1L;
-                           this.init_ItemStack = ItemStack.EMPTY;
-                           this.update = 0;
-                           return this.init(
+                           this.pendingRevision = -1L;
+                           this.pendingResult = ItemStack.EMPTY;
+                           this.serverWaitTicks = 0;
+                           return this.finish(
                               AiOperation.Status.UNCERTAIN, "The server updated but no trade result reached the inventory; reobserve before repeating"
                            );
                         }
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Trade cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Trade cancelled");
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_30() {
-               if (this.init_Entity == null || !this.init_Entity.isAlive()) {
-                  this.init_Entity = this.init_Entity_6();
-                  this.load_I = 0;
-                  if (this.init_Entity == null) {
-                     return this.init(
+            AiOperation.Result openTradeScreen() {
+               if (this.trader == null || !this.trader.isAlive()) {
+                  this.trader = this.findTrader();
+                  this.openAttempts = 0;
+                  if (this.trader == null) {
+                     return this.finish(
                         AiOperation.Status.FAILED,
                         entityId >= 0 ? "Entity " + entityId + " is not a live trader" : "No villager or wandering trader within 32 blocks"
                      );
@@ -286,46 +286,46 @@ final class AiTrade {
                }
 
                double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
-               if (mc.player.distanceTo(this.init_Entity) > reach * 0.9) {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.travelToCompat(
-                        this.init_Entity.blockPosition(), 2.0, false, false, true, Math.min(120, this.init_I_31())
+               if (mc.player.distanceTo(this.trader) > reach * 0.9) {
+                  if (this.leg == null) {
+                     this.leg = AiGoto.travelToCompat(
+                        this.trader.blockPosition(), 2.0, false, false, true, Math.min(120, this.remainingSeconds())
                      );
                   }
 
-                  AiOperation.Result legResult = this.init_AiOperation.tick();
+                  AiOperation.Result legResult = this.leg.tick();
                   if (!legResult.terminal()) {
-                     return this.init_AiOperation_Result_12("Walking to the trader");
+                     return this.running("Walking to the trader");
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.leg.cancel();
+                  this.leg = null;
                   return legResult.status() != AiOperation.Status.SUCCEEDED
-                     ? this.init(AiOperation.Status.FAILED, "No route to the trader: " + legResult.message())
-                     : this.init_AiOperation_Result_12("Arrived at the trader");
+                     ? this.finish(AiOperation.Status.FAILED, "No route to the trader: " + legResult.message())
+                     : this.running("Arrived at the trader");
                } else {
-                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
-                  this.init_DataUtil.tick();
-                  if (++this.load_I > 80) {
-                     return this.init(AiOperation.Status.FAILED, "Could not open the trade screen");
+                  this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.trader));
+                  this.aim.tick();
+                  if (++this.openAttempts > 80) {
+                     return this.finish(AiOperation.Status.FAILED, "Could not open the trade screen");
                   }
 
-                  if (!autismclient.ai.engine.AiAim.isLookingAtEntity(this.init_Entity)) {
-                     return this.init_AiOperation_Result_12("Turning toward the trader");
+                  if (!autismclient.ai.engine.AiAim.isLookingAtEntity(this.trader)) {
+                     return this.running("Turning toward the trader");
                   }
 
                   mc.gameMode
                      .interact(
                         mc.player,
-                        this.init_Entity,
-                        new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.defaultEntityAimPoint(this.init_Entity)),
+                        this.trader,
+                        new EntityHitResult(this.trader, autismclient.ai.engine.AiAim.defaultEntityAimPoint(this.trader)),
                         InteractionHand.MAIN_HAND
                      );
-                  return mc.player.containerMenu instanceof MerchantMenu ? null : this.init_AiOperation_Result_12("Opening the trade screen");
+                  return mc.player.containerMenu instanceof MerchantMenu ? null : this.running("Opening the trade screen");
                }
             }
 
-            Entity init_Entity_6() {
+            Entity findTrader() {
                if (entityId < 0) {
                   Entity best = null;
                   double bestDistance = 1024.0;
@@ -347,7 +347,7 @@ final class AiTrade {
                }
             }
 
-            int init_I(MerchantMenu menu) {
+            int findOfferIndex(MerchantMenu menu) {
                if (tradeIndex >= 0) {
                   return tradeIndex < menu.getOffers().size() ? tradeIndex : -1;
                }
@@ -368,11 +368,11 @@ final class AiTrade {
                return -1;
             }
 
-            boolean init_Z(MerchantOffer offer) {
-               return this.load(offer.getCostA()) && this.load(offer.getCostB());
+            boolean canAfford(MerchantOffer offer) {
+               return this.hasCost(offer.getCostA()) && this.hasCost(offer.getCostB());
             }
 
-            int init_I(ItemStack stack) {
+            int countHeld(ItemStack stack) {
                int total = 0;
 
                for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
@@ -385,7 +385,7 @@ final class AiTrade {
                return total;
             }
 
-            boolean init_Z_2(ItemStack stack) {
+            boolean hasRoomFor(ItemStack stack) {
                if (AiItems.countFreeSlots() > 0) {
                   return true;
                }
@@ -400,7 +400,7 @@ final class AiTrade {
                return false;
             }
 
-            boolean load(ItemStack cost) {
+            boolean hasCost(ItemStack cost) {
                if (cost.isEmpty()) {
                   return true;
                }
@@ -421,89 +421,89 @@ final class AiTrade {
                return false;
             }
 
-            String init_Str(MerchantOffer offer) {
-               StringBuilder text = new StringBuilder(AiTrade.init(offer.getCostA()));
+            String costText(MerchantOffer offer) {
+               StringBuilder text = new StringBuilder(AiTrade.stackText(offer.getCostA()));
                if (!offer.getCostB().isEmpty()) {
-                  text.append(" + ").append(AiTrade.init(offer.getCostB()));
+                  text.append(" + ").append(AiTrade.stackText(offer.getCostB()));
                }
 
                return text.toString();
             }
 
-            AiOperation.Result init_AiOperation_Result(MerchantMenu menu) {
-               if (this.poll >= rerollAttempts) {
+            AiOperation.Result rerollStep(MerchantMenu menu) {
+               if (this.rerolls >= rerollAttempts) {
                   return null;
                }
 
-               if (this.push != 0) {
-                  if (this.push == 1) {
-                     if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.init_BlockPos) == null) {
-                        this.init_AiOperation = AiGoto.approachBlockCompat(this.init_BlockPos, Math.min(60, this.init_I_31()));
-                        return this.init_AiOperation_Result_12("Approaching the job-site block");
+               if (this.rerollPhase != 0) {
+                  if (this.rerollPhase == 1) {
+                     if (this.leg == null && autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.jobSite) == null) {
+                        this.leg = AiGoto.approachBlockCompat(this.jobSite, Math.min(60, this.remainingSeconds()));
+                        return this.running("Approaching the job-site block");
                      }
 
-                     this.init_DataUtil.aimAt(Vec3.atCenterOf(this.init_BlockPos));
-                     this.init_DataUtil.tick();
-                     switch (this.init_RefQueue_DataUtil.digCompat(this.init_BlockPos)) {
+                     this.aim.aimAt(Vec3.atCenterOf(this.jobSite));
+                     this.aim.tick();
+                     switch (this.init_RefQueue_DataUtil.digCompat(this.jobSite)) {
                         case init:
-                           return this.init_AiOperation_Result_12("Breaking the job-site block");
+                           return this.running("Breaking the job-site block");
                         case read:
                            this.init_RefQueue_DataUtil.stopCompat();
-                           return this.init(AiFailure.UNREACHABLE, "Could not break the job-site block for a reroll");
+                           return this.fail(AiFailure.UNREACHABLE, "Could not break the job-site block for a reroll");
                         case load:
                            this.init_RefQueue_DataUtil.stopCompat();
-                           this.push = 2;
-                           this.pop = 0;
-                           return this.init_AiOperation_Result_12("Job-site broken; collecting it");
+                           this.rerollPhase = 2;
+                           this.rerollPhaseTicks = 0;
+                           return this.running("Job-site broken; collecting it");
                      }
                   }
 
-                  if (this.push == 2) {
-                     String itemId = BuiltInRegistries.ITEM.getKey(this.init_Item).toString();
+                  if (this.rerollPhase == 2) {
+                     String itemId = BuiltInRegistries.ITEM.getKey(this.jobSiteItem).toString();
                      if (AiGameState.countInventoryItem(itemId) > 0) {
-                        this.push = 3;
-                        return this.init_AiOperation_Result_12("Replacing the job-site block");
+                        this.rerollPhase = 3;
+                        return this.running("Replacing the job-site block");
                      }
 
-                     if (++this.pop > 60) {
-                        return this.init(AiFailure.TARGET_GONE, "Could not collect the broken job-site block");
+                     if (++this.rerollPhaseTicks > 60) {
+                        return this.fail(AiFailure.TARGET_GONE, "Could not collect the broken job-site block");
                      }
 
-                     ItemEntity drop = this.init_ItemEntity(itemId);
+                     ItemEntity drop = this.findJobSiteDrop(itemId);
                      if (drop != null && mc.player.distanceToSqr(drop) > 2.25) {
-                        if (this.init_AiOperation == null) {
-                           this.init_AiOperation = AiGoto.travelToCompat(drop.blockPosition(), 1.6, false, false, false, 25);
+                        if (this.leg == null) {
+                           this.leg = AiGoto.travelToCompat(drop.blockPosition(), 1.6, false, false, false, 25);
                         }
 
-                        AiOperation.Result legResult = this.init_AiOperation.tick();
+                        AiOperation.Result legResult = this.leg.tick();
                         if (!legResult.terminal()) {
-                           return this.init_AiOperation_Result_12("Collecting the job-site block");
+                           return this.running("Collecting the job-site block");
                         }
 
-                        this.init_AiOperation.cancel();
-                        this.init_AiOperation = null;
+                        this.leg.cancel();
+                        this.leg = null;
                      }
 
-                     return this.init_AiOperation_Result_12("Collecting the job-site block");
+                     return this.running("Collecting the job-site block");
                   } else {
-                     if (this.push == 3) {
-                        this.init_DataPipe.start(this.init_BlockPos, this.init_Item);
-                        this.push = 4;
-                        return this.init_AiOperation_Result_12("Replacing the job-site block");
+                     if (this.rerollPhase == 3) {
+                        this.placer.start(this.jobSite, this.jobSiteItem);
+                        this.rerollPhase = 4;
+                        return this.running("Replacing the job-site block");
                      }
 
-                     if (this.push == 4) {
-                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+                     if (this.rerollPhase == 4) {
+                        autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
                         if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                           this.poll++;
-                           this.push = 0;
-                           this.pop = 0;
-                           this.init_BlockPos = null;
+                           this.rerolls++;
+                           this.rerollPhase = 0;
+                           this.rerollPhaseTicks = 0;
+                           this.jobSite = null;
                            return null;
                         } else {
-                           return status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.pop <= 100
-                              ? this.init_AiOperation_Result_12("Replacing the job-site block")
-                              : this.init(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.init_DataPipe.failureReason());
+                           return status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.rerollPhaseTicks <= 100
+                              ? this.running("Replacing the job-site block")
+                              : this.fail(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.placer.failureReason());
                         }
                      } else {
                         return null;
@@ -516,32 +516,32 @@ final class AiTrade {
                      uses.add(offer.getUses());
                   }
 
-                  if (!AiTrade.init(uses)) {
-                     return this.init(AiFailure.IMPOSSIBLE_STATE, "reroll refused: the trader has already been traded with");
+                  if (!AiTrade.isUntraded(uses)) {
+                     return this.fail(AiFailure.IMPOSSIBLE_STATE, "reroll refused: the trader has already been traded with");
                   }
 
-                  this.init_BlockPos = this.init_BlockPos_11();
-                  if (this.init_BlockPos == null) {
-                     return this.init(AiFailure.UNREACHABLE, "No job-site block near the trader to break for a reroll");
+                  this.jobSite = this.findJobSite();
+                  if (this.jobSite == null) {
+                     return this.fail(AiFailure.UNREACHABLE, "No job-site block near the trader to break for a reroll");
                   }
 
-                  this.init_Item = mc.level.getBlockState(this.init_BlockPos).getBlock().asItem();
-                  this.push = 1;
-                  this.pop = 0;
+                  this.jobSiteItem = mc.level.getBlockState(this.jobSite).getBlock().asItem();
+                  this.rerollPhase = 1;
+                  this.rerollPhaseTicks = 0;
                   mc.player.closeContainer();
-                  this.init_I = -1;
-                  return this.init_AiOperation_Result_12("Breaking the job-site block for reroll " + (this.poll + 1) + "/" + rerollAttempts);
+                  this.menuContainerId = -1;
+                  return this.running("Breaking the job-site block for reroll " + (this.rerolls + 1) + "/" + rerollAttempts);
                }
             }
 
-            BlockPos init_BlockPos_11() {
-               if (this.init_Entity != null && mc.level != null) {
-                  BlockPos origin = this.init_Entity.blockPosition();
+            BlockPos findJobSite() {
+               if (this.trader != null && mc.level != null) {
+                  BlockPos origin = this.trader.blockPosition();
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
 
                   for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-16, -8, -16), origin.offset(16, 8, 16))) {
-                     if (AiTerrain.isLoaded(mc.level, pos) && AiTrade.init_Set.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(pos).getBlock()).toString())) {
+                     if (AiTerrain.isLoaded(mc.level, pos) && AiTrade.JOB_SITE_BLOCKS.contains(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(pos).getBlock()).toString())) {
                         double distance = pos.distSqr(origin);
                         if (distance < bestDistance) {
                            bestDistance = distance;
@@ -556,12 +556,12 @@ final class AiTrade {
                }
             }
 
-            ItemEntity init_ItemEntity(String itemId) {
+            ItemEntity findJobSiteDrop(String itemId) {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof ItemEntity item
                      && item.isAlive()
                      && BuiltInRegistries.ITEM.getKey(item.getItem().getItem()).toString().equals(itemId)
-                     && item.position().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos)) <= 64.0) {
+                     && item.position().distanceToSqr(Vec3.atCenterOf(this.jobSite)) <= 64.0) {
                      return item;
                   }
                }
@@ -569,34 +569,34 @@ final class AiTrade {
                return null;
             }
 
-            void init(int slot) {
+            void selectSlot(int slot) {
                if (mc.player.getInventory().getSelectedSlot() != slot) {
                   mc.player.getInventory().setSelectedSlot(slot);
                }
             }
 
-            int init_I_31() {
-               return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+            int remainingSeconds() {
+               return (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
             }
 
-            JsonObject init_JsonObject_47() {
+            JsonObject progressJson() {
                JsonObject out = AiJson.objectOf(
-                  "action", action.name().toLowerCase(Locale.ROOT), "completed", this.sync, "requested", count, "restocked", this.read_Z, "rerolls", this.poll
+                  "action", action.name().toLowerCase(Locale.ROOT), "completed", this.completedTrades, "requested", count, "restocked", this.restocked, "rerolls", this.rerolls
                );
-               if (this.init_Entity != null) {
+               if (this.trader != null) {
                   out.add(
                      "trader",
                      AiJson.objectOf(
                         "entityId",
-                        this.init_Entity.getId(),
+                        this.trader.getId(),
                         "type",
-                        BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).toString(),
+                        BuiltInRegistries.ENTITY_TYPE.getKey(this.trader.getType()).toString(),
                         "x",
-                        this.init_Entity.getBlockX(),
+                        this.trader.getBlockX(),
                         "y",
-                        this.init_Entity.getBlockY(),
+                        this.trader.getBlockY(),
                         "z",
-                        this.init_Entity.getBlockZ()
+                        this.trader.getBlockZ()
                      )
                   );
                }
@@ -611,11 +611,11 @@ final class AiTrade {
                            "index",
                            index,
                            "costA",
-                           AiTrade.init(offer.getCostA()),
+                           AiTrade.stackText(offer.getCostA()),
                            "costB",
-                           offer.getCostB().isEmpty() ? null : AiTrade.init(offer.getCostB()),
+                           offer.getCostB().isEmpty() ? null : AiTrade.stackText(offer.getCostB()),
                            "result",
-                           AiTrade.init(offer.getResult()),
+                           AiTrade.stackText(offer.getResult()),
                            "resultItem",
                            BuiltInRegistries.ITEM.getKey(offer.getResult().getItem()).toString(),
                            "uses",
@@ -625,7 +625,7 @@ final class AiTrade {
                            "outOfStock",
                            offer.isOutOfStock(),
                            "affordable",
-                           this.init_Z(offer)
+                           this.canAfford(offer)
                         )
                      );
                   }
@@ -635,43 +635,43 @@ final class AiTrade {
                   out.addProperty("traderXp", menu.getTraderXp());
                }
 
-               if (this.read_I >= 0) {
-                  out.addProperty("selectedIndex", this.read_I);
+               if (this.offerIndex >= 0) {
+                  out.addProperty("selectedIndex", this.offerIndex);
                }
 
                return out;
             }
 
-            AiOperation.Result init_AiOperation_Result_12(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_47().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               JsonObject data = this.init_JsonObject_47();
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               JsonObject data = this.progressJson();
                this.cancel();
                return new AiOperation.Result(status, message, data.toString(), List.of());
             }
 
-            AiOperation.Result init(AiFailure code, String message) {
-               JsonObject data = this.init_JsonObject_47();
+            AiOperation.Result fail(AiFailure code, String message) {
+               JsonObject data = this.progressJson();
                this.cancel();
                return AiOperation.Result.failed(code, message, data.toString());
             }
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
-                  this.init_DataUtil.clear();
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.aim.clear();
                   this.init_RefQueue_DataUtil.stopCompat();
-                  this.init_DataPipe.reset();
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                  this.placer.reset();
+                  if (this.leg != null) {
+                     this.leg.cancel();
+                     this.leg = null;
                   }
 
-                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.flush) {
-                     mc.player.getInventory().setSelectedSlot(this.flush);
+                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.originalSlot) {
+                     mc.player.getInventory().setSelectedSlot(this.originalSlot);
                   }
                }
             }
@@ -681,11 +681,11 @@ final class AiTrade {
       }
    }
 
-   private static String init(ItemStack stack) {
+   private static String stackText(ItemStack stack) {
       return stack.isEmpty() ? "none" : stack.getCount() + "x " + BuiltInRegistries.ITEM.getKey(stack.getItem());
    }
 
-   private static AiTrade.Inner_DataUtil init(String text) {
+   private static AiTrade.Inner_DataUtil parseAction(String text) {
       try {
          return AiTrade.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {

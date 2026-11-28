@@ -48,11 +48,11 @@ final class AiBuildSite {
    private final AiBuilder.Blueprint blueprint;
    private final Map<String, List<String>> substitutes;
    private final LevelReader world;
-   private final int pop;
+   private final int cellCount;
    private final BlockPos origin;
-   private final int tick;
-   private final int run;
-   private final int get;
+   private final int originX;
+   private final int originY;
+   private final int originZ;
    private final AiBuilder.CellSpec[] specs;
    private final long[] deltas;
    private final long[] positions;
@@ -65,7 +65,7 @@ final class AiBuildSite {
    private final long[] read_JArr;
    private final int[] read_IArr;
    private final BitSet read_BitSet;
-   private int set;
+   private int frontierScanCursor;
    private final long[] sortedKeys;
    private final int[] byPosition;
    private final int[] indexByRank;
@@ -76,20 +76,20 @@ final class AiBuildSite {
    private final BitSet failed;
    private final BitSet flush_BitSet;
    private final int[] observedIndices;
-   private int put;
-   private int add;
-   private int clear;
+   private int pendingTotal;
+   private int placedTotal;
+   private int failedTotal;
    private Map<Integer, String> failureReasons;
    private List<Long> init_List;
    private Set<Long> init_Set;
    private Set<Long> load_Set;
    private int[] close_IArr = EMPTY_INTS;
-   private int reset;
-   private int start;
-   private int stop = -1;
-   private int next = -1;
+   private int firstPendingRank;
+   private int revision;
+   private int materialsRevision = -1;
+   private int materialsMax = -1;
    private Map<String, Integer> write_Map = Map.of();
-   private int prev = 8;
+   private int reconcileCountdown = 8;
    private static final double init_D = 8.0;
    private static final BlockPos[] EMPTY_POSITIONS = new BlockPos[0];
 
@@ -106,33 +106,33 @@ final class AiBuildSite {
       this.substitutes = substitutes == null ? Map.of() : substitutes;
       this.world = world;
       List<AiBuilder.CellSpec> input = blueprint.cells();
-      this.pop = input.size();
+      this.cellCount = input.size();
       this.origin = blueprint.origin();
-      this.tick = this.origin.getX();
-      this.run = this.origin.getY();
-      this.get = this.origin.getZ();
-      this.specs = new AiBuilder.CellSpec[this.pop];
-      this.deltas = new long[this.pop];
-      this.positions = new long[this.pop];
-      this.kindOrdinals = new byte[this.pop];
-      this.items = new Item[this.pop];
-      this.load_BArr = new byte[this.pop];
-      this.load_IArr = new int[this.pop];
-      this.pending = new BitSet(this.pop);
-      this.placed = new BitSet(this.pop);
-      this.failed = new BitSet(this.pop);
-      this.flush_BitSet = new BitSet(this.pop);
-      this.init_BitSet = new BitSet(this.pop);
-      this.read_BitSet = new BitSet(this.pop);
+      this.originX = this.origin.getX();
+      this.originY = this.origin.getY();
+      this.originZ = this.origin.getZ();
+      this.specs = new AiBuilder.CellSpec[this.cellCount];
+      this.deltas = new long[this.cellCount];
+      this.positions = new long[this.cellCount];
+      this.kindOrdinals = new byte[this.cellCount];
+      this.items = new Item[this.cellCount];
+      this.load_BArr = new byte[this.cellCount];
+      this.load_IArr = new int[this.cellCount];
+      this.pending = new BitSet(this.cellCount);
+      this.placed = new BitSet(this.cellCount);
+      this.failed = new BitSet(this.cellCount);
+      this.flush_BitSet = new BitSet(this.cellCount);
+      this.init_BitSet = new BitSet(this.cellCount);
+      this.read_BitSet = new BitSet(this.cellCount);
       HashMap<String, Map<Map<String, String>, AiBuildSite.Inner_DataUtil>> classified = new HashMap<>();
       AiBuildSite.Inner_StreamUtil observedIndices = new AiBuildSite.Inner_StreamUtil();
       int classificationFailures = 0;
 
-      for (int i = 0; i < this.pop; i++) {
+      for (int i = 0; i < this.cellCount; i++) {
          AiBuilder.CellSpec cell = input.get(i);
          this.specs[i] = cell;
          this.deltas[i] = packDelta(cell.dx(), cell.dy(), cell.dz());
-         this.positions[i] = BlockPos.asLong(this.tick + cell.dx(), this.run + cell.dy(), this.get + cell.dz());
+         this.positions[i] = BlockPos.asLong(this.originX + cell.dx(), this.originY + cell.dy(), this.originZ + cell.dz());
          AiBuildSite.Inner_DataUtil entry = classified.computeIfAbsent(cell.block(), ignored -> new HashMap<>()).get(cell.properties());
          if (entry == null) {
             boolean standable = false;
@@ -170,34 +170,34 @@ final class AiBuildSite {
             && this.kindOrdinals[i] != (byte)AiBuildSite.Inner_CachePool.SKIP.ordinal();
          if (placeable) {
             this.pending.set(i);
-            this.put++;
+            this.pendingTotal++;
             if (AiBuilder.isFlowingFluidCell(cell)) {
                this.flush_BitSet.set(i);
-               observedIndices.init(i);
+               observedIndices.add(i);
             }
          }
       }
 
       this.observedIndices = observedIndices.toArray();
-      int[] byPosition = new int[this.pop];
+      int[] byPosition = new int[this.cellCount];
       int i = 0;
 
-      while (i < this.pop) {
+      while (i < this.cellCount) {
          byPosition[i] = i++;
       }
 
       this.mergeSort(byPosition);
       this.byPosition = byPosition;
-      this.sortedKeys = new long[this.pop];
+      this.sortedKeys = new long[this.cellCount];
 
-      for (int rank = 0; rank < this.pop; rank++) {
+      for (int rank = 0; rank < this.cellCount; rank++) {
          this.sortedKeys[rank] = this.positions[byPosition[rank]];
       }
 
-      this.load_BitSet = new BitSet(this.pop);
+      this.load_BitSet = new BitSet(this.cellCount);
 
-      for (int ix = 0; ix < this.pop; ix++) {
-         if (this.init_BitSet.get(ix) && this.run(ix)) {
+      for (int ix = 0; ix < this.cellCount; ix++) {
+         if (this.init_BitSet.get(ix) && this.hasHeadroom(ix)) {
             this.load_BitSet.set(ix);
          }
       }
@@ -206,7 +206,7 @@ final class AiBuildSite {
       this.read_JArr = new long[i];
       int at = 0;
 
-      for (int rank = 0; rank < this.pop && at < i; rank++) {
+      for (int rank = 0; rank < this.cellCount && at < i; rank++) {
          int index = this.byPosition[rank];
          if (this.load_BitSet.get(index)) {
             this.read_JArr[at++] = this.positions[index];
@@ -217,17 +217,17 @@ final class AiBuildSite {
       this.load_Map = this.load_Map();
       int[] ordered = this.buildSweepOrder();
       this.indexByRank = this.init_IArr_IArr(ordered);
-      this.rankByIndex = new int[this.pop];
+      this.rankByIndex = new int[this.cellCount];
       int rank = 0;
 
-      while (rank < this.pop) {
+      while (rank < this.cellCount) {
          this.rankByIndex[this.indexByRank[rank]] = rank++;
       }
 
       this.read_IArr = new int[i];
       rank = 0;
 
-      for (int rankx = 0; rankx < this.pop && rank < i; rankx++) {
+      for (int rankx = 0; rankx < this.cellCount && rank < i; rankx++) {
          int index = this.indexByRank[rankx];
          if (this.load_BitSet.get(index)) {
             this.read_IArr[rank++] = index;
@@ -272,7 +272,7 @@ final class AiBuildSite {
    }
 
    int init_I() {
-      return this.pop;
+      return this.cellCount;
    }
 
    long posKeyAt(int index) {
@@ -321,7 +321,7 @@ final class AiBuildSite {
 
    int indexOfKey(long positionKey) {
       int low = 0;
-      int high = this.pop - 1;
+      int high = this.cellCount - 1;
 
       while (low <= high) {
          int middle = low + high >>> 1;
@@ -396,7 +396,7 @@ final class AiBuildSite {
       for (int index : this.observedIndices) {
          if (!this.placed.get(index)) {
             BlockPos at = this.posAt(index);
-            if (read(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
+            if (isLoaded(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
                this.markPlaced(index);
                reconciled++;
             }
@@ -410,9 +410,9 @@ final class AiBuildSite {
       if (this.close_IArr.length == 0) {
          AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
 
-         for (int i = 0; i < this.pop; i++) {
+         for (int i = 0; i < this.cellCount; i++) {
             if (AiBuildIntent.isPoweredLever(this.specs[i])) {
-               found.init(i);
+               found.add(i);
             }
          }
 
@@ -429,24 +429,24 @@ final class AiBuildSite {
       }
 
       BlockPos at = this.posAt(index);
-      return read(level, at) && AiBuildIntent.init(this.specs[index], level.getBlockState(at));
+      return isLoaded(level, at) && AiBuildIntent.init(this.specs[index], level.getBlockState(at));
    }
 
    int pendingCount() {
-      if (this.observedIndices.length > 0 && --this.prev <= 0) {
-         this.prev = 8;
+      if (this.observedIndices.length > 0 && --this.reconcileCountdown <= 0) {
+         this.reconcileCountdown = 8;
          this.reconcileObserved();
       }
 
-      return this.put;
+      return this.pendingTotal;
    }
 
-   int write() {
-      return this.add;
+   int placedCount() {
+      return this.placedTotal;
    }
 
-   int update() {
-      return this.clear;
+   int failedCount() {
+      return this.failedTotal;
    }
 
    String failureReason(int index) {
@@ -454,8 +454,8 @@ final class AiBuildSite {
    }
 
    private void advanceFirstPending() {
-      while (this.reset < this.pop && !this.pending.get(this.indexByRank[this.reset])) {
-         this.reset++;
+      while (this.firstPendingRank < this.cellCount && !this.pending.get(this.indexByRank[this.firstPendingRank])) {
+         this.firstPendingRank++;
       }
    }
 
@@ -484,29 +484,29 @@ final class AiBuildSite {
    }
 
    void markPlaced(int index) {
-      if (index >= 0 && index < this.pop) {
+      if (index >= 0 && index < this.cellCount) {
          boolean wasPending = this.pending.get(index);
          boolean wasFailed = this.failed.get(index);
          this.pending.clear(index);
          this.failed.clear(index);
          if (wasPending) {
-            this.put--;
+            this.pendingTotal--;
          }
 
          if (wasFailed) {
-            this.clear--;
+            this.failedTotal--;
          }
 
          if (!this.placed.get(index)) {
             this.placed.set(index);
-            this.add++;
+            this.placedTotal++;
          }
 
          if (this.failureReasons != null) {
             this.failureReasons.remove(index);
          }
 
-         this.start++;
+         this.revision++;
          this.write_V_I(index);
          int partner = this.close_I(index);
          if (partner >= 0 && !this.placed.get(partner)) {
@@ -516,42 +516,42 @@ final class AiBuildSite {
    }
 
    void markPending(int index) {
-      if (index >= 0 && index < this.pop) {
+      if (index >= 0 && index < this.cellCount) {
          if (this.placed.get(index)) {
             this.placed.clear(index);
-            this.add--;
+            this.placedTotal--;
          }
 
          if (this.failed.get(index)) {
             this.failed.clear(index);
-            this.clear--;
+            this.failedTotal--;
          }
 
          if (!this.pending.get(index)) {
             this.pending.set(index);
-            this.put++;
-            this.reset = Math.min(this.reset, this.rankByIndex[index]);
+            this.pendingTotal++;
+            this.firstPendingRank = Math.min(this.firstPendingRank, this.rankByIndex[index]);
          }
 
-         this.start++;
+         this.revision++;
       }
    }
 
    void markFailed(int index, String reason) {
-      if (index >= 0 && index < this.pop) {
+      if (index >= 0 && index < this.cellCount) {
          if (this.placed.get(index)) {
             this.placed.clear(index);
-            this.add--;
+            this.placedTotal--;
          }
 
          if (this.pending.get(index)) {
             this.pending.clear(index);
-            this.put--;
+            this.pendingTotal--;
          }
 
          if (!this.failed.get(index)) {
             this.failed.set(index);
-            this.clear++;
+            this.failedTotal++;
          }
 
          if (this.failureReasons == null) {
@@ -559,7 +559,7 @@ final class AiBuildSite {
          }
 
          this.failureReasons.put(index, reason == null ? "failed" : reason);
-         this.start++;
+         this.revision++;
          this.advanceFirstPending();
       }
    }
@@ -568,7 +568,7 @@ final class AiBuildSite {
       this.markPending(index);
    }
 
-   int sync() {
+   int adoptExistingBlocks() {
       LevelReader level = this.currentLevel();
       if (level == null) {
          return 0;
@@ -576,10 +576,10 @@ final class AiBuildSite {
 
       int adopted = 0;
 
-      for (int i = 0; i < this.pop; i++) {
+      for (int i = 0; i < this.cellCount; i++) {
          if (!this.placed.get(i)) {
             BlockPos at = this.posAt(i);
-            if (read(level, at) && this.init_Z_I_BlockState(i, level.getBlockState(at))) {
+            if (isLoaded(level, at) && this.init_Z_I_BlockState(i, level.getBlockState(at))) {
                this.markPlaced(i);
                adopted++;
             }
@@ -596,7 +596,7 @@ final class AiBuildSite {
       }
 
       BlockPos at = this.posAt(index);
-      if (read(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
+      if (isLoaded(level, at) && this.init_Z_I_BlockState(index, level.getBlockState(at))) {
          this.markPlaced(index);
          return true;
       }
@@ -610,7 +610,7 @@ final class AiBuildSite {
 
    boolean isOccupied(BlockPos pos) {
       LevelReader level = this.currentLevel();
-      return level != null && pos != null && read(level, pos) ? !level.getBlockState(pos).isAir() : false;
+      return level != null && pos != null && isLoaded(level, pos) ? !level.getBlockState(pos).isAir() : false;
    }
 
    boolean push(int index) {
@@ -618,7 +618,7 @@ final class AiBuildSite {
    }
 
    int[] init_IArr_Vec3(Vec3 eye, double radius, int max) {
-      if (eye != null && max > 0 && this.pop != 0) {
+      if (eye != null && max > 0 && this.cellCount != 0) {
          int[] near = this.indicesNear(eye, radius);
          if (near.length == 0) {
             return EMPTY_INTS;
@@ -645,7 +645,7 @@ final class AiBuildSite {
    }
 
    int[] load_IArr_Vec3(Vec3 center, double radius, int max) {
-      if (center != null && max > 0 && this.pop != 0) {
+      if (center != null && max > 0 && this.cellCount != 0) {
          int[] near = this.indicesNear(center, radius);
          if (near.length == 0) {
             return EMPTY_INTS;
@@ -659,18 +659,18 @@ final class AiBuildSite {
    }
 
    Map<String, Integer> init_Map_I(int max) {
-      if (max <= 0 || this.pop == 0) {
+      if (max <= 0 || this.cellCount == 0) {
          return Map.of();
       }
 
-      if (this.stop == this.start && this.next == max) {
+      if (this.materialsRevision == this.revision && this.materialsMax == max) {
          return this.write_Map;
       }
 
       Map<String, Integer> out = new LinkedHashMap<>();
-      int limit = Math.min(this.pop, this.reset + 4096);
+      int limit = Math.min(this.cellCount, this.firstPendingRank + 4096);
 
-      for (int rank = this.reset; rank < limit && out.size() < max; rank++) {
+      for (int rank = this.firstPendingRank; rank < limit && out.size() < max; rank++) {
          int index = this.indexByRank[rank];
          if (this.pending.get(index) && !this.flush_BitSet.get(index)) {
             Item item = this.items[index];
@@ -690,8 +690,8 @@ final class AiBuildSite {
          }
       }
 
-      this.stop = this.start;
-      this.next = max;
+      this.materialsRevision = this.revision;
+      this.materialsMax = max;
       this.write_Map = Collections.unmodifiableMap(out);
       return this.write_Map;
    }
@@ -716,9 +716,9 @@ final class AiBuildSite {
       }
 
       LinkedHashSet<Long> out = new LinkedHashSet<>();
-      int limit = Math.min(this.pop, this.reset + 8192);
+      int limit = Math.min(this.cellCount, this.firstPendingRank + 8192);
 
-      for (int rank = this.reset; rank < limit; rank++) {
+      for (int rank = this.firstPendingRank; rank < limit; rank++) {
          int index = this.indexByRank[rank];
          if (this.pending.get(index) && this.write_Z_I(index)) {
             int mask = this.load_BArr[index] & 255;
@@ -730,7 +730,7 @@ final class AiBuildSite {
                   if ((mask & 1 << ordinal) != 0) {
                      BlockPos at = base.relative(DIRECTIONS[ordinal]);
                      if (!this.contains(at.asLong())) {
-                        boolean held = fluid ? update(level, at) : write(level, at);
+                        boolean held = fluid ? isFluidOrSolidAt(level, at) : isSolidAt(level, at);
                         if (!held) {
                            out.add(at.asLong());
                         }
@@ -746,11 +746,11 @@ final class AiBuildSite {
    }
 
    boolean pop(int index) {
-      return index >= 0 && index < this.pop && this.load_BitSet.get(index);
+      return index >= 0 && index < this.cellCount && this.load_BitSet.get(index);
    }
 
-   boolean tick(int index) {
-      if (index >= 0 && index < this.pop) {
+   boolean standsOnSiteCell(int index) {
+      if (index >= 0 && index < this.cellCount) {
          BlockPos at = BlockPos.of(this.positions[index]).below();
          int below = this.indexOfKey(at.asLong());
          return below >= 0 && this.init_BitSet.get(below);
@@ -759,8 +759,8 @@ final class AiBuildSite {
       }
    }
 
-   boolean run(int index) {
-      if (index >= 0 && index < this.pop) {
+   boolean hasHeadroom(int index) {
+      if (index >= 0 && index < this.cellCount) {
          BlockPos at = BlockPos.of(this.positions[index]);
          return this.indexOfKey(BlockPos.asLong(at.getX(), at.getY() + 1, at.getZ())) >= 0
             ? false
@@ -774,15 +774,15 @@ final class AiBuildSite {
       if (this.load_BitSet.get(index)) {
          return 0;
       } else {
-         return this.run(index) ? 1 : 2;
+         return this.hasHeadroom(index) ? 1 : 2;
       }
    }
 
    int[] init_IArr_I_I(int fromIndex, int max) {
       if (max > 0 && this.read_IArr.length != 0) {
-         int lowerRank = fromIndex >= 0 && fromIndex < this.pop ? this.rankByIndex[fromIndex] : 0;
+         int lowerRank = fromIndex >= 0 && fromIndex < this.cellCount ? this.rankByIndex[fromIndex] : 0;
          int[] found = this.load_IArr_I_I(lowerRank, max);
-         if (found.length == 0 && this.set < this.read_IArr.length) {
+         if (found.length == 0 && this.frontierScanCursor < this.read_IArr.length) {
             this.load_V();
             found = this.load_IArr_I_I(lowerRank, max);
          }
@@ -814,7 +814,7 @@ final class AiBuildSite {
       for (int at = start; at < this.read_IArr.length && out.size() < max && budget-- > 0; at++) {
          int index = this.read_IArr[at];
          if (this.pending.get(index) && !this.placed.get(index) && this.read_BitSet.get(index)) {
-            out.init(index);
+            out.add(index);
          }
       }
 
@@ -824,15 +824,15 @@ final class AiBuildSite {
    private void load_V() {
       int budget = Math.max(4096, this.read_IArr.length >>> 3);
 
-      while (this.set < this.read_IArr.length && budget-- > 0) {
-         int index = this.read_IArr[this.set++];
-         if (this.pending.get(index) && !this.placed.get(index) && this.get(index)) {
+      while (this.frontierScanCursor < this.read_IArr.length && budget-- > 0) {
+         int index = this.read_IArr[this.frontierScanCursor++];
+         if (this.pending.get(index) && !this.placed.get(index) && this.hasPlacedNeighbour(index)) {
             this.read_BitSet.set(index);
          }
       }
    }
 
-   private boolean get(int index) {
+   private boolean hasPlacedNeighbour(int index) {
       BlockPos base = this.posAt(index);
 
       for (Direction direction : DIRECTIONS) {
@@ -894,7 +894,7 @@ final class AiBuildSite {
       LevelReader level = this.currentLevel();
       if (level == null || feet == null) {
          return false;
-      } else if (read(level, feet.below()) && read(level, feet) && read(level, feet.above())) {
+      } else if (isLoaded(level, feet.below()) && isLoaded(level, feet) && isLoaded(level, feet.above())) {
          return this.indexOfKey(feet.asLong()) < 0 && this.indexOfKey(feet.above().asLong()) < 0
             ? this.init_Z_LevelReader_BlockPos(level, feet.below())
                && isPassable(level, feet)
@@ -933,7 +933,7 @@ final class AiBuildSite {
    }
 
    BlockPos[] init_BlockPosArr_Vec3(Vec3 center, double radius, int max) {
-      if (center != null && max > 0 && this.pop != 0) {
+      if (center != null && max > 0 && this.cellCount != 0) {
          LevelReader level = this.currentLevel();
          if (level == null) {
             return EMPTY_POSITIONS;
@@ -996,18 +996,18 @@ final class AiBuildSite {
    }
 
    private int[] buildSweepOrder() {
-      int[] order = new int[this.pop];
+      int[] order = new int[this.cellCount];
       int i = 0;
 
-      while (i < this.pop) {
+      while (i < this.cellCount) {
          order[i] = i++;
       }
 
-      int[] other = new int[this.pop];
-      int[] field = new int[this.pop];
+      int[] other = new int[this.cellCount];
+      int[] field = new int[this.cellCount];
 
       for (int pass = 0; pass < 6; pass++) {
-         for (int ix = 0; ix < this.pop; ix++) {
+         for (int ix = 0; ix < this.cellCount; ix++) {
             int index = order[ix];
             long delta = this.deltas[index];
             int var12;
@@ -1057,21 +1057,21 @@ final class AiBuildSite {
    }
 
    private int[] init_IArr_IArr(int[] base) {
-      if (this.pop < 2) {
+      if (this.cellCount < 2) {
          return base;
       }
 
-      int[] baseRank = new int[this.pop];
+      int[] baseRank = new int[this.cellCount];
       int rank = 0;
 
-      while (rank < this.pop) {
+      while (rank < this.cellCount) {
          baseRank[base[rank]] = rank++;
       }
 
-      int[] provider = new int[this.pop];
+      int[] provider = new int[this.cellCount];
       Arrays.fill(provider, -1);
 
-      for (int rankx = 0; rankx < this.pop; rankx++) {
+      for (int rankx = 0; rankx < this.cellCount; rankx++) {
          int index = base[rankx];
          AiBuildSite.Inner_CachePool kind = this.kindAt(index);
          if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
@@ -1087,7 +1087,7 @@ final class AiBuildSite {
          }
       }
 
-      for (int rankx = 0; rankx < this.pop; rankx++) {
+      for (int rankx = 0; rankx < this.cellCount; rankx++) {
          int index = base[rankx];
          if (provider[index] < 0) {
             int sibling = this.chestPartnerOf(index);
@@ -1097,28 +1097,28 @@ final class AiBuildSite {
          }
       }
 
-      int[] dependentCount = new int[this.pop];
+      int[] dependentCount = new int[this.cellCount];
 
-      for (int index = 0; index < this.pop; index++) {
+      for (int index = 0; index < this.cellCount; index++) {
          int parent = provider[index];
          if (parent >= 0 && parent != index) {
             dependentCount[parent]++;
          }
       }
 
-      int[] dependentStart = new int[this.pop + 1];
+      int[] dependentStart = new int[this.cellCount + 1];
       int total = 0;
 
-      for (int index = 0; index < this.pop; index++) {
+      for (int index = 0; index < this.cellCount; index++) {
          dependentStart[index] = total;
          total += dependentCount[index];
       }
 
-      dependentStart[this.pop] = total;
+      dependentStart[this.cellCount] = total;
       int[] dependents = new int[total];
-      int[] cursor = Arrays.copyOf(dependentStart, this.pop);
+      int[] cursor = Arrays.copyOf(dependentStart, this.cellCount);
 
-      for (int rankx = 0; rankx < this.pop; rankx++) {
+      for (int rankx = 0; rankx < this.cellCount; rankx++) {
          int index = base[rankx];
          int parent = provider[index];
          if (parent >= 0 && parent != index) {
@@ -1126,13 +1126,13 @@ final class AiBuildSite {
          }
       }
 
-      int[] out = new int[this.pop];
-      BitSet emitted = new BitSet(this.pop);
-      BitSet onPath = new BitSet(this.pop);
-      int[] stack = new int[Math.max(8, Math.min(this.pop, 64))];
+      int[] out = new int[this.cellCount];
+      BitSet emitted = new BitSet(this.cellCount);
+      BitSet onPath = new BitSet(this.cellCount);
+      int[] stack = new int[Math.max(8, Math.min(this.cellCount, 64))];
       int emittedCount = 0;
 
-      for (int rankx = 0; rankx < this.pop; rankx++) {
+      for (int rankx = 0; rankx < this.cellCount; rankx++) {
          int start = base[rankx];
          if (!emitted.get(start)) {
             int depth = 0;
@@ -1265,7 +1265,7 @@ final class AiBuildSite {
 
    private int close_I(int index) {
       int rank = this.rankByIndex[index];
-      if (rank + 1 < this.pop) {
+      if (rank + 1 < this.cellCount) {
          int next = this.indexByRank[rank + 1];
          if (this.init_Z_I_I(next, index)) {
             return next;
@@ -1377,9 +1377,9 @@ final class AiBuildSite {
 
    private void read_V() {
       Arrays.fill(this.load_IArr, -1);
-      int[] chain = new int[Math.min(this.pop, 64)];
+      int[] chain = new int[Math.min(this.cellCount, 64)];
 
-      for (int i = 0; i < this.pop; i++) {
+      for (int i = 0; i < this.cellCount; i++) {
          if (this.load_IArr[i] < 0) {
             int length = 0;
             int current = i;
@@ -1391,8 +1391,8 @@ final class AiBuildSite {
                }
 
                chain[length++] = current;
-               int belowY = this.run + unpackDy(this.deltas[current]) - 1;
-               long belowKey = BlockPos.asLong(this.tick + unpackDx(this.deltas[current]), belowY, this.get + unpackDz(this.deltas[current]));
+               int belowY = this.originY + unpackDy(this.deltas[current]) - 1;
+               long belowKey = BlockPos.asLong(this.originX + unpackDx(this.deltas[current]), belowY, this.originZ + unpackDz(this.deltas[current]));
                int below = this.indexOfKey(belowKey);
                if (below < 0) {
                   base = 0;
@@ -1417,16 +1417,16 @@ final class AiBuildSite {
    }
 
    private Map<Long, int[]> load_Map() {
-      if (this.pop == 0) {
+      if (this.cellCount == 0) {
          return Map.of();
       }
 
       HashMap<Long, AiBuildSite.Inner_StreamUtil> grouped = new HashMap<>();
 
-      for (int i = 0; i < this.pop; i++) {
+      for (int i = 0; i < this.cellCount; i++) {
          long delta = this.deltas[i];
-         long key = sectionKey(this.tick + unpackDx(delta), this.run + unpackDy(delta), this.get + unpackDz(delta));
-         grouped.computeIfAbsent(key, ignored -> new AiBuildSite.Inner_StreamUtil()).init(i);
+         long key = sectionKey(this.originX + unpackDx(delta), this.originY + unpackDy(delta), this.originZ + unpackDz(delta));
+         grouped.computeIfAbsent(key, ignored -> new AiBuildSite.Inner_StreamUtil()).add(i);
       }
 
       HashMap<Long, int[]> out = new HashMap<>(Math.max(16, grouped.size() * 2));
@@ -1460,11 +1460,11 @@ final class AiBuildSite {
                   for (int index : indices) {
                      if (this.pending.get(index) && !this.flush_BitSet.get(index)) {
                         long delta = this.deltas[index];
-                        double dx = this.tick + unpackDx(delta) + 0.5 - center.x;
-                        double dy = this.run + unpackDy(delta) + 0.5 - center.y;
-                        double dz = this.get + unpackDz(delta) + 0.5 - center.z;
+                        double dx = this.originX + unpackDx(delta) + 0.5 - center.x;
+                        double dy = this.originY + unpackDy(delta) + 0.5 - center.y;
+                        double dz = this.originZ + unpackDz(delta) + 0.5 - center.z;
                         if (dx * dx + dy * dy + dz * dz <= radiusSq) {
-                           found.init(index);
+                           found.add(index);
                         }
                      }
                   }
@@ -1490,7 +1490,7 @@ final class AiBuildSite {
    }
 
    private boolean init_Z_I_LevelReader(int index, LevelReader level) {
-      if (index >= 0 && index < this.pop) {
+      if (index >= 0 && index < this.cellCount) {
          int mask = this.load_BArr[index] & 255;
          if (mask != 0 && level != null) {
             BlockPos base = this.posAt(index);
@@ -1508,7 +1508,7 @@ final class AiBuildSite {
                         && !this.placed.get(other)) {
                         return false;
                      }
-                  } else if (fluid && !update(level, at)) {
+                  } else if (fluid && !isFluidOrSolidAt(level, at)) {
                      return false;
                   }
                }
@@ -1523,12 +1523,12 @@ final class AiBuildSite {
       }
    }
 
-   private static boolean read(LevelReader level, BlockPos at) {
+   private static boolean isLoaded(LevelReader level, BlockPos at) {
       return !(level instanceof Level real && !real.isLoaded(at));
    }
 
-   private static boolean write(LevelReader level, BlockPos at) {
-      if (!read(level, at)) {
+   private static boolean isSolidAt(LevelReader level, BlockPos at) {
+      if (!isLoaded(level, at)) {
          return false;
       }
 
@@ -1536,8 +1536,8 @@ final class AiBuildSite {
       return !state.isAir() && !state.canBeReplaced() && !state.getShape(level, at).isEmpty();
    }
 
-   private static boolean update(LevelReader level, BlockPos at) {
-      if (!read(level, at)) {
+   private static boolean isFluidOrSolidAt(LevelReader level, BlockPos at) {
+      if (!isLoaded(level, at)) {
          return false;
       }
 
@@ -1645,7 +1645,7 @@ final class AiBuildSite {
    private final class Inner_BufferHelper extends AbstractSet<Long> {
       @Override
       public int size() {
-         return AiBuildSite.this.pop;
+         return AiBuildSite.this.cellCount;
       }
 
       @Override
@@ -1656,22 +1656,22 @@ final class AiBuildSite {
       @Override
       public Iterator<Long> iterator() {
          return new Iterator<Long>() {
-            private int init;
+            private int cursor;
 
             @Override
             public boolean hasNext() {
-               return this.init < AiBuildSite.this.pop;
+               return this.cursor < AiBuildSite.this.cellCount;
             }
 
             public Long next() {
-               return this.init();
+               return this.nextKey();
             }
 
-            public Long init() {
-               if (this.init >= AiBuildSite.this.pop) {
+            public Long nextKey() {
+               if (this.cursor >= AiBuildSite.this.cellCount) {
                   throw new NoSuchElementException();
                } else {
-                  return AiBuildSite.this.sortedKeys[this.init++];
+                  return AiBuildSite.this.sortedKeys[this.cursor++];
                }
             }
          };
@@ -1724,22 +1724,22 @@ final class AiBuildSite {
       @Override
       public Iterator<Long> iterator() {
          return new Iterator<Long>() {
-            private int init;
+            private int cursor;
 
             @Override
             public boolean hasNext() {
-               return this.init < AiBuildSite.this.read_JArr.length;
+               return this.cursor < AiBuildSite.this.read_JArr.length;
             }
 
             public Long next() {
-               return this.init();
+               return this.nextKey();
             }
 
-            public Long init() {
-               if (this.init >= AiBuildSite.this.read_JArr.length) {
+            public Long nextKey() {
+               if (this.cursor >= AiBuildSite.this.read_JArr.length) {
                   throw new NoSuchElementException();
                } else {
-                  return AiBuildSite.this.read_JArr[this.init++];
+                  return AiBuildSite.this.read_JArr[this.cursor++];
                }
             }
          };
@@ -1753,7 +1753,7 @@ final class AiBuildSite {
       private int[] buffer = new int[8];
       private int size;
 
-      void init(int value) {
+      void add(int value) {
          if (this.size == this.buffer.length) {
             this.buffer = Arrays.copyOf(this.buffer, this.size * 2);
          }

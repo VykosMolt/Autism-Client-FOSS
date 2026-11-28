@@ -117,7 +117,7 @@ final class AiFarm {
          if (action == AiFarm.Inner_DataUtil.HARVEST) {
             String spec = AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat"));
             String crop = resolveCrop(spec);
-            return FIELD_CROPS.contains(crop) ? load(args, crop, YIELD_BY_CROP.get(crop)) : init(args, crop, YIELD_BY_CROP.get(crop));
+            return FIELD_CROPS.contains(crop) ? harvestField(args, crop, YIELD_BY_CROP.get(crop)) : init(args, crop, YIELD_BY_CROP.get(crop));
          } else if (action == AiFarm.Inner_DataUtil.PLANT) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmPlant.init(args, crop, load(crop));
@@ -125,7 +125,7 @@ final class AiFarm {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmBuild.init(args, crop, load(crop));
          } else {
-            return load(args);
+            return breed(args);
          }
       } else {
          throw new IllegalArgumentException("Farming requires a connected living player");
@@ -144,7 +144,7 @@ final class AiFarm {
       }
    }
 
-   static AiFarm.Inner_StreamUtil init(Block block) {
+   static AiFarm.Inner_StreamUtil harvestKindFor(Block block) {
       if (block == Blocks.SWEET_BERRY_BUSH) {
          return AiFarm.Inner_StreamUtil.INTERACT;
       } else if (autismclient.util.FarmCropCatalog.load(block)) {
@@ -188,7 +188,7 @@ final class AiFarm {
       return state.getBlock() instanceof BonemealableBlock && max >= 0 && cropAge(state) < max;
    }
 
-   static BlockPos init(Function<BlockPos, BlockState> at, BlockPos pos) {
+   static BlockPos harvestableColumnSegment(Function<BlockPos, BlockState> at, BlockPos pos) {
       BlockState state = at.apply(pos);
       if (state != null && autismclient.util.FarmCropCatalog.load(state.getBlock())) {
          BlockPos base = pos;
@@ -214,7 +214,7 @@ final class AiFarm {
          final Block crop = BuiltInRegistries.BLOCK
             .getOptional(Identifier.parse(cropBlock))
             .orElseThrow(() -> new IllegalArgumentException("Unknown crop block " + cropBlock));
-         final AiFarm.Inner_StreamUtil kind = init(crop);
+         final AiFarm.Inner_StreamUtil kind = harvestKindFor(crop);
          final String seed = load(cropBlock);
          return new AiOperation() {
             final Minecraft mc = Minecraft.getInstance();
@@ -229,8 +229,8 @@ final class AiFarm {
             final int write_I = 2;
             final int update_I = 5;
             final int sync = 25;
-            final int flush = Math.max(this.mc.level.getMinY(), this.origin.getY() - 16);
-            final int close = Math.min(this.mc.level.getMaxY() - 1, this.origin.getY() + 16);
+            final int minScanY = Math.max(this.mc.level.getMinY(), this.origin.getY() - 16);
+            final int maxScanY = Math.min(this.mc.level.getMaxY() - 1, this.origin.getY() + 16);
             final List<AiFarm.Inner_CachePool> matureWork = new ArrayList<>();
             final List<AiFarm.Inner_CachePool> growingWork = new ArrayList<>();
             final ArrayDeque<AiFarm.Inner_CachePool> followUps = new ArrayDeque<>();
@@ -250,31 +250,31 @@ final class AiFarm {
             BlockPos walkTarget;
             double walkRange;
             double lastWalkDistSqr = -1.0;
-            int open;
+            int walkStallTicks;
             final Deque<AiFarm.Inner_CachePool> deferredDrops = new ArrayDeque<>();
             final List<AiOperation> pendingReplantOps = new ArrayList<>();
             final List<AiFarm.Inner_CachePool> pendingReplantWork = new ArrayList<>();
             final IdentityHashMap<LevelChunkSection, Boolean> sectionHasCrop = new IdentityHashMap<>();
             long sectionCacheRevision = -1L;
-            int poll;
-            int push;
-            int pop;
-            int tick;
-            int run;
-            int get;
-            int set;
-            int put;
-            int add = this.heldAtStart;
-            int clear;
-            int reset;
-            int start;
-            int stop;
-            int next;
-            int prev;
-            int valid;
-            int size;
-            int data;
-            int value;
+            int scanChunkIndex;
+            int scanCellCursor;
+            int idleRescanTicks;
+            int workAttempts;
+            int columnOffsetCursor;
+            int dropPickupWaitTicks;
+            int replantConfirmTicks;
+            int seedHandWaitTicks;
+            int lastSeenCount = this.heldAtStart;
+            int idleTicks;
+            int verifyTicks;
+            int serverConfirmTicks;
+            int harvestedCount;
+            int replantedCount;
+            int externalReplantCount;
+            int replantSkippedCount;
+            int dropCount;
+            int bonemealCount;
+            int skippedTotal;
             boolean scanned;
             boolean cancelled;
             String blockedReason = "";
@@ -282,23 +282,23 @@ final class AiFarm {
             @Override
             public AiOperation.Result tick() {
                if (this.cancelled || this.mc.player == null || this.mc.level == null) {
-                  return this.init(AiOperation.Status.CANCELLED, "Harvest cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Harvest cancelled");
                }
 
                if (this.targetCount >= 0 && this.targetCount <= 2304) {
                   if (System.nanoTime() > this.deadline) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Harvest target not reached before deadline");
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Harvest target not reached before deadline");
                   }
 
                   if (this.mc.gui.screen() != null) {
                      autismclient.util.BlockAttackGraceWindow.init();
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      this.aim.clear();
-                     return this.read("Harvest paused while a screen is open");
+                     return this.running("Harvest paused while a screen is open");
                   }
 
                   if (this.mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.FAILED,
                         AiGuard.formatLowHealthAbort("harvesting", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
                      );
@@ -312,10 +312,10 @@ final class AiFarm {
                         this.pendingReplantOps.remove(i);
                         AiFarm.Inner_CachePool vw = this.pendingReplantWork.remove(i);
                         if (v.status() == AiOperation.Status.SUCCEEDED) {
-                           this.next++;
+                           this.replantedCount++;
                         } else {
-                           this.valid++;
-                           this.init(vw.cell(), v.message());
+                           this.replantSkippedCount++;
+                           this.recordSkip(vw.cell(), v.message());
                         }
                      }
                   }
@@ -324,18 +324,18 @@ final class AiFarm {
                         && (this.currentWork.kind() == AiFarm.Inner_BufferHelper.HARVEST || this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT)
                      || this.followUps.stream().anyMatch(w -> w.kind() == AiFarm.Inner_BufferHelper.REPLANT);
                   if (count < this.targetCount || owesReplant) {
-                     this.start = 0;
-                     this.reset = 0;
-                     this.set = 0;
+                     this.serverConfirmTicks = 0;
+                     this.verifyTicks = 0;
+                     this.replantConfirmTicks = 0;
                      if (count < this.targetCount && !this.hasRoomFor(cropItem)) {
-                        return this.init(AiOperation.Status.FAILED, "Inventory full: make room for " + cropItem + " before harvesting");
+                        return this.finish(AiOperation.Status.FAILED, "Inventory full: make room for " + cropItem + " before harvesting");
                      }
 
-                     if (count > this.add) {
-                        this.clear = 0;
+                     if (count > this.lastSeenCount) {
+                        this.idleTicks = 0;
                      }
 
-                     this.add = count;
+                     this.lastSeenCount = count;
                      if (!this.scanned) {
                         return this.scanStep();
                      }
@@ -343,24 +343,24 @@ final class AiFarm {
                      if (this.approach != null) {
                         AiOperation.Result r = this.approach.tick();
                         if (!r.terminal()) {
-                           return this.read("Walking to the next plant");
+                           return this.running("Walking to the next plant");
                         }
 
                         this.approach = null;
                         if (r.status() != AiOperation.Status.SUCCEEDED) {
-                           return this.load("no reachable approach");
+                           return this.workAttemptFailed("no reachable approach");
                         }
 
                         if (this.currentWork != null && this.currentWork.kind() != AiFarm.Inner_BufferHelper.DROP) {
                            BlockPos cell = this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT
                               ? this.currentWork.base()
                               : this.currentWork.cell();
-                           if (!this.load(cell) || !this.load(this.currentWork)) {
-                              return this.load("no clear line of sight after approach");
+                           if (!this.isWithinReach(cell) || !this.canSeeWorkFace(this.currentWork)) {
+                              return this.workAttemptFailed("no clear line of sight after approach");
                            }
                         }
 
-                        return this.read("Approach finished; re-evaluating");
+                        return this.running("Approach finished; re-evaluating");
                      } else {
                         if (this.walkTarget != null) {
                            return this.walkStep();
@@ -373,19 +373,19 @@ final class AiFarm {
                                  || this.currentWork.kind() != AiFarm.Inner_BufferHelper.REPLANT
                                  || !(this.action instanceof AiActedOperation actedOp)
                                  || !actedOp.init()) {
-                                 return this.read(this.activityText());
+                                 return this.running(this.activityText());
                               }
 
                               this.pendingReplantOps.add(this.action);
                               this.pendingReplantWork.add(this.currentWork);
                               this.action = null;
                               this.currentWork = null;
-                              this.tick = 0;
-                              this.run = 0;
+                              this.workAttempts = 0;
+                              this.columnOffsetCursor = 0;
                            } else {
                               this.action.cancel();
                               this.action = null;
-                              AiOperation.Result settled = this.init(this.currentWork, r);
+                              AiOperation.Result settled = this.settleWork(this.currentWork, r);
                               if (settled.terminal()) {
                                  return settled;
                               }
@@ -398,52 +398,52 @@ final class AiFarm {
                            }
 
                            this.currentWork = null;
-                           this.tick = 0;
-                           this.run = 0;
+                           this.workAttempts = 0;
+                           this.columnOffsetCursor = 0;
                            this.currentWork = this.nextWork();
                            if (!this.blockedReason.isEmpty()) {
-                              return this.init(AiOperation.Status.FAILED, this.blockedReason);
+                              return this.finish(AiOperation.Status.FAILED, this.blockedReason);
                            }
                         }
 
                         if (this.currentWork != null) {
-                           this.clear = 0;
-                           this.pop = 0;
+                           this.idleTicks = 0;
+                           this.idleRescanTicks = 0;
                            return this.startWork(this.currentWork);
                         }
 
                         if (!this.pendingReplantOps.isEmpty()) {
-                           return this.read("Confirming the last replant");
+                           return this.running("Confirming the last replant");
                         }
 
-                        if (++this.pop >= 100) {
+                        if (++this.idleRescanTicks >= 100) {
                            this.rescan();
                         }
 
-                        return ++this.clear > 1200
-                           ? this.init(
+                        return ++this.idleTicks > 1200
+                           ? this.finish(
                               AiOperation.Status.FAILED, "Nothing harvested for 60 seconds; locate reachable mature " + cropBlock + " or free inventory space"
                            )
-                           : this.read(this.stop == 0 ? "Scanning for " + cropBlock : "Waiting for regrowth");
+                           : this.running(this.harvestedCount == 0 ? "Scanning for " + cropBlock : "Waiting for regrowth");
                      }
                   } else if (!this.pendingReplantOps.isEmpty()) {
-                     return ++this.set > 200
-                        ? this.init(AiOperation.Status.UNCERTAIN, "The last replant is still unconfirmed; inspect the field before repeating")
-                        : this.read("Confirming the last replants");
+                     return ++this.replantConfirmTicks > 200
+                        ? this.finish(AiOperation.Status.UNCERTAIN, "The last replant is still unconfirmed; inspect the field before repeating")
+                        : this.running("Confirming the last replants");
                   } else if (count > this.heldAtStart && AiServerEvidence.inventoryRevision() <= this.startInventoryRevision) {
-                     return ++this.start > 200
-                        ? this.init(
+                     return ++this.serverConfirmTicks > 200
+                        ? this.finish(
                            AiOperation.Status.UNCERTAIN, "Harvest target observed locally, but server confirmation not received; inspect before repeating"
                         )
-                        : this.read("Verifying harvested inventory after server updates");
-                  } else if (count > this.heldAtStart && ++this.reset < 5) {
-                     return this.read("Verifying harvested inventory after server updates");
+                        : this.running("Verifying harvested inventory after server updates");
+                  } else if (count > this.heldAtStart && ++this.verifyTicks < 5) {
+                     return this.running("Verifying harvested inventory after server updates");
                   } else {
-                     return this.valid > 0
-                        ? this.init(
-                           AiOperation.Status.FAILED, "Harvested the target, but " + this.valid + " crops could not be replanted; inspect the reported cells"
+                     return this.replantSkippedCount > 0
+                        ? this.finish(
+                           AiOperation.Status.FAILED, "Harvested the target, but " + this.replantSkippedCount + " crops could not be replanted; inspect the reported cells"
                         )
-                        : this.init(
+                        : this.finish(
                            this.exactCount && count != this.targetCount ? AiOperation.Status.UNCERTAIN : AiOperation.Status.SUCCEEDED,
                            this.exactCount && count != this.targetCount
                               ? "Surplus retained; exact target requires storage reconciliation"
@@ -451,7 +451,7 @@ final class AiFarm {
                         );
                   }
                } else {
-                  return this.init(AiOperation.Status.FAILED, "Harvest target must fit player inventory");
+                  return this.finish(AiOperation.Status.FAILED, "Harvest target must fit player inventory");
                }
             }
 
@@ -477,19 +477,19 @@ final class AiFarm {
                }
 
                long stop = System.nanoTime() + 750000L;
-               int height = this.close - this.flush + 1;
+               int height = this.maxScanY - this.minScanY + 1;
 
-               for (int checked = 0; checked < 4096 && this.poll < 25; checked++) {
+               for (int checked = 0; checked < 4096 && this.scanChunkIndex < 25; checked++) {
                   if ((checked & 63) == 0 && System.nanoTime() >= stop) {
-                     return this.read("Scanning for " + cropBlock);
+                     return this.running("Scanning for " + cropBlock);
                   }
 
-                  int cx = (this.scanCentre.getX() >> 4) - 2 + this.poll % 5;
-                  int cz = (this.scanCentre.getZ() >> 4) - 2 + this.poll / 5;
+                  int cx = (this.scanCentre.getX() >> 4) - 2 + this.scanChunkIndex % 5;
+                  int cz = (this.scanCentre.getZ() >> 4) - 2 + this.scanChunkIndex / 5;
                   LevelChunk chunk = this.mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
-                  if (chunk != null && this.push < 256 * height) {
-                     int column = this.push / height;
-                     int y = this.flush + this.push % height;
+                  if (chunk != null && this.scanCellCursor < 256 * height) {
+                     int column = this.scanCellCursor / height;
+                     int y = this.minScanY + this.scanCellCursor % height;
                      int x = (cx << 4) + column / 16;
                      int z = (cz << 4) + column % 16;
                      if (Math.abs(x - this.scanCentre.getX()) <= 32 && Math.abs(z - this.scanCentre.getZ()) <= 32) {
@@ -497,15 +497,15 @@ final class AiFarm {
                         boolean contains = this.sectionHasCrop
                            .computeIfAbsent(section, part -> !part.hasOnlyAir() && part.maybeHas(statex -> statex.is(crop)));
                         if (!contains) {
-                           this.push = this.push + (Math.min(this.close + 1, (y >> 4) + 1 << 4) - y);
+                           this.scanCellCursor = this.scanCellCursor + (Math.min(this.maxScanY + 1, (y >> 4) + 1 << 4) - y);
                         } else {
-                           this.push++;
+                           this.scanCellCursor++;
                            BlockState state = section.getBlockState(x & 15, y & 15, z & 15);
                            if (state.is(crop)) {
                               BlockPos cell = new BlockPos(x, y, z);
                               if (!this.skippedCells.contains(cell.asLong()) && !this.isQueued(cell)) {
                                  if (kind == AiFarm.Inner_StreamUtil.COLUMN) {
-                                    BlockPos segment = AiFarm.init(pos -> this.mc.level.getBlockState(pos), cell);
+                                    BlockPos segment = AiFarm.harvestableColumnSegment(pos -> this.mc.level.getBlockState(pos), cell);
                                     if (segment != null && !this.skippedCells.contains(segment.asLong()) && !this.isQueued(segment)) {
                                        this.matureWork
                                           .add(AiFarm.Inner_CachePool.harvest(segment, this.mc.player.distanceToSqr(Vec3.atCenterOf(segment))));
@@ -519,32 +519,32 @@ final class AiFarm {
                            }
                         }
                      } else {
-                        this.push = (column + 1) * height;
+                        this.scanCellCursor = (column + 1) * height;
                      }
                   } else {
-                     this.poll++;
-                     this.push = 0;
+                     this.scanChunkIndex++;
+                     this.scanCellCursor = 0;
                   }
                }
 
-               if (this.poll < 25) {
-                  return this.read("Scanning for " + cropBlock);
+               if (this.scanChunkIndex < 25) {
+                  return this.running("Scanning for " + cropBlock);
                }
 
                this.scanned = true;
                Comparator<AiFarm.Inner_CachePool> nearest = Comparator.comparingDouble(AiFarm.Inner_CachePool::distanceSqr);
                this.matureWork.sort(nearest);
                this.growingWork.sort(nearest);
-               return this.read(
+               return this.running(
                   "Found " + this.matureWork.size() + " mature " + cropBlock + (this.growingWork.isEmpty() ? "" : " and " + this.growingWork.size() + " growing")
                );
             }
 
             void rescan() {
                this.scanCentre = this.mc.player.blockPosition();
-               this.poll = 0;
-               this.push = 0;
-               this.pop = 0;
+               this.scanChunkIndex = 0;
+               this.scanCellCursor = 0;
+               this.idleRescanTicks = 0;
                this.matureWork.clear();
                this.growingWork.clear();
                this.scanned = false;
@@ -608,7 +608,7 @@ final class AiFarm {
                            AiGameState.countInventoryItem(seed)
                         )
                         == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
-                        this.prev++;
+                        this.externalReplantCount++;
                         this.replantNotBefore.remove(w.cell().asLong());
                         this.harvestRevision.remove(w.cell().asLong());
                         continue;
@@ -639,7 +639,7 @@ final class AiFarm {
                      }
 
                      if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                        this.valid++;
+                        this.replantSkippedCount++;
                      }
 
                      if (w.kind() == AiFarm.Inner_BufferHelper.DROP) {
@@ -651,7 +651,7 @@ final class AiFarm {
                }
 
                while (!enough && !this.matureWork.isEmpty()) {
-                  AiFarm.Inner_CachePool w = this.init(this.matureWork);
+                  AiFarm.Inner_CachePool w = this.takeNearestWork(this.matureWork);
                   if (!this.skippedCells.contains(w.cell().asLong()) && this.stillValid(w)) {
                      return w;
                   }
@@ -659,7 +659,7 @@ final class AiFarm {
 
                if (this.useBonemeal && !enough) {
                   while (!this.growingWork.isEmpty()) {
-                     AiFarm.Inner_CachePool w = this.init(this.growingWork);
+                     AiFarm.Inner_CachePool w = this.takeNearestWork(this.growingWork);
                      if (!this.skippedCells.contains(w.cell().asLong()) && this.stillValid(w)) {
                         return w;
                      }
@@ -678,7 +678,7 @@ final class AiFarm {
                return null;
             }
 
-            AiFarm.Inner_CachePool init(List<AiFarm.Inner_CachePool> works) {
+            AiFarm.Inner_CachePool takeNearestWork(List<AiFarm.Inner_CachePool> works) {
                int best = -1;
                double bestSqr = 1.7976931348623157E308;
 
@@ -699,21 +699,21 @@ final class AiFarm {
                   Entity entity = this.mc.level.getEntity(w.entityId());
                   if (!(entity instanceof ItemEntity)) {
                      this.countDrop(w);
-                     return this.read();
+                     return this.finishWork();
                   }
 
                   if (this.mc.player.distanceToSqr(entity) <= 2.25) {
-                     if (++this.get > 40) {
+                     if (++this.dropPickupWaitTicks > 40) {
                         this.countDrop(w);
-                        return this.read();
+                        return this.finishWork();
                      } else {
-                        return this.read("Waiting for drop pickup; check inventory space");
+                        return this.running("Waiting for drop pickup; check inventory space");
                      }
                   } else {
-                     this.get = 0;
-                     return this.init(AiGoto.findStandableNearCompat(BlockPos.containing(entity.position().add(0.0, 0.2, 0.0)), 24), 0.7, 45, "Sweeping up the drops");
+                     this.dropPickupWaitTicks = 0;
+                     return this.moveToStance(AiGoto.findStandableNearCompat(BlockPos.containing(entity.position().add(0.0, 0.2, 0.0)), 24), 0.7, 45, "Sweeping up the drops");
                   }
-               } else if (this.load(cell) && this.load(w)) {
+               } else if (this.isWithinReach(cell) && this.canSeeWorkFace(w)) {
                   switch (w.kind()) {
                      case HARVEST:
                         this.harvestRevision.put(w.cell().asLong(), AiServerEvidence.blockRevision(w.cell()));
@@ -731,17 +731,17 @@ final class AiFarm {
 
                         if (kind == AiFarm.Inner_StreamUtil.INTERACT) {
                            this.action = AiGameOperations.blockAction("use", this.posJson(w.cell()));
-                           return this.read("Picking " + w.cell().toShortString());
+                           return this.running("Picking " + w.cell().toShortString());
                         } else {
                            this.action = AiGameOperations.blockAction("break", this.posJson(w.cell()));
                            AiOperation.Result first = this.action.tick();
                            if (!first.terminal()) {
-                              return this.read("Breaking " + w.cell().toShortString());
+                              return this.running("Breaking " + w.cell().toShortString());
                            }
 
                            this.action.cancel();
                            this.action = null;
-                           return this.init(this.currentWork, first);
+                           return this.settleWork(this.currentWork, first);
                         }
                      case REPLANT:
                         int slot = AiItems.equipHotbar(AiItems.resolveItem(seed));
@@ -749,67 +749,67 @@ final class AiFarm {
                            if (AiGameState.countInventoryItem(seed) <= 0) {
                               this.followUps.addLast(w);
                               this.currentWork = null;
-                              this.put = 0;
-                              return this.read("Picking up seed for the unfinished replant");
+                              this.seedHandWaitTicks = 0;
+                              return this.running("Picking up seed for the unfinished replant");
                            } else {
-                              if (++this.put > 80) {
-                                 return this.init(
+                              if (++this.seedHandWaitTicks > 80) {
+                                 return this.finish(
                                     AiOperation.Status.FAILED, "The seed hand did not settle; the replant remains unfinished at " + w.cell().toShortString()
                                  );
                               }
 
-                              return this.read("Preparing the seed hand");
+                              return this.running("Preparing the seed hand");
                            }
                         } else {
-                           this.put = 0;
+                           this.seedHandWaitTicks = 0;
                            JsonObject placeArgs = this.posJson(w.base());
                            placeArgs.addProperty("face", w.face().name());
                            placeArgs.addProperty("slot", slot);
                            this.action = AiGameOperations.blockAction("place", placeArgs);
                            AiOperation.Result opened = this.action.tick();
                            if (!opened.terminal()) {
-                              return this.read("Replanting " + w.cell().toShortString());
+                              return this.running("Replanting " + w.cell().toShortString());
                            }
 
                            this.action.cancel();
                            this.action = null;
-                           return this.init(this.currentWork, opened);
+                           return this.settleWork(this.currentWork, opened);
                         }
                      case BONEMEAL:
                         int mealSlot = AiItems.equipHotbar(AiItems.resolveItem("minecraft:bone_meal"));
                         if (mealSlot < 0) {
-                           return this.read();
+                           return this.finishWork();
                         }
 
                         JsonObject useArgs = this.posJson(w.cell());
                         useArgs.addProperty("slot", mealSlot);
                         useArgs.addProperty("aimY", this.aimHeight(w.cell()));
                         this.action = AiGameOperations.blockAction("use", useArgs);
-                        return this.read("Feeding " + w.cell().toShortString());
+                        return this.running("Feeding " + w.cell().toShortString());
                      default:
-                        return this.read();
+                        return this.finishWork();
                   }
                } else {
                   if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                     return this.init(AiGoto.findStandableNearCompat(w.cell(), 24), 0.45, 30, "Lining up the replant face");
+                     return this.moveToStance(AiGoto.findStandableNearCompat(w.cell(), 24), 0.45, 30, "Lining up the replant face");
                   }
 
-                  int[] column = AiFarm.COLUMN_OFFSETS[this.run++ % AiFarm.COLUMN_OFFSETS.length];
+                  int[] column = AiFarm.COLUMN_OFFSETS[this.columnOffsetCursor++ % AiFarm.COLUMN_OFFSETS.length];
                   BlockPos stance = AiGoto.findStandableNearCompat(new BlockPos(cell.getX() + column[0], cell.getY() - 1, cell.getZ() + column[1]), 24);
-                  return this.init(stance, 2.0, 60, "Moving into reach of " + cell.toShortString());
+                  return this.moveToStance(stance, 2.0, 60, "Moving into reach of " + cell.toShortString());
                }
             }
 
-            AiOperation.Result init(BlockPos stance, double range, int timeoutSeconds, String message) {
-               if (this.walkTarget == null && this.init(this.mc.player.blockPosition(), stance)) {
+            AiOperation.Result moveToStance(BlockPos stance, double range, int timeoutSeconds, String message) {
+               if (this.walkTarget == null && this.hasStraightWalk(this.mc.player.blockPosition(), stance)) {
                   this.walkTarget = stance;
                   this.walkRange = range;
-                  this.open = 0;
+                  this.walkStallTicks = 0;
                   this.lastWalkDistSqr = -1.0;
-                  return this.read(message);
+                  return this.running(message);
                } else {
                   this.approach = AiGoto.travelToCompat(stance, range, false, false, false, timeoutSeconds);
-                  return this.read(message);
+                  return this.running(message);
                }
             }
 
@@ -818,7 +818,7 @@ final class AiFarm {
                double distSqr = this.mc.player.distanceToSqr(center);
                if (distSqr <= Math.max(0.16, this.walkRange * this.walkRange)) {
                   this.stopWalking();
-                  return this.read("Arrived; re-evaluating");
+                  return this.running("Arrived; re-evaluating");
                }
 
                BlockPos feet = this.mc.player.blockPosition();
@@ -826,23 +826,23 @@ final class AiFarm {
                int sz = Integer.signum(this.walkTarget.getZ() - feet.getZ());
                boolean blocked = (sx != 0 || sz != 0) && !AiGoto.isStandableCompat(feet.offset(sx, 0, sz));
                if (this.lastWalkDistSqr >= 0.0 && distSqr > this.lastWalkDistSqr - 0.004) {
-                  if (++this.open > 40) {
+                  if (++this.walkStallTicks > 40) {
                      blocked = true;
                   }
                } else {
-                  this.open = 0;
+                  this.walkStallTicks = 0;
                }
 
                if (blocked) {
                   this.stopWalking();
-                  return this.read("Direct walk blocked; pathing around");
+                  return this.running("Direct walk blocked; pathing around");
                } else {
                   this.lastWalkDistSqr = distSqr;
                   this.aim.aimAt(center);
                   this.aim.tick();
                   this.mc.options.keyUp.setDown(true);
                   this.mc.player.setSprinting(distSqr > 9.0);
-                  return this.read("Walking straight to the next plant");
+                  return this.running("Walking straight to the next plant");
                }
             }
 
@@ -854,7 +854,7 @@ final class AiFarm {
                }
             }
 
-            boolean init(BlockPos from, BlockPos stance) {
+            boolean hasStraightWalk(BlockPos from, BlockPos stance) {
                if (from.getY() != stance.getY()) {
                   return false;
                }
@@ -882,16 +882,16 @@ final class AiFarm {
                }
             }
 
-            AiOperation.Result init(AiFarm.Inner_CachePool w, AiOperation.Result r) {
+            AiOperation.Result settleWork(AiFarm.Inner_CachePool w, AiOperation.Result r) {
                if (w == null) {
-                  return this.read("Re-evaluating the field");
+                  return this.running("Re-evaluating the field");
                }
 
                switch (w.kind()) {
                   case HARVEST:
                      if (r.status() == AiOperation.Status.SUCCEEDED
                         || r.status() == AiOperation.Status.TIMED_OUT && !this.mc.level.getBlockState(w.cell()).is(crop)) {
-                        this.stop++;
+                        this.harvestedCount++;
                         this.queueDropsNear(w.cell());
                         if (kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null && this.replantBase != null) {
                            ClientPacketListener connection = this.mc.getConnection();
@@ -903,73 +903,73 @@ final class AiFarm {
 
                         this.replantBase = null;
                         this.replantFace = null;
-                        return this.read();
+                        return this.finishWork();
                      } else {
                         this.replantBase = null;
                         this.replantFace = null;
-                        return this.load(r.message());
+                        return this.workAttemptFailed(r.message());
                      }
                   case REPLANT:
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
-                        this.next++;
-                        return this.read();
+                        this.replantedCount++;
+                        return this.finishWork();
                      }
 
                      return this.replantFailed(r.message());
                   case BONEMEAL:
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
-                        this.data++;
-                        return this.read();
+                        this.bonemealCount++;
+                        return this.finishWork();
                      }
 
-                     return this.load(r.message());
+                     return this.workAttemptFailed(r.message());
                   default:
-                     return this.read();
+                     return this.finishWork();
                }
             }
 
-            AiOperation.Result read() {
+            AiOperation.Result finishWork() {
                this.currentWork = null;
-               this.tick = 0;
-               this.run = 0;
-               this.get = 0;
-               this.put = 0;
-               return this.read("Harvested " + this.stop + ", " + cropItem + " " + this.add + "/" + this.targetCount);
+               this.workAttempts = 0;
+               this.columnOffsetCursor = 0;
+               this.dropPickupWaitTicks = 0;
+               this.seedHandWaitTicks = 0;
+               return this.running("Harvested " + this.harvestedCount + ", " + cropItem + " " + this.lastSeenCount + "/" + this.targetCount);
             }
 
             AiOperation.Result replantFailed(String reason) {
-               this.valid++;
+               this.replantSkippedCount++;
                if (this.currentWork != null) {
-                  this.init(this.currentWork.cell(), reason);
+                  this.recordSkip(this.currentWork.cell(), reason);
                }
 
-               return this.read();
+               return this.finishWork();
             }
 
-            AiOperation.Result load(String reason) {
+            AiOperation.Result workAttemptFailed(String reason) {
                if (this.currentWork == null) {
-                  return this.read("Re-evaluating the field");
+                  return this.running("Re-evaluating the field");
                }
 
-               if (++this.tick >= 3) {
+               if (++this.workAttempts >= 3) {
                   if (this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                     this.valid++;
+                     this.replantSkippedCount++;
                   }
 
-                  this.init(this.currentWork.cell(), reason);
+                  this.recordSkip(this.currentWork.cell(), reason);
                   this.skippedCells.add(this.currentWork.cell().asLong());
-                  return this.read();
+                  return this.finishWork();
                } else {
-                  return this.read("Attempt " + this.tick + " failed: " + reason);
+                  return this.running("Attempt " + this.workAttempts + " failed: " + reason);
                }
             }
 
-            void init(BlockPos cell, String reason) {
+            void recordSkip(BlockPos cell, String reason) {
                if (this.skipLog.size() < 32) {
                   this.skipLog.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
                }
 
-               this.value++;
+               this.skippedTotal++;
             }
 
             void queueDropsNear(BlockPos cell) {
@@ -1001,7 +1001,7 @@ final class AiFarm {
                int now = AiGameState.countInventoryItem(w.item());
                int base = this.dropBaseline.getOrDefault(w.item(), now);
                if (now > base) {
-                  this.size += now - base;
+                  this.dropCount += now - base;
                }
 
                this.dropBaseline.put(w.item(), now);
@@ -1011,25 +1011,25 @@ final class AiFarm {
                return AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ());
             }
 
-            boolean load(BlockPos pos) {
+            boolean isWithinReach(BlockPos pos) {
                return this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) <= 25.0
                   && autismclient.util.InteractionTargetRef.isInReach(this.mc, pos);
             }
 
-            boolean read(BlockPos pos) {
-               return this.init(pos, 0.5);
+            boolean hasLineOfSight(BlockPos pos) {
+               return this.hasLineOfSightAt(pos, 0.5);
             }
 
-            boolean load(AiFarm.Inner_CachePool w) {
+            boolean canSeeWorkFace(AiFarm.Inner_CachePool w) {
                BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
                if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                   return autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.mc, w.base(), w.face()) != null;
                } else {
-                  return w.kind() == AiFarm.Inner_BufferHelper.BONEMEAL ? this.init(cell, this.aimHeight(cell)) : this.read(cell);
+                  return w.kind() == AiFarm.Inner_BufferHelper.BONEMEAL ? this.hasLineOfSightAt(cell, this.aimHeight(cell)) : this.hasLineOfSight(cell);
                }
             }
 
-            boolean init(BlockPos pos, double aimY) {
+            boolean hasLineOfSightAt(BlockPos pos, double aimY) {
                BlockHitResult hit = this.mc
                   .level
                   .clip(
@@ -1091,21 +1091,21 @@ final class AiFarm {
                   "target",
                   this.targetCount,
                   "harvested",
-                  this.stop,
+                  this.harvestedCount,
                   "replanted",
-                  this.next,
+                  this.replantedCount,
                   "externalReplants",
-                  this.prev,
+                  this.externalReplantCount,
                   "replantSkipped",
-                  this.valid,
+                  this.replantSkippedCount,
                   "drops",
-                  this.size,
+                  this.dropCount,
                   "bonemeal",
-                  this.data,
+                  this.bonemealCount,
                   "skipped",
                   skipList,
                   "skippedTotal",
-                  this.value,
+                  this.skippedTotal,
                   "queued",
                   this.matureWork.size() + this.followUps.size(),
                   "confirmingReplants",
@@ -1115,11 +1115,11 @@ final class AiFarm {
                );
             }
 
-            AiOperation.Result read(String message) {
+            AiOperation.Result running(String message) {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
                return AiGameOperations.result(status, message, this.progressJson());
             }
@@ -1161,7 +1161,7 @@ final class AiFarm {
       return BREEDING_FOOD.getOrDefault(entityTypeId, List.of());
    }
 
-   private static AiOperation load(JsonObject args) {
+   private static AiOperation breed(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       final String species = AiJson.getString(args, "animal", "").trim().toLowerCase(Locale.ROOT);
       if (species.isEmpty()) {
@@ -1186,21 +1186,21 @@ final class AiFarm {
          Entity lastFed;
          int confirmTicks;
          int turnTicks;
-         int read;
+         int feedCooldownTicks;
          boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
             if (!this.cancelled && mc.player != null && mc.level != null) {
                if (System.nanoTime() > this.deadline) {
-                  return this.init(
+                  return this.finish(
                      this.fedIds.size() >= 2 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.TIMED_OUT,
                      "Breeding deadline reached after " + this.fedIds.size() + " feed(s)"
                   );
                }
 
                if (this.fedIds.size() >= feeds) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Fed " + this.fedIds.size() + " " + species);
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Fed " + this.fedIds.size() + " " + species);
                }
 
                if (this.lastFed != null) {
@@ -1220,7 +1220,7 @@ final class AiFarm {
                } else {
                   String food = this.heldFood();
                   if (food == null) {
-                     return this.init(
+                     return this.finish(
                         this.fedIds.size() >= 2 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
                         this.fedIds.size() >= 2
                            ? "Ran out of breeding food after " + this.fedIds.size() + " feed(s)"
@@ -1228,8 +1228,8 @@ final class AiFarm {
                      );
                   }
 
-                  if (this.read > 0) {
-                     this.read--;
+                  if (this.feedCooldownTicks > 0) {
+                     this.feedCooldownTicks--;
                      return this.running("Waiting between feeds");
                   }
 
@@ -1241,15 +1241,15 @@ final class AiFarm {
                      this.turnTicks = 0;
                      if (this.candidate == null) {
                         if (this.fedIds.size() >= 2) {
-                           return this.init(AiOperation.Status.SUCCEEDED, "No more unfed " + species + " nearby after " + this.fedIds.size() + " feed(s)");
+                           return this.finish(AiOperation.Status.SUCCEEDED, "No more unfed " + species + " nearby after " + this.fedIds.size() + " feed(s)");
                         }
 
                         String untamed = this.untamedHint(typeId);
                         if (untamed != null) {
-                           return this.init(AiOperation.Status.FAILED, untamed);
+                           return this.finish(AiOperation.Status.FAILED, untamed);
                         }
 
-                        return this.init(AiOperation.Status.FAILED, "No breedable " + species + " within 16 blocks");
+                        return this.finish(AiOperation.Status.FAILED, "No breedable " + species + " within 16 blocks");
                      }
                   }
 
@@ -1289,7 +1289,7 @@ final class AiFarm {
                         return this.running("Turning toward a " + species);
                      } else {
                         if (AiItems.equipHotbar(AiItems.resolveItem(food)) < 0) {
-                           return this.init(AiOperation.Status.FAILED, "Could not hold " + food);
+                           return this.finish(AiOperation.Status.FAILED, "Could not hold " + food);
                         }
 
                         mc.gameMode
@@ -1303,13 +1303,13 @@ final class AiFarm {
                         this.lastFed = this.candidate;
                         this.confirmTicks = 0;
                         this.candidate = null;
-                        this.read = 10;
+                        this.feedCooldownTicks = 10;
                         return this.running("Feeding a " + species);
                      }
                   }
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Breeding cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Breeding cancelled");
             }
          }
 
@@ -1386,7 +1386,7 @@ final class AiFarm {
             return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             JsonObject data = this.progressJson();
             this.cancel();
             return new AiOperation.Result(status, message, data.toString(), List.of());
@@ -1406,7 +1406,7 @@ final class AiFarm {
       };
    }
 
-   static List<BlockPos> init(Minecraft mc, Block crop) {
+   static List<BlockPos> findNearestField(Minecraft mc, Block crop) {
       BlockPos origin = mc.player.blockPosition();
       BlockPos seed = null;
       double best = 1.7976931348623157E308;
@@ -1459,12 +1459,12 @@ final class AiFarm {
       return field;
    }
 
-   private static AiOperation load(final JsonObject args, final String cropBlock, final String cropItem) {
+   private static AiOperation harvestField(final JsonObject args, final String cropBlock, final String cropItem) {
       final Minecraft mc = Minecraft.getInstance();
       Block crop = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cropBlock));
       int baseline = AiGameState.countInventoryItem(cropItem);
       final int target = AiJson.getInt(args, "count", 53) + (AiJson.getBoolean(args, "additional", false) ? baseline : 0);
-      final List<BlockPos> field = init(mc, crop);
+      final List<BlockPos> field = findNearestField(mc, crop);
       if (!field.isEmpty() && !AiJson.getBoolean(args, "bonemeal", false)) {
          final JsonObject rest = args.deepCopy();
          rest.addProperty("count", target);
@@ -1472,7 +1472,7 @@ final class AiFarm {
          return new AiOperation() {
             AiOperation fieldOp = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
             boolean fallbackStarted;
-            boolean load;
+            boolean dropSweepStarted;
 
             @Override
             public AiOperation.Result tick() {
@@ -1481,14 +1481,14 @@ final class AiFarm {
                   return r;
                }
 
-               if (!this.load && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem(cropItem) >= target && this.init()) {
+               if (!this.dropSweepStarted && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem(cropItem) >= target && this.hasFieldDrops()) {
                   this.fieldOp.cancel();
-                  this.load = true;
+                  this.dropSweepStarted = true;
                   this.fieldOp = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
                   return AiGameOperations.result(AiOperation.Status.RUNNING, "Collecting the field's remaining drops", new JsonObject());
                }
 
-               if (this.load
+               if (this.dropSweepStarted
                   || this.fallbackStarted
                   || r.status() == AiOperation.Status.CANCELLED
                   || AiGameState.countInventoryItem(cropItem) >= target
@@ -1502,7 +1502,7 @@ final class AiFarm {
                return AiGameOperations.result(AiOperation.Status.RUNNING, "Field done; looking for more " + cropItem, new JsonObject());
             }
 
-            boolean init() {
+            boolean hasFieldDrops() {
                int minX = 2147483647;
                int minZ = 2147483647;
                int maxX = -2147483648;

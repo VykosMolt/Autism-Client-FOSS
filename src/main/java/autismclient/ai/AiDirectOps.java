@@ -17,55 +17,55 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 
 public final class AiDirectOps {
-   public static final Set<String> init_Set = Set.of("game:fight", "game:shoot", "game:dodge", "game:mlg", "game:escape_hazard", "game:telly", "game:scaffold");
-   public static final Set<String> load_Set = Set.of(
+   public static final Set<String> UNPAUSABLE_TOOL_IDS = Set.of("game:fight", "game:shoot", "game:dodge", "game:mlg", "game:escape_hazard", "game:telly", "game:scaffold");
+   public static final Set<String> CAMPAIGN_TOOL_IDS = Set.of(
       "game:dimension", "game:plan", "game:nether_entry", "game:speedrun", "game:dragon_fight", "game:nether_run", "game:stronghold", "game:end_run"
    );
-   private static final AiCatalog init_AiCatalog = new AiCatalog();
-   private static volatile AiDirectOps.Inner_DataUtil init_o_DataUtil;
-   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil init_k_StreamUtil;
-   private static final List<AiDirectOps.Inner_DataUtil> init_List = new ArrayList<>();
-   private static volatile AiToolSettings init_AiToolSettings;
-   private static int init_I;
-   private static int load_I;
-   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil load_k_StreamUtil;
-   private static volatile AiOperation.Result init_AiOperation_Result;
+   private static final AiCatalog CATALOG = new AiCatalog();
+   private static volatile AiDirectOps.Inner_DataUtil active;
+   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil latestJob;
+   private static final List<AiDirectOps.Inner_DataUtil> waiters = new ArrayList<>();
+   private static volatile AiToolSettings cachedToolSettings;
+   private static int pendingInputCleanups;
+   private static int tickCount;
+   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil lastJob;
+   private static volatile AiOperation.Result lastResult;
 
    public static boolean init_Z(String id) {
-      return load_Set.contains(id);
+      return CAMPAIGN_TOOL_IDS.contains(id);
    }
 
    private AiDirectOps() {
    }
 
    public static void reloadToolSettings() {
-      init_AiToolSettings = AiToolSettings.load(aiFolder());
+      cachedToolSettings = AiToolSettings.load(aiFolder());
    }
 
    static void init(Minecraft client) {
       try {
          AiGhastReflect.tickAll();
-         if (++load_I % 20 == 0 || init_AiCatalog.snapshot().entries().isEmpty()) {
-            init_AiCatalog.refresh();
+         if (++tickCount % 20 == 0 || CATALOG.snapshot().entries().isEmpty()) {
+            CATALOG.refresh();
          }
 
-         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
-            init(client, waiter);
+         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
+            tickOp(client, waiter);
          }
 
-         AiDirectOps.Inner_DataUtil body = init_o_DataUtil;
+         AiDirectOps.Inner_DataUtil body = active;
          if (body != null) {
-            init(client, body);
+            tickOp(client, body);
          }
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Tools] tick failed", t);
-         init_V("survival supervisor failed; controls released");
+         stopAll("survival supervisor failed; controls released");
       }
    }
 
    public static AiCatalog.Snapshot catalogSnapshot() {
-      init_AiCatalog.refresh();
-      return init_AiCatalog.snapshot();
+      CATALOG.refresh();
+      return CATALOG.snapshot();
    }
 
    public static AiCatalog.Entry catalogEntry(String id) {
@@ -104,11 +104,11 @@ public final class AiDirectOps {
    }
 
    public static boolean isRunning() {
-      return init_o_DataUtil != null;
+      return active != null;
    }
 
-   public static String init_Str() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+   public static String activeToolId() {
+      AiDirectOps.Inner_DataUtil a = active;
       return a == null ? "" : a.id;
    }
 
@@ -117,9 +117,9 @@ public final class AiDirectOps {
    }
 
    public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil start(String id, JsonObject args) {
-      AiDirectOps.Inner_DataUtil running = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil running = active;
       if (running != null && !id.equals("client:run_macro")) {
-         throw new IllegalStateException("Already running " + running.id + " (" + init_Str(running) + ") - " + toolsCommand() + " stop first");
+         throw new IllegalStateException("Already running " + running.id + " (" + elapsedText(running) + ") - " + toolsCommand() + " stop first");
       }
 
       AiCatalog.Entry entry = catalogSnapshot().get(id);
@@ -134,7 +134,7 @@ public final class AiDirectOps {
 
          AiSettings ai = settings();
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
-         JsonObject effective = init(id, args, schema);
+         JsonObject effective = applyToolDefaults(id, args, schema);
          if (schema.has("type") || schema.has("properties")) {
             AiSchemas.init(schema, effective);
          }
@@ -170,13 +170,13 @@ public final class AiDirectOps {
          Minecraft mc = Minecraft.getInstance();
          AiDirectOps.Inner_DataUtil created = new AiDirectOps.Inner_DataUtil(id, op, lease, requiredResources, mc.level, ai.emergencyKey);
          if (id.equals("client:run_macro")) {
-            init_List.add(created);
-            init_k_StreamUtil = created.job;
+            waiters.add(created);
+            latestJob = created.job;
          } else {
-            init_o_DataUtil = created;
+            active = created;
          }
 
-         load_k_StreamUtil = created.job;
+         lastJob = created.job;
          created.job.init(() -> Minecraft.getInstance().execute(() -> init(created.job)));
          if (lease != null) {
             created.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + id, "{}");
@@ -184,9 +184,9 @@ public final class AiDirectOps {
             created.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Waiting for shared controls", "{}");
          }
 
-         init_AiOperation_Result = null;
+         lastResult = null;
          AiEventLog.getInstance().init("op_started", AiJson.objectOf("id", id, "source", "direct"));
-         AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + read_Str() + "§7 cancels");
+         AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + cancelHint() + "§7 cancels");
          return created.job;
       } else {
          throw new IllegalArgumentException(
@@ -196,152 +196,152 @@ public final class AiDirectOps {
    }
 
    public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil currentHandle() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
-      return a != null ? a.job : (init_k_StreamUtil != null ? init_k_StreamUtil : load_k_StreamUtil);
+      AiDirectOps.Inner_DataUtil a = active;
+      return a != null ? a.job : (latestJob != null ? latestJob : lastJob);
    }
 
    public static void init(autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job) {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil a = active;
       if (a != null && a.job == job) {
-         init(a, AiFailure.CANCELLED, "Cancelled by its owner");
+         failOp(a, AiFailure.CANCELLED, "Cancelled by its owner");
       } else {
-         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
+         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
             if (waiter.job == job) {
-               init(waiter, AiFailure.CANCELLED, "Cancelled by its owner");
+               failOp(waiter, AiFailure.CANCELLED, "Cancelled by its owner");
             }
          }
       }
    }
 
-   private static JsonObject init(String id, JsonObject args, JsonObject schema) {
+   private static JsonObject applyToolDefaults(String id, JsonObject args, JsonObject schema) {
       AiToolSettings s = toolSettings();
       JsonObject out = args.deepCopy();
       if (id.equals("game:goto") || id.equals("game:navigate")) {
-         init(schema, out, "strategy", s.strategy);
-         init(schema, out, "allowDig", s.allowDig);
-         init(schema, out, "allowPillar", s.allowPillar);
-         init(schema, out, "allowBridge", s.allowBridge);
-         init(schema, out, "allowInventory", s.allowInventory);
-         init(schema, out, "digReluctance", s.digReluctance);
+         putDefaultString(schema, out, "strategy", s.strategy);
+         putDefaultBoolean(schema, out, "allowDig", s.allowDig);
+         putDefaultBoolean(schema, out, "allowPillar", s.allowPillar);
+         putDefaultBoolean(schema, out, "allowBridge", s.allowBridge);
+         putDefaultBoolean(schema, out, "allowInventory", s.allowInventory);
+         putDefaultInt(schema, out, "digReluctance", s.digReluctance);
       }
 
       if ((id.equals("game:surface") || id.equals("game:cave")) && !out.has("strategy")) {
-         init(schema, out, "strategy", s.strategy);
+         putDefaultString(schema, out, "strategy", s.strategy);
       }
 
       if (id.equals("game:fight") && !out.has("useShield")) {
-         init(schema, out, "useShield", s.useShield);
+         putDefaultBoolean(schema, out, "useShield", s.useShield);
       }
 
-      if (!id.equals("game:goto") && !out.has("timeoutSeconds") && init(schema, "timeoutSeconds")) {
+      if (!id.equals("game:goto") && !out.has("timeoutSeconds") && schemaHas(schema, "timeoutSeconds")) {
          out.addProperty("timeoutSeconds", s.timeoutSeconds);
       }
 
       return out;
    }
 
-   private static void init(JsonObject schema, JsonObject out, String key, String value) {
-      if (!out.has(key) && init(schema, key)) {
+   private static void putDefaultString(JsonObject schema, JsonObject out, String key, String value) {
+      if (!out.has(key) && schemaHas(schema, key)) {
          out.addProperty(key, value);
       }
    }
 
-   private static void init(JsonObject schema, JsonObject out, String key, boolean value) {
-      if (!out.has(key) && init(schema, key)) {
+   private static void putDefaultBoolean(JsonObject schema, JsonObject out, String key, boolean value) {
+      if (!out.has(key) && schemaHas(schema, key)) {
          out.addProperty(key, value);
       }
    }
 
-   private static void init(JsonObject schema, JsonObject out, String key, int value) {
-      if (!out.has(key) && init(schema, key)) {
+   private static void putDefaultInt(JsonObject schema, JsonObject out, String key, int value) {
+      if (!out.has(key) && schemaHas(schema, key)) {
          out.addProperty(key, value);
       }
    }
 
-   private static boolean init(JsonObject schema, String key) {
+   private static boolean schemaHas(JsonObject schema, String key) {
       return schema.has("properties") && schema.getAsJsonObject("properties").has(key);
    }
 
    public static void stop() {
-      init_V("");
+      stopAll("");
    }
 
-   public static void init_V(String reason) {
+   public static void stopAll(String reason) {
       AiMacroTools.cancelAll("Tools stopped");
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil a = active;
 
-      for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
-         init(waiter, AiFailure.CANCELLED, "Macro tool stopped");
+      for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
+         failOp(waiter, AiFailure.CANCELLED, "Macro tool stopped");
       }
 
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
       } else {
-         init(a, AiFailure.CANCELLED, "Tool operation stopped" + (reason != null && !reason.isBlank() ? ": " + reason : ""));
+         failOp(a, AiFailure.CANCELLED, "Tool operation stopped" + (reason != null && !reason.isBlank() ? ": " + reason : ""));
          AutismClientMessaging.sendPrefixed("§e" + a.id + " stopped" + (reason != null && !reason.isBlank() ? ": " + reason : "."));
       }
    }
 
    public static void pause() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil a = active;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
-      } else if (a.init_Z) {
+      } else if (a.paused) {
          AutismClientMessaging.sendPrefixed("§7" + a.id + " is already paused - " + toolsCommand() + " resume continues.");
-      } else if (a.defense == null && !init_Set.contains(a.id)) {
-         a.init_Z = true;
-         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.PAUSED, "Paused", a.write);
-         load(a);
+      } else if (a.defense == null && !UNPAUSABLE_TOOL_IDS.contains(a.id)) {
+         a.paused = true;
+         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.PAUSED, "Paused", a.lastData);
+         releaseInputs(a);
          AutismClientMessaging.sendPrefixed("§e" + a.id + " paused (inputs released; its deadline keeps running) - " + toolsCommand() + " resume continues.");
       } else {
-         init_V("pause is unsafe for this op (live combat/reflex state)");
+         stopAll("pause is unsafe for this op (live combat/reflex state)");
       }
    }
 
    public static void resume() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil a = active;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
-      } else if (!a.init_Z) {
+      } else if (!a.paused) {
          AutismClientMessaging.sendPrefixed("§7" + a.id + " is not paused.");
       } else {
-         a.init_Z = false;
+         a.paused = false;
          a.job
             .init(
                a.lease == null ? autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING : autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING,
                "Resumed",
-               a.write
+               a.lastData
             );
          AutismClientMessaging.sendPrefixed("§7" + a.id + " resumed.");
       }
    }
 
    public static List<String> statusLines() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+      AiDirectOps.Inner_DataUtil a = active;
       if (a == null) {
          return List.of("§7No tool operation running.");
       }
 
       List<String> lines = new ArrayList<>();
-      lines.add("§7Op: §f" + a.id + " §8(" + init_Str(a) + (a.init_Z ? ", paused" : ", running") + ")");
-      if (!a.read.isBlank()) {
-         lines.add("§7Progress: §f" + a.read);
+      lines.add("§7Op: §f" + a.id + " §8(" + elapsedText(a) + (a.paused ? ", paused" : ", running") + ")");
+      if (!a.lastMessage.isBlank()) {
+         lines.add("§7Progress: §f" + a.lastMessage);
       }
 
-      if (toolSettings().verbosityLevel().includesData() && !a.write.isBlank() && !a.write.equals("{}")) {
-         lines.add("§8" + init(a.write, 200));
+      if (toolSettings().verbosityLevel().includesData() && !a.lastData.isBlank() && !a.lastData.equals("{}")) {
+         lines.add("§8" + clipJson(a.lastData, 200));
       }
 
       return lines;
    }
 
-   private static void init(Minecraft mc, AiDirectOps.Inner_DataUtil a) {
+   private static void tickOp(Minecraft mc, AiDirectOps.Inner_DataUtil a) {
       if (autismclient.modules.aD.init_Z()) {
-         init_V("client panic mode");
+         stopAll("client panic mode");
       } else if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          if (a.world != null && mc.level != a.world) {
             if (!init_Z(a.id)) {
-               init(a, AiFailure.WORLD_CHANGED, "World or session changed");
+               failOp(a, AiFailure.WORLD_CHANGED, "World or session changed");
                AutismClientMessaging.sendPrefixed("§e" + a.id + " cancelled [WORLD_CHANGED]: world or session changed.");
                return;
             }
@@ -350,25 +350,25 @@ public final class AiDirectOps {
          }
 
          if (mc.player != null && !mc.player.isAlive()) {
-            init(a, AiFailure.CANCELLED, "Player died");
+            failOp(a, AiFailure.CANCELLED, "Player died");
             AutismClientMessaging.sendPrefixed("§e" + a.id + " cancelled: player died.");
          } else if (CompatGLFW.glfwGetKey(mc.getWindow().handle(), a.emergencyKey) == 1) {
-            init_V("emergency key");
-         } else if (!a.init_Z) {
+            stopAll("emergency key");
+         } else if (!a.paused) {
             if (a.lease == null) {
                a.lease = MacroExecutor.acquireExternalResources(a.resources);
                if (a.lease == null) {
-                  a.read = "Waiting for shared controls";
+                  a.lastMessage = "Waiting for shared controls";
                   return;
                }
 
-               a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + a.id, a.write);
+               a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + a.id, a.lastData);
             }
 
             if (mc.player != null && mc.player.isAlive() && a.resources.contains("INPUT") && a.resources.contains("ROTATION")) {
                String hazard = AiHazardEscape.init(mc);
                if (hazard != null && !a.kind.equals("environment") && !a.id.equals("game:escape_hazard") && !AiGuard.isSuppressed()) {
-                  init(a, AiHazardEscape.init(AiJson.objectOf("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
+                  interruptForDefense(a, AiHazardEscape.init(AiJson.objectOf("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
                }
 
                if (hazard == null
@@ -376,7 +376,7 @@ public final class AiDirectOps {
                   && a.kind.equals("food")
                   && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   if (AiDodge.init(mc, false)) {
-                     init(
+                     interruptForDefense(
                         a,
                         AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
@@ -384,7 +384,7 @@ public final class AiDirectOps {
                         "incoming projectile while eating"
                      );
                   } else if (a.defense.canInterruptNow() && (AiGuard.sampleStatus().hostilesNear() > 0 || AiSurvival.nearestThreat(mc) != null)) {
-                     init(a, AiSurvival.defend(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
+                     interruptForDefense(a, AiSurvival.defend(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
                   }
                }
 
@@ -397,8 +397,8 @@ public final class AiDirectOps {
                      a.op, AiFailure.ENVIRONMENTAL_HAZARD, "Suffocating inside a block; observe the obstruction before restarting"
                   );
                   a.op.cancel();
-                  init(a, interrupted);
-                  load(a, interrupted);
+                  recordProgress(a, interrupted);
+                  completeOp(a, interrupted);
                   return;
                }
 
@@ -408,7 +408,7 @@ public final class AiDirectOps {
                   && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   boolean projectile = AiDodge.init(mc, mc.player.getDeltaMovement().horizontalDistance() >= 0.12);
                   if (projectile) {
-                     init(
+                     interruptForDefense(
                         a,
                         AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
@@ -424,7 +424,7 @@ public final class AiDirectOps {
                            ? AiSurvival.defend(mc)
                            : AiGuard.createResponseOperation(AiGuard.GuardPolicy.standard(), vitals, 15);
                         if (defense != null) {
-                           init(
+                           interruptForDefense(
                               a,
                               defense,
                               "combat",
@@ -433,7 +433,7 @@ public final class AiDirectOps {
                            );
                         }
                      } else if (!a.id.equals("game:eat") && vitals.food() <= 6 && vitals.hasFood() && vitals.hostilesNear() == 0) {
-                        init(a, AiSurvival.init(AiJson.objectOf("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
+                        interruptForDefense(a, AiSurvival.init(AiJson.objectOf("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
                      }
                   }
                }
@@ -468,9 +468,9 @@ public final class AiDirectOps {
                   );
                }
             } catch (Throwable t) {
-               init_V(a);
-               init_AiOperation_Result = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
-               init(a, true, init_AiOperation_Result);
+               removeOp(a);
+               lastResult = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
+               finishOp(a, true, lastResult);
                AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
                AutismClientMessaging.sendPrefixed(
                   "§c" + a.id + " failed [UNKNOWN]: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage())
@@ -478,15 +478,15 @@ public final class AiDirectOps {
                return;
             }
 
-            init(a, result);
+            recordProgress(a, result);
             if (result.terminal()) {
-               load(a, result);
+               completeOp(a, result);
             }
          }
       }
    }
 
-   private static void init(AiDirectOps.Inner_DataUtil a, AiOperation defense, String kind, AiFailure cause, String reason) {
+   private static void interruptForDefense(AiDirectOps.Inner_DataUtil a, AiOperation defense, String kind, AiFailure cause, String reason) {
       if (a.interrupted == null) {
          a.interrupted = AiService.interruptedFailureResult(a.op, cause, "Work interrupted: " + reason);
       }
@@ -527,25 +527,25 @@ public final class AiDirectOps {
          );
    }
 
-   private static void init(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
+   private static void recordProgress(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
       String data = result.dataJson();
-      a.read = result.message();
-      a.write = data == null ? "{}" : data;
+      a.lastMessage = result.message();
+      a.lastData = data == null ? "{}" : data;
       if (!result.terminal()) {
-         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING, a.read, a.write);
-         if (init_o_DataUtil == a) {
+         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING, a.lastMessage, a.lastData);
+         if (active == a) {
             String title = a.id.substring(a.id.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.id : Character.toUpperCase(title.charAt(0)) + title.substring(1);
-            AiVisualization.init(a, pretty, AiTaskStatus.init(a.read, "In progress"), -1);
+            AiVisualization.init(a, pretty, AiTaskStatus.init(a.lastMessage, "In progress"), -1);
          }
       }
    }
 
    public static AiOperation.Result init_AiOperation_Result() {
-      return init_AiOperation_Result;
+      return lastResult;
    }
 
-   static AiOperation.Result init(AiOperation op, AiOperation reflex, AiOperation.Result interrupted, AiFailure cause, String message, String lastData) {
+   static AiOperation.Result failureResult(AiOperation op, AiOperation reflex, AiOperation.Result interrupted, AiFailure cause, String message, String lastData) {
       boolean pending = op.requiresReconciliationAfterEmergency()
          || reflex != null && reflex.requiresReconciliationAfterEmergency()
          || interrupted != null && interrupted.status() == AiOperation.Status.UNCERTAIN;
@@ -559,12 +559,12 @@ public final class AiDirectOps {
       );
    }
 
-   private static void init(AiDirectOps.Inner_DataUtil a, AiFailure cause, String message) {
-      if (init_o_DataUtil == a || init_List.contains(a)) {
-         AiOperation.Result result = init(a.op, a.defense, a.interrupted, cause, message, a.write);
-         init_V(a);
-         init_AiOperation_Result = result;
-         init(a, true, result);
+   private static void failOp(AiDirectOps.Inner_DataUtil a, AiFailure cause, String message) {
+      if (active == a || waiters.contains(a)) {
+         AiOperation.Result result = failureResult(a.op, a.defense, a.interrupted, cause, message, a.lastData);
+         removeOp(a);
+         lastResult = result;
+         finishOp(a, true, result);
          AiEventLog.getInstance()
             .init(
                "op_failed",
@@ -578,19 +578,19 @@ public final class AiDirectOps {
       }
    }
 
-   private static void load(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
-      if (init_o_DataUtil == a || init_List.contains(a)) {
-         init_V(a);
-         init_AiOperation_Result = result;
-         init(a, false, result);
+   private static void completeOp(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
+      if (active == a || waiters.contains(a)) {
+         removeOp(a);
+         lastResult = result;
+         finishOp(a, false, result);
          AiToolSettings.Verbosity verbosity = toolSettings().verbosityLevel();
-         String data = a.write == null ? "{}" : a.write;
+         String data = a.lastData == null ? "{}" : a.lastData;
          switch (result.status()) {
             case SUCCEEDED:
                AiEventLog.getInstance().init("op_completed", AiJson.objectOf("id", a.id, "status", "SUCCEEDED"));
                AutismClientMessaging.sendPrefixed("§a" + a.id + ": " + result.message());
                if (!data.isBlank() && !data.equals("{}")) {
-                  AutismClientMessaging.sendPrefixed("§8" + init(data, init(verbosity)));
+                  AutismClientMessaging.sendPrefixed("§8" + clipJson(data, dataLimitFor(verbosity)));
                }
                break;
             case UNCERTAIN:
@@ -604,16 +604,16 @@ public final class AiDirectOps {
             case TIMED_OUT:
                AiFailure failure = result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
                AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "TIMED_OUT", "failure", failure.name()));
-               AutismClientMessaging.sendPrefixed(init(a.id, "timed out", failure, result.message(), verbosity));
+               AutismClientMessaging.sendPrefixed(failureLine(a.id, "timed out", failure, result.message(), verbosity));
                break;
             case FAILED:
                AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", result.failure().name()));
-               AutismClientMessaging.sendPrefixed(init(a.id, "failed", result.failure(), result.message(), verbosity));
+               AutismClientMessaging.sendPrefixed(failureLine(a.id, "failed", result.failure(), result.message(), verbosity));
          }
       }
    }
 
-   private static String init(String id, String verb, AiFailure failure, String message, AiToolSettings.Verbosity verbosity) {
+   private static String failureLine(String id, String verb, AiFailure failure, String message, AiToolSettings.Verbosity verbosity) {
       String line = "§c" + id + " " + verb + " [" + failure.name() + "]: " + message;
       if (verbosity.includesFailureSuggestions() && failure.isRecoverable() && !failure.suggestedActions().isEmpty()) {
          line = line + " §7(recoverable - try: " + String.join(", ", failure.suggestedActions()) + ")";
@@ -623,23 +623,23 @@ public final class AiDirectOps {
    }
 
    public static boolean isDrivingInput() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
-      return init_I > 0 || a != null && a.lease != null && a.resources.contains("INPUT");
+      AiDirectOps.Inner_DataUtil a = active;
+      return pendingInputCleanups > 0 || a != null && a.lease != null && a.resources.contains("INPUT");
    }
 
-   private static void init(AiDirectOps.Inner_DataUtil a, boolean cancel, AiOperation.Result result) {
+   private static void finishOp(AiDirectOps.Inner_DataUtil a, boolean cancel, AiOperation.Result result) {
       boolean input = a.lease != null && a.resources.contains("INPUT");
       if (input) {
-         init_I++;
+         pendingInputCleanups++;
       }
 
-      load(a);
+      releaseInputs(a);
       AiClientTick.execute(() -> {
          try {
-            init(a, cancel);
+            stopOp(a, cancel);
          } finally {
             if (input) {
-               init_I--;
+               pendingInputCleanups--;
             }
 
             a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.valueOf(result.status().name()), result.message(), result.dataJson());
@@ -647,17 +647,17 @@ public final class AiDirectOps {
       });
    }
 
-   private static void init_V(AiDirectOps.Inner_DataUtil a) {
+   private static void removeOp(AiDirectOps.Inner_DataUtil a) {
       AiVisualization.clearOwner(a);
-      if (init_o_DataUtil == a) {
-         init_o_DataUtil = null;
+      if (active == a) {
+         active = null;
       }
 
-      init_List.remove(a);
-      init_k_StreamUtil = init_List.isEmpty() ? null : init_List.getLast().job;
+      waiters.remove(a);
+      latestJob = waiters.isEmpty() ? null : waiters.getLast().job;
    }
 
-   private static void init(AiDirectOps.Inner_DataUtil a, boolean cancel) {
+   private static void stopOp(AiDirectOps.Inner_DataUtil a, boolean cancel) {
       try {
          if (a.defense != null) {
             try {
@@ -675,7 +675,7 @@ public final class AiDirectOps {
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Tools] operation cleanup failed", t);
       } finally {
-         load(a);
+         releaseInputs(a);
 
          try {
             if (a.lease != null) {
@@ -687,7 +687,7 @@ public final class AiDirectOps {
       }
    }
 
-   private static void load(AiDirectOps.Inner_DataUtil a) {
+   private static void releaseInputs(AiDirectOps.Inner_DataUtil a) {
       if (a.lease != null && a.resources.contains("INPUT")) {
          autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
          Minecraft mc = Minecraft.getInstance();
@@ -712,10 +712,10 @@ public final class AiDirectOps {
    }
 
    public static AiToolSettings toolSettings() {
-      AiToolSettings s = init_AiToolSettings;
+      AiToolSettings s = cachedToolSettings;
       if (s == null) {
          s = AiToolSettings.load(aiFolder());
-         init_AiToolSettings = s;
+         cachedToolSettings = s;
       }
 
       return s;
@@ -723,7 +723,7 @@ public final class AiDirectOps {
 
    public static void init(AiToolSettings next) {
       next.clamp();
-      init_AiToolSettings = next;
+      cachedToolSettings = next;
 
       try {
          next.save(aiFolder());
@@ -766,13 +766,13 @@ public final class AiDirectOps {
       }
    }
 
-   private static String init_Str(AiDirectOps.Inner_DataUtil a) {
-      long seconds = Math.max(0L, (System.nanoTime() - a.init_J) / 1000000000L);
+   private static String elapsedText(AiDirectOps.Inner_DataUtil a) {
+      long seconds = Math.max(0L, (System.nanoTime() - a.startedAt) / 1000000000L);
       return seconds < 60L ? seconds + "s" : String.format(Locale.ROOT, "%dm%02ds", seconds / 60L, seconds % 60L);
    }
 
-   private static String read_Str() {
-      AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
+   private static String cancelHint() {
+      AiDirectOps.Inner_DataUtil a = active;
       int key = a == null ? settings().emergencyKey : a.emergencyKey;
       return toolsCommand() + " stop or " + (key == 299 ? "F10" : "key " + key);
    }
@@ -781,7 +781,7 @@ public final class AiDirectOps {
       return autismclient.commands.CommandManager.getPrefix() + "tools";
    }
 
-   private static String write_Str() {
+   private static String verbosityHint() {
       String var10000;
       switch (toolSettings().verbosityLevel()) {
          case QUIET:
@@ -800,7 +800,7 @@ public final class AiDirectOps {
       return var10000;
    }
 
-   static String init(String json, int max) {
+   static String clipJson(String json, int max) {
       if (json == null) {
          return "{}";
       } else {
@@ -808,7 +808,7 @@ public final class AiDirectOps {
       }
    }
 
-   private static int init(AiToolSettings.Verbosity verbosity) {
+   private static int dataLimitFor(AiToolSettings.Verbosity verbosity) {
       short var10000;
       switch (verbosity) {
          case QUIET:
@@ -834,14 +834,14 @@ public final class AiDirectOps {
       final autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job;
       final List<String> resources;
       final int emergencyKey;
-      final long init_J = System.nanoTime();
+      final long startedAt = System.nanoTime();
       Object world;
-      boolean init_Z;
+      boolean paused;
       AiOperation defense;
       AiOperation.Result interrupted;
       String kind = "";
-      String read = "";
-      String write = "{}";
+      String lastMessage = "";
+      String lastData = "{}";
       long load_J;
 
       Inner_DataUtil(String id, AiOperation op, AutoCloseable lease, List<String> resources, Object world, int emergencyKey) {

@@ -80,7 +80,7 @@ final class AiBlazeFight {
       return System.nanoTime() < init_J;
    }
 
-   static autismclient.ai.engine.CoverGoal init(
+   static autismclient.ai.engine.CoverGoal chooseCoverGoal(
       BlockGetter level,
       AABB target,
       Vec3 targetEye,
@@ -110,14 +110,14 @@ final class AiBlazeFight {
                      && loaded.test(new BlockPos(under.getX(), feet.getY(), feet.getZ()))) {
                      Vec3 eye = new Vec3(feet.getX() + 0.5, feet.getY() + eyeHeight, feet.getZ() + 0.5);
                      boolean jump = level.getBlockState(feet.above(2)).getCollisionShape(level, feet.above(2)).isEmpty();
-                     if (init(target, eye, reach, true, jump, allowPillar)
+                     if (canStrikeFrom(target, eye, reach, true, jump, allowPillar)
                         && safe.test(feet)
                         && level.getFluidState(feet).isEmpty()
                         && level.getFluidState(feet.above()).isEmpty()
                         && level.getFluidState(feet.below()).isEmpty()
                         && autismclient.ai.engine.AiSight.hasLineOfSight(level, eye, targetEye, -9223372036854775808L, -9223372036854775808L)) {
                         boolean vertical = target.minY > eye.y && Math.sqrt(target.distanceToSqr(eye.add(0.0, 1.15, 0.0))) > reach;
-                        if (!vertical || jump && init(level, feet, loaded)) {
+                        if (!vertical || jump && isLoadedAndLavaFree(level, feet, loaded)) {
                            stances.add(feet);
                         }
                      }
@@ -130,7 +130,7 @@ final class AiBlazeFight {
       return new autismclient.ai.engine.CoverGoal(stances);
    }
 
-   static boolean init(AABB target, Vec3 eye, double reach, boolean seen, boolean jump, boolean pillar) {
+   static boolean canStrikeFrom(AABB target, Vec3 eye, double reach, boolean seen, boolean jump, boolean pillar) {
       double horizontal = Math.hypot(target.getCenter().x - eye.x, target.getCenter().z - eye.z);
       double gap = Math.sqrt(target.distanceToSqr(eye));
       double jumpGap = Math.sqrt(target.distanceToSqr(eye.add(0.0, 1.15, 0.0)));
@@ -145,7 +145,7 @@ final class AiBlazeFight {
       }
    }
 
-   private static boolean init(BlockGetter level, BlockPos feet, Predicate<BlockPos> loaded) {
+   private static boolean isLoadedAndLavaFree(BlockGetter level, BlockPos feet, Predicate<BlockPos> loaded) {
       for (BlockPos p : BlockPos.betweenClosed(feet.offset(-1, -3, -1), feet.offset(1, 3, 1))) {
          if (!loaded.test(p) || level.getFluidState(p).is(FluidTags.LAVA)) {
             return false;
@@ -155,7 +155,7 @@ final class AiBlazeFight {
       return true;
    }
 
-   static boolean init(Minecraft mc, Entity blaze) {
+   static boolean isAboveLava(Minecraft mc, Entity blaze) {
       if (mc.level != null && blaze != null) {
          BlockPos at = blaze.blockPosition();
 
@@ -181,7 +181,7 @@ final class AiBlazeFight {
       }
    }
 
-   static <T> T init(T nearest, T dry) {
+   static <T> T preferDry(T nearest, T dry) {
       return dry != null ? dry : nearest;
    }
 
@@ -189,7 +189,7 @@ final class AiBlazeFight {
       return distance + (seen ? 0 : 6) - (committed ? 3 : 0) - (wounded ? 6 : 0) + (groundAccess ? 0 : 5);
    }
 
-   static boolean init(BlockGetter level, AABB box, double reach, Predicate<BlockPos> loaded) {
+   static boolean hasStanceWithinReach(BlockGetter level, AABB box, double reach, Predicate<BlockPos> loaded) {
       BlockPos base = BlockPos.containing(box.getCenter().x, box.minY, box.getCenter().z);
       double reachSq = reach * reach;
 
@@ -222,7 +222,7 @@ final class AiBlazeFight {
       return false;
    }
 
-   static AABB init(AABB box, double dx, double dz, Predicate<AABB> free) {
+   static AABB slideFreeBox(AABB box, double dx, double dz, Predicate<AABB> free) {
       AABB at = box;
 
       for (double moved = 0.0; moved < 4.4; moved += 0.25) {
@@ -237,18 +237,18 @@ final class AiBlazeFight {
       return at;
    }
 
-   static boolean init(BlockGetter level, AABB box, Vec3 from, double reach, Predicate<BlockPos> loaded, Predicate<AABB> free) {
+   static boolean hasGroundAccessFrom(BlockGetter level, AABB box, Vec3 from, double reach, Predicate<BlockPos> loaded, Predicate<AABB> free) {
       double dx = box.getCenter().x - from.x;
       double dz = box.getCenter().z - from.z;
       double length = Math.hypot(dx, dz);
-      return length < 1.0E-4 ? init(level, box, reach + 0.25, loaded) : init(level, init(box, dx / length, dz / length, free), reach + 0.25, loaded);
+      return length < 1.0E-4 ? hasStanceWithinReach(level, box, reach + 0.25, loaded) : hasStanceWithinReach(level, slideFreeBox(box, dx / length, dz / length, free), reach + 0.25, loaded);
    }
 
-   static boolean init(boolean shotBlockable, int ticksToShot, int raiseTicks) {
+   static boolean canSwingFirst(boolean shotBlockable, int ticksToShot, int raiseTicks) {
       return !shotBlockable || ticksToShot >= raiseTicks + 2;
    }
 
-   static boolean init(float health, float floor, float targetHealth, double finishDamage, double gap, double reach, boolean seen, int finishTicks) {
+   static boolean canFinishTarget(float health, float floor, float targetHealth, double finishDamage, double gap, double reach, boolean seen, int finishTicks) {
       return seen && targetHealth > 0.0F && targetHealth <= finishDamage && gap <= reach + 1.0 && health > floor && finishTicks < 30;
    }
 
@@ -383,11 +383,11 @@ final class AiBlazeFight {
                if (mc.player.getHealth() <= line) {
                   boolean finishing = this.target instanceof LivingEntity living
                      && this.target.isAlive()
-                     && AiBlazeFight.init(
+                     && AiBlazeFight.canFinishTarget(
                         mc.player.getHealth(),
                         Math.max(3.0F, retreat - 4.0F),
                         living.getHealth(),
-                        this.init(1.0F) * 0.95,
+                        this.meleeDamage(1.0F) * 0.95,
                         Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition())),
                         AiDefense.attackReach(mc) - 0.05,
                         mc.player.hasLineOfSight(this.target),
@@ -436,13 +436,13 @@ final class AiBlazeFight {
                if (this.push % 4 == 0 && !this.defensive) {
                   Entity striker = this.load_Entity();
                   if (striker != null) {
-                     this.init(striker, true, "melee attacker at the body");
+                     this.switchTarget(striker, true, "melee attacker at the body");
                   }
                }
 
                Entity next = this.defensive ? this.target : this.pickTarget();
                if (next != this.target) {
-                  this.init(next, this.defensive, this.defensive ? "defensive threat" : "requested blaze after defense");
+                  this.switchTarget(next, this.defensive, this.defensive ? "defensive threat" : "requested blaze after defense");
                }
 
                if (!this.open_Z
@@ -474,7 +474,7 @@ final class AiBlazeFight {
                      this.cancelChild();
                   }
 
-                  return this.init(this.fireControl.status());
+                  return this.running(this.fireControl.status());
                } else {
                   Creeper creeper = AiCombat.mostDangerousCreeper(mc);
                   if (creeper == null && this.init_AiOperation != null) {
@@ -504,7 +504,7 @@ final class AiBlazeFight {
 
                      AiOperation.Result escape = this.init_AiOperation.tick();
                      if (!escape.terminal()) {
-                        return this.init("Leaving the creeper blast before killing blazes: " + escape.message());
+                        return this.running("Leaving the creeper blast before killing blazes: " + escape.message());
                      } else {
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;
@@ -512,7 +512,7 @@ final class AiBlazeFight {
                            this.init_AiOperation_Result_AiOperation_Status_Str_5(AiOperation.Status.CANCELLED, "Blast escape uncertain");
                            return escape;
                         } else {
-                           return this.init("Reassessing the creeper blast before resuming blaze combat");
+                           return this.running("Reassessing the creeper blast before resuming blaze combat");
                         }
                      }
                   } else {
@@ -520,7 +520,7 @@ final class AiBlazeFight {
                         AiOperation.Result r = this.arena.tick();
                         this.evidence = AiRunResources.parseEvidenceJson(r.dataJson());
                         if (!r.terminal()) {
-                           return this.init(r.message());
+                           return this.running(r.message());
                         }
 
                         this.arena.cancel();
@@ -546,7 +546,7 @@ final class AiBlazeFight {
                                  + " of "
                                  + count
                            )
-                           : this.init("Looking for the next blaze");
+                           : this.running("Looking for the next blaze");
                      }
 
                      this.close_I = 0;
@@ -556,7 +556,7 @@ final class AiBlazeFight {
                         }
 
                         this.stopUsingItem();
-                        return this.init(this.fireControl.status());
+                        return this.running(this.fireControl.status());
                      } else {
                         if (this.size > 0 && --this.size == 0 && this.healthBeforeShot >= 0.0F && this.shotBlaze != null) {
                            float after = this.shotBlaze.getHealth();
@@ -605,7 +605,7 @@ final class AiBlazeFight {
                         }
 
                         if (this.push % 4 == 0) {
-                           this.close_Z = AiBlazeFight.init(mc.level, box, reach + 0.3, p -> AiTerrain.isLoaded(mc.level, p));
+                           this.close_Z = AiBlazeFight.hasStanceWithinReach(mc.level, box, reach + 0.3, p -> AiTerrain.isLoaded(mc.level, p));
                         }
 
                         this.next = !this.close_Z && this.add <= 0 ? this.next + 1 : 0;
@@ -614,7 +614,7 @@ final class AiBlazeFight {
                         Vec3 jumpEye = eye.add(0.0, 1.15, 0.0);
                         double jumpGap = Math.sqrt(box.distanceToSqr(jumpEye));
                         boolean reachableJumping = jumpGap <= reach;
-                        boolean attackStance = AiBlazeFight.init(box, eye, reach, seen, this.read_Z_2(), false);
+                        boolean attackStance = AiBlazeFight.canStrikeFrom(box, eye, reach, seen, this.read_Z_2(), false);
                         boolean verticalAccess = seen && horizontal < 3.5 && box.minY > eye.y && !reachableJumping;
                         if (attackStance) {
                            this.run = 0;
@@ -647,8 +647,8 @@ final class AiBlazeFight {
                               this.tick = 0;
                               this.lastGap = gapNow;
                               if (++this.run > 3) {
-                                 this.init("no approach progress for three attempts", gapNow, 10);
-                                 return this.init("Leaving a blaze no route reaches for now");
+                                 this.markUnreachable("no approach progress for three attempts", gapNow, 10);
+                                 return this.running("Leaving a blaze no route reaches for now");
                               }
 
                               this.read_Z = true;
@@ -672,7 +672,7 @@ final class AiBlazeFight {
                                  }
 
                                  if (!r.terminal()) {
-                                    return this.init("Building up to the blaze");
+                                    return this.running("Building up to the blaze");
                                  }
 
                                  this.cancelChild();
@@ -686,7 +686,7 @@ final class AiBlazeFight {
                                  this.stopUsingItem();
                                  this.movementMode = "pillar";
                                  this.child = AiGoto.travelToCompat(mc.player.blockPosition().above(), 0.5, false, true, false, 4);
-                                 return this.init("Building up to the blaze");
+                                 return this.running("Building up to the blaze");
                               }
 
                               AiProjectiles.IncomingProjectile coming = AiCombat.nextIncoming(mc);
@@ -706,7 +706,7 @@ final class AiBlazeFight {
                                  && AiDefense.init(mc, mc.level.getEntity(coming.entityId()))
                                  && AiDefense.init(mc, AiCombat.init(coming))
                                  && AiCombat.init(coming) <= 10;
-                              boolean swingFirst = AiBlazeFight.init(blockNow, coming == null ? 2147483647 : AiCombat.init(coming), AiDefense.load(mc));
+                              boolean swingFirst = AiBlazeFight.canSwingFirst(blockNow, coming == null ? 2147483647 : AiCombat.init(coming), AiDefense.load(mc));
                               boolean swingSoon = inReach && charge >= 0.85F && swingFirst;
                               Vec3 look = autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target);
                               if (blockNow && !swingSoon) {
@@ -717,7 +717,7 @@ final class AiBlazeFight {
                               this.aim.tick();
                               boolean onTarget = this.aim.isAimedAtEntity(this.target);
                               boolean killsNow = this.target instanceof LivingEntity dying
-                                 && dying.getHealth() <= this.init(charge) * 0.95
+                                 && dying.getHealth() <= this.meleeDamage(charge) * 0.95
                                  && charge >= 0.5F;
                               boolean swingDue = inReach && (charge >= 0.92F || killsNow) && onTarget && AiDefense.init(mc, this.target, this.aim);
                               int forward = horizontal > 2.55 ? 1 : (horizontal < 2.15 ? -1 : 0);
@@ -727,7 +727,7 @@ final class AiBlazeFight {
                               }
 
                               boolean knockHold = false;
-                              boolean finishes = this.target instanceof LivingEntity hurt && hurt.getHealth() <= this.init(1.0F) * 0.95;
+                              boolean finishes = this.target instanceof LivingEntity hurt && hurt.getHealth() <= this.meleeDamage(1.0F) * 0.95;
                               if (!finishes && !(gap > reach + 1.5) && mc.player.onGround() && this.prev < 40) {
                                  if (this.push - this.valid >= 4) {
                                     this.valid = this.push;
@@ -780,7 +780,7 @@ final class AiBlazeFight {
                               }
 
                               if (dodge != null && mc.player.onGround() && (!blockNow || !AiCombat.init_Z_Minecraft(mc, dodge, mc.player.getYRot()))) {
-                                 int away = this.init(dodge);
+                                 int away = this.strafeSideFor(dodge);
                                  if (this.init_Z_I_I(forward, away)) {
                                     this.strafeDirection = away;
                                     this.flush_I = 0;
@@ -831,7 +831,7 @@ final class AiBlazeFight {
                               }
 
                               mc.options.keySprint.setDown(sprint);
-                              boolean canFinish = this.target instanceof LivingEntity living && living.getHealth() <= this.init(charge) * 0.95;
+                              boolean canFinish = this.target instanceof LivingEntity living && living.getHealth() <= this.meleeDamage(charge) * 0.95;
                               boolean canJump = mc.player.onGround() && this.read_Z_2() && autismclient.ai.engine.AiCombatMotion.init(mc) && this.load_Z_5();
                               boolean jump = canJump
                                  && !canFinish
@@ -915,7 +915,7 @@ final class AiBlazeFight {
                                  );
                               }
 
-                              return this.init(
+                              return this.running(
                                  (this.init_Z ? "Shield up, " : "")
                                     + (
                                        this.defensive
@@ -972,8 +972,8 @@ final class AiBlazeFight {
                                  }
 
                                  if (this.run >= 2) {
-                                    this.init("two failed or unproductive approach legs", gapNow, 15);
-                                    return this.init("Leaving a blaze no route reaches for now");
+                                    this.markUnreachable("two failed or unproductive approach legs", gapNow, 15);
+                                    return this.running("Leaving a blaze no route reaches for now");
                                  }
 
                                  BlockPos under = BlockPos.containing(this.target.getX(), this.target.getY() - 0.5, this.target.getZ());
@@ -983,7 +983,7 @@ final class AiBlazeFight {
                                        && this.child.canInterruptNow()
                                        && !this.preparation.requiresReconciliation(this.child)) {
                                     this.cancelChild();
-                                    autismclient.ai.engine.CoverGoal goal = AiBlazeFight.init(
+                                    autismclient.ai.engine.CoverGoal goal = AiBlazeFight.chooseCoverGoal(
                                        mc.level,
                                        box,
                                        this.target.getEyePosition(),
@@ -1003,7 +1003,7 @@ final class AiBlazeFight {
 
                                        this.read_Z = false;
                                        this.reset = this.push + 20;
-                                       return this.init("No observed safe attack stance for this blaze");
+                                       return this.running("No observed safe attack stance for this blaze");
                                     }
 
                                     this.releaseMovementKeys();
@@ -1089,7 +1089,7 @@ final class AiBlazeFight {
                                     this.read_Z = false;
                                  }
 
-                                 return this.init("Closing on the blaze (" + (int)horizontal + "m)");
+                                 return this.running("Closing on the blaze (" + (int)horizontal + "m)");
                               } else {
                                  if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.push % 20 == 0) {
                                     autismclient.ai.engine.AiNavDebug.log(
@@ -1112,12 +1112,12 @@ final class AiBlazeFight {
                                  }
 
                                  this.startUsingItem();
-                                 return this.init("Shield up on the way to the blaze");
+                                 return this.running("Shield up on the way to the blaze");
                               }
                            }
                         } else {
-                           this.init("no floor within reach of it", gapNow, 6);
-                           return this.init("Leaving a blaze out over the drop");
+                           this.markUnreachable("no floor within reach of it", gapNow, 6);
+                           return this.running("Leaving a blaze out over the drop");
                         }
                      }
                   }
@@ -1127,7 +1127,7 @@ final class AiBlazeFight {
             }
          }
 
-         void init(Entity next, boolean defensive, String reason) {
+         void switchTarget(Entity next, boolean defensive, String reason) {
             this.target = next;
             this.defensive = defensive;
             if (!defensive && next instanceof Blaze blaze) {
@@ -1218,7 +1218,7 @@ final class AiBlazeFight {
                      if (!(d > radius)) {
                         boolean ground = e == this.target
                            ? this.close_Z
-                           : AiBlazeFight.init(mc.level, e.getBoundingBox(), reachNow, p -> AiTerrain.isLoaded(mc.level, p));
+                           : AiBlazeFight.hasStanceWithinReach(mc.level, e.getBoundingBox(), reachNow, p -> AiTerrain.isLoaded(mc.level, p));
                         double score = AiBlazeFight.targetScore(
                            d, mc.player.hasLineOfSight(e), e == this.target, blaze.getHealth() < blaze.getMaxHealth() - 0.5, ground
                         );
@@ -1227,7 +1227,7 @@ final class AiBlazeFight {
                            best = e;
                         }
 
-                        if (!AiBlazeFight.init(mc, e) && score < dryScore) {
+                        if (!AiBlazeFight.isAboveLava(mc, e) && score < dryScore) {
                            dryScore = score;
                            dryBest = e;
                         }
@@ -1236,7 +1236,7 @@ final class AiBlazeFight {
                }
             }
 
-            return AiBlazeFight.init(best, dryBest);
+            return AiBlazeFight.preferDry(best, dryBest);
          }
 
          Vec3 standingPointFor(Entity blaze, double reach) {
@@ -1244,7 +1244,7 @@ final class AiBlazeFight {
             Predicate<BlockPos> loaded = p -> AiTerrain.isLoaded(mc.level, p);
             Predicate<AABB> free = b -> mc.level.noCollision(b);
             Vec3 here = mc.player.position();
-            if (AiBlazeFight.init(mc.level, box, here, reach, loaded, free)) {
+            if (AiBlazeFight.hasGroundAccessFrom(mc.level, box, here, reach, loaded, free)) {
                return null;
             }
 
@@ -1258,11 +1258,11 @@ final class AiBlazeFight {
                double distance = at.distanceTo(here);
                if (!(distance >= bestDistance) && !(distance > 5.0)) {
                   BlockPos feet = BlockPos.containing(at.x, here.y + 0.01, at.z);
-                  if (this.init(feet) && this.init_Z_Vec3_Vec3(here, at)) {
+                  if (this.isSafeStance(feet) && this.init_Z_Vec3_Vec3(here, at)) {
                      Vec3 eyeAt = at.add(0.0, mc.player.getEyeHeight(), 0.0);
                      if (!(box.distanceToSqr(eyeAt) > (reach - 0.1) * (reach - 0.1))
-                        && this.load(eyeAt, box.getCenter())
-                        && AiBlazeFight.init(mc.level, box, at, reach, loaded, free)) {
+                        && this.hasClearLine(eyeAt, box.getCenter())
+                        && AiBlazeFight.hasGroundAccessFrom(mc.level, box, at, reach, loaded, free)) {
                         best = at;
                         bestDistance = distance;
                      }
@@ -1273,7 +1273,7 @@ final class AiBlazeFight {
             return best;
          }
 
-         boolean init(Entity from) {
+         boolean knockbackAwayIsSafe(Entity from) {
             double dx = mc.player.getX() - from.getX();
             double dz = mc.player.getZ() - from.getZ();
             double length = Math.hypot(dx, dz);
@@ -1363,12 +1363,12 @@ final class AiBlazeFight {
          }
 
          boolean load_Z_5() {
-            if (!this.init(this.target)) {
+            if (!this.knockbackAwayIsSafe(this.target)) {
                return false;
             }
 
             for (Entity e : mc.level.entitiesForRendering()) {
-               if (e instanceof Blaze && e != this.target && e.isAlive() && e.distanceToSqr(mc.player) < 12.25 && !this.init(e)) {
+               if (e instanceof Blaze && e != this.target && e.isAlive() && e.distanceToSqr(mc.player) < 12.25 && !this.knockbackAwayIsSafe(e)) {
                   return false;
                }
             }
@@ -1376,7 +1376,7 @@ final class AiBlazeFight {
             return true;
          }
 
-         boolean init(BlockPos feet) {
+         boolean isSafeStance(BlockPos feet) {
             if (AiTerrain.isLoaded(mc.level, feet.below()) && AiTerrain.isLoaded(mc.level, feet.above())) {
                for (int dy = -1; dy <= 1; dy++) {
                   if (mc.level.getFluidState(feet.above(dy)).is(FluidTags.LAVA)) {
@@ -1398,7 +1398,7 @@ final class AiBlazeFight {
 
             for (int i = 1; i <= steps; i++) {
                Vec3 at = from.lerp(to, (double)i / steps);
-               if (!this.init(BlockPos.containing(at.x, from.y + 0.01, at.z))) {
+               if (!this.isSafeStance(BlockPos.containing(at.x, from.y + 0.01, at.z))) {
                   return false;
                }
             }
@@ -1406,7 +1406,7 @@ final class AiBlazeFight {
             return true;
          }
 
-         void init(String reason, double gap, int secondsx) {
+         void markUnreachable(String reason, double gap, int secondsx) {
             this.load_Str = reason;
             boolean wounded = this.target instanceof Blaze b && b.getHealth() < b.getMaxHealth() - 0.5;
             int hold = wounded ? Math.min(seconds, 6) : seconds;
@@ -1431,7 +1431,7 @@ final class AiBlazeFight {
             this.target = null;
          }
 
-         double init(float charge) {
+         double meleeDamage(float charge) {
             return Math.max(mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE), 1.0 + AiItems.attackDamageBonus(mc.player.getMainHandItem()))
                * (0.2 + 0.8 * charge * charge);
          }
@@ -1449,7 +1449,7 @@ final class AiBlazeFight {
             int charged = 0;
 
             for (Entity o : others) {
-               if (o.isOnFire() && this.load(o.getEyePosition(), eye)) {
+               if (o.isOnFire() && this.hasClearLine(o.getEyePosition(), eye)) {
                   charged++;
                }
             }
@@ -1465,7 +1465,7 @@ final class AiBlazeFight {
                   double dz = Math.sin(a) * 1.3;
                   Vec3 at = eye.add(dx, 0.0, dz);
                   double h = Math.hypot(this.target.getX() - at.x, this.target.getZ() - at.z);
-                  if (!(h < 1.4) && !(h > 3.4) && this.load(at, targetPoint)) {
+                  if (!(h < 1.4) && !(h > 3.4) && this.hasClearLine(at, targetPoint)) {
                      int[] keys = this.movementKeysFor(dx, dz);
                      if (this.init_Z_I_I(keys[0], keys[1])) {
                         int e = this.countSeenBy(at, others);
@@ -1487,7 +1487,7 @@ final class AiBlazeFight {
             int n = 0;
 
             for (Entity o : others) {
-               if (this.load(o.getEyePosition(), at)) {
+               if (this.hasClearLine(o.getEyePosition(), at)) {
                   n++;
                }
             }
@@ -1495,7 +1495,7 @@ final class AiBlazeFight {
             return n;
          }
 
-         boolean load(Vec3 from, Vec3 to) {
+         boolean hasClearLine(Vec3 from, Vec3 to) {
             return mc.level.clip(new ClipContext(from, to, Block.COLLIDER, Fluid.NONE, mc.player)).getType() == Type.MISS;
          }
 
@@ -1530,7 +1530,7 @@ final class AiBlazeFight {
             return best;
          }
 
-         int init(AiProjectiles.IncomingProjectile t) {
+         int strafeSideFor(AiProjectiles.IncomingProjectile t) {
             double vx = t.vx();
             double vz = t.vz();
             double v = Math.hypot(vx, vz);
@@ -1616,13 +1616,13 @@ final class AiBlazeFight {
          }
 
          boolean isStandingSafe() {
-            return AiBlazeFight.init(mc.level, mc.player.blockPosition(), p -> AiTerrain.isLoaded(mc.level, p));
+            return AiBlazeFight.isLoadedAndLavaFree(mc.level, mc.player.blockPosition(), p -> AiTerrain.isLoaded(mc.level, p));
          }
 
          boolean update_Z() {
             return this.target != null
                && this.target.isAlive()
-               && AiBlazeFight.init(
+               && AiBlazeFight.canStrikeFrom(
                   this.target.getBoundingBox(),
                   mc.player.getEyePosition(),
                   AiDefense.attackReach(mc) - 0.05,
@@ -1677,7 +1677,7 @@ final class AiBlazeFight {
             this.movementMode = "";
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             JsonObject data = AiJson.objectOf(
                "kills",
                this.kills,
