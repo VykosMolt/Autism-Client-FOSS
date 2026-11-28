@@ -82,8 +82,8 @@ public final class AiGoto {
    private AiGoto() {
    }
 
-   static boolean isWrStopped(AiWrExecutor.Inner_TableCache var0, Vec3 var1) {
-      return var0 != AiWrExecutor.Inner_TableCache.fill && var1.horizontalDistanceSqr() <= 4.0E-4;
+   static boolean isWrStopped(AiWrExecutor.RunState var0, Vec3 var1) {
+      return var0 != AiWrExecutor.RunState.fill && var1.horizontalDistanceSqr() <= 4.0E-4;
    }
 
    private static void recordNoRouteFailure(BlockPos var0) {
@@ -1341,7 +1341,7 @@ public final class AiGoto {
                   } else {
                      if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var1x) {
                         var1x.setFocus(this.stateOf_Z ? this.putAt_FileStore_TaskStat.activeOrigin() : this.putAt_Minecraft.player.blockPosition());
-                        var1x.scanBudget(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill ? 750000L : 4000000L);
+                        var1x.scanBudget(this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.RunState.fill ? 750000L : 4000000L);
                      } else {
                         AiLiveGrid.putAt(this.putAt_Minecraft, AiChunkMemory.getInstance());
                      }
@@ -1479,7 +1479,7 @@ public final class AiGoto {
                            this.chunkAt_V_4();
                         }
 
-                        if (this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.Inner_TableCache.fill) {
+                        if (this.putAt_RingCache.putAt_RingCache_TableCac() == AiWrExecutor.RunState.fill) {
                            AiPathfinder.PathResult var17x = this.putAt_FileStore_TaskStat.peekQueuedNextPath();
                            if (var17x != null && !var17x.movements().isEmpty() && this.putAt_RingCache.putAt_Z_List_Z(var17x.movements(), var17x.reachesGoal())
                               )
@@ -1492,20 +1492,20 @@ public final class AiGoto {
 
                         for (int var18x = 0; var18x < 2; var18x++) {
                            double var8x = this.putAt_RingCache.elapsedCostTicks();
-                           AiWrExecutor.Inner_TableCache var10 = this.putAt_RingCache.fill_RingCache_TableCac();
+                           AiWrExecutor.RunState var10 = this.putAt_RingCache.fill_RingCache_TableCac();
                            if (var14 && this.putAt_RingCache.elapsedCostTicks() > var8x) {
                               this.value_J = var13x;
                            }
 
-                           if (var10 == AiWrExecutor.Inner_TableCache.fill) {
+                           if (var10 == AiWrExecutor.RunState.fill) {
                               return this.fill(this.putAt_Str_Vec3_2(var3x));
                            }
 
-                           if (var10 == AiWrExecutor.Inner_TableCache.value) {
+                           if (var10 == AiWrExecutor.RunState.value) {
                               return this.putAt(this.putAt_RingCache.fill_BlockPos(), "Movement stalled");
                            }
 
-                           if (var10 == AiWrExecutor.Inner_TableCache.prevEx) {
+                           if (var10 == AiWrExecutor.RunState.prevEx) {
                               return this.putAt(AiOperation.Status.CANCELLED, "Goto cancelled");
                            }
 
@@ -1513,7 +1513,7 @@ public final class AiGoto {
                               return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.putAt_FileStore_TaskStat.lastError());
                            }
 
-                           if (var10 == AiWrExecutor.Inner_TableCache.putAt_RingCache_TableCac) {
+                           if (var10 == AiWrExecutor.RunState.putAt_RingCache_TableCac) {
                               if (!this.closeOf_Z_4()) {
                                  return this.fill("Landing before accepting the route");
                               }

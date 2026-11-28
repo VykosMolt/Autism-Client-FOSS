@@ -31,7 +31,7 @@ public final class AiRoutePolicy {
    private static volatile long blockedPredicateUntil;
    private static volatile Set<Long> avoidCells = Set.of();
    private static volatile long avoidCellsUntil;
-   private static volatile AiRoutePolicy.Inner_TableCache putAt_ValueSink_TableCac;
+   private static volatile AiRoutePolicy.PlacementPolicy putAt_ValueSink_TableCac;
 
    private AiRoutePolicy() {
    }
@@ -59,17 +59,17 @@ public final class AiRoutePolicy {
       return System.nanoTime() < avoidCellsUntil && (avoidCells.contains(var0.asLong()) || avoidCells.contains(var0.below().asLong()));
    }
 
-   public static void putAt(AiRoutePolicy.Inner_TableCache var0) {
+   public static void setPlacementPolicy(AiRoutePolicy.PlacementPolicy var0) {
       putAt_ValueSink_TableCac = var0;
    }
 
-   static AiRoutePolicy.Inner_TableCache putAt_ValueSink_TableCac() {
+   static AiRoutePolicy.PlacementPolicy putAt_ValueSink_TableCac() {
       return putAt_ValueSink_TableCac;
    }
 
    static void putAt_V_BlockPos_Block(BlockPos var0, Block var1) {
-      AiRoutePolicy.Inner_TableCache var2 = putAt_ValueSink_TableCac;
-      if (var2 == null || var2.putAt_Z(var0)) {
+      AiRoutePolicy.PlacementPolicy var2 = putAt_ValueSink_TableCac;
+      if (var2 == null || var2.shouldRecordPlaced(var0)) {
          AiScaffold.recordPlaced(var0, var1);
       }
    }
@@ -120,7 +120,7 @@ public final class AiRoutePolicy {
       return var2 - var0.plannedBreakTicks() > 10.0;
    }
 
-   static boolean fill(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   static boolean isStepStillValid(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       return putAt_Z_FileStore_PacketHe(var0, var1, false);
    }
 
@@ -140,13 +140,13 @@ public final class AiRoutePolicy {
             && var5.passable()
             && !var5.lava()
             && !var5.hazardFeet()
-            && prevEx(var0, var1);
+            && avoidsCachedCells(var0, var1);
       } else {
-         return value(var0, var1) && prevEx(var0, var1);
+         return isStepShapeValid(var0, var1) && avoidsCachedCells(var0, var1);
       }
    }
 
-   private static boolean value(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   private static boolean isStepShapeValid(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       boolean var10000;
       switch (var0.type()) {
          case WALK:
@@ -321,7 +321,7 @@ public final class AiRoutePolicy {
       return var10000;
    }
 
-   private static boolean prevEx(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   private static boolean avoidsCachedCells(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       boolean var10000;
       switch (var0.type()) {
          case DESCEND_2:
@@ -704,7 +704,7 @@ public final class AiRoutePolicy {
       return var2;
    }
 
-   static boolean readEx(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   static boolean descentFacesWall(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       if (var0.to().getY() < var0.from().getY()
          && (
             var0.type() == AiPathfinder.MoveType.DESCEND_1
@@ -724,16 +724,16 @@ public final class AiRoutePolicy {
       Arrays.fill(scratchHotbar, ItemStack.EMPTY);
    }
 
-   static final class Inner_CacheHelper {
-      private final ArrayDeque<long[]> putAt = new ArrayDeque<>();
+   static final class LoopDetector {
+      private final ArrayDeque<long[]> recentSteps = new ArrayDeque<>();
 
       boolean putAt(AiPathfinder.PathStep var1, long var2) {
-         while (!this.putAt.isEmpty() && var2 - ((long[])this.putAt.peekFirst())[1] > 45000000000L) {
-            this.putAt.pollFirst();
+         while (!this.recentSteps.isEmpty() && var2 - ((long[])this.recentSteps.peekFirst())[1] > 45000000000L) {
+            this.recentSteps.pollFirst();
          }
 
          long var4 = AiRoutePolicy.stepKey(var1);
-         var var6 = this.putAt.descendingIterator();
+         var var6 = this.recentSteps.descendingIterator();
 
          while (var6.hasNext()) {
             long[] var7 = (long[])var6.next();
@@ -748,30 +748,30 @@ public final class AiRoutePolicy {
 
          int var9 = 1;
 
-         for (long[] var8 : this.putAt) {
+         for (long[] var8 : this.recentSteps) {
             if (var8[0] == var4) {
                var9++;
             }
          }
 
-         this.putAt.addLast(new long[]{var4, var2});
+         this.recentSteps.addLast(new long[]{var4, var2});
 
-         while (this.putAt.size() > 256) {
-            this.putAt.pollFirst();
+         while (this.recentSteps.size() > 256) {
+            this.recentSteps.pollFirst();
          }
 
          return var9 >= 3;
       }
 
       void putAt() {
-         this.putAt.clear();
+         this.recentSteps.clear();
       }
    }
 
-   public interface Inner_TableCache {
+   public interface PlacementPolicy {
       Item putAt_Item(BlockPos var1);
 
-      boolean putAt_Z(BlockPos var1);
+      boolean shouldRecordPlaced(BlockPos var1);
 
       default boolean fill(BlockPos var1) {
          return true;
