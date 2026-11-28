@@ -17,7 +17,7 @@ public final class ProxyConnectivityTester {
    public static ProxyConnectivityTester.TestResult init(bW proxy, String destHost, int destPort, int timeoutMs) {
       if (proxy != null && proxy.init_bZ != null && proxy.init_Z()) {
          String host = destHost == null ? "" : destHost.trim();
-         if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !hasValidAuth(proxy)) {
+         if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !hasOversizedCredentials(proxy)) {
             int timeout = Math.max(1, timeoutMs);
             ProxyProtocolType primary = proxy.init_bZ == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             ProxyProtocolType secondary = primary == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks5 : ProxyProtocolType.Socks4;
@@ -43,7 +43,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static boolean hasValidAuth(bW proxy) {
+   private static boolean hasOversizedCredentials(bW proxy) {
       if (proxy.write != null && !proxy.write.isBlank()) {
          byte[] user = proxy.write.getBytes(StandardCharsets.UTF_8);
          byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);

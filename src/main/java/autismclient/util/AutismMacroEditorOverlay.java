@@ -4847,7 +4847,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int panelMouseX = mouseX;
          int panelMouseY = mouseY;
          if (this.isOverPalette(mouseX, mouseY)
-            || this.contextMenu.handleClick(mouseX, mouseY)
+            || this.contextMenu.containsPoint(mouseX, mouseY)
             || !this.dropdowns.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns)) {
             panelMouseX = -10000;
             panelMouseY = -10000;
@@ -5674,7 +5674,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             if (this.contextMenu.handleClick(mouseX, mouseY, button, (idx, label, i) -> this.onContextMenuItem(idx, i))) {
                return true;
             }
-         } else if (button == 1 && !this.contextMenu.handleClick(mouseX, mouseY)) {
+         } else if (button == 1 && !this.contextMenu.containsPoint(mouseX, mouseY)) {
             this.contextMenu.close();
          }
       }

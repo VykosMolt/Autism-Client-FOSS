@@ -470,7 +470,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
          float uiX = viewport.toUiX(mouseX);
          float uiY = viewport.toUiY(mouseY);
-         if (this.contextMenu.handleClick(uiX, uiY)) {
+         if (this.contextMenu.containsPoint(uiX, uiY)) {
             return true;
          } else {
             return this.openDropdown != null && this.openDropdown.isOpen() && this.openDropdown.containsPopupPoint(Math.round(uiX), Math.round(uiY))
@@ -1183,7 +1183,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             if (this.contextMenu.handleClick(uiMouseX, uiMouseY, button, (item, label, index) -> this.onContextMenuItem(item, index))) {
                return true;
             }
-         } else if (button == 1 && !this.contextMenu.handleClick(uiMouseX, uiMouseY)) {
+         } else if (button == 1 && !this.contextMenu.containsPoint(uiMouseX, uiMouseY)) {
             this.contextMenu.close();
          } else if (button == 1) {
             return true;

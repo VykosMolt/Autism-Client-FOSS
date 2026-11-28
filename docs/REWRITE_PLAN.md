@@ -53,8 +53,9 @@ methods that touch game or platform types directly.
 
 Fan-in counts the other top-level classes that reference this one. Smells that were measured:
 - `MacroExecutor` has 304 `instanceof <X>Action` checks on 287 lines (`grep -o 'instanceof [A-Za-z.]*Action\b'`).
-  Action behaviour lives in the executor, not in the 105 action classes of `util.macro`.
-- `ActionEditorOverlay` has 88 `instanceof <X>Action` checks (same grep) and 109 `MacroActionType.` references, though an
+  Action behaviour lives in the executor, not in the action classes of `util.macro` (105 `*Action.java` files,
+  102 of them classes; `MacroAction`, `AimTargetAction` and `CaptureOutputAction` are interfaces).
+- `ActionEditorOverlay` has 88 `instanceof <X>Action` checks (same grep) and 117 `MacroActionType.` references (on 109 lines), though an
   editor schema already exists (`ActionFieldRegistry`, `ActionFieldSchema`).
 - `PrintCore` reaches the world through `PrintEnv`, a 198-line interface with one implementation
   (`LivePrintEnv`). That is a ready-made seam for a fake world.

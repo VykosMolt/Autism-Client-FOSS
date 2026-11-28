@@ -43,7 +43,7 @@ formatting.
 
 Areas are assigned by package and class name, so the borders are approximate.
 - **AI total:** 255k lines (41%), across 337 files.
-- **Counts:** 63 module classes, 105 macro action classes, 251 mixins (254 files under `mixin/`).
+- **Counts:** 63 module classes, 105 `*Action.java` files in `util.macro` (102 classes, 3 interfaces), 251 mixins (254 files under `mixin/`).
 - **Concentration:** the 100 largest files hold 51% of the code, and the 46 files over 2,000 lines hold 38%.
 - **String literals:** 1.1M characters in all. The largest holders are `AiTools` (138k characters, mostly LLM tool
   descriptions and JSON schemas), `AiContext` (62k, prompt text), `ActionEditorOverlay` (36k) and

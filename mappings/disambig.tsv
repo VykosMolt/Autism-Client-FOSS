@@ -22278,7 +22278,7 @@ M	autismclient/ai/D$1	init	(Ljava/lang/String;)V	autismclient/ai/AiFarmBuild$1	l
 M	autismclient/ai/D$1	init	(Lnet/minecraft/core/BlockPos;)Lautismclient/api/ai/AiOperation;	autismclient/ai/AiFarmBuild$1	pourAtOp	(Lnet/minecraft/core/BlockPos;)Lautismclient/api/ai/AiOperation;
 M	autismclient/ai/D$1	init	(Lnet/minecraft/core/BlockPos;)Ljava/util/Set;	autismclient/ai/AiFarmBuild$1	init_Set	(Lnet/minecraft/core/BlockPos;)Ljava/util/Set;
 M	autismclient/ai/D$1	init	(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;	autismclient/ai/AiFarmBuild$1	nearestWaterSource	(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;
-M	autismclient/ai/D$1	init	(Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiFarmBuild$1	isCoveredAbove	(Lnet/minecraft/core/BlockPos;)Z
+M	autismclient/ai/D$1	init	(Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiFarmBuild$1	isOpenAbove	(Lnet/minecraft/core/BlockPos;)Z
 M	autismclient/ai/D$1	load	()I	autismclient/ai/AiFarmBuild$1	plotsToTill	()I
 M	autismclient/ai/D$1	load	()Lautismclient/api/ai/AiOperation$Result;	autismclient/ai/AiFarmBuild$1	tickHoePhase	()Lautismclient/api/ai/AiOperation$Result;
 M	autismclient/ai/D$1	load	()Ljava/lang/String;	autismclient/ai/AiFarmBuild$1	nearestLogWood	()Ljava/lang/String;
@@ -29500,9 +29500,9 @@ M	autismclient/gui/f/b/KeyHolder	init	(DLautismclient/gui/f/NetHelper;DD)I	autis
 M	autismclient/gui/f/b/KeyHolder	init	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;IZ)V	autismclient/gui/ui/widgets/RangeSliderRenderer	drawThumb	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;IZ)V
 M	autismclient/gui/f/b/ListPool	init	(Z)V	autismclient/gui/ui/widgets/FocusableInput	setFocused	(Z)V
 M	autismclient/gui/f/b/ListPool	load	()Z	autismclient/gui/ui/widgets/FocusableInput	isFocused	()Z
-M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/f/b/MethodUtil$DataUtil;I)Lautismclient/gui/f/NetHelper;	autismclient/gui/ui/widgets/ConnectedButtonRenderer	inset	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;I)Lautismclient/gui/f/NetHelper;
+M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/f/b/MethodUtil$DataUtil;I)Lautismclient/gui/f/NetHelper;	autismclient/gui/ui/widgets/ConnectedButtonRenderer	extendJoinedEdges	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;I)Lautismclient/gui/f/NetHelper;
 M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/b/CachePool$DataUtil;ZF)F	autismclient/gui/ui/widgets/ConnectedButtonRenderer	init_F_CachePool_DataUtil	(Lautismclient/gui/f/b/CachePool$Inner_DataUtil;ZF)F
-M	autismclient/gui/f/b/MethodUtil$DataUtil	init	()Z	autismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges	allConnected	()Z
+M	autismclient/gui/f/b/MethodUtil$DataUtil	init	()Z	autismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges	isStandalone	()Z
 M	autismclient/gui/f/b/NetHelper	flush	()Lautismclient/gui/f/NetHelper;	autismclient/gui/ui/widgets/ColorPickerPopup	hexBounds	()Lautismclient/gui/f/NetHelper;
 M	autismclient/gui/f/b/NetHelper	flush	()V	autismclient/gui/ui/widgets/ColorPickerPopup	syncHexText	()V
 M	autismclient/gui/f/b/NetHelper	init	()I	autismclient/gui/ui/widgets/ColorPickerPopup	selectionStart	()I
@@ -30862,7 +30862,7 @@ M	autismclient/modules/FieldCache	load	(I)Z	autismclient/modules/AutoTotemModule
 M	autismclient/modules/FieldCache	load	(Lnet/minecraft/world/entity/Entity;)F	autismclient/modules/AutoTotemModule	load_F_Entity	(Lnet/minecraft/world/entity/Entity;)F
 M	autismclient/modules/FieldCache	read	()I	autismclient/modules/AutoTotemModule	nextDelay	()I
 M	autismclient/modules/FieldCache	read	()V	autismclient/modules/AutoTotemModule	tickOperation	()V
-M	autismclient/modules/FieldCache	read	()Z	autismclient/modules/AutoTotemModule	isBusy	()Z
+M	autismclient/modules/FieldCache	read	()Z	autismclient/modules/AutoTotemModule	isBusyOrPausingMovement	()Z
 M	autismclient/modules/FieldCache	sync	()V	autismclient/modules/AutoTotemModule	closeGhostInventoryQuietly	()V
 M	autismclient/modules/FieldCache	sync	()Z	autismclient/modules/AutoTotemModule	shouldIgnore	()Z
 M	autismclient/modules/FieldCache	tick	()Z	autismclient/modules/AutoTotemModule	isSurrounded	()Z
@@ -42597,7 +42597,7 @@ M	autismclient/util/macro/TokenStore$StreamUtil	init	()D	autismclient/util/macro
 M	autismclient/util/macro/TokenStore$StreamUtil	init	()Ljava/lang/String;	autismclient/util/macro/HClipAction$ClipPlan	message	()Ljava/lang/String;
 M	autismclient/util/macro/TokenStore$StreamUtil	init	()Ljava/util/List;	autismclient/util/macro/HClipAction$ClipPlan	waypoints	()Ljava/util/List;
 M	autismclient/util/macro/TokenStore$StreamUtil	init	()Z	autismclient/util/macro/HClipAction$ClipPlan	ok	()Z
-M	autismclient/util/macro/TokenStore$StreamUtil	init	(D)Z	autismclient/util/macro/HClipAction$ClipPlan	isFlat	(D)Z
+M	autismclient/util/macro/TokenStore$StreamUtil	init	(D)Z	autismclient/util/macro/HClipAction$ClipPlan	requiresVerticalClip	(D)Z
 M	autismclient/util/macro/TokenStore$StreamUtil	init	(Ljava/lang/String;)Lautismclient/util/macro/TokenStore$StreamUtil;	autismclient/util/macro/HClipAction$ClipPlan	failedPlan	(Ljava/lang/String;)Lautismclient/util/macro/HClipAction$ClipPlan;
 M	autismclient/util/macro/TokenStore$TaskQueue	init	()I	autismclient/util/macro/HClipAction$PlanCacheKey	levelId	()I
 M	autismclient/util/macro/TokenStore$TaskQueue	init	()J	autismclient/util/macro/HClipAction$PlanCacheKey	startX	()J
@@ -54756,7 +54756,7 @@ M	autismclient/util/bb	init	()V	autismclient/util/MovementInputFixer	reset	()V
 M	autismclient/util/bb	load	(Lnet/minecraft/world/entity/player/Input;FFI)Lnet/minecraft/world/entity/player/Input;	autismclient/util/MovementInputFixer	fix	(Lnet/minecraft/world/entity/player/Input;FFI)Lnet/minecraft/world/entity/player/Input;
 M	autismclient/util/bf	init	(IZ)V	autismclient/util/NameScrapeController	start	(IZ)V
 M	autismclient/util/bf	init	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V	autismclient/util/NameScrapeController	render	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
-M	autismclient/util/F	init	(DD)Z	autismclient/util/OverlayContextMenu	handleClick	(DD)Z
+M	autismclient/util/F	init	(DD)Z	autismclient/util/OverlayContextMenu	containsPoint	(DD)Z
 M	autismclient/util/F	init	(IILjava/lang/Object;)V	autismclient/util/OverlayContextMenu	open	(IILjava/lang/Object;)V
 M	autismclient/util/F	init	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V	autismclient/util/OverlayContextMenu	render	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
 M	autismclient/util/ak	init	()V	autismclient/util/OverlaySuiteController	saveStates	()V
@@ -55906,7 +55906,7 @@ M	autismclient/util/macro/KeyHolder	init	(Ljava/lang/String;)Ljava/lang/String;	
 M	autismclient/util/macro/a	init	(Lnet/minecraft/nbt/CompoundTag;Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/a;	autismclient/util/macro/MacroCondition	fromTagOrFlat	(Lnet/minecraft/nbt/CompoundTag;Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/MacroCondition;
 M	autismclient/util/macro/k	init	(Lautismclient/util/macro/k$DataUtil;)V	autismclient/util/macro/MacroToolBridge	setBackend	(Lautismclient/util/macro/MacroToolBridge$ToolBackend;)V
 M	autismclient/util/macro/k	init	(Lautismclient/util/macro/k$StreamUtil;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;	autismclient/util/macro/MacroToolBridge	control	(Lautismclient/util/macro/MacroToolBridge$ToolJob;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
-M	autismclient/util/macro/k	load	(JLjava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/k$StreamUtil;	autismclient/util/macro/MacroToolBridge	start	(JLjava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/MacroToolBridge$ToolJob;
+M	autismclient/util/macro/k	load	(JLjava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/k$StreamUtil;	autismclient/util/macro/MacroToolBridge	findJob	(JLjava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/MacroToolBridge$ToolJob;
 M	autismclient/util/macro/k$ConfigStore	init	()Z	autismclient/util/macro/MacroToolBridge$JobState	isTerminal	()Z
 M	autismclient/util/macro/k$StreamUtil	init	(Lautismclient/util/macro/k$ConfigStore;Ljava/lang/String;Ljava/lang/String;)V	autismclient/util/macro/MacroToolBridge$ToolJob	publish	(Lautismclient/util/macro/MacroToolBridge$JobState;Ljava/lang/String;Ljava/lang/String;)V
 M	autismclient/util/macro/k$StreamUtil	init	(Ljava/lang/Runnable;)V	autismclient/util/macro/MacroToolBridge$ToolJob	onCancel	(Ljava/lang/Runnable;)V
@@ -58704,7 +58704,7 @@ M	autismclient/gui/e/BufferHelper	init	(FFF)[F	autismclient/gui/sdf/SdfShapeRend
 M	autismclient/gui/e/BufferHelper	init	(Lautismclient/gui/e/DataUtil;)Lcom/mojang/blaze3d/platform/NativeImage;	autismclient/gui/sdf/SdfShapeRenderer	rasterize	(Lautismclient/gui/sdf/SteppedRowContour;)Lcom/mojang/blaze3d/platform/NativeImage;
 M	autismclient/gui/e/BufferHelper	init	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FFLjava/util/List;[FI)V	autismclient/gui/sdf/SdfShapeRenderer	drawRows	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;FFLjava/util/List;[FI)V
 M	autismclient/gui/e/BufferHelper	init	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFFFFFIIZZ)V	autismclient/gui/sdf/SdfShapeRenderer	drawTile	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFFFFFIIZZ)V
-M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/f/b/MethodUtil$DataUtil;)Lautismclient/gui/f/NetHelper;	autismclient/gui/ui/widgets/ConnectedButtonRenderer	trimSeams	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;)Lautismclient/gui/f/NetHelper;
+M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/f/b/MethodUtil$DataUtil;)Lautismclient/gui/f/NetHelper;	autismclient/gui/ui/widgets/ConnectedButtonRenderer	trimFreeEdges	(Lautismclient/gui/f/NetHelper;Lautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;)Lautismclient/gui/f/NetHelper;
 M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;IILautismclient/gui/f/b/MethodUtil$DataUtil;)V	autismclient/gui/ui/widgets/ConnectedButtonRenderer	drawShape	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;IILautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;)V
 M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;Ljava/lang/String;Lnet/minecraft/resources/Identifier;I)V	autismclient/gui/ui/widgets/ConnectedButtonRenderer	drawLabel	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;Ljava/lang/String;Lnet/minecraft/resources/Identifier;I)V
 M	autismclient/gui/f/b/MethodUtil	init	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;Ljava/lang/String;Lnet/minecraft/resources/Identifier;ZIILautismclient/gui/f/b/MethodUtil$DataUtil;)V	autismclient/gui/ui/widgets/ConnectedButtonRenderer	drawButton	(Lautismclient/gui/f/SyncManager;Lautismclient/gui/f/NetHelper;Ljava/lang/String;Lnet/minecraft/resources/Identifier;ZIILautismclient/gui/ui/widgets/ConnectedButtonRenderer$ConnectedEdges;)V
@@ -58723,7 +58723,7 @@ M	autismclient/g/ConfigStore	init	(Lnet/minecraft/network/Connection;Lautismclie
 M	autismclient/g/ConfigStore	init	(Lnet/minecraft/network/protocol/Packet;)Lautismclient/g/ConfigStore$DataUtil;	autismclient/protector/OutboundChannelPolicy	replaceWith	(Lnet/minecraft/network/protocol/Packet;)Lautismclient/protector/OutboundChannelPolicy$Verdict;
 M	autismclient/g/HashUtil	init	(IZZ)I	autismclient/protector/ProtectorFeatureFlags	effectiveFlags	(IZZ)I
 M	autismclient/util/ba	load	(Lautismclient/util/ba$StreamUtil;)V	autismclient/util/MouseMovementRouter	resetAccumulatorsExcept	(Lautismclient/util/MouseMovementRouter$MovementSource;)V
-M	autismclient/util/ca	init	(Lautismclient/util/bW;)Z	autismclient/util/ProxyConnectivityTester	hasValidAuth	(Lautismclient/util/bW;)Z
+M	autismclient/util/ca	init	(Lautismclient/util/bW;)Z	autismclient/util/ProxyConnectivityTester	hasOversizedCredentials	(Lautismclient/util/bW;)Z
 M	autismclient/util/ca	init	(Lautismclient/util/bW;Lautismclient/util/bZ;Ljava/lang/String;II)Lautismclient/util/ca$DataUtil;	autismclient/util/ProxyConnectivityTester	runTest	(Lautismclient/util/bW;Lautismclient/util/ProxyProtocolType;Ljava/lang/String;II)Lautismclient/util/ProxyConnectivityTester$TestResult;
 M	autismclient/util/ca	init	(Ljava/io/OutputStream;Ljava/io/InputStream;Lautismclient/util/bW;)Lautismclient/util/ca$StreamUtil;	autismclient/util/ProxyConnectivityTester	socks5Auth	(Ljava/io/OutputStream;Ljava/io/InputStream;Lautismclient/util/bW;)Lautismclient/util/ProxyConnectivityTester$TestOutcome;
 M	autismclient/util/ca	init	(Ljava/io/OutputStream;Ljava/io/InputStream;Lautismclient/util/bW;Ljava/lang/String;I)Lautismclient/util/ca$StreamUtil;	autismclient/util/ProxyConnectivityTester	socks5Handshake	(Ljava/io/OutputStream;Ljava/io/InputStream;Lautismclient/util/bW;Ljava/lang/String;I)Lautismclient/util/ProxyConnectivityTester$TestOutcome;
@@ -58746,7 +58746,7 @@ M	autismclient/ai/aG	init	(Lnet/minecraft/world/level/chunk/LevelChunk;JII)Z	aut
 M	autismclient/ai/aS	init	(Ljava/lang/String;Ljava/lang/String;Lcom/google/gson/JsonObject;)V	autismclient/ai/AiPlan	validateArgs	(Ljava/lang/String;Ljava/lang/String;Lcom/google/gson/JsonObject;)V
 M	autismclient/ai/cj$1	init	(Lnet/minecraft/world/inventory/SmithingMenu;)Lautismclient/api/ai/AiOperation$Result;	autismclient/ai/AiSmith$1	missingInputs	(Lnet/minecraft/world/inventory/SmithingMenu;)Lautismclient/api/ai/AiOperation$Result;
 M	autismclient/ai/cn	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiStationPlacer	isBreakable	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/core/BlockPos;)Z
-M	autismclient/ai/cn	init	(Lnet/minecraft/core/BlockPos;Ljava/util/function/Predicate;)Z	autismclient/ai/AiStationPlacer	hasOpenSide	(Lnet/minecraft/core/BlockPos;Ljava/util/function/Predicate;)Z
+M	autismclient/ai/cn	init	(Lnet/minecraft/core/BlockPos;Ljava/util/function/Predicate;)Z	autismclient/ai/AiStationPlacer	isWalledIn	(Lnet/minecraft/core/BlockPos;Ljava/util/function/Predicate;)Z
 M	autismclient/ai/cI	init	(Lautismclient/ai/cI$StreamUtil;Ljava/io/ByteArrayOutputStream;I)V	autismclient/ai/AiWeb	readExactly	(Lautismclient/ai/AiWeb$DeadlineReader;Ljava/io/ByteArrayOutputStream;I)V
 M	autismclient/ai/a/ArrayUtil	putAt	(ZZZZZZ)Z	autismclient/ai/engine/AiParkourFallWarning	anyTrue	(ZZZZZZ)Z
 M	autismclient/ai/a/i	init	(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;I)Lnet/minecraft/core/BlockPos;	autismclient/ai/engine/AiStance	supportUnder	(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;I)Lnet/minecraft/core/BlockPos;
@@ -58827,7 +58827,7 @@ F	autismclient/modules/MethodUtil	open	I	autismclient/modules/AutoTradeModule	or
 F	autismclient/modules/MethodUtil	poll	I	autismclient/modules/AutoTradeModule	switchedSlot	I
 F	autismclient/modules/MethodUtil	pop	I	autismclient/modules/AutoTradeModule	placeSequence	I
 F	autismclient/modules/MethodUtil	push	I	autismclient/modules/AutoTradeModule	breakSequence	I
-F	autismclient/modules/ListPool	add	I	autismclient/modules/BedDefenderModule	unusedLastRotationTick	I
+F	autismclient/modules/ListPool	add	I	autismclient/modules/BedDefenderModule	lastRotationRequestTick	I
 F	autismclient/modules/ListPool	clear	I	autismclient/modules/BedDefenderModule	sneakDecisionTick	I
 F	autismclient/modules/ListPool	get	I	autismclient/modules/BedDefenderModule	ticksSinceRescan	I
 F	autismclient/modules/ListPool	next	I	autismclient/modules/BedDefenderModule	optionCursor	I
@@ -58930,7 +58930,7 @@ M	autismclient/ai/b/BufferHelper$BufferHelper	load	(J)V	autismclient/ai/print/Pr
 M	autismclient/ai/b/BufferHelper$CachePool	init	(Lautismclient/ai/b/BufferHelper$DataUtil;)Z	autismclient/ai/print/PrintCleanupAccess$Inner_CachePool	readsSpeculativeState	(Lautismclient/ai/print/PrintCleanupAccess$Inner_DataUtil;)Z
 M	autismclient/ai/b/BufferHelper$CachePool	load	(J)V	autismclient/ai/print/PrintCleanupAccess$Inner_CachePool	advanceSteps	(J)V
 M	autismclient/ai/b/BufferHelper$ConfigStore	init	(J)V	autismclient/ai/print/PrintCleanupAccess$Inner_ConfigStore	advance	(J)V
-M	autismclient/ai/b/BufferHelper$ConfigStore	init	(Lautismclient/ai/b/UiHelper$h;)Z	autismclient/ai/print/PrintCleanupAccess$Inner_ConfigStore	hasPendingSearch	(Lautismclient/ai/print/PrintCore$FlightExitSearch;)Z
+M	autismclient/ai/b/BufferHelper$ConfigStore	init	(Lautismclient/ai/b/UiHelper$h;)Z	autismclient/ai/print/PrintCleanupAccess$Inner_ConfigStore	isSearchBudgetExhausted	(Lautismclient/ai/print/PrintCore$FlightExitSearch;)Z
 M	autismclient/ai/b/BufferHelper$ConfigStore	load	(J)V	autismclient/ai/print/PrintCleanupAccess$Inner_ConfigStore	advanceSteps	(J)V
 M	autismclient/modules/MethodUtil	close	()V	autismclient/modules/AutoTradeModule	selectBestTool	()V
 M	autismclient/modules/MethodUtil	flush	()V	autismclient/modules/AutoTradeModule	openVillager	()V
@@ -60010,7 +60010,7 @@ M	autismclient/util/macro/aM	init	(Lautismclient/util/macro/aM$CachePool;Lnet/mi
 M	autismclient/util/macro/aM$CachePool	init	(Lnet/minecraft/nbt/CompoundTag;)Lautismclient/util/macro/aM$CachePool;	autismclient/util/macro/WaitPacketMatchAction$Inner_CachePool	ruleFromTag	(Lnet/minecraft/nbt/CompoundTag;)Lautismclient/util/macro/WaitPacketMatchAction$Inner_CachePool;
 M	autismclient/util/oresim/DataUtil	init	(Ljava/util/List;Lnet/minecraft/core/Direction;Ljava/util/List;)V	autismclient/util/oresim/OreGhostModelCache	collectQuads	(Ljava/util/List;Lnet/minecraft/core/Direction;Ljava/util/List;)V
 M	autismclient/util/oresim/DataUtil	init	(Lnet/minecraft/client/renderer/block/BlockStateModelSet;Lnet/minecraft/world/level/block/state/BlockState;)Lautismclient/util/oresim/DataUtil$StreamUtil;	autismclient/util/oresim/OreGhostModelCache	buildModel	(Lnet/minecraft/client/renderer/block/BlockStateModelSet;Lnet/minecraft/world/level/block/state/BlockState;)Lautismclient/util/oresim/OreGhostModelCache$Inner_StreamUtil;
-M	autismclient/util/h/StreamUtil	init	(IIZ)Z	autismclient/util/villager/TradeOfferFilter	countMatches	(IIZ)Z
+M	autismclient/util/h/StreamUtil	init	(IIZ)Z	autismclient/util/villager/TradeOfferFilter	levelMatches	(IIZ)Z
 M	autismclient/util/h/StreamUtil	init	(Lnet/minecraft/world/item/ItemStack;)I	autismclient/util/villager/TradeOfferFilter	emeraldCount	(Lnet/minecraft/world/item/ItemStack;)I
 F	autismclient/ai/SchematicRecording	chunkAt_I	I	autismclient/ai/SchematicRecording	minChunkX	I
 F	autismclient/ai/SchematicRecording	chunkAt_Z	Z	autismclient/ai/SchematicRecording	limitReached	Z

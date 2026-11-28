@@ -848,7 +848,7 @@ final class PrintCleanupAccess {
                }
 
                if (this.init_UiHelper_h.result == null) {
-                  this.load_Z = this.load_Z | this.hasPendingSearch(this.init_UiHelper_h);
+                  this.load_Z = this.load_Z | this.isSearchBudgetExhausted(this.init_UiHelper_h);
                   this.init_Vec3 = null;
                   this.init_UiHelper_h = null;
                } else {
@@ -890,7 +890,7 @@ final class PrintCleanupAccess {
                      )
                   );
                } else {
-                  this.load_Z = this.load_Z | this.hasPendingSearch(this.load_UiHelper_h);
+                  this.load_Z = this.load_Z | this.isSearchBudgetExhausted(this.load_UiHelper_h);
                   this.init_Vec3 = null;
                   this.init_UiHelper_h = this.load_UiHelper_h = null;
                   this.read_I = 0;
@@ -899,7 +899,7 @@ final class PrintCleanupAccess {
          }
       }
 
-      private boolean hasPendingSearch(PrintCore.FlightExitSearch exit) {
+      private boolean isSearchBudgetExhausted(PrintCore.FlightExitSearch exit) {
          return exit.search != null
             && exit.search.result == null
             && !exit.search.openQueue.isEmpty()

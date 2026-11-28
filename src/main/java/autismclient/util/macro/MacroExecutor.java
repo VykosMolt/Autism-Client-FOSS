@@ -5067,7 +5067,7 @@ public class MacroExecutor {
                return;
             }
 
-            MacroToolBridge.ToolJob jobx = "RUN".equals(action.operation) ? action.startJob(mc, owner) : MacroToolBridge.start(owner, action.scope, "");
+            MacroToolBridge.ToolJob jobx = "RUN".equals(action.operation) ? action.startJob(mc, owner) : MacroToolBridge.findJob(owner, action.scope, "");
             if (run != null && !run.running.get() && "RUN".equals(action.operation) && jobx != null) {
                jobx.cancel();
             }

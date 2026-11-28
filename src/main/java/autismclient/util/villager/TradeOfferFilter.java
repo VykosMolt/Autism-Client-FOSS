@@ -47,7 +47,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
             String key = enchantment.unwrapKey().map(k -> k.identifier().toString()).orElse("");
 
             for (TradeOfferFilter.Inner_DataUtil book : this.read) {
-               if (key.equals(book.enchantment()) && countMatches(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
+               if (key.equals(book.enchantment()) && levelMatches(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
                   return true;
                }
             }
@@ -59,7 +59,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
       }
    }
 
-   public static boolean countMatches(int actual, int wanted, boolean exact) {
+   public static boolean levelMatches(int actual, int wanted, boolean exact) {
       return exact ? actual == wanted : actual >= wanted;
    }
 

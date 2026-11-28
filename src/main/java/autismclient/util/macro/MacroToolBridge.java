@@ -55,7 +55,7 @@ public final class MacroToolBridge {
       return job;
    }
 
-   public static MacroToolBridge.ToolJob start(long owner, String scope, String filter) {
+   public static MacroToolBridge.ToolJob findJob(long owner, String scope, String filter) {
       MacroToolBridge.ToolBackend b = bridge;
       if (b == null) {
          return null;
@@ -67,7 +67,7 @@ public final class MacroToolBridge {
    }
 
    public static CompletableFuture<MacroToolBridge.JobSnapshot> runOperation(long owner, String scope, String operation) {
-      return control(start(owner, scope, ""), operation);
+      return control(findJob(owner, scope, ""), operation);
    }
 
    public static CompletableFuture<MacroToolBridge.JobSnapshot> control(MacroToolBridge.ToolJob job, String operation) {
@@ -86,7 +86,7 @@ public final class MacroToolBridge {
          return false;
       }
 
-      MacroToolBridge.ToolJob job = start(owner, scope, filter);
+      MacroToolBridge.ToolJob job = findJob(owner, scope, filter);
       if (job == null) {
          return "IDLE".equals(state);
       }

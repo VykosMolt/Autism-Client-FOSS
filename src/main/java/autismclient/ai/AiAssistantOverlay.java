@@ -298,7 +298,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             long now = System.currentTimeMillis();
             this.viewState.refresh(now, this.sessionsDrawer.open);
             this.recordMousePosition(mx, my);
-            boolean blocked = this.contextMenu.handleClick(mx, my)
+            boolean blocked = this.contextMenu.containsPoint(mx, my)
                || this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.isOverPopup(mx, my);
             this.ui.beginFrame(graphics, mx, my, blocked, delta);
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(

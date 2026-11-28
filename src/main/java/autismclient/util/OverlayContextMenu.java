@@ -118,7 +118,7 @@ public class OverlayContextMenu<T> {
       }
    }
 
-   public boolean handleClick(double mx, double my) {
+   public boolean containsPoint(double mx, double my) {
       if (!this.isOpen()) {
          return false;
       }

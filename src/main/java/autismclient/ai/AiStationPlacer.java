@@ -102,7 +102,7 @@ final class AiStationPlacer {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null
                && mc.level != null
-               && hasOpenSide(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
+               && isWalledIn(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
                && this.digOutSpot()) {
                return AiStationPlacer.Inner_DataUtil.WORKING;
             }
@@ -149,7 +149,7 @@ final class AiStationPlacer {
       }
    }
 
-   static boolean hasOpenSide(BlockPos feet, Predicate<BlockPos> collision) {
+   static boolean isWalledIn(BlockPos feet, Predicate<BlockPos> collision) {
       for (Direction side : Plane.HORIZONTAL) {
          BlockPos beside = feet.relative(side);
          if (!collision.test(beside) && !collision.test(beside.above())) {

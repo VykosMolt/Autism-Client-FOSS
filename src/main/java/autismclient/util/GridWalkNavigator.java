@@ -283,7 +283,7 @@ public final class GridWalkNavigator {
          advancePathIndex(px, py, pz, feetY);
       } else if (needPlan) {
          releaseKeys();
-         if (!autismclient.modules.AutoTotemModule.isBusy() && !autismclient.modules.AutoArmorModule.isBusy()) {
+         if (!autismclient.modules.AutoTotemModule.isBusyOrPausingMovement() && !autismclient.modules.AutoArmorModule.isBusy()) {
             double movedX = px - lastProgressX;
             double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
@@ -368,7 +368,7 @@ public final class GridWalkNavigator {
          int sprint = (mask & 1) != 0 && !jump ? 32 : 0;
          applyKeyMask(mask | (jump ? 16 : 0) | sprint);
          jumpStreak = jump ? jumpStreak + 1 : 0;
-         if (!autismclient.modules.AutoTotemModule.isBusy() && !autismclient.modules.AutoArmorModule.isBusy()) {
+         if (!autismclient.modules.AutoTotemModule.isBusyOrPausingMovement() && !autismclient.modules.AutoArmorModule.isBusy()) {
             double movedX = px - lastProgressX;
             double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {

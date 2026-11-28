@@ -99,7 +99,7 @@ public class HClipAction implements MacroAction {
             Entity vehicle = options.tryVehicleFirst ? player.getVehicle() : null;
             int packetCount;
             if (vehicle != null) {
-               if (plan.isFlat(player.getY())) {
+               if (plan.requiresVerticalClip(player.getY())) {
                   String message = "planned route requires vertical clipping; vehicle hclip refused";
                   if (options.chatFeedback) {
                      AutismClientMessaging.sendPrefixed("§cHClip: " + message);
@@ -600,7 +600,7 @@ public class HClipAction implements MacroAction {
          return new HClipAction.ClipPlan(false, 0.0, List.of(), message);
       }
 
-      boolean isFlat(double fallbackOriginY) {
+      boolean requiresVerticalClip(double fallbackOriginY) {
          if (this.waypoints.isEmpty()) {
             return false;
          }

@@ -1033,7 +1033,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.panelWidth, panelHeight, this.windowVisible, this.windowCollapsed);
       int h = this.renderedHeight(bounds, this.windowCollapsed);
       boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.panelWidth && my >= this.windowY && my <= this.windowY + h;
-      return overPanel | this.contextMenu.handleClick(mx, my);
+      return overPanel | this.contextMenu.containsPoint(mx, my);
    }
 
    @Override
@@ -1068,7 +1068,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          int bodyMx = mx;
          int bodyMy = my;
-         if (this.contextMenu.handleClick(mx, my)) {
+         if (this.contextMenu.containsPoint(mx, my)) {
             bodyMx = -10000;
             bodyMy = -10000;
          }

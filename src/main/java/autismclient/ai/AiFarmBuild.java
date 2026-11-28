@@ -1003,12 +1003,12 @@ final class AiFarmBuild {
             BlockState state = mc.level.getBlockState(p);
             if ((!AiSchematicActions.keepsWaterOut(state) || state.getFluidState().isSource())
                && (state.getCollisionShape(mc.level, p).isEmpty() || !state.getFluidState().isEmpty())
-               && (!below || this.isCoveredAbove(p))) {
+               && (!below || this.isOpenAbove(p))) {
                out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.levelingBlock(this.substrateId)));
             }
          }
 
-         boolean isCoveredAbove(BlockPos p) {
+         boolean isOpenAbove(BlockPos p) {
             for (int y = p.getY() + 1; y < this.farmPlan.ground(); y++) {
                BlockPos q = new BlockPos(p.getX(), y, p.getZ());
                BlockState s = mc.level.getBlockState(q);

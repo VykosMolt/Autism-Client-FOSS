@@ -223,7 +223,7 @@ public final class AggressiveWiringCheck {
             ActionWindow.holdInput();
             check("input hold active when Aggressive AutoTotem live", ActionWindow.inputHeld());
             check("AutoTotemModule.init_Z_6 reflects Aggressive input hold", AutoTotemModule.init_Z_6());
-            check("AutoTotemModule.read_Z_3 reflects Aggressive input hold", AutoTotemModule.isBusy());
+            check("AutoTotemModule.isBusyOrPausingMovement reflects Aggressive input hold", AutoTotemModule.isBusyOrPausingMovement());
             ActionWindow.releaseHold();
             check("releaseHold clears hold", !ActionWindow.inputHeld());
             check("AutoTotemModule.init_Z_6 false when Aggressive idle", !AutoTotemModule.init_Z_6());

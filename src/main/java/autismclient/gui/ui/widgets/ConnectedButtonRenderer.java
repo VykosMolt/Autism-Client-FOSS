@@ -141,14 +141,14 @@ public final class ConnectedButtonRenderer {
 
    private static void drawShape(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill, int border, ConnectedButtonRenderer.ConnectedEdges edges) {
       int radius = edges.update ? Math.max(1, 7) : 3;
-      if (edges.allConnected()) {
+      if (edges.isStandalone()) {
          if (edges.update) {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill);
          } else {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, radius, fill, border);
          }
       } else {
-         autismclient.gui.f.NetHelper grown = inset(bounds, edges, radius + 1);
+         autismclient.gui.f.NetHelper grown = extendJoinedEdges(bounds, edges, radius + 1);
          context.init_GuiGraphicsExtract().enableScissor(bounds.read(), bounds.write(), bounds.init(), bounds.load());
 
          try {
@@ -169,7 +169,7 @@ public final class ConnectedButtonRenderer {
       }
    }
 
-   private static autismclient.gui.f.NetHelper inset(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges, int by) {
+   private static autismclient.gui.f.NetHelper extendJoinedEdges(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges, int by) {
       int left = edges.init ? 0 : by;
       int top = edges.load ? 0 : by;
       int right = edges.read ? 0 : by;
@@ -182,14 +182,14 @@ public final class ConnectedButtonRenderer {
       if (!(hoverT <= 0.001F)) {
          int color = Math.round(20.0F * hoverT) << 24 | 16777215;
          int radius = Math.max(1, (edges.update ? 7 : 3) - 1);
-         autismclient.gui.f.NetHelper content = trimSeams(bounds, edges);
-         if (edges.allConnected()) {
+         autismclient.gui.f.NetHelper content = trimFreeEdges(bounds, edges);
+         if (edges.isStandalone()) {
             autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), content, radius, color);
          } else {
             context.init_GuiGraphicsExtract().enableScissor(bounds.read(), bounds.write(), bounds.init(), bounds.load());
 
             try {
-               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), inset(content, edges, radius + 1), radius, color);
+               autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), extendJoinedEdges(content, edges, radius + 1), radius, color);
             } finally {
                context.init_GuiGraphicsExtract().disableScissor();
             }
@@ -236,7 +236,7 @@ public final class ConnectedButtonRenderer {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), x, y, Math.max(0, height - 1), color);
    }
 
-   private static autismclient.gui.f.NetHelper trimSeams(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges) {
+   private static autismclient.gui.f.NetHelper trimFreeEdges(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges) {
       return bounds.load(edges.init ? 1 : 0, edges.load ? 1 : 0, edges.read ? 1 : 0, edges.write ? 1 : 0);
    }
 
@@ -249,7 +249,7 @@ public final class ConnectedButtonRenderer {
          this(left, top, right, bottom, false);
       }
 
-      boolean allConnected() {
+      boolean isStandalone() {
          return this.init && this.load && this.read && this.write;
       }
 

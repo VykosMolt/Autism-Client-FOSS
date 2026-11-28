@@ -114,7 +114,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private int candidateConfirmCount;
    private final Map<BlockPos, BedDefenderModule.Inner_DataUtil> stalls = new LinkedHashMap<>();
    private int lastPlaceTick = -2147483648;
-   private int unusedLastRotationTick = -2147483648;
+   private int lastRotationRequestTick = -2147483648;
    private boolean needsSneak;
    private int sneakDecisionTick = -2147483648;
    private int switchBackSlot = -1;
@@ -358,7 +358,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       if (!(al.init_Module_Str("bed-defender") instanceof BedDefenderModule bed)) {
          return false;
       } else {
-         int var2 = AutismSessionState.getInstance().getClientTick() - bed.unusedLastRotationTick;
+         int var2 = AutismSessionState.getInstance().getClientTick() - bed.lastRotationRequestTick;
          return bed.isEnabled() && !autismclient.util.SilentRotationManager.isReturningToPlayer() && var2 >= 0 && var2 <= 5 && "bed-defender".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
       }
    }
@@ -410,7 +410,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void releaseRotation() {
-      this.unusedLastRotationTick = -2147483648;
+      this.lastRotationRequestTick = -2147483648;
       if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          autismclient.util.SilentRotationManager.releaseOwner(this.id());
          autismclient.util.SilentRotationManager.tick(this.id(), MC.player);
@@ -1175,7 +1175,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
    private boolean requestRotation(RotationMath.Rotation goal, boolean holdPitch) {
       autismclient.util.SilentRotationManager.requestRotation(this.id(), 30, goal);
-      this.unusedLastRotationTick = AutismSessionState.getInstance().getClientTick();
+      this.lastRotationRequestTick = AutismSessionState.getInstance().getClientTick();
       if (!this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          return false;
       }
