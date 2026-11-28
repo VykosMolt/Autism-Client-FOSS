@@ -44,15 +44,15 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public final class InventoryTweaksModule extends Module {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private InventoryTweaksModule.Inner_StreamUtil init_R_StreamUtil;
-   private InventoryTweaksModule.Inner_ConfigStore init_R_ConfigStore;
-   private boolean init_Z;
-   private final Map<String, InventoryTweaksModule.Inner_DataUtil> init_Map = new HashMap<>();
-   private static int init_I = -2147483648;
-   private static WeakReference<AbstractContainerMenu> init_WeakReference = new WeakReference<>(null);
-   private static boolean load;
-   private static final Comparator<ItemStack> init_Comparator = Comparator.<ItemStack, String>comparing(
+   private static final Minecraft CLIENT = Minecraft.getInstance();
+   private InventoryTweaksModule.Inner_StreamUtil sortTask;
+   private InventoryTweaksModule.Inner_ConfigStore transferTask;
+   private boolean autoDumpTriggered;
+   private final Map<String, InventoryTweaksModule.Inner_DataUtil> itemSetCache = new HashMap<>();
+   private static int cachedButtonsRevision = -2147483648;
+   private static WeakReference<AbstractContainerMenu> cachedButtonsMenu = new WeakReference<>(null);
+   private static boolean cachedButtonsResult;
+   private static final Comparator<ItemStack> SORT_ORDER = Comparator.<ItemStack, String>comparing(
          stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()
       )
       .thenComparing(Comparator.comparingInt(ItemStack::getCount).reversed())
@@ -144,80 +144,80 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   public static InventoryTweaksModule init_R() {
+   public static InventoryTweaksModule instance() {
       return al.init_Module_Str("inventory-tweaks") instanceof InventoryTweaksModule tweaks ? tweaks : null;
    }
 
-   public static boolean init_Z_AbstractContainerM(AbstractContainerMenu handler) {
+   public static boolean shouldShowButtons(AbstractContainerMenu handler) {
       int revision = al.init_I();
-      if (revision == init_I && init_WeakReference.get() == handler) {
-         return load;
+      if (revision == cachedButtonsRevision && cachedButtonsMenu.get() == handler) {
+         return cachedButtonsResult;
       }
 
-      InventoryTweaksModule module = init_R();
-      boolean result = module != null && module.isEnabled() && module.bool("inventory-buttons") && module.load(handler);
-      init_I = revision;
-      init_WeakReference = new WeakReference<>(handler);
-      load = result;
+      InventoryTweaksModule module = instance();
+      boolean result = module != null && module.isEnabled() && module.bool("inventory-buttons") && module.isStealableContainer(handler);
+      cachedButtonsRevision = revision;
+      cachedButtonsMenu = new WeakReference<>(handler);
+      cachedButtonsResult = result;
       return result;
    }
 
-   public static void init_V_14() {
-      InventoryTweaksModule module = init_R();
+   public static void stealAll() {
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled()) {
-         module.init_V_Z_Z(true, false);
+         module.startTransfer(true, false);
       }
    }
 
-   public static void load_V_11() {
-      InventoryTweaksModule module = init_R();
+   public static void dumpAll() {
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled()) {
-         module.init_V_Z_Z(false, false);
+         module.startTransfer(false, false);
       }
    }
 
-   public static boolean init_Z_I_Slot(int button, Slot hoveredSlot) {
-      InventoryTweaksModule module = init_R();
+   public static boolean onMouseSortBind(int button, Slot hoveredSlot) {
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled() && module.bool("sorting-enabled")) {
          int bind = module.integer("sorting-key");
-         return autismclient.util.ValueSink.init_Z(bind) && autismclient.util.ValueSink.load_I(bind) == button ? module.init_Z_Slot(hoveredSlot) : false;
+         return autismclient.util.ValueSink.init_Z(bind) && autismclient.util.ValueSink.load_I(bind) == button ? module.startSort(hoveredSlot) : false;
       } else {
          return false;
       }
    }
 
-   public static boolean load(int keyCode, Slot hoveredSlot) {
-      InventoryTweaksModule module = init_R();
+   public static boolean onKeySortBind(int keyCode, Slot hoveredSlot) {
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled() && module.bool("sorting-enabled")) {
          int bind = module.integer("sorting-key");
-         return !autismclient.util.ValueSink.init_Z(bind) && bind == keyCode ? module.init_Z_Slot(hoveredSlot) : false;
+         return !autismclient.util.ValueSink.init_Z(bind) && bind == keyCode ? module.startSort(hoveredSlot) : false;
       } else {
          return false;
       }
    }
 
-   public static boolean init_Z_15() {
-      InventoryTweaksModule module = init_R();
+   public static boolean mouseDragMoveEnabled() {
+      InventoryTweaksModule module = instance();
       return module != null && module.isEnabled() && module.bool("mouse-drag-item-move");
    }
 
-   public static boolean load_Z_7() {
-      InventoryTweaksModule module = init_R();
+   public static boolean shulkerPreviewEnabled() {
+      InventoryTweaksModule module = instance();
       return module != null && module.isEnabled() && module.bool("shulker-preview");
    }
 
    public static boolean isMapPreviewEnabled() {
-      InventoryTweaksModule module = init_R();
+      InventoryTweaksModule module = instance();
       return module != null && module.isEnabled() && module.bool("map-preview");
    }
 
    public static boolean write_Z_3() {
-      InventoryTweaksModule module = init_R();
+      InventoryTweaksModule module = instance();
       return module != null && module.isEnabled() && (module.bool("auto-steal") || module.bool("auto-dump"));
    }
 
    public static int bundleItemsToShow(ItemStack stack, int vanillaLimit) {
-      InventoryTweaksModule module = init_R();
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled() && module.bool("uncap-bundle-scrolling")) {
          BundleContents contents = stack == null ? null : stack.get(DataComponents.BUNDLE_CONTENTS);
          return contents == null ? vanillaLimit : Math.max(vanillaLimit, contents.size());
@@ -227,40 +227,40 @@ public final class InventoryTweaksModule extends Module {
    }
 
    public static void init_V_I_5(int containerId) {
-      InventoryTweaksModule module = init_R();
+      InventoryTweaksModule module = instance();
       if (module != null && module.isEnabled()) {
-         module.load(containerId);
+         module.handleContainerOpen(containerId);
       }
    }
 
    @Override
    public void onDisable() {
-      this.init_R_StreamUtil = null;
-      this.init_R_ConfigStore = null;
-      this.init_Z = false;
-      this.init_Map.clear();
+      this.sortTask = null;
+      this.transferTask = null;
+      this.autoDumpTriggered = false;
+      this.itemSetCache.clear();
    }
 
    @Override
    public void tick() {
-      this.read_V_7();
-      this.write_V_7();
-      this.update_V_6();
+      this.tickSort();
+      this.tickTransfer();
+      this.tickAutoDrop();
    }
 
    @Override
    public boolean onPacketSend(Packet<?> packet) {
-      return this.init_Z_Packet(packet);
+      return this.shouldCancelPacket(packet);
    }
 
    @Override
    public boolean onPacketReceive(Packet<?> packet) {
       if (packet instanceof ClientboundContainerSetContentPacket content) {
-         this.load(content.containerId());
+         this.handleContainerOpen(content.containerId());
       }
 
       if (packet instanceof ClientboundContainerSetSlotPacket slot) {
-         this.load(slot.getContainerId());
+         this.handleContainerOpen(slot.getContainerId());
       }
 
       return false;
@@ -268,19 +268,19 @@ public final class InventoryTweaksModule extends Module {
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      if (hitResult == null || hand == null || init_Minecraft.player == null) {
+      if (hitResult == null || hand == null || CLIENT.player == null) {
          return false;
       }
 
-      if (this.bool("item-frames") && !this.update_Z_3()) {
-         ItemStack held = init_Minecraft.player.getItemInHand(hand);
-         if (!this.init_Z_ItemStack_Str(held, "anti-drop-items")) {
+      if (this.bool("item-frames") && !this.overrideHeld()) {
+         ItemStack held = CLIENT.player.getItemInHand(hand);
+         if (!this.listContains(held, "anti-drop-items")) {
             return false;
          } else if (hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof ItemFrame) {
             return true;
          } else {
-            return hitResult instanceof BlockHitResult blockHit && init_Minecraft.level != null
-               ? init_Minecraft.level.getBlockState(blockHit.getBlockPos()).is(Blocks.DECORATED_POT)
+            return hitResult instanceof BlockHitResult blockHit && CLIENT.level != null
+               ? CLIENT.level.getBlockState(blockHit.getBlockPos()).is(Blocks.DECORATED_POT)
                : false;
          }
       } else {
@@ -288,27 +288,27 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private boolean init_Z_Slot(Slot focusedSlot) {
-      if (focusedSlot == null || init_Minecraft.player == null || init_Minecraft.gameMode == null) {
+   private boolean startSort(Slot focusedSlot) {
+      if (focusedSlot == null || CLIENT.player == null || CLIENT.gameMode == null) {
          return false;
       }
 
-      if (this.bool("disable-in-creative") && init_Minecraft.player.hasInfiniteMaterials()) {
+      if (this.bool("disable-in-creative") && CLIENT.player.hasInfiniteMaterials()) {
          return false;
       }
 
-      AbstractContainerMenu handler = init_Minecraft.player.containerMenu;
+      AbstractContainerMenu handler = CLIENT.player.containerMenu;
       if (handler != null && handler.getCarried().isEmpty()) {
-         List<Slot> slots = this.init_List_Slot_AbstractContainerM(focusedSlot, handler);
+         List<Slot> slots = this.sortableSlots(focusedSlot, handler);
          if (slots.size() < 2) {
             return true;
          } else {
-            List<InventoryTweaksModule.Inner_CachePool> actions = this.init_List_List(slots);
+            List<InventoryTweaksModule.Inner_CachePool> actions = this.planSortActions(slots);
             if (actions.isEmpty()) {
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: already sorted.");
                return true;
             } else {
-               this.init_R_StreamUtil = new InventoryTweaksModule.Inner_StreamUtil(handler.containerId, actions, Math.max(0, this.integer("sorting-delay")));
+               this.sortTask = new InventoryTweaksModule.Inner_StreamUtil(handler.containerId, actions, Math.max(0, this.integer("sorting-delay")));
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: sorting " + slots.size() + " slots.");
                return true;
             }
@@ -319,19 +319,19 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private void read_V_7() {
-      if (this.init_R_StreamUtil != null && !this.init_R_StreamUtil.init()) {
-         this.init_R_StreamUtil = null;
+   private void tickSort() {
+      if (this.sortTask != null && !this.sortTask.tick()) {
+         this.sortTask = null;
       }
    }
 
-   private List<Slot> init_List_Slot_AbstractContainerM(Slot focusedSlot, AbstractContainerMenu handler) {
-      boolean focusedPlayer = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, focusedSlot);
+   private List<Slot> sortableSlots(Slot focusedSlot, AbstractContainerMenu handler) {
+      boolean focusedPlayer = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(CLIENT, focusedSlot);
       List<Slot> slots = new ArrayList<>();
 
       for (Slot slot : handler.slots) {
-         if (slot != null && slot.mayPickup(init_Minecraft.player)) {
-            int invSlot = init_I_Slot(slot);
+         if (slot != null && slot.mayPickup(CLIENT.player)) {
+            int invSlot = inventoryIndex(slot);
             if (focusedPlayer) {
                if (invSlot >= 9 && invSlot < 36) {
                   slots.add(slot);
@@ -345,7 +345,7 @@ public final class InventoryTweaksModule extends Module {
       return slots;
    }
 
-   private List<InventoryTweaksModule.Inner_CachePool> init_List_List(List<Slot> slots) {
+   private List<InventoryTweaksModule.Inner_CachePool> planSortActions(List<Slot> slots) {
       List<ItemStack> simulated = new ArrayList<>();
 
       for (Slot slot : slots) {
@@ -360,7 +360,7 @@ public final class InventoryTweaksModule extends Module {
          }
       }
 
-      desired.sort(init_Comparator);
+      desired.sort(SORT_ORDER);
 
       while (desired.size() < simulated.size()) {
          desired.add(ItemStack.EMPTY);
@@ -369,11 +369,11 @@ public final class InventoryTweaksModule extends Module {
       List<InventoryTweaksModule.Inner_CachePool> actions = new ArrayList<>();
 
       for (int i = 0; i < simulated.size(); i++) {
-         if (!init_Z_ItemStack_ItemStack(simulated.get(i), desired.get(i))) {
+         if (!sameStack(simulated.get(i), desired.get(i))) {
             int match = -1;
 
             for (int j = i + 1; j < simulated.size(); j++) {
-               if (init_Z_ItemStack_ItemStack(simulated.get(j), desired.get(i))) {
+               if (sameStack(simulated.get(j), desired.get(i))) {
                   match = j;
                   break;
                }
@@ -391,40 +391,40 @@ public final class InventoryTweaksModule extends Module {
       return actions;
    }
 
-   private void load(int containerId) {
-      if (init_Minecraft.player != null && init_Minecraft.player.containerMenu != null) {
-         AbstractContainerMenu handler = init_Minecraft.player.containerMenu;
-         if (handler.containerId == containerId && this.load(handler) && this.init_R_ConfigStore == null) {
-            if (this.bool("auto-steal") && this.bool("auto-dump") && !this.init_Z) {
-               this.init_Z = true;
+   private void handleContainerOpen(int containerId) {
+      if (CLIENT.player != null && CLIENT.player.containerMenu != null) {
+         AbstractContainerMenu handler = CLIENT.player.containerMenu;
+         if (handler.containerId == containerId && this.isStealableContainer(handler) && this.transferTask == null) {
+            if (this.bool("auto-steal") && this.bool("auto-dump") && !this.autoDumpTriggered) {
+               this.autoDumpTriggered = true;
                this.setValue("auto-dump", "false");
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: Auto Dump disabled because Auto Steal is enabled.");
             }
 
             if (this.bool("auto-steal")) {
-               this.init_V_Z_Z(true, true);
+               this.startTransfer(true, true);
             } else if (this.bool("auto-dump")) {
-               this.init_V_Z_Z(false, true);
+               this.startTransfer(false, true);
             }
          }
       }
    }
 
-   private void init_V_Z_Z(boolean steal, boolean automatic) {
-      if (init_Minecraft.player != null && init_Minecraft.gameMode != null) {
-         AbstractContainerMenu handler = init_Minecraft.player.containerMenu;
-         if (!this.load(handler)) {
+   private void startTransfer(boolean steal, boolean automatic) {
+      if (CLIENT.player != null && CLIENT.gameMode != null) {
+         AbstractContainerMenu handler = CLIENT.player.containerMenu;
+         if (!this.isStealableContainer(handler)) {
             if (!automatic) {
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: this menu is not enabled for Steal/Dump.");
             }
          } else {
-            List<InventoryTweaksModule.Inner_BufferHelper> clicks = this.init_List_AbstractContainerM_Z(handler, steal);
+            List<InventoryTweaksModule.Inner_BufferHelper> clicks = this.transferClicks(handler, steal);
             if (clicks.isEmpty()) {
                if (!automatic) {
                   AutismClientMessaging.sendPrefixed("Inventory Tweaks: nothing to " + (steal ? "steal." : "dump."));
                }
             } else {
-               this.init_R_ConfigStore = new InventoryTweaksModule.Inner_ConfigStore(
+               this.transferTask = new InventoryTweaksModule.Inner_ConfigStore(
                   handler.containerId,
                   clicks,
                   steal,
@@ -441,17 +441,17 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private List<InventoryTweaksModule.Inner_BufferHelper> init_List_AbstractContainerM_Z(AbstractContainerMenu handler, boolean steal) {
+   private List<InventoryTweaksModule.Inner_BufferHelper> transferClicks(AbstractContainerMenu handler, boolean steal) {
       List<InventoryTweaksModule.Inner_BufferHelper> clicks = new ArrayList<>();
 
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
-            int invSlot = init_I_Slot(slot);
+            int invSlot = inventoryIndex(slot);
             if (steal) {
-               if (invSlot < 0 && this.init_Z_ItemStack(slot.getItem(), "steal-filter", "steal-items")) {
+               if (invSlot < 0 && this.passesFilter(slot.getItem(), "steal-filter", "steal-items")) {
                   clicks.add(new InventoryTweaksModule.Inner_BufferHelper(slot.index, this.bool("steal-drop")));
                }
-            } else if (invSlot >= 0 && invSlot < 36 && this.init_Z_ItemStack(slot.getItem(), "dump-filter", "dump-items")) {
+            } else if (invSlot >= 0 && invSlot < 36 && this.passesFilter(slot.getItem(), "dump-filter", "dump-items")) {
                clicks.add(new InventoryTweaksModule.Inner_BufferHelper(slot.index, false));
             }
          }
@@ -460,43 +460,43 @@ public final class InventoryTweaksModule extends Module {
       return clicks;
    }
 
-   private void write_V_7() {
-      if (this.init_R_ConfigStore != null && !this.init_R_ConfigStore.init()) {
-         this.init_R_ConfigStore = null;
+   private void tickTransfer() {
+      if (this.transferTask != null && !this.transferTask.tick()) {
+         this.transferTask = null;
       }
    }
 
-   private void update_V_6() {
-      if (init_Minecraft.player != null && init_Minecraft.gameMode != null && init_Minecraft.gui.screen() == null && !this.list("auto-drop-items").isEmpty()) {
+   private void tickAutoDrop() {
+      if (CLIENT.player != null && CLIENT.gameMode != null && CLIENT.gui.screen() == null && !this.list("auto-drop-items").isEmpty()) {
          int start = this.bool("exclude-hotbar") ? 9 : 0;
 
          for (int slot = start; slot < 36; slot++) {
-            ItemStack stack = init_Minecraft.player.getInventory().getItem(slot);
+            ItemStack stack = CLIENT.player.getInventory().getItem(slot);
             if (!stack.isEmpty()
-               && this.init_Z_ItemStack_Str(stack, "auto-drop-items")
+               && this.listContains(stack, "auto-drop-items")
                && (!this.bool("only-full-stacks") || stack.getCount() >= stack.getMaxStackSize())) {
-               autismclient.util.InventoryDropHelper.load(init_Minecraft, slot, 0);
+               autismclient.util.InventoryDropHelper.load(CLIENT, slot, 0);
                return;
             }
          }
       }
    }
 
-   private boolean load(AbstractContainerMenu handler) {
-      if (handler != null && init_Minecraft.player != null && handler != init_Minecraft.player.inventoryMenu) {
-         Identifier id = this.init_Identifier_AbstractContainerM(handler);
+   private boolean isStealableContainer(AbstractContainerMenu handler) {
+      if (handler != null && CLIENT.player != null && handler != CLIENT.player.inventoryMenu) {
+         Identifier id = this.menuTypeId(handler);
          if (id == null) {
             return false;
          }
 
-         Set<String> allowed = this.init_Set_Str("steal-screens");
+         Set<String> allowed = this.itemSet("steal-screens");
          return allowed.contains(id.toString()) || allowed.contains(id.getPath());
       } else {
          return false;
       }
    }
 
-   private Identifier init_Identifier_AbstractContainerM(AbstractContainerMenu handler) {
+   private Identifier menuTypeId(AbstractContainerMenu handler) {
       try {
          MenuType<?> type = handler.getType();
          return type == null ? null : BuiltInRegistries.MENU.getKey(type);
@@ -505,39 +505,39 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private boolean init_Z_ItemStack(ItemStack stack, String modeOption, String listOption) {
+   private boolean passesFilter(ItemStack stack, String modeOption, String listOption) {
       String mode = this.choice(modeOption);
       if ("None".equals(mode)) {
          return true;
       }
 
-      boolean listed = this.init_Z_ItemStack_Str(stack, listOption);
+      boolean listed = this.listContains(stack, listOption);
       return "Whitelist".equals(mode) ? listed : !listed;
    }
 
-   private boolean init_Z_ItemStack_Str(ItemStack stack, String optionId) {
+   private boolean listContains(ItemStack stack, String optionId) {
       if (stack != null && !stack.isEmpty()) {
          String full = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().toLowerCase(Locale.ROOT);
          String path = full.startsWith("minecraft:") ? full.substring("minecraft:".length()) : full;
-         Set<String> ids = this.init_Set_Str(optionId);
+         Set<String> ids = this.itemSet(optionId);
          return ids.contains(full) || ids.contains(path);
       } else {
          return false;
       }
    }
 
-   private Set<String> init_Set_Str(String optionId) {
+   private Set<String> itemSet(String optionId) {
       List<String> raw = this.list(optionId);
       String source = String.join("|", raw);
-      InventoryTweaksModule.Inner_DataUtil cached = this.init_Map.get(optionId);
-      if (cached != null && cached.init_Str().equals(source)) {
-         return cached.init_Set();
+      InventoryTweaksModule.Inner_DataUtil cached = this.itemSetCache.get(optionId);
+      if (cached != null && cached.source().equals(source)) {
+         return cached.ids();
       }
 
       Set<String> values = new HashSet<>();
 
       for (String entry : raw) {
-         String id = init_Str_Str(entry);
+         String id = normalizeId(entry);
          if (!id.isBlank()) {
             values.add(id);
             if (id.startsWith("minecraft:")) {
@@ -549,29 +549,29 @@ public final class InventoryTweaksModule extends Module {
       }
 
       Set<String> immutable = Set.copyOf(values);
-      this.init_Map.put(optionId, new InventoryTweaksModule.Inner_DataUtil(source, immutable));
+      this.itemSetCache.put(optionId, new InventoryTweaksModule.Inner_DataUtil(source, immutable));
       return immutable;
    }
 
-   private boolean update_Z_3() {
+   private boolean overrideHeld() {
       int bind = this.integer("override-bind");
-      return bind != -1 && autismclient.util.ValueSink.init(init_Minecraft, bind);
+      return bind != -1 && autismclient.util.ValueSink.init(CLIENT, bind);
    }
 
-   private boolean init_Z_Packet(Packet<?> packet) {
-      if (init_Minecraft.player != null && !this.update_Z_3() && !this.list("anti-drop-items").isEmpty()) {
+   private boolean shouldCancelPacket(Packet<?> packet) {
+      if (CLIENT.player != null && !this.overrideHeld() && !this.list("anti-drop-items").isEmpty()) {
          if (packet instanceof ServerboundPlayerActionPacket action && (action.getAction() == Action.DROP_ITEM || action.getAction() == Action.DROP_ALL_ITEMS)) {
-            return this.init_Z_ItemStack_Str(init_Minecraft.player.getMainHandItem(), "anti-drop-items");
+            return this.listContains(CLIENT.player.getMainHandItem(), "anti-drop-items");
          } else if (packet instanceof ServerboundContainerClickPacket click) {
-            ContainerInput input = init_Enum_Obj_Class(click, ContainerInput.class);
+            ContainerInput input = reflectEnum(click, ContainerInput.class);
             if (input != ContainerInput.THROW) {
                return false;
             }
 
-            int slotId = init_I_Obj_StrArr(click, "getSlot", "slot", "slotNum");
-            AbstractContainerMenu handler = init_Minecraft.player.containerMenu;
+            int slotId = reflectInt(click, "getSlot", "slot", "slotNum");
+            AbstractContainerMenu handler = CLIENT.player.containerMenu;
             return handler != null && slotId >= 0 && slotId < handler.slots.size()
-               ? this.init_Z_ItemStack_Str(handler.slots.get(slotId).getItem(), "anti-drop-items")
+               ? this.listContains(handler.slots.get(slotId).getItem(), "anti-drop-items")
                : false;
          } else {
             return false;
@@ -581,16 +581,16 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private static int init_I_Slot(Slot slot) {
-      if (slot != null && init_Minecraft.player != null && slot.container == init_Minecraft.player.getInventory()) {
+   private static int inventoryIndex(Slot slot) {
+      if (slot != null && CLIENT.player != null && slot.container == CLIENT.player.getInventory()) {
          int index = slot.getContainerSlot();
-         return index >= 0 && index < init_Minecraft.player.getInventory().getContainerSize() ? index : -1;
+         return index >= 0 && index < CLIENT.player.getInventory().getContainerSize() ? index : -1;
       } else {
          return -1;
       }
    }
 
-   private static boolean init_Z_ItemStack_ItemStack(ItemStack a, ItemStack b) {
+   private static boolean sameStack(ItemStack a, ItemStack b) {
       if (a != null && !a.isEmpty() || b != null && !b.isEmpty()) {
          return a != null && b != null && !a.isEmpty() && !b.isEmpty()
             ? a.getCount() == b.getCount() && a.getDamageValue() == b.getDamageValue() && ItemStack.isSameItemSameComponents(a, b)
@@ -600,11 +600,11 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private static String init_Str_Str(String raw) {
+   private static String normalizeId(String raw) {
       return raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static <T extends Enum<T>> T init_Enum_Obj_Class(Object packet, Class<T> enumClass) {
+   private static <T extends Enum<T>> T reflectEnum(Object packet, Class<T> enumClass) {
       for (Method method : packet.getClass().getDeclaredMethods()) {
          if (method.getParameterCount() == 0 && enumClass.isAssignableFrom(method.getReturnType())) {
             try {
@@ -628,7 +628,7 @@ public final class InventoryTweaksModule extends Module {
       return null;
    }
 
-   private static int init_I_Obj_StrArr(Object packet, String... names) {
+   private static int reflectInt(Object packet, String... names) {
       for (String name : names) {
          try {
             Method method = packet.getClass().getDeclaredMethod(name);
@@ -652,7 +652,7 @@ public final class InventoryTweaksModule extends Module {
       return -1;
    }
 
-   private record Inner_BufferHelper(int init_I, boolean init_Z) {
+   private record Inner_BufferHelper(int slotId, boolean drop) {
    }
 
    private record Inner_CachePool(int init, int load) {
@@ -664,9 +664,9 @@ public final class InventoryTweaksModule extends Module {
       private final boolean steal;
       private final boolean dropBackwards;
       private final int delayMs;
-      private final int read;
-      private int write;
-      private long init_J;
+      private final int randomMs;
+      private int nextClick;
+      private long nextClickAt;
 
       private Inner_ConfigStore(
          int containerId, List<InventoryTweaksModule.Inner_BufferHelper> clicks, boolean steal, boolean dropBackwards, int delayMs, int initialDelayMs, int randomMs
@@ -676,50 +676,50 @@ public final class InventoryTweaksModule extends Module {
          this.steal = steal;
          this.dropBackwards = dropBackwards;
          this.delayMs = delayMs;
-         this.read = randomMs;
-         this.init_J = System.currentTimeMillis() + initialDelayMs;
+         this.randomMs = randomMs;
+         this.nextClickAt = System.currentTimeMillis() + initialDelayMs;
       }
 
-      private boolean init() {
-         if (InventoryTweaksModule.init_Minecraft.player == null || InventoryTweaksModule.init_Minecraft.player.containerMenu == null || InventoryTweaksModule.init_Minecraft.gameMode == null) {
+      private boolean tick() {
+         if (InventoryTweaksModule.CLIENT.player == null || InventoryTweaksModule.CLIENT.player.containerMenu == null || InventoryTweaksModule.CLIENT.gameMode == null) {
             return false;
          }
 
-         if (InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.containerId) {
+         if (InventoryTweaksModule.CLIENT.player.containerMenu.containerId != this.containerId) {
             return false;
          }
 
-         if (System.currentTimeMillis() < this.init_J) {
+         if (System.currentTimeMillis() < this.nextClickAt) {
             return true;
          }
 
-         while (this.write < this.clicks.size()) {
-            InventoryTweaksModule.Inner_BufferHelper click = this.clicks.get(this.write++);
-            if (click.init_I() >= 0 && click.init_I() < InventoryTweaksModule.init_Minecraft.player.containerMenu.slots.size()) {
-               Slot slot = InventoryTweaksModule.init_Minecraft.player.containerMenu.slots.get(click.init_I());
+         while (this.nextClick < this.clicks.size()) {
+            InventoryTweaksModule.Inner_BufferHelper click = this.clicks.get(this.nextClick++);
+            if (click.slotId() >= 0 && click.slotId() < InventoryTweaksModule.CLIENT.player.containerMenu.slots.size()) {
+               Slot slot = InventoryTweaksModule.CLIENT.player.containerMenu.slots.get(click.slotId());
                if (slot != null
                   && !slot.getItem().isEmpty()
-                  && (!this.steal || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "steal-filter", "steal-items"))
-                  && (this.steal || InventoryTweaksModule.this.init_Z_ItemStack(slot.getItem(), "dump-filter", "dump-items"))) {
-                  if (click.init_Z()) {
-                     float oldYaw = InventoryTweaksModule.init_Minecraft.player.getYRot();
+                  && (!this.steal || InventoryTweaksModule.this.passesFilter(slot.getItem(), "steal-filter", "steal-items"))
+                  && (this.steal || InventoryTweaksModule.this.passesFilter(slot.getItem(), "dump-filter", "dump-items"))) {
+                  if (click.drop()) {
+                     float oldYaw = InventoryTweaksModule.CLIENT.player.getYRot();
                      if (this.dropBackwards) {
-                        InventoryTweaksModule.init_Minecraft.player.setYRot(oldYaw + 180.0F);
+                        InventoryTweaksModule.CLIENT.player.setYRot(oldYaw + 180.0F);
                      }
 
                      try {
-                        autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 1, ContainerInput.THROW);
+                        autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.CLIENT, click.slotId(), 1, ContainerInput.THROW);
                      } finally {
                         if (this.dropBackwards) {
-                           InventoryTweaksModule.init_Minecraft.player.setYRot(oldYaw);
+                           InventoryTweaksModule.CLIENT.player.setYRot(oldYaw);
                         }
                      }
                   } else {
-                     autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 0, ContainerInput.QUICK_MOVE);
+                     autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.CLIENT, click.slotId(), 0, ContainerInput.QUICK_MOVE);
                   }
 
-                  if (this.delayMs > 0 || this.read > 0) {
-                     this.init_J = System.currentTimeMillis() + this.delayMs + ThreadLocalRandom.current().nextInt(this.read + 1);
+                  if (this.delayMs > 0 || this.randomMs > 0) {
+                     this.nextClickAt = System.currentTimeMillis() + this.delayMs + ThreadLocalRandom.current().nextInt(this.randomMs + 1);
                      return true;
                   }
                }
@@ -730,42 +730,42 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private record Inner_DataUtil(String init_Str, Set<String> init_Set) {
+   private record Inner_DataUtil(String source, Set<String> ids) {
    }
 
    private final class Inner_StreamUtil {
       private final int containerId;
       private final List<InventoryTweaksModule.Inner_CachePool> actions;
-      private final int load;
-      private int read;
-      private int write;
+      private final int delayTicks;
+      private int nextAction;
+      private int waitTicks;
 
       private Inner_StreamUtil(int containerId, List<InventoryTweaksModule.Inner_CachePool> actions, int delayTicks) {
          this.containerId = containerId;
          this.actions = actions;
-         this.load = delayTicks;
+         this.delayTicks = delayTicks;
       }
 
-      private boolean init() {
-         if (InventoryTweaksModule.init_Minecraft.player == null
-            || InventoryTweaksModule.init_Minecraft.player.containerMenu == null
-            || InventoryTweaksModule.init_Minecraft.player.containerMenu.containerId != this.containerId) {
+      private boolean tick() {
+         if (InventoryTweaksModule.CLIENT.player == null
+            || InventoryTweaksModule.CLIENT.player.containerMenu == null
+            || InventoryTweaksModule.CLIENT.player.containerMenu.containerId != this.containerId) {
             return false;
          }
 
-         if (this.write > 0) {
-            this.write--;
+         if (this.waitTicks > 0) {
+            this.waitTicks--;
             return true;
          }
 
-         if (this.read >= this.actions.size()) {
+         if (this.nextAction >= this.actions.size()) {
             return false;
          }
 
-         InventoryTweaksModule.Inner_CachePool action = this.actions.get(this.read++);
-         autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
-         this.write = this.load;
-         return this.read < this.actions.size() || this.write > 0;
+         InventoryTweaksModule.Inner_CachePool action = this.actions.get(this.nextAction++);
+         autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.CLIENT, action.init(), action.load());
+         this.waitTicks = this.delayTicks;
+         return this.nextAction < this.actions.size() || this.waitTicks > 0;
       }
    }
 }

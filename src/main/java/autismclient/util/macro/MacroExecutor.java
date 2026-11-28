@@ -193,7 +193,7 @@ public class MacroExecutor {
    private static final ThreadLocal<int[]> MAIN_THREAD_BURST_COUNT;
    private static final ConcurrentLinkedQueue<Runnable> TICK_ALIGNED_TASKS;
    private static volatile long manualLeaveAtMs;
-   private static int run;
+   private static int suppressedLeaveMarks;
    private static final long sync_J = 10000L;
    private static final long WAITER_TIMEOUT_NANOS;
    private static final List<MacroExecutor.PacketWaiter> INCOMING_PACKET_WAITERS;
@@ -263,7 +263,7 @@ public class MacroExecutor {
 
    private static int applyFlowJump(MacroExecutor.MacroRun run, autismclient.util.AutismMacro macro, int currentI, FlowAction flow, Minecraft mc) {
       run.elseBranchIndex = -1;
-      run.update = 0;
+      run.elseSkipSteps = 0;
       Integer dest = resolveFlowTarget(run, macro, currentI, flow, mc);
       if (dest == null) {
          return -2147483648;
@@ -272,15 +272,15 @@ public class MacroExecutor {
       int size = macro.actions.size();
       int target = Math.max(0, Math.min(size, dest));
       if (target <= currentI) {
-         run.poll++;
-         run.push++;
-         if (run.poll > 5000000) {
+         run.backwardJumps++;
+         run.backwardJumpBurst++;
+         if (run.backwardJumps > 5000000) {
             AutismClientMessaging.sendPrefixed("§cMacro aborted: jump limit exceeded (runaway loop).");
             return -2147483648;
          }
 
-         if (run.push >= 100000) {
-            run.push = 0;
+         if (run.backwardJumpBurst >= 100000) {
+            run.backwardJumpBurst = 0;
 
             try {
                awaitWhileRunning(MacroWaitRegistry.awaitTickSync());
@@ -288,7 +288,7 @@ public class MacroExecutor {
             }
          }
       } else {
-         run.push = 0;
+         run.backwardJumpBurst = 0;
       }
 
       return target - 1;
@@ -352,8 +352,8 @@ public class MacroExecutor {
 
    private static void startFpsOverride(MacroExecutor.MacroRun run, int headerIndex, int endIndexInclusive, int fpsLimit) {
       if (run != null) {
-         run.sync = headerIndex;
-         run.flush = endIndexInclusive;
+         run.fpsOverrideStart = headerIndex;
+         run.fpsOverrideEnd = endIndexInclusive;
          MacroFpsOverrideManager.setOverride(run.id, fpsLimit);
       }
    }
@@ -362,24 +362,24 @@ public class MacroExecutor {
       MacroExecutor.MacroRun run, int headerIndex, int endIndexInclusive, int delayMs, boolean realIncoming, boolean realOutgoing
    ) {
       if (run != null) {
-         run.close = headerIndex;
-         run.open = endIndexInclusive;
+         run.pingSpoofOverrideStart = headerIndex;
+         run.pingSpoofOverrideEnd = endIndexInclusive;
          PingSpoofScheduler.setRunOverride(run.id, delayMs, realIncoming, realOutgoing);
       }
    }
 
    private static void endFpsOverride(MacroExecutor.MacroRun run) {
-      if (run != null && run.sync >= 0) {
-         run.sync = -1;
-         run.flush = -1;
+      if (run != null && run.fpsOverrideStart >= 0) {
+         run.fpsOverrideStart = -1;
+         run.fpsOverrideEnd = -1;
          MacroFpsOverrideManager.clearOverride(run.id);
       }
    }
 
    private static void endPingSpoofOverride(MacroExecutor.MacroRun run) {
-      if (run != null && run.close >= 0) {
-         run.close = -1;
-         run.open = -1;
+      if (run != null && run.pingSpoofOverrideStart >= 0) {
+         run.pingSpoofOverrideStart = -1;
+         run.pingSpoofOverrideEnd = -1;
          PingSpoofScheduler.init(run.id);
       }
    }
@@ -432,7 +432,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void read(MacroExecutor.MacroRun run) {
+   private static void waitForOverrideTimeouts(MacroExecutor.MacroRun run) {
       if (run != null) {
          long deadline = Math.max(run.fpsTimeoutDeadlineNanos, run.spingTimeoutDeadlineNanos);
 
@@ -445,11 +445,11 @@ public class MacroExecutor {
 
    private static void endOverridesOutside(MacroExecutor.MacroRun run, int index) {
       if (run != null) {
-         if (run.sync >= 0 && (index > run.flush || index <= run.sync)) {
+         if (run.fpsOverrideStart >= 0 && (index > run.fpsOverrideEnd || index <= run.fpsOverrideStart)) {
             endFpsOverride(run);
          }
 
-         if (run.close >= 0 && (index > run.open || index <= run.close)) {
+         if (run.pingSpoofOverrideStart >= 0 && (index > run.pingSpoofOverrideEnd || index <= run.pingSpoofOverrideStart)) {
             endPingSpoofOverride(run);
          }
       }
@@ -824,7 +824,7 @@ public class MacroExecutor {
          run.heldActions.clear();
 
          for (MacroExecutor.AsyncActionHandle wait : new ArrayList<>(run.asyncWaits.values())) {
-            wait.init();
+            wait.runCleanup();
          }
 
          run.asyncWaits.clear();
@@ -855,8 +855,8 @@ public class MacroExecutor {
          PacketGateManager.init(run.id, mc == null ? null : mc.getConnection());
          MacroFpsOverrideManager.clearOverride(run.id);
          PingSpoofScheduler.init(run.id);
-         flush(run);
-         read(run, mc);
+         releaseSmoothLook(run);
+         releaseNavigation(run, mc);
          Thread thread = run.thread;
          if (interruptThread && thread != null && thread != Thread.currentThread()) {
             thread.interrupt();
@@ -917,7 +917,7 @@ public class MacroExecutor {
       if (!isResourceLocked(MacroResourceClassifier.Inner_DataUtil.INPUT) && mc != null) {
          mc.execute(() -> {
             syncSneakKey(mc);
-            read(mc);
+            syncSprintKey(mc);
          });
       }
    }
@@ -929,7 +929,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void read(Minecraft mc) {
+   private static void syncSprintKey(Minecraft mc) {
       if (!isResourceLocked(MacroResourceClassifier.Inner_DataUtil.INPUT) && mc != null) {
          boolean held = isActionTypeHeld(SprintAction.class);
          if (mc.options != null && mc.options.keySprint != null) {
@@ -1080,7 +1080,7 @@ public class MacroExecutor {
 
                runState = new MacroExecutor.MacroRun(NEXT_RUN_ID.getAndIncrement(), macro, executionMacro, runOptions);
                if (ACTIVE_RUNS.isEmpty()) {
-                  push();
+                  clearStaleCompletionCaches();
                }
 
                ACTIVE_RUNS.put(runState.id, runState);
@@ -1095,7 +1095,7 @@ public class MacroExecutor {
             }
 
             reportLanProgress(runState, 0, executionMacro.actions.size(), executionMacro.name);
-            Thread thread = new Thread(() -> write(runState), "Autism-Macro-" + runState.id);
+            Thread thread = new Thread(() -> runGuarded(runState), "Autism-Macro-" + runState.id);
             thread.setDaemon(true);
             lastMacroThread = thread;
             runState.thread = thread;
@@ -1174,11 +1174,11 @@ public class MacroExecutor {
       }
    }
 
-   private static void write(MacroExecutor.MacroRun runState) {
+   private static void runGuarded(MacroExecutor.MacroRun runState) {
       CURRENT_RUN.set(runState);
 
       try {
-         update(runState);
+         executeRun(runState);
       } catch (Throwable var8) {
          Throwable fatal = var8;
          if (!runState.flags.silent()) {
@@ -1193,7 +1193,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void update(MacroExecutor.MacroRun runState) {
+   private static void executeRun(MacroExecutor.MacroRun runState) {
       CURRENT_RUN.set(runState);
       MacroVariableContext.clear();
       autismclient.util.AutismMacro macro = runState.macro;
@@ -1274,8 +1274,8 @@ public class MacroExecutor {
             boolean burstMode = module.isPacketBurstMode();
             totalSteps = macro.actions.size();
             runState.elseBranchIndex = -1;
-            runState.update = 0;
-            runState.push = 0;
+            runState.elseSkipSteps = 0;
+            runState.backwardJumpBurst = 0;
             runState.lastCompletedStep = 0;
 
             for (int i = 0; i < macro.actions.size() && isStillRunning(); i++) {
@@ -1286,10 +1286,10 @@ public class MacroExecutor {
 
                setRunProgress(i, macro.actions.size());
                endOverridesOutside(runState, i);
-               if (runState.elseBranchIndex == i && runState.update > 0) {
-                  i += runState.update - 1;
+               if (runState.elseBranchIndex == i && runState.elseSkipSteps > 0) {
+                  i += runState.elseSkipSteps - 1;
                   runState.elseBranchIndex = -1;
-                  runState.update = 0;
+                  runState.elseSkipSteps = 0;
                } else {
                   MacroAction action = macro.actions.get(i);
                   if (action instanceof MultiAction multi) {
@@ -1309,7 +1309,7 @@ public class MacroExecutor {
                         boolean branchMatches = branch.init(mc);
                         if (branchMatches) {
                            runState.elseBranchIndex = i + 1 + Math.max(0, branch.thenSteps);
-                           runState.update = Math.max(0, branch.elseSteps);
+                           runState.elseSkipSteps = Math.max(0, branch.elseSteps);
                         } else {
                            i += Math.max(0, branch.thenSteps);
                         }
@@ -1327,10 +1327,10 @@ public class MacroExecutor {
                         i += bodyCount;
                      } else if (action instanceof IfAction ifA) {
                         runState.elseBranchIndex = -1;
-                        runState.update = 0;
+                        runState.elseSkipSteps = 0;
                         if (ifA.init(mc)) {
                            runState.elseBranchIndex = i + 1 + Math.max(0, ifA.thenSteps);
-                           runState.update = Math.max(0, ifA.elseSteps);
+                           runState.elseSkipSteps = Math.max(0, ifA.elseSteps);
                         } else {
                            i += Math.max(0, ifA.thenSteps);
                         }
@@ -1353,8 +1353,8 @@ public class MacroExecutor {
                            try {
                               if (guiPreconditionMet(mc, action)) {
                                  applyRaycastAim(mc, action);
-                                 CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !write(action)
-                                    ? write(mc, action)
+                                 CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !isScreenOpeningAction(action)
+                                    ? postGuiWaitFuture(mc, action)
                                     : null;
                                  if (burstMode && action instanceof SendPacketAction) {
                                     List<SendPacketAction> packetBatch = new ArrayList<>();
@@ -1450,7 +1450,7 @@ public class MacroExecutor {
                                              awaitWithTimeout(prearmed.future, 0L);
                                              startTarget = prearmed.completedPacketTargets;
                                           } finally {
-                                             prearmed.init();
+                                             prearmed.runCleanup();
                                           }
                                        }
 
@@ -1622,7 +1622,7 @@ public class MacroExecutor {
                                        if (!spa.persistent && spa.sprint) {
                                           postToClientThread(mc, () -> spa.execute(mc), spa.h_());
                                        } else {
-                                          postToClientThread(mc, () -> read(mc), spa.h_());
+                                          postToClientThread(mc, () -> syncSprintKey(mc), spa.h_());
                                        }
                                     } else if (action instanceof DisconnectAction da2) {
                                        reportLanProgress(runState, i + 1, macro.actions.size(), macro.name);
@@ -1762,7 +1762,7 @@ public class MacroExecutor {
                                        if (la.smooth) {
                                           startSmoothLook(rotationTarget.init(), rotationTarget.load(), la.getRotationStep());
                                           if (la.waitForCompletion) {
-                                             set();
+                                             awaitSmoothLookDone();
                                           }
                                        } else {
                                           mc.execute(() -> {
@@ -1798,7 +1798,7 @@ public class MacroExecutor {
 
                                        i = endIdx - 1;
                                     } else if (action instanceof CaptureValueAction captureValue) {
-                                       read(mc, captureValue);
+                                       executeCapture(mc, captureValue);
                                     } else if (action instanceof WaitForChatAction wca) {
                                        setRunStatus("Waiting for chat: " + wca.pattern);
                                        if (!awaitPrearmedWait(wca, wca.timeoutMs)) {
@@ -2020,7 +2020,7 @@ public class MacroExecutor {
                                           if (ra.smooth) {
                                              startSmoothLook(ra.yaw, ra.pitch, ra.init());
                                              if (ra.waitForCompletion) {
-                                                set();
+                                                awaitSmoothLookDone();
                                              }
                                           } else {
                                              mc.execute(() -> action.execute(mc));
@@ -2036,7 +2036,7 @@ public class MacroExecutor {
                                           if (la.smooth) {
                                              startSmoothLook(rotationTarget.init(), rotationTarget.load(), la.getRotationStep());
                                              if (la.waitForCompletion) {
-                                                set();
+                                                awaitSmoothLookDone();
                                              }
                                           } else {
                                              mc.execute(() -> {
@@ -2056,7 +2056,7 @@ public class MacroExecutor {
                                              }
                                           }
 
-                                          postGuiFuture = write(mc, ia);
+                                          postGuiFuture = postGuiWaitFuture(mc, ia);
                                           if (ia.useClickDelay && ia.clickDelayMs > 0) {
                                              runItemClickPlan(mc, ia);
                                           } else {
@@ -2166,7 +2166,7 @@ public class MacroExecutor {
                                              }
                                           } else if (action instanceof PacketGateAction pga) {
                                              runPacketGateAction(mc, pga);
-                                          } else if (write(action)) {
+                                          } else if (isScreenOpeningAction(action)) {
                                              postGuiFuture = waitForTargetFuture(mc, action);
                                           } else if (action instanceof MacroVariablesAction || action instanceof AssertAction) {
                                              action.execute(mc);
@@ -2203,7 +2203,7 @@ public class MacroExecutor {
                                                    }, fPlace.h_());
                                                 }
                                              }
-                                          } else if (update(action)) {
+                                          } else if (isPacketOrdered(action)) {
                                              executeGuarded(mc, action, action.getDisplayName());
                                           } else if (module != null && module.isInstantExecutionMode()) {
                                              CountDownLatch latch = new CountDownLatch(1);
@@ -2227,7 +2227,7 @@ public class MacroExecutor {
                                           }
                                        } else {
                                           if (action instanceof DropAction dropAction) {
-                                             postGuiFuture = write(mc, dropAction);
+                                             postGuiFuture = postGuiWaitFuture(mc, dropAction);
                                           }
 
                                           executeGuarded(mc, action, action.getDisplayName());
@@ -2247,7 +2247,7 @@ public class MacroExecutor {
                                        reportLanProgress(runState, i + 1, macro.actions.size(), macro.name);
                                     }
 
-                                    if (isStillRunning() && !sync(action) && module != null && module.isInstantExecutionMode()) {
+                                    if (isStillRunning() && !isNonInventoryAction(action) && module != null && module.isInstantExecutionMode()) {
                                        int delayUs = module.getActionDelayUs();
                                        if (delayUs > 0) {
                                           LockSupport.parkNanos(delayUs * 1000L);
@@ -2255,7 +2255,7 @@ public class MacroExecutor {
                                           Thread.onSpinWait();
                                        }
 
-                                       write(mc);
+                                       throttleMainThreadBurst(mc);
                                     }
                                  }
                               }
@@ -2291,7 +2291,7 @@ public class MacroExecutor {
                      Thread.onSpinWait();
                   }
 
-                  write(mc);
+                  throttleMainThreadBurst(mc);
                } else if (module != null && module.isUseMsSleepMode()) {
                   int sleepMs = module.getMsSleepInterval();
                   sleep(sleepMs);
@@ -2305,7 +2305,7 @@ public class MacroExecutor {
             }
          }
 
-         read(runState);
+         waitForOverrideTimeouts(runState);
          if (isStillRunning()) {
             runState.outcome = "COMPLETED";
             if (!runState.flags.silent()) {
@@ -2330,7 +2330,7 @@ public class MacroExecutor {
 
          PacketGateManager.init(runState.id, mc == null ? null : mc.getConnection());
          finishCurrentRun();
-         flush(runState);
+         releaseSmoothLook(runState);
          if (!ANY_RUN_ACTIVE.get()) {
             MacroWaitRegistry.cancelAll();
          }
@@ -2339,13 +2339,13 @@ public class MacroExecutor {
       }
    }
 
-   private static String write(String value) {
+   private static String resolvePacketName(String value) {
       return PacketNameResolver.load(value);
    }
 
    private static boolean packetNameMatches(String normalizedExpected, String candidate) {
       if (!normalizedExpected.isEmpty() && candidate != null && !candidate.isEmpty()) {
-         String normalizedCandidate = write(candidate);
+         String normalizedCandidate = resolvePacketName(candidate);
          if (normalizedCandidate.isEmpty()) {
             return false;
          }
@@ -2368,7 +2368,7 @@ public class MacroExecutor {
    }
 
    private static boolean packetNameMatchesRaw(String expected, String candidate) {
-      return expected != null && !expected.isEmpty() ? packetNameMatches(write(expected), candidate) : false;
+      return expected != null && !expected.isEmpty() ? packetNameMatches(resolvePacketName(expected), candidate) : false;
    }
 
    private static MacroExecutor.ServerPacketCacheEntry parsePacketTarget(String target) {
@@ -2382,7 +2382,7 @@ public class MacroExecutor {
 
       return PACKET_TARGET_CACHE.computeIfAbsent(target, t -> {
          String expectedName = WaitForPacketAction.load(t);
-         return new MacroExecutor.ServerPacketCacheEntry(WaitForPacketAction.init(t), expectedName, write(expectedName));
+         return new MacroExecutor.ServerPacketCacheEntry(WaitForPacketAction.init(t), expectedName, resolvePacketName(expectedName));
       });
    }
 
@@ -2570,7 +2570,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void push() {
+   private static void clearStaleCompletionCaches() {
       long stoppedAt = lastAllRunsEndedMs;
       if (stoppedAt > 0L && System.currentTimeMillis() - stoppedAt > 3000L) {
          COMPLETION_CACHE.clear();
@@ -2612,7 +2612,7 @@ public class MacroExecutor {
       );
       synchronized (union) {
          union.collected.addAll(base);
-         union.load = Math.max(union.load, base.size());
+         union.largestSuggestionBatch = Math.max(union.largestSuggestionBatch, base.size());
          advanceProbeQueue(union, connection, action.autofillTimeoutMs);
          List<String> pool = new ArrayList<>(union.collected);
          boolean ordered = action.listSelection == CandidatePoolSelector.Inner_CachePool.SEQUENTIAL
@@ -2642,8 +2642,8 @@ public class MacroExecutor {
 
                union.collected.addAll(cached.suggestions());
                int size = cached.suggestions().size();
-               boolean truncated = size >= union.load && union.load >= 8;
-               union.load = Math.max(union.load, size);
+               boolean truncated = size >= union.largestSuggestionBatch && union.largestSuggestionBatch >= 8;
+               union.largestSuggestionBatch = Math.max(union.largestSuggestionBatch, size);
                if (truncated) {
                   union.pendingPrefixes.add(target);
                }
@@ -2861,7 +2861,7 @@ public class MacroExecutor {
       return out;
    }
 
-   private static void read(Minecraft mc, CaptureValueAction action) {
+   private static void executeCapture(Minecraft mc, CaptureValueAction action) {
       if (action != null) {
          String modifierError = action.numberModifierError();
          if (!modifierError.isBlank()) {
@@ -2881,9 +2881,9 @@ public class MacroExecutor {
             if (source == CaptureValueAction.Inner_StateCache.RECENT_CHAT) {
                captureChatValue(action);
             } else if (source == CaptureValueAction.Inner_StateCache.SCOREBOARD) {
-               update(mc, action);
+               captureScoreboardValue(mc, action);
             } else {
-               write(mc, action);
+               capturePreviewValue(mc, action);
             }
          } else {
             MacroExecutor.MacroRun run = CURRENT_RUN.get();
@@ -2905,7 +2905,7 @@ public class MacroExecutor {
                   break;
                }
 
-               pop();
+               awaitNextTick();
             }
 
             CaptureValueAction.Inner_NetHelper preview = result.get();
@@ -2930,7 +2930,7 @@ public class MacroExecutor {
       return name.isBlank() ? "value" : "{" + name + "}";
    }
 
-   private static void write(Minecraft mc, CaptureValueAction action) {
+   private static void capturePreviewValue(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.MacroRun run = CURRENT_RUN.get();
       clearCaptures(action);
       String lastMessage = "";
@@ -2954,11 +2954,11 @@ public class MacroExecutor {
             setRunStatus("Capture waiting: " + lastMessage);
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
-   private static void update(Minecraft mc, CaptureValueAction action) {
+   private static void captureScoreboardValue(Minecraft mc, CaptureValueAction action) {
       MacroExecutor.MacroRun run = CURRENT_RUN.get();
       clearCaptures(action);
       String trackedKey = action.scoreboardRow;
@@ -3002,7 +3002,7 @@ public class MacroExecutor {
             }
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
@@ -3031,7 +3031,7 @@ public class MacroExecutor {
 
          try {
             while (isStillRunning() && PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
-               pop();
+               awaitNextTick();
             }
          } finally {
             if (PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
@@ -3041,7 +3041,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void write(Minecraft mc) {
+   private static void throttleMainThreadBurst(Minecraft mc) {
       if (mc != null && !mc.isSameThread()) {
          int[] burst = MAIN_THREAD_BURST_COUNT.get();
          if (++burst[0] >= 256) {
@@ -3128,7 +3128,7 @@ public class MacroExecutor {
             return;
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
@@ -3271,7 +3271,7 @@ public class MacroExecutor {
       if (target != null && target.hasSlot()) {
          session.slot = Math.max(0, Math.min(40, target.slot));
          session.slotLocked = true;
-         String explicitId = target.hasRegistryId() ? update(target.registryId) : "";
+         String explicitId = target.hasRegistryId() ? normalizeItemId(target.registryId) : "";
          if (!explicitId.isBlank()) {
             session.lockedItemId = explicitId;
          }
@@ -3282,10 +3282,10 @@ public class MacroExecutor {
             session.itemSeen = true;
          }
       } else if (target != null && target.hasRegistryId()) {
-         session.lockedItemId = update(target.registryId);
+         session.lockedItemId = normalizeItemId(target.registryId);
          session.slot = findTargetSlot(mc, action, session.lockedItemId, target);
       } else if (target != null && target.hasItemFilter()) {
-         int slot = load(mc, action, "", target);
+         int slot = findDurabilitySlot(mc, action, "", target);
          if (slot >= 0) {
             session.slot = slot;
             session.lockedItemId = registryIdOf(stackInVisibleSlot(mc, slot));
@@ -3324,7 +3324,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, WaitDurabilityAction action, String lockedRegistryId, MacroItemTarget target) {
+   private static int findDurabilitySlot(Minecraft mc, WaitDurabilityAction action, String lockedRegistryId, MacroItemTarget target) {
       if (mc != null && mc.player != null) {
          int selected = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
          if (slotHoldsTarget(mc, action, lockedRegistryId, target, selected)) {
@@ -3481,7 +3481,7 @@ public class MacroExecutor {
       }
    }
 
-   private static String update(String raw) {
+   private static String normalizeItemId(String raw) {
       if (raw != null && !raw.isBlank()) {
          String trimmed = raw.trim().toLowerCase(Locale.ROOT);
          Identifier parsed = Identifier.tryParse(trimmed.contains(":") ? trimmed : "minecraft:" + trimmed);
@@ -3598,7 +3598,7 @@ public class MacroExecutor {
          applyStashedCaptures(action);
          return true;
       } finally {
-         wait.init();
+         wait.runCleanup();
       }
    }
 
@@ -4382,7 +4382,7 @@ public class MacroExecutor {
             baseFutures.add(base);
             futures.add(base.thenApply(event -> {
                if (event.packet() != null) {
-                  storeMatchedPacket(condition, event.packet(), event.load());
+                  storeMatchedPacket(condition, event.packet(), event.direction());
                }
 
                if (condition instanceof CaptureOutputAction output) {
@@ -4398,7 +4398,7 @@ public class MacroExecutor {
 
                   LinkedHashMap<String, MacroVarValue> captures = new LinkedHashMap<>(event.captures());
                   captures.put(name, value);
-                  return new MacroExecutor.PacketEvent(event.packet(), event.load(), event.nanoTime(), event.chatCapture(), captures);
+                  return new MacroExecutor.PacketEvent(event.packet(), event.direction(), event.nanoTime(), event.chatCapture(), captures);
                } else {
                   return (MacroExecutor.PacketEvent)event;
                }
@@ -4726,13 +4726,13 @@ public class MacroExecutor {
                   } else {
                      out.complete(
                         new MacroExecutor.PacketEvent(
-                           event.packet(), event.load(), event.nanoTime(), chatCaptureOf(event.packet()), captures.get()
+                           event.packet(), event.direction(), event.nanoTime(), chatCaptureOf(event.packet()), captures.get()
                         )
                      );
                   }
                }
             );
-         out.whenComplete((v, e) -> listener.init());
+         out.whenComplete((v, e) -> listener.dispose());
          return out;
       } else if (trigger instanceof WaitForPacketAction packetAction) {
          List<String> targets = packetAction.init();
@@ -4766,8 +4766,8 @@ public class MacroExecutor {
          recv.future.thenAccept(matched::complete);
          send.future.thenAccept(matched::complete);
          matched.whenComplete((v, e) -> {
-            recv.init();
-            send.init();
+            recv.dispose();
+            send.dispose();
          });
          return matched;
       } else if (trigger instanceof WaitForWorldChangeAction world) {
@@ -4793,7 +4793,7 @@ public class MacroExecutor {
             }
          });
          done.whenComplete((v, e) -> {
-            worldListener.init();
+            worldListener.dispose();
             if (!tickFuture.isDone()) {
                tickFuture.cancel(true);
             }
@@ -4806,7 +4806,7 @@ public class MacroExecutor {
             (packet, direction, now) -> packet instanceof ClientboundPlayerPositionPacket || isJoinPacket(packet)
          );
          teleListener.future.whenComplete((event, error) -> {
-            teleListener.init();
+            teleListener.dispose();
             if (error != null) {
                done.cancel(true);
             } else if (teleport.minDistance <= 0.0) {
@@ -4816,12 +4816,12 @@ public class MacroExecutor {
                   if (e != null) {
                      done.cancel(true);
                   } else {
-                     done.complete(new MacroExecutor.PacketEvent(event.packet(), event.load(), System.nanoTime(), event.chatCapture()));
+                     done.complete(new MacroExecutor.PacketEvent(event.packet(), event.direction(), System.nanoTime(), event.chatCapture()));
                   }
                });
             }
          });
-         done.whenComplete((v, e) -> teleListener.init());
+         done.whenComplete((v, e) -> teleListener.dispose());
          return done;
       } else {
          CompletableFuture<?> base = triggerWaitFuture(mc, trigger);
@@ -5149,8 +5149,8 @@ public class MacroExecutor {
          try {
             if (guiPreconditionMet(mc, action)) {
                applyRaycastAim(mc, action);
-               CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !write(action)
-                  ? write(mc, action)
+               CompletableFuture<Void> postGuiFuture = !(action instanceof ItemAction) && !(action instanceof DropAction) && !isScreenOpeningAction(action)
+                  ? postGuiWaitFuture(mc, action)
                   : null;
                if (action instanceof ToolsAction tools) {
                   runToolsAction(mc, tools);
@@ -5224,7 +5224,7 @@ public class MacroExecutor {
                   applyStashedCaptures(wgta);
                } else if (action instanceof PacketGateAction pga) {
                   runPacketGateAction(mc, pga);
-               } else if (write(action)) {
+               } else if (isScreenOpeningAction(action)) {
                   postGuiFuture = waitForTargetFuture(mc, action);
                } else if (action instanceof WaitForHealthAction wh) {
                   setRunStatus(wh.write());
@@ -5280,7 +5280,7 @@ public class MacroExecutor {
                   } catch (CancellationException var110) {
                   }
                } else if (action instanceof CaptureValueAction captureValue) {
-                  read(mc, captureValue);
+                  executeCapture(mc, captureValue);
                } else if (action instanceof WaitForChatAction wca) {
                   setRunStatus("Waiting for chat: " + wca.pattern);
                   waitForChatMatch(wca);
@@ -5384,7 +5384,7 @@ public class MacroExecutor {
                   if (la.smooth) {
                      startSmoothLook(rotationTarget.init(), rotationTarget.load(), la.getRotationStep());
                      if (la.waitForCompletion) {
-                        set();
+                        awaitSmoothLookDone();
                      }
                   } else {
                      mc.execute(() -> {
@@ -5398,7 +5398,7 @@ public class MacroExecutor {
                   if (ra.smooth) {
                      startSmoothLook(ra.yaw, ra.pitch, ra.init());
                      if (ra.waitForCompletion) {
-                        set();
+                        awaitSmoothLookDone();
                      }
                   } else {
                      mc.execute(() -> action.execute(mc));
@@ -5450,7 +5450,7 @@ public class MacroExecutor {
                   if (!spa.persistent && spa.sprint) {
                      postToClientThread(mc, () -> spa.execute(mc), spa.h_());
                   } else {
-                     postToClientThread(mc, () -> read(mc), spa.h_());
+                     postToClientThread(mc, () -> syncSprintKey(mc), spa.h_());
                   }
                } else if (action instanceof NbtBookAction nba) {
                   int totalBooks = Math.max(1, nba.bookCount);
@@ -5489,7 +5489,7 @@ public class MacroExecutor {
                      }
                   }
 
-                  postGuiFuture = write(mc, ia);
+                  postGuiFuture = postGuiWaitFuture(mc, ia);
                   executeGuarded(mc, action, "ItemAction");
                } else if (!(action instanceof DropAction) && !(action instanceof SwapSlotsAction)) {
                   if (action instanceof SendPacketAction) {
@@ -5697,7 +5697,7 @@ public class MacroExecutor {
                      runUsePhaseAction(mc, phaseAction);
                   } else if (action instanceof ContextMacroAction contextAction) {
                      runContextAction(contextAction);
-                  } else if (update(action)) {
+                  } else if (isPacketOrdered(action)) {
                      executeGuarded(mc, action, action.getDisplayName());
                   } else if (module != null && module.isInstantExecutionMode()) {
                      CountDownLatch latch = new CountDownLatch(1);
@@ -5717,7 +5717,7 @@ public class MacroExecutor {
                   }
                } else {
                   if (action instanceof DropAction dropAction) {
-                     postGuiFuture = write(mc, dropAction);
+                     postGuiFuture = postGuiWaitFuture(mc, dropAction);
                   }
 
                   executeGuarded(mc, action, action.getDisplayName());
@@ -5731,7 +5731,7 @@ public class MacroExecutor {
                   }
                }
 
-               if (isStillRunning() && !sync(action) && module != null && module.isInstantExecutionMode()) {
+               if (isStillRunning() && !isNonInventoryAction(action) && module != null && module.isInstantExecutionMode()) {
                   int delayUs = module.getActionDelayUs();
                   if (delayUs > 0) {
                      LockSupport.parkNanos(delayUs * 1000L);
@@ -5752,7 +5752,7 @@ public class MacroExecutor {
          RotationMath.Rotation rotation = callOnClientThread(mc, () -> MacroAimController.init(mc, aim.getAimTarget(mc)), null);
          if (rotation != null) {
             MacroAimController.init(rotation);
-            pop();
+            awaitNextTick();
          }
       }
    }
@@ -5778,7 +5778,7 @@ public class MacroExecutor {
       return context != null && context.macro() != null ? collectQueuedPackets(context.macro(), context.nextIndex(), count, context.load()) : new ArrayList<>();
    }
 
-   private static boolean write(MacroAction action) {
+   private static boolean isScreenOpeningAction(MacroAction action) {
       return action instanceof OpenContainerAction || action instanceof InteractEntityAction;
    }
 
@@ -5797,7 +5797,7 @@ public class MacroExecutor {
 
       boolean waitForTarget = var10000;
       if (!waitForTarget) {
-         CompletableFuture<Void> postGuiFuture = write(mc, action);
+         CompletableFuture<Void> postGuiFuture = postGuiWaitFuture(mc, action);
          performInteraction(mc, action);
          return postGuiFuture;
       }
@@ -5811,7 +5811,7 @@ public class MacroExecutor {
                throw new RuntimeException();
             }
          } else {
-            CompletableFuture<Void> postGuiFuture = write(mc, action);
+            CompletableFuture<Void> postGuiFuture = postGuiWaitFuture(mc, action);
             if (performInteraction(mc, action)) {
                return postGuiFuture;
             }
@@ -5855,10 +5855,10 @@ public class MacroExecutor {
             AutismClientMessaging.sendPrefixed("§cError in " + action.getDisplayName() + ": " + e.getMessage());
             return true;
          }
-      }, Boolean.FALSE, update(action));
+      }, Boolean.FALSE, isPacketOrdered(action));
    }
 
-   private static CompletableFuture<Void> write(Minecraft mc, MacroAction action) {
+   private static CompletableFuture<Void> postGuiWaitFuture(Minecraft mc, MacroAction action) {
       if (Boolean.TRUE.equals(SUPPRESS_POST_GUI_WAIT.get())) {
          return null;
       } else {
@@ -5885,12 +5885,12 @@ public class MacroExecutor {
          if (!guiName.success()) {
             return false;
          } else if (isGuiNamedOpen(mc, guiName.value())) {
-            update(mc);
+            waitForScreenReady(mc);
             return true;
          } else {
             CompletableFuture<Void> future = MacroWaitRegistry.awaitGuiTitle(guiName.value());
             awaitWhileRunning(future);
-            update(mc);
+            waitForScreenReady(mc);
             return true;
          }
       } else {
@@ -5913,10 +5913,10 @@ public class MacroExecutor {
       }
 
       String actual = mc.gui.screen().getTitle() == null ? "" : mc.gui.screen().getTitle().getString();
-      return read(expected, actual);
+      return looseTextMatch(expected, actual);
    }
 
-   private static boolean read(String expected, String actual) {
+   private static boolean looseTextMatch(String expected, String actual) {
       if (expected != null && !expected.isBlank() && actual != null && !actual.isBlank()) {
          String expectedLower = expected.toLowerCase(Locale.ROOT);
          String actualLower = actual.toLowerCase(Locale.ROOT);
@@ -5936,7 +5936,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void update(Minecraft mc) {
+   private static void waitForScreenReady(Minecraft mc) {
       long deadline = System.nanoTime() + 500000000L;
 
       while (isStillRunning()) {
@@ -5971,14 +5971,14 @@ public class MacroExecutor {
             AutismClientMessaging.sendPrefixed("§cError in " + label + ": " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage()));
          }
       };
-      if (update(action)) {
+      if (isPacketOrdered(action)) {
          runOnNextClientTick(mc, body);
       } else {
          runOnClientThread(mc, body);
       }
    }
 
-   private static boolean update(MacroAction action) {
+   private static boolean isPacketOrdered(MacroAction action) {
       return action instanceof PacketOrderAware ordered && ordered.h_();
    }
 
@@ -6099,7 +6099,7 @@ public class MacroExecutor {
       }, action.h_());
    }
 
-   private static boolean sync(MacroAction action) {
+   private static boolean isNonInventoryAction(MacroAction action) {
       return !(action instanceof ItemAction)
             && !(action instanceof DropAction)
             && !(action instanceof SwapSlotsAction)
@@ -6197,7 +6197,7 @@ public class MacroExecutor {
                }
 
                if (i + 1 < times && isStillRunning()) {
-                  pop();
+                  awaitNextTick();
                }
             }
          } finally {
@@ -6322,7 +6322,7 @@ public class MacroExecutor {
                            }
                         }
                      );
-                     pop();
+                     awaitNextTick();
                   }
 
                   runOnClientThread(mc, () -> {
@@ -6333,13 +6333,13 @@ public class MacroExecutor {
                         }
                      }
                   });
-                  pop();
+                  awaitNextTick();
                   runOnClientThread(mc, () -> {
                      if (mc.player != null) {
                         mc.player.containerMenu = mc.player.inventoryMenu;
                      }
                   });
-                  pop();
+                  awaitNextTick();
                }
 
                runOnClientThread(mc, xsa::enableCarry);
@@ -6394,7 +6394,7 @@ public class MacroExecutor {
                      break;
                   }
 
-                  pop();
+                  awaitNextTick();
                }
 
                runOnClientThread(mc, () -> {
@@ -6423,7 +6423,7 @@ public class MacroExecutor {
                         }
                      }
                   });
-                  pop();
+                  awaitNextTick();
                }
 
                return;
@@ -6484,13 +6484,13 @@ public class MacroExecutor {
                         }
                      }
                   });
-                  pop();
+                  awaitNextTick();
                   runOnClientThread(mc, () -> {
                      if (mc.player != null) {
                         mc.player.containerMenu = mc.player.inventoryMenu;
                      }
                   });
-                  pop();
+                  awaitNextTick();
                }
 
                runOnClientThread(mc, xsa::enableCarry);
@@ -6545,7 +6545,7 @@ public class MacroExecutor {
                         }
                      }
                   });
-                  pop();
+                  awaitNextTick();
                }
 
                return;
@@ -6603,7 +6603,7 @@ public class MacroExecutor {
    private static boolean transferGroup(Minecraft mc, List<XCarryAction.Inner_CachePool> group, int delayTicks, boolean delayAfterPickup, boolean delayBeforeReturn) {
       if (mc != null && mc.player != null && mc.gameMode != null && group != null && !group.isEmpty()) {
          MacroExecutor.TransferPlan snapshot = callOnClientThread(
-            mc, () -> captureTransferPlan(mc, group), MacroExecutor.TransferPlan.init()
+            mc, () -> captureTransferPlan(mc, group), MacroExecutor.TransferPlan.invalid()
          );
          if (!snapshot.valid) {
             return false;
@@ -6630,13 +6630,13 @@ public class MacroExecutor {
             InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
             return handler != null && handler.getCarried().isEmpty() && init_Z_InventoryMenu_2(handler, group, snapshot);
          }, Boolean.FALSE))) {
-            return MacroExecutor.TransferPlan.init();
+            return MacroExecutor.TransferPlan.invalid();
          }
 
          MacroExecutor.QuickCraftPlan quickCraftPlan = callOnClientThread(mc, () -> {
             InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
             return planQuickCraft(handler, group, snapshot);
-         }, MacroExecutor.QuickCraftPlan.init());
+         }, MacroExecutor.QuickCraftPlan.invalid());
          MacroExecutor.TransferPlan expected = snapshot;
          if (quickCraftPlan.valid) {
             setRunStatus("XCarry Safe drag -> " + group.size() + " slots x" + quickCraftPlan.placeCount);
@@ -6646,7 +6646,7 @@ public class MacroExecutor {
             int nextDragIndex = 0;
             if (delayAfterPickup) {
                if (!clickInventorySlot(mc, first.init(), 0, ContainerInput.PICKUP)) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                delayTicksIf(delayTicks, true);
@@ -6654,11 +6654,11 @@ public class MacroExecutor {
                   InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
                   return isCarrying(handler, snapshot.sourceStack, snapshot.sourceCount);
                }, Boolean.FALSE))) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                if (!clickInventorySlot(mc, -999, start, ContainerInput.QUICK_CRAFT)) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
             } else {
                ArrayList<MacroExecutor.DragClickStep> dragClicks = new ArrayList<>(group.size() + 3);
@@ -6673,7 +6673,7 @@ public class MacroExecutor {
 
                dragClicks.add(new MacroExecutor.DragClickStep(-999, end, ContainerInput.QUICK_CRAFT));
                if (!clickInventorySlots(mc, dragClicks.toArray(MacroExecutor.DragClickStep[]::new))) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                nextDragIndex = group.size();
@@ -6682,16 +6682,16 @@ public class MacroExecutor {
             for (int i = nextDragIndex; i < group.size(); i++) {
                XCarryAction.Inner_CachePool move = group.get(i);
                if (i > nextDragIndex || nextDragIndex > 0) {
-                  read(delayTicks);
+                  waitXCarryTicks(delayTicks);
                }
 
                if (!clickInventorySlot(mc, move.load(), add, ContainerInput.QUICK_CRAFT)) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
             }
 
             if (nextDragIndex < group.size() && !clickInventorySlot(mc, -999, end, ContainerInput.QUICK_CRAFT)) {
-               return MacroExecutor.TransferPlan.init();
+               return MacroExecutor.TransferPlan.invalid();
             }
 
             boolean firstResidual = true;
@@ -6701,22 +6701,22 @@ public class MacroExecutor {
                int count = residual.getValue() == null ? 0 : residual.getValue();
                if (count > 0) {
                   if (!firstResidual) {
-                     read(delayTicks);
+                     waitXCarryTicks(delayTicks);
                   }
 
                   firstResidual = false;
                   if (!init_Z_Minecraft(mc, targetSlotId, count, delayTicks)) {
-                     return MacroExecutor.TransferPlan.init();
+                     return MacroExecutor.TransferPlan.invalid();
                   }
                }
             }
 
-            expected = snapshot.init(quickCraftPlan.expectedTargetCounts);
+            expected = snapshot.withExpectedTargetCounts(quickCraftPlan.expectedTargetCounts);
          } else {
             int nextMoveIndex = 0;
             if (delayAfterPickup) {
                if (!clickInventorySlot(mc, first.init(), 0, ContainerInput.PICKUP)) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                delayTicksIf(delayTicks, true);
@@ -6728,14 +6728,14 @@ public class MacroExecutor {
                   new MacroExecutor.DragClickStep(first.init(), 0, ContainerInput.PICKUP),
                   new MacroExecutor.DragClickStep(firstMove.load(), firstButton, ContainerInput.PICKUP)
                )) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                int remainingFirst = firstButton == 0 ? 0 : Math.max(0, firstMove.read() - 1);
                if (remainingFirst > 0) {
-                  read(delayTicks);
+                  waitXCarryTicks(delayTicks);
                   if (!init_Z_Minecraft(mc, firstMove.load(), remainingFirst, delayTicks)) {
-                     return MacroExecutor.TransferPlan.init();
+                     return MacroExecutor.TransferPlan.invalid();
                   }
                }
 
@@ -6745,7 +6745,7 @@ public class MacroExecutor {
             for (int i = nextMoveIndex; i < group.size(); i++) {
                XCarryAction.Inner_CachePool move = group.get(i);
                if (move != null && move.read() > 0 && !init_Z_Minecraft(mc, move.load(), move.read(), delayTicks)) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
             }
          }
@@ -6756,16 +6756,16 @@ public class MacroExecutor {
          }, Boolean.FALSE));
          if (hasLeftover) {
             if (delayBeforeReturn) {
-               read(delayTicks);
+               waitXCarryTicks(delayTicks);
             }
 
             int returnSlot = callOnClientThread(mc, () -> findReturnSlot(mc, first.init()), -1);
             if (returnSlot < 0) {
-               return MacroExecutor.TransferPlan.init();
+               return MacroExecutor.TransferPlan.invalid();
             }
 
             if (!clickInventorySlot(mc, returnSlot, 0, ContainerInput.PICKUP)) {
-               return MacroExecutor.TransferPlan.init();
+               return MacroExecutor.TransferPlan.invalid();
             }
          }
 
@@ -6773,9 +6773,9 @@ public class MacroExecutor {
             InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
             return handler != null && handler.getCarried().isEmpty();
          }, Boolean.FALSE));
-         return cursorEmpty ? expected : MacroExecutor.TransferPlan.init();
+         return cursorEmpty ? expected : MacroExecutor.TransferPlan.invalid();
       } else {
-         return MacroExecutor.TransferPlan.init();
+         return MacroExecutor.TransferPlan.invalid();
       }
    }
 
@@ -6804,7 +6804,7 @@ public class MacroExecutor {
             }
 
             if (remaining > 0) {
-               read(delayTicks);
+               waitXCarryTicks(delayTicks);
             }
          }
 
@@ -6823,7 +6823,7 @@ public class MacroExecutor {
                Slot sourceSlot = handler.slots.get(first.init());
                ItemStack source = sourceSlot.getItem();
                if (source.isEmpty()) {
-                  return MacroExecutor.TransferPlan.init();
+                  return MacroExecutor.TransferPlan.invalid();
                }
 
                int total = 0;
@@ -6832,16 +6832,16 @@ public class MacroExecutor {
 
                for (XCarryAction.Inner_CachePool move : group) {
                   if (move == null || move.init() != first.init()) {
-                     return MacroExecutor.TransferPlan.init();
+                     return MacroExecutor.TransferPlan.invalid();
                   }
 
                   if (!init_Z_InventoryMenu_5(handler, source, move)) {
-                     return MacroExecutor.TransferPlan.init();
+                     return MacroExecutor.TransferPlan.invalid();
                   }
 
                   int start = startCounts.computeIfAbsent(move.load(), slotId -> menuSlotCount(handler, slotId));
                   if (start < 0) {
-                     return MacroExecutor.TransferPlan.init();
+                     return MacroExecutor.TransferPlan.invalid();
                   }
 
                   expectedCounts.put(move.load(), expectedCounts.getOrDefault(move.load(), start) + move.read());
@@ -6850,15 +6850,15 @@ public class MacroExecutor {
 
                return total > 0 && total <= source.getCount()
                   ? new MacroExecutor.TransferPlan(true, source.copy(), source.getCount(), startCounts, expectedCounts)
-                  : MacroExecutor.TransferPlan.init();
+                  : MacroExecutor.TransferPlan.invalid();
             } else {
-               return MacroExecutor.TransferPlan.init();
+               return MacroExecutor.TransferPlan.invalid();
             }
          } else {
-            return MacroExecutor.TransferPlan.init();
+            return MacroExecutor.TransferPlan.invalid();
          }
       } else {
-         return MacroExecutor.TransferPlan.init();
+         return MacroExecutor.TransferPlan.invalid();
       }
    }
 
@@ -6945,45 +6945,45 @@ public class MacroExecutor {
                if (move.load() >= 0 && move.load() < handler.slots.size()) {
                   Slot targetSlot = handler.slots.get(move.load());
                   if (!canQuickCraftInto(handler, targetSlot, snapshot.sourceStack)) {
-                     return MacroExecutor.QuickCraftPlan.init();
+                     return MacroExecutor.QuickCraftPlan.invalid();
                   }
 
                   int start = snapshot.startTargetCounts.getOrDefault(move.load(), menuSlotCount(handler, move.load()));
-                  int finalForMove = snapshot.load.getOrDefault(move.load(), start);
+                  int finalForMove = snapshot.expectedTargetCounts.getOrDefault(move.load(), start);
                   int desiredAdd = finalForMove - start;
                   if (desiredAdd <= 0) {
-                     return MacroExecutor.QuickCraftPlan.init();
+                     return MacroExecutor.QuickCraftPlan.invalid();
                   }
 
                   int max = Math.min(snapshot.sourceStack.getMaxStackSize(), targetSlot.getMaxStackSize(snapshot.sourceStack));
                   if (start + desiredAdd > max) {
-                     return MacroExecutor.QuickCraftPlan.init();
+                     return MacroExecutor.QuickCraftPlan.invalid();
                   }
 
                   desiredAdds.put(move.load(), desiredAdd);
                   continue;
                }
 
-               return MacroExecutor.QuickCraftPlan.init();
+               return MacroExecutor.QuickCraftPlan.invalid();
             }
 
-            return MacroExecutor.QuickCraftPlan.init();
+            return MacroExecutor.QuickCraftPlan.invalid();
          }
 
-         MacroExecutor.QuickCraftPlan best = MacroExecutor.QuickCraftPlan.init();
+         MacroExecutor.QuickCraftPlan best = MacroExecutor.QuickCraftPlan.invalid();
          MacroExecutor.QuickCraftPlan even = planQuickCraft(handler, snapshot, desiredAdds, 0);
          MacroExecutor.QuickCraftPlan rightDrag = planQuickCraft(handler, snapshot, desiredAdds, 1);
          if (even.valid) {
             best = even;
          }
 
-         if (rightDrag.valid && (!best.valid || rightDrag.read < best.read)) {
+         if (rightDrag.valid && (!best.valid || rightDrag.cost < best.cost)) {
             best = rightDrag;
          }
 
          return best;
       } else {
-         return MacroExecutor.QuickCraftPlan.init();
+         return MacroExecutor.QuickCraftPlan.invalid();
       }
    }
 
@@ -7014,18 +7014,18 @@ public class MacroExecutor {
                int targetSlotId = entry.getKey();
                int desiredAdd = entry.getValue();
                if (desiredAdd < placeCount) {
-                  return MacroExecutor.QuickCraftPlan.init();
+                  return MacroExecutor.QuickCraftPlan.invalid();
                }
 
                Slot targetSlot = targetSlotId >= 0 && targetSlotId < handler.slots.size() ? handler.slots.get(targetSlotId) : null;
                if (!canQuickCraftInto(handler, targetSlot, snapshot.sourceStack)) {
-                  return MacroExecutor.QuickCraftPlan.init();
+                  return MacroExecutor.QuickCraftPlan.invalid();
                }
 
                int start = snapshot.startTargetCounts.getOrDefault(targetSlotId, menuSlotCount(handler, targetSlotId));
                int max = Math.min(snapshot.sourceStack.getMaxStackSize(), targetSlot.getMaxStackSize(snapshot.sourceStack));
                if (start + placeCount > max) {
-                  return MacroExecutor.QuickCraftPlan.init();
+                  return MacroExecutor.QuickCraftPlan.invalid();
                }
 
                int leftover = desiredAdd - placeCount;
@@ -7039,16 +7039,16 @@ public class MacroExecutor {
 
             int carriedAfterQuickCraft = snapshot.sourceCount - placeCount * slotCount;
             if (residualTotal > carriedAfterQuickCraft) {
-               return MacroExecutor.QuickCraftPlan.init();
+               return MacroExecutor.QuickCraftPlan.invalid();
             }
 
             int cost = slotCount + 2 + residualTotal;
             return new MacroExecutor.QuickCraftPlan(true, quickCraftType, placeCount, cost, residual, expected);
          } else {
-            return MacroExecutor.QuickCraftPlan.init();
+            return MacroExecutor.QuickCraftPlan.invalid();
          }
       } else {
-         return MacroExecutor.QuickCraftPlan.init();
+         return MacroExecutor.QuickCraftPlan.invalid();
       }
    }
 
@@ -7097,21 +7097,21 @@ public class MacroExecutor {
       }, Boolean.FALSE)) : false;
    }
 
-   private static void read(int delayTicks) {
+   private static void waitXCarryTicks(int delayTicks) {
       int ticks = XCarryAction.write(delayTicks);
 
       for (int i = 0; i < ticks && isStillRunning(); i++) {
-         pop();
+         awaitNextTick();
       }
    }
 
    private static void delayTicksIf(int delayTicks, boolean enabled) {
       if (enabled) {
-         read(delayTicks);
+         waitXCarryTicks(delayTicks);
       }
    }
 
-   private static boolean load(Minecraft mc, int slotId, int button, ContainerInput input) {
+   private static boolean clickSlot(Minecraft mc, int slotId, int button, ContainerInput input) {
       if (mc != null && mc.player != null && mc.gameMode != null) {
          boolean clicked = callOnClientThread(mc, () -> {
             if (mc.player != null && mc.gameMode != null) {
@@ -7131,7 +7131,7 @@ public class MacroExecutor {
             return false;
          }
 
-         pop();
+         awaitNextTick();
          return true;
       } else {
          return false;
@@ -7160,7 +7160,7 @@ public class MacroExecutor {
             return false;
          }
 
-         pop();
+         awaitNextTick();
          return true;
       } else {
          return false;
@@ -7175,7 +7175,7 @@ public class MacroExecutor {
             return true;
          }
 
-         pop();
+         awaitNextTick();
       }
 
       return Boolean.TRUE.equals(callOnClientThread(mc, () -> accepted != null && accepted.getAsBoolean(), Boolean.FALSE));
@@ -7186,17 +7186,17 @@ public class MacroExecutor {
       int ticks = Math.max(1, minTicks);
 
       for (int i = 0; i < ticks && isStillRunning(); i++) {
-         pop();
+         awaitNextTick();
       }
 
       while (isStillRunning() && System.nanoTime() < deadline) {
          long revision = MacroWaitRegistry.getInventoryRevision();
          if (revision != startRevision) {
-            pop();
+            awaitNextTick();
             return;
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
@@ -7214,7 +7214,7 @@ public class MacroExecutor {
       if (mc != null && mc.player != null && snapshot != null && snapshot.valid) {
          InventoryMenu handler = mc.player.inventoryMenu;
          if (handler != null && handler.getCarried().isEmpty()) {
-            for (Entry<Integer, Integer> entry : snapshot.load.entrySet()) {
+            for (Entry<Integer, Integer> entry : snapshot.expectedTargetCounts.entrySet()) {
                int slotId = entry.getKey();
                if (slotId >= 0 && slotId < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(slotId).getItem();
@@ -7259,10 +7259,10 @@ public class MacroExecutor {
          }
 
          if (delayBeforeReturn) {
-            read(delayTicks);
+            waitXCarryTicks(delayTicks);
          }
 
-         return load(mc, returnSlot, 0, ContainerInput.PICKUP)
+         return clickSlot(mc, returnSlot, 0, ContainerInput.PICKUP)
             && waitTicksFor(mc, 3, () -> mc.player != null && mc.player.inventoryMenu.getCarried().isEmpty());
       } else {
          return false;
@@ -7337,10 +7337,10 @@ public class MacroExecutor {
          int returnSlot = callOnClientThread(mc, () -> findReturnSlot(mc, sourceSlotId), -1);
          if (returnSlot >= 0) {
             if (delayBeforeReturn) {
-               read(delayTicks);
+               waitXCarryTicks(delayTicks);
             }
 
-            load(mc, returnSlot, 0, ContainerInput.PICKUP);
+            clickSlot(mc, returnSlot, 0, ContainerInput.PICKUP);
             waitTicksFor(mc, 3, () -> mc.player != null && mc.player.inventoryMenu.getCarried().isEmpty());
          } else {
             load_V_Minecraft_I(mc, sourceSlotId);
@@ -7373,13 +7373,13 @@ public class MacroExecutor {
             break;
          }
 
-         pop();
+         awaitNextTick();
       }
 
       return Boolean.TRUE.equals(callOnClientThread(mc, condition, Boolean.FALSE));
    }
 
-   private static void pop() {
+   private static void awaitNextTick() {
       CompletableFuture<Void> tickFuture = MacroWaitRegistry.awaitTickSync();
       awaitWhileRunning(tickFuture);
    }
@@ -7399,7 +7399,7 @@ public class MacroExecutor {
                long lastAttemptTick = AutismSessionState.getInstance().getClientTick() - (delayTicks + 1L);
                long lastSneakTick = -9223372036854775808L;
 
-               while (isStillRunning() && flush(action)) {
+               while (isStillRunning() && isTopLevelAction(action)) {
                   if (action.sneak) {
                      long sneakTick = AutismSessionState.getInstance().getClientTick();
                      if (sneakTick != lastSneakTick) {
@@ -7442,7 +7442,7 @@ public class MacroExecutor {
                               init_V_Minecraft_5(mc, target, direction, action.h_());
                            } else if (t == InteractTimingMode.AFTER_PLUS) {
                               init_V_Minecraft_5(mc, target, direction, action.h_());
-                              pop();
+                              awaitNextTick();
                               runOnClientThread(mc, () -> useItemOnBlock(mc, target, direction), action.h_());
                            } else {
                               init_V_Minecraft_5(mc, target, direction, action.h_());
@@ -7483,7 +7483,7 @@ public class MacroExecutor {
       return mc.level == null || mc.level.isOutsideBuildHeight(pos) || mc.level.getBlockState(pos).isAir();
    }
 
-   private static boolean flush(MacroAction action) {
+   private static boolean isTopLevelAction(MacroAction action) {
       MacroExecutor.MacroRun run = CURRENT_RUN.get();
       return run != null && run.macro != null && run.macro.actions != null ? run.macro.actions.contains(action) : true;
    }
@@ -7552,7 +7552,7 @@ public class MacroExecutor {
          int targetTimes = Math.max(0, action.times);
          int completed = 0;
          if (startDelay > 0) {
-            write(startDelay);
+            sleepClientTicks(startDelay);
          }
 
          boolean[] started = new boolean[]{false};
@@ -7564,7 +7564,7 @@ public class MacroExecutor {
 
          while (true) {
             try {
-               if (!isStillRunning() || !flush(action)) {
+               if (!isStillRunning() || !isTopLevelAction(action)) {
                   return;
                }
 
@@ -7575,13 +7575,13 @@ public class MacroExecutor {
                   if (!started[0]) {
                      result = useNextSteps
                         ? breakStartStep(mc, action, target, direction, started, nextStepsFired, missingNextStepsWarned)
-                        : callOnClientThread(mc, () -> load(mc, action, target, direction, started), -1, action.h_());
+                        : callOnClientThread(mc, () -> breakStartTick(mc, action, target, direction, started), -1, action.h_());
                   } else if (action.interact && action.interactTiming == InteractTimingMode.CUSTOM) {
-                     result = useNextSteps ? load(mc, action, target, direction, nextStepsFired, missingNextStepsWarned) : read(mc, action, target, direction);
+                     result = useNextSteps ? customTimingBreakStep(mc, action, target, direction, nextStepsFired, missingNextStepsWarned) : customTimingBreakTick(mc, action, target, direction);
                   } else {
                      result = useNextSteps
                         ? breakProgressStep(mc, action, target, direction, nextStepsFired, missingNextStepsWarned)
-                        : callOnClientThread(mc, () -> load(mc, action, target, direction), -1, action.h_());
+                        : callOnClientThread(mc, () -> breakProgressTick(mc, action, target, direction), -1, action.h_());
                   }
 
                   if (result < 0) {
@@ -7595,9 +7595,9 @@ public class MacroExecutor {
                   } else {
                      boolean completedStartedBreak = started[0];
                      if (useNextSteps && completedStartedBreak) {
-                        load(mc, action, nextStepsFired, missingNextStepsWarned);
+                        fireInteractNextSteps(mc, action, nextStepsFired, missingNextStepsWarned);
                      } else if (action.interact && action.interactTiming == InteractTimingMode.AFTER_PLUS) {
-                        pop();
+                        awaitNextTick();
                         runOnClientThread(mc, () -> useItemOnBlock(mc, target, direction), action.h_());
                      }
 
@@ -7709,7 +7709,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] started) {
+   private static int breakStartTick(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] started) {
       if (mc.level != null && mc.gameMode != null && mc.player != null && mc.getConnection() != null) {
          BlockState state = mc.level.getBlockState(pos);
          if (!state.isAir() && !mc.level.isOutsideBuildHeight(pos)) {
@@ -7817,7 +7817,7 @@ public class MacroExecutor {
       return mc.level.getBlockState(pos).isAir() ? 1 : 0;
    }
 
-   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
+   private static int breakProgressTick(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
       if (mc.level != null && mc.gameMode != null && mc.player != null && mc.getConnection() != null) {
          BlockState state = mc.level.getBlockState(pos);
          if (state.isAir()) {
@@ -7852,7 +7852,7 @@ public class MacroExecutor {
       }
    }
 
-   private static int load(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned) {
+   private static int customTimingBreakStep(Minecraft mc, BreakAction action, BlockPos pos, Direction dir, boolean[] nextStepsFired, boolean[] missingNextStepsWarned) {
       boolean willBreak = Boolean.TRUE.equals(callOnClientThread(mc, () -> {
          if (mc.level != null && mc.player != null) {
             BlockState state = mc.level.getBlockState(pos);
@@ -7885,7 +7885,7 @@ public class MacroExecutor {
       return broke;
    }
 
-   private static int read(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
+   private static int customTimingBreakTick(Minecraft mc, BreakAction action, BlockPos pos, Direction dir) {
       boolean willBreak = Boolean.TRUE.equals(callOnClientThread(mc, () -> {
          if (mc.level != null && mc.player != null) {
             BlockState s = mc.level.getBlockState(pos);
@@ -7999,14 +7999,14 @@ public class MacroExecutor {
       }
    }
 
-   private static void load(Minecraft mc, BreakAction action, boolean[] fired, boolean[] missingWarned) {
+   private static void fireInteractNextSteps(Minecraft mc, BreakAction action, boolean[] fired, boolean[] missingWarned) {
       if (action.interact && action.runNextSteps && action.interactTiming != null) {
          switch (action.interactTiming) {
             case AFTER:
                fireNextActions(mc, action, fired, missingWarned);
                break;
             case AFTER_PLUS:
-               pop();
+               awaitNextTick();
                fireNextActions(mc, action, fired, missingWarned);
                break;
             case CUSTOM:
@@ -8040,7 +8040,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void write(int ticks) {
+   private static void sleepClientTicks(int ticks) {
       long start = AutismSessionState.getInstance().getClientTick();
 
       while (isStillRunning() && AutismSessionState.getInstance().getClientTick() - start < ticks) {
@@ -8155,7 +8155,7 @@ public class MacroExecutor {
             }
          }
 
-         tick();
+         tickNavigationOwner();
       }
    }
 
@@ -8277,7 +8277,7 @@ public class MacroExecutor {
                   }, action.h_());
                } else if (t == InteractTimingMode.AFTER_PLUS) {
                   executeGuarded(mc, action, "Place");
-                  pop();
+                  awaitNextTick();
                   runOnClientThread(mc, () -> useItemOnBlock(mc, placePos, face), action.h_());
                } else {
                   executeGuarded(mc, action, "Place");
@@ -8298,17 +8298,17 @@ public class MacroExecutor {
             return;
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
-   private static void read(Minecraft mc, int slotId) {
+   private static void waitForSlotOccupied(Minecraft mc, int slotId) {
       while (isStillRunning()) {
          if (Boolean.TRUE.equals(callOnClientThread(mc, () -> isSlotOccupied(mc, slotId), Boolean.FALSE))) {
             return;
          }
 
-         pop();
+         awaitNextTick();
       }
    }
 
@@ -8355,7 +8355,7 @@ public class MacroExecutor {
          if (targets.isEmpty()) {
             if (ia.useSlot && ia.targetSlot >= 0) {
                setRunStatus("Waiting for slot " + ia.targetSlot);
-               read(mc, ia.targetSlot);
+               waitForSlotOccupied(mc, ia.targetSlot);
             }
          } else {
             for (MacroItemTarget target : targets) {
@@ -8375,7 +8375,7 @@ public class MacroExecutor {
             waitForSlotItem(mc, slot, resolvedTarget);
          } else if (slot >= 0) {
             setRunStatus("Waiting for slot " + slot);
-            read(mc, slot);
+            waitForSlotOccupied(mc, slot);
          } else if (resolvedTarget.hasItemFilter()) {
             setRunStatus("Waiting for item in GUI: " + itemLabel);
             CompletableFuture<Void> waitFuture = MacroWaitRegistry.load(resolvedTarget);
@@ -8502,7 +8502,7 @@ public class MacroExecutor {
                   if (run != null && run.aiOperation == op) {
                      run.aiOperation = null;
                      TRACKED_AI_OPERATIONS.add(op);
-                     sync(run);
+                     clearNavigationOwner(run);
                   }
 
                   return;
@@ -8526,9 +8526,9 @@ public class MacroExecutor {
                }
             } finally {
                if (!isStillRunning()) {
-                  read(run, mc);
+                  releaseNavigation(run, mc);
                } else if (run == null || run.aiOperation == null) {
-                  sync(run);
+                  clearNavigationOwner(run);
                }
             }
 
@@ -8585,7 +8585,7 @@ public class MacroExecutor {
                      int minedDelta = 0;
                      if (mineTracker != null) {
                         mineTracker.scanAroundPlayer(mc);
-                        minedDelta = mineTracker.init();
+                        minedDelta = mineTracker.brokenCount();
                         setRunStatus("Mining: " + mineDesc + " (" + minedDelta + "/" + mineAction.minedCountTarget + ")");
                         if (minedDelta >= mineAction.minedCountTarget) {
                            stopReason = "Mine target reached";
@@ -8609,7 +8609,7 @@ public class MacroExecutor {
 
                      if (stopReason != null) {
                         setRunStatus(stopReason);
-                        read(run, mc);
+                        releaseNavigation(run, mc);
                         return;
                      }
 
@@ -8636,9 +8636,9 @@ public class MacroExecutor {
                   }
 
                   if (!isStillRunning()) {
-                     read(run, mc);
+                     releaseNavigation(run, mc);
                   } else if (run == null || run.aiOperation == null) {
-                     sync(run);
+                     clearNavigationOwner(run);
                   }
                }
             }
@@ -8726,14 +8726,14 @@ public class MacroExecutor {
       }
    }
 
-   private static void read(MacroExecutor.MacroRun run, Minecraft mc) {
+   private static void releaseNavigation(MacroExecutor.MacroRun run, Minecraft mc) {
       if (run != null) {
          NAVIGATION_OWNER.compareAndSet(run, null);
          cancelRunAiOperation(run, mc);
       }
    }
 
-   private static void sync(MacroExecutor.MacroRun run) {
+   private static void clearNavigationOwner(MacroExecutor.MacroRun run) {
       if (run != null) {
          NAVIGATION_OWNER.compareAndSet(run, null);
       }
@@ -8745,7 +8745,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void sync(Minecraft mc) {
+   private static void cancelAllNavigation(Minecraft mc) {
       MacroExecutor.MacroRun owner = NAVIGATION_OWNER.getAndSet(null);
       if (owner != null) {
          cancelRunAiOperation(owner, mc);
@@ -8784,7 +8784,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void tick() {
+   private static void tickNavigationOwner() {
       MacroExecutor.MacroRun owner = NAVIGATION_OWNER.get();
       if (owner != null) {
          AiOperation op = owner.aiOperation;
@@ -8971,7 +8971,7 @@ public class MacroExecutor {
       GLOBAL_HELD_MOVES.clear();
       syncHeldKeys(Minecraft.getInstance());
       MacroWaitRegistry.cancelAll();
-      run();
+      cancelAllPacketWaiters();
       GLOBAL_WAITING_FOR_CHAT.set(false);
       GLOBAL_WAITING_FOR_PACKET.set(false);
       synchronized (GLOBAL_PACKET_WAIT_LOCK) {
@@ -8989,7 +8989,7 @@ public class MacroExecutor {
          globalChatWaitFuture = null;
       }
 
-      sync(Minecraft.getInstance());
+      cancelAllNavigation(Minecraft.getInstance());
       autismclient.util.BlockPreviewRenderer.load();
       Minecraft mc = Minecraft.getInstance();
       PacketGateManager.init(mc == null ? null : mc.getConnection());
@@ -9090,18 +9090,18 @@ public class MacroExecutor {
    }
 
    public static void markManualLevelLeave() {
-      if (CURRENT_RUN.get() == null && run <= 0) {
+      if (CURRENT_RUN.get() == null && suppressedLeaveMarks <= 0) {
          manualLeaveAtMs = System.currentTimeMillis();
       }
    }
 
    public static void runWithSuppressedLeaveMark(Runnable leave) {
-      run++;
+      suppressedLeaveMarks++;
 
       try {
          leave.run();
       } finally {
-         run--;
+         suppressedLeaveMarks--;
       }
    }
 
@@ -9317,7 +9317,7 @@ public class MacroExecutor {
          for (MacroExecutor.PacketMatchWaiter listener : list) {
             boolean drop;
             try {
-               drop = listener.init(event);
+               drop = listener.offer(event);
             } catch (Throwable ignored) {
                drop = true;
             }
@@ -9337,7 +9337,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void run() {
+   private static void cancelAllPacketWaiters() {
       for (MacroExecutor.PacketWaiter listener : INCOMING_PACKET_WAITERS) {
          listener.cancel();
       }
@@ -9347,11 +9347,11 @@ public class MacroExecutor {
       }
 
       for (MacroExecutor.PacketMatchWaiter listener : INCOMING_EVENT_WAITERS) {
-         listener.init();
+         listener.dispose();
       }
 
       for (MacroExecutor.PacketMatchWaiter listener : OUTGOING_EVENT_WAITERS) {
-         listener.init();
+         listener.dispose();
       }
    }
 
@@ -9400,7 +9400,7 @@ public class MacroExecutor {
 
    public static void dispatchPacketToRuns(Packet<?> packet, String direction) {
       if (!autismclient.modules.aD.read_Z()) {
-         get();
+         trackServerChange();
          List<MacroExecutor.MacroRun> runs = runsSnapshot();
          boolean s2c = "S2C".equals(direction);
          boolean chatWork = false;
@@ -9507,7 +9507,7 @@ public class MacroExecutor {
       if (!autismclient.modules.aD.read_Z()) {
          MacroExecutor.ChatCapture capture = chatCaptureOf(packet);
          if (capture != null && capture.load() != null && !capture.load().isBlank()) {
-            get();
+            trackServerChange();
             logChatMessage(capture);
          }
       }
@@ -9532,7 +9532,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void get() {
+   private static void trackServerChange() {
       String currentServerKey = resolveServerKey();
       if (!currentServerKey.isEmpty() && !currentServerKey.equals(lastSeenServerKey)) {
          synchronized (CHAT_LOG_LOCK) {
@@ -9558,7 +9558,7 @@ public class MacroExecutor {
       if (mc != null && !mc.isLocalServer()) {
          ServerData entry = mc.getCurrentServer();
          if (entry != null && entry.ip != null && !entry.ip.isBlank()) {
-            return sync(entry.ip);
+            return normalizeAddress(entry.ip);
          }
 
          if (mc.getConnection() != null && mc.getConnection().getConnection() != null) {
@@ -9570,12 +9570,12 @@ public class MacroExecutor {
                }
 
                if (host != null && !host.isBlank()) {
-                  return sync(host + ":" + inet.getPort());
+                  return normalizeAddress(host + ":" + inet.getPort());
                }
             } else if (address != null) {
                String raw = address.toString();
                if (raw != null && !raw.isBlank()) {
-                  return sync(raw);
+                  return normalizeAddress(raw);
                }
             }
          }
@@ -9586,7 +9586,7 @@ public class MacroExecutor {
       }
    }
 
-   private static String sync(String address) {
+   private static String normalizeAddress(String address) {
       if (address == null) {
          return "";
       }
@@ -9728,13 +9728,13 @@ public class MacroExecutor {
    private static MacroExecutor.ChatCapture createChatCapture(
       String sender, String message, String displayText, Component displayComponent, MacroExecutor.ChatSenderKind source
    ) {
-      String cleanMessage = flush(message);
+      String cleanMessage = cleanChatText(message);
       if (cleanMessage.isBlank()) {
          return null;
       }
 
-      String cleanSender = flush(sender);
-      String cleanDisplay = flush(displayText);
+      String cleanSender = cleanChatText(sender);
+      String cleanDisplay = cleanChatText(displayText);
       Component rendered = flattenComponent(displayComponent);
       String display = cleanDisplay;
       if (rendered == null || rendered.getString().isBlank()) {
@@ -9744,19 +9744,19 @@ public class MacroExecutor {
       }
 
       if (display == null || display.isBlank()) {
-         display = flush(rendered.getString());
+         display = cleanChatText(rendered.getString());
       }
 
       MacroExecutor.ChatSenderKind resolvedSource = source != null ? source : MacroExecutor.ChatSenderKind.PLAYER;
-      return new MacroExecutor.ChatCapture(cleanSender, cleanMessage, flush(display), rendered, resolvedSource);
+      return new MacroExecutor.ChatCapture(cleanSender, cleanMessage, cleanChatText(display), rendered, resolvedSource);
    }
 
-   private static String flush(String text) {
+   private static String cleanChatText(String text) {
       if (text == null) {
          return "";
       }
 
-      String stripped = open(text).replace('\n', ' ').replace('\r', ' ');
+      String stripped = stripFormattingCodes(text).replace('\n', ' ').replace('\r', ' ');
       StringBuilder out = new StringBuilder(stripped.length());
       int offset = 0;
 
@@ -9774,15 +9774,15 @@ public class MacroExecutor {
 
    public static String cleanVisibleChatText(String text) {
       if (text != null && !text.isBlank()) {
-         String stripped = open(text).trim();
-         String flattened = close(stripped);
-         return flush(flattened != null ? flattened : stripped);
+         String stripped = stripFormattingCodes(text).trim();
+         String flattened = jsonComponentText(stripped);
+         return cleanChatText(flattened != null ? flattened : stripped);
       } else {
          return "";
       }
    }
 
-   private static String close(String text) {
+   private static String jsonComponentText(String text) {
       if (text != null && !text.isBlank()) {
          String trimmed = text.trim();
          if (!trimmed.startsWith("{") && !trimmed.startsWith("[") && !trimmed.startsWith("\"")) {
@@ -9827,7 +9827,7 @@ public class MacroExecutor {
       }
    }
 
-   private static String open(String text) {
+   private static String stripFormattingCodes(String text) {
       if (text != null && !text.isEmpty()) {
          StringBuilder out = new StringBuilder(text.length());
 
@@ -9851,7 +9851,7 @@ public class MacroExecutor {
    }
 
    private static boolean isOnlinePlayer(String sender) {
-      String cleanSender = flush(sender);
+      String cleanSender = cleanChatText(sender);
       if (cleanSender.isBlank()) {
          return false;
       }
@@ -9916,7 +9916,7 @@ public class MacroExecutor {
       return score + 1.0E-9 >= Math.max(40, Math.min(100, thresholdPercent)) / 100.0;
    }
 
-   private static String poll(String text) {
+   private static String normalizeForMatch(String text) {
       if (text == null) {
          return "";
       }
@@ -10206,7 +10206,7 @@ public class MacroExecutor {
          recordComponentAt(value, 0),
          invokeOrComponent(value, 2, "name", "targetName", "type")
       );
-      return flush(extractText(direct));
+      return cleanChatText(extractText(direct));
    }
 
    private static String playerNameOf(UUID uuid) {
@@ -10518,7 +10518,7 @@ public class MacroExecutor {
       if (SMOOTH_LOOK_ACTIVE.get()) {
          MacroExecutor.MacroRun owner = SMOOTH_LOOK_OWNER.get();
          if (owner != null && !owner.running.get()) {
-            flush(owner);
+            releaseSmoothLook(owner);
          } else if (owner == null && !ANY_RUN_ACTIVE.get()) {
             synchronized (SMOOTH_LOOK_LOCK) {
                if (SMOOTH_LOOK_OWNER.get() == null) {
@@ -10594,7 +10594,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void set() {
+   private static void awaitSmoothLookDone() {
       MacroExecutor.MacroRun run = CURRENT_RUN.get();
 
       while (isStillRunning() && SMOOTH_LOOK_ACTIVE.get() && (run == null || SMOOTH_LOOK_OWNER.get() == run)) {
@@ -10602,7 +10602,7 @@ public class MacroExecutor {
       }
    }
 
-   private static void flush(MacroExecutor.MacroRun run) {
+   private static void releaseSmoothLook(MacroExecutor.MacroRun run) {
       if (run != null) {
          synchronized (SMOOTH_LOOK_LOCK) {
             if (SMOOTH_LOOK_OWNER.get() == run) {
@@ -10837,7 +10837,7 @@ public class MacroExecutor {
          this.completedPacketTargets = Math.max(0, completedPacketTargets);
       }
 
-      void init() {
+      void runCleanup() {
          try {
             this.cleanup.run();
          } catch (Throwable var2) {
@@ -10852,7 +10852,7 @@ public class MacroExecutor {
       final boolean valid;
       final int quickCraftType;
       final int placeCount;
-      final int read;
+      final int cost;
       final Map<Integer, Integer> residualCounts;
       final Map<Integer, Integer> expectedTargetCounts;
 
@@ -10862,12 +10862,12 @@ public class MacroExecutor {
          this.valid = valid;
          this.quickCraftType = quickCraftType;
          this.placeCount = placeCount;
-         this.read = cost;
+         this.cost = cost;
          this.residualCounts = residualCounts == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(residualCounts));
          this.expectedTargetCounts = expectedTargetCounts == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(expectedTargetCounts));
       }
 
-      static MacroExecutor.QuickCraftPlan init() {
+      static MacroExecutor.QuickCraftPlan invalid() {
          return new MacroExecutor.QuickCraftPlan(false, 0, 0, 2147483647, Map.of(), Map.of());
       }
    }
@@ -10876,10 +10876,10 @@ public class MacroExecutor {
    }
 
    private static final class RunExecutionContext implements MacroExecutionContext {
-      private final MacroExecutor.MacroRun init;
+      private final MacroExecutor.MacroRun run;
 
       private RunExecutionContext(MacroExecutor.MacroRun run) {
-         this.init = run;
+         this.run = run;
       }
 
       @Override
@@ -10891,7 +10891,7 @@ public class MacroExecutor {
       public void runOnClientThread(Runnable r) {
          if (r != null) {
             Runnable safe = () -> MacroExecutor.runWithCurrentRun(
-               this.init,
+               this.run,
                () -> {
                   try {
                      r.run();
@@ -10915,7 +10915,7 @@ public class MacroExecutor {
          Supplier<T> safe = () -> {
             AtomicReference<T> value = new AtomicReference<>();
             MacroExecutor.runWithCurrentRun(
-               this.init,
+               this.run,
                () -> {
                   try {
                      value.set(s.get());
@@ -10933,7 +10933,7 @@ public class MacroExecutor {
 
       @Override
       public void waitTicks(int ticks) {
-         MacroExecutor.runWithCurrentRun(this.init, () -> {
+         MacroExecutor.runWithCurrentRun(this.run, () -> {
             for (int i = 0; i < ticks && MacroExecutor.isStillRunning(); i++) {
                MacroExecutor.awaitWhileRunning(MacroWaitRegistry.awaitTickSync());
             }
@@ -10943,25 +10943,25 @@ public class MacroExecutor {
       @Override
       public void awaitCondition(CompletableFuture<Void> future) {
          if (future != null) {
-            MacroExecutor.runWithCurrentRun(this.init, () -> MacroExecutor.awaitWhileRunning(future));
+            MacroExecutor.runWithCurrentRun(this.run, () -> MacroExecutor.awaitWhileRunning(future));
          }
       }
 
       @Override
       public void awaitCondition(AddonCondition condition) {
          if (condition != null) {
-            MacroExecutor.runWithCurrentRun(this.init, () -> MacroExecutor.awaitWhileRunning(MacroWaitRegistry.init(condition)));
+            MacroExecutor.runWithCurrentRun(this.run, () -> MacroExecutor.awaitWhileRunning(MacroWaitRegistry.init(condition)));
          }
       }
 
       @Override
       public boolean isActive() {
-         return this.init != null && this.init.running.get() && !autismclient.modules.aD.read_Z();
+         return this.run != null && this.run.running.get() && !autismclient.modules.aD.read_Z();
       }
 
       @Override
       public void setStatus(String status) {
-         MacroExecutor.runWithCurrentRun(this.init, () -> MacroExecutor.setRunStatus(status));
+         MacroExecutor.runWithCurrentRun(this.run, () -> MacroExecutor.setRunStatus(status));
       }
 
       @Override
@@ -10978,31 +10978,31 @@ public class MacroExecutor {
 
       @Override
       public Optional<MacroVarValue> variable(String name) {
-         return this.init == null ? Optional.empty() : this.init.variables.lookup(name);
+         return this.run == null ? Optional.empty() : this.run.variables.lookup(name);
       }
 
       @Override
       public void setVariable(String name, MacroVarValue value) {
-         if (this.init != null) {
-            this.init.variables.init(name, value);
+         if (this.run != null) {
+            this.run.variables.init(name, value);
          }
       }
 
       @Override
       public void removeVariable(String name) {
-         if (this.init != null) {
-            this.init.variables.remove(name);
+         if (this.run != null) {
+            this.run.variables.remove(name);
          }
       }
 
       @Override
       public Map<String, MacroVarValue> variables() {
-         return this.init == null ? Map.of() : this.init.variables.snapshot();
+         return this.run == null ? Map.of() : this.run.variables.snapshot();
       }
 
       @Override
       public MacroTemplateResolver.ResolveResult resolveTemplate(String template) {
-         return MacroTemplateResolver.resolve(template, this.init == null ? null : this.init.variables, Minecraft.getInstance());
+         return MacroTemplateResolver.resolve(template, this.run == null ? null : this.run.variables, Minecraft.getInstance());
       }
    }
 
@@ -11070,13 +11070,13 @@ public class MacroExecutor {
          registry.add(this);
       }
 
-      boolean init(MacroExecutor.PacketEvent event) {
+      boolean offer(MacroExecutor.PacketEvent event) {
          if (this.future.isDone()) {
             return true;
          } else if (event.nanoTime() - this.deadlineNanos >= 0L) {
             this.future.cancel(true);
             return true;
-         } else if (this.matcher.test(event.packet(), event.load(), event.nanoTime())) {
+         } else if (this.matcher.test(event.packet(), event.direction(), event.nanoTime())) {
             this.future.complete(event);
             return true;
          } else {
@@ -11084,7 +11084,7 @@ public class MacroExecutor {
          }
       }
 
-      public void init() {
+      public void dispose() {
          this.registry.remove(this);
          if (!this.future.isDone()) {
             this.future.cancel(true);
@@ -11136,7 +11136,7 @@ public class MacroExecutor {
       private final Set<Block> targetBlocks;
       private final HashMap<Long, Boolean> trackedTargets = new HashMap<>();
       private final HashSet<Long> brokenPositions = new HashSet<>();
-      private int load;
+      private int brokenTargetCount;
 
       private TargetBlockScanner(Set<Block> targetBlocks) {
          this.targetBlocks = targetBlocks;
@@ -11171,8 +11171,8 @@ public class MacroExecutor {
          }
       }
 
-      synchronized int init() {
-         return this.load;
+      synchronized int brokenCount() {
+         return this.brokenTargetCount;
       }
 
       synchronized void scanAroundPlayer(Minecraft mc) {
@@ -11195,12 +11195,12 @@ public class MacroExecutor {
       synchronized void onBlockPacket(Minecraft mc, Packet<?> packet) {
          if (mc != null && mc.level != null && packet != null) {
             if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
-               this.init(mc, blockUpdate.getPos(), blockUpdate.getBlockState());
+               this.onBlockUpdate(mc, blockUpdate.getPos(), blockUpdate.getBlockState());
             } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
                try {
                   sectionUpdate.runUpdates((pos, state) -> {
                      if (pos != null && state != null) {
-                        this.init(mc, pos, state);
+                        this.onBlockUpdate(mc, pos, state);
                      }
                   });
                } catch (Throwable var6) {
@@ -11209,7 +11209,7 @@ public class MacroExecutor {
          }
       }
 
-      private void init(Minecraft mc, BlockPos pos, BlockState newState) {
+      private void onBlockUpdate(Minecraft mc, BlockPos pos, BlockState newState) {
          if (mc != null && mc.level != null && pos != null && newState != null && this.isWithinTrackingRadius(mc, pos)) {
             BlockPos stablePos = new BlockPos(pos.getX(), pos.getY(), pos.getZ());
             BlockState oldState = mc.level.getBlockState(stablePos);
@@ -11256,7 +11256,7 @@ public class MacroExecutor {
 
       private void recordBrokenTarget(long posKey) {
          if (this.brokenPositions.add(posKey)) {
-            this.load++;
+            this.brokenTargetCount++;
          }
       }
    }
@@ -11266,7 +11266,7 @@ public class MacroExecutor {
       final ItemStack sourceStack;
       final int sourceCount;
       final Map<Integer, Integer> startTargetCounts;
-      final Map<Integer, Integer> load;
+      final Map<Integer, Integer> expectedTargetCounts;
 
       TransferPlan(
          boolean valid, ItemStack sourceStack, int sourceCount, Map<Integer, Integer> startTargetCounts, Map<Integer, Integer> expectedTargetCounts
@@ -11275,14 +11275,14 @@ public class MacroExecutor {
          this.sourceStack = sourceStack == null ? ItemStack.EMPTY : sourceStack;
          this.sourceCount = sourceCount;
          this.startTargetCounts = startTargetCounts == null ? Map.of() : Map.copyOf(startTargetCounts);
-         this.load = expectedTargetCounts == null ? Map.of() : Map.copyOf(expectedTargetCounts);
+         this.expectedTargetCounts = expectedTargetCounts == null ? Map.of() : Map.copyOf(expectedTargetCounts);
       }
 
-      MacroExecutor.TransferPlan init(Map<Integer, Integer> expectedTargetCounts) {
+      MacroExecutor.TransferPlan withExpectedTargetCounts(Map<Integer, Integer> expectedTargetCounts) {
          return new MacroExecutor.TransferPlan(this.valid, this.sourceStack, this.sourceCount, this.startTargetCounts, expectedTargetCounts);
       }
 
-      static MacroExecutor.TransferPlan init() {
+      static MacroExecutor.TransferPlan invalid() {
          return new MacroExecutor.TransferPlan(false, ItemStack.EMPTY, 0, Map.of(), Map.of());
       }
    }
@@ -11316,7 +11316,7 @@ public class MacroExecutor {
          return dir + PacketNameResolver.directionalName(this.packet, this.init_Str == null ? "" : this.init_Str);
       }
 
-      public String load() {
+      public String direction() {
          return this.init_Str;
       }
    }
@@ -11381,16 +11381,16 @@ public class MacroExecutor {
       volatile boolean rejoining = false;
       volatile int lastCompletedStep = 0;
       volatile int elseBranchIndex = -1;
-      volatile int update = 0;
-      volatile int sync = -1;
-      volatile int flush = -1;
-      volatile int close = -1;
-      volatile int open = -1;
+      volatile int elseSkipSteps = 0;
+      volatile int fpsOverrideStart = -1;
+      volatile int fpsOverrideEnd = -1;
+      volatile int pingSpoofOverrideStart = -1;
+      volatile int pingSpoofOverrideEnd = -1;
       volatile long fpsTimeoutDeadlineNanos = 0L;
       volatile long spingTimeoutDeadlineNanos = 0L;
       volatile Map<String, Integer> labelIndex = null;
-      volatile int poll = 0;
-      volatile int push = 0;
+      volatile int backwardJumps = 0;
+      volatile int backwardJumpBurst = 0;
       final IdentityHashMap<MacroAction, MacroExecutor.AsyncActionHandle> asyncWaits = new IdentityHashMap<>();
       final Map<MacroAction, Map<String, MacroVarValue>> capturedValues = Collections.synchronizedMap(new IdentityHashMap<>());
       final Map<MacroAction, CandidatePoolSelector.Inner_BufferHelper> candidatePools = Collections.synchronizedMap(new IdentityHashMap<>());
@@ -11419,7 +11419,7 @@ public class MacroExecutor {
       final LinkedHashSet<String> collected = new LinkedHashSet<>();
       final ArrayDeque<String> pendingPrefixes = new ArrayDeque<>();
       int nextCharIndex;
-      int load;
+      int largestSuggestionBatch;
 
       CommandProbeQueue(Object connection, String baseQuery) {
          this.connection = connection;

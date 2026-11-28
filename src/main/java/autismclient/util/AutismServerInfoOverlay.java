@@ -91,7 +91,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private int scrollbarGrabOffset = 0;
    private long lastLayoutRebuildMs = 0L;
    private static final String[] TAB_LABELS = new String[]{"Info", "Plugins"};
-   private int start = 0;
+   private int activeTab = 0;
    private final List<AutismServerInfoOverlay.ClickHotspot> clickHotspots = new ArrayList<>();
    private volatile String dnsResult = null;
    private volatile String dnsHost = null;
@@ -104,18 +104,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private List<AutismServerInfoOverlay.DetailRow> detailRows = List.of();
    private String detailRowsQuery = null;
    private String detailRowsSelectedKey = null;
-   private int stop = -1;
+   private int detailRowsContentWidth = -1;
    private int[] detailRowOffsets = new int[0];
-   private int next = 0;
-   private int prev = 0;
-   private int valid = 0;
-   private int size = -1;
+   private int detailRowsHeight = 0;
+   private int detailsRevision = 0;
+   private int detailRowsRevision = 0;
+   private int builtDetailRowsRevision = -1;
    private Map<String, AutismServerInfoOverlay.DetectedPluginEntry> detectedPluginDetails = Map.of();
-   private int data = -1;
+   private int builtDetailsRevision = -1;
    private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
-   private int value = 0;
+   private int contentHeight = 0;
    private String selectedPlugin = null;
-   private int state = 50;
+   private int scanDelayMs = 50;
    private boolean scanDone = false;
    private boolean tick_Z = false;
    private AutismServerInfoOverlay.ActiveScanSession activeScan;
@@ -123,10 +123,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private final ServerScanIdAllocator scanIdAllocator = new ServerScanIdAllocator();
    private AutismServerInfoOverlay.ScanStatus scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
    private String scanIssue = "";
-   private int queue;
-   private int buffer;
-   private int entry;
-   private int node;
+   private int scanTotalProbes;
+   private int scanAnsweredProbes;
+   private int scanRetriedProbes;
+   private int scanFailedProbes;
    private final Set<String> observedCommandTokens = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
    private final Map<String, AutismServerInfoOverlay.EvidenceSource> pluginEvidence = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
    private final Map<String, AutismServerInfoOverlay.EvidenceSource> pluginCopyEvidence = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -150,7 +150,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private boolean completionAnnounced = false;
    private boolean layoutDirty = true;
    private boolean put_Z = false;
-   private int flags = 50;
+   private int activeScanDelayMs = 50;
    private String requestedScanContext = null;
    private String scanAddress = null;
    private String lastSeenAddress = "";
@@ -724,7 +724,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.windowNode.body().init(this.contentGap()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.contentPadding()));
       this.tabBar
          .setTabs(TAB_LABELS)
-         .setActiveIndex(this.start)
+         .setActiveIndex(this.activeTab)
          .setOnSelect(this::onTabSelected);
       this.searchInput
          .setPlaceholder("Search plugins...")
@@ -737,9 +737,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.scanDelaySlider
          .setRange(10.0F, 500.0F)
          .setStep(10.0F)
-         .setValue(this.state)
-         .init(value -> this.setScanDelayMs(Math.round(value)));
-      this.progressBar.init(0.0F);
+         .setValue(this.scanDelayMs)
+         .setOnChange(value -> this.setScanDelayMs(Math.round(value)));
+      this.progressBar.setProgress(0.0F);
    }
 
    public void saveState() {
@@ -750,11 +750,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          stateAddress = this.scanAddress;
       }
 
-      shared.setServerInfoActiveTab(this.start);
+      shared.setServerInfoActiveTab(this.activeTab);
       shared.setServerInfoScrollOffset(this.scroll.getOffset());
       shared.setServerInfoSelectedPlugin(this.selectedPlugin);
       shared.setServerInfoStateAddress(stateAddress);
-      shared.setServerInfoScanDelayMs(this.state);
+      shared.setServerInfoScanDelayMs(this.scanDelayMs);
       shared.setServerInfoTabWidth(this.infoTabWidth);
       shared.setServerInfoTabHeight(this.infoTabHeight);
       shared.setServerInfoPluginsTabWidth(this.pluginsTabWidth);
@@ -766,8 +766,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    public void restoreState() {
       AutismSessionState shared = AutismSessionState.getInstance();
       this.loadBounds();
-      this.start = Math.max(0, Math.min(TAB_LABELS.length - 1, shared.getServerInfoActiveTab()));
-      this.state = Math.max(10, Math.min(500, shared.getServerInfoScanDelayMs()));
+      this.activeTab = Math.max(0, Math.min(TAB_LABELS.length - 1, shared.getServerInfoActiveTab()));
+      this.scanDelayMs = Math.max(10, Math.min(500, shared.getServerInfoScanDelayMs()));
       this.infoTabWidth = Math.max(this.bind_I_2(), shared.getServerInfoTabWidth());
       this.infoTabHeight = Math.max(this.a_I_2(), shared.getServerInfoTabHeight());
       this.pluginsTabWidth = Math.max(this.b_I_2(), shared.getServerInfoPluginsTabWidth());
@@ -793,7 +793,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.selectedPlugin = null;
       }
 
-      if (this.start == 0) {
+      if (this.activeTab == 0) {
          this.count_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
@@ -801,8 +801,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.node_V_2();
       }
 
-      this.tabBar.setActiveIndex(this.start);
-      this.scanDelaySlider.setValue(this.state);
+      this.tabBar.setActiveIndex(this.activeTab);
+      this.scanDelaySlider.setValue(this.scanDelayMs);
    }
 
    public static boolean isSavedVisible() {
@@ -812,11 +812,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void onTabSelected(int tabIdx) {
       this.saveTabSize();
-      this.start = Math.max(0, Math.min(TAB_LABELS.length - 1, tabIdx));
-      this.tabBar.setActiveIndex(this.start);
+      this.activeTab = Math.max(0, Math.min(TAB_LABELS.length - 1, tabIdx));
+      this.tabBar.setActiveIndex(this.activeTab);
       this.scroll.jumpTo(0, 0);
       this.selectedPlugin = null;
-      if (this.start == 0) {
+      if (this.activeTab == 0) {
          this.count_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
@@ -832,14 +832,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void rebuildLayout() {
       this.layoutDirty = false;
       this.windowNode.body().clearChildren();
-      this.tabBar.setActiveIndex(this.start);
-      this.scanDelaySlider.setValue(this.state);
-      this.progressBar.init(this.scanProgress());
+      this.tabBar.setActiveIndex(this.activeTab);
+      this.scanDelaySlider.setValue(this.scanDelayMs);
+      this.progressBar.setProgress(this.scanProgress());
       if (!this.tick_Z) {
          this.windowNode.body().addChild(this.tabBar);
       }
 
-      if (this.start == 0) {
+      if (this.activeTab == 0) {
          this.buildInfoTab();
       } else if (!this.scanDone && !this.tick_Z) {
          this.buildProbeSetupSection();
@@ -857,9 +857,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void buildInfoTab() {
       ServerData entry = MC.getCurrentServer();
       String displayedAddress = this.displayedAddress();
-      String realIp = this.pop(displayedAddress);
-      String software = this.load(entry);
-      String versionNote = this.read(entry);
+      String realIp = this.resolvedIp(displayedAddress);
+      String software = this.guessServerSoftware(entry);
+      String versionNote = this.versionNote(entry);
       String ping = entry != null ? entry.ping + " ms" : "--";
       String players = "--";
       if (MC.getConnection() != null) {
@@ -882,7 +882,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       String tps = estimatedTps > 0.0 ? String.format("%.1f", Math.min(20.0, estimatedTps)) : "--";
       this.infoRowsColumn = new autismclient.gui.ui.layout.ColumnLayout();
       this.addInfoRow("IP:", displayedAddress, null, () -> this.copyToClipboard(displayedAddress, "Server address copied.", "Server address unavailable."));
-      String host = this.push(displayedAddress);
+      String host = this.hostFromAddress(displayedAddress);
       if (!host.isBlank() && (!host.equals(realIp) || this.dnsLookupRunning)) {
          this.addInfoRow("Real IP:", realIp, null, this::copyRealIp);
       }
@@ -974,7 +974,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          .addChild(new autismclient.gui.ui.layout.LabelNode("Start probing manually", autismclient.gui.f.b.l.write));
       this.windowNode
          .body()
-         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.state + " ms").setLabelWidth(this.delayLabelWidth()));
+         .addChild(new autismclient.gui.ui.layout.KeyValueRowNode("Delay:", this.scanDelayMs + " ms").setLabelWidth(this.delayLabelWidth()));
       this.windowNode.body().addChild(this.scanDelaySlider);
       this.windowNode.body().addChild(new autismclient.gui.ui.layout.LabelNode("Default: 50 ms", autismclient.gui.f.b.l.write));
       this.windowNode
@@ -1025,7 +1025,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.windowNode
          .body()
          .addChild(
-            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.update)).setLabelWidth(this.progressLabelWidth())
+            new autismclient.gui.ui.layout.KeyValueRowNode("Failed:", Integer.toString(session == null ? 0 : session.failedCount)).setLabelWidth(this.progressLabelWidth())
          );
       int foundCount = this.foundCount();
       this.windowNode
@@ -1059,7 +1059,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int filteredCount = 0;
 
       for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.rebuildPluginDetails()) {
-         if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
+         if (detail != null && (query.isEmpty() || detail.searchText.contains(query))) {
             filteredCount++;
          }
       }
@@ -1106,7 +1106,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.searchInput.setValue("");
       this.searchInput.setFocused(false);
       this.scroll.jumpTo(0, 0);
-      this.start = 1;
+      this.activeTab = 1;
       this.node_V_2();
       this.saveState();
    }
@@ -1196,8 +1196,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void setScanDelayMs(int delayMs) {
-      this.state = Math.max(10, Math.min(500, delayMs));
-      AutismSessionState.getInstance().setServerInfoScanDelayMs(this.state);
+      this.scanDelayMs = Math.max(10, Math.min(500, delayMs));
+      AutismSessionState.getInstance().setServerInfoScanDelayMs(this.scanDelayMs);
    }
 
    @Override
@@ -1210,7 +1210,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isPluginResultsView() {
-      return this.start == 1 && this.scanDone && !this.tick_Z;
+      return this.activeTab == 1 && this.scanDone && !this.tick_Z;
    }
 
    private int tick_I_22() {
@@ -1285,19 +1285,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private int stop_I_7() {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int measured = Math.max(this.a_I_2(), this.size_I_3());
-      return Math.max(this.a_I_2(), Math.min(measured, Math.max(this.a_I_2(), Math.round(viewport.height()) - this.f())));
+      return Math.max(this.a_I_2(), Math.min(measured, Math.max(this.a_I_2(), Math.round(viewport.height()) - this.verticalScreenMargin())));
    }
 
    private int next_I_7() {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int measured = Math.max(this.d_I_2(), this.measureHeightFor(1, false, false, Math.max(this.overlayWidth, this.scan_I_2())));
-      return Math.min(measured, Math.max(this.d_I_2(), Math.round(viewport.height()) - this.f()));
+      return Math.min(measured, Math.max(this.d_I_2(), Math.round(viewport.height()) - this.verticalScreenMargin()));
    }
 
    private int prev_I_6() {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       int measured = Math.max(this.e_I_2(), this.measureHeightFor(1, false, true, Math.max(this.overlayWidth, this.parse_I_2())));
-      return Math.min(measured, Math.max(this.e_I_2(), Math.round(viewport.height()) - this.f()));
+      return Math.min(measured, Math.max(this.e_I_2(), Math.round(viewport.height()) - this.verticalScreenMargin()));
    }
 
    private int estimateListViewportTop() {
@@ -1322,15 +1322,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int measureHeightFor(int tab, boolean scanDone, boolean scanInProgress, int measureWidth) {
-      int previousTab = this.start;
+      int previousTab = this.activeTab;
       boolean previousScanDone = this.scanDone;
       boolean previousScanInProgress = this.tick_Z;
-      this.start = tab;
+      this.activeTab = tab;
       this.scanDone = scanDone;
       this.tick_Z = scanInProgress;
       this.rebuildLayout();
       int measured = Math.round(this.layoutHost.measureHeight(measureWidth));
-      this.start = previousTab;
+      this.activeTab = previousTab;
       this.scanDone = previousScanDone;
       this.tick_Z = previousScanInProgress;
       this.rebuildLayout();
@@ -1340,19 +1340,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private int data_I_3() {
       int rowCount = 12;
       String displayedAddress = this.displayedAddress();
-      String host = this.push(displayedAddress);
-      String realIp = this.pop(displayedAddress);
+      String host = this.hostFromAddress(displayedAddress);
+      String realIp = this.resolvedIp(displayedAddress);
       if (!host.isBlank() && (!host.equals(realIp) || this.dnsLookupRunning)) {
          rowCount++;
       }
 
       ServerData entry = MC.getCurrentServer();
-      String software = this.load(entry);
+      String software = this.guessServerSoftware(entry);
       if (!"--".equals(software)) {
          rowCount++;
       }
 
-      String versionNote = this.read(entry);
+      String versionNote = this.versionNote(entry);
       if (!"--".equals(versionNote)) {
          rowCount++;
       }
@@ -1362,7 +1362,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void saveTabSize() {
-      if (this.start == 0) {
+      if (this.activeTab == 0) {
          this.infoTabWidth = Math.max(this.bind_I_2(), this.overlayWidth);
          this.infoTabHeight = Math.max(this.data_I_3(), this.overlayHeight);
          this.pluginsTabWidth = Math.max(this.pluginsTabWidth, this.infoTabWidth);
@@ -1379,10 +1379,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.cancelScan("clear");
       this.scanStatus = AutismServerInfoOverlay.ScanStatus.NONE;
       this.scanIssue = "";
-      this.queue = 0;
-      this.buffer = 0;
-      this.entry = 0;
-      this.node = 0;
+      this.scanTotalProbes = 0;
+      this.scanAnsweredProbes = 0;
+      this.scanRetriedProbes = 0;
+      this.scanFailedProbes = 0;
       this.completionAnnounced = false;
       this.observedCommandTokens.clear();
       this.pluginEvidence.clear();
@@ -1421,7 +1421,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (cached.plugins != null) {
          int kept = 0;
 
-         for (String plugin : this.load((Collection<String>)cached.plugins)) {
+         for (String plugin : this.uniquePlugins((Collection<String>)cached.plugins)) {
             if (kept++ >= 1000) {
                break;
             }
@@ -1465,10 +1465,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       this.scanIssue = this.scanStatus == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Cached partial scan" : "";
-      this.queue = Math.max(0, cached.totalProbes);
-      this.buffer = Math.max(0, cached.answeredProbes);
-      this.entry = Math.max(0, cached.retriedProbes);
-      this.node = Math.max(0, cached.failedProbes);
+      this.scanTotalProbes = Math.max(0, cached.totalProbes);
+      this.scanAnsweredProbes = Math.max(0, cached.answeredProbes);
+      this.scanRetriedProbes = Math.max(0, cached.retriedProbes);
+      this.scanFailedProbes = Math.max(0, cached.failedProbes);
       this.observedCommandTokens.clear();
       this.pluginEvidence.clear();
       this.pluginCopyEvidence.clear();
@@ -1549,10 +1549,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                copyEvidenceSnapshot,
                this.pluginCopyCommands,
                this.scanStatus.name(),
-               this.queue,
-               this.buffer,
-               this.entry,
-               this.node,
+               this.scanTotalProbes,
+               this.scanAnsweredProbes,
+               this.scanRetriedProbes,
+               this.scanFailedProbes,
                serverName,
                this.scanAddress
             );
@@ -1815,7 +1815,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean read(AutismServerInfoOverlay.EvidenceSource evidence) {
+   private boolean isIndirectEvidence(AutismServerInfoOverlay.EvidenceSource evidence) {
       boolean var10000;
       switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case USER_AUTOCOMPLETE:
@@ -1839,13 +1839,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private boolean init_Z_AutismServerInfoOv_4(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry == null
          ? false
-         : entry.resultKind == AutismServerInfoOverlay.DetectionType.FEATURE || this.read(entry.evidence);
+         : entry.resultKind == AutismServerInfoOverlay.DetectionType.FEATURE || this.isIndirectEvidence(entry.evidence);
    }
 
-   private boolean load(AutismServerInfoOverlay.PluginAccumulator entry) {
+   private boolean isDirectPluginEvidence(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry != null
          && entry.resultKind == AutismServerInfoOverlay.DetectionType.PLUGIN
-         && !this.read(entry.evidence)
+         && !this.isIndirectEvidence(entry.evidence)
          && entry.evidence != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI;
    }
 
@@ -1859,7 +1859,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          score += 1000;
       }
 
-      if (this.read(entry.evidence)) {
+      if (this.isIndirectEvidence(entry.evidence)) {
          score += 500;
       }
 
@@ -2094,8 +2094,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             AutismServerInfoOverlay.DetectionType beforeKind = entry.resultKind;
             int beforeCommandCount = entry.commands.size();
             int beforeCopyCommandCount = entry.copyCommands.size();
-            int beforeChannelCount = entry.read.size();
-            int beforeGuiCount = entry.write.size();
+            int beforeChannelCount = entry.channels.size();
+            int beforeGuiCount = entry.guis.size();
             boolean candidateHasBetterCopySource = this.copyEvidenceRank(evidence) < this.copyEvidenceRank(entry.copyEvidence);
             boolean allowReadableRename = !this.load_Z(entry.copyEvidence) || candidateHasBetterCopySource;
             if (candidateHasBetterCopySource) {
@@ -2143,8 +2143,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                for (String channel : channels) {
                   if (channel != null) {
                      String cleanChannel = channel.trim();
-                     if (!cleanChannel.isEmpty() && (entry.read.size() < 64 || entry.read.contains(cleanChannel))) {
-                        entry.read.add(cleanChannel);
+                     if (!cleanChannel.isEmpty() && (entry.channels.size() < 64 || entry.channels.contains(cleanChannel))) {
+                        entry.channels.add(cleanChannel);
                      }
                   }
                }
@@ -2154,8 +2154,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                for (String gui : guis) {
                   if (gui != null) {
                      String cleanGui = gui.trim();
-                     if (!cleanGui.isEmpty() && (entry.write.size() < 64 || entry.write.contains(cleanGui))) {
-                        entry.write.add(cleanGui);
+                     if (!cleanGui.isEmpty() && (entry.guis.size() < 64 || entry.guis.contains(cleanGui))) {
+                        entry.guis.add(cleanGui);
                      }
                   }
                }
@@ -2169,8 +2169,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                || beforeKind != entry.resultKind
                || beforeCommandCount != entry.commands.size()
                || beforeCopyCommandCount != entry.copyCommands.size()
-               || beforeChannelCount != entry.read.size()
-               || beforeGuiCount != entry.write.size();
+               || beforeChannelCount != entry.channels.size()
+               || beforeGuiCount != entry.guis.size();
          } else {
             return false;
          }
@@ -2188,8 +2188,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             explicitKey,
             source.name,
             source.commands,
-            source.read,
-            source.write,
+            source.channels,
+            source.guis,
             source.commandBacked,
             source.evidence,
             source.confidence,
@@ -2290,9 +2290,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (aliasedPlugin != null && !aliasedPlugin.isBlank()) {
             String aliasedKey = this.pluginKey(aliasedPlugin);
             AutismServerInfoOverlay.PluginAccumulator aliasedEntry = entries.get(aliasedKey);
-            if (this.load(aliasedEntry)) {
+            if (this.isDirectPluginEvidence(aliasedEntry)) {
                int score = this.entrySortScore(aliasedEntry);
-               if (bestKey == null || score <= bestScore || !this.load(entries.get(bestKey))) {
+               if (bestKey == null || score <= bestScore || !this.isDirectPluginEvidence(entries.get(bestKey))) {
                   bestKey = aliasedKey;
                }
             }
@@ -2362,10 +2362,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            changed = true;
                         }
 
-                        if (!entry.write.isEmpty()) {
-                           int beforeGuiCount = owner.write.size();
-                           owner.write.addAll(entry.write);
-                           changed |= beforeGuiCount != owner.write.size();
+                        if (!entry.guis.isEmpty()) {
+                           int beforeGuiCount = owner.guis.size();
+                           owner.guis.addAll(entry.guis);
+                           changed |= beforeGuiCount != owner.guis.size();
                         }
 
                         entry.commands.remove(command);
@@ -2600,8 +2600,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          commands.sort(String.CASE_INSENSITIVE_ORDER);
          this.detectedPlugins.add(plugin);
          this.pluginCommands.put(plugin, commands);
-         this.pluginChannels.put(plugin, this.distinctRows(entry.read));
-         List<String> guis = new ArrayList<>(entry.write);
+         this.pluginChannels.put(plugin, this.distinctRows(entry.channels));
+         List<String> guis = new ArrayList<>(entry.guis);
          guis.removeIf(gui -> gui == null || gui.isBlank());
          guis.sort(String.CASE_INSENSITIVE_ORDER);
          this.pluginGuis.put(plugin, List.copyOf(guis));
@@ -3081,7 +3081,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   fingerprint.plugin(),
                   entry.commands,
                   fingerprint.channels(),
-                  entry.write,
+                  entry.guis,
                   entry.commandBacked,
                   AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
                   this.confidenceForFingerprint(fingerprint)
@@ -3138,7 +3138,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          List<String> evidenceText = new ArrayList<>();
          evidenceText.add(entry.name);
          evidenceText.addAll(entry.commands);
-         evidenceText.addAll(entry.write);
+         evidenceText.addAll(entry.guis);
 
          for (String text : evidenceText) {
             if (text != null) {
@@ -3325,7 +3325,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void recordScanFailure(AutismServerInfoOverlay.ActiveScanSession session, String stage, Throwable error) {
       if (session != null && !session.attemptTracker.load()) {
-         session.sync++;
+         session.processingFailures++;
          String detail = error == null ? "unknown" : error.getClass().getSimpleName() + ": " + error.getMessage();
          this.scanIssue = stage + " failed";
          this.trace(session, "error stage=" + stage + " detail=" + detail);
@@ -3340,7 +3340,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void finishScan(AutismServerInfoOverlay.ScanStatus requestedOutcome, String issue) {
       AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
       if (session != null && session.attemptTracker.init()) {
-         this.flush(true);
+         this.flushObservations(true);
          Map<String, AutismServerInfoOverlay.PluginAccumulator> finalEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          boolean processingFailed = false;
 
@@ -3351,7 +3351,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.init_Z_Map(finalEntries);
          } catch (RuntimeException error) {
             processingFailed = true;
-            session.sync++;
+            session.processingFailures++;
             this.scanIssue = "Final processing failed";
             LOGGER.warn("Plugin scan {} failed during final processing", session.generation, error);
             this.trace(session, "error stage=final-processing detail=" + error.getClass().getSimpleName());
@@ -3359,7 +3359,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          AutismServerInfoOverlay.ScanStatus outcome = requestedOutcome;
          if (outcome == null) {
-            outcome = !processingFailed && !session.attemptTracker.init(session.sync, session.update, session.pendingProbeIds.size())
+            outcome = !processingFailed && !session.attemptTracker.init(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
                ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                : AutismServerInfoOverlay.ScanStatus.PARTIAL;
          }
@@ -3368,7 +3368,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
          }
 
-         boolean infrastructureFailure = processingFailed || session.sync > 0 || session.update > 0 || !session.pendingProbeIds.isEmpty();
+         boolean infrastructureFailure = processingFailed || session.processingFailures > 0 || session.failedCount > 0 || !session.pendingProbeIds.isEmpty();
          boolean restorePrevious = finalEntries.isEmpty() && infrastructureFailure && !session.previousEntries.isEmpty();
          if (restorePrevious) {
             outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
@@ -3377,11 +3377,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.trace(
             session,
             "final roots="
-               + session.flush
+               + session.rootCount
                + " suggestionReplies="
-               + session.close
+               + session.suggestionReplies
                + " suggestionEntries="
-               + session.open
+               + session.suggestionEntries
                + " sent="
                + session.sentCount
                + " answered="
@@ -3389,7 +3389,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                + " retried="
                + session.retryCount
                + " failed="
-               + session.update
+               + session.failedCount
                + " legacy="
                + this.init_I_Map(this.legacyPluginEntries)
                + " working="
@@ -3422,10 +3422,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          session.contextSignature = this.computeContextSignature();
          this.scanAddress = session.serverAddress;
          this.contextSignature = session.contextSignature;
-         this.queue = session.totalProbes;
-         this.buffer = session.replyCount;
-         this.entry = session.retryCount;
-         this.node = session.update;
+         this.scanTotalProbes = session.totalProbes;
+         this.scanAnsweredProbes = session.replyCount;
+         this.scanRetriedProbes = session.retryCount;
+         this.scanFailedProbes = session.failedCount;
          this.activeScan = null;
          this.tick_Z = false;
          this.scanDone = true;
@@ -3447,7 +3447,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          this.announceCompletion();
-         this.flags = this.state;
+         this.activeScanDelayMs = this.scanDelayMs;
       }
    }
 
@@ -3467,17 +3467,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      );
                      MC.getConnection().send(packet);
                      session.sentCount++;
-                     session.nextProbeAt = now + this.flags;
+                     session.nextProbeAt = now + this.activeScanDelayMs;
                   } catch (Exception error) {
-                     session.nextProbeAt = now + this.flags;
-                     if (session.attemptTracker.init(request.load)) {
+                     session.nextProbeAt = now + this.activeScanDelayMs;
+                     if (session.attemptTracker.init(request.attempt)) {
                         session.retryCount++;
                         this.trace(session, "retry probe=" + request.id + " reason=" + error.getClass().getSimpleName());
                         LOGGER.warn("Plugin scan {} will retry probe {}", session.generation, request.id, error);
                         session.probeQueue
-                           .addLast(new AutismServerInfoOverlay.QueuedProbe(request.id, request.spec, request.load + 1));
+                           .addLast(new AutismServerInfoOverlay.QueuedProbe(request.id, request.spec, request.attempt + 1));
                      } else {
-                        session.update++;
+                        session.failedCount++;
                         session.pendingProbeIds.remove(request.id);
                         session.probesById.remove(request.id);
                         this.recordScanFailure(session, "probe send", error);
@@ -3497,7 +3497,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private long init_J_2() {
       AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
       int retryCount = session == null ? 0 : session.retryCount;
-      return Math.max(this.flags, (long)(this.totalProbeCount() + retryCount) * this.flags);
+      return Math.max(this.activeScanDelayMs, (long)(this.totalProbeCount() + retryCount) * this.activeScanDelayMs);
    }
 
    private long finishedSendingAt() {
@@ -3510,7 +3510,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return 0L;
       }
 
-      long candidate = session.nextProbeAt - this.flags;
+      long candidate = session.nextProbeAt - this.activeScanDelayMs;
       return Math.max(session.startedAt, candidate);
    }
 
@@ -3750,7 +3750,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             boolean settledAfterLastResponse = session.lastResponseAt > 0L && now - session.lastResponseAt >= 700L;
             boolean timedOut = now - session.startedAt >= this.scanTimeoutMs();
             if (allProbesSent && settledAfterSend && (!allResponsesReceived || settledAfterLastResponse) || timedOut) {
-               AutismServerInfoOverlay.ScanStatus outcome = !session.attemptTracker.init(session.sync, session.update, session.pendingProbeIds.size())
+               AutismServerInfoOverlay.ScanStatus outcome = !session.attemptTracker.init(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
                   ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                   : AutismServerInfoOverlay.ScanStatus.PARTIAL;
                this.finishScan(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
@@ -3764,7 +3764,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    public void tickScan() {
       try {
-         this.flush(false);
+         this.flushObservations(false);
          this.syncServerContext();
          this.block_V_2();
          if (this.tick_Z) {
@@ -3793,7 +3793,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             String name = child.getName();
             AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
             if (session != null) {
-               session.flush++;
+               session.rootCount++;
             }
 
             if (name.contains(":")) {
@@ -3830,7 +3830,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.trace(
          session,
          "command tree roots="
-            + (session == null ? 0 : session.flush)
+            + (session == null ? 0 : session.rootCount)
             + " legacy="
             + this.init_I_Map(this.legacyPluginEntries)
             + " working="
@@ -3880,7 +3880,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String address = this.normalizedServerAddress();
          AutismConfig.getGlobal().removePluginScan(address);
          this.restartScan();
-         this.read(true);
+         this.startScan(true);
          this.saveState();
       }
    }
@@ -3907,10 +3907,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void scan_V_2() {
-      this.read(false);
+      this.startScan(false);
    }
 
-   private void read(boolean forceLive) {
+   private void startScan(boolean forceLive) {
       if (!this.configurationOnly && !autismclient.modules.aD.read_Z()) {
          if (!forceLive) {
             this.syncServerContext();
@@ -3922,16 +3922,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.scanStatus = AutismServerInfoOverlay.ScanStatus.FAILED;
                this.scanIssue = "Not connected";
             } else {
-               this.flags = this.state;
+               this.activeScanDelayMs = this.scanDelayMs;
                this.scanAddress = this.normalizedServerAddress();
                this.contextSignature = this.computeContextSignature();
                long startedAt = System.currentTimeMillis();
                AutismServerInfoOverlay.ActiveScanSession session = new AutismServerInfoOverlay.ActiveScanSession(
                   this.nextScanGeneration++, this.scanAddress, this.contextSignature, startedAt, this.snapshotPluginEntries()
                );
-               session.nextProbeAt = startedAt + this.flags;
+               session.nextProbeAt = startedAt + this.activeScanDelayMs;
                this.activeScan = session;
-               this.start = 1;
+               this.activeTab = 1;
                this.tick_Z = true;
                this.scanDone = false;
                this.observedCommandTokens.clear();
@@ -3960,7 +3960,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      session.probeQueue.addLast(new AutismServerInfoOverlay.QueuedProbe(probe.getKey(), probe.getValue()));
                   }
 
-                  this.trace(session, "start probes=" + session.totalProbes + " delay=" + this.flags + "ms");
+                  this.trace(session, "start probes=" + session.totalProbes + " delay=" + this.activeScanDelayMs + "ms");
                   this.tickActiveScanSession();
                } catch (Exception error) {
                   this.recordScanFailure(session, "startup", error);
@@ -4096,7 +4096,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.recordCommandHistory(root, rawCommand);
                this.pendingCommandEvidence.add(new AutismServerInfoOverlay.CommandEvidence(rawCommand, evidence, guiTitle));
                this.observationsDirty = true;
-               this.flush(false);
+               this.flushObservations(false);
             } catch (Throwable t) {
                this.reportStageFailure("live-command", t);
             }
@@ -4140,13 +4140,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return false;
          }
 
-         int before = entry.write.size();
+         int before = entry.guis.size();
          String cleanTitle = guiTitle.trim();
-         if (entry.write.size() < 64 || entry.write.contains(cleanTitle)) {
-            entry.write.add(cleanTitle);
+         if (entry.guis.size() < 64 || entry.guis.contains(cleanTitle)) {
+            entry.guis.add(cleanTitle);
          }
 
-         if (!this.read(entry.evidence)) {
+         if (!this.isIndirectEvidence(entry.evidence)) {
             entry.evidence = this.mergeEvidence(
                entry.evidence, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
             );
@@ -4162,13 +4162,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                ownerKey,
                this.mergeConfidence(this.pluginConfidence.get(ownerKey), AutismServerInfoOverlay.MatchConfidence.FEATURE)
             );
-         return before != entry.write.size();
+         return before != entry.guis.size();
       } else {
          return false;
       }
    }
 
-   private void read(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
+   private void applyScanEntries(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       this.applyCatalogFingerprints(entries);
       this.init_Z_Map(entries);
       if (this.tick_Z) {
@@ -4220,7 +4220,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   boolean liveObservation = !scanProbe;
                   if (!liveObservation) {
                      String address = this.normalizedServerAddress();
-                     if (!this.tick_Z || !session.init(capturedGeneration, address)) {
+                     if (!this.tick_Z || !session.matches(capturedGeneration, address)) {
                         return;
                      }
                   }
@@ -4236,8 +4236,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
                         session.probesById.remove(id);
                         session.lastResponseAt = System.currentTimeMillis();
-                        session.close++;
-                        session.open = session.open + list.size();
+                        session.suggestionReplies++;
+                        session.suggestionEntries = session.suggestionEntries + list.size();
                      }
 
                      List<String> tokens = new ArrayList<>(list.size());
@@ -4258,12 +4258,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         this.observationsDirty = true;
                      }
 
-                     this.flush(false);
+                     this.flushObservations(false);
                   } catch (Throwable error) {
-                     if (scanProbe && session != null && session.init(capturedGeneration, this.normalizedServerAddress())) {
+                     if (scanProbe && session != null && session.matches(capturedGeneration, this.normalizedServerAddress())) {
                         session.pendingProbeIds.remove(id);
                         session.probesById.remove(id);
-                        session.update++;
+                        session.failedCount++;
                         this.recordScanFailure(session, "suggestion reply", error);
                         this.tickActiveScanSession();
                      } else {
@@ -4276,7 +4276,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void flush(boolean force) {
+   private void flushObservations(boolean force) {
       if (this.observationsDirty) {
          long now = System.currentTimeMillis();
          if (force || now - this.lastObservationFlushMs >= 250L) {
@@ -4314,8 +4314,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          try {
             for (AutismServerInfoOverlay.CommandEvidence live : liveBatch) {
                this.init_Z_Map(entries, live.command, live.evidence);
-               if (live.load != null && !live.load.isBlank()) {
-                  this.init_Z_Map_3(entries, live.command, live.load);
+               if (live.guiTitle != null && !live.guiTitle.isBlank()) {
+                  this.init_Z_Map_3(entries, live.command, live.guiTitle);
                }
             }
 
@@ -4330,7 +4330,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      this.mergeAccumulators(entries, legacyEntries);
                      this.init_Z_Map(entries);
                      if (!scanData && !this.tick_Z) {
-                        this.read(entries);
+                        this.applyScanEntries(entries);
                      } else {
                         this.legacyPluginEntries.clear();
                         this.legacyPluginEntries.putAll(legacyEntries);
@@ -4355,7 +4355,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   }
 
                   AutismServerInfoOverlay.ActiveScanSession current = this.activeScan;
-                  if (this.tick_Z && current != null && current.init(reply.generation, this.normalizedServerAddress())) {
+                  if (this.tick_Z && current != null && current.matches(reply.generation, this.normalizedServerAddress())) {
                      scanData = true;
                      break;
                   }
@@ -4366,8 +4366,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         || reply.probe.kind == AutismServerInfoOverlay.ProbeKind.VERSION
                         || reply.probe.kind == AutismServerInfoOverlay.ProbeKind.HELP
                         || (reply.probe.query != null && reply.probe.query.contains(" "))))
-                  || (reply.load != null && reply.load.query != null && reply.load.query.contains(" "));
-               boolean rootProbe = auditIsRootProbe(reply.probe) || auditIsRootProbe(reply.load);
+                  || (reply.observed != null && reply.observed.query != null && reply.observed.query.contains(" "));
+               boolean rootProbe = auditIsRootProbe(reply.probe) || auditIsRootProbe(reply.observed);
                boolean playerBatch = this.auditIsPlayerListBatch(reply.tokens, knownPlayers, isArgCompletion, rootProbe);
 
                for (String text : reply.tokens) {
@@ -4376,7 +4376,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      continue;
                   }
 
-                  this.init_V_Map(entries, legacyEntries, reply.probe, reply.load, reply.liveObservation, text);
+                  this.init_V_Map(entries, legacyEntries, reply.probe, reply.observed, reply.liveObservation, text);
                }
             }
          } finally {
@@ -4409,9 +4409,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE : AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
       } else if (probe != null) {
-         if (probe.kind == AutismServerInfoOverlay.ProbeKind.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
-            this.mergePluginEntry(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
-            this.mergePluginEntry(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+         if (probe.kind == AutismServerInfoOverlay.ProbeKind.NAMESPACE && probe.pluginHint != null && !normalizedToken.isEmpty()) {
+            this.mergePluginEntry(legacyEntries, probe.pluginHint, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+            this.mergePluginEntry(entries, probe.pluginHint, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
          } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
             || probe.kind == AutismServerInfoOverlay.ProbeKind.VERSION) {
             String pluginCandidate = text.trim();
@@ -4446,9 +4446,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   AutismServerInfoOverlay.DetectionType.PLUGIN
                );
             }
-         } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
-            this.mergePluginEntry(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
-            this.mergePluginEntry(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+         } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.HELP && probe.pluginHint != null && probe.pluginHint.length() >= 2 && !normalizedToken.isEmpty()) {
+            this.mergePluginEntry(legacyEntries, probe.pluginHint, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+            this.mergePluginEntry(entries, probe.pluginHint, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
          } else if (probe.kind == AutismServerInfoOverlay.ProbeKind.ROOT && !normalizedToken.isEmpty()) {
             this.init_Z_Map_Str(entries, normalizedToken);
          }
@@ -4492,7 +4492,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.catalogRevision = -1L;
             if (currentAddress.equals(this.scanAddress) && this.scanDone && AutismConfig.getGlobal().autoProbePlugins) {
                this.restartScan();
-               this.read(true);
+               this.startScan(true);
             } else if (currentAddress.equals(this.scanAddress) && this.scanDone) {
                this.resetForServer(currentAddress, currentContextSignature);
             } else {
@@ -4529,7 +4529,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.windowNode.setShowBody(!this.overlayCollapsed);
          OverlayManager.getInstance().bringToFront(this);
          this.syncServerContext();
-         if (this.start == 0) {
+         if (this.activeTab == 0) {
             this.count_V_2();
          } else if (this.tick_Z) {
             this.task_V_2();
@@ -4560,7 +4560,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.windowNode.setShowBody(!this.overlayCollapsed);
          if (c) {
             this.clearFocusAndDismissMenu();
-         } else if (this.start == 0) {
+         } else if (this.activeTab == 0) {
             this.count_V_2();
          } else if (this.tick_Z) {
             this.task_V_2();
@@ -4640,7 +4640,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    @Override
    public int getMinHeight() {
-      if (this.start == 1) {
+      if (this.activeTab == 1) {
          if (this.tick_Z) {
             return this.prev_I_6();
          } else {
@@ -4687,7 +4687,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int preferredHeight = Math.round(this.windowNode.measureHeight(metrics, this.overlayWidth));
       if (this.overlayCollapsed) {
          this.overlayHeight = preferredHeight;
-      } else if (this.start == 0) {
+      } else if (this.activeTab == 0) {
          this.overlayHeight = this.stop_I_7();
       } else if (this.tick_Z) {
          this.overlayHeight = this.prev_I_6();
@@ -4707,7 +4707,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.layoutHost.render(ctx, mx, my, delta);
       if (this.windowNode.pushBodyClip(ctx)) {
          try {
-            if (this.start == 1 && this.scanDone && !this.tick_Z) {
+            if (this.activeTab == 1 && this.scanDone && !this.tick_Z) {
                this.clickHotspots.clear();
                this.renderDetailList(ctx, viewport, uiMouseX, uiMouseY, delta);
             }
@@ -4770,23 +4770,23 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (innerViewH > 0) {
             int rowContentW = Math.max(48, clipRight - clipLeft);
             List<AutismServerInfoOverlay.DetailRow> rows = this.detailRowsFor(this.searchInput.getValue(), rowContentW);
-            int estimatedContentHeight = this.load(rows);
+            int estimatedContentHeight = this.totalRowsHeight(rows);
             int maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-            int quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.o(), maxScroll);
+            int quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.detailRowHeight(), maxScroll);
             this.scroll.setOffset(quantizedTarget, maxScroll);
-            int visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(delta, maxScroll), this.o(), maxScroll);
-            this.value = estimatedContentHeight;
+            int visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(delta, maxScroll), this.detailRowHeight(), maxScroll);
+            this.contentHeight = estimatedContentHeight;
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(x, listTop, rowW, viewH);
             int scrolledRowContentW = Math.max(48, clipRight - clipLeft - (scrollbarMetrics.isScrollable() ? 10 : 0));
             if (scrolledRowContentW != rowContentW) {
                rowContentW = scrolledRowContentW;
                rows = this.detailRowsFor(this.searchInput.getValue(), rowContentW);
-               estimatedContentHeight = this.load(rows);
+               estimatedContentHeight = this.totalRowsHeight(rows);
                maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-               quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.o(), maxScroll);
+               quantizedTarget = this.quantizeScrollOffset(this.scroll.getOffset(), this.detailRowHeight(), maxScroll);
                this.scroll.setOffset(quantizedTarget, maxScroll);
-               visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll);
-               this.value = estimatedContentHeight;
+               visualScroll = this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.detailRowHeight(), maxScroll);
+               this.contentHeight = estimatedContentHeight;
                scrollbarMetrics = this.scrollbarMetrics(x, listTop, rowW, viewH);
             }
 
@@ -4799,7 +4799,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
                try {
                   int startIndex = this.firstVisibleRow(rows, visualScroll);
-                  int cy = clipTop - visualScroll + this.read(startIndex);
+                  int cy = clipTop - visualScroll + this.rowOffset(startIndex);
 
                   for (int rowIndex = startIndex; rowIndex < rows.size(); rowIndex++) {
                      AutismServerInfoOverlay.DetailRow row = rows.get(rowIndex);
@@ -4807,7 +4807,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      int rowTop = rowY;
                      int rowBottom = rowY + row.height;
                      boolean rowVisible = rowBottom > clipTop && rowTop < clipBottom;
-                     if (row.init()) {
+                     if (row.isHeader()) {
                         if (rowVisible) {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawSectionHeader(ctx, clipLeft, rowTop, clipRight - clipLeft, rowBottom - rowTop);
                            int headerTextY = UiLayoutMath.centerTextY(
@@ -4819,14 +4819,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               row.title,
                               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                               this.theme.load(autismclient.gui.f.b.l.write),
-                              clipLeft + this.n(),
+                              clipLeft + this.headerTextIndent(),
                               headerTextY,
                               false
                            );
                         }
                      } else if (row.type == AutismServerInfoOverlay.DetailRowKind.PLUGIN) {
                         boolean standaloneCommandHint = this.isStandaloneCommandHint(row);
-                        boolean selected = !standaloneCommandHint && this.samePluginKey(row.load, this.selectedPlugin);
+                        boolean selected = !standaloneCommandHint && this.samePluginKey(row.plugin, this.selectedPlugin);
                         boolean hovered = rowVisible && uiMouseX >= clipLeft && uiMouseX < clipLeft + rowContentW && uiMouseY >= rowTop && uiMouseY < rowBottom;
                         if (rowVisible) {
                            autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, clipLeft, rowTop, rowContentW, rowBottom - rowTop, hovered, selected);
@@ -4845,17 +4845,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            );
                         }
 
-                        boolean isAnticheat = row.load != null && ANTICHEAT_PLUGINS.contains(row.load.toLowerCase(Locale.ROOT));
+                        boolean isAnticheat = row.plugin != null && ANTICHEAT_PLUGINS.contains(row.plugin.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
                            ? ThemePaletteManager.recolor(-43691, ThemePaletteManager.ColorRole.DANGER)
                            : this.confidenceColor(row.confidence, hovered);
-                        String label = isAnticheat ? "! " + row.load : row.load;
+                        String label = isAnticheat ? "! " + row.plugin : row.plugin;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
                         int labelMaxWidth = Math.max(40, rowContentW - 18);
-                        if (row.update != null && !row.update.isBlank()) {
+                        if (row.countLabel != null && !row.countLabel.isBlank()) {
                            int cw = autismclient.gui.f.b.k.init(
                               this.textRenderer,
-                              row.update,
+                              row.countLabel,
                               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                               this.theme.load(autismclient.gui.f.b.l.write)
                            );
@@ -4868,7 +4868,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               autismclient.gui.f.b.k.init(
                                  ctx,
                                  this.textRenderer,
-                                 row.update,
+                                 row.countLabel,
                                  this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                                  this.theme.load(autismclient.gui.f.b.l.write),
                                  countX,
@@ -4893,7 +4893,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               false
                            );
                            if (!standaloneCommandHint) {
-                              String clickedPlugin = row.load;
+                              String clickedPlugin = row.plugin;
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
                               this.clickHotspots
@@ -4903,7 +4903,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                                     this.saveState();
                                  }));
                            } else {
-                              String hintCommand = row.load;
+                              String hintCommand = row.plugin;
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
                               this.clickHotspots
@@ -4919,8 +4919,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      } else {
                         boolean commandRow = row.type == AutismServerInfoOverlay.DetailRowKind.COMMAND;
                         boolean channelRow = row.type == AutismServerInfoOverlay.DetailRowKind.CHANNEL
-                           && row.write != null
-                           && !row.write.isBlank();
+                           && row.actionCommand != null
+                           && !row.actionCommand.isBlank();
                         boolean clickableRow = commandRow || channelRow;
                         boolean hovered = clickableRow
                            && rowVisible
@@ -4935,7 +4935,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            int textColor = hovered ? this.theme.load(autismclient.gui.f.b.l.read) : detailColor;
                            String detailLabel = autismclient.gui.f.b.k.init(
                               this.textRenderer,
-                              row.read,
+                              row.label,
                               Math.max(20, rowContentW - 20),
                               this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
                               textColor
@@ -4955,8 +4955,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            );
                         }
 
-                        if (rowVisible && clickableRow && row.write != null && !row.write.isBlank()) {
-                           String actionValue = row.write;
+                        if (rowVisible && clickableRow && row.actionCommand != null && !row.actionCommand.isBlank()) {
+                           String actionValue = row.actionCommand;
                            int hitTop = Math.max(rowTop, clipTop);
                            int hitBottom = Math.min(rowBottom, clipBottom);
                            this.clickHotspots
@@ -4979,7 +4979,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      }
 
                      cy += row.height;
-                     if (cy > clipBottom + this.o()) {
+                     if (cy > clipBottom + this.detailRowHeight()) {
                         break;
                      }
                   }
@@ -5013,7 +5013,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             var10000 = UiColorPalette.warningYellow();
             break;
          case CHANNEL:
-            var10000 = this.channelDetailColor(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
+            var10000 = this.channelDetailColor(row.label == null ? null : row.label.replaceFirst("^ch\\s+", ""));
             break;
          case WHY:
             var10000 = this.confidenceColor(row.confidence, false);
@@ -5029,21 +5029,21 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return row != null
          && row.type == AutismServerInfoOverlay.DetailRowKind.PLUGIN
          && row.evidence == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
-         && row.load != null
-         && row.load.startsWith("/");
+         && row.plugin != null
+         && row.plugin.startsWith("/");
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int x, int y, int width, int height) {
       int innerHeight = this.innerViewportHeight(height);
-      int maxScroll = Math.max(0, this.value - innerHeight);
+      int maxScroll = Math.max(0, this.contentHeight - innerHeight);
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
-         this.value,
+         this.contentHeight,
          Math.max(1, innerHeight),
          x + width - 5,
          y + 1,
          3,
          Math.max(1, innerHeight),
-         this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.o(), maxScroll)
+         this.quantizeScrollOffset(this.scroll.tickAndClamp(0.0F, maxScroll), this.detailRowHeight(), maxScroll)
       );
    }
 
@@ -5147,7 +5147,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       } else if (this.isNoChannel(detail)) {
          return "no channel";
       } else {
-         String base = this.close(detail);
+         String base = this.channelBase(detail);
          if (base.isBlank()) {
             return "--";
          } else {
@@ -5182,10 +5182,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String channelKey(String detail) {
-      return this.isNoChannel(detail) ? "no-channel" : this.close(detail).toLowerCase(Locale.ROOT);
+      return this.isNoChannel(detail) ? "no-channel" : this.channelBase(detail).toLowerCase(Locale.ROOT);
    }
 
-   private String close(String detail) {
+   private String channelBase(String detail) {
       if (detail == null) {
          return "";
       }
@@ -5207,17 +5207,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return text;
    }
 
-   private String open(String detail) {
+   private String channelFromDetail(String detail) {
       if (detail != null && !this.isNoChannel(detail)) {
-         String base = this.close(detail);
-         String channel = this.poll(base);
+         String base = this.channelBase(detail);
+         String channel = this.normalizeChannel(base);
          return channel.isBlank() ? null : channel;
       } else {
          return null;
       }
    }
 
-   private String poll(String rawChannel) {
+   private String normalizeChannel(String rawChannel) {
       if (rawChannel == null) {
          return "";
       }
@@ -5426,7 +5426,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private float minViewportHeight() {
-      return this.o() * 4 + 2;
+      return this.detailRowHeight() * 4 + 2;
    }
 
    private int mark_I_2() {
@@ -5465,20 +5465,20 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return this.theme.load() + this.contentPadding() * 2 + 48;
    }
 
-   private int f() {
+   private int verticalScreenMargin() {
       return 24;
    }
 
-   private int g() {
-      return this.o();
+   private int headerRowHeight() {
+      return this.detailRowHeight();
    }
 
-   private int h() {
+   private int baseRowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int i() {
-      return this.o();
+   private int commandRowHeight() {
+      return this.detailRowHeight();
    }
 
    private int j() {
@@ -5497,12 +5497,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return 3;
    }
 
-   private int n() {
+   private int headerTextIndent() {
       return 3;
    }
 
-   private int o() {
-      return this.h();
+   private int detailRowHeight() {
+      return this.baseRowHeight();
    }
 
    private int visibleViewportHeight(autismclient.gui.ui.layout.VerticalSpacerNode slot) {
@@ -5516,7 +5516,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int innerViewportHeight(int viewHeight) {
-      return Math.max(0, this.alignHeightToStep(Math.max(0, viewHeight - 2), this.o()));
+      return Math.max(0, this.alignHeightToStep(Math.max(0, viewHeight - 2), this.detailRowHeight()));
    }
 
    private OverlayBounds clampBounds(OverlayBounds bounds) {
@@ -5536,7 +5536,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
-   private String load(ServerData entry) {
+   private String guessServerSoftware(ServerData entry) {
       LinkedHashSet<String> guesses = new LinkedHashSet<>();
       String brand = this.serverBrand().toLowerCase(Locale.ROOT);
       if (brand.contains("purpur")) {
@@ -5572,7 +5572,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return guesses.isEmpty() ? "--" : String.join(" + ", guesses);
    }
 
-   private String read(ServerData entry) {
+   private String versionNote(ServerData entry) {
       String brand = this.serverBrand();
       String reportedVersion = this.reportedVersion(entry);
       String brandLower = brand.toLowerCase(Locale.ROOT);
@@ -5633,7 +5633,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return "--";
    }
 
-   private String push(String rawAddress) {
+   private String hostFromAddress(String rawAddress) {
       if (rawAddress != null && !rawAddress.isBlank() && !"--".equals(rawAddress)) {
          String trimmed = rawAddress.trim();
          if (trimmed.startsWith("[") && trimmed.contains("]")) {
@@ -5771,13 +5771,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void copyRealIp() {
       String displayedAddress = this.displayedAddress();
-      String realIp = this.pop(displayedAddress);
+      String realIp = this.resolvedIp(displayedAddress);
       String resolvedWithPort = this.withPort(realIp, this.parsePort(displayedAddress));
       this.copyToClipboard(resolvedWithPort, "Real IP copied.", "Real IP unavailable.");
    }
 
    private void resolveDnsAsync(String rawAddress) {
-      String host = this.push(rawAddress);
+      String host = this.hostFromAddress(rawAddress);
       if (!host.isEmpty()) {
          if (!host.equals(this.dnsHost)) {
             this.dnsResult = null;
@@ -5809,7 +5809,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String pop(String rawAddress) {
+   private String resolvedIp(String rawAddress) {
       this.resolveDnsAsync(rawAddress);
       String socketIp = this.socketIp();
       if (!socketIp.isBlank()) {
@@ -5892,14 +5892,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             boolean standaloneCommandHint = this.isStandaloneCommandHintEntry(detail);
             grouped.computeIfAbsent(groupTitle, unused -> new ArrayList<>())
                .add(
-                  AutismServerInfoOverlay.DetailRow.init(
+                  AutismServerInfoOverlay.DetailRow.pluginRow(
                      plugin,
                      detail.resultKind,
                      detail.evidence,
                      detail.confidence,
-                     this.h(),
+                     this.baseRowHeight(),
                      standaloneCommandHint ? "" : detail.countLabel,
-                     detail.update
+                     detail.searchText
                   )
                );
             boolean selected = this.samePluginKey(plugin, this.selectedPlugin);
@@ -5909,14 +5909,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.matchesQuery(normalizedQuery, plugin, "/" + command, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.DetailRow.init(
+                           AutismServerInfoOverlay.DetailRow.detailRow(
                               AutismServerInfoOverlay.DetailRowKind.COMMAND,
                               plugin,
                               "cmd /" + command,
                               "/" + command,
                               detail.evidence,
                               detail.confidence,
-                              this.i(),
+                              this.commandRowHeight(),
                               this.buildSearchText(plugin, command, detail.sourceLabel)
                            )
                         );
@@ -5927,14 +5927,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.matchesQuery(normalizedQuery, plugin, gui, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.DetailRow.init(
+                           AutismServerInfoOverlay.DetailRow.detailRow(
                               AutismServerInfoOverlay.DetailRowKind.GUI,
                               plugin,
                               "gui " + gui,
                               null,
                               detail.evidence,
                               detail.confidence,
-                              this.i(),
+                              this.commandRowHeight(),
                               this.buildSearchText(plugin, gui, detail.sourceLabel)
                            )
                         );
@@ -5946,14 +5946,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.matchesQuery(normalizedQuery, plugin, label, detail.sourceLabel)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.DetailRow.init(
+                           AutismServerInfoOverlay.DetailRow.detailRow(
                               AutismServerInfoOverlay.DetailRowKind.CHANNEL,
                               plugin,
                               "ch " + label,
-                              this.open(channel),
+                              this.channelFromDetail(channel),
                               detail.evidence,
                               detail.confidence,
-                              this.i(),
+                              this.commandRowHeight(),
                               this.buildSearchText(plugin, label, detail.sourceLabel)
                            )
                         );
@@ -5970,7 +5970,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             group.getValue()
                .sort(
                   (a, b) -> {
-                     int byPlugin = String.CASE_INSENSITIVE_ORDER.compare(a.load == null ? "" : a.load, b.load == null ? "" : b.load);
+                     int byPlugin = String.CASE_INSENSITIVE_ORDER.compare(a.plugin == null ? "" : a.plugin, b.plugin == null ? "" : b.plugin);
                      return byPlugin != 0
                         ? byPlugin
                         : Integer.compare(
@@ -5978,7 +5978,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         );
                   }
                );
-            rows.add(AutismServerInfoOverlay.DetailRow.init(group.getKey(), this.g()));
+            rows.add(AutismServerInfoOverlay.DetailRow.header(group.getKey(), this.headerRowHeight()));
             rows.addAll(group.getValue());
          }
       }
@@ -6054,7 +6054,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return "Payload Channels";
       }
 
-      if (resultKind != AutismServerInfoOverlay.DetectionType.FEATURE && !this.read(evidence)) {
+      if (resultKind != AutismServerInfoOverlay.DetectionType.FEATURE && !this.isIndirectEvidence(evidence)) {
          String var10000;
          switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
             case EXACT:
@@ -6226,7 +6226,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return sb.toString().toLowerCase(Locale.ROOT);
    }
 
-   private List<String> load(Collection<String> plugins) {
+   private List<String> uniquePlugins(Collection<String> plugins) {
       if (plugins != null && !plugins.isEmpty()) {
          Map<String, String> unique = new LinkedHashMap<>();
 
@@ -6272,13 +6272,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private Collection<AutismServerInfoOverlay.DetectedPluginEntry> rebuildPluginDetails() {
-      if (this.data == this.prev) {
+      if (this.builtDetailsRevision == this.detailsRevision) {
          return this.detectedPluginDetails.values();
       }
 
       Map<String, AutismServerInfoOverlay.NamespaceSummary> builders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (String plugin : this.load((Collection<String>)this.detectedPlugins)) {
+      for (String plugin : this.uniquePlugins((Collection<String>)this.detectedPlugins)) {
          String key = this.pluginKey(plugin);
          if (!key.isBlank()) {
             AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
@@ -6291,7 +6291,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.mergeCommands(builders, this.pluginCommands);
       this.mergeCopyCommands(builders, this.pluginCopyCommands);
       this.mergeGuis(builders, this.pluginGuis);
-      this.write(builders, this.pluginChannels);
+      this.mergeNamespaces(builders, this.pluginChannels);
       Map<String, AutismServerInfoOverlay.DetectedPluginEntry> details = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       for (Entry<String, AutismServerInfoOverlay.NamespaceSummary> entry : builders.entrySet()) {
@@ -6300,8 +6300,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (builder != null) {
             String displayName = builder.name != null && !builder.name.isBlank() ? builder.name.trim() : key;
             List<String> commands = List.copyOf(builder.commands);
-            List<String> copyCommands = builder.load.isEmpty() ? commands : List.copyOf(builder.load);
-            List<String> guis = List.copyOf(builder.read);
+            List<String> copyCommands = builder.copyCommandSet.isEmpty() ? commands : List.copyOf(builder.copyCommandSet);
+            List<String> guis = List.copyOf(builder.guis);
             List<String> channels = this.distinctRows(builder.channels);
             AutismServerInfoOverlay.EvidenceSource evidence = this.pluginEvidence
                .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
@@ -6322,7 +6322,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       this.detectedPluginDetails = Collections.unmodifiableMap(new TreeMap<>(details));
-      this.data = this.prev;
+      this.builtDetailsRevision = this.detailsRevision;
       return this.detectedPluginDetails.values();
    }
 
@@ -6370,7 +6370,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                if (entry.getValue() != null) {
                   for (String command : entry.getValue()) {
                      if (command != null && !command.isBlank()) {
-                        builder.load.add(command.trim());
+                        builder.copyCommandSet.add(command.trim());
                      }
                   }
                }
@@ -6392,7 +6392,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                if (entry.getValue() != null) {
                   for (String gui : entry.getValue()) {
                      if (gui != null && !gui.isBlank()) {
-                        builder.read.add(gui.trim());
+                        builder.guis.add(gui.trim());
                      }
                   }
                }
@@ -6401,7 +6401,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void write(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
+   private void mergeNamespaces(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
             String key = this.pluginKey(entry.getKey());
@@ -6437,14 +6437,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private List<AutismServerInfoOverlay.DetailRow> detailRowsFor(String queryText, int rowContentWidth) {
       String query = queryText == null ? "" : queryText.trim().toLowerCase(Locale.ROOT);
       String selectedKey = this.selectedPlugin == null ? "" : this.pluginKey(this.selectedPlugin);
-      if (this.size == this.valid && Objects.equals(this.detailRowsQuery, query) && Objects.equals(this.detailRowsSelectedKey, selectedKey) && this.stop == rowContentWidth) {
+      if (this.builtDetailRowsRevision == this.detailRowsRevision && Objects.equals(this.detailRowsQuery, query) && Objects.equals(this.detailRowsSelectedKey, selectedKey) && this.detailRowsContentWidth == rowContentWidth) {
          return this.detailRows;
       }
 
       List<AutismServerInfoOverlay.DetectedPluginEntry> filtered = new ArrayList<>();
 
       for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.rebuildPluginDetails()) {
-         if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
+         if (detail != null && (query.isEmpty() || detail.searchText.contains(query))) {
             filtered.add(detail);
          }
       }
@@ -6452,50 +6452,50 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.setDetailRows(this.buildDetailRows(filtered, query));
       this.detailRowsQuery = query;
       this.detailRowsSelectedKey = selectedKey;
-      this.stop = rowContentWidth;
-      this.size = this.valid;
+      this.detailRowsContentWidth = rowContentWidth;
+      this.builtDetailRowsRevision = this.detailRowsRevision;
       return this.detailRows;
    }
 
-   private boolean write(String plugin, String query) {
+   private boolean pluginMatchesQuery(String plugin, String query) {
       if (plugin != null && query != null && !query.isBlank()) {
          AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
-         return detail != null && detail.update.contains(query);
+         return detail != null && detail.searchText.contains(query);
       } else {
          return false;
       }
    }
 
    private void invalidateDetails() {
-      this.prev++;
-      this.valid++;
-      this.size = -1;
+      this.detailsRevision++;
+      this.detailRowsRevision++;
+      this.builtDetailRowsRevision = -1;
       this.detailRowsQuery = null;
       this.detailRowsSelectedKey = null;
-      this.stop = -1;
+      this.detailRowsContentWidth = -1;
       this.detailRows = List.of();
       this.detailRowOffsets = new int[0];
-      this.next = 0;
-      this.data = -1;
+      this.detailRowsHeight = 0;
+      this.builtDetailsRevision = -1;
       this.detectedPluginDetails = Map.of();
       this.requestLayoutRebuild();
    }
 
    private void invalidateDetailRows() {
-      this.valid++;
-      this.size = -1;
+      this.detailRowsRevision++;
+      this.builtDetailRowsRevision = -1;
       this.detailRowsQuery = null;
       this.detailRowsSelectedKey = null;
-      this.stop = -1;
+      this.detailRowsContentWidth = -1;
       this.detailRows = List.of();
       this.detailRowOffsets = new int[0];
-      this.next = 0;
+      this.detailRowsHeight = 0;
       this.requestLayoutRebuild();
    }
 
-   private int load(List<AutismServerInfoOverlay.DetailRow> rows) {
+   private int totalRowsHeight(List<AutismServerInfoOverlay.DetailRow> rows) {
       if (rows == this.detailRows) {
-         return this.next;
+         return this.detailRowsHeight;
       }
 
       int total = 0;
@@ -6522,10 +6522,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       this.detailRows = safeRows;
       this.detailRowOffsets = offsets;
-      this.next = cursor;
+      this.detailRowsHeight = cursor;
    }
 
-   private int read(int index) {
+   private int rowOffset(int index) {
       return index >= 0 && index < this.detailRowOffsets.length ? this.detailRowOffsets[index] : 0;
    }
 
@@ -6569,14 +6569,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       try {
-         return this.read(mx, my, button);
+         return this.handleMouseClicked(mx, my, button);
       } catch (Throwable t) {
          this.reportStageFailure("mouseClicked", t);
          return false;
       }
    }
 
-   private boolean read(double mx, double my, int button) {
+   private boolean handleMouseClicked(double mx, double my, int button) {
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
       float uiMouseX = viewport.toUiX(mx);
       float uiMouseY = viewport.toUiY(my);
@@ -6608,7 +6608,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return this.containsPoint(mx, my);
       }
 
-      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+      if (this.activeTab == 1 && this.scanDone && !this.tick_Z) {
          autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(
             Math.round(this.listViewportSpacer.x()),
             Math.round(this.listViewportSpacer.y()),
@@ -6618,15 +6618,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack(uiMouseX, uiMouseY)) {
             this.draggingScrollbar = true;
             this.scrollbarGrabOffset = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.thumbY());
-            this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.o());
+            this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.detailRowHeight());
             this.saveState();
             return true;
          }
       }
 
-      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+      if (this.activeTab == 1 && this.scanDone && !this.tick_Z) {
          for (AutismServerInfoOverlay.ClickHotspot region : this.clickHotspots) {
-            if (region.init(uiMouseX, uiMouseY)) {
+            if (region.contains(uiMouseX, uiMouseY)) {
                this.layoutHost.clearFocus();
                region.action.run();
                return true;
@@ -6668,7 +6668,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             Math.round(this.listViewportSpacer.width()),
             this.visibleViewportHeight(this.listViewportSpacer)
          );
-         this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.o());
+         this.scroll.dragToMouseYStepped(scrollbarMetrics, Math.round(uiMouseY), this.scrollbarGrabOffset, this.detailRowHeight());
          return true;
       }
 
@@ -6707,10 +6707,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean scrollDetails(double mx, double my, double amount) {
-      if (this.start == 1 && this.scanDone && !this.tick_Z) {
+      if (this.activeTab == 1 && this.scanDone && !this.tick_Z) {
          int viewH = this.visibleViewportHeight(this.listViewportSpacer);
-         int maxScroll = Math.max(0, this.value - this.innerViewportHeight(viewH));
-         this.scroll.scrollByWheel(amount, this.o(), maxScroll);
+         int maxScroll = Math.max(0, this.contentHeight - this.innerViewportHeight(viewH));
+         this.scroll.scrollByWheel(amount, this.detailRowHeight(), maxScroll);
          return true;
       } else {
          return this.layoutHost.mouseScrolled(mx, my, amount);
@@ -6741,10 +6741,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       StringBuilder sb = new StringBuilder();
       ServerData entry = MC.getCurrentServer();
       String ip = this.displayedAddress();
-      String realIp = this.pop(ip);
+      String realIp = this.resolvedIp(ip);
       List<String> detectedAcs = this.detectedAnticheats();
-      String software = this.load(entry);
-      String versionNote = this.read(entry);
+      String software = this.guessServerSoftware(entry);
+      String versionNote = this.versionNote(entry);
       sb.append("=== Server Info ===\n");
       sb.append("IP:         ").append(ip).append("\n");
       if (!realIp.equals("--")) {
@@ -6810,7 +6810,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          });
          int copyCount = 0;
 
-         for (String plugin : this.load((Collection<String>)this.detectedPlugins)) {
+         for (String plugin : this.uniquePlugins((Collection<String>)this.detectedPlugins)) {
             if (plugin != null && !plugin.isBlank()) {
                AutismServerInfoOverlay.DetectedPluginEntry detail = this.detailFor(plugin);
                if (detail != null
@@ -6870,7 +6870,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       final long generation;
       final boolean liveObservation;
       final AutismServerInfoOverlay.ProbeSpec probe;
-      final AutismServerInfoOverlay.ProbeSpec load;
+      final AutismServerInfoOverlay.ProbeSpec observed;
       final List<String> tokens;
 
       ProbeObservation(
@@ -6883,7 +6883,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.generation = generation;
          this.liveObservation = liveObservation;
          this.probe = probe;
-         this.load = observed;
+         this.observed = observed;
          this.tokens = tokens;
       }
    }
@@ -6898,12 +6898,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final class CommandEvidence {
       final String command;
       final AutismServerInfoOverlay.EvidenceSource evidence;
-      final String load;
+      final String guiTitle;
 
       CommandEvidence(String command, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
          this.command = command;
          this.evidence = evidence;
-         this.load = guiTitle;
+         this.guiTitle = guiTitle;
       }
    }
 
@@ -6916,21 +6916,21 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private static class ClickHotspot {
       final int x;
-      final int load;
-      final int read;
-      final int write;
+      final int y;
+      final int width;
+      final int height;
       final Runnable action;
 
       ClickHotspot(int x, int y, int width, int height, Runnable action) {
          this.x = x;
-         this.load = y;
-         this.read = width;
-         this.write = height;
+         this.y = y;
+         this.width = width;
+         this.height = height;
          this.action = action;
       }
 
-      boolean init(double mx, double my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+      boolean contains(double mx, double my) {
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 
@@ -6949,14 +6949,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static final class ProgressBarNode extends autismclient.gui.ui.layout.LayoutNode {
-      private float sync = 0.0F;
+      private float progress = 0.0F;
 
       ProgressBarNode() {
          this.nodeHeight = 12.0F;
       }
 
-      AutismServerInfoOverlay.ProgressBarNode init(float progress) {
-         this.sync = Math.max(0.0F, Math.min(1.0F, progress));
+      AutismServerInfoOverlay.ProgressBarNode setProgress(float progress) {
+         this.progress = Math.max(0.0F, Math.min(1.0F, progress));
          return this;
       }
 
@@ -6973,7 +6973,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),
                autismclient.gui.f.NetHelper.init(Math.round(this.nodeX), Math.round(this.nodeY), Math.round(this.nodeWidth), Math.round(this.nodeHeight)),
-               this.sync
+               this.progress
             );
          }
       }
@@ -6997,8 +6997,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final class NamespaceSummary {
       String name;
       final Set<String> commands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final Set<String> load = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> copyCommandSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> guis = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final List<String> channels = new ArrayList<>();
    }
 
@@ -7018,11 +7018,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int sentCount;
       int replyCount;
       int retryCount;
-      int update;
-      int sync;
-      int flush;
-      int close;
-      int open;
+      int failedCount;
+      int processingFailures;
+      int rootCount;
+      int suggestionReplies;
+      int suggestionEntries;
 
       ActiveScanSession(
          long generation, String serverAddress, String contextSignature, long startedAt, Map<String, AutismServerInfoOverlay.PluginAccumulator> previousEntries
@@ -7037,7 +7037,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.nextProbeAt = startedAt;
       }
 
-      boolean init(long expectedGeneration, String address) {
+      boolean matches(long expectedGeneration, String address) {
          return this.attemptTracker.init(expectedGeneration, address);
       }
    }
@@ -7045,12 +7045,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final class ProbeSpec {
       final String query;
       final AutismServerInfoOverlay.ProbeKind kind;
-      final String load;
+      final String pluginHint;
 
       ProbeSpec(String query, AutismServerInfoOverlay.ProbeKind kind, String hint) {
          this.query = query;
          this.kind = kind;
-         this.load = hint;
+         this.pluginHint = hint;
       }
    }
 
@@ -7132,15 +7132,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private static final class DetailRow {
       final AutismServerInfoOverlay.DetailRowKind type;
       final String title;
-      final String load;
-      final String read;
-      final String write;
+      final String plugin;
+      final String label;
+      final String actionCommand;
       final AutismServerInfoOverlay.DetectionType resultKind;
       final AutismServerInfoOverlay.EvidenceSource evidence;
       final AutismServerInfoOverlay.MatchConfidence confidence;
       final int height;
-      final String update;
-      final String sync;
+      final String countLabel;
+      final String searchText;
 
       private DetailRow(
          AutismServerInfoOverlay.DetailRowKind type,
@@ -7157,18 +7157,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       ) {
          this.type = type;
          this.title = title;
-         this.load = plugin;
-         this.read = label;
-         this.write = actionCommand;
+         this.plugin = plugin;
+         this.label = label;
+         this.actionCommand = actionCommand;
          this.resultKind = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
          this.evidence = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
          this.confidence = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
          this.height = Math.max(1, height);
-         this.update = countLabel == null ? "" : countLabel;
-         this.sync = searchText == null ? "" : searchText;
+         this.countLabel = countLabel == null ? "" : countLabel;
+         this.searchText = searchText == null ? "" : searchText;
       }
 
-      static AutismServerInfoOverlay.DetailRow init(String title, int height) {
+      static AutismServerInfoOverlay.DetailRow header(String title, int height) {
          return new AutismServerInfoOverlay.DetailRow(
             AutismServerInfoOverlay.DetailRowKind.HEADER,
             title,
@@ -7180,11 +7180,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             AutismServerInfoOverlay.MatchConfidence.UNKNOWN,
             height,
             "",
-            init(title)
+            lowerOrEmpty(title)
          );
       }
 
-      static AutismServerInfoOverlay.DetailRow init(
+      static AutismServerInfoOverlay.DetailRow pluginRow(
          String plugin,
          AutismServerInfoOverlay.DetectionType resultKind,
          AutismServerInfoOverlay.EvidenceSource evidence,
@@ -7198,7 +7198,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          );
       }
 
-      static AutismServerInfoOverlay.DetailRow init(
+      static AutismServerInfoOverlay.DetailRow detailRow(
          AutismServerInfoOverlay.DetailRowKind type,
          String plugin,
          String label,
@@ -7213,11 +7213,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          );
       }
 
-      boolean init() {
+      boolean isHeader() {
          return this.type == AutismServerInfoOverlay.DetailRowKind.HEADER;
       }
 
-      private static String init(String text) {
+      private static String lowerOrEmpty(String text) {
          return text == null ? "" : text.toLowerCase(Locale.ROOT);
       }
    }
@@ -7235,10 +7235,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private static final class SliderNode extends autismclient.gui.ui.layout.LayoutNode {
-      private float sync = 0.0F;
-      private float flush = 1.0F;
-      private float close = 0.0F;
-      private float open = 0.0F;
+      private float min = 0.0F;
+      private float max = 1.0F;
+      private float value = 0.0F;
+      private float step = 0.0F;
       private boolean dragging = false;
       private Consumer<Float> onChange;
 
@@ -7247,29 +7247,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       AutismServerInfoOverlay.SliderNode setRange(float min, float max) {
-         this.sync = min;
-         this.flush = Math.max(min, max);
-         return this.setValue(this.close);
+         this.min = min;
+         this.max = Math.max(min, max);
+         return this.setValue(this.value);
       }
 
       AutismServerInfoOverlay.SliderNode setStep(float step) {
-         this.open = Math.max(0.0F, step);
-         return this.setValue(this.close);
+         this.step = Math.max(0.0F, step);
+         return this.setValue(this.value);
       }
 
       AutismServerInfoOverlay.SliderNode setValue(float value) {
          float snapped = this.snapValue(this.clampValue(value));
-         if (Math.abs(this.close - snapped) > 1.0E-4F) {
-            this.close = snapped;
+         if (Math.abs(this.value - snapped) > 1.0E-4F) {
+            this.value = snapped;
             if (this.onChange != null) {
-               this.onChange.accept(this.close);
+               this.onChange.accept(this.value);
             }
          }
 
          return this;
       }
 
-      AutismServerInfoOverlay.SliderNode init(Consumer<Float> onChange) {
+      AutismServerInfoOverlay.SliderNode setOnChange(Consumer<Float> onChange) {
          this.onChange = onChange;
          return this;
       }
@@ -7288,7 +7288,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.SyncManager uiContext = autismclient.gui.f.UiHelper.init(
                context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
             );
-            SliderRenderer.init(uiContext, bounds, SliderRenderer.ratio(this.close, this.sync, this.flush), this.containsPoint(context.mouseX(), context.mouseY()) || this.dragging);
+            SliderRenderer.init(uiContext, bounds, SliderRenderer.ratio(this.value, this.min, this.max), this.containsPoint(context.mouseX(), context.mouseY()) || this.dragging);
          }
       }
 
@@ -7325,16 +7325,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       private void setFromMouse(float mouseX) {
          this.setValue(
-            (float)SliderRenderer.init(mouseX, Math.round(this.nodeX), Math.round(this.nodeWidth), this.sync, this.flush, this.open <= 0.0F ? 9.999999747378752E-5 : this.open)
+            (float)SliderRenderer.init(mouseX, Math.round(this.nodeX), Math.round(this.nodeWidth), this.min, this.max, this.step <= 0.0F ? 9.999999747378752E-5 : this.step)
          );
       }
 
       private float clampValue(float value) {
-         return Math.max(this.sync, Math.min(this.flush, value));
+         return Math.max(this.min, Math.min(this.max, value));
       }
 
       private float snapValue(float value) {
-         return this.open <= 0.0F ? value : this.sync + Math.round((value - this.sync) / this.open) * this.open;
+         return this.step <= 0.0F ? value : this.min + Math.round((value - this.min) / this.step) * this.step;
       }
    }
 
@@ -7351,7 +7351,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       final String sourceLabel;
       final String countLabel;
       final List<String> copyCommands;
-      final String update;
+      final String searchText;
 
       DetectedPluginEntry(
          String displayName,
@@ -7380,7 +7380,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.sourceLabel = sourceLabel == null ? "" : sourceLabel;
          this.countLabel = countLabel == null ? "" : countLabel;
          this.copyCommands = copyCommands == null ? List.of() : copyCommands;
-         this.update = searchText == null ? "" : searchText;
+         this.searchText = searchText == null ? "" : searchText;
       }
    }
 
@@ -7393,14 +7393,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       AutismServerInfoOverlay.MatchConfidence confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
       final Set<String> commands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> copyCommands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-      final Set<String> write = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> channels = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+      final Set<String> guis = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
    }
 
    private static final class QueuedProbe {
       final int id;
       final AutismServerInfoOverlay.ProbeSpec spec;
-      final int load;
+      final int attempt;
 
       QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec) {
          this(id, spec, 0);
@@ -7409,7 +7409,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec, int attempt) {
          this.id = id;
          this.spec = spec;
-         this.load = attempt;
+         this.attempt = attempt;
       }
    }
 }

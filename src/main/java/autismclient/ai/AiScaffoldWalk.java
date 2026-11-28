@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.phys.Vec3;
 
 final class AiScaffoldWalk {
-   static int init(double yaw) {
+   static int snapYaw45(double yaw) {
       long q = Math.round(yaw / 45.0) * 45L;
       return (int)((q % 360L + 360L) % 360L);
    }
@@ -35,52 +35,52 @@ final class AiScaffoldWalk {
             static final int load_I = 10;
             static final int read_I = 60;
             static final double write_D = 1.0;
-            final BlockPos init_BlockPos = mc.player.blockPosition();
-            final long init_J = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final int write_I = AiScaffoldWalk.init(mc.player.getYRot());
-            autismclient.ai.engine.AiBridgeDriver init_NetHelper;
-            final int update_I = mc.player.getInventory().getSelectedSlot();
-            int sync_I;
-            int flush_I = -1;
-            BlockPos load_BlockPos;
-            long load_J;
-            int close_I;
+            final BlockPos startPos = mc.player.blockPosition();
+            final long deadlineNanos = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final int followYaw = AiScaffoldWalk.snapYaw45(mc.player.getYRot());
+            autismclient.ai.engine.AiBridgeDriver bridgeDriver;
+            final int originalSlot = mc.player.getInventory().getSelectedSlot();
+            int placedCount;
+            int switchedSlot = -1;
+            BlockPos pendingCell;
+            long pendingRevision;
+            int verifyWaitTicks;
             boolean init_Z;
             boolean load_Z;
             boolean read_Z;
             boolean write_Z;
-            boolean update_Z;
-            int open_I;
-            int poll;
-            double update_D = 0.0 / 0.0;
-            BlockPos read_BlockPos;
-            BlockPos write_BlockPos;
+            boolean cleanedUp;
+            int legIndex;
+            int legPlaced;
+            double legBaseY = 0.0 / 0.0;
+            BlockPos legEndFeet;
+            BlockPos towerPlaceCell;
             double sync_D = 0.0 / 0.0;
-            double flush_D = 0.0 / 0.0;
-            double close_D;
-            double open_D;
-            int push;
-            String init_Str = "Scaffolding";
+            double stuckX = 0.0 / 0.0;
+            double stuckY;
+            double stuckZ;
+            int stuckTicks;
+            String statusLabel = "Scaffolding";
 
-            AiScaffoldWalk.Inner_DataUtil init_bN_DataUtil() {
-               return plan.legs().get(this.open_I);
+            AiScaffoldWalk.Inner_DataUtil currentLeg() {
+               return plan.legs().get(this.legIndex);
             }
 
-            boolean init_Z_21() {
-               return this.open_I >= plan.legs().size() - 1;
+            boolean isLastLeg() {
+               return this.legIndex >= plan.legs().size() - 1;
             }
 
-            boolean init(BlockPos cell) {
+            boolean isSolidLoaded(BlockPos cell) {
                return AiTerrain.isLoaded(mc.level, cell) && !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
             }
 
-            boolean init(int bx, int bz) {
-               BlockPos cell = new BlockPos(bx, (int)Math.floor(this.update_D - 1.0), bz);
+            boolean hasSupportAt(int bx, int bz) {
+               BlockPos cell = new BlockPos(bx, (int)Math.floor(this.legBaseY - 1.0), bz);
                return !AiTerrain.isLoaded(mc.level, cell) ? true : !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
             }
 
-            boolean load(BlockPos support) {
+            boolean lavaBelow(BlockPos support) {
                for (int i = 1; i <= 3; i++) {
                   if (mc.level.getBlockState(support.below(i)).is(Blocks.LAVA)) {
                      return true;
@@ -90,7 +90,7 @@ final class AiScaffoldWalk {
                return false;
             }
 
-            List<AiTelly.Inner_DataUtil> init_List_7() {
+            List<AiTelly.Inner_DataUtil> hotbarView() {
                List<AiTelly.Inner_DataUtil> view = new ArrayList<>(9);
 
                for (int i = 0; i < 9; i++) {
@@ -106,31 +106,31 @@ final class AiScaffoldWalk {
                return view;
             }
 
-            int init_I_27() {
+            int buildBlockCount() {
                int total = 0;
 
-               for (AiTelly.Inner_DataUtil entry : this.init_List_7()) {
+               for (AiTelly.Inner_DataUtil entry : this.hotbarView()) {
                   total += entry.count();
                }
 
                return total;
             }
 
-            boolean load() {
-               int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.init_List_7());
+            boolean selectBuildBlock() {
+               int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
                if (slot < 0) {
                   return false;
                }
 
                if (slot != mc.player.getInventory().getSelectedSlot()) {
                   mc.player.getInventory().setSelectedSlot(slot);
-                  this.flush_I = slot;
+                  this.switchedSlot = slot;
                }
 
                return true;
             }
 
-            boolean read(BlockPos cell) {
+            boolean placeAt(BlockPos cell) {
                ItemStack stack = mc.player.getInventory().getItem(mc.player.getInventory().getSelectedSlot());
                BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(
                      cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), BlockPlacementPlanner.blockItemValidator(stack, mc.player, InteractionHand.MAIN_HAND)
@@ -152,139 +152,139 @@ final class AiScaffoldWalk {
                return true;
             }
 
-            AiScaffoldWalk.Inner_StreamUtil init_bN_StreamUtil() {
+            AiScaffoldWalk.Inner_StreamUtil effectiveMode() {
                return mc.player.getFoodData().getFoodLevel() <= 6 ? AiScaffoldWalk.Inner_StreamUtil.WALK : plan.mode();
             }
 
-            void init(String reason) {
-               this.open_I++;
-               this.poll = 0;
-               this.update_D = 0.0 / 0.0;
-               this.read_BlockPos = null;
-               this.write_BlockPos = null;
+            void advanceLeg(String reason) {
+               this.legIndex++;
+               this.legPlaced = 0;
+               this.legBaseY = 0.0 / 0.0;
+               this.legEndFeet = null;
+               this.towerPlaceCell = null;
                this.sync_D = 0.0 / 0.0;
-               if (!this.init_Z_21()) {
-                  this.init_Str = "Leg advanced (" + reason + ")";
+               if (!this.isLastLeg()) {
+                  this.statusLabel = "Leg advanced (" + reason + ")";
                }
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.update_Z && mc.player != null && mc.level != null) {
+               if (!this.cleanedUp && mc.player != null && mc.level != null) {
                   if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                     return this.init(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("scaffolding", mc.player.getHealth(), mc.player.getMaxHealth()));
+                     return this.finish(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("scaffolding", mc.player.getHealth(), mc.player.getMaxHealth()));
                   }
 
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Scaffold deadline reached");
+                  if (System.nanoTime() > this.deadlineNanos) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Scaffold deadline reached");
                   }
 
                   if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.sync_I)
+                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.placedCount)
                      );
                   }
 
                   this.write_Z = false;
                   Vec3 pos = mc.player.position();
                   this.read_Z = false;
-                  if (this.load_BlockPos != null) {
-                     if (this.init(this.load_BlockPos)) {
+                  if (this.pendingCell != null) {
+                     if (this.isSolidLoaded(this.pendingCell)) {
                         if (!this.load_Z) {
-                           this.sync_I++;
-                           this.poll++;
+                           this.placedCount++;
+                           this.legPlaced++;
                            this.read_Z = true;
                         }
 
-                        if (plan.verify() && AiServerEvidence.blockRevision(this.load_BlockPos) <= this.load_J) {
-                           if (++this.close_I > 60) {
-                              return this.init(AiOperation.Status.UNCERTAIN, "Placement dispatched; no applied server block confirmation");
+                        if (plan.verify() && AiServerEvidence.blockRevision(this.pendingCell) <= this.pendingRevision) {
+                           if (++this.verifyWaitTicks > 60) {
+                              return this.finish(AiOperation.Status.UNCERTAIN, "Placement dispatched; no applied server block confirmation");
                            }
                         } else {
-                           this.load_BlockPos = null;
+                           this.pendingCell = null;
                         }
-                     } else if (++this.close_I > 5) {
+                     } else if (++this.verifyWaitTicks > 5) {
                         if (!this.init_Z) {
                            this.init_Z = true;
-                           if (!this.load()) {
-                              return this.init(AiOperation.Status.FAILED, "Out of blocks");
+                           if (!this.selectBuildBlock()) {
+                              return this.finish(AiOperation.Status.FAILED, "Out of blocks");
                            }
 
-                           this.read(this.load_BlockPos);
-                        } else if (this.close_I > 10) {
-                           return this.init(AiOperation.Status.FAILED, "Placement was not applied at " + this.load_BlockPos.toShortString());
+                           this.placeAt(this.pendingCell);
+                        } else if (this.verifyWaitTicks > 10) {
+                           return this.finish(AiOperation.Status.FAILED, "Placement was not applied at " + this.pendingCell.toShortString());
                         }
                      }
                   }
 
                   if (!this.read_Z
-                     && Double.compare(this.flush_D, pos.x) == 0
-                     && Double.compare(this.close_D, pos.y) == 0
-                     && Double.compare(this.open_D, pos.z) == 0) {
-                     if (++this.push > 100) {
-                        return this.init(AiOperation.Status.FAILED, "Wedged against terrain; no progress");
+                     && Double.compare(this.stuckX, pos.x) == 0
+                     && Double.compare(this.stuckY, pos.y) == 0
+                     && Double.compare(this.stuckZ, pos.z) == 0) {
+                     if (++this.stuckTicks > 100) {
+                        return this.finish(AiOperation.Status.FAILED, "Wedged against terrain; no progress");
                      }
                   } else {
-                     this.push = 0;
+                     this.stuckTicks = 0;
                   }
 
-                  this.flush_D = pos.x;
-                  this.close_D = pos.y;
-                  this.open_D = pos.z;
-                  if (this.sync_I >= plan.blocks()) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
-                  } else if (this.open_I >= plan.legs().size()) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Scaffold route complete");
+                  this.stuckX = pos.x;
+                  this.stuckY = pos.y;
+                  this.stuckZ = pos.z;
+                  if (this.placedCount >= plan.blocks()) {
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
+                  } else if (this.legIndex >= plan.legs().size()) {
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Scaffold route complete");
                   } else {
-                     return this.init_bN_DataUtil().tower() ? this.load(pos) : this.init(pos);
+                     return this.currentLeg().tower() ? this.tickTower(pos) : this.tickBridge(pos);
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Scaffold cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Scaffold cancelled");
                }
             }
 
-            void init(int slot) {
+            void selectSlot(int slot) {
                if (slot != mc.player.getInventory().getSelectedSlot()) {
                   mc.player.getInventory().setSelectedSlot(slot);
-                  this.flush_I = slot;
+                  this.switchedSlot = slot;
                }
             }
 
-            AiOperation.Result init(Vec3 pos) {
-               if (this.init_NetHelper == null) {
-                  if (this.poll >= this.init_bN_DataUtil().blocks() || this.read_BlockPos != null) {
-                     if (this.init_Z_21()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
+            AiOperation.Result tickBridge(Vec3 pos) {
+               if (this.bridgeDriver == null) {
+                  if (this.legPlaced >= this.currentLeg().blocks() || this.legEndFeet != null) {
+                     if (this.isLastLeg()) {
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
                      }
 
-                     this.init("bridge leg done");
-                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.sync_I));
+                     this.advanceLeg("bridge leg done");
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.placedCount));
                   }
 
                   BlockPos feet = mc.player.blockPosition();
-                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.follow() ? this.write_I : this.init_bN_DataUtil().direction());
+                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.follow() ? this.followYaw : this.currentLeg().direction());
                   autismclient.ai.engine.AiBridger.Inner_CachePool cells = new autismclient.ai.engine.AiBridger.Inner_CachePool(
-                     feet.getX(), feet.getZ(), feet.getY() - 1, d[0], d[1], this.init_bN_DataUtil().blocks() - this.poll
+                     feet.getX(), feet.getZ(), feet.getY() - 1, d[0], d[1], this.currentLeg().blocks() - this.legPlaced
                   );
-                  this.init_NetHelper = new autismclient.ai.engine.AiBridgeDriver(
+                  this.bridgeDriver = new autismclient.ai.engine.AiBridgeDriver(
                      cells,
                      autismclient.ai.engine.AiBridgeDriver.chooseStyle(
-                        this.init_bN_StreamUtil() == AiScaffoldWalk.Inner_StreamUtil.TELLY, cells, mc.player, this.init_I_27()
+                        this.effectiveMode() == AiScaffoldWalk.Inner_StreamUtil.TELLY, cells, mc.player, this.buildBlockCount()
                      ),
-                     this.init_DataUtil
+                     this.aim
                   );
-                  this.update_D = feet.getY();
+                  this.legBaseY = feet.getY();
                }
 
-               if (pos.y < this.update_D - 2.0) {
-                  return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
+               if (pos.y < this.legBaseY - 2.0) {
+                  return this.finish(AiOperation.Status.FAILED, "Fell off the scaffold");
                } else {
-                  BlockPos support = this.init_NetHelper.nextSupport();
-                  if (support != null && this.load(support)) {
-                     return this.init(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + support.toShortString());
+                  BlockPos support = this.bridgeDriver.nextSupport();
+                  if (support != null && this.lavaBelow(support)) {
+                     return this.finish(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + support.toShortString());
                   } else {
-                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.init_List_7());
+                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.hotbarView());
                      if (slot < 0 && support != null) {
                         autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);
@@ -295,41 +295,41 @@ final class AiScaffoldWalk {
                         mc.options.keyShift.setDown(true);
                         Vec3 v = mc.player.getDeltaMovement();
                         return mc.player.onGround() && v.x * v.x + v.z * v.z < 1.0E-4
-                           ? this.init(AiOperation.Status.FAILED, "Out of blocks")
+                           ? this.finish(AiOperation.Status.FAILED, "Out of blocks")
                            : AiGameOperations.result(
-                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.objectOf("placed", this.sync_I)
+                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.objectOf("placed", this.placedCount)
                            );
                      } else {
-                        autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, cell -> {
-                           this.sync_I++;
-                           this.poll++;
+                        autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.bridgeDriver.init(slot, this::selectSlot, cell -> {
+                           this.placedCount++;
+                           this.legPlaced++;
                            this.read_Z = true;
                         });
                         if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
-                           return this.init(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
+                           return this.finish(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
                         } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL) {
-                           return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
+                           return this.finish(AiOperation.Status.FAILED, "Fell off the scaffold");
                         } else {
-                           String style = this.init_NetHelper.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
+                           String style = this.bridgeDriver.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
                            if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
-                              this.read_BlockPos = mc.player.blockPosition();
-                              this.init_NetHelper = null;
+                              this.legEndFeet = mc.player.blockPosition();
+                              this.bridgeDriver = null;
                               return AiGameOperations.result(
-                                 AiOperation.Status.RUNNING, "Leg done", AiJson.objectOf("placed", this.sync_I, "leg", this.open_I)
+                                 AiOperation.Status.RUNNING, "Leg done", AiJson.objectOf("placed", this.placedCount, "leg", this.legIndex)
                               );
                            } else {
                               return AiGameOperations.result(
                                  AiOperation.Status.RUNNING,
-                                 this.init_Str + ", " + this.sync_I + " placed",
+                                 this.statusLabel + ", " + this.placedCount + " placed",
                                  AiJson.objectOf(
                                     "placed",
-                                    this.sync_I,
+                                    this.placedCount,
                                     "mode",
                                     style,
                                     "leg",
-                                    this.open_I,
+                                    this.legIndex,
                                     "remainingBlocks",
-                                    this.init_I_27(),
+                                    this.buildBlockCount(),
                                     "nextCell",
                                     support == null ? "secured" : support.toShortString()
                                  )
@@ -341,56 +341,56 @@ final class AiScaffoldWalk {
                }
             }
 
-            AiOperation.Result load(Vec3 pos) {
-               if (this.poll >= this.init_bN_DataUtil().blocks()) {
-                  if (this.init_Z_21()) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
+            AiOperation.Result tickTower(Vec3 pos) {
+               if (this.legPlaced >= this.currentLeg().blocks()) {
+                  if (this.isLastLeg()) {
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
                   }
 
-                  this.init("tower done");
-                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.sync_I));
+                  this.advanceLeg("tower done");
+                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.placedCount));
                } else {
                   BlockPos feet = mc.player.blockPosition();
                   boolean onGround = mc.player.onGround();
-                  if (this.init(feet.above(2))) {
-                     if (this.init_Z_21()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Ceiling reached");
+                  if (this.isSolidLoaded(feet.above(2))) {
+                     if (this.isLastLeg()) {
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Ceiling reached");
                      }
 
-                     this.init("ceiling reached");
-                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced (ceiling)", AiJson.objectOf("placed", this.sync_I));
+                     this.advanceLeg("ceiling reached");
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced (ceiling)", AiJson.objectOf("placed", this.placedCount));
                   } else {
                      boolean jump = false;
                      if (onGround) {
-                        this.write_BlockPos = feet;
+                        this.towerPlaceCell = feet;
                         this.sync_D = pos.y;
                         jump = true;
-                     } else if (this.write_BlockPos != null
+                     } else if (this.towerPlaceCell != null
                         && !Double.isNaN(this.sync_D)
                         && pos.y >= this.sync_D + 1.0
-                        && !this.init(this.write_BlockPos)
-                        && this.load_BlockPos == null) {
-                        if (this.load(this.write_BlockPos)) {
-                           return this.init(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + this.write_BlockPos.toShortString());
+                        && !this.isSolidLoaded(this.towerPlaceCell)
+                        && this.pendingCell == null) {
+                        if (this.lavaBelow(this.towerPlaceCell)) {
+                           return this.finish(AiOperation.Status.FAILED, "Refusing to scaffold over lava at " + this.towerPlaceCell.toShortString());
                         }
 
-                        if (!this.load()) {
-                           return this.init(AiOperation.Status.FAILED, "Out of blocks");
+                        if (!this.selectBuildBlock()) {
+                           return this.finish(AiOperation.Status.FAILED, "Out of blocks");
                         }
 
-                        if (this.read(this.write_BlockPos)) {
-                           this.load_BlockPos = this.write_BlockPos;
-                           this.load_J = AiServerEvidence.blockRevision(this.write_BlockPos);
-                           this.close_I = 0;
+                        if (this.placeAt(this.towerPlaceCell)) {
+                           this.pendingCell = this.towerPlaceCell;
+                           this.pendingRevision = AiServerEvidence.blockRevision(this.towerPlaceCell);
+                           this.verifyWaitTicks = 0;
                            this.init_Z = false;
                            this.load_Z = false;
-                           if (this.init(this.write_BlockPos)) {
-                              this.sync_I++;
-                              this.poll++;
+                           if (this.isSolidLoaded(this.towerPlaceCell)) {
+                              this.placedCount++;
+                              this.legPlaced++;
                               this.load_Z = true;
                               this.read_Z = true;
                               if (!plan.verify()) {
-                                 this.load_BlockPos = null;
+                                 this.pendingCell = null;
                               }
                            }
                         }
@@ -406,37 +406,37 @@ final class AiScaffoldWalk {
 
                      return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
-                        this.init_Str + " (tower), " + this.sync_I + " placed",
-                        AiJson.objectOf("placed", this.sync_I, "mode", "tower", "leg", this.open_I, "remainingBlocks", this.init_I_27())
+                        this.statusLabel + " (tower), " + this.placedCount + " placed",
+                        AiJson.objectOf("placed", this.placedCount, "mode", "tower", "leg", this.legIndex, "remainingBlocks", this.buildBlockCount())
                      );
                   }
                }
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
                return AiGameOperations.result(
                   status,
                   message,
                   AiJson.objectOf(
                      "placed",
-                     this.sync_I,
+                     this.placedCount,
                      "from",
-                     this.init_BlockPos.toShortString(),
+                     this.startPos.toShortString(),
                      "to",
-                     mc.player != null ? mc.player.blockPosition().toShortString() : this.init_BlockPos.toShortString()
+                     mc.player != null ? mc.player.blockPosition().toShortString() : this.startPos.toShortString()
                   )
                );
             }
 
             @Override
             public void cancel() {
-               if (!this.update_Z) {
-                  this.update_Z = true;
+               if (!this.cleanedUp) {
+                  this.cleanedUp = true;
                   autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
-                  this.init_DataUtil.clear();
-                  if (mc.player != null && this.flush_I >= 0 && mc.player.getInventory().getSelectedSlot() == this.flush_I) {
-                     mc.player.getInventory().setSelectedSlot(this.update_I);
+                  this.aim.clear();
+                  if (mc.player != null && this.switchedSlot >= 0 && mc.player.getInventory().getSelectedSlot() == this.switchedSlot) {
+                     mc.player.getInventory().setSelectedSlot(this.originalSlot);
                   }
                }
             }

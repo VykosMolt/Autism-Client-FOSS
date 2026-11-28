@@ -63,18 +63,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private final Map<String, RegistrySelectorScreen.Inner_DataUtil> entriesById = new HashMap<>();
    private final List<RegistrySelectorScreen.Inner_StreamUtil> hitRegions = new ArrayList<>();
    private ThemedTextInputBox searchField;
-   private int poll;
-   private int push;
+   private int availableScroll;
+   private int selectedScroll;
    private boolean availableScrollbarDragging;
    private boolean selectedScrollbarDragging;
-   private int pop;
+   private int scrollGrabOffset;
    private String cachedRawValue;
    private String cachedNeedle;
    private Set<String> cachedSelectedIds = Set.of();
    private List<RegistrySelectorScreen.Inner_ConfigStore> cachedSelectedRows = List.of();
    private List<RegistrySelectorScreen.Inner_DataUtil> cachedAvailable = List.of();
-   private int tick = -1;
-   private int run;
+   private int contentHeightKey = -1;
+   private int cachedContentHeight;
 
    private static int textColor() {
       return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
@@ -106,17 +106,17 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       try {
          this.hitRegions.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
-         int x = this.pop();
+         int x = this.panelX();
          int y = this.panelY();
-         int panelW = this.run();
+         int panelW = this.panelWidth();
          int panelH = this.get();
          this.init(graphics, x, y, panelW, panelH, this.titleText(), mx, my);
          if (panelW < 260 || panelH < 100) {
-            this.load(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.sync(), 12), textColor(), Math.max(0, panelW - 8));
+            this.load(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight(), 12), textColor(), Math.max(0, panelW - 8));
             return;
          }
 
-         this.init(x + 4, this.close(), panelW - 8, this.flush());
+         this.ensureSearchField(x + 4, this.bodyTop(), panelW - 8, this.flush());
          this.searchField.render(graphics, mx, my, delta);
          RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
          this.init(graphics, pane, pane.init(), "Available", true, mx, my);
@@ -137,24 +137,24 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
       try {
          if (available) {
-            this.init(graphics, x + 3, listTop, w - 12, listH, mx, my);
+            this.drawAvailablePane(graphics, x + 3, listTop, w - 12, listH, mx, my);
          } else {
-            this.load(graphics, x + 3, listTop, w - 12, listH, mx, my);
+            this.drawSelectedPane(graphics, x + 3, listTop, w - 12, listH, mx, my);
          }
       } finally {
          autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
       }
 
-      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.init(available, x, listTop, w, listH);
+      autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetricsAt(available, x, listTop, w, listH);
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, metrics.containsTrack(mx, my), available ? this.availableScrollbarDragging : this.selectedScrollbarDragging);
    }
 
-   private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
+   private void drawAvailablePane(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
       List<RegistrySelectorScreen.Inner_DataUtil> rows = this.availableEntries();
       int maxScroll = Math.max(0, this.contentHeight(rows) - h);
-      this.poll = this.init(this.poll, 0, maxScroll);
-      int rowY = y - this.poll;
-      int rowH = this.poll();
+      this.availableScroll = this.clamp(this.availableScroll, 0, maxScroll);
+      int rowY = y - this.availableScroll;
+      int rowH = this.rowHeight();
       int groupH = this.push();
       String lastGroup = "";
 
@@ -176,20 +176,20 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
+   private void drawSelectedPane(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
       List<RegistrySelectorScreen.Inner_ConfigStore> rows = this.selectedRows();
-      int maxScroll = Math.max(0, this.write() - h);
-      this.push = this.init(this.push, 0, maxScroll);
-      int rowH = this.poll();
+      int maxScroll = Math.max(0, this.selectedContentHeight() - h);
+      this.selectedScroll = this.clamp(this.selectedScroll, 0, maxScroll);
+      int rowH = this.rowHeight();
       if (rows.isEmpty()) {
          this.load(graphics, "Nothing selected.", x + 4, this.centeredTextY(y, rowH), textColor(), w - 8);
       } else {
-         int first = this.init(this.push / rowH, 0, Math.max(0, rows.size() - 1));
-         int last = this.init((this.push + h - 1) / rowH, 0, rows.size() - 1);
+         int first = this.clamp(this.selectedScroll / rowH, 0, Math.max(0, rows.size() - 1));
+         int last = this.clamp((this.selectedScroll + h - 1) / rowH, 0, rows.size() - 1);
 
          for (int i = first; i <= last; i++) {
             RegistrySelectorScreen.Inner_ConfigStore row = rows.get(i);
-            int rowY = y - this.push + i * rowH;
+            int rowY = y - this.selectedScroll + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
                this.init(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.Inner_CachePool.REMOVE, row.id, mx, my, row.init_Z);
             }
@@ -216,7 +216,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    ) {
       String label = entry == null ? value : entry.load;
       String id = entry == null ? value : entry.init_Str;
-      int rowH = this.poll();
+      int rowH = this.rowHeight();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
       autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH - 1, over ? -1441000940 : -1441722092);
       int textX = x + 4;
@@ -262,7 +262,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
-      int headerH = this.sync();
+      int headerH = this.headerHeight();
       autismclient.gui.ui.widgets.DialogFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
@@ -285,22 +285,22 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics availableMetrics = this.scrollbarMetrics(true);
       if (availableMetrics.isScrollable() && availableMetrics.containsTrack(mx, my)) {
          this.availableScrollbarDragging = true;
-         this.pop = availableMetrics.containsThumb(mx, my) ? my - availableMetrics.thumbY() : availableMetrics.thumbHeight() / 2;
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(availableMetrics, my, this.pop);
+         this.scrollGrabOffset = availableMetrics.containsThumb(mx, my) ? my - availableMetrics.thumbY() : availableMetrics.thumbHeight() / 2;
+         this.availableScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(availableMetrics, my, this.scrollGrabOffset);
          return true;
       }
 
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics selectedMetrics = this.scrollbarMetrics(false);
       if (selectedMetrics.isScrollable() && selectedMetrics.containsTrack(mx, my)) {
          this.selectedScrollbarDragging = true;
-         this.pop = selectedMetrics.containsThumb(mx, my) ? my - selectedMetrics.thumbY() : selectedMetrics.thumbHeight() / 2;
-         this.push = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(selectedMetrics, my, this.pop));
+         this.scrollGrabOffset = selectedMetrics.containsThumb(mx, my) ? my - selectedMetrics.thumbY() : selectedMetrics.thumbHeight() / 2;
+         this.selectedScroll = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(selectedMetrics, my, this.scrollGrabOffset));
          return true;
       }
 
       for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
          RegistrySelectorScreen.Inner_StreamUtil hit = this.hitRegions.get(i);
-         if (hit.init(mx, my)
+         if (hit.contains(mx, my)
             && (hit.action != RegistrySelectorScreen.Inner_CachePool.ADD || this.isOverAvailablePane(mx, my))
             && (hit.action != RegistrySelectorScreen.Inner_CachePool.REMOVE || this.load(mx, my))) {
             switch (hit.action) {
@@ -337,10 +337,10 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.availableScrollbarDragging) {
-         this.poll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(true), my, this.pop);
+         this.availableScroll = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(true), my, this.scrollGrabOffset);
          return true;
       } else if (this.selectedScrollbarDragging) {
-         this.push = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(false), my, this.pop));
+         this.selectedScroll = this.snapToRow(autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics(false), my, this.scrollGrabOffset));
          return true;
       } else {
          return this.searchField != null && this.searchField.mouseDragged(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
@@ -351,19 +351,19 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       int mx = cA.init_I_D(mouseX);
       int my = cA.init_I_D(mouseY);
-      int amount = scrollY < 0.0 ? this.poll() : -this.poll();
+      int amount = scrollY < 0.0 ? this.rowHeight() : -this.rowHeight();
       if (this.isOverAvailablePane(mx, my)) {
-         this.poll += amount;
+         this.availableScroll += amount;
       } else {
          if (!this.load(mx, my)) {
             return true;
          }
 
-         this.push += amount;
+         this.selectedScroll += amount;
       }
 
-      this.poll = this.init(this.poll, 0, this.scrollbarMetrics(true).maxScroll());
-      this.push = this.init(this.push, 0, this.scrollbarMetrics(false).maxScroll());
+      this.availableScroll = this.clamp(this.availableScroll, 0, this.scrollbarMetrics(true).maxScroll());
+      this.selectedScroll = this.clamp(this.selectedScroll, 0, this.scrollbarMetrics(false).maxScroll());
       return true;
    }
 
@@ -386,7 +386,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return true;
    }
 
-   private void init(int x, int y, int w, int h) {
+   private void ensureSearchField(int x, int y, int w, int h) {
       if (this.searchField == null) {
          this.searchField = new ThemedTextInputBox(Minecraft.getInstance(), this.font, x, y, w, h, false);
          this.searchField.setPlaceholder(Component.literal("Search"));
@@ -569,7 +569,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                      if (item != Items.AIR) {
                         out.add(
                            new RegistrySelectorScreen.Inner_DataUtil(
-                              this.read(BuiltInRegistries.ITEM.getKey(item)),
+                              this.lowerId(BuiltInRegistries.ITEM.getKey(item)),
                               item.getName(item.getDefaultInstance()).getString(),
                               "",
                               DisplayItemStackFactory.displayStack(item),
@@ -606,7 +606,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         throw new MatchException(null, null);
                   }
 
-                  out.add(new RegistrySelectorScreen.Inner_DataUtil(this.read(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
+                  out.add(new RegistrySelectorScreen.Inner_DataUtil(this.lowerId(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
                }
             });
             break;
@@ -619,7 +619,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         ItemStack iconx = spawnEggs.getOrDefault(typeEntry, ItemStack.EMPTY);
                         out.add(
                            new RegistrySelectorScreen.Inner_DataUtil(
-                              this.read(BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)typeEntry)),
+                              this.lowerId(BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)typeEntry)),
                               typeEntry.getDescription().getString(),
                               this.entityGroup((EntityType<?>)typeEntry),
                               iconx,
@@ -638,7 +638,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                      if (soundId != null) {
                         out.add(
                            new RegistrySelectorScreen.Inner_DataUtil(
-                              this.read(soundId),
+                              this.lowerId(soundId),
                               this.displayName(soundId),
                               this.load(soundId),
                               this.soundIcon(soundId, this.spawnEggsByType()),
@@ -997,23 +997,23 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private String read(Identifier id) {
+   private String lowerId(Identifier id) {
       return id == null ? "" : id.toString().toLowerCase(Locale.ROOT);
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(boolean available) {
       RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
-      return this.init(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
+      return this.scrollbarMetricsAt(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init(boolean available, int paneX, int listTop, int paneW, int listH) {
-      int contentH = available ? this.contentHeight(this.availableEntries()) : this.write();
-      int scroll = available ? this.poll : this.push;
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetricsAt(boolean available, int paneX, int listTop, int paneW, int listH) {
+      int contentH = available ? this.contentHeight(this.availableEntries()) : this.selectedContentHeight();
+      int scroll = available ? this.availableScroll : this.selectedScroll;
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);
    }
 
    private int contentHeight(List<RegistrySelectorScreen.Inner_DataUtil> rows) {
-      int rowH = this.poll();
+      int rowH = this.rowHeight();
       int groupH = this.push();
       int height = 0;
       String lastGroup = "";
@@ -1030,19 +1030,19 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return rows.isEmpty() ? 0 : height + 2;
    }
 
-   private int write() {
+   private int selectedContentHeight() {
       int size = this.selectedRows().size();
-      return size == 0 ? 0 : size * this.poll() + 2;
+      return size == 0 ? 0 : size * this.rowHeight() + 2;
    }
 
-   private int update() {
-      int key = this.poll() * 1000 + this.push();
-      if (key != this.tick) {
-         this.tick = key;
-         this.run = this.contentHeight(this.entries);
+   private int listContentHeight() {
+      int key = this.rowHeight() * 1000 + this.push();
+      if (key != this.contentHeightKey) {
+         this.contentHeightKey = key;
+         this.cachedContentHeight = this.contentHeight(this.entries);
       }
 
-      return Math.max(this.run, this.write());
+      return Math.max(this.cachedContentHeight, this.selectedContentHeight());
    }
 
    private static boolean isGroupedKind(Setting<?, ?> option) {
@@ -1060,11 +1060,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private RegistrySelectorScreen.Inner_BufferHelper availablePane() {
-      int panelX = this.pop();
+      int panelX = this.panelX();
       int panelY = this.panelY();
-      int paneY = this.close() + this.flush() + 2;
+      int paneY = this.bodyTop() + this.flush() + 2;
       int paneH = panelY + this.get() - paneY - 4;
-      int paneW = (this.run() - 8 - 4) / 2;
+      int paneW = (this.panelWidth() - 8 - 4) / 2;
       int leftX = panelX + 4;
       int rightX = leftX + paneW + 4;
       int listTop = paneY + 2 + this.open();
@@ -1072,7 +1072,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return new RegistrySelectorScreen.Inner_BufferHelper(leftX, rightX, paneY, paneW, paneH, listTop, listH);
    }
 
-   private int sync() {
+   private int headerHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
@@ -1080,15 +1080,15 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int close() {
-      return this.panelY() + this.sync() + 4;
+   private int bodyTop() {
+      return this.panelY() + this.headerHeight() + 4;
    }
 
    private int open() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int poll() {
+   private int rowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
@@ -1101,12 +1101,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void clampScrolls() {
-      this.poll = this.init(this.poll, 0, this.scrollbarMetrics(true).maxScroll());
-      this.push = this.init(this.push, 0, this.scrollbarMetrics(false).maxScroll());
+      this.availableScroll = this.clamp(this.availableScroll, 0, this.scrollbarMetrics(true).maxScroll());
+      this.selectedScroll = this.clamp(this.selectedScroll, 0, this.scrollbarMetrics(false).maxScroll());
    }
 
    private int snapToRow(int offset) {
-      int rowH = this.poll();
+      int rowH = this.rowHeight();
       return Math.max(0, offset / rowH) * rowH;
    }
 
@@ -1114,27 +1114,27 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return this.setting == null ? "Select" : "Select " + this.setting.label();
    }
 
-   private int pop() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.run(), 6);
+   private int panelX() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.panelWidth(), 6);
    }
 
    private int panelY() {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.get(), 6);
    }
 
-   private int run() {
+   private int panelWidth() {
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 460);
    }
 
    private int get() {
-      int minList = 4 * this.poll();
+      int minList = 4 * this.rowHeight();
       int maxList = Math.max(minList, (int)(this.virtualHeight() * 0.65F));
-      int list = this.init(this.update(), minList, maxList);
-      int chrome = this.sync() + 4 + this.flush() + 2 + 4 + this.open() + 4;
+      int list = this.clamp(this.listContentHeight(), minList, maxList);
+      int chrome = this.headerHeight() + 4 + this.flush() + 2 + 4 + this.open() + 4;
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + list);
    }
 
-   private int init(int value, int min, int max) {
+   private int clamp(int value, int min, int max) {
       return Math.max(min, Math.min(max, value));
    }
 
@@ -1195,7 +1195,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private record Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool action, int x, int load, int read, int write, String value) {
-      boolean init(int mx, int my) {
+      boolean contains(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }

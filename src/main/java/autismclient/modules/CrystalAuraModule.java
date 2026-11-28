@@ -104,17 +104,17 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private final Random jitterRandom;
    private long totalTickNanos;
    private long maxTickNanos;
-   private int clear;
+   private int tickSampleCount;
    private LivingEntity target;
    private String attackStage;
-   private int reset;
+   private int lastActiveTick;
    private BlockPos reservedCrystalCell;
    private final autismclient.util.ActionCooldownScheduler cooldowns;
    private final autismclient.util.CombatAimSpeedController aimSpeed;
    private final autismclient.util.SessionContextWatcher sessionWatcher;
    private final autismclient.util.TargetLeadDamageEstimator leadEstimator;
    private final autismclient.util.ActivationModeLatch activationLatch;
-   private int start;
+   private int burstCount;
    private long burstResetDeadline;
    private long stopDeadline;
    private long switchDeadline;
@@ -125,38 +125,38 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private String entityFilterSource;
    private Set<String> entityFilter;
    private int stop;
-   private int next;
-   private int prev;
+   private int borrowedSlot;
+   private int switchBackDelay;
    private int valid;
-   private int size;
+   private int entryCursor;
    private BlockPos plannedObsidianPos;
-   private int data;
+   private int obsidianSlot;
    private LivingEntity obsidianPlanTarget;
-   private int value;
+   private int obsidianPlanUntil;
    private double plannedObsidianDamage;
    private BlockPos plannedSupportPos;
    private LivingEntity supportPlanTarget;
    private final autismclient.util.StickyPlacementSelector stickySelector;
-   private int cache;
+   private int supportPlanUntil;
    private BlockPos previewSupportPos;
    private BlockPos previewCrystalPos;
    private int state;
    private BlockPos lastPlacedSupport;
-   private int queue;
+   private int sameAreaStreak;
    private int buffer;
-   private int entry;
-   private int node;
+   private int sameTargetStreak;
+   private int lastTargetId;
    private int task;
-   private int pool;
+   private int lastObsidianPlaceTick;
    private BlockPos unverifiedObsidianPos;
-   private int index;
-   private int count;
+   private int obsidianWindowStart;
+   private int obsidianPlacesInWindow;
    private final autismclient.util.LatencyTickWindow<BlockPos> recentPlacements;
    private final autismclient.util.LatencyTickWindow<EndCrystal> recentAttacks;
    private final autismclient.util.PendingCrystalAttackCache pendingAttacks;
-   private int flags;
+   private int lastBurstTick;
    private BlockPos bestBuilderSupport;
-   private int level;
+   private int builderTargetId;
    private int frame;
    private BlockPos builderPlayerPos;
    private BlockPos builderEnemyPos;
@@ -176,7 +176,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.simOptions = autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withIgnoreTerrain(true);
       this.jitterRandom = new Random();
       this.attackStage = "";
-      this.reset = -2147483648;
+      this.lastActiveTick = -2147483648;
       this.cooldowns = new autismclient.util.ActionCooldownScheduler();
       this.aimSpeed = new autismclient.util.CombatAimSpeedController();
       this.sessionWatcher = new autismclient.util.SessionContextWatcher();
@@ -184,21 +184,21 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.activationLatch = new autismclient.util.ActivationModeLatch();
       this.entityFilter = Set.of();
       this.stop = -1;
-      this.next = -1;
+      this.borrowedSlot = -1;
       this.valid = -2147483648;
-      this.data = -1;
-      this.value = -2147483648;
+      this.obsidianSlot = -1;
+      this.obsidianPlanUntil = -2147483648;
       this.stickySelector = new autismclient.util.StickyPlacementSelector();
-      this.cache = -2147483648;
+      this.supportPlanUntil = -2147483648;
       this.state = -2147483648;
-      this.node = -1;
-      this.pool = -2147483648;
-      this.index = -2147483648;
+      this.lastTargetId = -1;
+      this.lastObsidianPlaceTick = -2147483648;
+      this.obsidianWindowStart = -2147483648;
       this.recentPlacements = new autismclient.util.LatencyTickWindow<>(16);
       this.recentAttacks = new autismclient.util.LatencyTickWindow<>(16);
       this.pendingAttacks = new autismclient.util.PendingCrystalAttackCache();
-      this.flags = -2147483648;
-      this.level = -1;
+      this.lastBurstTick = -2147483648;
+      this.builderTargetId = -1;
       this.block = -2147483648;
       this.cachedSupports = List.of();
       this.scoredCandidates = new ArrayList<>(4);
@@ -384,8 +384,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    public void onEnable() {
       if (autismclient.aggressivepvp.Versions.onEnable(autismclient.aggressivepvp.Versions.crystal)) {
          this.stop = -1;
-         this.next = -1;
-         this.prev = 0;
+         this.borrowedSlot = -1;
+         this.switchBackDelay = 0;
          this.refreshViewSettings();
          return;
       }
@@ -398,15 +398,15 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    public void onDisable() {
       if (autismclient.aggressivepvp.Versions.onDisable(autismclient.aggressivepvp.Versions.crystal)) {
          this.stop = -1;
-         this.next = -1;
-         this.prev = 0;
+         this.borrowedSlot = -1;
+         this.switchBackDelay = 0;
          this.refreshViewSettings();
          return;
       }
 
       int back = this.stop;
-      int borrowed = this.next;
-      int delay = this.prev;
+      int borrowed = this.borrowedSlot;
+      int delay = this.switchBackDelay;
       this.resetState();
       this.refreshViewSettings();
       // Do not preserve Default's deferred switch-back when handing over to Aggressive.
@@ -416,8 +416,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       if (back >= 0 && !handingOverToAggressive) {
          // The switch-back still runs after its delay, from tick().
          this.stop = back;
-         this.next = borrowed;
-         this.prev = delay;
+         this.borrowedSlot = borrowed;
+         this.switchBackDelay = delay;
       }
 
       autismclient.util.SilentRotationManager.releaseOwner("crystal-aura");
@@ -427,8 +427,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    public void onGameLeft() {
       if (autismclient.aggressivepvp.Versions.onGameLeft(autismclient.aggressivepvp.Versions.crystal)) {
          this.stop = -1;
-         this.next = -1;
-         this.prev = 0;
+         this.borrowedSlot = -1;
+         this.switchBackDelay = 0;
          return;
       }
 
@@ -446,39 +446,39 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.auditHasUpdateDeadline = false;
       this.totalTickNanos = 0L;
       this.maxTickNanos = 0L;
-      this.clear = 0;
+      this.tickSampleCount = 0;
       this.target = null;
-      this.reset = -2147483648;
+      this.lastActiveTick = -2147483648;
       this.reservedCrystalCell = null;
       this.cooldowns.init();
       this.leadEstimator.init();
       this.activationLatch.init();
-      this.start = 0;
+      this.burstCount = 0;
       this.burstResetDeadline = 0L;
       this.stopDeadline = 0L;
       this.auditHasReadDeadline = false;
       this.auditHasWriteDeadline = false;
       this.stop = -1;
-      this.next = -1;
-      this.prev = 0;
+      this.borrowedSlot = -1;
+      this.switchBackDelay = 0;
       this.valid = -2147483648;
-      this.size = 0;
+      this.entryCursor = 0;
       this.lastPlacedSupport = null;
-      this.queue = 0;
+      this.sameAreaStreak = 0;
       this.buffer = 0;
-      this.entry = 0;
-      this.node = -1;
+      this.sameTargetStreak = 0;
+      this.lastTargetId = -1;
       this.task = 0;
-      this.pool = -2147483648;
+      this.lastObsidianPlaceTick = -2147483648;
       this.unverifiedObsidianPos = null;
-      this.index = -2147483648;
-      this.count = 0;
+      this.obsidianWindowStart = -2147483648;
+      this.obsidianPlacesInWindow = 0;
       this.recentPlacements.clear();
       this.recentAttacks.clear();
       this.pendingAttacks.init();
-      this.flags = -2147483648;
+      this.lastBurstTick = -2147483648;
       this.bestBuilderSupport = null;
-      this.level = -1;
+      this.builderTargetId = -1;
       this.frame = 0;
       table = -2147483648;
       this.builderPlayerPos = null;
@@ -527,10 +527,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.block = -2147483648;
       if ("vulnerable-spam".equals(settingId)) {
          this.lastPlacedSupport = null;
-         this.queue = 0;
+         this.sameAreaStreak = 0;
          this.buffer = 0;
-         this.entry = 0;
-         this.node = -1;
+         this.sameTargetStreak = 0;
+         this.lastTargetId = -1;
          this.task = 0;
       }
    }
@@ -550,12 +550,12 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    LivingEntity currentTarget() {
-      int age = AutismSessionState.getInstance().getClientTick() - this.reset;
-      return this.isEnabled() && age >= 0 && age <= 2 && this.push() ? this.target : null;
+      int age = AutismSessionState.getInstance().getClientTick() - this.lastActiveTick;
+      return this.isEnabled() && age >= 0 && age <= 2 && this.isInGameReady() ? this.target : null;
    }
 
    public static double averageTickMicros() {
-      return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.clear > 0 ? aura.totalTickNanos / aura.clear / 1000.0 : 0.0;
+      return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.tickSampleCount > 0 ? aura.totalTickNanos / aura.tickSampleCount / 1000.0 : 0.0;
    }
 
    public static double maxTickMicros() {
@@ -593,7 +593,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    public static boolean init_Z_51() {
       if (al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled()) {
-         int age = AutismSessionState.getInstance().getClientTick() - aura.reset;
+         int age = AutismSessionState.getInstance().getClientTick() - aura.lastActiveTick;
          return age >= 0 && age <= 5;
       } else {
          return false;
@@ -610,7 +610,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       } else if (!(al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled())) {
          return false;
       } else {
-         if (aura.reset != AutismSessionState.getInstance().getClientTick()) {
+         if (aura.lastActiveTick != AutismSessionState.getInstance().getClientTick()) {
             return false;
          }
 
@@ -625,7 +625,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       if (autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.crystal)) {
          return false;
       }
-      return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.stop >= 0 && aura.next == slot : false;
+      return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.stop >= 0 && aura.borrowedSlot == slot : false;
    }
 
    public static boolean sync_Z_11() {
@@ -680,14 +680,14 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       boolean enabled = this.isEnabled();
-      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.push());
+      return !SilentMovementCoordinator.isSafeWalkActive() && (autismclient.util.SilentRotationManager.isReturningToPlayer() || enabled && this.isInGameReady());
    }
 
    private static boolean auditBeforeDeadline(boolean active, long deadline) {
       return active && System.nanoTime() - deadline < 0L;
    }
 
-   private boolean poll() {
+   private boolean isActivationActive() {
       if (auditBeforeDeadline(this.auditHasWriteDeadline, this.stopDeadline)) {
          return false;
       }
@@ -695,7 +695,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       int bind = this.integer("activation-key");
       boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
       if (!this.activationLatch.init(this.choice("activation"), down)) {
-         this.start = 0;
+         this.burstCount = 0;
          return false;
       }
 
@@ -712,12 +712,12 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       int limit = var10000;
-      if (limit != 0 && this.start >= limit) {
+      if (limit != 0 && this.burstCount >= limit) {
          if (auditBeforeDeadline(this.auditHasReadDeadline, this.burstResetDeadline)) {
             return false;
          }
 
-         this.start = 0;
+         this.burstCount = 0;
          return true;
       } else {
          return true;
@@ -726,7 +726,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private void checkTargetKilled(LivingEntity previous) {
       if (previous != null && (!previous.isAlive() || previous.isRemoved() || !(autismclient.util.ExplosionDamageCalculator.effectiveHealth(previous) > 0.0))) {
-         this.start = 0;
+         this.burstCount = 0;
          if (this.bool("stop-on-kill")) {
             this.stopDeadline = System.nanoTime() + this.integer("stop-delay") * 1000000L;
             this.auditHasWriteDeadline = true;
@@ -735,7 +735,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private boolean push() {
+   private boolean isInGameReady() {
       return MC != null
          && MC.player != null
          && MC.level != null
@@ -787,14 +787,14 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          this.update_V_17();
-         if (!this.push()) {
+         if (!this.isInGameReady()) {
             this.target = null;
             this.clearPlans();
             this.lastPlacedSupport = null;
-            this.queue = 0;
+            this.sameAreaStreak = 0;
             this.buffer = 0;
-            this.entry = 0;
-            this.node = -1;
+            this.sameTargetStreak = 0;
+            this.lastTargetId = -1;
             this.task = 0;
             this.releaseClaims();
             return;
@@ -802,7 +802,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          LivingEntity previousTarget = this.target;
          this.checkTargetKilled(previousTarget);
-         if (!this.poll()) {
+         if (!this.isActivationActive()) {
             this.target = null;
             this.clearPlans();
             this.releaseClaims();
@@ -811,7 +811,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          LivingEntity enemy = this.findTarget();
          if (enemy != previousTarget) {
-            this.start = 0;
+            this.burstCount = 0;
          }
 
          this.target = enemy;
@@ -822,10 +822,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          if (enemy == null) {
             this.clearPlans();
             this.lastPlacedSupport = null;
-            this.queue = 0;
+            this.sameAreaStreak = 0;
             this.buffer = 0;
-            this.entry = 0;
-            this.node = -1;
+            this.sameTargetStreak = 0;
+            this.lastTargetId = -1;
             this.task = 0;
             this.releaseClaims();
             return;
@@ -866,16 +866,16 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
             if (destroy == null && defend == null) {
                autismclient.util.BlockPlacementPlanner.RayBudget budget = new autismclient.util.BlockPlacementPlanner.RayBudget(48);
-               if (this.read(enemy)) {
+               if (this.resumeObsidianPlan(enemy)) {
                   obsidian = this.init_t_TaskQueue_U_StreamUtil(budget);
-               } else if (this.update(enemy)) {
-                  place = this.load(enemy, budget);
+               } else if (this.resumeSupportPlan(enemy)) {
+                  place = this.bestPlacement(enemy, budget);
                }
 
                if (obsidian == null && place == null && this.plannedObsidianPos == null && this.plannedSupportPos == null) {
                   place = this.planPlace(enemy, budget);
                   boolean builderSuppressed = false;
-                  if (this.bool("place") && this.bool("obsidian") && this.put() && (place == null || place.load() < 8.0)) {
+                  if (this.bool("place") && this.bool("obsidian") && this.canUseCrystalSlot() && (place == null || place.load() < 8.0)) {
                      if (this.write(enemy)) {
                         builderSuppressed = true;
                      } else if (!this.run()) {
@@ -925,7 +925,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                return;
             }
 
-            this.reset = AutismSessionState.getInstance().getClientTick();
+            this.lastActiveTick = AutismSessionState.getInstance().getClientTick();
             this.reservedCrystalCell = null;
             boolean borrowsHand = place != null && place.hand() != InteractionHand.OFF_HAND
                || obsidian != null && obsidian.hand() != InteractionHand.OFF_HAND
@@ -992,7 +992,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             if (obsidian != null) {
                this.executeBuilder(obsidian, obsidianHit);
             } else {
-               this.load(defend, defendHit);
+               this.executeObsidianPlace(defend, defendHit);
             }
 
             return;
@@ -1005,7 +1005,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          long elapsed = System.nanoTime() - profileStarted;
          this.totalTickNanos += elapsed;
          this.maxTickNanos = Math.max(this.maxTickNanos, elapsed);
-         this.clear++;
+         this.tickSampleCount++;
       }
    }
 
@@ -1060,7 +1060,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             );
       }
 
-      this.prev = this.integer("switch-back-delay");
+      this.switchBackDelay = this.integer("switch-back-delay");
    }
 
    private void init(LivingEntity enemy, CrystalAuraModule.Inner_ConfigStore destroy, CrystalAuraModule.Inner_NetHelper place, CrystalAuraModule.Inner_TaskQueue obsidian) {
@@ -1072,12 +1072,12 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          } else {
             if (++this.buffer > 1) {
                this.lastPlacedSupport = null;
-               this.queue = 0;
+               this.sameAreaStreak = 0;
             }
 
             if (++this.task > 1) {
-               this.entry = 0;
-               this.node = -1;
+               this.sameTargetStreak = 0;
+               this.lastTargetId = -1;
             }
          }
       } else {
@@ -1090,18 +1090,18 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             && Math.abs(support.getZ() - this.lastPlacedSupport.getZ()) <= 1;
          this.lastPlacedSupport = support;
          if (!strong) {
-            this.queue = 0;
+            this.sameAreaStreak = 0;
          } else {
-            this.queue = sameArea ? this.queue + 1 : 1;
+            this.sameAreaStreak = sameArea ? this.sameAreaStreak + 1 : 1;
          }
 
          if (this.load_Z_LivingEntity_2(enemy)) {
             this.task = 0;
-            this.entry = enemy.getId() == this.node ? this.entry + 1 : 1;
-            this.node = enemy.getId();
+            this.sameTargetStreak = enemy.getId() == this.lastTargetId ? this.sameTargetStreak + 1 : 1;
+            this.lastTargetId = enemy.getId();
          } else if (++this.task > 1) {
-            this.entry = 0;
-            this.node = -1;
+            this.sameTargetStreak = 0;
+            this.lastTargetId = -1;
          }
       }
    }
@@ -1109,10 +1109,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private boolean pop() {
       LivingEntity enemy = this.target;
       if (enemy != null && MC.player != null) {
-         int age = AutismSessionState.getInstance().getClientTick() - this.flags;
+         int age = AutismSessionState.getInstance().getClientTick() - this.lastBurstTick;
          boolean blastGrace = age >= 0 && age <= 2;
-         if (!this.bool("vulnerable-spam") || this.entry < 2 || !this.load_Z_LivingEntity_2(enemy) && this.task > 1) {
-            if (this.queue < 2) {
+         if (!this.bool("vulnerable-spam") || this.sameTargetStreak < 2 || !this.load_Z_LivingEntity_2(enemy) && this.task > 1) {
+            if (this.sameAreaStreak < 2) {
                return false;
             } else {
                return blastGrace ? true : MC.player.getDeltaMovement().lengthSqr() <= 0.0625 && enemy.getDeltaMovement().lengthSqr() <= 0.0625;
@@ -1176,7 +1176,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       for (LivingEntity entity : found) {
          double distanceSq = distanceSqToBox(entity.getBoundingBox(), eye);
          if (!(distanceSq > rangeSq)) {
-            double score = this.init(mode, entity, distanceSq, eye);
+            double score = this.targetScore(mode, entity, distanceSq, eye);
             if (score < bestScore) {
                bestScore = score;
                best = entity;
@@ -1189,7 +1189,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          double grace = range + 0.5;
          double incumbentDistanceSq = distanceSqToBox(incumbent.getBoundingBox(), eye);
          if (incumbentDistanceSq <= grace * grace
-            && (best == null || !autismclient.util.TargetSwitchHysteresis.init(mode, bestScore, this.init(mode, incumbent, incumbentDistanceSq, eye)))) {
+            && (best == null || !autismclient.util.TargetSwitchHysteresis.init(mode, bestScore, this.targetScore(mode, incumbent, incumbentDistanceSq, eye)))) {
             return incumbent;
          }
       }
@@ -1197,7 +1197,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return best;
    }
 
-   private double init(String mode, LivingEntity entity, double distanceSq, Vec3 eye) {
+   private double targetScore(String mode, LivingEntity entity, double distanceSq, Vec3 eye) {
       double var10000;
       switch (mode) {
          case "HP":
@@ -1402,7 +1402,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       if (!autismclient.util.QueuedCombatAction.init(
          "crystal-aura",
          new EntityHitResult(crystal, hitPoint),
-         () -> this.push()
+         () -> this.isInGameReady()
             && crystal.isAlive()
             && this.set()
             && this.serverRotation() != null
@@ -1424,9 +1424,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.recordAction(true);
       this.recentAttacks.init(crystal, AutismSessionState.getInstance().getClientTick(), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
       this.pendingAttacks.init(crystal, BlockPos.containing(crystal.position()), AutismSessionState.getInstance().getClientTick(), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
-      this.flags = AutismSessionState.getInstance().getClientTick();
-      this.start++;
-      if (!"Unlimited".equals(this.choice("burst-limit")) && this.start >= Integer.parseInt(this.choice("burst-limit"))) {
+      this.lastBurstTick = AutismSessionState.getInstance().getClientTick();
+      this.burstCount++;
+      if (!"Unlimited".equals(this.choice("burst-limit")) && this.burstCount >= Integer.parseInt(this.choice("burst-limit"))) {
          this.burstResetDeadline = System.nanoTime() + this.integer("burst-reset") * 1000000L;
          this.auditHasReadDeadline = true;
          this.activationLatch.init("Press");
@@ -1444,7 +1444,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return null;
       }
 
-      if (!this.put()) {
+      if (!this.canUseCrystalSlot()) {
          return null;
       }
 
@@ -1469,7 +1469,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             .withLeadEye(eye.add(player.getDeltaMovement()))
             .withRayBudget(budget);
          scan.clear();
-         this.init(support, state, cell, eye, wire, scan);
+         this.addSupportCandidate(support, state, cell, eye, wire, scan);
 
          for (autismclient.util.BlockPlacementPlanner.SupportCandidate option : scan) {
             entries.add(new CrystalAuraModule.Inner_JsonUtil(support, request, option));
@@ -1481,7 +1481,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       int size = entries.size();
-      int start = this.size >= 0 && this.size < size ? this.size : 0;
+      int start = this.entryCursor >= 0 && this.entryCursor < size ? this.entryCursor : 0;
 
       for (int step = 0; step < size; step++) {
          int index = (start + step) % size;
@@ -1493,7 +1493,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             );
             if (candidate != null) {
                InteractionHand hand = this.crystalHand();
-               this.size = 0;
+               this.entryCursor = 0;
                BlockPos chosen = entry.support();
                Vec3 chosenSource = new Vec3(chosen.getX() + 0.5, chosen.getY() + 1.0, chosen.getZ() + 0.5);
                double chosenDamage = this.rankDamage(enemy, chosenSource, this.predictedHitbox(enemy, this.leadHorizonTicks(), 1.5))
@@ -1502,17 +1502,17 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             }
 
             if (refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET) {
-               this.size = index;
+               this.entryCursor = index;
                return null;
             }
          }
       }
 
-      this.size = 0;
+      this.entryCursor = 0;
       return null;
    }
 
-   private void init(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, RotationMath.Rotation wire, List<autismclient.util.BlockPlacementPlanner.SupportCandidate> out) {
+   private void addSupportCandidate(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, RotationMath.Rotation wire, List<autismclient.util.BlockPlacementPlanner.SupportCandidate> out) {
       boolean requiresSneak = autismclient.util.BlockPlacementPlanner.requiresSneakToPlace(state, support);
       List<CrystalAuraModule.Inner_SyncManager> keyed = new ArrayList<>();
 
@@ -1572,7 +1572,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
-         if (this.read(cursor)
+         if (this.isCrystalBase(cursor)
             && (!"Aimed".equals(this.choice("aim-mode")) || this.aimedHit instanceof BlockHitResult aimed && aimed.getBlockPos().equals(cursor))
             && MC.level.isEmptyBlock(cursor.above())) {
             Vec3 source = new Vec3(cursor.getX() + 0.5, cursor.getY() + 1.0, cursor.getZ() + 0.5);
@@ -1580,7 +1580,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                double distanceSq = eye.distanceToSqr(source);
                if (!(distanceSq > rangeSq)) {
                   double bound = autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, source, 6.0F, targetOptions);
-                  if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.write(cursor)) {
+                  if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.recentlyPlacedAbove(cursor)) {
                      candidates.add(new CrystalAuraModule.Inner_DataUtil(cursor.immutable(), source, bound, distanceSq));
                   }
                }
@@ -1653,7 +1653,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return Math.floor(targetDamage * 2.0);
    }
 
-   private boolean read(BlockPos pos) {
+   private boolean isCrystalBase(BlockPos pos) {
       BlockState state = MC.level.getBlockState(pos);
       return state.getBlock() == Blocks.OBSIDIAN || state.getBlock() == Blocks.BEDROCK;
    }
@@ -1687,7 +1687,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return true;
    }
 
-   private boolean write(BlockPos support) {
+   private boolean recentlyPlacedAbove(BlockPos support) {
       return this.recentPlacements.init(support.above(), AutismSessionState.getInstance().getClientTick());
    }
 
@@ -1766,11 +1766,11 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          return null;
       } else {
          BlockPos support = plan.support();
-         if (!this.read(support)) {
+         if (!this.isCrystalBase(support)) {
             return null;
          } else {
             AABB nextBox = MC.player.getBoundingBox().move(MC.player.getDeltaMovement());
-            if (this.init_Z_BlockPos_AABB_3(support, nextBox) && !this.write(support)) {
+            if (this.init_Z_BlockPos_AABB_3(support, nextBox) && !this.recentlyPlacedAbove(support)) {
                return !isEndCrystal(MC.player.getItemInHand(plan.hand()))
                   ? null
                   : autismclient.util.BlockPlacementPlanner.verifyWithRotation(
@@ -1795,7 +1795,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             "crystal-aura",
             hit,
             hand,
-            () -> this.push()
+            () -> this.isInGameReady()
                && this.serverRotation() != null
                && this.placeHit(plan, this.serverRotation()) != null
                && this.init_Z_LivingEntity_3(
@@ -1868,7 +1868,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
          Vec3 source = new Vec3(cursor.getX() + 0.5, cursor.getY() + 1.0, cursor.getZ() + 0.5);
          if ((!"Aimed".equals(this.choice("aim-mode")) || cursor.equals(this.init_BlockPos_8())) && (!this.bool("only-above") || !(source.y < enemy.getY()))) {
-            if (this.read(cursor)) {
+            if (this.isCrystalBase(cursor)) {
                double supportBound = autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, source, 6.0F, targetOptions);
                if (supportBound >= floor && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && this.init_Z_Vec3_9(eye, cursor, source)) {
                   autismclient.util.ExplosionDamageCalculator.DamagePair supportRank = this.rankDamage(enemy, source, blastTarget);
@@ -1884,9 +1884,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                double distanceSq = eye.distanceToSqr(source);
                if (!(distanceSq > rangeSq)) {
                   double bound = autismclient.util.ExplosionDamageCalculator.calculateUpperBoundDamage(enemy, source, 6.0F, targetOptions);
-                  if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.write(cursor)) {
+                  if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.recentlyPlacedAbove(cursor)) {
                      supportFaces.clear();
-                     autismclient.util.BlockPlacementPlanner.collectCandidates(this.init(cursor.immutable(), material, hand, range, eye, this.wireRotation()), supportFaces);
+                     autismclient.util.BlockPlacementPlanner.collectCandidates(this.placementQuery(cursor.immutable(), material, hand, range, eye, this.wireRotation()), supportFaces);
                      if (!supportFaces.isEmpty()) {
                         candidates.add(new CrystalAuraModule.Inner_DataUtil(cursor.immutable(), source, bound, distanceSq));
                      }
@@ -1944,7 +1944,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       for (int i = 0; i < limit; i++) {
          BlockPos cell = accepted.get(i).cell();
-         autismclient.util.BlockPlacementPlanner.Query request = this.init(cell, material, hand, range, eye, wire).withRayBudget(budget);
+         autismclient.util.BlockPlacementPlanner.Query request = this.placementQuery(cell, material, hand, range, eye, wire).withRayBudget(budget);
          autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request, refusal);
          if (candidate != null) {
             InteractionHand resolved = offhand ? InteractionHand.OFF_HAND : this.handForSlot(slot);
@@ -1965,7 +1965,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return builderDamage >= rivalDamage + 5.0 && builderDamage >= rivalDamage * 2.0;
    }
 
-   private autismclient.util.BlockPlacementPlanner.Query init(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, RotationMath.Rotation wire) {
+   private autismclient.util.BlockPlacementPlanner.Query placementQuery(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, RotationMath.Rotation wire) {
       return new autismclient.util.BlockPlacementPlanner.Query(cell, eye, range, autismclient.util.BlockPlacementPlanner.blockItemValidator(stack, MC.player, hand))
          .withFromRotation(wire)
          .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
@@ -2007,7 +2007,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       Vec3 eye = MC.player.getEyePosition();
       return autismclient.util.BlockPlacementPlanner.verifyWithRotation(
-         plan.placement(), wire, eye, plan.range(), this.init(cell, held, plan.hand(), plan.range(), eye, this.wireRotation())
+         plan.placement(), wire, eye, plan.range(), this.placementQuery(cell, held, plan.hand(), plan.range(), eye, this.wireRotation())
       );
    }
 
@@ -2026,7 +2026,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             "crystal-aura",
             hit,
             hand,
-            () -> this.push() && this.serverRotation() != null && this.builderHit(plan, this.serverRotation()) != null,
+            () -> this.isInGameReady() && this.serverRotation() != null && this.builderHit(plan, this.serverRotation()) != null,
             () -> {
                this.onBuilderDispatched(plan);
                dispatched.run();
@@ -2056,7 +2056,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.recordAction(false);
    }
 
-   private boolean update(BlockPos cell) {
+   private boolean isCellOnCooldown(BlockPos cell) {
       Integer until = this.init_Map.get(cell);
       if (until == null) {
          return false;
@@ -2103,7 +2103,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             return null;
          }
 
-         this.prev = this.integer("switch-back-delay");
+         this.switchBackDelay = this.integer("switch-back-delay");
          return InteractionHand.MAIN_HAND;
       } else {
          int held = player.getInventory().getSelectedSlot();
@@ -2112,10 +2112,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                this.stop = held;
             }
 
-            this.next = slot;
+            this.borrowedSlot = slot;
          }
 
-         this.prev = this.integer("switch-back-delay");
+         this.switchBackDelay = this.integer("switch-back-delay");
          return player.getInventory().getSelectedSlot() == slot && !auditBeforeDeadline(this.auditHasUpdateDeadline, this.switchDeadline) ? InteractionHand.MAIN_HAND : null;
       }
    }
@@ -2132,18 +2132,18 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          int tick = AutismSessionState.getInstance().getClientTick();
-         int cooldownAge = tick - this.pool;
+         int cooldownAge = tick - this.lastObsidianPlaceTick;
          if (cooldownAge >= 0 && cooldownAge < 2) {
             return null;
          }
 
-         int windowAge = tick - this.index;
+         int windowAge = tick - this.obsidianWindowStart;
          if (windowAge < 0 || windowAge >= 20) {
-            this.index = tick;
-            this.count = 0;
+            this.obsidianWindowStart = tick;
+            this.obsidianPlacesInWindow = 0;
          }
 
-         if (this.count >= 3) {
+         if (this.obsidianPlacesInWindow >= 3) {
             return null;
          }
 
@@ -2209,7 +2209,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          cells.sort(Comparator.comparingDouble(CrystalAuraModule.Inner_StreamUtil::reduction).reversed());
-         return this.init(cells, material, hand, slot, range, eye, budget);
+         return this.bestObsidianPlan(cells, material, hand, slot, range, eye, budget);
       } else {
          return null;
       }
@@ -2218,7 +2218,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity_U_StreamUtil(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       if (this.bool("defend")
          && this.bool("place")
-         && this.put()
+         && this.canUseCrystalSlot()
          && !SurroundModule.init_Z_27()
          && !BedDefenderModule.init_Z_10()
          && !AnchorAuraModule.read_Z()
@@ -2228,16 +2228,16 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             return null;
          }
 
-         if (tick - this.pool >= 0 && tick - this.pool < 2) {
+         if (tick - this.lastObsidianPlaceTick >= 0 && tick - this.lastObsidianPlaceTick < 2) {
             return null;
          }
 
-         if (tick - this.index < 0 || tick - this.index >= 20) {
-            this.index = tick;
-            this.count = 0;
+         if (tick - this.obsidianWindowStart < 0 || tick - this.obsidianWindowStart >= 20) {
+            this.obsidianWindowStart = tick;
+            this.obsidianPlacesInWindow = 0;
          }
 
-         if (this.count >= 3) {
+         if (this.obsidianPlacesInWindow >= 3) {
             return null;
          }
 
@@ -2289,7 +2289,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          }
 
          viable.sort(Comparator.comparingDouble(CrystalAuraModule.Inner_StreamUtil::reduction).reversed());
-         return this.init(viable, stack, hand, slot, range, eye, budget);
+         return this.bestObsidianPlan(viable, stack, hand, slot, range, eye, budget);
       } else {
          return null;
       }
@@ -2317,7 +2317,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_TaskQueue init(
+   private CrystalAuraModule.Inner_TaskQueue bestObsidianPlan(
       List<CrystalAuraModule.Inner_StreamUtil> cells, ItemStack material, InteractionHand hand, int slot, double range, Vec3 eye, autismclient.util.BlockPlacementPlanner.RayBudget budget
    ) {
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
@@ -2325,7 +2325,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       for (int i = 0; i < limit; i++) {
          CrystalAuraModule.Inner_StreamUtil cell = cells.get(i);
-         autismclient.util.BlockPlacementPlanner.Query request = this.init(cell.cell(), material, hand, range, eye, this.wireRotation())
+         autismclient.util.BlockPlacementPlanner.Query request = this.placementQuery(cell.cell(), material, hand, range, eye, this.wireRotation())
             .withRayBudget(budget);
          autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request, refusal);
          if (candidate != null) {
@@ -2403,9 +2403,9 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                }
             }
          } else if (!imminentOnly
-            && this.read(cursor)
+            && this.isCrystalBase(cursor)
             && MC.level.isEmptyBlock(cursor.above())
-            && !this.update(cursor)
+            && !this.isCellOnCooldown(cursor)
             && this.init_Z_BlockPos_AABB_3(cursor, nextBox)) {
             Vec3 source = new Vec3(cursor.getX() + 0.5, cursor.getY() + 1, cursor.getZ() + 0.5);
             Vec3 direction = enemy.position().subtract(player.position());
@@ -2435,19 +2435,19 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return List.copyOf(threats.subList(0, Math.min(4, threats.size())));
    }
 
-   private boolean load(CrystalAuraModule.Inner_TaskQueue plan, BlockHitResult hit) {
+   private boolean executeObsidianPlace(CrystalAuraModule.Inner_TaskQueue plan, BlockHitResult hit) {
       return this.executeBuilder(plan, hit, () -> {
-         this.pool = AutismSessionState.getInstance().getClientTick();
-         this.count++;
+         this.lastObsidianPlaceTick = AutismSessionState.getInstance().getClientTick();
+         this.obsidianPlacesInWindow++;
       });
    }
 
    private void setBuilderPlan(LivingEntity enemy, CrystalAuraModule.Inner_TaskQueue plan) {
       this.plannedObsidianPos = plan.cell();
-      this.data = plan.slot();
+      this.obsidianSlot = plan.slot();
       this.obsidianPlanTarget = enemy;
       this.plannedObsidianDamage = plan.load();
-      this.value = AutismSessionState.getInstance().getClientTick() + 12;
+      this.obsidianPlanUntil = AutismSessionState.getInstance().getClientTick() + 12;
       this.plannedSupportPos = null;
    }
 
@@ -2455,7 +2455,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.plannedSupportPos = plan.support();
       this.supportPlanTarget = enemy;
       this.stickySelector.init();
-      this.cache = AutismSessionState.getInstance().getClientTick() + 6;
+      this.supportPlanUntil = AutismSessionState.getInstance().getClientTick() + 6;
       this.plannedObsidianPos = null;
    }
 
@@ -2473,20 +2473,20 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.stickySelector.init();
    }
 
-   private boolean read(LivingEntity enemy) {
+   private boolean resumeObsidianPlan(LivingEntity enemy) {
       if (this.plannedObsidianPos == null) {
          return false;
       }
 
-      if (AutismSessionState.getInstance().getClientTick() - this.value <= 0
+      if (AutismSessionState.getInstance().getClientTick() - this.obsidianPlanUntil <= 0
          && enemy == this.obsidianPlanTarget
          && this.bool("place")
          && this.bool("obsidian")
-         && this.put()
+         && this.canUseCrystalSlot()
          && MC.level.getBlockState(this.plannedObsidianPos).canBeReplaced()
          && MC.level.isUnobstructed(Blocks.OBSIDIAN.defaultBlockState(), this.plannedObsidianPos, CollisionContext.empty())
          && this.init_Z_BlockPos_AABB_3(this.plannedObsidianPos, MC.player.getBoundingBox().move(MC.player.getDeltaMovement()))
-         && this.get()) {
+         && this.canUseObsidianSlot()) {
          Vec3 heldSource = new Vec3(this.plannedObsidianPos.getX() + 0.5, this.plannedObsidianPos.getY() + 1.0, this.plannedObsidianPos.getZ() + 0.5);
          if (this.meetsDamageThresholds(
                enemy,
@@ -2502,7 +2502,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                this.builderEnemyPos = enemyPos.immutable();
                List<BlockPos> supports = this.findSupports(enemy, MC.player.blockInteractionRange());
                if (!supports.isEmpty()) {
-                  this.level = enemy.getId();
+                  this.builderTargetId = enemy.getId();
                   this.bestBuilderSupport = supports.get(0);
                   this.frame = 0;
                   this.plannedObsidianPos = null;
@@ -2522,8 +2522,8 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private boolean write(LivingEntity enemy) {
-      if (this.bestBuilderSupport != null && enemy.getId() == this.level) {
-         if (this.read(this.bestBuilderSupport)
+      if (this.bestBuilderSupport != null && enemy.getId() == this.builderTargetId) {
+         if (this.isCrystalBase(this.bestBuilderSupport)
             && this.init_Z_BlockPos_AABB_3(this.bestBuilderSupport, MC.player.getBoundingBox().move(MC.player.getDeltaMovement()))
             && this.meetsDamageThresholds(
                enemy,
@@ -2543,11 +2543,11 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private boolean get() {
+   private boolean canUseObsidianSlot() {
       LocalPlayer player = MC.player;
-      return this.data < 0
+      return this.obsidianSlot < 0
          ? isObsidian(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura")
-         : !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.data, "crystal-aura") && isObsidian(player.getInventory().getItem(this.data));
+         : !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.obsidianSlot, "crystal-aura") && isObsidian(player.getInventory().getItem(this.obsidianSlot));
    }
 
    private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil(autismclient.util.BlockPlacementPlanner.RayBudget budget) {
@@ -2558,10 +2558,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
 
       Vec3 eye = player.getEyePosition();
-      boolean offhand = this.data < 0;
+      boolean offhand = this.obsidianSlot < 0;
       InteractionHand hand = offhand ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-      ItemStack material = offhand ? player.getOffhandItem() : player.getInventory().getItem(this.data);
-      autismclient.util.BlockPlacementPlanner.Query request = this.init(this.plannedObsidianPos, material, hand, range, eye, this.wireRotation())
+      ItemStack material = offhand ? player.getOffhandItem() : player.getInventory().getItem(this.obsidianSlot);
+      autismclient.util.BlockPlacementPlanner.Query request = this.placementQuery(this.plannedObsidianPos, material, hand, range, eye, this.wireRotation())
          .withRayBudget(budget);
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request, refusal);
@@ -2572,21 +2572,21 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          return null;
       } else {
-         InteractionHand resolved = offhand ? InteractionHand.OFF_HAND : this.handForSlot(this.data);
-         return new CrystalAuraModule.Inner_TaskQueue(this.plannedObsidianPos, resolved, range, candidate, this.plannedObsidianDamage, this.data);
+         InteractionHand resolved = offhand ? InteractionHand.OFF_HAND : this.handForSlot(this.obsidianSlot);
+         return new CrystalAuraModule.Inner_TaskQueue(this.plannedObsidianPos, resolved, range, candidate, this.plannedObsidianDamage, this.obsidianSlot);
       }
    }
 
-   private boolean update(LivingEntity enemy) {
+   private boolean resumeSupportPlan(LivingEntity enemy) {
       if (this.plannedSupportPos == null) {
          return false;
       }
 
-      if (AutismSessionState.getInstance().getClientTick() - this.cache <= 0
+      if (AutismSessionState.getInstance().getClientTick() - this.supportPlanUntil <= 0
          && enemy == this.supportPlanTarget
          && this.bool("place")
-         && this.put()
-         && this.read(this.plannedSupportPos)
+         && this.canUseCrystalSlot()
+         && this.isCrystalBase(this.plannedSupportPos)
          && this.init_Z_BlockPos_AABB_3(this.plannedSupportPos, MC.player.getBoundingBox().move(MC.player.getDeltaMovement()))) {
          autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.rankDamage(
             enemy,
@@ -2606,7 +2606,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   private CrystalAuraModule.Inner_NetHelper load(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
+   private CrystalAuraModule.Inner_NetHelper bestPlacement(LivingEntity enemy, autismclient.util.BlockPlacementPlanner.RayBudget budget) {
       LocalPlayer player = MC.player;
       double range = player.blockInteractionRange();
       if (range <= 0.0) {
@@ -2623,7 +2623,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          .withLeadEye(eye.add(player.getDeltaMovement()))
          .withRayBudget(budget);
       List<autismclient.util.BlockPlacementPlanner.SupportCandidate> scan = new ArrayList<>();
-      this.init(support, state, cell, eye, wire, scan);
+      this.addSupportCandidate(support, state, cell, eye, wire, scan);
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
       int start = this.stickySelector.init(scan, optionx -> optionx);
 
@@ -2694,10 +2694,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                   this.stop = held;
                }
 
-               this.next = best;
+               this.borrowedSlot = best;
             }
 
-            this.prev = this.integer("switch-back-delay");
+            this.switchBackDelay = this.integer("switch-back-delay");
          }
       }
    }
@@ -2706,7 +2706,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       return !this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(source, 6.0F, this.simOptions, this.decimal("max-friend-damage"));
    }
 
-   private boolean put() {
+   private boolean canUseCrystalSlot() {
       LocalPlayer player = MC.player;
       return isEndCrystal(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther("crystal-aura") ? true : this.load_I_16() >= 0;
    }
@@ -2722,7 +2722,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             return null;
          }
 
-         this.prev = this.integer("switch-back-delay");
+         this.switchBackDelay = this.integer("switch-back-delay");
          return InteractionHand.MAIN_HAND;
       } else {
          int slot = this.load_I_16();
@@ -2736,10 +2736,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                this.stop = held;
             }
 
-            this.next = slot;
+            this.borrowedSlot = slot;
          }
 
-         this.prev = this.integer("switch-back-delay");
+         this.switchBackDelay = this.integer("switch-back-delay");
          return player.getInventory().getSelectedSlot() == slot && !auditBeforeDeadline(this.auditHasUpdateDeadline, this.switchDeadline) ? InteractionHand.MAIN_HAND : null;
       }
    }
@@ -2796,18 +2796,18 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
    private void update_V_17() {
       if (this.stop >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
-         if (this.next >= 0 && MC.player.getInventory().getSelectedSlot() != this.next) {
+         if (this.borrowedSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.borrowedSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (!AnchorAuraModule.init_Z_I(selected) && !KillAuraModule.load_Z_I_3(selected)) {
                this.stop = -1;
-               this.next = -1;
-               this.prev = 0;
+               this.borrowedSlot = -1;
+               this.switchBackDelay = 0;
             }
-         } else if (this.prev > 0) {
-            this.prev--;
+         } else if (this.switchBackDelay > 0) {
+            this.switchBackDelay--;
          } else if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.stop, "crystal-aura") && this.load_Z_I_6(this.stop)) {
             this.stop = -1;
-            this.next = -1;
+            this.borrowedSlot = -1;
          }
       }
    }

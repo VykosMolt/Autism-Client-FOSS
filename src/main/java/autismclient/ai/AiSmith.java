@@ -25,7 +25,7 @@ final class AiSmith {
    private static final int load_I = 100;
    private static final int read = 40;
    private static final int write = 40;
-   private static final Set<String> init_Set = Set.of(
+   private static final Set<String> NETHERITE_UPGRADE_BASES = Set.of(
       "minecraft:diamond_sword",
       "minecraft:diamond_pickaxe",
       "minecraft:diamond_axe",
@@ -36,7 +36,7 @@ final class AiSmith {
       "minecraft:diamond_leggings",
       "minecraft:diamond_boots"
    );
-   private static final Set<String> load_Set = Set.of(
+   private static final Set<String> TRIM_MATERIALS = Set.of(
       "minecraft:iron_ingot",
       "minecraft:copper_ingot",
       "minecraft:gold_ingot",
@@ -55,53 +55,53 @@ final class AiSmith {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final AiSmith.Inner_DataUtil mode = init_cj_DataUtil(AiJson.getString(args, "mode", "upgrade"));
-         final String templateId = init(AiJson.getString(args, "template", ""), "template");
-         final String baseId = init(AiJson.getString(args, "base", ""), "base");
-         final String additionId = init(AiJson.getString(args, "addition", ""), "addition");
-         String combo = init(mode, templateId, baseId, additionId);
+         final AiSmith.Inner_DataUtil mode = parseMode(AiJson.getString(args, "mode", "upgrade"));
+         final String templateId = requireItemId(AiJson.getString(args, "template", ""), "template");
+         final String baseId = requireItemId(AiJson.getString(args, "base", ""), "base");
+         final String additionId = requireItemId(AiJson.getString(args, "addition", ""), "addition");
+         String combo = validateInputs(mode, templateId, baseId, additionId);
          if (combo != null) {
             throw new IllegalArgumentException(combo);
          }
 
          final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300)));
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
-            BlockPos init_BlockPos;
-            int init_I;
-            int load_I;
-            int read_I;
+            final Minecraft client = Minecraft.getInstance();
+            final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
+            BlockPos tablePos;
+            int aimTicks;
+            int placeTicks;
+            int searchCooldown;
             int write;
-            int update;
-            int sync;
-            long load_J = -1L;
-            boolean init_Z;
-            boolean load_Z;
-            ItemStack init_ItemStack = ItemStack.EMPTY;
-            int flush = -1;
-            int close;
-            String init_Str = "";
-            int open = -1;
-            boolean read_Z;
+            int resultWaitTicks;
+            int confirmWaitTicks;
+            long takeRevision = -1L;
+            boolean placing;
+            boolean done;
+            ItemStack expectedOutput = ItemStack.EMPTY;
+            int menuId = -1;
+            int outputCountBefore;
+            String pickedItem = "";
+            int pickedSlot = -1;
+            boolean picked;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.load_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Smithing deadline reached");
-                  } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                     return this.init(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("smithing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
-                  } else if (!(this.init_Minecraft.player.containerMenu instanceof SmithingMenu menu)) {
-                     AiOperation.Result open = this.init_AiOperation_Result_33();
-                     return open != null ? open : this.init("Opening the smithing table");
+               if (!this.done && this.client.player != null && this.client.level != null) {
+                  if (System.nanoTime() > this.deadlineNanos) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Smithing deadline reached");
+                  } else if (this.client.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                     return this.fail(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("smithing", this.client.player.getHealth(), this.client.player.getMaxHealth()));
+                  } else if (!(this.client.player.containerMenu instanceof SmithingMenu menu)) {
+                     AiOperation.Result open = this.ensureTable();
+                     return open != null ? open : this.running("Opening the smithing table");
                   } else {
-                     if (this.flush != menu.containerId) {
+                     if (this.menuId != menu.containerId) {
                         for (int slot = 0; slot <= 3; slot++) {
                            if (!menu.getSlot(slot).getItem().isEmpty()) {
-                              return this.init(
+                              return this.fail(
                                  AiFailure.IMPOSSIBLE_STATE,
                                  "The smithing table is in use: slot "
                                     + slot
@@ -112,7 +112,7 @@ final class AiSmith {
                            }
                         }
 
-                        this.flush = menu.containerId;
+                        this.menuId = menu.containerId;
                      }
 
                      AiOperation.Result missing = this.init(menu);
@@ -120,58 +120,58 @@ final class AiSmith {
                         return missing;
                      }
 
-                     if (this.load_J >= 0L) {
-                        if (AiServerEvidence.containerRevision(menu.containerId) > this.load_J) {
+                     if (this.takeRevision >= 0L) {
+                        if (AiServerEvidence.containerRevision(menu.containerId) > this.takeRevision) {
                            if (menu.getSlot(3).getItem().isEmpty()
-                              && AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString()) > this.close) {
-                              return this.init(AiOperation.Status.SUCCEEDED, "Smithed " + BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()));
+                              && AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.expectedOutput.getItem()).toString()) > this.outputCountBefore) {
+                              return this.finish(AiOperation.Status.SUCCEEDED, "Smithed " + BuiltInRegistries.ITEM.getKey(this.expectedOutput.getItem()));
                            } else {
-                              return ++this.sync > 40
-                                 ? this.init(
+                              return ++this.confirmWaitTicks > 40
+                                 ? this.finish(
                                     AiOperation.Status.UNCERTAIN,
                                     menu.getSlot(3).getItem().isEmpty()
                                        ? "The result left the station but was not observed in the inventory; reobserve before repeating"
                                        : "The result is still in the station (inventory full?); free space and take it before repeating"
                                  )
-                                 : this.init("Verifying the smithed result reached the inventory");
+                                 : this.running("Verifying the smithed result reached the inventory");
                            }
                         } else {
-                           return ++this.sync > 40
-                              ? this.init(AiOperation.Status.UNCERTAIN, "The result was not confirmed by the server; reobserve before repeating")
-                              : this.init("Waiting for the server to apply the smith");
+                           return ++this.confirmWaitTicks > 40
+                              ? this.finish(AiOperation.Status.UNCERTAIN, "The result was not confirmed by the server; reobserve before repeating")
+                              : this.running("Waiting for the server to apply the smith");
                         }
                      } else {
                         if (menu.getSlot(0).getItem().isEmpty()) {
-                           this.init(menu, templateId, 0);
-                           return this.init("Placing the template");
+                           this.moveItemToSlot(menu, templateId, 0);
+                           return this.running("Placing the template");
                         }
 
                         if (menu.getSlot(1).getItem().isEmpty()) {
-                           this.init(menu, baseId, 1);
-                           return this.init("Placing the base item");
+                           this.moveItemToSlot(menu, baseId, 1);
+                           return this.running("Placing the base item");
                         }
 
                         if (menu.getSlot(2).getItem().isEmpty()) {
-                           this.init(menu, additionId, 2);
-                           return this.init("Placing the addition");
+                           this.moveItemToSlot(menu, additionId, 2);
+                           return this.running("Placing the addition");
                         }
 
                         ItemStack out = menu.getSlot(3).getItem();
                         if (out.isEmpty()) {
-                           return ++this.update > 40
-                              ? this.init(AiFailure.IMPOSSIBLE_STATE, "The combination produced no result; check the inputs")
-                              : this.init("Waiting for the result");
+                           return ++this.resultWaitTicks > 40
+                              ? this.fail(AiFailure.IMPOSSIBLE_STATE, "The combination produced no result; check the inputs")
+                              : this.running("Waiting for the result");
                         }
 
-                        this.init_ItemStack = out.copy();
-                        this.close = AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString());
-                        this.load_J = AiServerEvidence.containerRevision(menu.containerId);
+                        this.expectedOutput = out.copy();
+                        this.outputCountBefore = AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.expectedOutput.getItem()).toString());
+                        this.takeRevision = AiServerEvidence.containerRevision(menu.containerId);
                         AiContainerTransactions.sendPredictedClick(menu.containerId, 3, 0, ContainerInput.QUICK_MOVE);
-                        return this.init("Taking the result");
+                        return this.running("Taking the result");
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Smithing cancelled; committed table contents stay");
+                  return this.finish(AiOperation.Status.CANCELLED, "Smithing cancelled; committed table contents stay");
                }
             }
 
@@ -190,30 +190,30 @@ final class AiSmith {
                      missing.addProperty(additionId, 1);
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing smithing materials", AiJson.objectOf("missing", missing)) : null;
+                  return missing.size() > 0 ? this.fail(AiFailure.MISSING_MATERIALS, "Missing smithing materials", AiJson.objectOf("missing", missing)) : null;
                } else {
                   return null;
                }
             }
 
-            void init(SmithingMenu menu, String itemId, int targetSlot) {
-               int slot = this.init(itemId, true);
+            void moveItemToSlot(SmithingMenu menu, String itemId, int targetSlot) {
+               int slot = this.findItemSlot(itemId, true);
                if (slot < 0) {
-                  slot = this.init(itemId, false);
+                  slot = this.findItemSlot(itemId, false);
                }
 
                if (slot >= 0) {
-                  this.init(itemId, slot);
-                  int menuSlot = this.init(slot);
+                  this.recordPick(itemId, slot);
+                  int menuSlot = this.menuSlot(slot);
                   AiContainerTransactions.sendPredictedClick(menu.containerId, menuSlot, 0, ContainerInput.PICKUP);
                   AiContainerTransactions.sendPredictedClick(menu.containerId, targetSlot, 0, ContainerInput.PICKUP);
                   this.write++;
                }
             }
 
-            int init(String itemId, boolean plainOnly) {
+            int findItemSlot(String itemId, boolean plainOnly) {
                for (int slot = 0; slot < 36; slot++) {
-                  ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
+                  ItemStack stack = this.client.player.getInventory().getItem(slot);
                   if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId) && (!plainOnly || AiItems.isPlainItem(stack))) {
                      return slot;
                   }
@@ -222,106 +222,106 @@ final class AiSmith {
                return -1;
             }
 
-            void init(String itemId, int slot) {
+            void recordPick(String itemId, int slot) {
                int sameId = 0;
 
                for (int i = 0; i < 36; i++) {
-                  ItemStack stack = this.init_Minecraft.player.getInventory().getItem(i);
+                  ItemStack stack = this.client.player.getInventory().getItem(i);
                   if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId)) {
                      sameId++;
                   }
                }
 
                if (sameId > 1) {
-                  this.init_Str = itemId;
-                  this.open = slot;
-                  this.read_Z = true;
+                  this.pickedItem = itemId;
+                  this.pickedSlot = slot;
+                  this.picked = true;
                }
             }
 
-            int init(int inventorySlot) {
+            int menuSlot(int inventorySlot) {
                return inventorySlot < 9 ? inventorySlot + 31 : inventorySlot - 9 + 4;
             }
 
-            AiOperation.Result init_AiOperation_Result_33() {
-               if (this.init_BlockPos == null && this.read_I-- <= 0) {
-                  this.init_BlockPos = this.init_BlockPos_14();
-                  this.read_I = 40;
+            AiOperation.Result ensureTable() {
+               if (this.tablePos == null && this.searchCooldown-- <= 0) {
+                  this.tablePos = this.findTable();
+                  this.searchCooldown = 40;
                }
 
-               if (this.init_BlockPos == null && this.read_I < 40 && !this.init_Z) {
-                  return this.init("Looking for a smithing table");
+               if (this.tablePos == null && this.searchCooldown < 40 && !this.placing) {
+                  return this.running("Looking for a smithing table");
                }
 
-               if (this.init_BlockPos == null) {
-                  if (!this.init_Z) {
+               if (this.tablePos == null) {
+                  if (!this.placing) {
                      if (AiGameState.countInventoryItem("minecraft:smithing_table") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:smithing_table", 1);
-                        return this.init(AiFailure.MISSING_STATION, "No smithing table in reach or in the bag", AiJson.objectOf("missing", missing));
+                        return this.fail(AiFailure.MISSING_STATION, "No smithing table in reach or in the bag", AiJson.objectOf("missing", missing));
                      }
 
                      BlockPos spot = AiCraft.findPlacementSpot();
                      if (spot == null) {
-                        return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for a smithing table");
+                        return this.finish(AiOperation.Status.FAILED, "No free supported spot next to the player for a smithing table");
                      }
 
-                     this.init_DataPipe
+                     this.placer
                         .start(spot, BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:smithing_table")).orElseThrow());
-                     this.init_Z = true;
-                     this.load_I = 0;
+                     this.placing = true;
+                     this.placeTicks = 0;
                   }
 
-                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.init_DataPipe.tick();
+                  autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                     this.init_BlockPos = this.init_DataPipe.targetPos();
-                     this.init_Z = false;
-                     return this.init("Smithing table placed");
+                     this.tablePos = this.placer.targetPos();
+                     this.placing = false;
+                     return this.running("Smithing table placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.load_I <= 100) {
-                     return this.init("Placing a smithing table");
+                  if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks <= 100) {
+                     return this.running("Placing a smithing table");
                   }
 
-                  this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place a smithing table: " + this.init_DataPipe.failureReason());
+                  this.placing = false;
+                  return this.finish(AiOperation.Status.FAILED, "Could not place a smithing table: " + this.placer.failureReason());
                } else {
-                  double reach = Math.max(4.5, this.init_Minecraft.player.blockInteractionRange());
-                  if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos)) > reach * reach) {
-                     return this.init(AiOperation.Status.FAILED, "The smithing table fell out of reach");
+                  double reach = Math.max(4.5, this.client.player.blockInteractionRange());
+                  if (this.client.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.tablePos)) > reach * reach) {
+                     return this.finish(AiOperation.Status.FAILED, "The smithing table fell out of reach");
                   }
 
-                  this.init_DataUtil.aimAt(Vec3.atCenterOf(this.init_BlockPos));
-                  this.init_DataUtil.tick();
-                  if (++this.init_I > 80) {
-                     return this.init(AiOperation.Status.FAILED, "Could not open the smithing table");
+                  this.aim.aimAt(Vec3.atCenterOf(this.tablePos));
+                  this.aim.tick();
+                  if (++this.aimTicks > 80) {
+                     return this.finish(AiOperation.Status.FAILED, "Could not open the smithing table");
                   }
 
-                  if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.init_BlockPos)) {
-                     return this.init("Turning toward the smithing table");
+                  if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.tablePos)) {
+                     return this.running("Turning toward the smithing table");
                   }
 
                   BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hit == null) {
-                     return this.init("Turning toward the smithing table");
+                     return this.running("Turning toward the smithing table");
                   }
 
-                  this.init_Minecraft.gameMode.useItemOn(this.init_Minecraft.player, InteractionHand.MAIN_HAND, hit);
-                  Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
+                  this.client.gameMode.useItemOn(this.client.player, InteractionHand.MAIN_HAND, hit);
+                  Compat263.swing(this.client.player, InteractionHand.MAIN_HAND);
                   return null;
                }
             }
 
-            BlockPos init_BlockPos_14() {
+            BlockPos findTable() {
                Block wanted = AiCraft.requireBlock("minecraft:smithing_table");
-               BlockPos origin = this.init_Minecraft.player.blockPosition();
+               BlockPos origin = this.client.player.blockPosition();
                BlockPos best = null;
                double bestDistance = 1.7976931348623157E308;
                int radius = 16;
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
-                  if (AiTerrain.isLoaded(this.init_Minecraft.level, pos) && this.init_Minecraft.level.getBlockState(pos).getBlock() == wanted) {
-                     double distance = this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(pos));
+                  if (AiTerrain.isLoaded(this.client.level, pos) && this.client.level.getBlockState(pos).getBlock() == wanted) {
+                     double distance = this.client.player.distanceToSqr(Vec3.atCenterOf(pos));
                      if (distance < bestDistance) {
                         bestDistance = distance;
                         best = pos.immutable();
@@ -332,11 +332,11 @@ final class AiSmith {
                return best;
             }
 
-            JsonObject init_JsonObject_50() {
+            JsonObject materialCounts() {
                return AiJson.objectOf("template", AiGameState.countInventoryItem(templateId), "base", AiGameState.countInventoryItem(baseId), "addition", AiGameState.countInventoryItem(additionId));
             }
 
-            JsonObject load() {
+            JsonObject statusData() {
                JsonObject out = AiJson.objectOf(
                   "mode",
                   mode.name().toLowerCase(Locale.ROOT),
@@ -347,35 +347,35 @@ final class AiSmith {
                   "addition",
                   additionId,
                   "result",
-                  this.init_ItemStack.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString(),
+                  this.expectedOutput.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(this.expectedOutput.getItem()).toString(),
                   "resultCount",
-                  this.init_ItemStack.isEmpty() ? 0 : this.init_ItemStack.getCount(),
+                  this.expectedOutput.isEmpty() ? 0 : this.expectedOutput.getCount(),
                   "remainingMaterials",
-                  this.init_JsonObject_50(),
+                  this.materialCounts(),
                   "stationAt",
-                  this.init_BlockPos == null ? null : this.init_BlockPos.toShortString()
+                  this.tablePos == null ? null : this.tablePos.toShortString()
                );
-               if (this.read_Z) {
-                  out.add("picked", AiJson.objectOf("item", this.init_Str, "slot", this.open));
+               if (this.picked) {
+                  out.add("picked", AiJson.objectOf("item", this.pickedItem, "slot", this.pickedSlot));
                }
 
                return out;
             }
 
-            AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.load().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusData().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finish(status, message, null);
             }
 
-            AiOperation.Result init(AiFailure code, String message) {
-               return this.init(code, message, null);
+            AiOperation.Result fail(AiFailure code, String message) {
+               return this.fail(code, message, null);
             }
 
-            AiOperation.Result init(AiFailure code, String message, JsonObject extra) {
-               JsonObject data = this.load();
+            AiOperation.Result fail(AiFailure code, String message, JsonObject extra) {
+               JsonObject data = this.statusData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -386,8 +386,8 @@ final class AiSmith {
                return AiOperation.Result.failed(code, message, data.toString());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.load();
+            AiOperation.Result finish(AiOperation.Status status, String message, JsonObject extra) {
+               JsonObject data = this.statusData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -400,12 +400,12 @@ final class AiSmith {
 
             @Override
             public void cancel() {
-               if (!this.load_Z) {
-                  this.load_Z = true;
-                  this.init_DataUtil.clear();
-                  this.init_DataPipe.reset();
-                  if (this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu instanceof SmithingMenu) {
-                     this.init_Minecraft.player.closeContainer();
+               if (!this.done) {
+                  this.done = true;
+                  this.aim.clear();
+                  this.placer.reset();
+                  if (this.client.player != null && this.client.player.containerMenu instanceof SmithingMenu) {
+                     this.client.player.closeContainer();
                   }
                }
             }
@@ -415,7 +415,7 @@ final class AiSmith {
       }
    }
 
-   private static String init(String spec, String arg) {
+   private static String requireItemId(String spec, String arg) {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
@@ -428,7 +428,7 @@ final class AiSmith {
       }
    }
 
-   private static AiSmith.Inner_DataUtil init_cj_DataUtil(String text) {
+   private static AiSmith.Inner_DataUtil parseMode(String text) {
       try {
          return AiSmith.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
@@ -436,25 +436,25 @@ final class AiSmith {
       }
    }
 
-   static String init(AiSmith.Inner_DataUtil mode, String templateId, String baseId, String additionId) {
+   static String validateInputs(AiSmith.Inner_DataUtil mode, String templateId, String baseId, String additionId) {
       if (mode == AiSmith.Inner_DataUtil.UPGRADE) {
          if (!templateId.equals("minecraft:netherite_upgrade_smithing_template")) {
             return "upgrade needs minecraft:netherite_upgrade_smithing_template as the template";
          } else if (!additionId.equals("minecraft:netherite_ingot")) {
             return "upgrade needs minecraft:netherite_ingot as the addition";
          } else {
-            return !init_Set.contains(baseId) ? "upgrade base must be diamond-tier gear, got " + baseId : null;
+            return !NETHERITE_UPGRADE_BASES.contains(baseId) ? "upgrade base must be diamond-tier gear, got " + baseId : null;
          }
       } else if (!templateId.endsWith("_armor_trim_smithing_template")) {
          return "trim needs an *_armor_trim_smithing_template as the template, got " + templateId;
-      } else if (!load_Set.contains(additionId)) {
+      } else if (!TRIM_MATERIALS.contains(additionId)) {
          return "trim addition must be a trim material (iron/copper/gold/lapis/emerald/diamond/netherite/redstone/quartz/amethyst), got " + additionId;
       } else {
-         return !init_Z(baseId) ? "trim base must be an armor piece, got " + baseId : null;
+         return !isArmorPiece(baseId) ? "trim base must be an armor piece, got " + baseId : null;
       }
    }
 
-   private static boolean init_Z(String itemId) {
+   private static boolean isArmorPiece(String itemId) {
       String path = itemId.substring(itemId.indexOf(58) + 1);
       return path.endsWith("_helmet") || path.endsWith("_chestplate") || path.endsWith("_leggings") || path.endsWith("_boots") || path.equals("turtle_helmet");
    }

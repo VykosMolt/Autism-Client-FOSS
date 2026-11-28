@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 final class AiEquip {
    private static final int init_I = 40;
    private static final int load = 400;
-   private static final Map<EquipmentSlot, Integer> init_Map = Map.of(
+   private static final Map<EquipmentSlot, Integer> ARMOR_MENU_SLOTS = Map.of(
       EquipmentSlot.HEAD, 5, EquipmentSlot.CHEST, 6, EquipmentSlot.LEGS, 7, EquipmentSlot.FEET, 8
    );
 
@@ -49,20 +49,20 @@ final class AiEquip {
             throw new IllegalArgumentException("prefer only applies to what:armor");
          }
 
-         String hand = init_Str(AiJson.getString(args, "hand", "main"));
+         String hand = normalizeHand(AiJson.getString(args, "hand", "main"));
          if (hand.equals("offhand")) {
             if (!what.equals("armor") && !what.equals("armour") && !what.equals("weapon") && !what.equals("tool")) {
-               return init(AiItems.resolveItem(what), what);
+               return equipOffhand(AiItems.resolveItem(what), what);
             } else {
                throw new IllegalArgumentException("hand:offhand equips a specific item spec (e.g. shield), not " + what);
             }
          } else {
             if (what.equals("armor") || what.equals("armour")) {
-               return init_AiOperation(prefer);
+               return equipArmor(prefer);
             }
 
             if (what.equals("weapon")) {
-               return init(AiItems.bestWeaponSlot(36), "weapon");
+               return holdSlot(AiItems.bestWeaponSlot(36), "weapon");
             }
 
             if (what.equals("tool")) {
@@ -73,9 +73,9 @@ final class AiEquip {
 
                AiItems.ItemSpec block = AiItems.resolveBlock(blockSpec);
                BlockState state = block.blocks().iterator().next().defaultBlockState();
-               return init(AiItems.bestToolFor(state, 36), "tool for " + blockSpec);
+               return holdSlot(AiItems.bestToolFor(state, 36), "tool for " + blockSpec);
             } else {
-               return load(AiItems.resolveItem(what), what);
+               return holdItem(AiItems.resolveItem(what), what);
             }
          }
       } else {
@@ -83,7 +83,7 @@ final class AiEquip {
       }
    }
 
-   static String init_Str(String raw) {
+   static String normalizeHand(String raw) {
       String hand = raw == null ? "main" : raw.trim().toLowerCase(Locale.ROOT);
       if (hand.isEmpty()) {
          return "main";
@@ -94,27 +94,27 @@ final class AiEquip {
       }
    }
 
-   private static AiOperation init(final AiItems.ItemSpec target, final String what) {
+   private static AiOperation equipOffhand(final AiItems.ItemSpec target, final String what) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         long init_J = -1L;
-         final Object init_Obj = mc.level;
-         final Object load_Obj = mc.getConnection();
-         final Object read = mc.player;
-         int init_I;
-         boolean init_Z;
-         boolean load_Z;
+         long repliesAtClick = -1L;
+         final Object startLevel = mc.level;
+         final Object startConnection = mc.getConnection();
+         final Object startPlayer = mc.player;
+         int waitTicks;
+         boolean swapSent;
+         boolean done;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.load_Z && mc.player != null) {
-               if (mc.level == this.init_Obj && mc.getConnection() == this.load_Obj && mc.player == this.read && mc.player.isAlive()) {
-                  if (!target.matches(mc.player.getOffhandItem()) || this.init_Z && AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) <= this.init_J) {
-                     if (!this.init_Z) {
+            if (!this.done && mc.player != null) {
+               if (mc.level == this.startLevel && mc.getConnection() == this.startConnection && mc.player == this.startPlayer && mc.player.isAlive()) {
+                  if (!target.matches(mc.player.getOffhandItem()) || this.swapSent && AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) <= this.repliesAtClick) {
+                     if (!this.swapSent) {
                         if (mc.player.containerMenu == mc.player.inventoryMenu && mc.player.containerMenu.getCarried().isEmpty()) {
                            int source = AiItems.findSlot(target, 36);
                            if (source < 0) {
-                              this.load_Z = true;
+                              this.done = true;
                               return AiOperation.Result.failed(
                                  AiFailure.MISSING_MATERIALS,
                                  "No " + what + " in inventory",
@@ -122,42 +122,42 @@ final class AiEquip {
                               );
                            }
 
-                           this.init_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
+                           this.repliesAtClick = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
                            int menuSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, source);
-                           this.init_Z = menuSlot >= 0;
-                           if (this.init_Z) {
+                           this.swapSent = menuSlot >= 0;
+                           if (this.swapSent) {
                               AiContainerTransactions.sendPredictedClick(mc.player.inventoryMenu.containerId, menuSlot, 40, ContainerInput.SWAP);
                            }
 
-                           if (!this.init_Z) {
-                              this.load_Z = true;
+                           if (!this.swapSent) {
+                              this.done = true;
                               return AiOperation.Result.failed(
                                  AiFailure.IMPOSSIBLE_STATE,
                                  "Could not move " + what + " to the offhand (the cursor must be empty)",
                                  AiJson.objectOf("what", what).toString()
                               );
                            } else {
-                              return this.init("Moving " + what + " to the offhand");
+                              return this.running("Moving " + what + " to the offhand");
                            }
                         } else {
                            return AiGameOperations.result(
                               AiOperation.Status.FAILED, "Offhand swap requires the player inventory with an empty cursor", new JsonObject()
                            );
                         }
-                     } else if (++this.init_I > 40) {
-                        this.load_Z = true;
+                     } else if (++this.waitTicks > 40) {
+                        this.done = true;
                         return AiGameOperations.result(
                            AiOperation.Status.UNCERTAIN,
                            "The offhand swap went out but no applied server inventory confirmation arrived",
                            AiJson.objectOf("what", what)
                         );
                      } else {
-                        return this.init("Waiting for applied server inventory confirmation");
+                        return this.running("Waiting for applied server inventory confirmation");
                      }
                   } else {
-                     this.load_Z = true;
+                     this.done = true;
                      return AiGameOperations.result(
-                        AiOperation.Status.SUCCEEDED, "Offhand holds " + AiEquip.init(), AiJson.objectOf("what", what, "hand", "offhand", "held", AiEquip.init())
+                        AiOperation.Status.SUCCEEDED, "Offhand holds " + AiEquip.offhandItemId(), AiJson.objectOf("what", what, "hand", "offhand", "held", AiEquip.offhandItemId())
                      );
                   }
                } else {
@@ -168,23 +168,23 @@ final class AiEquip {
             }
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             return AiGameOperations.result(AiOperation.Status.RUNNING, message, AiJson.objectOf("what", what, "hand", "offhand"));
          }
 
          @Override
          public void cancel() {
-            this.load_Z = true;
+            this.done = true;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_Z || this.load_Z;
+            return !this.swapSent || this.done;
          }
       };
    }
 
-   private static String init() {
+   private static String offhandItemId() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return "";
@@ -194,102 +194,102 @@ final class AiEquip {
       return stack.isEmpty() ? "minecraft:air" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static AiOperation init(int slot, String description) {
-      return init(slot, null, description);
+   private static AiOperation holdSlot(int slot, String description) {
+      return holdInHand(slot, null, description);
    }
 
-   private static AiOperation load(AiItems.ItemSpec target, String description) {
-      return init(-1, target, description);
+   private static AiOperation holdItem(AiItems.ItemSpec target, String description) {
+      return holdInHand(-1, target, description);
    }
 
-   private static AiOperation init(final int plannedSlot, final AiItems.ItemSpec target, final String description) {
+   private static AiOperation holdInHand(final int plannedSlot, final AiItems.ItemSpec target, final String description) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final Object init_Obj = mc.level;
-         final Object load_Obj = mc.getConnection();
-         final Object read = mc.player;
-         boolean init_Z;
-         boolean load_Z;
-         int init_I = -1;
-         int load_I;
-         long init_J;
-         ItemStack init_ItemStack = ItemStack.EMPTY;
+         final Object startLevel = mc.level;
+         final Object startConnection = mc.getConnection();
+         final Object startPlayer = mc.player;
+         boolean done;
+         boolean clickSent;
+         int hotbarSlot = -1;
+         int waitTicks;
+         long repliesAtClick;
+         ItemStack expectedStack = ItemStack.EMPTY;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null) {
-               if (mc.level != this.init_Obj || mc.getConnection() != this.load_Obj || mc.player != this.read || !mc.player.isAlive()) {
-                  return this.init(AiOperation.Status.UNCERTAIN, "Hand equipment player or world changed");
+            if (!this.done && mc.player != null) {
+               if (mc.level != this.startLevel || mc.getConnection() != this.startConnection || mc.player != this.startPlayer || !mc.player.isAlive()) {
+                  return this.finish(AiOperation.Status.UNCERTAIN, "Hand equipment player or world changed");
                }
 
                if (mc.player.containerMenu != mc.player.inventoryMenu || !mc.player.inventoryMenu.getCarried().isEmpty()) {
-                  return this.init(
-                     this.load_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
+                  return this.finish(
+                     this.clickSent ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
                      "Hand equipment requires the player inventory with an empty cursor"
                   );
                }
 
-               if (!this.load_Z) {
+               if (!this.clickSent) {
                   int source = target == null ? plannedSlot : AiItems.findSlot(target, 36);
                   if (source >= 0 && source < 36 && !mc.player.getInventory().getItem(source).isEmpty()) {
-                     this.init_ItemStack = mc.player.getInventory().getItem(source).copy();
-                     this.init_I = source < 9 ? source : AiItems.pickHotbarDestination();
+                     this.expectedStack = mc.player.getInventory().getItem(source).copy();
+                     this.hotbarSlot = source < 9 ? source : AiItems.pickHotbarDestination();
                      if (source < 9) {
-                        autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
-                        return this.init(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.load());
+                        autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.hotbarSlot);
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.mainHandItemId());
                      }
 
                      int menuSlot = autismclient.util.InventorySlotHelper.toScreenSlot(mc, source);
                      if (menuSlot < 0) {
-                        return this.init(AiOperation.Status.FAILED, "Could not resolve the equipment's inventory slot");
+                        return this.finish(AiOperation.Status.FAILED, "Could not resolve the equipment's inventory slot");
                      }
 
-                     this.init_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
-                     AiContainerTransactions.sendPredictedClick(mc.player.inventoryMenu.containerId, menuSlot, this.init_I, ContainerInput.SWAP);
-                     this.load_Z = true;
-                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Moving " + description + " into the hotbar", this.init());
+                     this.repliesAtClick = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
+                     AiContainerTransactions.sendPredictedClick(mc.player.inventoryMenu.containerId, menuSlot, this.hotbarSlot, ContainerInput.SWAP);
+                     this.clickSent = true;
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Moving " + description + " into the hotbar", this.statusData());
                   } else {
-                     return this.init(AiOperation.Status.FAILED, "No suitable " + description + " in inventory");
+                     return this.finish(AiOperation.Status.FAILED, "No suitable " + description + " in inventory");
                   }
-               } else if (AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) > this.init_J) {
-                  if (!ItemStack.matches(this.init_ItemStack, mc.player.getInventory().getItem(this.init_I))) {
-                     return this.init(AiOperation.Status.FAILED, "Server did not apply the expected hotbar swap; no repeat click issued");
+               } else if (AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) > this.repliesAtClick) {
+                  if (!ItemStack.matches(this.expectedStack, mc.player.getInventory().getItem(this.hotbarSlot))) {
+                     return this.finish(AiOperation.Status.FAILED, "Server did not apply the expected hotbar swap; no repeat click issued");
                   }
 
-                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
-                  return this.init(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.load());
+                  autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.hotbarSlot);
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Holding " + AiEquip.mainHandItemId());
                } else {
-                  return ++this.load_I > 40
-                     ? this.init(AiOperation.Status.UNCERTAIN, "Hotbar swap lacks an applied server snapshot")
-                     : AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for the hotbar swap to apply", this.init());
+                  return ++this.waitTicks > 40
+                     ? this.finish(AiOperation.Status.UNCERTAIN, "Hotbar swap lacks an applied server snapshot")
+                     : AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for the hotbar swap to apply", this.statusData());
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Equip cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Equip cancelled");
             }
          }
 
-         JsonObject init() {
-            return AiJson.objectOf("what", description, "slot", this.init_I, "held", AiEquip.load(), "pending", this.load_Z && !this.init_Z);
+         JsonObject statusData() {
+            return AiJson.objectOf("what", description, "slot", this.hotbarSlot, "held", AiEquip.mainHandItemId(), "pending", this.clickSent && !this.done);
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            this.init_Z = true;
-            return AiGameOperations.result(status, message, this.init());
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            this.done = true;
+            return AiGameOperations.result(status, message, this.statusData());
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
+            this.done = true;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.load_Z || this.init_Z;
+            return !this.clickSent || this.done;
          }
       };
    }
 
-   private static AiOperation init_AiOperation(final String preferSpec) {
+   private static AiOperation equipArmor(final String preferSpec) {
       final Minecraft mc = Minecraft.getInstance();
       Module module = autismclient.modules.al.init_Module_Str("auto-armor");
       final boolean preferElytra = !AiRunResources.isCampaignActive() && module != null && "true".equals(module.value("prefer-elytra"));
@@ -297,61 +297,61 @@ final class AiEquip {
       final boolean swapArmor = module != null && "true".equals(module.value("can-swap-armor"));
       final boolean hotbarSwap = module == null || !"false".equals(module.value("hotbar"));
       boolean saveArmor = module != null && "true".equals(module.value("save-armor"));
-      final int threshold = Math.max(saveArmor ? init(module) : -2147483648, AiRunResources.isCampaignActive() ? 32 : -2147483648);
-      final AiItems.ItemSpec prefer = preferSpec.isEmpty() ? null : init_af_DataUtil(preferSpec);
+      final int threshold = Math.max(saveArmor ? durabilityThreshold(module) : -2147483648, AiRunResources.isCampaignActive() ? 32 : -2147483648);
+      final AiItems.ItemSpec prefer = preferSpec.isEmpty() ? null : parsePreferSpec(preferSpec);
       return new AiOperation() {
-         final String init_Str = AiEquip.read();
-         final Object init_Obj = mc.level;
-         final Object load_Obj = mc.getConnection();
-         final Object read_Obj = mc.player;
-         ItemStack init_ItemStack = ItemStack.EMPTY;
-         EquipmentSlot init_EquipmentSlot;
-         int init_I;
-         int load_I;
-         long init_J = -1L;
-         int read_I;
-         boolean init_Z;
-         boolean load_Z;
-         boolean read_Z;
+         final String wornBefore = AiEquip.wornArmorSummary();
+         final Object startLevel = mc.level;
+         final Object startConnection = mc.getConnection();
+         final Object startPlayer = mc.player;
+         ItemStack expectedStack = ItemStack.EMPTY;
+         EquipmentSlot movedSlot;
+         int ticks;
+         int armorMoves;
+         long repliesAtClick = -1L;
+         int waitTicks;
+         boolean movePending;
+         boolean done;
+         boolean preferChecked;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.load_Z && mc.player != null) {
-               if (mc.level != this.init_Obj || mc.getConnection() != this.load_Obj || mc.player != this.read_Obj || !mc.player.isAlive()) {
-                  return this.init(AiOperation.Status.UNCERTAIN, "Armor player or world changed; reconcile any pending move");
+            if (!this.done && mc.player != null) {
+               if (mc.level != this.startLevel || mc.getConnection() != this.startConnection || mc.player != this.startPlayer || !mc.player.isAlive()) {
+                  return this.finish(AiOperation.Status.UNCERTAIN, "Armor player or world changed; reconcile any pending move");
                }
 
-               if (++this.init_I > 400) {
-                  return this.init(AiOperation.Status.UNCERTAIN, "Armour equip did not settle in time");
+               if (++this.ticks > 400) {
+                  return this.finish(AiOperation.Status.UNCERTAIN, "Armour equip did not settle in time");
                }
 
                if (mc.player.containerMenu != mc.player.inventoryMenu) {
-                  return this.init(this.init_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "Close the open container before equipping armour");
+                  return this.finish(this.movePending ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, "Close the open container before equipping armour");
                }
 
                if (!mc.player.containerMenu.getCarried().isEmpty()) {
-                  return this.init(AiOperation.Status.FAILED, "Clear the cursor before equipping armour");
+                  return this.finish(AiOperation.Status.FAILED, "Clear the cursor before equipping armour");
                }
 
-               if (this.init_Z) {
-                  if (AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) <= this.init_J) {
-                     return ++this.read_I > 40
-                        ? this.init(AiOperation.Status.UNCERTAIN, "The armour click went out but no applied server inventory confirmation arrived")
-                        : this.init("Waiting for applied server inventory confirmation");
+               if (this.movePending) {
+                  if (AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId) <= this.repliesAtClick) {
+                     return ++this.waitTicks > 40
+                        ? this.finish(AiOperation.Status.UNCERTAIN, "The armour click went out but no applied server inventory confirmation arrived")
+                        : this.running("Waiting for applied server inventory confirmation");
                   }
 
-                  if (!ItemStack.matches(this.init_ItemStack, mc.player.getItemBySlot(this.init_EquipmentSlot))) {
-                     return this.init(AiOperation.Status.FAILED, "Server did not apply the expected armor move; no repeat click issued");
+                  if (!ItemStack.matches(this.expectedStack, mc.player.getItemBySlot(this.movedSlot))) {
+                     return this.finish(AiOperation.Status.FAILED, "Server did not apply the expected armor move; no repeat click issued");
                   }
 
-                  this.init_Z = false;
-                  this.load_I++;
-                  this.read_I = 0;
-                  return this.init("Armour move applied; re-evaluating");
+                  this.movePending = false;
+                  this.armorMoves++;
+                  this.waitTicks = 0;
+                  return this.running("Armour move applied; re-evaluating");
                } else {
-                  if (prefer != null && !this.read_Z) {
-                     this.read_Z = true;
-                     if (AiEquip.init(autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.init_TaskTimer_BufferHe(), allowCursed, true), prefer).isEmpty()) {
+                  if (prefer != null && !this.preferChecked) {
+                     this.preferChecked = true;
+                     if (AiEquip.preferredCandidates(autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.inventoryView(), allowCursed, true), prefer).isEmpty()) {
                         JsonObject data = AiJson.objectOf(
                            "what",
                            "armor",
@@ -360,47 +360,47 @@ final class AiEquip {
                            "matches",
                            AiJson.GSON.toJsonTree(prefer.itemIds()),
                            "worn",
-                           AiEquip.read(),
+                           AiEquip.wornArmorSummary(),
                            "wornBefore",
-                           this.init_Str
+                           this.wornBefore
                         );
                         this.cancel();
                         return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "prefer '" + preferSpec + "' matches no armor piece, carried or worn", data.toString());
                      }
                   }
 
-                  AiEquip.Inner_StreamUtil move = this.init_w_StreamUtil();
+                  AiEquip.Inner_StreamUtil move = this.nextMove();
                   if (move == null) {
-                     String now = AiEquip.read();
-                     return this.init(
+                     String now = AiEquip.wornArmorSummary();
+                     return this.finish(
                         AiOperation.Status.SUCCEEDED,
-                        this.load_I == 0 ? "Already wearing the best available armour" : "Equipped " + now + " (" + this.load_I + " verified moves)"
+                        this.armorMoves == 0 ? "Already wearing the best available armour" : "Equipped " + now + " (" + this.armorMoves + " verified moves)"
                      );
                   }
 
                   if (move.kind() == AiEquip.Inner_DataUtil.CLEAR_WORN && mc.player.getInventory().getFreeSlot() < 0) {
-                     return this.init(AiOperation.Status.FAILED, "No free inventory slot to swap out the worn " + AiEquip.init(mc.player.getItemBySlot(move.slot())));
+                     return this.finish(AiOperation.Status.FAILED, "No free inventory slot to swap out the worn " + AiEquip.itemId(mc.player.getItemBySlot(move.slot())));
                   }
 
-                  this.init_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
+                  this.repliesAtClick = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
                   AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, move.menuSlot(), move.button(), move.input());
-                  this.init_EquipmentSlot = move.slot();
-                  this.init_ItemStack = mc.player.getItemBySlot(this.init_EquipmentSlot).copy();
-                  this.init_Z = true;
-                  this.read_I = 0;
-                  return this.init("Moving " + move.description());
+                  this.movedSlot = move.slot();
+                  this.expectedStack = mc.player.getItemBySlot(this.movedSlot).copy();
+                  this.movePending = true;
+                  this.waitTicks = 0;
+                  return this.running("Moving " + move.description());
                }
             } else {
-               return this.init(AiOperation.Status.CANCELLED, "Armour equip cancelled");
+               return this.finish(AiOperation.Status.CANCELLED, "Armour equip cancelled");
             }
          }
 
-         AiEquip.Inner_StreamUtil init_w_StreamUtil() {
-            Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = AiEquip.init(
-               autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.init_TaskTimer_BufferHe(), allowCursed, true), threshold, prefer
+         AiEquip.Inner_StreamUtil nextMove() {
+            Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = AiEquip.bestBySlot(
+               autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.inventoryView(), allowCursed, true), threshold, prefer
             );
             if (preferElytra) {
-               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.init_TaskTimer_DataUtil();
+               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.wornElytraCandidate();
                if (elytra != null) {
                   best.put(EquipmentSlot.CHEST, elytra);
                }
@@ -411,21 +411,21 @@ final class AiEquip {
                if (candidate != null && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR) {
                   ItemStack wornStack = mc.player.getItemBySlot(slot);
                   if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(wornStack)) {
-                     int armorMenuSlot = AiEquip.init_Map.get(slot);
+                     int armorMenuSlot = AiEquip.ARMOR_MENU_SLOTS.get(slot);
                      if (wornStack.isEmpty()) {
                         return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
                            )
                            : new AiEquip.Inner_StreamUtil(
-                              slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
+                              slot, this.screenSlot(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
                            );
                      } else {
                         return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.stack())
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
                            )
-                           : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.CLEAR_WORN, AiEquip.init(wornStack));
+                           : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.CLEAR_WORN, AiEquip.itemId(wornStack));
                      }
                   }
                }
@@ -434,7 +434,7 @@ final class AiEquip {
             return null;
          }
 
-         autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper init_TaskTimer_BufferHe() {
+         autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper inventoryView() {
             return new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
                @Override
                public ItemStack init(int index) {
@@ -448,7 +448,7 @@ final class AiEquip {
             };
          }
 
-         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {
+         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil wornElytraCandidate() {
             ItemStack wornChest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
             if (wornChest.is(Items.ELYTRA)) {
                return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, -1);
@@ -472,37 +472,37 @@ final class AiEquip {
                : null;
          }
 
-         int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
+         int screenSlot(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
             return autismclient.util.InventorySlotHelper.toScreenSlot(mc, candidate.inventorySlot());
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             return AiGameOperations.result(
                AiOperation.Status.RUNNING,
                message,
-               AiJson.objectOf("what", "armor", "worn", AiEquip.read(), "wornBefore", this.init_Str, "armorMoves", this.load_I)
+               AiJson.objectOf("what", "armor", "worn", AiEquip.wornArmorSummary(), "wornBefore", this.wornBefore, "armorMoves", this.armorMoves)
             );
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            JsonObject data = AiJson.objectOf("what", "armor", "worn", AiEquip.read(), "wornBefore", this.init_Str, "armorMoves", this.load_I);
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            JsonObject data = AiJson.objectOf("what", "armor", "worn", AiEquip.wornArmorSummary(), "wornBefore", this.wornBefore, "armorMoves", this.armorMoves);
             this.cancel();
             return new AiOperation.Result(status, message, data.toString(), List.of());
          }
 
          @Override
          public void cancel() {
-            this.load_Z = true;
+            this.done = true;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.init_Z || this.load_Z;
+            return !this.movePending || this.done;
          }
       };
    }
 
-   static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> init(
+   static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> preferredCandidates(
       Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, AiItems.ItemSpec prefer
    ) {
       Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> matching = new EnumMap<>(EquipmentSlot.class);
@@ -524,18 +524,18 @@ final class AiEquip {
       return matching;
    }
 
-   static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(
+   static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> bestBySlot(
       Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, AiItems.ItemSpec prefer
    ) {
       Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.bestBySlot(byType, threshold);
       if (prefer != null) {
-         best.putAll(autismclient.util.ArmorEvaluationHelper.bestBySlot(init(byType, prefer), threshold));
+         best.putAll(autismclient.util.ArmorEvaluationHelper.bestBySlot(preferredCandidates(byType, prefer), threshold));
       }
 
       return best;
    }
 
-   static AiItems.ItemSpec init_af_DataUtil(String spec) {
+   static AiItems.ItemSpec parsePreferSpec(String spec) {
       if (spec.contains(",")) {
          Set<Item> items = new LinkedHashSet<>();
          Set<Block> blocks = new LinkedHashSet<>();
@@ -545,7 +545,7 @@ final class AiEquip {
                throw new IllegalArgumentException("prefer list contains an empty item specification");
             }
 
-            AiItems.ItemSpec target = init_af_DataUtil(part.trim());
+            AiItems.ItemSpec target = parsePreferSpec(part.trim());
             items.addAll(target.items());
             blocks.addAll(target.blocks());
          }
@@ -582,7 +582,7 @@ final class AiEquip {
       }
    }
 
-   private static int init(Module module) {
+   private static int durabilityThreshold(Module module) {
       try {
          return Integer.parseInt(module.value("durability-threshold"));
       } catch (NumberFormatException e) {
@@ -590,11 +590,11 @@ final class AiEquip {
       }
    }
 
-   private static String init(ItemStack stack) {
+   private static String itemId(ItemStack stack) {
       return stack.isEmpty() ? "minecraft:air" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static String load() {
+   private static String mainHandItemId() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return "";
@@ -604,7 +604,7 @@ final class AiEquip {
       return stack.isEmpty() ? "minecraft:air" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static String read() {
+   private static String wornArmorSummary() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return "";
