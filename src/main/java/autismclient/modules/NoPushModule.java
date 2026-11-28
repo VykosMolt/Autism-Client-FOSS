@@ -10,7 +10,7 @@ public final class NoPushModule extends Module {
       this.add(new BoolSetting("entities", "Entities", false).description("Prevent collision pushes from entities").build());
    }
 
-   public static boolean init(Entity receiving, String option) {
+   public static boolean cancelsPush(Entity receiving, String option) {
       return receiving != null
          && receiving == MC.player
          && !MC.player.isAutoSpinAttack()

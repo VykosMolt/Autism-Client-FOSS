@@ -5,7 +5,7 @@ public final class SessionContextWatcher {
    private Object lastPlayer;
    private Object lastConnection;
 
-   public void init(Object world, Object player, Object connection, Runnable reset) {
+   public void check(Object world, Object player, Object connection, Runnable reset) {
       if (this.lastWorld != world || this.lastPlayer != player || this.lastConnection != connection) {
          reset.run();
          this.lastWorld = world;
@@ -14,7 +14,7 @@ public final class SessionContextWatcher {
       }
    }
 
-   public void init() {
+   public void clear() {
       this.lastWorld = this.lastPlayer = this.lastConnection = null;
    }
 }

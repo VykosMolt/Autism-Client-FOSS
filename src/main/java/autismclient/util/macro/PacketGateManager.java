@@ -40,7 +40,7 @@ public final class PacketGateManager {
             init(id, ownerRunId);
          } else {
             String key = init(ownerRunId, id);
-            init_ConcurrentHashMap.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.init(), action.flushOnDisable));
+            init_ConcurrentHashMap.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
             init_Str = key;
          }
       }
@@ -291,7 +291,7 @@ public final class PacketGateManager {
    }
 
    private static String resolvePacketName(String value) {
-      return PacketNameResolver.load(value);
+      return PacketNameResolver.normalizeCached(value);
    }
 
    public static final class Inner_DataUtil {

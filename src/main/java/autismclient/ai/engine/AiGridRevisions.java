@@ -22,7 +22,7 @@ public final class AiGridRevisions {
    private AiGridRevisions() {
    }
 
-   public static void init(BlockPos pos) {
+   public static void bump(BlockPos pos) {
       bumpChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
@@ -34,7 +34,7 @@ public final class AiGridRevisions {
       }
    }
 
-   public static int init(long chunkKey) {
+   public static int revisionOf(long chunkKey) {
       AtomicInteger revision = chunkRevisions.get(HashCommon.mix(chunkKey));
       return revision == null ? fallbackRevision : revision.get();
    }

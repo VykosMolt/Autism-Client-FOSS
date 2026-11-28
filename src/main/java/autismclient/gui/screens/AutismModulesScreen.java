@@ -368,7 +368,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       if (this.isTitleSetup()) {
          this.lanSyncOverlay = AutismLANSyncOverlay.getOrCreate(this.font);
          this.lanSyncOverlay.restoreState();
-         this.lanSyncOverlay.load(true);
+         this.lanSyncOverlay.setConfigurationOnly(true);
          manager.register(this.lanSyncOverlay);
          this.queueEditorOverlay = this.init(AutismQueueEditorOverlay.class, null);
          if (this.queueEditorOverlay == null) {
@@ -376,7 +376,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             this.queueEditorOverlay.restoreState();
          }
 
-         this.queueEditorOverlay.load(true);
+         this.queueEditorOverlay.setConfigurationOnly(true);
          manager.register(this.queueEditorOverlay);
          this.customFilterOverlay = this.init(AutismCustomFilterOverlay.class, null);
          if (this.customFilterOverlay == null) {
@@ -422,14 +422,14 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
             if (logger != null) {
                logger.restoreState();
-               logger.load(true);
+               logger.setConfigurationOnly(true);
                manager.register(logger);
             }
 
             AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
             if (serverInfo != null) {
                serverInfo.restoreState();
-               serverInfo.load(true);
+               serverInfo.setConfigurationOnly(true);
                manager.register(serverInfo);
             }
          }
@@ -450,7 +450,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             this.lanSyncOverlay.restoreState();
          }
 
-         this.lanSyncOverlay.load(false);
+         this.lanSyncOverlay.setConfigurationOnly(false);
          manager.register(this.lanSyncOverlay);
          this.queueEditorOverlay = this.init(AutismQueueEditorOverlay.class, null);
          if (this.queueEditorOverlay == null) {
@@ -458,7 +458,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             this.queueEditorOverlay.restoreState();
          }
 
-         this.queueEditorOverlay.load(false);
+         this.queueEditorOverlay.setConfigurationOnly(false);
          manager.register(this.queueEditorOverlay);
          this.customFilterOverlay = this.init(AutismCustomFilterOverlay.class, null);
          if (this.customFilterOverlay == null) {
@@ -507,14 +507,14 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
             if (logger != null) {
                logger.restoreState();
-               logger.load(false);
+               logger.setConfigurationOnly(false);
                manager.register(logger);
             }
 
             AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
             if (serverInfo != null) {
                serverInfo.restoreState();
-               serverInfo.load(false);
+               serverInfo.setConfigurationOnly(false);
                manager.register(serverInfo);
             }
          }
@@ -656,7 +656,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          }
       } else if ("ai".equals(id)) {
          if (!AutismLiteVariant.enabled()) {
-            autismclient.ai.AiAssistant.getInstance().read();
+            autismclient.ai.AiAssistant.getInstance().toggle();
          }
       } else if ("macros".equals(id)) {
          this.open();
@@ -724,10 +724,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
                   LauncherQuickActions.toggleDelayPackets();
                   break;
                case "flush":
-                  LauncherQuickActions.read();
+                  LauncherQuickActions.flushQueue();
                   break;
                case "clear":
-                  LauncherQuickActions.write();
+                  LauncherQuickActions.clearQueue();
             }
          }
       }
@@ -801,11 +801,11 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       if (this.lanSyncOverlay != null) {
-         this.lanSyncOverlay.load(false);
+         this.lanSyncOverlay.setConfigurationOnly(false);
       }
 
       if (this.queueEditorOverlay != null) {
-         this.queueEditorOverlay.load(false);
+         this.queueEditorOverlay.setConfigurationOnly(false);
       }
 
       ActionEditorOverlay actionEditor = ActionEditorOverlay.getExisting();
@@ -817,12 +817,12 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       if (global != null) {
          AutismPacketLoggerOverlay logger = global.getPacketLoggerOverlay();
          if (logger != null) {
-            logger.load(false);
+            logger.setConfigurationOnly(false);
          }
 
          AutismServerInfoOverlay serverInfo = global.getServerInfoOverlay();
          if (serverInfo != null) {
-            serverInfo.load(false);
+            serverInfo.setConfigurationOnly(false);
          }
       }
 

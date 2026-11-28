@@ -12,7 +12,7 @@ public final class AiChatOps {
    private AiChatOps() {
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       int index = AiJson.getInt(args, "index", 0);
       int actionIndex = AiJson.getInt(args, "actionIndex", 0);
       int size = AiChatLedger.size();

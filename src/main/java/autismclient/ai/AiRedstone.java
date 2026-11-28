@@ -41,7 +41,7 @@ final class AiRedstone {
    private AiRedstone() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiRedstone.RedstoneAction action = init(AiJson.getString(args, "action", "inspect"));

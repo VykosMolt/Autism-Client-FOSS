@@ -22,15 +22,15 @@ public enum AiSurface {
       this.write_D = bounce;
    }
 
-   public byte init() {
+   public byte id() {
       return (byte)this.ordinal();
    }
 
-   public static AiSurface init(int id) {
+   public static AiSurface byId(int id) {
       return id >= 0 && id < init_mArr.length ? init_mArr[id] : NORMAL;
    }
 
-   public static AiSurface init(double friction, double speedFactor, double jumpFactor, double bounce) {
+   public static AiSurface classify(double friction, double speedFactor, double jumpFactor, double bounce) {
       if (bounce >= 0.9) {
          return SLIME;
       } else if (bounce > 0.0) {
@@ -48,7 +48,7 @@ public enum AiSurface {
       }
    }
 
-   public static AiSurface init(AiPathfinder.CellInfo probe) {
+   public static AiSurface of(AiPathfinder.CellInfo probe) {
       if (probe == null || !probe.loaded()) {
          return NORMAL;
       } else if (probe.ice()) {

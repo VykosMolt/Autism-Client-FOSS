@@ -48,7 +48,7 @@ public final class AiEditLedger {
       prune(now);
    }
 
-   public static synchronized void init(BlockPos cell, BlockState was) {
+   public static synchronized void recordBreak(BlockPos cell, BlockState was) {
       boolean ownedSupport = AiScaffold.recordedBlock(cell) != null;
       boolean teardownExpected = expectedTeardown.remove(cell.asLong());
       AiScaffold.forget(cell);
@@ -111,7 +111,7 @@ public final class AiEditLedger {
       return breakTimes.containsKey(cell.asLong());
    }
 
-   public static synchronized boolean update(BlockPos cell) {
+   public static synchronized boolean isNearRecentBreak(BlockPos cell) {
       if (breakTimes.containsKey(cell.asLong())) {
          return true;
       }

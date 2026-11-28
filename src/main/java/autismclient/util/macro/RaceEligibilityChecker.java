@@ -4,15 +4,15 @@ public final class RaceEligibilityChecker {
    private RaceEligibilityChecker() {
    }
 
-   public static boolean init(MacroAction action) {
+   public static boolean isEligible(MacroAction action) {
       return action != null && !(action instanceof DelayAction) && RaceAction.isRaceCondition(action);
    }
 
-   public static boolean init(autismclient.util.AutismMacro macro) {
+   public static boolean hasEligible(autismclient.util.AutismMacro macro) {
       if (macro != null && macro.actions != null) {
          for (MacroAction action : macro.actions) {
             if (action != null && action.isEnabled()) {
-               return init(action);
+               return isEligible(action);
             }
          }
 

@@ -41,11 +41,11 @@ final class AiCover {
    private AiCover() {
    }
 
-   static boolean init(Minecraft mc) {
+   static boolean isTakingCover(Minecraft mc) {
       return mc.player != null && mc.player.tickCount - lastCoverTick <= 1;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(10, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 45)));
@@ -382,11 +382,11 @@ final class AiCover {
                         && mc.player.getHealth() < healTo
                         && (
                            this.eatOp != null
-                              || mc.player.getFoodData().getFoodLevel() < 18 && this.eatAttempts < 3 && AiSurvival.init(mc.player.getInventory()) >= 0
+                              || mc.player.getFoodData().getFoodLevel() < 18 && this.eatAttempts < 3 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0
                         )) {
                         if (this.eatOp == null) {
                            this.eatAttempts++;
-                           this.eatOp = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
+                           this.eatOp = AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                         }
 
                         AiOperation.Result r = this.eatOp.tick();

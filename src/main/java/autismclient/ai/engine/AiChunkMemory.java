@@ -105,11 +105,11 @@ public final class AiChunkMemory {
       return instance;
    }
 
-   public static void init(Path baseDir) {
+   public static void setBaseDir(Path baseDir) {
       load_Path = baseDir;
    }
 
-   public static void init(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       instance.load_V_Minecraft(mc);
    }
 
@@ -123,7 +123,7 @@ public final class AiChunkMemory {
       }
    }
 
-   public static boolean init(String path) {
+   public static boolean isNotableBlock(String path) {
       return path != null && (path.endsWith("_ore") || init_Set.contains(path));
    }
 
@@ -152,7 +152,7 @@ public final class AiChunkMemory {
       return packed;
    }
 
-   public void init(int cx, int cz, int yLo, int height, short[] flags, Map<Integer, String> notables) {
+   public void storeChunk(int cx, int cz, int yLo, int height, short[] flags, Map<Integer, String> notables) {
       if (height > 0 && height <= 128) {
          byte[] fresh = init_BArr_SArr(flags, yLo, height);
          Map<Integer, String> freshNotables = notables == null ? Map.of() : notables;

@@ -10,7 +10,7 @@ public final class DoubleClickSampler {
       this.init_Random = rng == null ? new Random() : rng;
    }
 
-   public int init() {
+   public int sampleFollowUps() {
       return this.init_Random.nextDouble() < 0.08 ? 1 : 0;
    }
 }

@@ -63,7 +63,7 @@ public class MacroClipboardCodec {
          ListTag packetList = new ListTag();
 
          for (AutismSessionState.DelayedPacket qp : queue) {
-            CompoundTag packetTag = init(qp);
+            CompoundTag packetTag = encode(qp);
             if (packetTag != null) {
                packetList.add(packetTag);
             }
@@ -473,7 +473,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<AutismSessionState.DelayedPacket> read() {
+   public static List<AutismSessionState.DelayedPacket> readPackets() {
       try {
          String base64 = Minecraft.getInstance().keyboardHandler.getClipboard();
          if (base64 != null && !base64.trim().isEmpty()) {
@@ -539,7 +539,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static CompoundTag init(AutismSessionState.DelayedPacket qp) {
+   public static CompoundTag encode(AutismSessionState.DelayedPacket qp) {
       try {
          CompoundTag tag = new CompoundTag();
          tag.putInt("delay", qp.getDelay());
@@ -1282,7 +1282,7 @@ public class MacroClipboardCodec {
          ListTag packetList = new ListTag();
 
          for (AutismSessionState.DelayedPacket qp : queue) {
-            CompoundTag packetTag = init(qp);
+            CompoundTag packetTag = encode(qp);
             if (packetTag != null) {
                packetList.add(packetTag);
             }

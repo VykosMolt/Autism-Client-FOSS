@@ -800,8 +800,8 @@ final class AiDragon {
                } else {
                   boolean threat = false;
 
-                  for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.init(mc)) {
-                     if (AiProjectiles.init(tracked)) {
+                  for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.incoming(mc)) {
+                     if (AiProjectiles.isImminent(tracked)) {
                         threat = true;
                         break;
                      }
@@ -904,7 +904,7 @@ final class AiDragon {
                         return this.fail(AiFailure.TIMEOUT, "Too little time left to clear the remaining crystals");
                      }
 
-                     this.currentLeg = AiCrystals.init(AiJson.objectOf("timeoutSeconds", this.clampSeconds(600), "skipCaged", !AiThreats.isLegacyCombatEnabled()));
+                     this.currentLeg = AiCrystals.create(AiJson.objectOf("timeoutSeconds", this.clampSeconds(600), "skipCaged", !AiThreats.isLegacyCombatEnabled()));
                   }
 
                   AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
@@ -1839,7 +1839,7 @@ final class AiDragon {
                      return this.running("Out of arrows");
                   }
 
-                  this.currentLeg = AiRanged.init(
+                  this.currentLeg = AiRanged.create(
                      AiJson.objectOf("entityId", this.dragon.getId(), "count", 3, "timeoutSeconds", this.clampSeconds(45))
                   );
                }

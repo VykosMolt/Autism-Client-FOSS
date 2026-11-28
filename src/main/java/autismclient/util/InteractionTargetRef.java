@@ -33,17 +33,17 @@ public final class InteractionTargetRef {
       return pos == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.BLOCK, pos, "", InteractionHand.MAIN_HAND, null, null, false);
    }
 
-   public static InteractionTargetRef init(BlockHitResult hitResult, InteractionHand hand) {
+   public static InteractionTargetRef ofBlock(BlockHitResult hitResult, InteractionHand hand) {
       return hitResult != null && hitResult.getBlockPos() != null
          ? new InteractionTargetRef(InteractionTargetRef.TargetKind.BLOCK, hitResult.getBlockPos(), "", hand, hitResult.getLocation(), hitResult.getDirection(), hitResult.isInside())
          : null;
    }
 
-   public static InteractionTargetRef init(Entity entity, InteractionHand hand) {
+   public static InteractionTargetRef ofEntity(Entity entity, InteractionHand hand) {
       return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.ENTITY_INTERACT, null, refFor(entity), hand, null, null, false);
    }
 
-   public static InteractionTargetRef init(Entity entity, InteractionHand hand, Vec3 hitPos) {
+   public static InteractionTargetRef ofEntity(Entity entity, InteractionHand hand, Vec3 hitPos) {
       return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.ENTITY_INTERACT_AT, null, refFor(entity), hand, hitPos, null, false);
    }
 

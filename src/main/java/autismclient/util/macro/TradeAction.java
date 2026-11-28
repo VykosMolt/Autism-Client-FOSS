@@ -115,7 +115,7 @@ public final class TradeAction implements ContextMacroAction {
          return false;
       }
 
-      Entity entity = ctx.callOnClientThread(() -> autismclient.util.villager.MerchantInteractHelper.init(ctx.mc(), this.target == TradeAction.MerchantTarget.AIMED, this.range));
+      Entity entity = ctx.callOnClientThread(() -> autismclient.util.villager.MerchantInteractHelper.findMerchant(ctx.mc(), this.target == TradeAction.MerchantTarget.AIMED, this.range));
       if (entity == null) {
          return false;
       }
@@ -128,7 +128,7 @@ public final class TradeAction implements ContextMacroAction {
          }
 
          if (!sent) {
-            sent = Boolean.TRUE.equals(ctx.callOnClientThread(() -> ctx.isActive() && autismclient.util.villager.MerchantInteractHelper.load(ctx.mc(), entity, this.range)));
+            sent = Boolean.TRUE.equals(ctx.callOnClientThread(() -> ctx.isActive() && autismclient.util.villager.MerchantInteractHelper.interact(ctx.mc(), entity, this.range)));
          }
 
          ctx.setStatus("Trade: opening merchant");

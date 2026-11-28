@@ -15,7 +15,7 @@ final class AiPrintClock {
    private AiPrintClock() {
    }
 
-   static autismclient.ai.print.PrintClockSequence init(final autismclient.ai.print.LivePrintEnv env, final autismclient.ai.print.PrintClockSpec spec) {
+   static autismclient.ai.print.PrintClockSequence create(final autismclient.ai.print.LivePrintEnv env, final autismclient.ai.print.PrintClockSpec spec) {
       final Minecraft mc = Minecraft.getInstance();
       final LocalPlayer originalPlayer = mc.player;
       return new autismclient.ai.print.PrintClockSequence(env, spec, new autismclient.ai.print.PrintClockSequence.Inner_DataUtil() {
@@ -33,7 +33,7 @@ final class AiPrintClock {
 
          @Override
          public autismclient.ai.print.PrintMachineJob init(BlockPos at, BlockState source, Map<Integer, ItemStack> contents) {
-            return AiPrintContainer.load(env, new AiSchematicMachinePlan.ContainerPlan(at, contents, source));
+            return AiPrintContainer.create(env, new AiSchematicMachinePlan.ContainerPlan(at, contents, source));
          }
 
          @Override

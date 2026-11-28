@@ -8,18 +8,18 @@ final class KnockbackCounterStrafe {
    private int ticksLeft;
    private boolean jump;
 
-   void init(Vec3 motion, boolean jump, boolean counter, int ticks) {
+   void start(Vec3 motion, boolean jump, boolean counter, int ticks) {
       this.jump = jump;
-      this.init(motion, counter, ticks);
+      this.start(motion, counter, ticks);
    }
 
-   void init(Vec3 motion, boolean counter, int ticks) {
+   void start(Vec3 motion, boolean counter, int ticks) {
       double speed = motion.horizontalDistance();
       this.direction = speed > 0.035 ? new Vec3(motion.x / speed, 0.0, motion.z / speed) : Vec3.ZERO;
       this.ticksLeft = counter && speed > 0.035 ? Math.clamp(ticks, 1, 6) : 0;
    }
 
-   Input init(Input own, Vec3 motion, float yaw, boolean canJump) {
+   Input apply(Input own, Vec3 motion, float yaw, boolean canJump) {
       boolean jump = this.jump && canJump;
       this.jump = false;
       if (this.ticksLeft <= 0) {
@@ -49,7 +49,7 @@ final class KnockbackCounterStrafe {
       this.direction = Vec3.ZERO;
    }
 
-   int init_I() {
+   int ticksLeft() {
       return this.ticksLeft;
    }
 }

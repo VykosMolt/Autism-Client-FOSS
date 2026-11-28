@@ -45,11 +45,11 @@ final class AiPotion {
       return -1;
    }
 
-   static boolean init(Minecraft mc) {
+   static boolean shouldDrinkFireResistance(Minecraft mc) {
       return mc.player != null && !mc.player.hasEffect(MobEffects.FIRE_RESISTANCE) && findFireResistance(mc.player.getInventory()) >= 0;
    }
 
-   static AiOperation init() {
+   static AiOperation drinkFireResistance() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          int init_I;

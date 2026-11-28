@@ -64,12 +64,12 @@ public final class PayloadJsonCodec {
             action.payloadJson = init("", "");
          } else {
             action.payloadClassName = payload.getClass().getName();
-            action.payloadJson = init("C2S", action.channel, payload);
+            action.payloadJson = encode("C2S", action.channel, payload);
          }
       }
    }
 
-   public static String init(String direction, String channel, CustomPacketPayload payload) {
+   public static String encode(String direction, String channel, CustomPacketPayload payload) {
       JsonObject root = new JsonObject();
       root.addProperty("direction", direction == null ? "" : direction);
       root.addProperty("channel", channel == null ? "" : channel);
@@ -94,7 +94,7 @@ public final class PayloadJsonCodec {
    }
 
    public static String init(String channel, CustomPacketPayload payload) {
-      return init("", channel, payload);
+      return encode("", channel, payload);
    }
 
    public static String init_Str(autismclient.util.macro.PayloadAction action) {
@@ -110,7 +110,7 @@ public final class PayloadJsonCodec {
          try {
             CustomPacketPayload payload = init(action.payloadClassName, AutismPayloadSupport.parseHexOrBase64(action.payloadData));
             if (payload != null) {
-               return init(action.sourceDirection, action.channel, payload);
+               return encode(action.sourceDirection, action.channel, payload);
             }
          } catch (Throwable var2) {
          }
@@ -335,7 +335,7 @@ public final class PayloadJsonCodec {
 
    public static String load(String direction, String channel, CustomPacketPayload payload) {
       try {
-         return init(direction, channel, payload);
+         return encode(direction, channel, payload);
       } catch (Throwable t) {
          return init(direction, channel);
       }
@@ -798,12 +798,12 @@ public final class PayloadJsonCodec {
    }
 
    private static String init(Field field) {
-      String mapped = InspectorMappingsIndex.init(field);
+      String mapped = InspectorMappingsIndex.fieldAlias(field);
       return mapped != null && !mapped.isBlank() ? mapped : field.getName();
    }
 
    private static String init(RecordComponent component) {
-      String mapped = InspectorMappingsIndex.init(component.getAccessor());
+      String mapped = InspectorMappingsIndex.methodAlias(component.getAccessor());
       return mapped != null && !mapped.isBlank() ? mapped : component.getName();
    }
 

@@ -131,7 +131,7 @@ public final class GifModule extends Module {
             .build()
       );
       this.add(
-         new ActionSetting("reload-images", "Reload Images", () -> autismclient.util.gif.GifTextureManager.init())
+         new ActionSetting("reload-images", "Reload Images", () -> autismclient.util.gif.GifTextureManager.reloadAll())
             .description("Drop every cached image so files are re-read.")
             .group("Advanced")
             .availableOffline()

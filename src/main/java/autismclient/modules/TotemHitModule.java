@@ -140,7 +140,7 @@ public final class TotemHitModule extends Module {
                      && System.nanoTime() >= this.init_J
                      && autismclient.util.WeaponDamageCalculator.init() instanceof EntityHitResult hit
                      && hit.getEntity() == this.init_LivingEntity) {
-                     if (!autismclient.util.QueuedCombatAction.init(
+                     if (!autismclient.util.QueuedCombatAction.queueAttack(
                         "totem-hit",
                         hit,
                         () -> this.init_Z_29()

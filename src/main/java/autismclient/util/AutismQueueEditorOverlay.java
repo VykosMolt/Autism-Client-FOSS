@@ -114,7 +114,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       this.setVisible(!this.visible);
    }
 
-   public void load(boolean configurationOnly) {
+   public void setConfigurationOnly(boolean configurationOnly) {
       this.configurationOnly = configurationOnly;
    }
 
@@ -502,7 +502,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                      AutismSessionState.DelayedPacket.resetIdCounter();
                   }
 
-                  List<AutismSessionState.DelayedPacket> newQueue = MacroClipboardCodec.read();
+                  List<AutismSessionState.DelayedPacket> newQueue = MacroClipboardCodec.readPackets();
                   if (newQueue != null) {
                      AutismSessionState.getInstance().replaceDelayedPackets(newQueue);
                      this.clearSelection();
@@ -525,7 +525,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                   }
                }) + gap;
                bx = this.ghostToolbarButton(context, bx, row1Y, this.toolbarButtonHeight(), "Ins", mouseX, mouseY, "Insert clipboard packets at the end of the queue", () -> {
-                  List<AutismSessionState.DelayedPacket> newPackets = MacroClipboardCodec.read();
+                  List<AutismSessionState.DelayedPacket> newPackets = MacroClipboardCodec.readPackets();
                   if (newPackets != null && !newPackets.isEmpty()) {
                      List<AutismSessionState.DelayedPacket> combinedQueue = new ArrayList<>(AutismSessionState.getInstance().getDelayedPackets());
                      combinedQueue.addAll(newPackets);

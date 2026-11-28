@@ -301,12 +301,12 @@ final class AiSettingsView {
       this.models = this.modelCatalog.models();
       this.modelDropdown.setOptions(this.models);
       this.modelDropdown.setSelectedIndex(Math.max(0, this.models.indexOf(this.selectedModel)));
-      this.modelDropdown.active = !this.modelCatalog.load() && !this.models.isEmpty();
+      this.modelDropdown.active = !this.modelCatalog.isScanning() && !this.models.isEmpty();
       this.modelDropdown
          .setLabelOverride(
             this.models.contains(this.selectedModel)
                ? ""
-               : (this.modelCatalog.load() ? "Scanning models..." : (this.models.isEmpty() ? "Scan for models" : "Select a model"))
+               : (this.modelCatalog.isScanning() ? "Scanning models..." : (this.models.isEmpty() ? "Scan for models" : "Select a model"))
          );
    }
 
@@ -384,7 +384,7 @@ final class AiSettingsView {
             Thread worker = new Thread(
                () -> {
                   AiKeyResolver.Inner_DataUtil resolution = AiKeyResolver.init(k, p, endpointText, typed, () -> {
-                     if (!this.modelCatalog.init(generation)) {
+                     if (!this.modelCatalog.isCurrent(generation)) {
                         throw new CancellationException("Model scan superseded");
                      }
                   });
@@ -571,7 +571,7 @@ final class AiSettingsView {
             kit.addClickRegion(
                field,
                () -> autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(
-                  this.dropdowns, this.host.read_I(), this.host.write_I(), 0
+                  this.dropdowns, this.host.contextMenuX(), this.host.contextMenuY(), 0
                )
             );
          }
@@ -595,7 +595,7 @@ final class AiSettingsView {
             kit.addInteractiveRegion(
                modelBounds,
                () -> autismclient.gui.ui.widgets.DropdownWidget.handleMouseClick(
-                  this.dropdowns, this.host.read_I(), this.host.write_I(), 0
+                  this.dropdowns, this.host.contextMenuX(), this.host.contextMenuY(), 0
                ),
                null,
                this.models.isEmpty() ? "Scan to list models returned for this key and endpoint" : this.models.size() + " models to choose from"
@@ -605,14 +605,14 @@ final class AiSettingsView {
          kit.drawIconButton(
             autismclient.gui.f.NetHelper.init(modelBounds.init() + 2, y, ctrl, ctrl),
             autismclient.util.GuiIconAtlas.REFRESH,
-            this.modelCatalog.load(),
+            this.modelCatalog.isScanning(),
             false,
-            this.modelCatalog.load() ? "Scanning models..." : "Scan for models",
+            this.modelCatalog.isScanning() ? "Scanning models..." : "Scan for models",
             () -> this.scanModels(true)
          );
          autismclient.gui.ui.widgets.DropdownWidget.renderTriggers(kit.graphics, kit.font, this.dropdowns, kit.mouseX, kit.mouseY);
          y += ctrl + 2;
-         String status = this.modelCatalog.load() ? "Scanning models..." : this.scanMessage;
+         String status = this.modelCatalog.isScanning() ? "Scanning models..." : this.scanMessage;
          if (!status.isBlank()) {
             kit.drawEllipsizedText(status, x + 5, y + 1, w - 10, this.init_Z ? kit.colors.danger : kit.colors.textSecondary);
             y += AiUiKit.lineHeight() + 2;
@@ -637,7 +637,7 @@ final class AiSettingsView {
             y = this.drawFlagRow(kit, flag, live, x, y, w, now);
          }
 
-         int opacity = this.ghostLimit >= 0 && (this.update_Z || now < this.flush_J) ? this.ghostLimit : AiVisualization.load(live.ghostOpacity);
+         int opacity = this.ghostLimit >= 0 && (this.update_Z || now < this.flush_J) ? this.ghostLimit : AiVisualization.clampPercent(live.ghostOpacity);
          kit.drawCenteredRowText("Ghost opacity: " + opacity + "%", autismclient.gui.f.NetHelper.init(x, y, w, ctrl), x + 5, w, kit.colors.textPrimary);
          y += ctrl + 2;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
@@ -645,7 +645,7 @@ final class AiSettingsView {
             autismclient.gui.ui.widgets.SliderRenderer.init(kit.renderContext, this.init_NetHelper, opacity / 100.0, kit.isHovered(this.init_NetHelper));
             kit.addInteractiveRegion(this.init_NetHelper, () -> {
                this.update_Z = true;
-               this.dragGhostSlider(this.host.read_I());
+               this.dragGhostSlider(this.host.contextMenuX());
             }, null, "Drag to adjust all textured ghost blocks");
          }
 

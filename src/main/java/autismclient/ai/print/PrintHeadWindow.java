@@ -14,18 +14,18 @@ final class PrintHeadWindow {
    private long read_J;
    private Direction init_Direction;
 
-   void init() {
+   void reset() {
       this.load_I = this.read_I = 0;
       this.init_J = this.load_J = -9223372036854775808L;
       this.init_Direction = null;
    }
 
-   void init(float y, float p, long atTick, long now) {
+   void observe(float y, float p, long atTick, long now) {
       if (!Float.isFinite(y) || !Float.isFinite(p)) {
-         this.init();
+         this.reset();
       } else if (atTick != this.init_J) {
          if (this.load_J != -9223372036854775808L && (now < this.load_J || now - this.load_J > 100000000L)) {
-            this.init();
+            this.reset();
          }
 
          this.init_J = atTick;
@@ -44,7 +44,7 @@ final class PrintHeadWindow {
       }
    }
 
-   boolean init(Direction wanted, long now) {
+   boolean isStableFacing(Direction wanted, long now) {
       if (this.load_I >= 6 && this.init_Direction == wanted && now - this.read_J >= 150000000L && now >= this.load_J && now - this.load_J <= 100000000L) {
          for (int y = 0; y < this.load_I; y++) {
             for (int p = 0; p < this.load_I; p++) {

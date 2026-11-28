@@ -309,7 +309,7 @@ public final class LeafDupeModule extends Module {
                this.flush = 0;
                this.cycleCount = 0;
                this.candidatePage = 0L;
-               this.rateLimiter.init();
+               this.rateLimiter.reset();
                autismclient.util.leafdupe.LeafDupePacketTracker.load();
             }
 
@@ -608,7 +608,7 @@ public final class LeafDupeModule extends Module {
       for (int slot = 0; slot < 9; slot++) {
          ItemStack stack = MC.player.getInventory().getItem(slot);
          if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "leaf-dupe") && isFasterTool(stack, state)) {
-            float speed = autismclient.util.BlockBreakSpeedHelper.init(MC, stack, state);
+            float speed = autismclient.util.BlockBreakSpeedHelper.breakSpeed(MC, stack, state);
             if (speed > bestSpeed || speed == bestSpeed && slot == MC.player.getInventory().getSelectedSlot()) {
                best = slot;
                bestSpeed = speed;
@@ -1383,7 +1383,7 @@ public final class LeafDupeModule extends Module {
       this.flush = 0;
       this.candidatePage = 0L;
       this.cycleCount = 0;
-      this.rateLimiter.init();
+      this.rateLimiter.reset();
    }
 
    private enum SelectionMode {

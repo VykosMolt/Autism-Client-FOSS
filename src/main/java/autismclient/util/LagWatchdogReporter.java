@@ -32,7 +32,7 @@ public final class LagWatchdogReporter {
    private LagWatchdogReporter() {
    }
 
-   public static void init(Minecraft client) {
+   public static void tick(Minecraft client) {
       try {
          bK.init_V();
          if (load_Z && !bK.init_Z()) {
@@ -54,7 +54,7 @@ public final class LagWatchdogReporter {
       }
    }
 
-   public static void init() {
+   public static void reset() {
       baselineFps = -1.0;
       lowFpsSamples = 0;
       lowFpsSince = 0L;
@@ -64,7 +64,7 @@ public final class LagWatchdogReporter {
 
    private static void sample(Minecraft client) {
       if (client == null || client.level == null) {
-         init();
+         reset();
       } else if (client.getWindow() == null || !client.getWindow().isFocused()) {
          lowFpsSince = 0L;
       } else if (autismclient.util.macro.MacroFpsOverrideManager.isActive()) {

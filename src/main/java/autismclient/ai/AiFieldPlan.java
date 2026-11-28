@@ -17,7 +17,7 @@ final class AiFieldPlan {
    private AiFieldPlan() {
    }
 
-   static List<Vec3> init(List<BlockPos> cells, int band, BlockPos near) {
+   static List<Vec3> sweepPath(List<BlockPos> cells, int band, BlockPos near) {
       if (cells.isEmpty()) {
          return List.of();
       }

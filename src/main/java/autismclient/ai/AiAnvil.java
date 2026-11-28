@@ -30,7 +30,7 @@ final class AiAnvil {
    private AiAnvil() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final AiAnvil.AnvilMode mode = parseMode(AiJson.getString(args, "mode", "repair"));
@@ -346,7 +346,7 @@ final class AiAnvil {
                   out.addProperty("result", BuiltInRegistries.ITEM.getKey(this.expectedOutput.getItem()).toString());
                   out.addProperty("resultCount", this.expectedOutput.getCount());
                   out.addProperty("damageValue", this.expectedOutput.getDamageValue());
-                  out.add("enchantSummary", AiWorldReaders.init(this.expectedOutput));
+                  out.add("enchantSummary", AiWorldReaders.summary(this.expectedOutput));
                }
 
                return out;

@@ -166,7 +166,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             m.close,
             m.lastPlanKind,
             m.hurtWindow.init_I(m.init_I_15()),
-            SprintStateTracker.load(),
+            SprintStateTracker.predictedServerSprinting(),
             var4
          );
       } else {
@@ -218,7 +218,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             int tick = AutismSessionState.getInstance().getClientTick();
             if (m.attackBuffer.hasQueued()) {
                Runnable receipt = autismclient.util.CombatAttackDispatcher.init_Runnable(target);
-               if (!m.attackBuffer.init(target, attack, receipt)) {
+               if (!m.attackBuffer.queue(target, attack, receipt)) {
                   m.init_V_Z_5(false);
                   plain.run();
                   if (receipt != null) {
@@ -246,9 +246,9 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            Vec3 nextEye = terrain.init_Vec3_F(yaw).add(0.0, MC.player.getEyeHeight(), 0.0);
                            AABB nextBody = target.getBoundingBox().move(targetMotion(target));
                            terrain.pitch = AimHitboxHelper.init(pitch, nextEye, nextBody, nextEye, nextBody);
-                           terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
+                           terrain.init_Z = AimHitboxHelper.rayHits(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
                            terrain.load_Z = SprintStateTracker.effectiveSprinting(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
-                              || autismclient.util.LegacyCombatDetector.init(MC.player);
+                              || autismclient.util.LegacyCombatDetector.isLegacyCombat(MC.player);
                            KBDisplacementModule.DisplacementResult struck = m.init_X_StreamUtil_LivingEntity(target, terrain, tick, m.hurtWindow.init_I(fallback));
                            terrain.init_Vec3 = struck.horizontalShift();
                            boolean grounded = struck.grounded();
@@ -322,7 +322,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                                  + plan.init_W_JsonUtil().init_I()
                                  + " lead="
                                  + String.format(Locale.ROOT, "%.2f,%.2f", m.clientServerOffset.x, m.clientServerOffset.z);
-                              m.attackBuffer.init(target, attack, autismclient.util.CombatAttackDispatcher.init_Runnable(target));
+                              m.attackBuffer.queue(target, attack, autismclient.util.CombatAttackDispatcher.init_Runnable(target));
                            } else {
                               m.recordReason(
                                  target.getBoundingBox().move(targetMotion(target)).distanceToSqr(nextEye) > reach * reach
@@ -556,15 +556,15 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       try {
          boolean flank = this.flank;
          int count = this.attackBuffer
-            .init(
+            .dispatch(
                value -> context
                   && value instanceof LivingEntity target
                   && target == this.redirectLevel.getEntity(target.getId())
                   && this.init_Z_LivingEntity_2(target)
                   && (
-                     AimHitboxHelper.init(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player), 0.002)
+                     AimHitboxHelper.rayHits(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player), 0.002)
                         || flank
-                           && AimHitboxHelper.init(
+                           && AimHitboxHelper.rayHits(
                               target.getBoundingBox(), MC.player.getEyePosition(), this.redirectYaw, this.redirectPitch, autismclient.util.AttackReachHelper.maxReach(MC.player), 0.002
                            )
                   ),
@@ -598,7 +598,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
             this.load_J = System.nanoTime() + 2000000000L;
             this.init_ClientLevel = MC.level;
-            this.strafeCorrector.init();
+            this.strafeCorrector.reset();
          }
       } finally {
          this.init_Z = false;
@@ -641,7 +641,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    }
 
    private static boolean isAimedAt(AABB box, Vec3 eye, float yaw, float pitch) {
-      return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
+      return AimHitboxHelper.rayHits(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
    }
 
    public static Input fixInput(Input input, float camera, float yaw) {
@@ -666,7 +666,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             }
 
             double acceleration = MC.player.onGround() ? speed * (0.21600002F / (friction * friction * friction)) : (sprint ? 0.026 : 0.02);
-            return KnockbackThrowPlanner.init(MC.player.getDeltaMovement(), keys, yaw, acceleration);
+            return KnockbackThrowPlanner.applyInput(MC.player.getDeltaMovement(), keys, yaw, acceleration);
          });
       } else {
          return null;
@@ -744,7 +744,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          || MC.gui.overlay() != null
          || MC.options.keyUse.isDown()
          || MC.options.keyInventory.isDown()
-         || autismclient.util.ManualInteractionYield.init()
+         || autismclient.util.ManualInteractionYield.isYielding()
          || MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10()
          || aD.init_Z()
          || FreecamController.isActive()
@@ -794,7 +794,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          return false;
       }
 
-      if (SilentMovementCoordinator.activeRotation() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
+      if (SilentMovementCoordinator.activeRotation() != null && !QueuedAttackBuffer.isCompatibleOwner(autismclient.util.SilentRotationManager.getActiveOwnerId())) {
          return false;
       }
 
@@ -811,7 +811,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          level,
          SprintStateTracker.effectiveSprinting(MC.player.isSprinting()),
          MC.player.getAttackStrengthScale(0.5F),
-         autismclient.util.LegacyCombatDetector.init(MC.player)
+         autismclient.util.LegacyCombatDetector.isLegacyCombat(MC.player)
       );
    }
 
@@ -836,7 +836,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.attackBuffer.clear();
       this.clearRedirect();
       this.init_ArrayDeque.clear();
-      this.strafeCorrector.init();
+      this.strafeCorrector.reset();
       this.init_ClientLevel = null;
       this.load_J = 0L;
       this.init_I = -2147483648;
@@ -853,7 +853,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.reasonCounts.clear();
       this.lastPlanKind = "none";
       this.init_Map.clear();
-      this.hurtWindow.init();
+      this.hurtWindow.clear();
       this.targetTracks.clear();
    }
 
@@ -872,7 +872,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       this.wTap.read_V();
       this.init_Map.clear();
       this.read_ClientLevel = null;
-      this.hurtWindow.init();
+      this.hurtWindow.clear();
       this.targetTracks.clear();
       if (ownsSilentRotation()) {
          autismclient.util.SilentRotationManager.resetAll();
@@ -982,7 +982,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                      }
                   }
 
-                  Vec3 movement = KnockbackThrowPlanner.init(velocity, keys, yaw, acceleration);
+                  Vec3 movement = KnockbackThrowPlanner.applyInput(velocity, keys, yaw, acceleration);
                   return !this.init_Z_AABB(Module.MC.player.getBoundingBox().expandTowards(movement))
                      ? Module.MC.player.position()
                      : Module.MC

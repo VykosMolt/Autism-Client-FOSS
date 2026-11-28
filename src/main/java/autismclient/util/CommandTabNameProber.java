@@ -90,7 +90,7 @@ public final class CommandTabNameProber {
    private CommandTabNameProber() {
    }
 
-   public static LinkedHashMap<String, String> init(Minecraft mc, String self) {
+   public static LinkedHashMap<String, String> probe(Minecraft mc, String self) {
       LinkedHashMap<String, String> names = new LinkedHashMap<>();
       if (mc == null) {
          return names;
@@ -422,7 +422,7 @@ public final class CommandTabNameProber {
 
                   for (int k = start; k < end; k++) {
                      int idx = pending.get(k);
-                     int requestId = CommandProbeIdAllocator.init();
+                     int requestId = CommandProbeIdAllocator.next();
                      MacroExecutor.PacketWaiter listener = MacroExecutor.registerIncomingPacketWaiter(
                         packet -> packet instanceof ClientboundCommandSuggestionsPacket replyx && replyx.id() == requestId
                      );

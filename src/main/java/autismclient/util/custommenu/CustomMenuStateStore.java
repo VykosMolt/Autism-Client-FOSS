@@ -9,11 +9,11 @@ public final class CustomMenuStateStore {
    private volatile long revision;
    private volatile CustomMenuSnapshot snapshot;
 
-   public boolean init(Packet<?> packet, String phase) {
-      return !CustomMenuAdapterRegistry.acceptsInbound(packet) ? false : this.load(packet, phase);
+   public boolean acceptInbound(Packet<?> packet, String phase) {
+      return !CustomMenuAdapterRegistry.acceptsInbound(packet) ? false : this.handle(packet, phase);
    }
 
-   public boolean load(Packet<?> packet, String phase) {
+   public boolean handle(Packet<?> packet, String phase) {
       CustomMenuEvent event = CustomMenuAdapterRegistry.inspect(packet, phase);
       if (event.type() == CustomMenuEvent.Type.NONE) {
          return false;
@@ -39,13 +39,13 @@ public final class CustomMenuStateStore {
       return this.revision;
    }
 
-   public synchronized void init(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
+   public synchronized void replace(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
       if (expected == null || this.snapshot == null || this.snapshot.generation() == expected.generation()) {
          this.snapshot = replacement == null ? null : replacement.withConnectionState(expected == null ? "" : expected.phase(), ++this.revision);
       }
    }
 
-   public synchronized void init(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
+   public synchronized void replace(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
       if (this.revision == seenGeneration) {
          this.revision++;
          this.snapshot = replacement == null ? null : replacement.withConnectionState(phase == null ? "" : phase, this.revision);

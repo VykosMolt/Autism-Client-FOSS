@@ -794,7 +794,7 @@ final class AiGuard {
                burrowActive = false;
                fleeActive = true;
                AutismClientAddon.LOG.info("[AI] cover: repeated cover from an unreachable shooter, leaving its range");
-               return allowDuringLowHealth(AiSurvival.load(AiJson.objectOf("radius", 16.0, "distance", 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds)))));
+               return allowDuringLowHealth(AiSurvival.flee(AiJson.objectOf("radius", 16.0, "distance", 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds)))));
             }
 
             boolean blazeCharge = blazeShooter && !AiThreats.isLegacyCombatEnabled();
@@ -824,7 +824,7 @@ final class AiGuard {
                coverActive = true;
                recordShooterCover(nearestShooterEntityId);
                return allowDuringLowHealth(
-                  AiCover.init(AiJson.objectOf("healTo", vitals.health() < 12.0F ? Math.min(vitals.maxHealth(), 16.0F) : 0.0F, "timeoutSeconds", 45))
+                  AiCover.create(AiJson.objectOf("healTo", vitals.health() < 12.0F ? Math.min(vitals.maxHealth(), 16.0F) : 0.0F, "timeoutSeconds", 45))
                );
             }
          }
@@ -934,14 +934,14 @@ final class AiGuard {
                );
                break;
             case FLEE:
-               var10000 = AiSurvival.load(
+               var10000 = AiSurvival.flee(
                   AiJson.objectOf(
                      "radius", creeperNearby ? 20 : 14, "distance", creeperNearby ? 40 : 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds))
                   )
                );
                break;
             case EAT:
-               var10000 = AiSurvival.init(AiJson.objectOf("food", 19, "timeoutSeconds", Math.max(10, Math.min(40, budgetSeconds))));
+               var10000 = AiSurvival.eat(AiJson.objectOf("food", 19, "timeoutSeconds", Math.max(10, Math.min(40, budgetSeconds))));
                break;
             case TIDY:
                var10000 = createTidyOperation(policy);
@@ -1001,13 +1001,13 @@ final class AiGuard {
                if (mc.level.getBlockState(feet).canBeReplaced() && !mc.level.getBlockState(feet.below()).getCollisionShape(mc.level, feet.below()).isEmpty()) {
                   lastEndermanWaterWardNanos = System.nanoTime();
                   return AiNetherRun.sequence(
-                     AiBucket.init(
+                     AiBucket.create(
                         AiJson.objectOf(
                            "action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5
                         )
                      ),
                      () -> AiNetherRun.sequence(
-                        AiCombat.init(100), () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
+                        AiCombat.init(100), () -> AiBucket.create(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
                      )
                   );
                } else {
@@ -1054,7 +1054,7 @@ final class AiGuard {
       lastTidyNanos = now;
       JsonArray keep = new JsonArray();
       policy.keep().forEach(keep::add);
-      return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 4, "keep", keep));
+      return AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 4, "keep", keep));
    }
 
    static String decisionReason(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
@@ -1203,7 +1203,7 @@ final class AiGuard {
 
    private static boolean hasEdibleFood() {
       Minecraft mc = Minecraft.getInstance();
-      return mc.player != null && AiSurvival.init(mc.player.getInventory()) >= 0;
+      return mc.player != null && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0;
    }
 
    record StatusSnapshot(

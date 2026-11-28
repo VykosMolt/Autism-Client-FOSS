@@ -31,11 +31,11 @@ final class AiCellMaterials {
    private AiCellMaterials() {
    }
 
-   static List<AiCellMaterials.MaterialRequirement> init(AiBuilder.CellSpec cell) {
-      return init(cell, null, false);
+   static List<AiCellMaterials.MaterialRequirement> requirements(AiBuilder.CellSpec cell) {
+      return requirements(cell, null, false);
    }
 
-   static List<AiCellMaterials.MaterialRequirement> init(AiBuilder.CellSpec cell, BlockState live, boolean waterAbove) {
+   static List<AiCellMaterials.MaterialRequirement> requirements(AiBuilder.CellSpec cell, BlockState live, boolean waterAbove) {
       if (!AiBuilder.isTransientPistonCell(cell) && (live == null || !AiBuilder.matchesSchematicCell(cell, live))) {
          if (!"upper".equals(cell.properties().get("half")) && !"head".equals(cell.properties().get("part"))) {
             ArrayList<AiCellMaterials.MaterialRequirement> out = new ArrayList<>();
@@ -180,7 +180,7 @@ final class AiCellMaterials {
       }
    }
 
-   static List<AiCellMaterials.MaterialRequirement> init(List<AiBuilder.CellSpec> cells, BlockPos origin, LevelReader world) {
+   static List<AiCellMaterials.MaterialRequirement> requirementsInWorld(List<AiBuilder.CellSpec> cells, BlockPos origin, LevelReader world) {
       HashSet<Long> sourceCells = new HashSet<>();
 
       for (AiBuilder.CellSpec cell : cells) {
@@ -195,7 +195,7 @@ final class AiCellMaterials {
             BlockPos target = origin.offset(cell.dx(), cell.dy(), cell.dz());
             BlockState live = world.getBlockState(target);
             if (!AiBuilder.matchesSchematicCell(cell, live)) {
-               out.addAll(init(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
+               out.addAll(requirements(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
                BlockPos foundation = AiSchematicActions.foundationFor(cell, target, world, sourceCells);
                if (foundation != null && foundations.add(foundation)) {
                   init(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);

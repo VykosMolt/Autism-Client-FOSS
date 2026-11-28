@@ -14,8 +14,8 @@ public final class AiCheckpointHud {
    }
 
    public static void render(autismclient.gui.f.SyncManager ui, List<autismclient.ai.engine.AiStandingTarget.StandingSpot> checkpoints) {
-      if (!checkpoints.isEmpty() && WorldProjectionHelper.init(PROJECTION)) {
-         Vec3 camera = WorldProjectionHelper.init();
+      if (!checkpoints.isEmpty() && WorldProjectionHelper.projection(PROJECTION)) {
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          GuiGraphicsExtractor graphics = ui.init_GuiGraphicsExtract();
          autismclient.gui.ui.UiColorScheme colors = ui.init_TableIndex().colors();
 

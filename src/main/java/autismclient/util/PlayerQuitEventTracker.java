@@ -26,7 +26,7 @@ public final class PlayerQuitEventTracker {
 
    public void updateRoster(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
       if (profiles.size() > 4096) {
-         this.init();
+         this.clear();
       } else {
          Map<UUID, AntiVanishRosterTracker.RosterProfile> live = new HashMap<>();
          Set<String> names = new HashSet<>();
@@ -104,7 +104,7 @@ public final class PlayerQuitEventTracker {
 
          this.members.values().removeIf(mx -> now - mx.lastSeenAt > 30000L);
          if (this.members.size() > 4096) {
-            this.init();
+            this.clear();
          }
       }
    }
@@ -206,7 +206,7 @@ public final class PlayerQuitEventTracker {
          && (m.quitMessageAt < 0L || m.quitMessageAt < m.removedAt - 3000L);
    }
 
-   public void init() {
+   public void clear() {
       this.members.clear();
       this.recentRemovals.clear();
    }

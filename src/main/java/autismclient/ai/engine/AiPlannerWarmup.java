@@ -16,7 +16,7 @@ public final class AiPlannerWarmup {
    private AiPlannerWarmup() {
    }
 
-   public static void putAt(Minecraft var0) {
+   public static void tick(Minecraft var0) {
       if (!putAt_Z) {
          if (++flowTemp >= 100) {
             putAt_Z = true;

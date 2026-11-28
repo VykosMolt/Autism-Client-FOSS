@@ -20,7 +20,7 @@ final class PlayerDisplayNameParser {
    }
 
    static boolean init(String accountName, Component display) {
-      if (!init(accountName)) {
+      if (!isPlausibleAccountName(accountName)) {
          return false;
       }
 
@@ -28,7 +28,7 @@ final class PlayerDisplayNameParser {
       return text != null && indexOfName(text.text.toString(), accountName) >= 0;
    }
 
-   static boolean init(String name) {
+   static boolean isPlausibleAccountName(String name) {
       if (name != null && !name.isEmpty() && name.length() <= 32 && name.equals(name.strip())) {
          boolean alphanumeric = false;
 
@@ -50,7 +50,7 @@ final class PlayerDisplayNameParser {
    }
 
    static MutableComponent displayName(String accountName, Component serverDisplay, TextColor fallbackColor) {
-      if (!init(accountName)) {
+      if (!isPlausibleAccountName(accountName)) {
          return Component.empty();
       }
 
@@ -76,7 +76,7 @@ final class PlayerDisplayNameParser {
       return value == null ? fallback : value;
    }
 
-   static int init_I(String accountName, Component display, TextColor fallback) {
+   static int displayColor(String accountName, Component display, TextColor fallback) {
       long[] sum = new long[4];
       displayName(accountName, display, fallback).visit((style, text) -> {
          int rgb = style.getColor() == null ? 16777215 : style.getColor().getValue();

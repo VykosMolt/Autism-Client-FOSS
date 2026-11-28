@@ -18,7 +18,7 @@ public final class ItemSnbtCodec {
    private ItemSnbtCodec() {
    }
 
-   public static String init(ItemStack stack) {
+   public static String giveCommand(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
          String components = write(stack);
@@ -28,11 +28,11 @@ public final class ItemSnbtCodec {
       }
    }
 
-   public static String load(ItemStack stack) {
+   public static String snbt(ItemStack stack) {
       if (stack != null && !stack.isEmpty() && CLIENT.player != null) {
          try {
             Tag tag = ItemStack.CODEC.encodeStart(CLIENT.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
-            return init(tag);
+            return tagText(tag);
          } catch (Throwable t) {
             return "{error:\"" + escape(t.getClass().getSimpleName()) + "\"}";
          }
@@ -54,7 +54,7 @@ public final class ItemSnbtCodec {
       }
    }
 
-   public static String read(ItemStack stack) {
+   public static String validationError(ItemStack stack) {
       return stack != null && !stack.isEmpty() ? ItemStack.validateStrict(stack).error().map(Object::toString).orElse("") : "item stack is empty";
    }
 
@@ -74,7 +74,7 @@ public final class ItemSnbtCodec {
                      if (key.charAt(0) == '!') {
                         parts.add(key);
                      } else {
-                        parts.add(key + "=" + init(value));
+                        parts.add(key + "=" + tagText(value));
                      }
                   }
                }
@@ -91,7 +91,7 @@ public final class ItemSnbtCodec {
       }
    }
 
-   public static String init(Tag tag) {
+   public static String tagText(Tag tag) {
       return tag == null ? "" : tag.toString();
    }
 

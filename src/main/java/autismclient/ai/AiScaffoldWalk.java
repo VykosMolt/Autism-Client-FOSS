@@ -23,7 +23,7 @@ final class AiScaffoldWalk {
       return (int)((q % 360L + 360L) % 360L);
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final AiScaffoldWalk.ScaffoldPlan plan = AiScaffoldWalk.ScaffoldPlan.parse(args);
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
@@ -263,7 +263,7 @@ final class AiScaffoldWalk {
                   }
 
                   BlockPos feet = mc.player.blockPosition();
-                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.follow() ? this.followYaw : this.currentLeg().direction());
+                  int[] d = autismclient.ai.engine.AiBridgeDriver.cardinalStep(plan.follow() ? this.followYaw : this.currentLeg().direction());
                   autismclient.ai.engine.AiBridger.Inner_CachePool cells = new autismclient.ai.engine.AiBridger.Inner_CachePool(
                      feet.getX(), feet.getZ(), feet.getY() - 1, d[0], d[1], this.currentLeg().blocks() - this.legPlaced
                   );

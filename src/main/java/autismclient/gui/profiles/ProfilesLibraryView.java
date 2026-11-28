@@ -322,7 +322,7 @@ public final class ProfilesLibraryView {
       int cy = y + write(w) + 4;
       cy = this.init(ctx, x, cy, w, "Auto-save changes", p.autoSave, () -> this.profileManager.setAutoSave(p, !p.autoSave));
       cy = this.init(ctx, x, cy, w, "Own macro library", p.ownMacroLibrary, () -> this.profileManager.setOwnMacroLibrary(p, !p.ownMacroLibrary));
-      cy = this.init(ctx, x, cy, w, "Own theme color", p.ownThemeColor, () -> this.profileManager.read(p, !p.ownThemeColor));
+      cy = this.init(ctx, x, cy, w, "Own theme color", p.ownThemeColor, () -> this.profileManager.setOwnThemeColor(p, !p.ownThemeColor));
       cy += 2;
       String serverHeading = "Auto-apply on servers";
       ctx.init_PoolEntry()
@@ -549,7 +549,7 @@ public final class ProfilesLibraryView {
             if (cur != null && !cur.autoSave && this.profileManager.hasUnsavedChanges()) {
                this.pendingSwitch = target;
             } else {
-               this.profileManager.read(target);
+               this.profileManager.switchToAsync(target);
                this.selectedProfileId = target.id;
             }
          }
@@ -564,7 +564,7 @@ public final class ProfilesLibraryView {
             this.profileManager.saveSnapshot(this.profileManager.active());
          }
 
-         this.profileManager.read(target);
+         this.profileManager.switchToAsync(target);
          this.selectedProfileId = target.id;
       }
    }
@@ -612,10 +612,10 @@ public final class ProfilesLibraryView {
          } else {
             switch (this.mode) {
                case CREATE:
-                  AutismProfile p = this.profileManager.init(name, this.autoSave, this.ownMacroLibrary, this.ownThemeColor);
+                  AutismProfile p = this.profileManager.create(name, this.autoSave, this.ownMacroLibrary, this.ownThemeColor);
                   if (p != null) {
                      this.init(p);
-                     this.profileManager.read(p);
+                     this.profileManager.switchToAsync(p);
                   }
                   break;
                case RENAME:

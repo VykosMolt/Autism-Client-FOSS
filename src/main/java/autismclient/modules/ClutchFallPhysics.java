@@ -298,8 +298,8 @@ final class ClutchFallPhysics {
          }
 
          @Override
-         public double load() {
-            return world.load();
+         public double baseMovementSpeed() {
+            return world.baseMovementSpeed();
          }
 
          @Override
@@ -323,8 +323,8 @@ final class ClutchFallPhysics {
          }
 
          @Override
-         public boolean sync(int x, int y, int z) {
-            return world.sync(x, y, z);
+         public boolean isClimbable(int x, int y, int z) {
+            return world.isClimbable(x, y, z);
          }
 
          @Override
@@ -358,8 +358,8 @@ final class ClutchFallPhysics {
          }
 
          @Override
-         public boolean update(int x, int y, int z) {
-            return world.update(x, y, z);
+         public boolean isHazard(int x, int y, int z) {
+            return world.isHazard(x, y, z);
          }
       };
 

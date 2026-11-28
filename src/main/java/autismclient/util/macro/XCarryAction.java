@@ -205,7 +205,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public static int write(int ticks) {
+   public static int clampDelay(int ticks) {
       return Math.max(0, Math.min(10, ticks));
    }
 
@@ -341,7 +341,7 @@ public class XCarryAction implements MacroAction {
 
          while (safety++ < 512) {
             XCarryAction.SlotMove move = this.nextMove(handler);
-            if (move == null || !init(handler, mc, move.init, move.load, move.read)) {
+            if (move == null || !moveItems(handler, mc, move.init, move.load, move.read)) {
                break;
             }
 
@@ -700,7 +700,7 @@ public class XCarryAction implements MacroAction {
       tag.putString("type", MacroActionType.XCARRY.name());
       tag.putString("mode", this.mode.name());
       tag.putString("transferMode", this.transferMode.name());
-      tag.putInt("safeClickDelayTicks", write(this.safeClickDelayTicks));
+      tag.putInt("safeClickDelayTicks", clampDelay(this.safeClickDelayTicks));
       tag.putBoolean("safeClickDelayAfterPickup", this.safeClickDelayAfterPickup);
       tag.putBoolean("safeClickDelayBeforeReturn", this.safeClickDelayBeforeReturn);
       tag.putBoolean("carryCursor", true);
@@ -752,7 +752,7 @@ public class XCarryAction implements MacroAction {
          this.transferMode = XCarryAction.TransferMode.FAST;
       }
 
-      this.safeClickDelayTicks = write(tag.getIntOr("safeClickDelayTicks", 1));
+      this.safeClickDelayTicks = clampDelay(tag.getIntOr("safeClickDelayTicks", 1));
       this.safeClickDelayAfterPickup = tag.getBooleanOr("safeClickDelayAfterPickup", true);
       this.safeClickDelayBeforeReturn = tag.getBooleanOr("safeClickDelayBeforeReturn", true);
       this.enableAllSources();
@@ -962,7 +962,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public static boolean init(InventoryMenu handler, Minecraft mc, int fromSlotId, int toSlotId, int count) {
+   public static boolean moveItems(InventoryMenu handler, Minecraft mc, int fromSlotId, int toSlotId, int count) {
       if (count <= 0) {
          return false;
       }

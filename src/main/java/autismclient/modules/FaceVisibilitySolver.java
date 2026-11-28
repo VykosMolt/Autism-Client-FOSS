@@ -18,7 +18,7 @@ final class FaceVisibilitySolver {
    private FaceVisibilitySolver() {
    }
 
-   static List<Vec3> init(Vec3 eye, AABB face, Direction side, List<AABB> blockers, Vec3 preferred) {
+   static List<Vec3> visiblePoints(Vec3 eye, AABB face, Direction side, List<AABB> blockers, Vec3 preferred) {
       return init(eye, face, side, List.of()).init(blockers, preferred);
    }
 

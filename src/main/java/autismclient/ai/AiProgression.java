@@ -263,7 +263,7 @@ final class AiProgression {
          if (KEEP_ITEMS.contains(id)) {
             total.merge(id, n, Integer::sum);
          } else {
-            AiCraftPlanner.init(raw, id, n).missing().forEach((m, k) -> {
+            AiCraftPlanner.plan(raw, id, n).missing().forEach((m, k) -> {
                if (KEEP_ITEMS.contains(m)) {
                   total.merge(m, k, Integer::sum);
                }
@@ -320,7 +320,7 @@ final class AiProgression {
 
       for (Entry<String, Integer> goal : goals.entrySet()) {
          if (live.held(goal.getKey()) < goal.getValue()) {
-            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(raw, goal.getKey(), goal.getValue());
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(raw, goal.getKey(), goal.getValue());
             if (plan.missing().containsKey(goal.getKey())) {
                return null;
             }
@@ -344,7 +344,7 @@ final class AiProgression {
 
    static int earlyDiamondPicks(int missing, int held, double beforeTicks, double afterTicks, double setupTicks, boolean prerequisitesAffordable) {
       int firstPick = Math.max(0, 3 - held);
-      return prerequisitesAffordable && AiMiningPreparation.init(missing, beforeTicks, afterTicks, setupTicks, firstPick) ? firstPick : -1;
+      return prerequisitesAffordable && AiMiningPreparation.worthPreparing(missing, beforeTicks, afterTicks, setupTicks, firstPick) ? firstPick : -1;
    }
 
    static Map<String, Integer> keepItemsFor(String itemId, int goal) {
@@ -375,7 +375,7 @@ final class AiProgression {
             }
          };
          Map<String, Integer> out = new LinkedHashMap<>();
-         AiCraftPlanner.init(leaves, itemId, goal).missing().forEach((id, n) -> {
+         AiCraftPlanner.plan(leaves, itemId, goal).missing().forEach((id, n) -> {
             if (KEEP_ITEMS.contains(id)) {
                out.merge(id, n, Integer::sum);
             }
@@ -773,11 +773,11 @@ final class AiProgression {
          public AiOperation.Result tick() {
             AiOperation.Result result = this.advance();
             if (!result.terminal()) {
-               AiVisualization.init(this, this.title, AiTaskStatus.init(result.message(), "Preparing materials"), AiCraft.countItem(itemId), goal);
-               AiGoal.init(this, 1, this.title, AiGoal.read(this.stepKey), "");
+               AiVisualization.showCount(this, this.title, AiTaskStatus.init(result.message(), "Preparing materials"), AiCraft.countItem(itemId), goal);
+               AiGoal.set(this, 1, this.title, AiGoal.stepLabel(this.stepKey), "");
             } else {
                AiVisualization.clearOwner(this);
-               AiGoal.init(this);
+               AiGoal.clear(this);
             }
 
             return result;
@@ -1058,7 +1058,7 @@ final class AiProgression {
             if (AiProgression.freeSlots(mc) < 3 && System.nanoTime() - this.lastTidyNanos > 30000000000L) {
                this.lastTidyNanos = System.nanoTime();
                return this.startStep(
-                  "tidy", "make room in the bag", AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 3, "keep", this.keepIds()))
+                  "tidy", "make room in the bag", AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 3, "keep", this.keepIds()))
                );
             }
 
@@ -1091,14 +1091,14 @@ final class AiProgression {
                   && !this.shieldEquipTried) {
                   this.shieldEquipTried = true;
                   return this.startStep(
-                     "shield-offhand", "the shield to the offhand", AiEquip.init(AiJson.objectOf("what", "minecraft:shield", "hand", "offhand"))
+                     "shield-offhand", "the shield to the offhand", AiEquip.create(AiJson.objectOf("what", "minecraft:shield", "hand", "offhand"))
                   );
                }
             }
 
             if (this.betterArmourHeld() && this.armourEquips < 3) {
                this.armourEquips++;
-               return this.startStep("armour-now", "put the new armour on", AiEquip.init(AiJson.objectOf("what", "armor")));
+               return this.startStep("armour-now", "put the new armour on", AiEquip.create(AiJson.objectOf("what", "armor")));
             }
 
             int waterWanted = Math.min(2, kit.getOrDefault("minecraft:bucket", 0));
@@ -1123,7 +1123,7 @@ final class AiProgression {
                return this.startStep("furnace", "make the furnace while the table is out", this.obtainOp("minecraft:furnace", 1));
             }
 
-            if (mc.player.getFoodData().getFoodLevel() <= 12 && AiSurvival.init(mc.player.getInventory()) < 0 && System.nanoTime() - this.lastHuntNanos > 600000000000L) {
+            if (mc.player.getFoodData().getFoodLevel() <= 12 && AiSurvival.bestFoodSlot(mc.player.getInventory()) < 0 && System.nanoTime() - this.lastHuntNanos > 600000000000L) {
                this.lastHuntNanos = System.nanoTime();
                AiOperation hunt = AiSpeedrun.hunt(48.0, 4, Math.min(120, this.secondsLeft()));
                if (hunt != null) {
@@ -1189,9 +1189,9 @@ final class AiProgression {
                Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
-                     autismclient.ai.engine.AiBlockMine.init(AiProgression.STONE_BLOCKS),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(AiProgression.STONE_BLOCKS),
                      "drops",
-                     autismclient.ai.engine.AiBlockMine.init(AiProgression.STONE_TOOL_BLOCKS),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(AiProgression.STONE_TOOL_BLOCKS),
                      "held",
                      stoneBatch,
                      "radius",
@@ -1327,7 +1327,7 @@ final class AiProgression {
                   : this.startStep(
                      "smith",
                      "upgrade the " + AiProgression.displayName(diamond) + " to " + AiProgression.displayName(itemId),
-                     AiSmith.init(
+                     AiSmith.create(
                         AiJson.objectOf(
                            "base",
                            diamond,
@@ -1386,7 +1386,7 @@ final class AiProgression {
                         return this.startStep(
                            "smelt-load:" + material,
                            "load the furnace with " + AiProgression.displayName(raw) + " " + why + " and work on while it smelts",
-                           AiSmelt.load(
+                           AiSmelt.smelt(
                               AiJson.objectOf(
                                  "item",
                                  material,
@@ -1407,7 +1407,7 @@ final class AiProgression {
                         return this.startStep(
                            "smelt:" + material,
                            "smelt " + batch + " " + AiProgression.displayName(material) + " " + why,
-                           AiSmelt.init(
+                           AiSmelt.smelt(
                               AiJson.objectOf(
                                  "item",
                                  material,
@@ -1582,7 +1582,7 @@ final class AiProgression {
 
             this.returnToFurnace = true;
             int seconds = (int)Math.max(60L, Math.min(this.secondsLeft(), (this.read_J - now) / 1000000000L + 90L));
-            AiOperation collect = AiSmelt.load(
+            AiOperation collect = AiSmelt.smelt(
                AiJson.objectOf(
                   "item",
                   this.close_Str,
@@ -1618,14 +1618,14 @@ final class AiProgression {
 
          AiOperation stairsToOre(AiProgression.Inner_StreamUtil next) {
             BlockPos feet = mc.player.blockPosition();
-            Predicate<BlockState> matches = autismclient.ai.engine.AiStaircase.init(next.family());
+            Predicate<BlockState> matches = autismclient.ai.engine.AiStaircase.matchesFamily(next.family());
             BlockPos target = this.oreTargetByFamily.get(next.family());
             if (target != null && (!matches.test(mc.level.getBlockState(target)) || !this.safeToMine(target))) {
                target = null;
             }
 
             if (target == null) {
-               target = autismclient.ai.engine.AiStaircase.load(mc.level, feet, 64, 1, matches, this::safeToMine);
+               target = autismclient.ai.engine.AiStaircase.findTarget(mc.level, feet, 64, 1, matches, this::safeToMine);
             }
 
             if (target != null) {
@@ -1637,32 +1637,32 @@ final class AiProgression {
                target = new BlockPos(feet.getX() + facing.getStepX() * 512, next.bestY(), feet.getZ() + facing.getStepZ() * 512);
             }
 
-            Predicate<BlockPos> protectedCells = autismclient.ai.engine.AiStaircase.init(
+            Predicate<BlockPos> protectedCells = autismclient.ai.engine.AiStaircase.protectedCells(
                mc.level, state -> matches.test(state) || state.requiresCorrectToolForDrops() && !this.canHarvest(state)
             );
             Predicate<BlockPos> blocked = cell -> this.blockedStairCells.contains(cell.asLong()) || protectedCells.test(cell);
-            Predicate<BlockPos> noFloor = autismclient.ai.engine.AiStaircase.init(mc.level);
-            List<BlockPos> steps = autismclient.ai.engine.AiStaircase.read(feet, target, 48, blocked, noFloor);
+            Predicate<BlockPos> noFloor = autismclient.ai.engine.AiStaircase.noFloor(mc.level);
+            List<BlockPos> steps = autismclient.ai.engine.AiStaircase.planStairs(feet, target, 48, blocked, noFloor);
             if (steps.isEmpty()) {
                return null;
             }
 
             this.firstStairStep = steps.get(0);
             int seconds = (int)Math.max(20L, (this.read_J - System.nanoTime()) / 1000000000L + 10L);
-            return autismclient.ai.engine.AiStaircase.init(steps, seconds);
+            return autismclient.ai.engine.AiStaircase.followStepsOperation(steps, seconds);
          }
 
          AiOperation stoneStaircase(int seconds, int stockGoal) {
             BlockPos feet = mc.player.blockPosition();
             AiProgression.Inner_StreamUtil next = this.finalTier().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() ? AiProgression.ORE_SOURCES.get("minecraft:raw_iron") : null;
-            Predicate<BlockState> ore = next == null ? state -> false : autismclient.ai.engine.AiStaircase.init(next.family());
+            Predicate<BlockState> ore = next == null ? state -> false : autismclient.ai.engine.AiStaircase.matchesFamily(next.family());
             BlockPos target = next == null ? null : this.oreTargetByFamily.get(next.family());
             if (target != null && (!ore.test(mc.level.getBlockState(target)) || !this.safeToMine(target))) {
                target = null;
             }
 
             if (target == null && next != null) {
-               target = autismclient.ai.engine.AiStaircase.init(
+               target = autismclient.ai.engine.AiStaircase.findBatchTarget(
                   mc.level, feet, 48, 4, ore, this::safeToMine, Math.max(1, 3 - AiCraft.countItem("minecraft:raw_iron") - AiCraft.countItem("minecraft:iron_ingot"))
                );
             }
@@ -1681,7 +1681,7 @@ final class AiProgression {
 
             Predicate<BlockState> keep = state -> ore.test(state) || state.requiresCorrectToolForDrops() && !this.canHarvest(state);
             if (toOre) {
-               BlockPos top = autismclient.ai.engine.AiStaircase.findStairTop(mc.level, feet, target, autismclient.ai.engine.AiStaircase.init(mc.level, keep), 40);
+               BlockPos top = autismclient.ai.engine.AiStaircase.findStairTop(mc.level, feet, target, autismclient.ai.engine.AiStaircase.protectedCells(mc.level, keep), 40);
                if (top != null) {
                   int inShaft = AiProgression.countStoneToolBlocks();
 
@@ -1708,11 +1708,11 @@ final class AiProgression {
 
             BlockPos start = toOre ? autismclient.ai.engine.AiStaircase.findStairStart(mc.level, feet, target) : null;
             List<BlockPos> steps = autismclient.ai.engine.AiStaircase.planSteps(
-               start != null ? start : feet, target, 32, autismclient.ai.engine.AiStaircase.init(mc.level, keep), autismclient.ai.engine.AiStaircase.init(mc.level)
+               start != null ? start : feet, target, 32, autismclient.ai.engine.AiStaircase.protectedCells(mc.level, keep), autismclient.ai.engine.AiStaircase.noFloor(mc.level)
             );
             if (start != null && steps.size() < 2) {
                start = null;
-               steps = autismclient.ai.engine.AiStaircase.planSteps(feet, target, 32, autismclient.ai.engine.AiStaircase.init(mc.level, keep), autismclient.ai.engine.AiStaircase.init(mc.level));
+               steps = autismclient.ai.engine.AiStaircase.planSteps(feet, target, 32, autismclient.ai.engine.AiStaircase.protectedCells(mc.level, keep), autismclient.ai.engine.AiStaircase.noFloor(mc.level));
             }
 
             if (start != null) {
@@ -1808,7 +1808,7 @@ final class AiProgression {
                   return false;
                }
 
-               if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !autismclient.ai.engine.AiEditLedger.update(n)) {
+               if (mc.level.getBlockState(n).isAir() && mc.level.getBrightness(LightLayer.SKY, n) == 0 && !autismclient.ai.engine.AiEditLedger.isNearRecentBreak(n)) {
                   return false;
                }
             }
@@ -1996,7 +1996,7 @@ final class AiProgression {
                   ? this.startStep(
                      "expedition-water",
                      "secure iron for both expedition buckets",
-                     AiObtain.init(AiJson.objectOf("item", "minecraft:iron_ingot", "count", ironNeeded, "timeoutSeconds", Math.min(240, this.secondsLeft())))
+                     AiObtain.obtain(AiJson.objectOf("item", "minecraft:iron_ingot", "count", ironNeeded, "timeoutSeconds", Math.min(240, this.secondsLeft())))
                   )
                   : this.startStep("expedition-water", "fill both water buckets before diamond descent", AiObsidian.init(2, Math.min(180, this.secondsLeft())));
             } else {
@@ -2049,7 +2049,7 @@ final class AiProgression {
                      return this.startStep(
                         "ore:" + drop,
                         "mine " + count + " " + AiProgression.displayName(drop) + " " + why,
-                        AiOreRoute.init(
+                        AiOreRoute.mineOre(
                            ore.family(), drop, AiCraft.countItem(drop) + count, AiProgression.oresForDrops(ore, count), ore.bestY(), this.secondsLeft(), this.oreTargetByFamily.remove(ore.family())
                         )
                      );
@@ -2057,21 +2057,21 @@ final class AiProgression {
                } else if (AiCraft.countItem("minecraft:furnace") == 0) {
                   return this.startStep("pack-furnace", "make a furnace to take to the Nether", this.obtainOp("minecraft:furnace", 1));
                } else if (AiCraft.countItem("minecraft:coal") < 4 && this.failuresByStep.getOrDefault("pack-coal", 0) == 0) {
-                  return this.startStep("pack-coal", "mine coal to take to the Nether", AiOreRoute.init("coal_ore", "minecraft:coal", 4, 4, Math.min(240, this.secondsLeft())));
+                  return this.startStep("pack-coal", "mine coal to take to the Nether", AiOreRoute.mineOre("coal_ore", "minecraft:coal", 4, 4, Math.min(240, this.secondsLeft())));
                } else {
                   return AiCraft.countItem("minecraft:crafting_table") == 0
                      ? this.startStep("pack-table", "make a crafting table to take along", this.obtainOp("minecraft:crafting_table", 1))
                      : this.startStep(
                         "nether",
                         "get to the Nether",
-                        AiNetherEntry.init(AiJson.objectOf("skipVillage", true, "timeoutSeconds", Math.max(600, this.secondsLeft())))
+                        AiNetherEntry.create(AiJson.objectOf("skipVillage", true, "timeoutSeconds", Math.max(600, this.secondsLeft())))
                      );
                }
             }
          }
 
          AiOperation.Result prepareSmelting(int items, String output, String input) {
-            if (!AiSmelt.init(mc, output, input)) {
+            if (!AiSmelt.canSmelt(mc, output, input)) {
                return this.startStep("furnace", "make a furnace", this.obtainOp("minecraft:furnace", 1));
             }
 
@@ -2094,7 +2094,7 @@ final class AiProgression {
             }
 
             return AiCraft.countItem("minecraft:coal") == 0 && this.failuresByStep.getOrDefault("fuel-coal", 0) == 0
-               ? this.startStep("fuel-coal", "mine coal for fuel", AiOreRoute.init("coal_ore", "minecraft:coal", 2, 2, Math.min(120, this.secondsLeft())))
+               ? this.startStep("fuel-coal", "mine coal for fuel", AiOreRoute.mineOre("coal_ore", "minecraft:coal", 2, 2, Math.min(120, this.secondsLeft())))
                : this.startStep("fuel-wood", "get wood to burn", AiProgression.gatherLogs(AiItems.countInInventory(AiItems.resolveItem("log")) + 1, Math.min(180, this.secondsLeft())));
          }
 
@@ -2118,7 +2118,7 @@ final class AiProgression {
          }
 
          AiOperation obtainOp(String item, int count) {
-            return AiObtain.init(AiJson.objectOf("item", item, "count", count, "staged", true, "timeoutSeconds", Math.max(60, this.secondsLeft())));
+            return AiObtain.obtain(AiJson.objectOf("item", item, "count", count, "staged", true, "timeoutSeconds", Math.max(60, this.secondsLeft())));
          }
 
          AiOperation reclaimBlock(BlockPos pos, String item) {
@@ -2214,7 +2214,7 @@ final class AiProgression {
                this.nightStepActive = true;
                AutismClientAddon.LOG.info("[AI] ladder for {}: night falls, {}", itemId, bed ? "sleeping" : "burrowing");
                this.stepOp = bed
-                  ? AiSleep.init(AiJson.objectOf("timeoutSeconds", 240))
+                  ? AiSleep.create(AiJson.objectOf("timeoutSeconds", 240))
                   : AiBurrow.init(AiJson.objectOf("timeoutSeconds", 600));
                this.stepKey = "night";
                this.stepLabel = bed ? "sleep through the night" : "burrow until dawn";

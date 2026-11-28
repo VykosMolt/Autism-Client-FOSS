@@ -5,7 +5,7 @@ public final class BlockSequenceSyncTracker {
    private int init_I;
    private boolean init_Z;
 
-   public void init(Object world, int sequence) {
+   public void expect(Object world, int sequence) {
       this.init_Obj = world;
       this.init_I = sequence;
       this.init_Z = true;
@@ -17,17 +17,17 @@ public final class BlockSequenceSyncTracker {
       }
    }
 
-   public void load(Object world, int sequence) {
+   public void onAck(Object world, int sequence) {
       if (this.init_Obj == world && sequence - this.init_I >= 0) {
          this.init_Z = false;
       }
    }
 
-   public boolean init(Object world) {
+   public boolean isPending(Object world) {
       return this.init_Z && this.init_Obj == world;
    }
 
-   public void init() {
+   public void reset() {
       this.init_Z = false;
       this.init_Obj = null;
    }

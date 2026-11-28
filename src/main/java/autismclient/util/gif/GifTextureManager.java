@@ -83,7 +83,7 @@ public final class GifTextureManager {
       return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.TextureSurface.CAPE, null);
    }
 
-   public static Identifier load(String path, double targetFps, boolean keepAspect, double quality) {
+   public static Identifier shieldTexture(String path, double targetFps, boolean keepAspect, double quality) {
       return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.TextureSurface.SHIELD, null);
    }
 
@@ -97,7 +97,7 @@ public final class GifTextureManager {
       return dims == null ? null : (int[])dims.clone();
    }
 
-   public static void init() {
+   public static void reloadAll() {
       epoch++;
       List<Identifier> ids = new ArrayList<>();
 

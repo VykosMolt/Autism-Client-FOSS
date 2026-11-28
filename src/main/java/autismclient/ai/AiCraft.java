@@ -242,9 +242,9 @@ final class AiCraft {
                                  }
 
                                  JsonObject tidy = AiCraftCapacity.tidyPlan(
-                                    this.plan, this.stepsDone, outputId, remaining, AiCraftPlanner.init(AiCraft.buildRecipeGraph(), outputId, target)
+                                    this.plan, this.stepsDone, outputId, remaining, AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), outputId, target)
                                  );
-                                 this.tidyRetryOp = AiCraftCapacity.tidyThenRetry(rejection, AiTidy.init(tidy), () -> {
+                                 this.tidyRetryOp = AiCraftCapacity.tidyThenRetry(rejection, AiTidy.create(tidy), () -> {
                                     JsonObject retry = args.deepCopy();
                                     retry.addProperty("count", target);
                                     retry.addProperty("additional", false);
@@ -301,7 +301,7 @@ final class AiCraft {
                            return this.running("Crafted step " + this.stepsDone + "/" + this.plan.steps().size());
                         } else {
                            if (this.plan == null || this.stepsDone >= this.plan.steps().size()) {
-                              this.plan = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), outputId, target);
+                              this.plan = AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), outputId, target);
                               this.stepsDone = 0;
                               if (this.plan.satisfied()) {
                                  return this.finish(
@@ -327,7 +327,7 @@ final class AiCraft {
                               }
 
                               if (this.plan.requiresTable() && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") <= 0) {
-                                 AiCraftPlanner.CraftPlan table = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1);
+                                 AiCraftPlanner.CraftPlan table = AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1);
                                  if (table.complete() && !table.requiresTable() && !table.steps().isEmpty()) {
                                     this.plan = table;
                                     return this.running("Crafting a crafting table first (" + outputId + " needs a 3x3 grid)");
@@ -571,7 +571,7 @@ final class AiCraft {
                }
 
                AiOperation.Result running(String message) {
-                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the recipe"), AiCraft.countItem(outputId), target);
+                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.init(message, "Preparing the recipe"), AiCraft.countItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.snapshotJson().toString(), List.of());
                }
 
@@ -956,7 +956,7 @@ final class AiCraft {
       }
 
       final Map<String, Integer> counts = new HashMap<>();
-      return AiObtain.init(new AiCraftPlanner.RecipeGraph() {
+      return AiObtain.withMining(new AiCraftPlanner.RecipeGraph() {
          @Override
          public List<AiCraftPlanner.RecipeSpec> recipesFor(String itemId) {
             return byOutput.getOrDefault(itemId, List.of());
@@ -978,7 +978,7 @@ final class AiCraft {
                && mc.level != null
                && autismclient.ai.engine.AiStaircase.findNearestBlock(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
             ? true
-            : AiCraftPlanner.init(buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
+            : AiCraftPlanner.plan(buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
       }
    }
 

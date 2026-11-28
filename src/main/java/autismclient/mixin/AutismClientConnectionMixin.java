@@ -358,7 +358,7 @@ public abstract class AutismClientConnectionMixin {
                         }
 
                         if (!requiredClose && ContainerCloseGuard.isHeldOpen(closeForHold.getContainerId())) {
-                           ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
+                           ContainerCloseGuard.defer(closeForHold.getContainerId(), closeForHold);
                            ci.cancel();
                            return;
                         }
@@ -372,7 +372,7 @@ public abstract class AutismClientConnectionMixin {
                      if (normalLoggerPath) {
                         if (packet instanceof ServerboundUseItemOnPacket pibp) {
                            shared.setLastInteractedBlockPos(pibp.hitResult().getBlockPos());
-                           shared.setLastInteractionTarget(InteractionTargetRef.init(pibp.hitResult(), pibp.hand()));
+                           shared.setLastInteractionTarget(InteractionTargetRef.ofBlock(pibp.hitResult(), pibp.hand()));
                         }
 
                         if (packet instanceof ServerboundInteractPacket entityPacket) {
@@ -380,7 +380,7 @@ public abstract class AutismClientConnectionMixin {
                            if (targeted != null && targeted != Minecraft.getInstance().player) {
                               InteractionHand capturedHand = entityPacket.hand();
                               Vec3 capturedHitPos = entityPacket.location();
-                              shared.setLastInteractionTarget(capturedHitPos != null ? InteractionTargetRef.init(targeted, capturedHand, capturedHitPos) : InteractionTargetRef.init(targeted, capturedHand));
+                              shared.setLastInteractionTarget(capturedHitPos != null ? InteractionTargetRef.ofEntity(targeted, capturedHand, capturedHitPos) : InteractionTargetRef.ofEntity(targeted, capturedHand));
                            }
                         }
 
@@ -551,7 +551,7 @@ public abstract class AutismClientConnectionMixin {
             this.autism$clearRuntimeConnectionStateOnDisconnect(packet);
          } else {
             if (customMenuPacket) {
-               CustomMenuTracker.load(packet, protocolHint);
+               CustomMenuTracker.onPacket(packet, protocolHint);
             }
 
             if (!isPlayReceiveListener(listener) || !PingSpoofScheduler.interceptIncoming(packet) && !BlinkPacketManager.interceptIncoming(packet)) {
@@ -567,7 +567,7 @@ public abstract class AutismClientConnectionMixin {
 
                if (autism$isIncomingChatPacket(packet)) {
                   MacroExecutor.recordIncomingChatPacket(packet);
-                  autismclient.modules.AutoLoginModule.init(packet);
+                  autismclient.modules.AutoLoginModule.onPacket(packet);
                }
 
                if (!AutismLiteVariant.enabled()
@@ -576,13 +576,13 @@ public abstract class AutismClientConnectionMixin {
                }
 
                if (normalLoggerPath) {
-                  ServerTickPhaseTracker.init(packet);
+                  ServerTickPhaseTracker.onPacket(packet);
                   MacroExecutor.onIncomingPacket(packet);
-                  if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && CommandProbeIdAllocator.init(macroSuggestions.id())) {
+                  if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && CommandProbeIdAllocator.isProbeId(macroSuggestions.id())) {
                      ci.cancel();
                   } else {
                      if (packet instanceof ClientboundOpenScreenPacket openScreenPacket) {
-                        ContainerCloseGuard.load(openScreenPacket.getContainerId());
+                        ContainerCloseGuard.onOpen(openScreenPacket.getContainerId());
                      }
 
                      if (module.onPacketReceive(packet, payloadLoggedEarly)) {
@@ -689,7 +689,7 @@ public abstract class AutismClientConnectionMixin {
                   }
 
                   if (!requiredClose && ContainerCloseGuard.isHeldOpen(closeForHold.getContainerId())) {
-                     ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
+                     ContainerCloseGuard.defer(closeForHold.getContainerId(), closeForHold);
                      ci.cancel();
                      return;
                   }

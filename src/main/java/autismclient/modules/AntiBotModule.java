@@ -45,11 +45,11 @@ public final class AntiBotModule extends Module {
          .description("Radius in blocks")
          .visibleWhen(() -> this.isCustomMode() && this.alwaysNear.get())
    );
-   final BoolSetting sync = this.add(this.customSetting(new BoolSetting("need-hit", "Need Hit", false)).description("Hidden until you hit"));
-   final BoolSetting flush = this.add(this.customSetting(new BoolSetting("need-swing", "Need Swing", false)).description("Hidden until it swings"));
-   final BoolSetting close = this.add(this.customSetting(new BoolSetting("need-crit", "Need Crit", false)).description("Hidden until crit-hit"));
-   final BoolSetting open = this.add(this.customSetting(new BoolSetting("odd-scale", "Odd Scale", false)).description("Scale is not normal"));
-   final BoolSetting poll = this.add(this.customSetting(new BoolSetting("armor", "Armor", false)).description("Real players wear this"));
+   final BoolSetting needHit = this.add(this.customSetting(new BoolSetting("need-hit", "Need Hit", false)).description("Hidden until you hit"));
+   final BoolSetting needSwing = this.add(this.customSetting(new BoolSetting("need-swing", "Need Swing", false)).description("Hidden until it swings"));
+   final BoolSetting needCrit = this.add(this.customSetting(new BoolSetting("need-crit", "Need Crit", false)).description("Hidden until crit-hit"));
+   final BoolSetting oddScale = this.add(this.customSetting(new BoolSetting("odd-scale", "Odd Scale", false)).description("Scale is not normal"));
+   final BoolSetting requireArmor = this.add(this.customSetting(new BoolSetting("armor", "Armor", false)).description("Real players wear this"));
    final ChoiceSetting armorHead = this.add(this.armorChoice("armor-head", "Helmet", ArmorFilterMatcher.HEAD_OPTIONS));
    final ChoiceSetting armorChest = this.add(this.armorChoice("armor-chest", "Chestplate", ArmorFilterMatcher.CHEST_OPTIONS));
    final ChoiceSetting armorLegs = this.add(this.armorChoice("armor-legs", "Leggings", ArmorFilterMatcher.BASE_OPTIONS));
@@ -67,7 +67,7 @@ public final class AntiBotModule extends Module {
       return new ChoiceSetting(id, title, "Any", rules)
          .group("Custom")
          .description("Any = not checked")
-         .visibleWhen(() -> this.isCustomMode() && this.poll.get())
+         .visibleWhen(() -> this.isCustomMode() && this.requireArmor.get())
          .build();
    }
 

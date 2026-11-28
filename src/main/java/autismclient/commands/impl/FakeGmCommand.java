@@ -26,7 +26,7 @@ public class FakeGmCommand extends Command {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
          FakeGamemodeManager.ApplyResult result;
          if (!"reset".equals(mode) && !"r".equals(mode)) {
-            GameType resolved = FakeGamemodeManager.init(mode);
+            GameType resolved = FakeGamemodeManager.parseMode(mode);
             if (resolved == null) {
                AutismClientMessaging.sendPrefixed("§cUnknown mode: §f" + mode);
                return 1;

@@ -78,7 +78,7 @@ public final class ToolsCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("list").executes(ctx -> this.init_I_Str("")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("category", StringArgumentType.greedyString())
-                  .suggests((ctx, builder) -> AiToolsSuggest.load(builder))
+                  .suggests((ctx, builder) -> AiToolsSuggest.suggestFamilies(builder))
                   .executes(ctx -> this.init_I_Str(StringArgumentType.getString(ctx, "category")))
             )
       );
@@ -96,7 +96,7 @@ public final class ToolsCommand extends Command {
                .executes(ctx -> this.sync("Missing capability id\nUsage: " + prefix() + "tools call <id> [k=v ...]")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("invocation", StringArgumentType.greedyString())
-                  .suggests((ctx, builder) -> AiToolsSuggest.init(builder))
+                  .suggests((ctx, builder) -> AiToolsSuggest.suggestTools(builder))
                   .executes(ctx -> this.read(StringArgumentType.getString(ctx, "invocation")))
             )
       );
@@ -106,7 +106,7 @@ public final class ToolsCommand extends Command {
             .executes(ctx -> this.load(sub, ""));
          shorthand.then(
             RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString())
-               .suggests((ctx, builder) -> AiToolsSuggest.init(sub, builder))
+               .suggests((ctx, builder) -> AiToolsSuggest.suggestArgs(sub, builder))
                .executes(ctx -> this.load(sub, StringArgumentType.getString(ctx, "args")))
          );
          root.then(shorthand);
@@ -479,7 +479,7 @@ public final class ToolsCommand extends Command {
          }
       }
 
-      List<String> near = AiToolCallParser.init(raw, ids, 4);
+      List<String> near = AiToolCallParser.nearestIds(raw, ids, 4);
       if (!near.isEmpty()) {
          send("§7Did you mean: §f" + String.join("§7, §f", near));
       }

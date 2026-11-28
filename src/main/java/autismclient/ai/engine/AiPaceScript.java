@@ -157,13 +157,13 @@ public final class AiPaceScript {
                AiPhysics.MotionState var7 = var6;
 
                for (int var8 = 0; var8 < 80; var8++) {
-                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
+                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.running(0.0F, var3), var5);
                }
 
                double var17 = var7.z();
 
                for (int var10 = 0; var10 < 80; var10++) {
-                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
+                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.running(0.0F, var3), var5);
                }
 
                double var18 = (var7.z() - var17) / 80.0;
@@ -175,7 +175,7 @@ public final class AiPaceScript {
 
                for (int var13 = 0; var13 < 120; var13++) {
                   var12 = AiPhysics.step(
-                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
+                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.running(0.0F, var3), var5
                   );
                }
 
@@ -183,7 +183,7 @@ public final class AiPaceScript {
 
                for (int var15 = 0; var15 < 120; var15++) {
                   var12 = AiPhysics.step(
-                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
+                     var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.running(0.0F, var3), var5
                   );
                }
 
@@ -200,7 +200,7 @@ public final class AiPaceScript {
       if (!Double.isFinite(var1) || var1 <= 0.0 || Math.abs(var0.movementSpeed() - var1) <= 1.0E-9) {
          return var0;
       } else if (var0 instanceof AiPlannerWorld var3) {
-         var3.putAt(var1);
+         var3.setSpeed(var1);
          return var3;
       } else {
          return new AiPaceScript.Inner_EventBus(var0, var1);

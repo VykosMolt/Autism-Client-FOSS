@@ -78,7 +78,7 @@ final class AiPrintPreparation implements AiOperation {
          AiPrintSupply.validateOptions(power);
          this.options = power;
          this.origin = AiBuilder.auditOrigin(args, this.startPos);
-         this.schematicPath = AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
+         this.schematicPath = AiSchematic.resolveFile(AiSchematic.directory(), AiJson.getString(args, "schematic", ""));
          this.skipUnknown = AiJson.getBoolean(args, "skipUnknown", false);
          this.verify = AiJson.getBoolean(args, "verify", true);
          int seconds = args.has("timeoutSeconds") ? AiJson.getInt(args, "timeoutSeconds", 0) : 0;
@@ -123,7 +123,7 @@ final class AiPrintPreparation implements AiOperation {
       AiSchematicReadiness.BuildableAssessment buildable = AiSchematicReadiness.assessBuildable(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
       AiBuilder.checkNotCancelled();
-      List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
+      List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.targets(blueprint));
       autismclient.ai.print.PrintCore.PreparedGeometry geometry = autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled);
       AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
@@ -564,7 +564,7 @@ final class AiPrintPreparation implements AiOperation {
                BlockPos at = this.blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                BlockState live = world.getBlockState(at);
                if (!AiBuilder.matchesSchematicCell(cell, live)) {
-                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.init(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
+                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.requirements(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
                      this.init(requirement);
                   }
 

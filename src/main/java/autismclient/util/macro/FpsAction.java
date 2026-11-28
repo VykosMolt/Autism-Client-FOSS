@@ -37,7 +37,7 @@ public class FpsAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       long owner = MacroExecutor.getCurrentRunId();
-      MacroFpsOverrideManager.init(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.getDurationMs() * 1000000L);
+      MacroFpsOverrideManager.setOverride(owner < 0L ? 0L : owner, Math.max(0, this.maxFps), this.getDurationMs() * 1000000L);
    }
 
    @Override

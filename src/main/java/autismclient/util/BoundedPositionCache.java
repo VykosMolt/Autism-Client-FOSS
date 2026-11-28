@@ -24,7 +24,7 @@ public final class BoundedPositionCache<T> {
       };
    }
 
-   public boolean init(long position, T value) {
+   public boolean put(long position, T value) {
       if (value == null) {
          throw new NullPointerException("value");
       }

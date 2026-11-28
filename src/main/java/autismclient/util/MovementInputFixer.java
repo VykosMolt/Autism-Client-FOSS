@@ -29,7 +29,7 @@ public final class MovementInputFixer {
    private float open_F;
    private float poll_F = 0.0F / 0.0F;
 
-   public void init() {
+   public void reset() {
       this.load();
       this.clientTick = -2147483648;
    }
@@ -54,7 +54,7 @@ public final class MovementInputFixer {
       return copy.load(input, cameraYaw, silentYaw, clientTick, footing);
    }
 
-   public Input load(Input input, float cameraYaw, float silentYaw, int clientTick) {
+   public Input fix(Input input, float cameraYaw, float silentYaw, int clientTick) {
       return this.load(input, cameraYaw, silentYaw, clientTick, null);
    }
 

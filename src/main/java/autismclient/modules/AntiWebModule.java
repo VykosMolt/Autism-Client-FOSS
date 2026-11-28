@@ -28,11 +28,11 @@ public final class AntiWebModule extends Module {
          : null;
    }
 
-   public static boolean init_Z(Entity entity) {
+   public static boolean isActiveFor(Entity entity) {
       return init_RenderState(entity) != null;
    }
 
-   public static boolean load(Entity entity) {
+   public static boolean isSolidMode(Entity entity) {
       AntiWebModule module = init_RenderState(entity);
       return module != null && "Solid".equals(module.choice("mode"));
    }

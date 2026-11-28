@@ -8,7 +8,7 @@ final class ExternalBreakTracker {
    private final Set<BlockPos> solidCells = new HashSet<>();
    private final Set<BlockPos> externallyBroken = new HashSet<>();
 
-   void init(BlockPos pos, boolean solid, boolean ownBreak) {
+   void onBlockEdit(BlockPos pos, boolean solid, boolean ownBreak) {
       if (solid) {
          this.solidCells.add(pos.immutable());
          this.externallyBroken.remove(pos);
@@ -21,11 +21,11 @@ final class ExternalBreakTracker {
       }
    }
 
-   boolean init(BlockPos pos) {
+   boolean wasExternallyBroken(BlockPos pos) {
       return this.externallyBroken.contains(pos);
    }
 
-   void init() {
+   void clear() {
       this.solidCells.clear();
       this.externallyBroken.clear();
    }

@@ -101,19 +101,19 @@ public abstract class AutismMouseHandlerMixin {
       if (assistX != 0.0 || assistY != 0.0) {
          this.autism$simulatedDX = 0.0;
          this.autism$simulatedDY = 0.0;
-         if (FreeLookModule.init(x, y)) {
+         if (FreeLookModule.turn(x, y)) {
             original.call(player, assistX, assistY);
          } else {
             original.call(player, x + assistX, y + assistY);
          }
-      } else if (!FreeLookModule.init(x, y)) {
+      } else if (!FreeLookModule.turn(x, y)) {
          original.call(player, x, y);
       }
    }
 
    @Inject(method = "handleAccumulatedMovement", at = @At("HEAD"))
    private void autism$clearQueuedMouseInputWhenUnavailable(CallbackInfo ci) {
-      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, AutismSessionState.getInstance().getClientTick());
+      MouseDeltaAccumulator.add(this.accumulatedDX, this.accumulatedDY, AutismSessionState.getInstance().getClientTick());
       if (!AutismLiteVariant.enabled() && this.minecraft.gui.screen() == null && (Math.abs(this.accumulatedDX) > 0.5 || Math.abs(this.accumulatedDY) > 0.5)) {
          AiService ai = AiService.getExistingInstance();
          if (ai != null) {

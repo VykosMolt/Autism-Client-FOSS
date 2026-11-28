@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 final class QueuedAttackBuffer {
    private final ArrayDeque<QueuedAttackBuffer.QueuedAttack> init = new ArrayDeque<>();
 
-   boolean init(Object target, Runnable attack, Runnable receipt) {
+   boolean queue(Object target, Runnable attack, Runnable receipt) {
       if (this.init.size() >= 4) {
          return false;
       }
@@ -38,10 +38,10 @@ final class QueuedAttackBuffer {
    }
 
    int init_I_Predicate(Predicate<Object> valid) {
-      return this.init(valid, target -> {});
+      return this.dispatch(valid, target -> {});
    }
 
-   int init(Predicate<Object> valid, Consumer<Object> sent) {
+   int dispatch(Predicate<Object> valid, Consumer<Object> sent) {
       ArrayList<QueuedAttackBuffer.QueuedAttack> hits = new ArrayList<>(this.init);
       this.init.clear();
       int count = 0;
@@ -66,7 +66,7 @@ final class QueuedAttackBuffer {
       this.init.clear();
    }
 
-   static boolean init_Z_Str(String owner) {
+   static boolean isCompatibleOwner(String owner) {
       return owner == null || owner.isBlank() || "kill-aura".equals(owner) || "kb-displacement".equals(owner);
    }
 

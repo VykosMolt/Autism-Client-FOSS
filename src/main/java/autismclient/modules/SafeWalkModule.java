@@ -43,7 +43,7 @@ public final class SafeWalkModule extends Module {
       this.clearTicks = 0;
    }
 
-   public static Input init(ClientInput source, Input original) {
+   public static Input adjustInput(ClientInput source, Input original) {
       if (original != null && CLIENT != null && CLIENT.player != null && CLIENT.player.input == source) {
          if (al.init_Module_Str("safe-walk") instanceof SafeWalkModule safeWalk) {
             if (!safeWalk.isEnabled()) {

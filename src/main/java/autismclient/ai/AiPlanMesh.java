@@ -55,8 +55,8 @@ final class AiPlanMesh implements AutoCloseable {
    int write_I;
    int update;
    int sync;
-   int flush;
-   int close;
+   int cellCount;
+   int quadCount;
    private boolean closed;
    private AiPlanMesh.SectionBuild pendingBuild;
    private long queryRevision;
@@ -116,7 +116,7 @@ final class AiPlanMesh implements AutoCloseable {
       return count;
    }
 
-   boolean init(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview) {
+   boolean matches(BlockPos origin, List<AiBuilder.CellSpec> cells, boolean preview) {
       return !this.closed && this.cells == cells && (preview || this.origin.equals(origin)) && this.preview == preview;
    }
 
@@ -140,7 +140,7 @@ final class AiPlanMesh implements AutoCloseable {
       }
    }
 
-   int read() {
+   int size() {
       return this.cells.size();
    }
 
@@ -189,7 +189,7 @@ final class AiPlanMesh implements AutoCloseable {
       this.nearestEye = null;
    }
 
-   List<Integer> init(Vec3 eye, int limit, int budget, long deadline) {
+   List<Integer> nearest(Vec3 eye, int limit, int budget, long deadline) {
       if (this.isReady() && limit > 0) {
          if (this.nearestQuery != null && (this.nearestQuery.revision != this.queryRevision || this.nearestQuery.limit != limit)) {
             this.nearestQuery = null;
@@ -238,7 +238,7 @@ final class AiPlanMesh implements AutoCloseable {
                boolean loaded = AiTerrain.isLoaded(world, at);
                BlockState live = loaded ? world.getBlockState(at) : Blocks.AIR.defaultBlockState();
                boolean satisfied = loaded && AiBuilder.matchesSchematicCell(cell, live);
-               int color = AiVisualization.init(satisfied, live.canBeReplaced(), loaded);
+               int color = AiVisualization.cellColor(satisfied, live.canBeReplaced(), loaded);
                if (loaded
                   && !satisfied
                   && !live.isAir()
@@ -301,7 +301,7 @@ final class AiPlanMesh implements AutoCloseable {
                double dzx = this.origin.getZ() + s.anchor.getZ() + 8 - camera.z;
                return dx * dx + dyx * dyx + dzx * dzx;
             }));
-            this.flush = this.close = 0;
+            this.cellCount = this.quadCount = 0;
             RenderType type = autismclient.render.AutismRenderTypes.aiPlanGhost();
 
             for (AiPlanMesh.MeshSection section : visible) {
@@ -315,15 +315,15 @@ final class AiPlanMesh implements AutoCloseable {
 
                if (section.meshReady) {
                   section.mesh
-                     .init(
+                     .draw(
                         type,
                         pose.pose(),
                         this.origin.getX() + section.anchor.getX() - camera.x,
                         this.origin.getY() + section.anchor.getY() - camera.y,
                         this.origin.getZ() + section.anchor.getZ() - camera.z
                      );
-                  this.flush = this.flush + section.drawnCount;
-                  this.close = this.close + section.quadCount;
+                  this.cellCount = this.cellCount + section.drawnCount;
+                  this.quadCount = this.quadCount + section.quadCount;
                }
             }
          }
@@ -338,7 +338,7 @@ final class AiPlanMesh implements AutoCloseable {
       int[] drawn = new int[]{0};
       Pose identity = new PoseStack().last();
       section.meshReady = section.mesh
-         .init(
+         .build(
             autismclient.render.AutismRenderTypes.aiPlanGhost(),
             buffer -> {
                label91:

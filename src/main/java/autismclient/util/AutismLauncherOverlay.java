@@ -262,7 +262,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.mainSection.getContent(),
             this.createButton("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
-                  autismclient.ai.AiAssistant.getInstance().read();
+                  autismclient.ai.AiAssistant.getInstance().toggle();
                }
             }),
             this.createButton("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
@@ -296,7 +296,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          );
          this.addButtonPair(
             this.mainSection.getContent(),
-            this.createButton("Title", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, LauncherQuickActions::open),
+            this.createButton("Title", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, LauncherQuickActions::copyScreenTitle),
             this.createButton("Disc+Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::put_V_3)
          );
       }
@@ -936,15 +936,15 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void flush_V_8() {
-      LauncherQuickActions.read();
+      LauncherQuickActions.flushQueue();
    }
 
    private void close_V_7() {
-      LauncherQuickActions.write();
+      LauncherQuickActions.clearQueue();
    }
 
    private void open_V_6() {
-      LauncherQuickActions.sync();
+      LauncherQuickActions.desync();
    }
 
    private void poll_V_4() {
@@ -952,7 +952,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void set_V_4() {
-      LauncherQuickActions.close();
+      LauncherQuickActions.restoreGui();
    }
 
    private void put_V_3() {

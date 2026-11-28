@@ -10,10 +10,10 @@ final class PrintCreativeStock {
    private final Map<Integer, ItemStack> stockedSlots = new HashMap<>();
 
    int stockedSlot(IntFunction<ItemStack> inventory) {
-      return this.init(inventory, stack -> false);
+      return this.stockedSlot(inventory, stack -> false);
    }
 
-   int init(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
+   int stockedSlot(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
       this.stockedSlots.entrySet().removeIf(e -> !ItemStack.matches(e.getValue(), inventory.apply(e.getKey())));
 
       for (int i = 0; i < 36; i++) {
@@ -26,7 +26,7 @@ final class PrintCreativeStock {
    }
 
    int stockedSlotOrOffhand(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
-      int main = this.init(inventory, reserved);
+      int main = this.stockedSlot(inventory, reserved);
       return main >= 0 ? main : (inventory.apply(40).isEmpty() ? 40 : -1);
    }
 
@@ -44,7 +44,7 @@ final class PrintCreativeStock {
       }
    }
 
-   void init(int slot, ItemStack stack) {
+   void recordSlot(int slot, ItemStack stack) {
       if (stack.isEmpty()) {
          this.stockedSlots.remove(slot);
       } else {
@@ -52,7 +52,7 @@ final class PrintCreativeStock {
       }
    }
 
-   void init(int a, int b) {
+   void swapSlots(int a, int b) {
       ItemStack first = this.stockedSlots.remove(a);
       ItemStack second = this.stockedSlots.remove(b);
       if (first != null) {

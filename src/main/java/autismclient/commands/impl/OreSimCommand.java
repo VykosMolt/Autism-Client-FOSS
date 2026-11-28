@@ -59,7 +59,7 @@ public class OreSimCommand extends Command {
          String worldgen = autismclient.util.oresim.OreSimEngine.hasError()
             ? "§cFAILED"
             : (
-               autismclient.util.oresim.OreSimEngine.load_Z()
+               autismclient.util.oresim.OreSimEngine.isBusy()
                   ? "§e" + autismclient.util.oresim.OreSimEngine.status().name().toLowerCase(Locale.ROOT)
                   : (
                      autismclient.util.oresim.OreSimEngine.isReady()

@@ -17,7 +17,7 @@ public final class ActionCooldownScheduler {
       return next == null || nowNanos >= next;
    }
 
-   public boolean init(int tick) {
+   public boolean ranThisTick(int tick) {
       return tick == this.lastTick;
    }
 
@@ -30,7 +30,7 @@ public final class ActionCooldownScheduler {
       this.nextAllowed.put(kind, nowNanos + Math.max(0L, delayNanos));
    }
 
-   public void init() {
+   public void reset() {
       this.nextAllowed.clear();
       this.lastTick = -2147483648;
    }
@@ -40,7 +40,7 @@ public final class ActionCooldownScheduler {
       return ((long)Math.max(0, baseMs) + extra) * 1000000L;
    }
 
-   public static int init(int placeMs, int chargeMs, int detonateMs, int switchMs, int latencyMs, boolean shielded) {
+   public static int cooldownMs(int placeMs, int chargeMs, int detonateMs, int switchMs, int latencyMs, boolean shielded) {
       long configured = Math.max(0, placeMs) + Math.max(0, chargeMs) + Math.max(0, detonateMs) + (shielded ? 3L : 2L) * Math.max(0, switchMs);
       long budgetMs = configured + Math.max(0, latencyMs) + 250L;
       return Math.max(20, Math.min(200, (int)Math.ceil(budgetMs / 50.0) + 8));

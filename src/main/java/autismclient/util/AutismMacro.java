@@ -571,11 +571,11 @@ public class AutismMacro {
    private static MacroAction migrateLegacyAction(String typeName, CompoundTag actionTag) {
       if ("WAIT_ENTITY_TARGET".equals(typeName)) {
          autismclient.util.macro.WaitForEntityAction migrated = new autismclient.util.macro.WaitForEntityAction();
-         migrated.init(actionTag);
+         migrated.migrateFrom(actionTag);
          return migrated;
       } else if ("WAIT_GUI_TYPE".equals(typeName)) {
          autismclient.util.macro.WaitForGuiAction migrated = new autismclient.util.macro.WaitForGuiAction();
-         migrated.init(actionTag);
+         migrated.migrateFrom(actionTag);
          return migrated;
       } else {
          return null;
@@ -618,7 +618,7 @@ public class AutismMacro {
          return true;
       } else if (o != null && this.getClass() == o.getClass()) {
          AutismMacro that = (AutismMacro)o;
-         return MacroNameNormalizer.init(this.name, that.name);
+         return MacroNameNormalizer.sameName(this.name, that.name);
       } else {
          return false;
       }
@@ -626,7 +626,7 @@ public class AutismMacro {
 
    @Override
    public int hashCode() {
-      return Objects.hash(MacroNameNormalizer.init(this.name));
+      return Objects.hash(MacroNameNormalizer.normalize(this.name));
    }
 
    static {

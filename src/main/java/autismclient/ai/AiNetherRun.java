@@ -162,7 +162,7 @@ final class AiNetherRun {
          }
 
          init_Z = false;
-         final BlockPos remembered = firstPlausiblePortal(portal, AiPortalLinks.init(2147483647), rememberedPortal, at -> isPortalOrUnloaded(mc, at));
+         final BlockPos remembered = firstPlausiblePortal(portal, AiPortalLinks.nearestKnownPortal(2147483647), rememberedPortal, at -> isPortalOrUnloaded(mc, at));
          return new AiOperation() {
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
             final String startWorld = currentWorld;
@@ -320,7 +320,7 @@ final class AiNetherRun {
 
                   autismclient.ai.engine.AiMiningCommitment vein = this.init_aB_StreamUtil.commitmentFor(block);
                   Predicate<BlockPos> allowed = atxx -> this.init_aB_StreamUtil.isCellAvailable(atxx.asLong(), now);
-                  vein.init(observed, allowed);
+                  vein.extend(observed, allowed);
                   Set<Long> present = new HashSet<>();
 
                   for (BlockPos at : observed) {
@@ -329,8 +329,8 @@ final class AiNetherRun {
                      }
                   }
 
-                  vein.init(present, atxx -> !allowed.test(atxx) || AiTerrain.isLoaded(mc.level, atxx) && !kind.test(mc.level.getBlockState(atxx)));
-                  if (vein.isActive() && vein.init(now, true, 250000000L)) {
+                  vein.dropMissing(present, atxx -> !allowed.test(atxx) || AiTerrain.isLoaded(mc.level, atxx) && !kind.test(mc.level.getBlockState(atxx)));
+                  if (vein.isActive() && vein.isFinished(now, true, 250000000L)) {
                      AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
                         AiJson.objectOf("transition", "complete", "kind", block ? "block" : "ore", "anchor", vein.getAnchor().toShortString())
@@ -351,7 +351,7 @@ final class AiNetherRun {
                         return null;
                      }
 
-                     vein.init(seed, observed, allowed);
+                     vein.begin(seed, observed, allowed);
                      AiRunTrace.emitServiceEvent(
                         "nether_gold_batch",
                         AiJson.objectOf(
@@ -436,7 +436,7 @@ final class AiNetherRun {
                   }
 
                   if (mc.player.isAlive() && this.startDeathRevision == AiServerEvidence.deathRevision()) {
-                     AiGoal.init(
+                     AiGoal.set(
                         this,
                         1,
                         "Nether",
@@ -521,7 +521,7 @@ final class AiNetherRun {
                               this.flush_J = System.nanoTime();
                               return this.startChild(
                                  "fight a blaze",
-                                 AiNetherRun.init(
+                                 AiNetherRun.fightThenPickup(
                                     AiBlazeFight.init(
                                        AiJson.objectOf(
                                           "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 120
@@ -648,7 +648,7 @@ final class AiNetherRun {
                      AiRunTrace.emitServiceEvent("nether_leg_resume", AiJson.objectOf("kind", "blaze", "entityId", id));
                      return this.startChild(
                         "fight a blaze",
-                        AiNetherRun.init(
+                        AiNetherRun.fightThenPickup(
                            AiBlazeFight.init(
                               AiJson.objectOf(
                                  "entityId", id, "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 60
@@ -774,8 +774,8 @@ final class AiNetherRun {
                   if (mc.player.getHealth() >= 18.0F && !AiEndRun.init_Z(mc) && !mc.player.isInLava()) {
                      this.read_Z = false;
                   } else {
-                     if (AiSurvival.init(mc.player.getInventory()) >= 0 || mc.player.getFoodData().getFoodLevel() >= 18) {
-                        return this.startChild("recover after blaze retreat", AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
+                     if (AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0 || mc.player.getFoodData().getFoodLevel() >= 18) {
+                        return this.startChild("recover after blaze retreat", AiCover.create(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
                      }
 
                      AiNetherRun.init_Z = true;
@@ -804,11 +804,11 @@ final class AiNetherRun {
                   return this.read_AiOperation_Result_8();
                } else {
                   if (AiRunResources.isCampaignActive() && !AiRunResources.isMandatoryArmorEquipped()) {
-                     return this.startChild("restore required Nether armor", AiEquip.init(AiJson.objectOf("what", "armor")));
+                     return this.startChild("restore required Nether armor", AiEquip.create(AiJson.objectOf("what", "armor")));
                   }
 
                   if (!AiNetherRun.init_Z
-                     && AiSurvival.init(mc.player.getInventory()) < 0
+                     && AiSurvival.bestFoodSlot(mc.player.getInventory()) < 0
                      && (mc.player.getHealth() < 18.0F && mc.player.getFoodData().getFoodLevel() < 18 || mc.player.getFoodData().getFoodLevel() <= 6)) {
                      AiNetherRun.init_Z = true;
                      this.stopReason = "no carried food for continued travel or healing";
@@ -860,7 +860,7 @@ final class AiNetherRun {
                         AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                         return this.startChild(
                            "barter an economical gold batch",
-                           AiBarter.init(AiJson.objectOf("pearls", goal.pearls(), "gold", goal.gold(), "partners", 3, "timeoutSeconds", 180))
+                           AiBarter.create(AiJson.objectOf("pearls", goal.pearls(), "gold", goal.gold(), "partners", 3, "timeoutSeconds", 180))
                         );
                      }
 
@@ -923,11 +923,11 @@ final class AiNetherRun {
                      this.nextHealAt = System.nanoTime() + 30000000000L;
                      if ((mc.player.getHealth() < 10.0F || this.read_Z_7())
                         && (!AiWorldScan.findEntitiesByType("minecraft:blaze", 24.0).isEmpty() || !AiWorldScan.findEntitiesByType("minecraft:wither_skeleton", 16.0).isEmpty())) {
-                        return this.startChild("hide and heal", AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
+                        return this.startChild("hide and heal", AiCover.create(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
                      }
 
-                     if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
-                        return this.startChild("eat to heal", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
+                     if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0) {
+                        return this.startChild("eat to heal", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
                      }
                   }
 
@@ -937,7 +937,7 @@ final class AiNetherRun {
 
                   if (!this.shieldAttempted && !mc.player.getOffhandItem().is(Items.SHIELD) && AiCraft.countItem("minecraft:shield") > 0) {
                      this.shieldAttempted = true;
-                     return this.startChild("shield to the offhand", AiEquip.init(AiJson.objectOf("what", "minecraft:shield", "hand", "offhand")));
+                     return this.startChild("shield to the offhand", AiEquip.create(AiJson.objectOf("what", "minecraft:shield", "hand", "offhand")));
                   }
 
                   float provokeHealth = AiForage.init(mc, mc.player.blockPosition()) ? 12.0F : 16.0F;
@@ -945,7 +945,7 @@ final class AiNetherRun {
                         && this.heldPearls() < pearls
                         && mc.player.getHealth() >= provokeHealth
                         && System.nanoTime() > this.tick_J
-                        && AiSurvival.init(mc.player.getInventory()) >= 0
+                        && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0
                         && mc.player.onGround()
                         && AiForage.write(mc, mc.player.blockPosition())
                      ? this.findHuntableEnderman(48)
@@ -954,7 +954,7 @@ final class AiNetherRun {
                      this.tick_J = System.nanoTime() + 5000000000L;
                      return this.startChild(
                         "fight an enderman",
-                        AiNetherRun.init(
+                        AiNetherRun.fightThenPickup(
                            this.huntEnderman(provokable.getId()),
                            "minecraft:ender_pearl",
                            () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))
@@ -1018,7 +1018,7 @@ final class AiNetherRun {
                   if (huntable != null) {
                      return this.startChild(
                         "fight an enderman",
-                        AiNetherRun.init(
+                        AiNetherRun.fightThenPickup(
                            this.guardedEndermanFight(
                               huntable.getId(),
                               AiCombat.init(
@@ -1043,7 +1043,7 @@ final class AiNetherRun {
                      AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                      return this.startChild(
                         "barter with the piglins before the blazes",
-                        AiBarter.init(
+                        AiBarter.create(
                            AiJson.objectOf(
                               "pearls",
                               goal.pearls(),
@@ -1130,7 +1130,7 @@ final class AiNetherRun {
                                  this.flush_J = System.nanoTime();
                                  return this.startChild(
                                     "fight a blaze after a stall",
-                                    AiNetherRun.init(
+                                    AiNetherRun.fightThenPickup(
                                        AiBlazeFight.init(
                                           AiJson.objectOf(
                                              "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 60
@@ -1220,16 +1220,16 @@ final class AiNetherRun {
                               return this.running("Leaving a spawner no walk reaches");
                            }
 
-                           if (blaze != null && AiPotion.init(mc) && this.set_I < 3) {
+                           if (blaze != null && AiPotion.shouldDrinkFireResistance(mc) && this.set_I < 3) {
                               this.set_I++;
-                              return this.startChild("drink fire resistance", AiPotion.init());
+                              return this.startChild("drink fire resistance", AiPotion.drinkFireResistance());
                            }
 
                            if (blaze != null && mc.player.getHealth() >= 10.0F) {
                               this.flush_J = System.nanoTime();
                               return this.startChild(
                                  "fight a blaze",
-                                 AiNetherRun.init(
+                                 AiNetherRun.fightThenPickup(
                                     AiBlazeFight.init(
                                        AiJson.objectOf(
                                           "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 120
@@ -1324,7 +1324,7 @@ final class AiNetherRun {
                               return this.startChild("prepare minimal blaze-spawner cap and fireball screen", new AiBlazeArena(this.load_BlockPos, 10));
                            } else {
                               return this.canEatToHeal()
-                                 ? this.startChild("eat while waiting for blazes", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 15)))
+                                 ? this.startChild("eat while waiting for blazes", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 15)))
                                  : this.startChild("wait for blazes at the spawner", AiCombat.init(60));
                            }
                         } else {
@@ -1382,7 +1382,7 @@ final class AiNetherRun {
                            AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                            return this.startChild(
                               "barter with the piglins",
-                              AiBarter.init(
+                              AiBarter.create(
                                  AiJson.objectOf(
                                     "pearls",
                                     goal.pearls(),
@@ -1467,7 +1467,7 @@ final class AiNetherRun {
                                     null,
                                     AiGoto.GotoOptions.DEFAULT
                                  ),
-                                 () -> AiNetherRun.init(
+                                 () -> AiNetherRun.fightThenPickup(
                                     this.guardedEndermanFight(
                                        far.getId(),
                                        AiCombat.init(
@@ -1535,7 +1535,7 @@ final class AiNetherRun {
                            }
 
                            if (this.canEatToHeal()) {
-                              return this.startChild("eat while waiting for endermen", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 15)));
+                              return this.startChild("eat while waiting for endermen", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 15)));
                            }
 
                            this.endermanHuntAttempts++;
@@ -1584,7 +1584,7 @@ final class AiNetherRun {
                         () -> AiWorldScan.findNearestBlock(s -> s.is(Blocks.NETHER_PORTAL), 12),
                         at -> AiTerrain.isLoaded(mc.level, at) && mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL)
                      );
-               this.portal = AiNetherRun.firstPlausiblePortal(loadedPortal, AiPortalLinks.init(2147483647), this.portal, at -> AiNetherRun.isPortalOrUnloaded(mc, at));
+               this.portal = AiNetherRun.firstPlausiblePortal(loadedPortal, AiPortalLinks.nearestKnownPortal(2147483647), this.portal, at -> AiNetherRun.isPortalOrUnloaded(mc, at));
                if (this.portal != null) {
                   AiNetherRun.rememberedPortal = this.portal;
                }
@@ -1922,7 +1922,7 @@ final class AiNetherRun {
             }
 
             boolean canEatToHeal() {
-               return mc.player.getHealth() < mc.player.getMaxHealth() && mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.init(mc.player.getInventory()) >= 0;
+               return mc.player.getHealth() < mc.player.getMaxHealth() && mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0;
             }
 
             Entity findHuntableEnderman(int radius) {
@@ -2257,7 +2257,7 @@ final class AiNetherRun {
                      "bodyWalled",
                      AiForage.init(mc, mc.player.blockPosition()),
                      "safeFoodAvailable",
-                     AiSurvival.init(mc.player.getInventory()) >= 0,
+                     AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0,
                      "provokeRetryInSeconds",
                      Math.max(0L, (this.tick_J - now) / 1000000000L),
                      "waitsUsed",
@@ -2329,7 +2329,7 @@ final class AiNetherRun {
             }
 
             AiOperation.Result finish(AiOperation.Status status, String message, AiOperation.Result child) {
-               AiGoal.init(this);
+               AiGoal.clear(this);
                boolean pending = this.requiresReconciliationAfterEmergency();
                AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.progressSnapshot(), pending, child);
                this.reobserveBeforeResuming = this.reobserveBeforeResuming | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
@@ -2354,7 +2354,7 @@ final class AiNetherRun {
 
             @Override
             public void cancel() {
-               AiGoal.init(this);
+               AiGoal.clear(this);
                this.reobserveBeforeResuming = this.reobserveBeforeResuming | this.requiresReconciliationAfterEmergency();
                if (this.child != null) {
                   this.child.cancel();
@@ -2543,7 +2543,7 @@ final class AiNetherRun {
       return sequence(first, second, false);
    }
 
-   static AiOperation load(AiOperation first, Supplier<AiOperation> second) {
+   static AiOperation then(AiOperation first, Supplier<AiOperation> second) {
       return sequence(first, second, true);
    }
 
@@ -2733,7 +2733,7 @@ final class AiNetherRun {
       };
    }
 
-   static AiOperation init(final AiOperation fight, final String item, final Supplier<AiOperation> pickup) {
+   static AiOperation fightThenPickup(final AiOperation fight, final String item, final Supplier<AiOperation> pickup) {
       return new AiOperation() {
          AiOperation current = fight;
          boolean switched;

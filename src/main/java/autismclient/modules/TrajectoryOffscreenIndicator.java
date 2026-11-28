@@ -27,12 +27,12 @@ public final class TrajectoryOffscreenIndicator {
       drawnCount = 0;
    }
 
-   public static void init(GuiGraphicsExtractor graphics) {
+   public static void render(GuiGraphicsExtractor graphics) {
       drawnCount = 0;
       Minecraft mc = Minecraft.getInstance();
       Module module = al.init_Module_Str("trajectories");
-      if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.init(PROJECTION)) {
-         Vec3 camera = WorldProjectionHelper.init();
+      if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.projection(PROJECTION)) {
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
             drawIndicator(graphics, mc, remembered.position(), camera, -8329771);

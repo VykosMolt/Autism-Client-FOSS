@@ -22,7 +22,7 @@ public class MacroVariablesAction implements MacroAction {
          }
 
          String name = this.names.get(i);
-         if (!MacroVariableStore.load(name).isEmpty()) {
+         if (!MacroVariableStore.rootKey(name).isEmpty()) {
             resolvedValues.put(name, MacroVarValue.ofText(resolved.value()));
          }
       }

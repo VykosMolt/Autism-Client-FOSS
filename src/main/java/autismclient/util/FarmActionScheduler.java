@@ -6,7 +6,7 @@ public final class FarmActionScheduler {
    private FarmActionScheduler() {
    }
 
-   public static <T> T init(List<FarmActionScheduler.ActionOption<T>> options, float yaw, float pitch, int selected, T previous) {
+   public static <T> T choose(List<FarmActionScheduler.ActionOption<T>> options, float yaw, float pitch, int selected, T previous) {
       boolean urgent = options.stream().anyMatch(FarmActionScheduler.ActionOption::urgent);
       boolean planting = options.stream().anyMatch(o -> init(o.kind()));
       T best = null;

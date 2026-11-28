@@ -102,7 +102,7 @@ final class AiClientConfig {
                   if (m.isNameTaken(name, null)) {
                      throw new IllegalArgumentException("A profile named '" + name + "' already exists");
                   } else {
-                     AutismProfile px = m.init(
+                     AutismProfile px = m.create(
                         name,
                         AiJson.getBoolean(args, "autoSave", true),
                         AiJson.getBoolean(args, "ownMacroLibrary", false),
@@ -175,7 +175,7 @@ final class AiClientConfig {
                   }
 
                   if (args.has("ownThemeColor")) {
-                     m.read(p, AiJson.getBoolean(args, "ownThemeColor", p.ownThemeColor));
+                     m.setOwnThemeColor(p, AiJson.getBoolean(args, "ownThemeColor", p.ownThemeColor));
                   }
 
                   return profilesJson(m);
@@ -236,7 +236,7 @@ final class AiClientConfig {
       return AiJson.objectOf("active", m.activeId(), "unsavedChanges", m.hasUnsavedChanges(), "profiles", list);
    }
 
-   static JsonObject load(JsonObject args) {
+   static JsonObject themeColors(JsonObject args) {
       String action = actionOf(args, "get");
       return onClientThread(() -> {
          AutismConfig cfg = AutismConfig.getGlobal();
@@ -410,7 +410,7 @@ final class AiClientConfig {
       return AiJson.objectOf("advanced", c.advanced, "customized", autismclient.util.ThemePaletteManager.isCustomActive(), "colors", colors);
    }
 
-   static JsonObject read(JsonObject args) {
+   static JsonObject hudElements(JsonObject args) {
       String action = actionOf(args, "list");
       return onClientThread(
          () -> {
@@ -520,7 +520,7 @@ final class AiClientConfig {
       return out;
    }
 
-   static JsonObject write(JsonObject args) {
+   static JsonObject guiPacketControls(JsonObject args) {
       String action = actionOf(args, "state");
       return onClientThread(() -> {
          ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
@@ -569,7 +569,7 @@ final class AiClientConfig {
       );
    }
 
-   static JsonObject update(JsonObject args) {
+   static JsonObject packetFilter(JsonObject args) {
       String action = actionOf(args, "list");
       return onClientThread(
          () -> {
@@ -682,7 +682,7 @@ final class AiClientConfig {
       return AiJson.objectOf("name", e.name(), "c2s", e.c2sCount(), "s2c", e.s2cCount(), "builtIn", e.isBuiltIn());
    }
 
-   static JsonObject sync(JsonObject args) {
+   static JsonObject waypoints(JsonObject args) {
       String action = actionOf(args, "list");
       return onClientThread(() -> {
          AutismWaypoints w = AutismWaypoints.getInstance();
@@ -743,7 +743,7 @@ final class AiClientConfig {
       }
    }
 
-   static JsonObject close(JsonObject args) {
+   static JsonObject proxies(JsonObject args) {
       String action = actionOf(args, "list");
       return onClientThread(
          () -> {
@@ -830,13 +830,13 @@ final class AiClientConfig {
       throw new IllegalArgumentException("No proxy '" + key + "'; list proxies first");
    }
 
-   static JsonObject open(JsonObject args) {
+   static JsonObject joinMacro(JsonObject args) {
       String action = actionOf(args, "get");
       return onClientThread(
          () -> {
             if (action.equals("set")) {
                if (args.has("enabled")) {
-                  autismclient.util.JoinMacroController.init(AiJson.getBoolean(args, "enabled", false));
+                  autismclient.util.JoinMacroController.setEnabled(AiJson.getBoolean(args, "enabled", false));
                }
 
                if (args.has("macro")) {
@@ -853,7 +853,7 @@ final class AiClientConfig {
                }
 
                if (args.has("keepEnabled")) {
-                  autismclient.util.JoinMacroController.load(AiJson.getBoolean(args, "keepEnabled", false));
+                  autismclient.util.JoinMacroController.setKeepEnabled(AiJson.getBoolean(args, "keepEnabled", false));
                }
             } else if (!action.equals("get")) {
                throw new IllegalArgumentException("Unknown action '" + action + "'; use get or set");
@@ -873,7 +873,7 @@ final class AiClientConfig {
       );
    }
 
-   static JsonObject poll(JsonObject args) {
+   static JsonObject serverInfo(JsonObject args) {
       return onClientThread(() -> {
          Minecraft mc = Minecraft.getInstance();
          ClientPacketListener connection = mc.getConnection();
@@ -908,7 +908,7 @@ final class AiClientConfig {
       });
    }
 
-   static JsonObject pop(JsonObject args) {
+   static JsonObject macroFolders(JsonObject args) {
       String action = actionOf(args, "list");
       return onClientThread(() -> {
          autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.getInstance();
@@ -955,7 +955,7 @@ final class AiClientConfig {
       });
    }
 
-   static JsonObject tick(JsonObject args) {
+   static JsonObject macroLibrary(JsonObject args) {
       String action = actionOf(args, "running");
       return onClientThread(() -> {
          autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.getInstance();

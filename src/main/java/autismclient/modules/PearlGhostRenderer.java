@@ -45,20 +45,20 @@ public final class PearlGhostRenderer {
    private PearlGhostRenderer() {
    }
 
-   public static boolean init() {
+   public static boolean isActive() {
       DangerModule danger = DangerModule.instance();
       return danger != null && danger.isEnabled() && !aD.init_Z() && danger.open_Z_6();
    }
 
-   public static void init(PoseStack pose) {
-      if (init()) {
+   public static void render(PoseStack pose) {
+      if (isActive()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
             DangerModule danger = DangerModule.instance();
-            Vec3 camera = WorldProjectionHelper.init();
+            Vec3 camera = WorldProjectionHelper.cameraPosition();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             AutismBufferSource buffers = BUFFERS.init();
-            VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
+            VertexConsumer lines = buffers.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (IncomingProjectileScanner.ProjectileWarning warning : danger.read_List_2()) {
                if (!warning.entity().isRemoved()) {
@@ -96,10 +96,10 @@ public final class PearlGhostRenderer {
                }
             }
 
-            init(pose.last(), lines, danger.blastPredictions(), camera);
+            drawBlastOutlines(pose.last(), lines, danger.blastPredictions(), camera);
             if (!danger.blastPredictions().isEmpty()) {
-               VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
-               load(pose.last(), fill, danger.blastPredictions(), camera);
+               VertexConsumer fill = buffers.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+               drawBlastFills(pose.last(), fill, danger.blastPredictions(), camera);
             }
 
             if (danger.isKindEnabled(IncomingProjectileScanner.ProjectileKind.PEARL) && danger.bool("pearl-ghost")) {
@@ -117,7 +117,7 @@ public final class PearlGhostRenderer {
                }
             }
 
-            buffers.init();
+            buffers.drawAll();
          }
       }
    }
@@ -125,7 +125,7 @@ public final class PearlGhostRenderer {
    private static void init_V_Minecraft(
       Minecraft mc, PoseStack pose, AutismBufferSource buffers, IncomingProjectileScanner.ProjectileWarning warning, Vec3 camera, float partial, double opacity
    ) {
-      init(
+      drawGhost(
          mc,
          pose,
          buffers,
@@ -139,7 +139,7 @@ public final class PearlGhostRenderer {
       );
    }
 
-   static void init(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
+   static void drawBlastOutlines(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.002).move(camera.scale(-1.0));
          int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
@@ -147,7 +147,7 @@ public final class PearlGhostRenderer {
       }
    }
 
-   static void load(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
+   static void drawBlastFills(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.001).move(camera.scale(-1.0));
          int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
@@ -155,7 +155,7 @@ public final class PearlGhostRenderer {
       }
    }
 
-   static void init(
+   static void drawGhost(
       Minecraft mc, PoseStack pose, AutismBufferSource buffers, AbstractClientPlayer owner, Vec3 teleport, Vec3 camera, float partial, int tint, double opacity, int pass
    ) {
       if (modelSet != mc.getEntityModels()) {
@@ -210,7 +210,7 @@ public final class PearlGhostRenderer {
          pose.translate(0.0, -1.501, 0.0);
          model.renderToBuffer(
             pose,
-            buffers.init(autismclient.render.AutismRenderTypes.pearlGhost(pipeline)),
+            buffers.buffer(autismclient.render.AutismRenderTypes.pearlGhost(pipeline)),
             15728880,
             OverlayTexture.NO_OVERLAY,
             tint & 16777215 | alpha << 24

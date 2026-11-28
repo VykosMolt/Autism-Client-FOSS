@@ -21,17 +21,17 @@ public final class DangerHudRenderer {
    private DangerHudRenderer() {
    }
 
-   public static void init(GuiGraphicsExtractor graphics) {
+   public static void render(GuiGraphicsExtractor graphics) {
       DangerModule danger = DangerModule.instance();
       Minecraft mc = Minecraft.getInstance();
       if (danger != null) {
-         BedDangerHudRenderer.init(graphics, danger);
+         BedDangerHudRenderer.render(graphics, danger);
       }
 
       if (danger != null && danger.close_Z_9() && mc.player != null && mc.gui.screen() == null && !aD.init_Z()) {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, mc.font, 0, 0);
-         if (WorldProjectionHelper.init(PROJECTION)) {
-            Vec3 camera = WorldProjectionHelper.init();
+         if (WorldProjectionHelper.projection(PROJECTION)) {
+            Vec3 camera = WorldProjectionHelper.cameraPosition();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             float scale = danger.warningScale();
             Arrays.fill(placedMarkerX, 0.0F / 0.0F);

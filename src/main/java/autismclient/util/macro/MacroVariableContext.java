@@ -21,7 +21,7 @@ public final class MacroVariableContext {
    }
 
    public static void setValue(String name, MacroVarValue value) {
-      activeOrFallbackStore().init(name, value);
+      activeOrFallbackStore().set(name, value);
    }
 
    public static void setAll(Map<String, MacroVarValue> values) {

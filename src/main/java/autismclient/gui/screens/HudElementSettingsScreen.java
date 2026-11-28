@@ -228,7 +228,7 @@ public class HudElementSettingsScreen extends Screen {
       } else if (row.type == HudElementSettingsScreen.RowType.ITEM) {
          int pickW = this.textButtonWidth("Pick");
          String raw = AutismHudManager.setting(this.id, row.key);
-         String itemName = raw != null && !raw.isBlank() ? RegistryDisplayNameCache.init(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
+         String itemName = raw != null && !raw.isBlank() ? RegistryDisplayNameCache.itemName(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
          this.drawTrimmedText(graphics, itemName, valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
          this.drawButton(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
       } else if (row.type == HudElementSettingsScreen.RowType.PICK) {

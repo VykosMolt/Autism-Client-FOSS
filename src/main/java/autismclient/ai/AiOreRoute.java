@@ -33,15 +33,15 @@ final class AiOreRoute {
       return d;
    }
 
-   static AiOperation init(String family, String drop, int targetHeld, int blocks, int seconds) {
+   static AiOperation mineOre(String family, String drop, int targetHeld, int blocks, int seconds) {
       return !LEGIT_MINING ? searchMine(family, drop, targetHeld, 48, -2147483648, seconds) : branchMineOp(family, drop, targetHeld, blocks, -2147483648, seconds, true);
    }
 
    static AiOperation branchMine(String family, String drop, int targetHeld, int blocks, int bestY, int seconds) {
-      return init(family, drop, targetHeld, blocks, bestY, seconds, null);
+      return mineOre(family, drop, targetHeld, blocks, bestY, seconds, null);
    }
 
-   static AiOperation init(String family, String drop, int targetHeld, int blocks, int bestY, int seconds, BlockPos focus) {
+   static AiOperation mineOre(String family, String drop, int targetHeld, int blocks, int bestY, int seconds, BlockPos focus) {
       if (!LEGIT_MINING) {
          JsonObject args = AiJson.objectOf("block", family, "drop", drop, "held", targetHeld, "radius", 64, "timeoutSeconds", Math.max(60, seconds));
          if (bestY != -2147483648) {
@@ -129,7 +129,7 @@ final class AiOreRoute {
                         );
                      return this.afterChild(r);
                   } else if (AiProgression.freeSlots(mc) < 3) {
-                     this.child = AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.keepItems()));
+                     this.child = AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.keepItems()));
                      return this.running("Making room in the bag");
                   } else {
                      return this.init_AiOperation_Result_18();

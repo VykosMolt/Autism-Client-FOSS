@@ -132,8 +132,8 @@ public final class BedEspModule extends Module {
    }
 
    static List<EspChunkWorker.EspBox> scanChunk(LevelChunk chunk) {
-      return EspChunkWorker.load
-         .init(
+      return EspChunkWorker.beds
+         .scan(
             chunk,
             MC.level.getGameTime(),
             "beds",
@@ -508,7 +508,7 @@ public final class BedEspModule extends Module {
    static List<ItemStack> recommendedTools() {
       List<ItemStack> tools = new ArrayList<>();
       tools.add(ItemStack.EMPTY);
-      boolean legacy = autismclient.util.LegacyCombatDetector.init(MC.player);
+      boolean legacy = autismclient.util.LegacyCombatDetector.isLegacyCombat(MC.player);
 
       for (Item item : List.of(legacy ? Items.DIAMOND_PICKAXE : Items.NETHERITE_PICKAXE, legacy ? Items.DIAMOND_AXE : Items.NETHERITE_AXE, Items.SHEARS)) {
          ItemStack stack = new ItemStack(item);
@@ -527,7 +527,7 @@ public final class BedEspModule extends Module {
       for (ItemStack stack : tools) {
          if (stack.isEmpty()
             || stack.isItemEnabled(MC.level.enabledFeatures()) && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() >= 2)) {
-            double speed = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.init(MC, stack, state);
+            double speed = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.breakSpeed(MC, stack, state);
             int haste = MobEffectUtil.hasDigSpeed(MC.player) ? MobEffectUtil.getDigSpeedAmplification(MC.player) + 1 : 0;
             speed *= 1.0 + 0.2 * haste;
             MobEffectInstance fatigue = MC.player.getEffect(MobEffects.MINING_FATIGUE);
@@ -552,7 +552,7 @@ public final class BedEspModule extends Module {
 
             speed *= this.breakSpeedByStack.computeIfAbsent(stack, this::breakSpeedWith);
             boolean correct = !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state);
-            double ticks = init(hardness, speed, correct, MC.player.hasInfiniteMaterials());
+            double ticks = breakTicks(hardness, speed, correct, MC.player.hasInfiniteMaterials());
             if (ticks < best) {
                best = ticks;
                chosen = stack;
@@ -586,7 +586,7 @@ public final class BedEspModule extends Module {
       return candidate.getValue();
    }
 
-   static double init(float hardness, double speed, boolean correct, boolean creative) {
+   static double breakTicks(float hardness, double speed, boolean correct, boolean creative) {
       if (!(hardness < 0.0F) && !(speed <= 0.0)) {
          return !creative && hardness != 0.0F ? Math.max(1.0, Math.ceil(hardness * (correct ? 30 : 100) / speed)) : 1.0;
       } else {

@@ -7,7 +7,7 @@ final class AiReplantEvidence {
    private AiReplantEvidence() {
    }
 
-   static boolean init(BlockState before, BlockState after, Block crop) {
+   static boolean wasHarvested(BlockState before, BlockState after, Block crop) {
       return before.is(crop) && AiFarm.isRipe(before) && after.isAir();
    }
 
@@ -17,7 +17,7 @@ final class AiReplantEvidence {
          && update != null
          && update.revision() > brokenRevision
          && update.state().isAir()
-         && !autismclient.util.BlockBreakGraceCalc.init(now, brokenAt, latencyMillis);
+         && !autismclient.util.BlockBreakGraceCalc.inGrace(now, brokenAt, latencyMillis);
    }
 
    static AiReplantEvidence.ReplantState init(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {

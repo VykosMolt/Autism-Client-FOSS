@@ -51,11 +51,11 @@ public final class BedEspOverlayRenderer {
 
    public static void init(PoseStack matrices) {
       if (isActive()) {
-         Vec3 camera = WorldProjectionHelper.init();
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          AutismBufferSource source = init_c_DataUtil.init();
          List<BedEspModule.BedInfo> beds = init_List();
          boolean path = BedEspModule.policy().load();
-         VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+         VertexConsumer fill = source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (BedEspModule.BedInfo bed : beds) {
             int rgb = bed.color().getTextureDiffuseColor();
@@ -67,7 +67,7 @@ public final class BedEspOverlayRenderer {
             }
          }
 
-         VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
+         VertexConsumer lines = source.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (BedEspModule.BedInfo bed : beds) {
             WorldLineRenderer.init(
@@ -82,15 +82,15 @@ public final class BedEspOverlayRenderer {
             }
          }
 
-         source.init();
+         source.drawAll();
       }
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
       if (isActive() && BedEspModule.policy().read()) {
          Matrix4f matrix = new Matrix4f();
-         if (WorldProjectionHelper.init(matrix)) {
-            Vec3 camera = WorldProjectionHelper.init();
+         if (WorldProjectionHelper.projection(matrix)) {
+            Vec3 camera = WorldProjectionHelper.cameraPosition();
             autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, init_Minecraft.font, 0, 0);
             int rowHeight = Math.max(
                12,
@@ -106,7 +106,7 @@ public final class BedEspOverlayRenderer {
 
             for (BedEspModule.BedInfo bed : init_List()) {
                double distance = Math.sqrt(bed.box().distanceToSqr(camera));
-               float alpha = DistanceFadeCurve.init(distance);
+               float alpha = DistanceFadeCurve.fade(distance);
                if (!(alpha < 0.005F)) {
                   float[] point = init(matrix, camera, bed.labelPos());
                   if (point != null) {
@@ -131,7 +131,7 @@ public final class BedEspOverlayRenderer {
 
                      try {
                         graphics.pose().translate(point[0], point[1]);
-                        float scale = NameTagsRenderer.init(0.72, true, distance);
+                        float scale = NameTagsRenderer.scaleFor(0.72, true, distance);
                         graphics.pose().scale(scale, scale);
                         graphics.pose().translate(0.0F, -height - 2);
                         int text = autismclient.gui.f.PacketUtil.init(-1, alpha);

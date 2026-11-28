@@ -370,7 +370,7 @@ final class AiBlazeFight {
                AiBlazeFight.init_J = System.nanoTime() + 400000000L;
                AiFallGuard.markDriven();
                this.push++;
-               this.deaths.init(mc);
+               this.deaths.sweep(mc);
                this.kills = this.deaths.killCount();
                if (System.nanoTime() > this.deadline) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_5(
@@ -496,7 +496,7 @@ final class AiBlazeFight {
                            this.arena = null;
                         }
 
-                        this.init_AiOperation = AiSurvival.load(AiJson.objectOf("radius", 10, "distance", 10, "timeoutSeconds", 6));
+                        this.init_AiOperation = AiSurvival.flee(AiJson.objectOf("radius", 10, "distance", 10, "timeoutSeconds", 6));
                         AiRunTrace.emitServiceEvent(
                            "blaze_combat_priority", AiJson.objectOf("reason", "nearby creeper fuse", "entityId", creeper.getId())
                         );
@@ -773,8 +773,8 @@ final class AiBlazeFight {
 
                               AiProjectiles.IncomingProjectile dodge = null;
 
-                              for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
-                                 if (AiProjectiles.init(t) && AiCombat.init(t) <= 20 && (dodge == null || AiCombat.init(t) < AiCombat.init(dodge))) {
+                              for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
+                                 if (AiProjectiles.isImminent(t) && AiCombat.init(t) <= 20 && (dodge == null || AiCombat.init(t) < AiCombat.init(dodge))) {
                                     dodge = t;
                                  }
                               }
@@ -1131,7 +1131,7 @@ final class AiBlazeFight {
             this.target = next;
             this.defensive = defensive;
             if (!defensive && next instanceof Blaze blaze) {
-               this.deaths.init(blaze);
+               this.deaths.watch(blaze);
             }
 
             this.cancelChild();
@@ -1857,8 +1857,8 @@ final class AiBlazeFight {
    static List<AiProjectiles.IncomingProjectile> incomingProjectiles(Minecraft mc) {
       List<AiProjectiles.IncomingProjectile> out = new ArrayList<>();
 
-      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
-         if (AiProjectiles.init(t)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
+         if (AiProjectiles.isImminent(t)) {
             out.add(t);
          }
       }

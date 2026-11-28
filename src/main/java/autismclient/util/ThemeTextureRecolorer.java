@@ -43,7 +43,7 @@ public final class ThemeTextureRecolorer {
    private ThemeTextureRecolorer() {
    }
 
-   public static Identifier init(Identifier source, ThemePaletteManager.ColorRole ch) {
+   public static Identifier recolored(Identifier source, ThemePaletteManager.ColorRole ch) {
       if (source == null) {
          return null;
       }
@@ -233,7 +233,7 @@ public final class ThemeTextureRecolorer {
       );
    }
 
-   public static void init(TextureManager textureManager) {
+   public static void register(TextureManager textureManager) {
       try {
          preview = new ThemeTextureRecolorer.RecoloredPanorama(init_Identifier);
          textureManager.register(init_Identifier, preview);
@@ -351,7 +351,7 @@ public final class ThemeTextureRecolorer {
       });
    }
 
-   public static void load() {
+   public static void invalidate() {
       currentGeneration++;
       failedGenerations.clear();
       load_Z = false;

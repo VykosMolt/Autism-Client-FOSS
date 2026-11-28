@@ -429,7 +429,7 @@ final class AiBuildSite {
       }
 
       BlockPos at = this.posAt(index);
-      return isLoaded(level, at) && AiBuildIntent.init(this.specs[index], level.getBlockState(at));
+      return isLoaded(level, at) && AiBuildIntent.matches(this.specs[index], level.getBlockState(at));
    }
 
    int pendingCount() {
@@ -1547,10 +1547,10 @@ final class AiBuildSite {
 
    private boolean init_Z_I_BlockState(int index, BlockState live) {
       AiBuilder.CellSpec cell = this.specs[index];
-      if (AiBuildIntent.init(cell, live)) {
+      if (AiBuildIntent.matches(cell, live)) {
          return true;
       } else {
-         return AiBuildIntent.isPoweredLever(cell) && AiBuildIntent.init(AiBuildIntent.unpoweredLever(cell), live) ? true : AiBuildIntent.init(cell, live, this.substitutes);
+         return AiBuildIntent.isPoweredLever(cell) && AiBuildIntent.matches(AiBuildIntent.unpoweredLever(cell), live) ? true : AiBuildIntent.matches(cell, live, this.substitutes);
       }
    }
 

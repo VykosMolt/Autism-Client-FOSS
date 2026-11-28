@@ -12,11 +12,11 @@ final class AimHitboxHelper {
    private AimHitboxHelper() {
    }
 
-   static boolean init(AABB box, Vec3 eye, float yaw, float pitch, double reach) {
-      return init(box, eye, yaw, pitch, reach, 0.03);
+   static boolean rayHits(AABB box, Vec3 eye, float yaw, float pitch, double reach) {
+      return rayHits(box, eye, yaw, pitch, reach, 0.03);
    }
 
-   static boolean init(AABB box, Vec3 eye, float yaw, float pitch, double reach, double margin) {
+   static boolean rayHits(AABB box, Vec3 eye, float yaw, float pitch, double reach, double margin) {
       box = box.deflate(margin);
       return box.contains(eye) || box.clip(eye, eye.add(Vec3.directionFromRotation(pitch, yaw).scale(reach))).isPresent();
    }

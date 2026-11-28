@@ -450,7 +450,7 @@ public final class AiContext {
       return tracker.init(fields, observation == null ? "" : observation.id(), observation == null ? "" : observation.source(), data);
    }
 
-   public static String init(
+   public static String build(
       AiCatalog.Snapshot catalog, AiObservation observation, String objective, String task, List<AiMemoryStore.Memory> memories, int maxCharacters
    ) {
       String turn = init(new AiContext.ObservationTracker(), task, new JsonObject(), -1, 60, 0L, null, null, observation);

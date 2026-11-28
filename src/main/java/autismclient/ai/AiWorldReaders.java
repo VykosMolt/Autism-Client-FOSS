@@ -122,7 +122,7 @@ final class AiWorldReaders {
       return decoration;
    }
 
-   static JsonArray read(Minecraft mc) {
+   static JsonArray bossBars(Minecraft mc) {
       JsonArray bars = new JsonArray();
 
       try {
@@ -166,7 +166,7 @@ final class AiWorldReaders {
       return vitals;
    }
 
-   static JsonObject init(ItemStack stack) {
+   static JsonObject summary(ItemStack stack) {
       JsonObject summary = new JsonObject();
 
       try {
@@ -279,7 +279,7 @@ final class AiWorldReaders {
       return summary;
    }
 
-   static JsonObject init(ItemStack stack, int page) {
+   static JsonObject dump(ItemStack stack, int page) {
       JsonObject base = new JsonObject();
 
       try {
@@ -508,7 +508,7 @@ final class AiWorldReaders {
                entry.addProperty("item", BuiltInRegistries.ITEM.getKey(inner.getItem()).toString());
                entry.addProperty("count", inner.getCount());
                entry.addProperty("name", init(inner.getHoverName().getString(), 128));
-               entry.add("components", init(inner));
+               entry.add("components", summary(inner));
                items.add(entry);
             });
             if (items.size() > 0) {

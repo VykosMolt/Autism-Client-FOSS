@@ -8,7 +8,7 @@ public class PickUpAllAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      autismclient.util.ContainerPickUpAllHelper.init(mc, null, this.times);
+      autismclient.util.ContainerPickUpAllHelper.pickUpAll(mc, null, this.times);
    }
 
    @Override

@@ -473,12 +473,12 @@ public final class AiPathfinder {
 
          @Override
          public byte putAt_B_I(int var1, int var2x, int var3) {
-            return var7.containsKey(BlockPos.asLong(var1, var2x, var3)) ? AiSurface.NORMAL.init() : var0.putAt_B_I(var1, var2x, var3);
+            return var7.containsKey(BlockPos.asLong(var1, var2x, var3)) ? AiSurface.NORMAL.id() : var0.putAt_B_I(var1, var2x, var3);
          }
 
          @Override
-         public long putAt_J() {
-            return var0.putAt_J();
+         public long revision() {
+            return var0.revision();
          }
       };
    }
@@ -5240,7 +5240,7 @@ public final class AiPathfinder {
          this.goal = var3.putAt_FileStore_TokenCod_FileStore_TextStor(var1);
          this.options = var4;
          this.blacklistedCells = var5;
-         this.gridRevision = var1.putAt_J();
+         this.gridRevision = var1.revision();
          this.cachedGrid = new AiPathfinder.MoveGenerator.CachedGrid(var1, 16384, var6);
          this.cachedGrid.fallPolicy = var4.fallPolicy();
          BlockPos var8 = var3.putAt_BlockPos();
@@ -5562,7 +5562,7 @@ public final class AiPathfinder {
                   break;
                }
 
-               if (this.grid.putAt_J() != this.gridRevision) {
+               if (this.grid.revision() != this.gridRevision) {
                   this.hitPendingChunk = true;
                   this.finished = true;
                   break;
@@ -6065,7 +6065,7 @@ public final class AiPathfinder {
                var4 = var3.z();
             }
 
-            var3 = AiPhysics.step(var3, var3.onGround() ? AiPhysics.MoveInput.jump(0.0F, true) : AiPhysics.MoveInput.run(0.0F, true), var2);
+            var3 = AiPhysics.step(var3, var3.onGround() ? AiPhysics.MoveInput.jump(0.0F, true) : AiPhysics.MoveInput.running(0.0F, true), var2);
          }
 
          return 200.0 / Math.max(1.0E-6, var3.z() - var4);
@@ -6237,11 +6237,11 @@ public final class AiPathfinder {
 
       int flowState();
 
-      default int flowTemp() {
+      default int pendingPlacementCount() {
          return 0;
       }
 
-      default List<AiPathfinder.PathStep> putAt_List() {
+      default List<AiPathfinder.PathStep> remainingMoves() {
          return List.of();
       }
 
@@ -6493,12 +6493,12 @@ public final class AiPathfinder {
       private long lastHotbarRescanNanos;
 
       @Override
-      public long putAt_J() {
+      public long revision() {
          return this.invalidationRevision;
       }
 
       public long changeVersion() {
-         return this.sliceUpdateVersion + this.putAt_J();
+         return this.sliceUpdateVersion + this.revision();
       }
 
       void awaitChangeVersion(long var1, long var3) throws java.lang.InterruptedException {
@@ -6691,7 +6691,7 @@ public final class AiPathfinder {
          if (var2 >= this.minY && var2 <= this.maxY) {
             long var4 = packChunkKey(var1 >> 4, var3 >> 4);
             AiPathfinder.LiveGridView.SectionSlice var6 = this.loadedSlices.get(var4);
-            if (var6 != null && var6.revision() == AiGridRevisions.init(var4)) {
+            if (var6 != null && var6.revision() == AiGridRevisions.revisionOf(var4)) {
                if (var6.ready().get((var1 & 15) * 16 + (var3 & 15)) == 0) {
                   this.pendingChunkKeys.add(var4);
                   this.priorityColumnKeys.add(packChunkKey(var1, var3));
@@ -6750,11 +6750,11 @@ public final class AiPathfinder {
       private AiPathfinder.LiveGridView.SectionSlice getReadySlice(int var1, int var2) {
          long var3 = packChunkKey(var1 >> 4, var2 >> 4);
          AiPathfinder.LiveGridView.SectionSlice var5 = this.loadedSlices.get(var3);
-         if (var5 != null && var5.revision() == AiGridRevisions.init(var3) && var5.ready().get((var1 & 15) * 16 + (var2 & 15)) != 0) {
+         if (var5 != null && var5.revision() == AiGridRevisions.revisionOf(var3) && var5.ready().get((var1 & 15) * 16 + (var2 & 15)) != 0) {
             return var5;
          }
 
-         if (var5 != null && var5.revision() != AiGridRevisions.init(var3)) {
+         if (var5 != null && var5.revision() != AiGridRevisions.revisionOf(var3)) {
             this.loadedSlices.remove(var3, var5);
          }
 
@@ -6790,7 +6790,7 @@ public final class AiPathfinder {
          if (var2 >= this.minY && var2 <= this.maxY) {
             AiPathfinder.LiveGridView.SectionSlice var4 = this.getReadySlice(var1, var3);
             if (var4 == null) {
-               return AiSurface.NORMAL.init();
+               return AiSurface.NORMAL.id();
             } else {
                int var5 = var4.index(var1, var2, var3, this.minY, this.maxY - this.minY + 1);
                if (var4.surface() != null) {
@@ -6798,14 +6798,14 @@ public final class AiPathfinder {
                } else {
                   short var6 = var4.flags()[var5];
                   if ((var6 & 4096) != 0) {
-                     return AiSurface.ICE.init();
+                     return AiSurface.ICE.id();
                   } else {
-                     return (var6 & 8192) != 0 ? AiSurface.SOUL_SAND.init() : AiSurface.NORMAL.init();
+                     return (var6 & 8192) != 0 ? AiSurface.SOUL_SAND.id() : AiSurface.NORMAL.id();
                   }
                }
             }
          } else {
-            return AiSurface.NORMAL.init();
+            return AiSurface.NORMAL.id();
          }
       }
 
@@ -6830,7 +6830,7 @@ public final class AiPathfinder {
                long var9 = packChunkKey(var7 >> 4, var8 >> 4);
                if (this.cellSource.isChunkLoaded(var7 >> 4, var8 >> 4)) {
                   AiPathfinder.LiveGridView.SectionSlice var20 = this.loadedSlices.get(var9);
-                  if (var20 == null || var20.revision() != AiGridRevisions.init(var9)) {
+                  if (var20 == null || var20.revision() != AiGridRevisions.revisionOf(var9)) {
                      var20 = this.allocateSlice(var5, var9);
                      this.loadedSlices.put(var9, var20);
                   }
@@ -6867,7 +6867,7 @@ public final class AiPathfinder {
                   Math.max(0, Math.min(15, this.focusPos.getZ() - (var13.intValue() << 4)))
                );
                this.activeSlice = this.loadedSlices.get(var13);
-               if (this.activeSlice == null || this.activeSlice.revision() != AiGridRevisions.init(var13)) {
+               if (this.activeSlice == null || this.activeSlice.revision() != AiGridRevisions.revisionOf(var13)) {
                   this.activeSlice = this.allocateSlice(var5, var13);
                }
 
@@ -6876,7 +6876,7 @@ public final class AiPathfinder {
                if (!this.cellSource.isChunkLoaded(var15, var17)) {
                   AiPathfinder.LiveGridView.SectionSlice var19 = this.chunkMemory == null
                      ? null
-                     : this.chunkMemory.sectionSlice(var15, var17, this.minY, var5, AiGridRevisions.init(var13));
+                     : this.chunkMemory.sectionSlice(var15, var17, this.minY, var5, AiGridRevisions.revisionOf(var13));
                   if (var19 != null) {
                      this.loadedSlices.put(var13, var19);
                      this.memoryFallbackSlices.put(var13, var19);
@@ -6969,7 +6969,7 @@ public final class AiPathfinder {
                if ((var8 & 1) != 0 && AiChunkMemory.init_I(var8) == 1) {
                   var4.set((this.savingChunkX << 4) + var5, this.minY + this.savingYOffset, (this.savingChunkZ << 4) + var6);
                   String var9 = BuiltInRegistries.BLOCK.getKey(this.level.getBlockState(var4).getBlock()).getPath();
-                  if (AiChunkMemory.init(var9)) {
+                  if (AiChunkMemory.isNotableBlock(var9)) {
                      if (this.savingBlockNames == null) {
                         this.savingBlockNames = new HashMap<>();
                      }
@@ -6994,8 +6994,8 @@ public final class AiPathfinder {
          this.savingChunkKey = -9223372036854775808L;
          this.savingFlags = null;
          this.savingBlockNames = null;
-         if (var15 == AiGridRevisions.init(var12)) {
-            this.chunkMemory.init(var13, var14, this.minY, var3, var10, var11);
+         if (var15 == AiGridRevisions.revisionOf(var12)) {
+            this.chunkMemory.storeChunk(var13, var14, this.minY, var3, var10, var11);
          }
 
          return true;
@@ -7106,7 +7106,7 @@ public final class AiPathfinder {
             new byte[256 * var1],
             new short[256 * var1],
             new byte[256 * var1],
-            AiGridRevisions.init(var2),
+            AiGridRevisions.revisionOf(var2),
             new short[256 * var1],
             new AtomicIntegerArray(256),
             new short[256 * var1],
@@ -7364,9 +7364,9 @@ public final class AiPathfinder {
          if (var0 != null && var0.isInsideBuildHeight(var1)) {
             Block var2 = var0.getBlockState(var1).getBlock();
             double var3 = var2 instanceof SlimeBlock ? 1.0 : (var2 instanceof BedBlock ? 0.75 : 0.0);
-            return AiSurface.init(var2.getFriction(), var2.getSpeedFactor(), var2.getJumpFactor(), var3).init();
+            return AiSurface.classify(var2.getFriction(), var2.getSpeedFactor(), var2.getJumpFactor(), var3).id();
          } else {
-            return AiSurface.NORMAL.init();
+            return AiSurface.NORMAL.id();
          }
       }
 
@@ -7649,7 +7649,7 @@ public final class AiPathfinder {
          }
 
          default byte putAt_B(BlockPos var1) {
-            return AiSurface.init(this.cellAt(var1)).init();
+            return AiSurface.of(this.cellAt(var1)).id();
          }
       }
    }
@@ -7973,7 +7973,7 @@ public final class AiPathfinder {
                if (var4 != null && !this.goal.putAt_Z_I(var4.getX(), var4.getY(), var4.getZ(), this.grid)) {
                   this.precomputingNext = true;
                   this.launchSearchOnGrid(
-                     var4, var1.flowTemp(), true, AiPathfinder.withSimulatedEdits(this.grid, var1.putAt_List())
+                     var4, var1.pendingPlacementCount(), true, AiPathfinder.withSimulatedEdits(this.grid, var1.remainingMoves())
                   );
                }
             }
@@ -8117,7 +8117,7 @@ public final class AiPathfinder {
 
          while (!this.closed && this.generation.get() == var1) {
             long var41 = System.nanoTime();
-            long var43 = this.grid instanceof AiPathfinder.LiveGridView var45 ? var45.changeVersion() : this.grid.putAt_J();
+            long var43 = this.grid instanceof AiPathfinder.LiveGridView var45 ? var45.changeVersion() : this.grid.revision();
             AiPathfinder.SearchSession var60 = AiPathfinder.SearchSession.createProofSession(
                var8, var2, var3, var19 ? var4.withoutConstruction() : var4, var5, var19, this.unlimitedBudget, var9
             );
@@ -8426,12 +8426,12 @@ public final class AiPathfinder {
          return this.probe(var1, var2, var3);
       }
 
-      default long init_J() { return this.putAt_J(); }
+      default long init_J() { return this.revision(); }
       default short init_S_I(int x, int y, int z) { return this.putAt_S_I(x, y, z); }
       default short collisionShapeCode(int x, int y, int z) { return this.fill_S(x, y, z); }
       default byte init_B_I(int x, int y, int z) { return this.putAt_B_I(x, y, z); }
 
-      default long putAt_J() {
+      default long revision() {
          return 0L;
       }
 
@@ -8444,7 +8444,7 @@ public final class AiPathfinder {
       }
 
       default byte putAt_B_I(int var1, int var2, int var3) {
-         return AiSurface.init(this.probe(var1, var2, var3)).init();
+         return AiSurface.of(this.probe(var1, var2, var3)).id();
       }
 
       default double movementSpeed() {

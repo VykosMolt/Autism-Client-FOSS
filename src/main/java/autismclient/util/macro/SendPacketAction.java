@@ -30,7 +30,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
 
    public static Packet<?> resolvePacket(AutismSessionState.DelayedPacket qp) {
       if (qp != null && qp.packet != null) {
-         return qp.isExactReplay() ? qp.packet : PacketRegenerator.init(qp.packet);
+         return qp.isExactReplay() ? qp.packet : PacketRegenerator.regenerate(qp.packet);
       } else {
          return null;
       }
@@ -130,7 +130,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       ListTag packetList = new ListTag();
 
       for (AutismSessionState.DelayedPacket qp : this.packets) {
-         CompoundTag packetTag = autismclient.util.MacroClipboardCodec.init(qp);
+         CompoundTag packetTag = autismclient.util.MacroClipboardCodec.encode(qp);
          if (packetTag != null) {
             packetList.add(packetTag);
          }

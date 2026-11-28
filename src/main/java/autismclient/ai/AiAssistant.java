@@ -70,7 +70,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   public void read() {
+   public void toggle() {
       OverlayManager manager = OverlayManager.getInstance();
       if (this.overlay != null
          && this.overlay.isVisible()
@@ -102,12 +102,12 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void openView(String view) {
       this.openOverlay();
-      this.overlay.load(view);
+      this.overlay.showView(view);
    }
 
    public void update_V() {
       this.openOverlay();
-      this.overlay.sync_V();
+      this.overlay.openSettings();
    }
 
    public void openAction(String action, String query) {
@@ -117,7 +117,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void sync() {
       if (this.overlay != null) {
-         this.overlay.update_V();
+         this.overlay.confirmActionMenu();
       }
    }
 
@@ -131,7 +131,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public void close() {
       if (this.overlay != null) {
-         this.overlay.flush_V();
+         this.overlay.confirmPlacement();
       }
    }
 
@@ -142,10 +142,10 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    }
 
    public JsonObject load_JsonObject() {
-      return this.overlay == null ? new JsonObject() : this.overlay.init_JsonObject();
+      return this.overlay == null ? new JsonObject() : this.overlay.actionMenuStatus();
    }
 
-   void poll() {
+   void hideOverlay() {
       if (this.overlay != null) {
          this.overlay.hide();
       }
@@ -157,7 +157,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    void push() {
       if (this.overlay != null) {
-         this.overlay.poll_V();
+         this.overlay.cancelActionMenu();
       }
    }
 
@@ -177,9 +177,9 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       boolean openFromKey = pressed && !this.keyWasDown;
       this.keyWasDown = pressed;
       if (!autismclient.modules.aD.init_Z() && autismclient.e.RefQueue.init()) {
-         AiWorldMemory.init(MC);
+         AiWorldMemory.tick(MC);
          if (openFromKey && autismclient.util.at.init()) {
-            this.read();
+            this.toggle();
          }
 
          if ("ai-assistant".equals(autismclient.util.SilentRotationManager.getActiveOwnerId()) || autismclient.util.SilentRotationManager.isReturningToPlayer()) {

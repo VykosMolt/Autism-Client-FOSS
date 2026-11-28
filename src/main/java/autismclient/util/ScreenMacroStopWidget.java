@@ -41,7 +41,7 @@ public final class ScreenMacroStopWidget {
             y = 0;
          }
 
-         MacroStatusHudRenderer.init(context, mc.font, x, y, 172, 10, y > 0, true, false);
+         MacroStatusHudRenderer.render(context, mc.font, x, y, 172, 10, y > 0, true, false);
          autismclient.gui.f.NetHelper stop = autismclient.gui.f.NetHelper.init(x + 172 - 58 - 4, y + panelH + 3, 58, 16);
          int vx = cA.init_I_D(mouseX);
          int vy = cA.init_I_D(mouseY);

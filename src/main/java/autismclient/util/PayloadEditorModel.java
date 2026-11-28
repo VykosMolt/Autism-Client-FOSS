@@ -13,12 +13,12 @@ public final class PayloadEditorModel {
    public String write_Str = "";
    public int packetId = -1;
    public String update_Str = "";
-   public String sync = "";
+   public String encodingMode = "";
    public List<PayloadFieldCodec.PayloadField> fields = new ArrayList<>();
    public byte[] bodyBytes = new byte[0];
    public byte[] load_BArr = new byte[0];
    public PayloadEditorModel.PayloadProvenance init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
-   public String flush = "";
+   public String error = "";
    public String close = "Binary";
    public boolean hasCommandApiValue = false;
    public boolean commandApiOverride = false;
@@ -55,7 +55,7 @@ public final class PayloadEditorModel {
       model.write_Str = action.payloadClassName == null ? "" : action.payloadClassName;
       model.packetId = action.payloadPacketId;
       model.update_Str = action.sourceProtocol == null ? "" : action.sourceProtocol;
-      model.sync = action.payloadEncodingMode == null ? "" : action.payloadEncodingMode;
+      model.encodingMode = action.payloadEncodingMode == null ? "" : action.payloadEncodingMode;
       model.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance);
       model.hasCommandApiValue = action.commandApiRecognized;
       model.commandApiOverride = action.commandApiOverride;
@@ -168,7 +168,7 @@ public final class PayloadEditorModel {
 
       parsed.fields = new ArrayList<>(PayloadFieldCodec.parseFields(String.join("\n", writerLines)));
       if (!parsed.init_Z_Z(true)) {
-         this.flush = parsed.flush;
+         this.error = parsed.error;
          this.bumpRevision();
          return false;
       } else {
@@ -182,21 +182,21 @@ public final class PayloadEditorModel {
    public boolean parseHex(String hex) {
       try {
          this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
-         this.flush = "";
+         this.error = "";
          return true;
       } catch (Throwable t) {
-         this.flush = AutismPayloadSupport.describeError(t);
+         this.error = AutismPayloadSupport.describeError(t);
          this.bumpRevision();
          return false;
       }
    }
 
-   public boolean read(String text) {
+   public boolean setUtf8(String text) {
       this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), PayloadEditorModel.PayloadProvenance.USER_EDITED);
       return true;
    }
 
-   public boolean write(String text) {
+   public boolean setLogical(String text) {
       PayloadEditorModel parsed = this.init_bE();
       String bodyHex = null;
       String logicalHex = null;
@@ -257,14 +257,14 @@ public final class PayloadEditorModel {
             parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
          }
       } catch (Throwable t) {
-         this.flush = AutismPayloadSupport.describeError(t);
+         this.error = AutismPayloadSupport.describeError(t);
          this.bumpRevision();
          return false;
       }
 
       this.init_V_bE(parsed);
       this.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
-      this.flush = "";
+      this.error = "";
       this.bumpRevision();
       return true;
    }
@@ -322,7 +322,7 @@ public final class PayloadEditorModel {
       }
    }
 
-   public String read() {
+   public String utf8Text() {
       if (this.write_J == this.init_J) {
          return this.push;
       }
@@ -333,7 +333,7 @@ public final class PayloadEditorModel {
       return this.push;
    }
 
-   public String write() {
+   public String logicalText() {
       if (this.update_J == this.init_J) {
          return this.pop;
       }
@@ -389,7 +389,7 @@ public final class PayloadEditorModel {
       PayloadFieldCodec.PayloadTemplate template = this.toSpec();
       PayloadFieldCodec.EncodeResult built = template.encode();
       if (!built.isValid()) {
-         this.flush = String.join("; ", built.errors());
+         this.error = String.join("; ", built.errors());
          if (strict) {
             this.bumpRevision();
             return false;
@@ -399,12 +399,12 @@ public final class PayloadEditorModel {
       this.channel = template.channel();
       this.direction = template.direction().name();
       this.phase = template.phase().name();
-      this.sync = template.encodingMode().name();
+      this.encodingMode = template.encodingMode().name();
       this.bodyBytes = built.bytes();
       this.load_BArr = (byte[])this.bodyBytes.clone();
       this.close = init_Str_BArr(this.bodyBytes);
       this.load_V();
-      this.flush = "";
+      this.error = "";
       this.bumpRevision();
       return true;
    }
@@ -413,11 +413,11 @@ public final class PayloadEditorModel {
       this.bodyBytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       this.load_BArr = (byte[])this.bodyBytes.clone();
       this.fields = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.bodyBytes));
-      this.sync = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
+      this.encodingMode = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
       this.close = init_Str_BArr(this.bodyBytes);
       this.init_bE_StreamUtil = source == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED : source;
       this.load_V();
-      this.flush = "";
+      this.error = "";
       this.bumpRevision();
    }
 
@@ -434,7 +434,7 @@ public final class PayloadEditorModel {
    }
 
    private String sync() {
-      return this.sync != null && !this.sync.isBlank() ? this.sync : AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
+      return this.encodingMode != null && !this.encodingMode.isBlank() ? this.encodingMode : AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
    }
 
    private static String init_Str_BArr(byte[] bytes) {
@@ -463,12 +463,12 @@ public final class PayloadEditorModel {
       this.write_Str = other.write_Str;
       this.packetId = other.packetId;
       this.update_Str = other.update_Str;
-      this.sync = other.sync;
+      this.encodingMode = other.encodingMode;
       this.fields = new ArrayList<>(other.fields == null ? List.of() : other.fields);
       this.bodyBytes = other.bodyBytes == null ? new byte[0] : (byte[])other.bodyBytes.clone();
       this.load_BArr = other.load_BArr == null ? new byte[0] : (byte[])other.load_BArr.clone();
       this.init_bE_StreamUtil = other.init_bE_StreamUtil;
-      this.flush = other.flush;
+      this.error = other.error;
       this.close = other.close;
       this.hasCommandApiValue = other.hasCommandApiValue;
       this.commandApiOverride = other.commandApiOverride;

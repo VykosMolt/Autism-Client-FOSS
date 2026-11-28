@@ -23,7 +23,7 @@ public class JumpAction implements MacroAction {
       }
    }
 
-   public void init(Minecraft mc) {
+   public void releaseJump(Minecraft mc) {
       if (mc.options != null && mc.options.keyJump != null) {
          mc.options.keyJump.setDown(false);
       }

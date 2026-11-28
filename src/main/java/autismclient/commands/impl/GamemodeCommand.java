@@ -25,7 +25,7 @@ public class GamemodeCommand extends Command {
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::put).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
-         GameType resolved = FakeGamemodeManager.init(mode);
+         GameType resolved = FakeGamemodeManager.parseMode(mode);
          if (resolved != null) {
             FakeGamemodeManager.ApplyResult result = RealGamemodeSender.init(resolved);
             AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());

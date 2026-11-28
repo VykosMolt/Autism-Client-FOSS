@@ -653,7 +653,7 @@ public final class AiProvider implements AutoCloseable {
                   continue;
                }
 
-               String message = AiHttp.init(this.settings.provider, status, detail, key);
+               String message = AiHttp.errorMessage(this.settings.provider, status, detail, key);
                if (status != 429 && status < 500) {
                   throw new IOException(message);
                }
@@ -690,7 +690,7 @@ public final class AiProvider implements AutoCloseable {
 
             this.backoff(null, attempt, cancelled);
          } catch (IOException e) {
-            String safe = AiHttp.init(e.getMessage(), key);
+            String safe = AiHttp.redact(e.getMessage(), key);
             if (!Objects.equals(safe, e.getMessage())) {
                throw new IOException(safe);
             }
@@ -780,7 +780,7 @@ public final class AiProvider implements AutoCloseable {
    }
 
    private static String snippet(String raw, int max) {
-      String collapsed = AiHttp.init(raw, null).replaceAll("\\s+", " ").trim();
+      String collapsed = AiHttp.redact(raw, null).replaceAll("\\s+", " ").trim();
       return collapsed.length() <= max ? collapsed : collapsed.substring(0, max);
    }
 
@@ -828,7 +828,7 @@ public final class AiProvider implements AutoCloseable {
       int bytes = 0;
 
       String line;
-      while ((line = AiBoundedIo.init(reader, 1000000)) != null) {
+      while ((line = AiBoundedIo.readLine(reader, 1000000)) != null) {
          if (cancelled.getAsBoolean()) {
             throw new CancellationException();
          }
@@ -1160,7 +1160,7 @@ public final class AiProvider implements AutoCloseable {
       int bytes = 0;
 
       String line;
-      while ((line = AiBoundedIo.init(reader, 1000000)) != null) {
+      while ((line = AiBoundedIo.readLine(reader, 1000000)) != null) {
          if (cancelled.getAsBoolean()) {
             throw new CancellationException();
          }

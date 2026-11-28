@@ -328,7 +328,7 @@ public final class AiAim {
    }
 
    public boolean isAimedAtEntity(Entity target) {
-      if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.init()) {
+      if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.isOnTickThread()) {
          return isLookingAtEntity(target);
       } else if (!this.silent) {
          return isLookingAtEntity(target);
@@ -356,7 +356,7 @@ public final class AiAim {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player == null) {
          return Vec3.ZERO;
-      } else if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.init()) {
+      } else if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.isOnTickThread()) {
          ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
          return !wire.initialized() ? Vec3.ZERO : Vec3.directionFromRotation(wire.currentPitch(), wire.currentYaw());
       } else {

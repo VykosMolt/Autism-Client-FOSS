@@ -23,12 +23,12 @@ import net.minecraft.world.phys.Vec3;
 
 public final class EspChunkWorker {
    static final EspChunkWorker INSTANCE = new EspChunkWorker();
-   static final EspChunkWorker load = new EspChunkWorker();
-   static final EspChunkWorker read = new EspChunkWorker();
-   static final EspChunkWorker write = new EspChunkWorker();
-   static final EspChunkWorker update = new EspChunkWorker();
-   static final EspChunkWorker sync = new EspChunkWorker();
-   static final EspChunkWorker flush = new EspChunkWorker();
+   static final EspChunkWorker beds = new EspChunkWorker();
+   static final EspChunkWorker endPortals = new EspChunkWorker();
+   static final EspChunkWorker storage = new EspChunkWorker();
+   static final EspChunkWorker blocks = new EspChunkWorker();
+   static final EspChunkWorker spawners = new EspChunkWorker();
+   static final EspChunkWorker oreSim = new EspChunkWorker();
    private static final long init_J = 100L;
    private static final int init_I = 4096;
    private static volatile Object cacheLevel;
@@ -99,7 +99,7 @@ public final class EspChunkWorker {
       return cached != null && cached.stamp.equals(stamp) ? cached.boxes : List.of();
    }
 
-   List<EspChunkWorker.EspBox> init(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
+   List<EspChunkWorker.EspBox> scan(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
       long key = chunk.getPos().pack();
       EspChunkWorker.ChunkResult cached = this.results.get(key);
       if (cached != null && cached.stamp.equals(stamp) && gameTime - cached.gameTime < 100L) {
@@ -144,9 +144,9 @@ public final class EspChunkWorker {
    }
 
    static void reset() {
-      read.inFlight.clear();
-      if (!read.results.isEmpty()) {
-         read.results.clear();
+      endPortals.inFlight.clear();
+      if (!endPortals.results.isEmpty()) {
+         endPortals.results.clear();
          cacheRevision.incrementAndGet();
       }
    }
@@ -154,30 +154,30 @@ public final class EspChunkWorker {
    static void clearAll() {
       INSTANCE.results.clear();
       INSTANCE.inFlight.clear();
-      load.results.clear();
-      load.inFlight.clear();
-      read.results.clear();
-      read.inFlight.clear();
-      write.results.clear();
-      write.inFlight.clear();
-      update.results.clear();
-      update.inFlight.clear();
-      sync.results.clear();
-      sync.inFlight.clear();
-      flush.results.clear();
-      flush.inFlight.clear();
+      beds.results.clear();
+      beds.inFlight.clear();
+      endPortals.results.clear();
+      endPortals.inFlight.clear();
+      storage.results.clear();
+      storage.inFlight.clear();
+      blocks.results.clear();
+      blocks.inFlight.clear();
+      spawners.results.clear();
+      spawners.inFlight.clear();
+      oreSim.results.clear();
+      oreSim.inFlight.clear();
       cacheRevision.incrementAndGet();
    }
 
    private static void invalidateChunk(int chunkX, int chunkZ) {
       long key = ChunkPos.pack(chunkX, chunkZ);
       boolean had = INSTANCE.results.remove(key) != null;
-      had |= load.results.remove(key) != null;
-      had |= read.results.remove(key) != null;
-      had |= write.results.remove(key) != null;
-      had |= update.results.remove(key) != null;
-      had |= sync.results.remove(key) != null;
-      had |= flush.results.remove(key) != null;
+      had |= beds.results.remove(key) != null;
+      had |= endPortals.results.remove(key) != null;
+      had |= storage.results.remove(key) != null;
+      had |= blocks.results.remove(key) != null;
+      had |= spawners.results.remove(key) != null;
+      had |= oreSim.results.remove(key) != null;
       if (had) {
          cacheRevision.incrementAndGet();
       }
@@ -185,12 +185,12 @@ public final class EspChunkWorker {
 
    private static boolean hasAnyCachedChunks() {
       return !INSTANCE.results.isEmpty()
-         || !load.results.isEmpty()
-         || !read.results.isEmpty()
-         || !write.results.isEmpty()
-         || !update.results.isEmpty()
-         || !sync.results.isEmpty()
-         || !flush.results.isEmpty();
+         || !beds.results.isEmpty()
+         || !endPortals.results.isEmpty()
+         || !storage.results.isEmpty()
+         || !blocks.results.isEmpty()
+         || !spawners.results.isEmpty()
+         || !oreSim.results.isEmpty();
    }
 
    public static void init_V_BlockPos(BlockPos pos) {

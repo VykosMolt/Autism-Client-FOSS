@@ -509,7 +509,7 @@ final class AiPrintSupply {
                BlockPos p = this.prep.worldPos(cell);
                BlockState live = this.prep.loaded.test(p) ? this.prep.readState(p) : null;
                if (live == null || !AiBuilder.matchesSchematicCell(cell, live)) {
-                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.init(cell, live, false)) {
+                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.requirements(cell, live, false)) {
                      if (requirement.item() == this.item) {
                         if (requirement.use() == AiCellMaterials.MaterialUse.REUSE) {
                            this.read = Math.max(this.read, requirement.count());

@@ -18,7 +18,7 @@ public class BranchAction implements MacroAction {
       return MacroActionType.BRANCH;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean matches(Minecraft mc) {
       if (mc == null) {
          return false;
       }
@@ -35,7 +35,7 @@ public class BranchAction implements MacroAction {
             var10000 = true;
             break;
          case GUI_TYPE:
-            var10000 = GuiScreenMatcher.init(mc.gui.screen(), resolved);
+            var10000 = GuiScreenMatcher.matchesTitle(mc.gui.screen(), resolved);
             break;
          case INVENTORY_ITEM:
             var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse(resolved));

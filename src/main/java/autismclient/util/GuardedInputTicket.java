@@ -26,11 +26,11 @@ final class GuardedInputTicket {
       }
    }
 
-   void load() {
+   void resolveDispatched() {
       this.resolve(this.dispatched);
    }
 
-   void read() {
+   void fail() {
       this.resolve(false);
    }
 

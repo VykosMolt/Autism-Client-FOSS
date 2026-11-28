@@ -4,7 +4,7 @@ public class FarmTrackCheck {
    public static void main(String[] args) {
       BoundedPositionCache<String> table = new BoundedPositionCache<>(4096);
       for (long i = 0; i < 4097; i++) {
-         table.init(i, "cell" + i);
+         table.put(i, "cell" + i);
       }
 
       if (table.get(4096L) == null) {
@@ -15,7 +15,7 @@ public class FarmTrackCheck {
          fail("oldest position not evicted, size=" + table.size());
       }
 
-      table.init(1L, "replaced");
+      table.put(1L, "replaced");
       if (!"replaced".equals(table.get(1L)) || table.size() != 4096) {
          fail("replacing an existing position changed the size");
       }

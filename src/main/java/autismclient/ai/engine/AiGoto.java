@@ -1250,7 +1250,7 @@ public final class AiGoto {
                   ? AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE
                   : (var15 ? AiPathfinder.FallPolicy.PARKOUR_SAFE : AiPathfinder.FallPolicy.STANDARD);
                if (!AutismLiteVariant.enabled()) {
-                  AiWalkingWork.putAt(this, this.putAt_RingCache);
+                  AiWalkingWork.register(this, this.putAt_RingCache);
                }
 
                this.putAt_RingCache.prev(var11 != null && var11.putAt_Z());
@@ -1364,7 +1364,7 @@ public final class AiGoto {
                               String.format(Locale.ROOT, "%.1f", this.prevEx_D)
                            );
                         if (this.putAt_Minecraft.level != null) {
-                           AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.init(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition(), null, 6, 4));
+                           AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.dump(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition(), null, 6, 4));
                         }
 
                         return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, "No progress toward the target in 30 s");
@@ -1491,9 +1491,9 @@ public final class AiGoto {
                         }
 
                         for (int var18x = 0; var18x < 2; var18x++) {
-                           double var8x = this.putAt_RingCache.putAt_D();
+                           double var8x = this.putAt_RingCache.elapsedCostTicks();
                            AiWrExecutor.Inner_TableCache var10 = this.putAt_RingCache.fill_RingCache_TableCac();
-                           if (var14 && this.putAt_RingCache.putAt_D() > var8x) {
+                           if (var14 && this.putAt_RingCache.elapsedCostTicks() > var8x) {
                               this.value_J = var13x;
                            }
 
@@ -2102,7 +2102,7 @@ public final class AiGoto {
                   }
 
                   int var2 = (int)Math.round(this.putAt_Minecraft.player.position().distanceTo(Vec3.atBottomCenterOf(var18.putAt_List.get(this.readEx_I))));
-                  AiVisualization.load(this.fill_Obj, "Parkour", "Planning  ·  " + (this.readEx_I + 1) + "/" + this.flowState, var2, 100 * var17 / this.flowState);
+                  AiVisualization.showProgress(this.fill_Obj, "Parkour", "Planning  ·  " + (this.readEx_I + 1) + "/" + this.flowState, var2, 100 * var17 / this.flowState);
                }
 
                return this.fill("Planning route to checkpoint " + (this.readEx_I + 1) + "/" + this.flowState);
@@ -2180,7 +2180,7 @@ public final class AiGoto {
 
             @Override
             public int fill_I_18() {
-               return this.putAt_RingCache.state_I();
+               return this.putAt_RingCache.remainingMoveCount();
             }
 
             @Override
@@ -2220,7 +2220,7 @@ public final class AiGoto {
 
             @Override
             public void putAt_V_BiPredicate(BiPredicate<BlockState, ItemStack> var1) {
-               this.putAt_RingCache.putAt_V_BiPredicate(var1);
+               this.putAt_RingCache.setAcceptedTool(var1);
                if (this.putAt_FileStore_TextStor instanceof AiPathfinder.LiveGridView var2) {
                   var2.setAcceptedTool(var1);
                } else if (this.putAt_FileStore_TextStor instanceof AiLiveGrid var3x) {
@@ -2305,7 +2305,7 @@ public final class AiGoto {
             }
 
             AiOperation.Result putAt(BlockPos var1, String var2) {
-               if (this.putAt_RingCache.putAt_Str().equals("dig failed: no tool that gets its drops")) {
+               if (this.putAt_RingCache.lastFailureReason().equals("dig failed: no tool that gets its drops")) {
                   return this.putAt(autismclient.ai.AiFailure.MISSING_TOOL, "No usable harvesting tool for a block on the route");
                }
 
@@ -2313,7 +2313,7 @@ public final class AiGoto {
                   return this.fill(var2 + "; stabilizing before replan");
                }
 
-               if ((var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var3x && var3x.load()) && this.closeOf_I < 2 && this.pollAt_Z_4()
+               if ((var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var3x && var3x.hasProtectedCells()) && this.closeOf_I < 2 && this.pollAt_Z_4()
                   )
                 {
                   this.closeOf_I++;
@@ -2337,7 +2337,7 @@ public final class AiGoto {
                      this.putAt_RingCache.putAt_BlockPos().toShortString(),
                      this.prev_I,
                      this.prevEx_I,
-                     var7x != null && !this.putAt_RingCache.putAt_Str().isEmpty() ? ": " + this.putAt_RingCache.putAt_Str() : ""
+                     var7x != null && !this.putAt_RingCache.lastFailureReason().isEmpty() ? ": " + this.putAt_RingCache.lastFailureReason() : ""
                   );
                if (!var15
                   && !this.frameOf
@@ -2346,7 +2346,7 @@ public final class AiGoto {
                   && var2.startsWith("No route toward the target")
                   && this.readEx_Z_15()) {
                   this.frameOf = true;
-                  if (var11 instanceof PlacementGoal var8x && var8x.getWorkVolume() != null && !var8x.load()) {
+                  if (var11 instanceof PlacementGoal var8x && var8x.getWorkVolume() != null && !var8x.hasProtectedCells()) {
                      AABB var9x = var8x.getWorkVolume();
                      BlockPos var10 = AiGoto.findStandableNear(
                         new BlockPos((int)Math.floor(var9x.minX) - 2, this.putAt_Minecraft.player.blockPosition().getY(), (int)Math.floor(var9x.getCenter().z)),
@@ -2427,7 +2427,7 @@ public final class AiGoto {
 
             private AiOperation.Result putAt(AiPathfinder.PathStep var1, String var2) {
                BlockPos var3x = this.putAt_RingCache.putAt_BlockPos();
-               String var4x = this.putAt_RingCache.putAt_Str();
+               String var4x = this.putAt_RingCache.lastFailureReason();
                boolean var5x = var4x.contains("past its target") || var4x.contains("slid below") || var4x.contains("below the takeoff");
                boolean var6x = this.putAt_RingCache.readEx_Z();
                if (var6x) {
@@ -2734,7 +2734,7 @@ public final class AiGoto {
                      }
 
                      this.prev_Z = false;
-                     List var2 = this.putAt_RingCache.putAt_List();
+                     List var2 = this.putAt_RingCache.remainingMoves();
                      if (var2.size() < 2) {
                         return;
                      }
@@ -2779,7 +2779,7 @@ public final class AiGoto {
                   }
 
                   this.putAt_BufferCore = new AiParkourFallWarning(this.putAt_Minecraft, var1x, this::readEx, () -> this.tick_Z = true);
-                  if (!this.putAt_BufferCore.putAt_Z()) {
+                  if (!this.putAt_BufferCore.openWarning()) {
                      this.putAt_BufferCore = null;
                   }
                }
@@ -2852,7 +2852,7 @@ public final class AiGoto {
                            "[AI] no route from {} to {}: {}",
                            this.putAt_RingCache.putAt_BlockPos().toShortString(),
                            var0.toShortString(),
-                           AiTerrainDump.init(this.putAt_Minecraft.level, this.putAt_RingCache.putAt_BlockPos(), var0, 4, 2)
+                           AiTerrainDump.dump(this.putAt_Minecraft.level, this.putAt_RingCache.putAt_BlockPos(), var0, 4, 2)
                         );
                   }
 
@@ -2860,7 +2860,7 @@ public final class AiGoto {
                      return this.fill(var1x + "; stabilizing before replan");
                   }
 
-                  if ((var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var2 && var2.load())
+                  if ((var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var2 && var2.hasProtectedCells())
                      && this.closeOf_I < 2
                      && this.pollAt_Z_4()) {
                      this.closeOf_I++;
@@ -2958,7 +2958,7 @@ public final class AiGoto {
                   .withDisabledTypes(var7x)
                   .withConstructionBlocks(this.readEx_I_10())
                   .withMovementLimits(var12.maxFall(), var12.avoidWater())
-                  .withFarmlandRepair(var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var8x && var8x.load())
+                  .withFarmlandRepair(var11 instanceof AiGoto.WrappedGoal || var11 instanceof PlacementGoal var8x && var8x.hasProtectedCells())
                   .withSupportedBridges(this.putAt_FileStore_TokenCod != null && this.putAt_FileStore_TokenCod.putAt_Z())
                   .withFallPolicy(this.fill_FileStore_RingUtil);
             }
@@ -3251,7 +3251,7 @@ public final class AiGoto {
             }
 
             BlockPos readEx_BlockPos_5() {
-               return AiStance.init(this.putAt_Minecraft);
+               return AiStance.standingPos(this.putAt_Minecraft);
             }
 
             boolean prev_Z_8() {
@@ -3277,7 +3277,7 @@ public final class AiGoto {
                   } else if (var1x instanceof PlacementGoal var6x) {
                      return !AiGoto.isWrStopped(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())
                         ? false
-                        : var6x.init(this.putAt_Minecraft);
+                        : var6x.acceptsStance(this.putAt_Minecraft);
                   } else if (var1x instanceof InteractionGoal var3x) {
                      if (var3x.breaksTarget() && !AiMotionSafety.isSafeToBreakSupport(var3x.getTarget())) {
                         var3x.rejectStance(var5x);
@@ -3600,7 +3600,7 @@ public final class AiGoto {
                      return false;
                   }
 
-                  var3x.update(var6x);
+                  var3x.rejectStance(var6x);
                   AutismClientAddon.LOG.info("[AI] stance {} cannot place at {}; picking another", var6x.toShortString(), var0.toShortString());
                   this.putAt_FileStore_TaskStat.replanFrom(var6x);
                   return true;
@@ -3634,7 +3634,7 @@ public final class AiGoto {
                   "firstPathReadyMs",
                   this.chunkAt_D,
                   "pathTicks",
-                  Math.round(this.putAt_RingCache.putAt_D()),
+                  Math.round(this.putAt_RingCache.elapsedCostTicks()),
                   "blocksDug",
                   this.putAt_RingCache.readEx_I(),
                   "pillarsPlaced",
@@ -3764,7 +3764,7 @@ public final class AiGoto {
                      var2 = var2 + "  ·  " + (var17 + 1) + "/" + this.flowState;
                   }
 
-                  AiVisualization.load(var1, var15 ? "Parkour" : "Navigation", var2, var3x, (100 * var17 + var4x) / this.flowState);
+                  AiVisualization.showProgress(var1, var15 ? "Parkour" : "Navigation", var2, var3x, (100 * var17 + var4x) / this.flowState);
                }
             }
 
@@ -3802,7 +3802,7 @@ public final class AiGoto {
                if (!this.flushOf_Z) {
                   this.flushOf_Z = true;
                   if (!AutismLiteVariant.enabled() && this.putAt_BufferCore != null) {
-                     this.putAt_BufferCore.putAt_V();
+                     this.putAt_BufferCore.closeWarning();
                   }
 
                   if (this.putAt_JsonWorker_TableCa != null) {
@@ -3932,7 +3932,7 @@ public final class AiGoto {
                   double var10 = var7.getY() + 0.8 - var2 - this.fill_D;
                   double var12 = var7.getZ() - var3;
                   if (var8 * var8 + var10 * var10 + var12 * var12 <= this.putAt_D * this.putAt_D
-                     && InteractionGoal.load(var4, var7, var1, var2, var3, this.fill_D, var7.getX() + 0.5, var7.getY() + 0.8, var7.getZ() + 0.5, this.putAt_D)) {
+                     && InteractionGoal.canReach(var4, var7, var1, var2, var3, this.fill_D, var7.getX() + 0.5, var7.getY() + 0.8, var7.getZ() + 0.5, this.putAt_D)) {
                      return true;
                   }
                }

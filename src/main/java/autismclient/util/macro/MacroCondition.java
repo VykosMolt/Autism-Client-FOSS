@@ -278,7 +278,7 @@ public final class MacroCondition {
       a.itemName = this.item == null ? "" : this.item;
       a.entityId = this.item == null ? "" : this.item;
       a.guiType = this.item != null && !this.item.isBlank() ? this.item : "ANY";
-      return a.init(mc);
+      return a.holds(mc);
    }
 
    private boolean checkInventoryPredicate(Minecraft mc, WaitInventoryPredicateAction.InventoryCondition cond) {
@@ -287,7 +287,7 @@ public final class MacroCondition {
       w.itemName = this.item == null ? "" : this.item;
       w.count = this.amount;
       w.slot = this.slot;
-      return w.init(mc);
+      return w.isSatisfied(mc);
    }
 
    private int countItem(Minecraft mc) {
@@ -311,7 +311,7 @@ public final class MacroCondition {
       w.measurement = this.durMeasure;
       w.comparison = this.durabilityComparison();
       w.value = this.amount;
-      return w.init(mc);
+      return w.isSatisfied(mc);
    }
 
    private boolean checkEntityNearby(Minecraft mc) {
@@ -319,7 +319,7 @@ public final class MacroCondition {
       w.condition = WaitEntityTargetAction.TargetCondition.NEARBY;
       w.entityId = this.item == null ? "" : this.item;
       w.range = this.range;
-      return w.init(mc);
+      return w.isSatisfied(mc);
    }
 
    private boolean checkVariable(Minecraft mc) {

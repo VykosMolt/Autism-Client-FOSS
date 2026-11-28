@@ -466,7 +466,7 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   static Vec3 init(Vec3 velocity, Input keys, float yaw, double acceleration) {
+   static Vec3 applyInput(Vec3 velocity, Input keys, float yaw, double acceleration) {
       double forward = (keys.forward() ? 1 : 0) - (keys.backward() ? 1 : 0);
       double side = (keys.left() ? 1 : 0) - (keys.right() ? 1 : 0);
       double length = Math.hypot(side, forward);

@@ -97,7 +97,7 @@ public final class AiCatalog {
                   "boolean, default false: false borrows activation only for this operation and restores temporary settings when the run ends; pass true only when the user asked for this change itself"
                )
                .toString();
-            AiCapabilityDescriptor d = init(
+            AiCapabilityDescriptor d = descriptor(
                "module:" + m.id(),
                m.isAddon() ? "addon-module" : "autism",
                "modules/" + m.category().load(),
@@ -158,7 +158,7 @@ public final class AiCatalog {
          for (String id : CustomMenuAdapterRegistry.ids()) {
             addEntry(
                entries,
-               init(
+               descriptor(
                   "menu:" + id,
                   "autism",
                   "server-menus",
@@ -235,7 +235,7 @@ public final class AiCatalog {
             )
          )
          .toString();
-      return init(
+      return descriptor(
          "command:" + name,
          "autism",
          "commands",
@@ -270,7 +270,7 @@ public final class AiCatalog {
          .findFirst()
          .orElse(null);
       String semantics = (
-            action.getType() == null ? "Legacy add-on action; behavior is undocumented until its owner contributes an AI contract." : AiMacroValidator.init(action.getType())
+            action.getType() == null ? "Legacy add-on action; behavior is undocumented until its owner contributes an AI contract." : AiMacroValidator.describe(action.getType())
          )
          + AiSourceKnowledge.init(action.getClass());
       if (contributed != null) {
@@ -286,7 +286,7 @@ public final class AiCatalog {
             + contributed.failureRecovery();
       }
 
-      AiCapabilityDescriptor descriptor = init(
+      AiCapabilityDescriptor descriptor = descriptor(
          "macro:" + id,
          owner,
          "macros/" + (id.startsWith("WAIT") ? "conditions" : "actions"),
@@ -295,7 +295,7 @@ public final class AiCatalog {
          fields,
          "Use serializedDefaults as the wire format. Validate fields, control flow, live targets, and action-specific world prerequisites before execution.",
          semantics,
-         contributed == null ? autismclient.util.macro.MacroResourceClassifier.init(action).stream().map(Enum::name).toList() : contributed.resources(),
+         contributed == null ? autismclient.util.macro.MacroResourceClassifier.classify(action).stream().map(Enum::name).toList() : contributed.resources(),
          "Verify the macro run's terminal status, then check the intended game-state postcondition.",
          "Inspect the failed step and live targets; missing add-ons or unavailable navigation support cannot be repaired by repeating the same action.",
          defaults,
@@ -325,7 +325,7 @@ public final class AiCatalog {
       addEntryWith(entries, descriptor, defaults, AiSourceKnowledge.load(action.getClass()) + AiSourceKnowledge.load(autismclient.util.AutismMacro.class) + AiSourceKnowledge.load(AiMacroValidator.class));
    }
 
-   static AiCapabilityDescriptor init(
+   static AiCapabilityDescriptor descriptor(
       String id,
       String owner,
       String family,

@@ -393,7 +393,7 @@ final class AiNetherEntry {
       return missing;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       AiDimension.refreshWorld();
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
@@ -580,7 +580,7 @@ final class AiNetherEntry {
                            false, this.hasStoneTier(), this.needsFood(), this.needsVillage(), this.hasIronFireGear(), this.portalNearby(), this.lavaNearby()
                         );
                         if ((next == AiNetherEntry.EntryPhase.LAVA || next == AiNetherEntry.EntryPhase.PORTAL) && !this.portalHistoryChecked) {
-                           this.knownPortal = AiPortalLinks.init(192);
+                           this.knownPortal = AiPortalLinks.nearestKnownPortal(192);
                            if (this.knownPortal == null && this.portalLookupRetries-- > 0) {
                               return this.running("Checking observed portal history before making another frame");
                            }
@@ -653,7 +653,7 @@ final class AiNetherEntry {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                   AiGuard.GuardDecision decision = AiGuard.decide(this.guardPolicy, vitals);
                   if (AiNetherEntry.shouldSuppressEat(
-                     decision.action(), AiSurvival.init(mc.player.getInventory()) >= 0, mc.player.containerMenu != mc.player.inventoryMenu, mc.gui.screen() != null
+                     decision.action(), AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0, mc.player.containerMenu != mc.player.inventoryMenu, mc.gui.screen() != null
                   )) {
                      this.suppressedEatReason = decision.reason();
                      return null;
@@ -760,7 +760,7 @@ final class AiNetherEntry {
                   int cap = Math.max(60, Math.min(600, this.secondsLeft()));
                   if ("sleep".equals(action)) {
                      JsonObject sleepArgs = AiJson.objectOf("timeoutSeconds", Math.min(240, cap));
-                     this.nightOp = this.allowLowHealthIfRecovery("game:sleep", sleepArgs, AiSleep.init(sleepArgs));
+                     this.nightOp = this.allowLowHealthIfRecovery("game:sleep", sleepArgs, AiSleep.create(sleepArgs));
                   } else {
                      this.nightOp = AiBurrow.init(AiJson.objectOf("timeoutSeconds", cap));
                   }
@@ -1723,8 +1723,8 @@ final class AiNetherEntry {
 
                   if (mc.player.getHealth() < 16.0F || mc.player.getFoodData().getFoodLevel() < 18) {
                      this.foodOp = mc.player.getFoodData().getFoodLevel() < 18
-                        ? AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20))
-                        : AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90));
+                        ? AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20))
+                        : AiCover.create(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90));
                      return this.running("Restoring health and hunger before Nether entry");
                   }
                }
@@ -1902,7 +1902,7 @@ final class AiNetherEntry {
                         var10004 = AiChop.init(legArgs);
                         break;
                      case "game:obtain":
-                        var10004 = AiObtain.init(legArgs);
+                        var10004 = AiObtain.obtain(legArgs);
                         break;
                      case "game:craft":
                         var10004 = AiCraft.craft(legArgs);
@@ -1911,13 +1911,13 @@ final class AiNetherEntry {
                         var10004 = AiCollect.init(legArgs);
                         break;
                      case "game:bucket":
-                        var10004 = AiBucket.init(legArgs);
+                        var10004 = AiBucket.create(legArgs);
                         break;
                      case "game:oracle":
                         var10004 = AiOracle.create(legArgs);
                         break;
                      case "game:find":
-                        var10004 = AiGameplay.sync(legArgs);
+                        var10004 = AiGameplay.find(legArgs);
                         break;
                      case "game:container":
                         var10004 = AiContainer.create(legArgs);
@@ -1926,7 +1926,7 @@ final class AiNetherEntry {
                         var10004 = AiGameOperations.blockAction("break", legArgs);
                         break;
                      case "game:portal_cast":
-                        var10004 = AiPortalCast.init(legArgs);
+                        var10004 = AiPortalCast.create(legArgs);
                         break;
                      case "game:dimension":
                         var10004 = AiDimension.init(legArgs);

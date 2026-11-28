@@ -42,7 +42,7 @@ final class AiBrew {
    private AiBrew() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String ingredientSpec = AiJson.getString(args, "ingredient", "");

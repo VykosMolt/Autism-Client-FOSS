@@ -185,7 +185,7 @@ public class DropCommand extends Command {
             int handlerSlot = InventorySlotHelper.toScreenSlot(mc, inventorySlot);
             if (handlerSlot >= 0) {
                int stackCount = stack.getCount();
-               if (InventoryDropHelper.init(mc, handlerSlot, 0) > 0) {
+               if (InventoryDropHelper.dropFromHandler(mc, handlerSlot, 0) > 0) {
                   droppedItems += stackCount;
                   droppedStacks++;
                }
@@ -268,7 +268,7 @@ public class DropCommand extends Command {
          if (!stack.isEmpty() && stack.getItem() == item) {
             int amount = Math.min(remaining, stack.getCount());
             int handlerSlot = InventorySlotHelper.toScreenSlot(mc, inventorySlot);
-            if (handlerSlot >= 0 && InventoryDropHelper.init(mc, handlerSlot, amount) != 0) {
+            if (handlerSlot >= 0 && InventoryDropHelper.dropFromHandler(mc, handlerSlot, amount) != 0) {
                dropped += amount;
                remaining -= amount;
             }

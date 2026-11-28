@@ -31,16 +31,16 @@ public final class WindowIconManager {
    public static void apply(Minecraft client) {
       if (!init_Z && client != null && client.getWindow() != null) {
          init_Z = true;
-         load(client);
+         scheduleApply(client);
       }
    }
 
-   public static void load(Minecraft client) {
+   public static void scheduleApply(Minecraft client) {
       load_I = 60;
       retryApply(client);
    }
 
-   public static void read(Minecraft client) {
+   public static void tick(Minecraft client) {
       if (load_I > 0) {
          retryApply(client);
       }

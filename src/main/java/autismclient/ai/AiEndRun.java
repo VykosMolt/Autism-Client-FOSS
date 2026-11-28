@@ -59,10 +59,10 @@ final class AiEndRun {
 
       BlockPos feet = mc.player.blockPosition();
       return AiNetherRun.sequence(
-         AiBucket.init(
+         AiBucket.create(
             AiJson.objectOf("action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5)
          ),
-         () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
+         () -> AiBucket.create(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
       );
    }
 
@@ -286,7 +286,7 @@ final class AiEndRun {
                         }
 
                         String hazard = AiPortalLinks.arrivalHazard();
-                        AiPortalLinks.init("minecraft:the_end", this.exitPortal, "minecraft:overworld", mc.player.blockPosition(), hazard == null, this.exitLinkEvidence);
+                        AiPortalLinks.recordLink("minecraft:the_end", this.exitPortal, "minecraft:overworld", mc.player.blockPosition(), hazard == null, this.exitLinkEvidence);
                         return this.finish(
                            hazard == null ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
                            hazard == null
@@ -422,8 +422,8 @@ final class AiEndRun {
                      "to the heal spot at " + this.healSpot.toShortString(),
                      AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(this.healSpot, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
                   );
-               } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
-                  return this.startStep("eat before the fight", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
+               } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0) {
+                  return this.startStep("eat before the fight", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
                } else if (System.nanoTime() > this.burrowCooldownUntil) {
                   this.burrowCooldownUntil = System.nanoTime() + 20000000000L;
                   return this.startStep(
@@ -556,7 +556,7 @@ final class AiEndRun {
                         return this.finish(AiOperation.Status.FAILED, "Required End armor could not be equipped; readiness remains unresolved");
                      }
 
-                     return this.startStep("equip the required End armor", AiEquip.init(AiJson.objectOf("what", "armor")));
+                     return this.startStep("equip the required End armor", AiEquip.create(AiJson.objectOf("what", "armor")));
                   }
                }
 

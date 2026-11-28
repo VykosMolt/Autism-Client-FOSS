@@ -77,15 +77,15 @@ public final class FreeLookModule extends Module {
       return this.isFrontView();
    }
 
-   public float init_F_3() {
+   public float cameraYaw() {
       return this.cameraYaw;
    }
 
-   public float load_F() {
+   public float cameraPitch() {
       return this.cameraPitch;
    }
 
-   public static boolean init(double deltaX, double deltaY) {
+   public static boolean turn(double deltaX, double deltaY) {
       FreeLookModule freeLook = activeInstance();
       if (freeLook != null && MC.player != null) {
          freeLook.cameraYaw += (float)(deltaX * 0.15);

@@ -109,7 +109,7 @@ final class AiHttp {
       }
    }
 
-   static String init(String raw, String key) {
+   static String redact(String raw, String key) {
       String safe = raw == null ? "" : raw;
       if (key != null && !key.isBlank()) {
          safe = safe.replace(key.trim(), "[redacted]");
@@ -155,8 +155,8 @@ final class AiHttp {
       return credit && low || m.contains("plans & billing") || m.contains("plans and billing");
    }
 
-   static String init(AiSettings.Provider provider, int status, String raw, String key) {
-      String detail = init(raw, key).replaceAll("\\s+", " ").trim();
+   static String errorMessage(AiSettings.Provider provider, int status, String raw, String key) {
+      String detail = redact(raw, key).replaceAll("\\s+", " ").trim();
       if (detail.length() > 700) {
          detail = detail.substring(0, 700);
       }
@@ -199,7 +199,7 @@ final class AiHttp {
       return provider.name() + " HTTP " + status + (detail.isEmpty() ? "" : ": " + detail) + "; " + advice;
    }
 
-   static HttpResponse<byte[]> init(HttpRequest request, int limit, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
+   static HttpResponse<byte[]> send(HttpRequest request, int limit, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       checkpoint.run();
       CompletableFuture<HttpResponse<byte[]>> future = init_HttpClient.sendAsync(request, info -> new AiHttp.LimitedBodySubscriber(limit));
       long deadline = System.nanoTime() + request.timeout().orElse(Duration.ofSeconds(60L)).toNanos();

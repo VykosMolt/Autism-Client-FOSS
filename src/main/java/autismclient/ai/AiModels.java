@@ -319,10 +319,10 @@ final class AiModels {
    private static JsonObject init(String url, AiSettings.Provider provider, String key, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       Builder request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20L)).header("Accept", "application/json").GET();
       AiHttp.authHeaders(provider, key).forEach(request::header);
-      HttpResponse<byte[]> response = AiHttp.init(request.build(), 2097152, checkpoint);
+      HttpResponse<byte[]> response = AiHttp.send(request.build(), 2097152, checkpoint);
       String body = new String(response.body(), StandardCharsets.UTF_8);
       if (response.statusCode() != 200) {
-         throw new AiModels.Inner_StreamUtil(response.statusCode(), AiHttp.init(provider, response.statusCode(), body, key));
+         throw new AiModels.Inner_StreamUtil(response.statusCode(), AiHttp.errorMessage(provider, response.statusCode(), body, key));
       }
 
       JsonElement parsed;

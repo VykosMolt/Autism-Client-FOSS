@@ -30,7 +30,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
    }
 
    public Optional<Map<String, MacroVarValue>> capture(Minecraft mc) {
-      if (mc != null && GuiScreenMatcher.init(mc.gui.screen(), this.guiType, "")) {
+      if (mc != null && GuiScreenMatcher.matches(mc.gui.screen(), this.guiType, "")) {
          Screen screen = mc.gui.screen();
          String actual = screen.getTitle() == null ? "" : screen.getTitle().getString();
          Map<String, MacroVarValue> values = new LinkedHashMap<>();
@@ -40,11 +40,11 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
                return Optional.empty();
             }
 
-            if (!resolved.value().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.value())) {
+            if (!resolved.value().isBlank() && !GuiScreenMatcher.matches(screen, this.guiType, resolved.value())) {
                return Optional.empty();
             }
          } else {
-            Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.init(this.matchMode, this.title, actual);
+            Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.match(this.matchMode, this.title, actual);
             if (result.isEmpty()) {
                return Optional.empty();
             }

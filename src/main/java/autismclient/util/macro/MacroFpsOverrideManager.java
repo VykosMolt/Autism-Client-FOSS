@@ -14,10 +14,10 @@ public final class MacroFpsOverrideManager {
    }
 
    public static void init_V_I_J(int fpsLimit, long durationNanos) {
-      init(0L, fpsLimit, durationNanos);
+      setOverride(0L, fpsLimit, durationNanos);
    }
 
-   public static synchronized void init(long ownerRunId, int fpsLimit, long durationNanos) {
+   public static synchronized void setOverride(long ownerRunId, int fpsLimit, long durationNanos) {
       if (durationNanos <= 0L) {
          clearOverride(ownerRunId);
       } else {

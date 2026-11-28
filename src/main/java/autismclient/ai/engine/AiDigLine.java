@@ -304,12 +304,12 @@ public final class AiDigLine {
             }
 
             double turn = init(lookYaw, lookPitch, line);
-            double time = AiMiningTargetCost.init(costs, needed, 0.0, turn > 1.0E-6 ? 1.0 : 0.0);
+            double time = AiMiningTargetCost.estimateTicks(costs, needed, 0.0, turn > 1.0E-6 ? 1.0 : 0.0);
             BlockPos first = line.chain().get(0);
             choices.add(new AiMiningTargetCost.TargetChoice(i, time, turn, first.distToCenterSqr(eye), first.asLong()));
          }
 
-         int chosen = AiMiningTargetCost.init(choices);
+         int chosen = AiMiningTargetCost.pickQuickest(choices);
          if (chosen < 0) {
             break;
          }

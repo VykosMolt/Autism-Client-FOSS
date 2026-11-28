@@ -44,7 +44,7 @@ final class BedBreachRouteSolver {
                LinkedHashSet<Vec3> points = new LinkedHashSet<>();
 
                for (Direction side : Direction.values()) {
-                  points.addAll(FaceVisibilitySolver.init(eye, box, side, blockers, preferred));
+                  points.addAll(FaceVisibilitySolver.visiblePoints(eye, box, side, blockers, preferred));
                   FaceVisibilitySolver.FaceProjection face = FaceVisibilitySolver.init(eye, box, side, hard);
                   points.addAll(face.init(List.of(), preferred));
 
@@ -119,7 +119,7 @@ final class BedBreachRouteSolver {
       return null;
    }
 
-   static boolean init(double remainingTicks, double combatBudget, boolean criticalHealth) {
+   static boolean fitsBudget(double remainingTicks, double combatBudget, boolean criticalHealth) {
       return !criticalHealth && Double.isFinite(remainingTicks) && remainingTicks <= Math.min(6.0, combatBudget);
    }
 

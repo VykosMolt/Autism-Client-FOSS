@@ -302,7 +302,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          return false;
       }
 
-      String error = ItemSnbtCodec.read(stack);
+      String error = ItemSnbtCodec.validationError(stack);
       this.init_Z = error.isBlank();
       this.errorText = this.init_Z ? "Valid complete ItemStack" : error;
       if (this.init_Z) {
@@ -323,8 +323,8 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
             this.init_Z = false;
             this.errorText = "Formatted (structure repaired — still not a valid ItemStack; check ids/values)";
          } else {
-            String error = ItemSnbtCodec.read(stack);
-            this.editor.setValue(ItemNbtInspector.prettyPrint(ItemSnbtCodec.load(stack)));
+            String error = ItemSnbtCodec.validationError(stack);
+            this.editor.setValue(ItemNbtInspector.prettyPrint(ItemSnbtCodec.snbt(stack)));
             this.init_Z = error.isBlank();
             this.errorText = this.init_Z ? "Formatted and valid" : "Formatted — " + error;
          }

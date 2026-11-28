@@ -172,7 +172,7 @@ final class AiObsidian {
                   this.init_I = -1;
                   this.load_I++;
                   this.init_Str = "craft";
-                  this.init_AiOperation = AiObtain.init(
+                  this.init_AiOperation = AiObtain.obtain(
                      AiJson.objectOf("item", "minecraft:bucket", "count", stock.emptyTarget(), "timeoutSeconds", AiObsidian.secondsLeft(this.deadlineNanos))
                   );
                   return AiObsidian.running("Preparing all empty water buckets before travelling");
@@ -213,7 +213,7 @@ final class AiObsidian {
                      this.init_AiOperation = AiGoto.approachAnyWaterSourceCompat(this.init_List, Math.min(45, AiObsidian.secondsLeft(this.deadlineNanos)));
                   } else {
                      this.init_Str = "fill";
-                     this.init_AiOperation = AiBucket.init(
+                     this.init_AiOperation = AiBucket.create(
                         AiJson.objectOf(
                            "action",
                            "fill",
@@ -283,7 +283,7 @@ final class AiObsidian {
          public AiOperation.Result tick() {
             AiOperation.Result result = acquisition.tick();
             if (!result.terminal()) {
-               AiVisualization.init(
+               AiVisualization.showCount(
                   this,
                   "Getting " + Items.OBSIDIAN.getDefaultInstance().getHoverName().getString(),
                   AiTaskStatus.init(result.message(), "Preparing obsidian"),
@@ -743,7 +743,7 @@ final class AiObsidian {
                      );
                      break;
                   case PICKUP:
-                     this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init(
+                     this.init_AiOperation = autismclient.ai.engine.AiBlockMine.dropsOnlyOperation(
                         AiJson.objectOf(
                            "block",
                            "obsidian",
@@ -1000,7 +1000,7 @@ final class AiObsidian {
          }
 
          AiOperation init(String action, String fluid, BlockPos pos) {
-            return AiBucket.init(
+            return AiBucket.create(
                AiJson.objectOf("action", action, "fluid", fluid, "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 8)
             );
          }

@@ -98,7 +98,7 @@ public final class AiEnvironmentHazards {
                   return true;
                }
 
-               int revision = AiGridRevisions.init(AiGridRevisions.chunkKey(cx, cz));
+               int revision = AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz));
                AiEnvironmentHazards.Inner_StreamUtil summary = init(cache, world, source, chunk, cx, cz, revision, tick);
                if (summary == null) {
                   return true;
@@ -185,7 +185,7 @@ public final class AiEnvironmentHazards {
    }
 
    private static boolean init(Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision) {
-      return AiGridRevisions.init(AiGridRevisions.chunkKey(cx, cz)) == revision && source.loadedChunk(world, cx, cz) == chunk;
+      return AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz)) == revision && source.loadedChunk(world, cx, cz) == chunk;
    }
 
    static AiEnvironmentHazards.Inner_BufferHelper init(int bottom, BlockState state) {

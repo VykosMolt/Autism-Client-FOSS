@@ -16,6 +16,6 @@ public interface PacketOrderAware {
    }
 
    static PacketOrderMode readPacketOrder(CompoundTag tag) {
-      return tag != null && tag.contains("packetOrder") ? PacketOrderMode.init(tag.getStringOr("packetOrder", "INSTANT"), PacketOrderMode.INSTANT) : PacketOrderMode.INSTANT;
+      return tag != null && tag.contains("packetOrder") ? PacketOrderMode.parse(tag.getStringOr("packetOrder", "INSTANT"), PacketOrderMode.INSTANT) : PacketOrderMode.INSTANT;
    }
 }

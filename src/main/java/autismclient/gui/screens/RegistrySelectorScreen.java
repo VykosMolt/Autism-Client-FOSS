@@ -412,7 +412,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void init_V_Str_6(String id) {
-      List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+      List<String> tokens = PipeDelimitedListUtil.split(this.module.value(this.setting.id()));
       LinkedHashSet<String> valid = this.validIds(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
       valid.add(id);
@@ -421,12 +421,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void load_V_2(String id) {
-      List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+      List<String> tokens = PipeDelimitedListUtil.split(this.module.value(this.setting.id()));
       LinkedHashSet<String> valid = this.validIds(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
-      String normalized = RegistryIdValidator.init(id);
+      String normalized = RegistryIdValidator.normalize(id);
       valid.remove(normalized);
-      invalid.removeIf(token -> token.equals(id) || RegistryIdValidator.init(token).equals(normalized));
+      invalid.removeIf(token -> token.equals(id) || RegistryIdValidator.normalize(token).equals(normalized));
       this.storeIds(valid, invalid);
       this.clampScrolls();
    }
@@ -434,7 +434,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private void storeIds(Set<String> valid, List<String> invalid) {
       List<String> out = new ArrayList<>(valid);
       out.addAll(invalid);
-      String encoded = PipeDelimitedListUtil.init(out);
+      String encoded = PipeDelimitedListUtil.join(out);
       if (this.parent instanceof AutismModulesScreen moduleScreen && moduleScreen.isTitleSetup()) {
          this.module.setConfiguredValue(this.setting.id(), encoded);
       } else {
@@ -451,8 +451,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       LinkedHashSet<String> out = new LinkedHashSet<>();
 
       for (String token : tokens) {
-         String normalized = RegistryIdValidator.init(token);
-         if (RegistryIdValidator.init(this.setting.kind(), normalized) && (!this.hasBlockFilter() || this.entriesById.containsKey(normalized))) {
+         String normalized = RegistryIdValidator.normalize(token);
+         if (RegistryIdValidator.isValid(this.setting.kind(), normalized) && (!this.hasBlockFilter() || this.entriesById.containsKey(normalized))) {
             out.add(normalized);
          }
       }
@@ -462,14 +462,14 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private List<String> init_List_List_2(List<String> tokens) {
       if (!this.hasBlockFilter()) {
-         return RegistryIdValidator.init(this.setting.kind(), tokens);
+         return RegistryIdValidator.invalidIds(this.setting.kind(), tokens);
       }
 
       List<String> invalid = new ArrayList<>();
 
       for (String token : tokens) {
-         String normalized = RegistryIdValidator.init(token);
-         if (!RegistryIdValidator.init(this.setting.kind(), normalized) || !this.entriesById.containsKey(normalized)) {
+         String normalized = RegistryIdValidator.normalize(token);
+         if (!RegistryIdValidator.isValid(this.setting.kind(), normalized) || !this.entriesById.containsKey(normalized)) {
             invalid.add(token);
          }
       }
@@ -499,7 +499,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       String rawValue = this.module.value(this.setting.id());
       String needle = this.searchText().trim().toLowerCase(Locale.ROOT);
       if (!rawValue.equals(this.cachedRawValue) || !needle.equals(this.cachedNeedle)) {
-         List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
+         List<String> tokens = PipeDelimitedListUtil.split(this.module.value(this.setting.id()));
          LinkedHashSet<String> selected = this.validIds(tokens);
          List<RegistrySelectorScreen.SelectedRow> selectedRows = new ArrayList<>();
 
@@ -593,7 +593,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         }
                         break;
                      case ORE_SIM:
-                        if (!autismclient.util.oresim.OreBlockCatalog.init(block)) {
+                        if (!autismclient.util.oresim.OreBlockCatalog.isOre(block)) {
                            return;
                         }
                         break;
@@ -606,7 +606,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         throw new MatchException(null, null);
                   }
 
-                  out.add(new RegistrySelectorScreen.RegistryEntry(this.lowerId(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
+                  out.add(new RegistrySelectorScreen.RegistryEntry(this.lowerId(id), block.getName().getString(), "", DisplayItemStackFactory.forBlock(block), false));
                }
             });
             break;
@@ -915,7 +915,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private ItemStack read(String path) {
       Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.withDefaultNamespace(path)).orElse(Blocks.AIR);
-      return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.init(block) : ItemStack.EMPTY;
+      return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.forBlock(block) : ItemStack.EMPTY;
    }
 
    private RegistrySelectorScreen.RegistryEntry plainEntry(String id) {

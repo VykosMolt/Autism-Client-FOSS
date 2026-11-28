@@ -41,7 +41,7 @@ final class AiBucket {
    private AiBucket() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiBucket.BucketAction action = parseAction(AiJson.getString(args, "action", "fill"));

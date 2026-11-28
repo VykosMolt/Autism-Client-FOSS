@@ -227,7 +227,7 @@ public final class AutismConfig implements Cloneable {
       bK.init(this);
       autismclient.modules.aD.init(this);
       autismclient.protector.ProtectorFeatureFlags.refresh(this);
-      AutismConfigPersistence.init(this);
+      AutismConfigPersistence.schedule(this);
       Runnable hook = AuditConfigSafety.deferHook(afterSave);
       if (hook != null) {
          try {

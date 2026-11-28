@@ -42,7 +42,7 @@ public final class AiSavedContents {
          || block instanceof CrafterBlock;
    }
 
-   public static boolean init(BlockState expected, BlockState actual, boolean typedSource) {
+   public static boolean matchesSaved(BlockState expected, BlockState actual, boolean typedSource) {
       if (!actual.is(expected.getBlock())) {
          return false;
       }

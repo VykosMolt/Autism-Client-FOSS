@@ -64,7 +64,7 @@ public final class VirtualInputDispatcher {
       if (pendingTicket != null && pendingTicket.owner.equals(owner)) {
          GuardedInputTicket old = pendingTicket;
          pendingTicket = null;
-         old.read();
+         old.fail();
       }
    }
 
@@ -72,7 +72,7 @@ public final class VirtualInputDispatcher {
       GuardedInputTicket old = activeTicket;
       activeTicket = null;
       if (old != null) {
-         old.load();
+         old.resolveDispatched();
       }
    }
 
@@ -80,7 +80,7 @@ public final class VirtualInputDispatcher {
       GuardedInputTicket old = pendingTicket;
       pendingTicket = null;
       if (old != null) {
-         old.read();
+         old.fail();
       }
    }
 
@@ -216,7 +216,7 @@ public final class VirtualInputDispatcher {
       return use ? useHeld : attackHeld;
    }
 
-   public static void load(boolean held) {
+   public static void setUseHeld(boolean held) {
       useHeld = applyHold(MC != null && MC.options != null ? MC.options.keyUse : null, useHeld, held);
    }
 
@@ -246,7 +246,7 @@ public final class VirtualInputDispatcher {
 
    private static void releaseHolds() {
       setAttackHeld(false);
-      load(false);
+      setUseHeld(false);
    }
 
    public static void setSlot(int slot) {
@@ -256,7 +256,7 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   public static void init(int slot, int from) {
+   public static void requestSlot(int slot, int from) {
       if (!autismclient.modules.aD.read_Z()) {
          pendingSlot = Math.max(0, Math.min(8, slot));
          pendingSlotFrom = from;

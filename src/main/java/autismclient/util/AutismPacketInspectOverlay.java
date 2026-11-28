@@ -729,7 +729,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                break;
             case COPY:
                if (this.report != null) {
-                  MINECRAFT.keyboardHandler.setClipboard(this.report.load());
+                  MINECRAFT.keyboardHandler.setClipboard(this.report.copyText());
                   bi.init("Copied packet inspection.");
                }
          }
@@ -994,11 +994,11 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          actions.add(AutismPacketInspectOverlay.PacketAction.COPY_RAW);
       }
 
-      if (LoggedPacketActions.init(this.entry)) {
+      if (LoggedPacketActions.isResendable(this.entry)) {
          actions.add(AutismPacketInspectOverlay.PacketAction.QUEUE);
       }
 
-      if (LoggedPacketActions.sync(this.entry)) {
+      if (LoggedPacketActions.isPayloadC2S(this.entry)) {
          actions.add(AutismPacketInspectOverlay.PacketAction.EDIT_PAYLOAD);
       }
 

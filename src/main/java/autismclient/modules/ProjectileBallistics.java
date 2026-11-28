@@ -61,7 +61,7 @@ public final class ProjectileBallistics {
    private ProjectileBallistics() {
    }
 
-   public static Vec3 init(Entity owner) {
+   public static Vec3 inheritedVelocity(Entity owner) {
       if (owner == null) {
          return Vec3.ZERO;
       }
@@ -98,7 +98,7 @@ public final class ProjectileBallistics {
       return var10000;
    }
 
-   public static List<ProjectileBallistics.ProjectileShot> init(Player player, ItemStack stack, boolean alwaysBow, boolean multiShot) {
+   public static List<ProjectileBallistics.ProjectileShot> shots(Player player, ItemStack stack, boolean alwaysBow, boolean multiShot) {
       if (player == null || stack == null || stack.isEmpty()) {
          return List.of();
       }

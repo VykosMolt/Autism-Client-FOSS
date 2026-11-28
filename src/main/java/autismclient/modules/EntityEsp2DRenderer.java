@@ -50,7 +50,7 @@ public final class EntityEsp2DRenderer {
    }
 
    private static void load(GuiGraphicsExtractor context) {
-      if (init_Minecraft.getWindow() != null && WorldProjectionHelper.init(init_Matrix4f)) {
+      if (init_Minecraft.getWindow() != null && WorldProjectionHelper.projection(init_Matrix4f)) {
          if (init_Obj != init_Minecraft.level) {
             init_Int2ObjectOpenHash.clear();
             init_Obj = init_Minecraft.level;
@@ -63,7 +63,7 @@ public final class EntityEsp2DRenderer {
          float screenW = cA.init_I();
          float screenH = cA.load_I();
          float px = screenW / Math.max(1, init_Minecraft.getWindow().getWidth());
-         Vec3 camera = WorldProjectionHelper.init();
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          float tickDelta = init_Minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
          float healthLerp = dt <= 0.0F ? 1.0F : 1.0F - (float)Math.exp(-dt / 0.12F);
          Module espModule = al.init_Module_Str("esp");

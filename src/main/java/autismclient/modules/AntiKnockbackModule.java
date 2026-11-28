@@ -88,7 +88,7 @@ public final class AntiKnockbackModule extends Module {
             m.counterStrafe.reset();
             if (m.init_Z) {
                if (!m.read_Z) {
-                  m.counterStrafe.init(motionReady ? m.preHitMotion : Vec3.ZERO, reset, motionReady && m.counterMovement, m.integer("counter-ticks"));
+                  m.counterStrafe.start(motionReady ? m.preHitMotion : Vec3.ZERO, reset, motionReady && m.counterMovement, m.integer("counter-ticks"));
                   m.read_I = m.clientTick();
                }
 
@@ -110,9 +110,9 @@ public final class AntiKnockbackModule extends Module {
          if (m.isRecent(m.init_I)) {
             if (m.init_Z) {
                if (m.read_Z) {
-                  m.counterStrafe.init(m.preHitMotion, true, m.counterMovement, m.integer("counter-ticks"));
+                  m.counterStrafe.start(m.preHitMotion, true, m.counterMovement, m.integer("counter-ticks"));
                } else {
-                  m.counterStrafe.init(m.preHitMotion, m.counterMovement, m.integer("counter-ticks"));
+                  m.counterStrafe.start(m.preHitMotion, m.counterMovement, m.integer("counter-ticks"));
                }
 
                m.read_I = m.clientTick();
@@ -139,8 +139,8 @@ public final class AntiKnockbackModule extends Module {
          int age = m.clientTick() - m.read_I;
          if (m.read_I != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;
-            boolean braking = m.counterStrafe.init_I() > 0;
-            Input result = m.counterStrafe.init(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.getMovementYaw(MC.player), ground);
+            boolean braking = m.counterStrafe.ticksLeft() > 0;
+            Input result = m.counterStrafe.apply(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.getMovementYaw(MC.player), ground);
             if (result.jump() && !original.jump()) {
                m.load_J++;
             }

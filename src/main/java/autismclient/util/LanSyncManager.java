@@ -1103,12 +1103,12 @@ public class LanSyncManager {
                   searchSocket.setTcpNoDelay(true);
                   DataOutputStream out = new DataOutputStream(searchSocket.getOutputStream());
                   DataInputStream in = new DataInputStream(searchSocket.getInputStream());
-                  out.writeInt(autismclient.util.sync.LanSyncPacketType.SEARCH_REQUEST.init());
+                  out.writeInt(autismclient.util.sync.LanSyncPacketType.SEARCH_REQUEST.id());
                   out.writeUTF("");
                   out.flush();
                   int typeId = in.readInt();
                   String foundSessionId = in.readUTF();
-                  if (typeId == autismclient.util.sync.LanSyncPacketType.SESSION.init()) {
+                  if (typeId == autismclient.util.sync.LanSyncPacketType.SESSION.id()) {
                      autismclient.util.sync.LanSyncPacket.SessionPacket session = new autismclient.util.sync.LanSyncPacket.SessionPacket();
                      session.setSessionId(foundSessionId);
                      session.read(in);
@@ -1504,9 +1504,9 @@ public class LanSyncManager {
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             int packetType = in.readInt();
             String packetSession = in.readUTF();
-            if (packetType == autismclient.util.sync.LanSyncPacketType.SEARCH_REQUEST.init()) {
+            if (packetType == autismclient.util.sync.LanSyncPacketType.SEARCH_REQUEST.id()) {
                AutismClientAddon.LOG.info("[TCP] Received search request, responding with session info");
-               out.writeInt(autismclient.util.sync.LanSyncPacketType.SESSION.init());
+               out.writeInt(autismclient.util.sync.LanSyncPacketType.SESSION.id());
                out.writeUTF(this.sessionId);
                new autismclient.util.sync.LanSyncPacket.SessionPacket(this.sessionId, 0L, this.localUsername).write(out);
                out.flush();
@@ -1514,7 +1514,7 @@ public class LanSyncManager {
                return;
             }
 
-            if (packetType != autismclient.util.sync.LanSyncPacketType.JOIN.init()) {
+            if (packetType != autismclient.util.sync.LanSyncPacketType.JOIN.id()) {
                return;
             }
 
@@ -1564,7 +1564,7 @@ public class LanSyncManager {
             while (this.running.get() && !clientSocket.isClosed()) {
                int nextPacketType = in.readInt();
                String nextPacketSession = in.readUTF();
-               autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.init(nextPacketType);
+               autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.byId(nextPacketType);
                autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.create(type, nextPacketSession);
                if (packet == null) {
                   throw new IOException("Unknown LAN packet id " + nextPacketType);
@@ -1693,7 +1693,7 @@ public class LanSyncManager {
             DataOutputStream out = new DataOutputStream(this.clientSocket.getOutputStream());
             autismclient.util.sync.LanSyncPacket.JoinPacket joinPacket = new autismclient.util.sync.LanSyncPacket.JoinPacket(this.sessionId, this.localUsername);
             synchronized (this.clientWriteLock) {
-               out.writeInt(joinPacket.getType().init());
+               out.writeInt(joinPacket.getType().id());
                out.writeUTF(joinPacket.getSessionId());
                joinPacket.write(out);
                out.flush();
@@ -1708,7 +1708,7 @@ public class LanSyncManager {
                   while (this.running.get() && this.clientSocket != null && !this.clientSocket.isClosed()) {
                      int packetType = in.readInt();
                      String packetSession = in.readUTF();
-                     autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.init(packetType);
+                     autismclient.util.sync.LanSyncPacketType type = autismclient.util.sync.LanSyncPacketType.byId(packetType);
                      autismclient.util.sync.LanSyncPacket packet = type == null ? null : autismclient.util.sync.LanSyncPacket.create(type, packetSession);
                      if (packet == null) {
                         throw new IOException("Unknown LAN packet id " + packetType);
@@ -1807,7 +1807,7 @@ public class LanSyncManager {
    private byte[] encodePacket(autismclient.util.sync.LanSyncPacket packet) throws IOException {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream out = new DataOutputStream(baos);
-      out.writeInt(packet.getType().init());
+      out.writeInt(packet.getType().id());
       out.writeUTF(packet.getSessionId());
       packet.write(out);
       return baos.toByteArray();
@@ -2052,7 +2052,7 @@ public class LanSyncManager {
                macro.fromTag(nbt);
                String relayNbt = macro.toTag().toString();
                if (p.sourceType != 1) {
-                  this.peerMacros.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.init(macro.name), macro);
+                  this.peerMacros.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.normalize(macro.name), macro);
                }
 
                this.peerMacrosRevision.incrementAndGet();
@@ -2150,7 +2150,7 @@ public class LanSyncManager {
       if (packet instanceof autismclient.util.sync.LanSyncPacket.PresetDataPacket && packet.getSessionId().equals(this.sessionId)) {
          autismclient.util.sync.LanSyncPacket.PresetDataPacket p = (autismclient.util.sync.LanSyncPacket.PresetDataPacket)packet;
          if ((p.senderUsername == null || !p.senderUsername.equals(this.localUsername))
-            && PacketPresetManager.getInstance().init(p.presetName, p.presetJson, p.senderUsername)
+            && PacketPresetManager.getInstance().importShared(p.presetName, p.presetJson, p.senderUsername)
             && this.isHost
             && p.senderUsername != null
             && !p.senderUsername.isBlank()) {
@@ -2166,7 +2166,7 @@ public class LanSyncManager {
             this.peerMacrosRevision.incrementAndGet();
             Map<String, AutismMacro> senderMacros = this.peerMacros.get(p.senderUsername);
             if (senderMacros != null) {
-               senderMacros.remove(MacroNameNormalizer.init(p.macroName));
+               senderMacros.remove(MacroNameNormalizer.normalize(p.macroName));
             }
 
             if (this.isHost && p.senderUsername != null && !p.senderUsername.isBlank()) {
@@ -2183,7 +2183,7 @@ public class LanSyncManager {
             Set<String> live = new HashSet<>();
 
             for (String name : p.macroNames) {
-               live.add(MacroNameNormalizer.init(name));
+               live.add(MacroNameNormalizer.normalize(name));
             }
 
             this.peerMacrosRevision.incrementAndGet();
@@ -2615,7 +2615,7 @@ public class LanSyncManager {
          for (String peer : new TreeSet<>(this.connectedClients.keySet())) {
             if (!peer.equals(this.localUsername)) {
                Map<String, AutismMacro> peerMacros = remote.get(peer);
-               if (peerMacros == null || !peerMacros.containsKey(MacroNameNormalizer.init(macroName))) {
+               if (peerMacros == null || !peerMacros.containsKey(MacroNameNormalizer.normalize(macroName))) {
                   missing.add(peer);
                }
             }
@@ -2642,7 +2642,7 @@ public class LanSyncManager {
                   }
                } else {
                   Map<String, AutismMacro> peerMacros = remote.get(username);
-                  if (peerMacros == null || !peerMacros.containsKey(MacroNameNormalizer.init(macroName))) {
+                  if (peerMacros == null || !peerMacros.containsKey(MacroNameNormalizer.normalize(macroName))) {
                      missing.put(username, macroName);
                   }
                }
@@ -2662,7 +2662,7 @@ public class LanSyncManager {
          if (!entry.getKey().equals(this.localUsername)) {
             for (AutismMacro macro : entry.getValue().values()) {
                if (macro != null) {
-                  String key = MacroNameNormalizer.init(macro.name);
+                  String key = MacroNameNormalizer.normalize(macro.name);
                   remoteMacros.putIfAbsent(key, macro.name);
                }
             }
@@ -2674,7 +2674,7 @@ public class LanSyncManager {
 
    public void importPeerMacro(String clientUsername, String macroName) {
       Map<String, AutismMacro> clientMacros = this.peerMacros.get(clientUsername);
-      AutismMacro remoteMacro = clientMacros == null ? null : clientMacros.get(MacroNameNormalizer.init(macroName));
+      AutismMacro remoteMacro = clientMacros == null ? null : clientMacros.get(MacroNameNormalizer.normalize(macroName));
       if (remoteMacro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: " + macroName);
       } else {

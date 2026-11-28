@@ -10,7 +10,7 @@ public final class AspectRatioModule extends Module {
       this.add(new DoubleSetting("ratio", "Ratio", 1.7777777777777777, 0.1, 5.0, 0.01).visibleWhen(() -> "Custom".equals(this.choice("preset"))).build());
    }
 
-   public static float init(float width, float height) {
+   public static float adjustedAspect(float width, float height) {
       if (height > 0.0F
          && autismclient.e.RenderState.init()
          && !aD.read_Z()

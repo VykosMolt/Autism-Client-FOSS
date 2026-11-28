@@ -704,7 +704,7 @@ public final class AutoTradeModule extends Module {
    }
 
    private boolean inRange(Entity entity) {
-      return autismclient.util.villager.MerchantInteractHelper.init(MC, entity, this.decimal("range"));
+      return autismclient.util.villager.MerchantInteractHelper.inRange(MC, entity, this.decimal("range"));
    }
 
    private void flush() {
@@ -722,7 +722,7 @@ public final class AutoTradeModule extends Module {
    }
 
    private boolean canReach(Vec3 point) {
-      return autismclient.util.villager.MerchantInteractHelper.init(MC, point);
+      return autismclient.util.villager.MerchantInteractHelper.lookAt(MC, point);
    }
 
    private BlockHitResult hitFor(BlockPos pos) {

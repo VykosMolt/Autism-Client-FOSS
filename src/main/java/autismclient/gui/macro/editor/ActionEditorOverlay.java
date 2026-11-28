@@ -1029,7 +1029,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          preview.setFocusEffectsEnabled(false);
          preview.setPlaceholder(Component.literal("Nothing available now"));
          this.internalTextFields.put("_capture_preview", preview);
-         this.capturePattern = autismclient.util.macro.CaptureValueAction.init(this.textFieldValueOr("exampleText", ""), this.textFieldValueOr("selectedText", ""), this.textFieldValueOr("saveAs", "value"));
+         this.capturePattern = autismclient.util.macro.CaptureValueAction.generatePattern(this.textFieldValueOr("exampleText", ""), this.textFieldValueOr("selectedText", ""), this.textFieldValueOr("saveAs", "value"));
          this.lastCaptureSource = "";
          this.waitForTriggerTouched = false;
 
@@ -1072,7 +1072,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.draggingSafeDelay = false;
          this.resetSafeDelaySlider();
          ThemedTextInputBox delayField = this.textFields.get("safeClickDelayTicks");
-         int safeDelay = XCarryAction.write(xCarryAction.safeClickDelayTicks);
+         int safeDelay = XCarryAction.clampDelay(xCarryAction.safeClickDelayTicks);
          this.actionTag.putInt("safeClickDelayTicks", safeDelay);
          this.actionTag.putBoolean("safeClickDelayAfterPickup", xCarryAction.safeClickDelayAfterPickup);
          this.actionTag.putBoolean("safeClickDelayBeforeReturn", xCarryAction.safeClickDelayBeforeReturn);
@@ -1122,7 +1122,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (action instanceof PlaceAction placeAction && placeAction.blockPos != null) {
-            autismclient.util.BlockPreviewRenderer.init(placeAction.blockPos, -50373);
+            autismclient.util.BlockPreviewRenderer.show(placeAction.blockPos, -50373);
          }
       }
 
@@ -1913,7 +1913,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
 
                   if (previewPos != null) {
-                     autismclient.util.BlockPreviewRenderer.init(previewPos, -50373);
+                     autismclient.util.BlockPreviewRenderer.show(previewPos, -50373);
                   }
 
                   Identifier placeFont = this.styleTheme.init_Identifier_l(l.read);
@@ -3446,7 +3446,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       });
       this.renderSecondaryButton(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.readPackets();
          if (pasted != null && !pasted.isEmpty()) {
             this.init_V_ck_CachePool(pasted.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first pasted packet");
@@ -3817,7 +3817,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("Loaded " + finalQueuePackets.size() + " packets from queue");
       });
       this.renderSecondaryButton(ctx, fromBtns[2], cy, fromBtns[3], 13, "Paste Base64", mx, my, () -> {
-         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.readPackets();
          if (pasted != null && !pasted.isEmpty()) {
             this.storeCapturedPackets(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -3946,7 +3946,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("Loaded " + this.queuedPackets().size() + " packets from queue");
       });
       this.renderSecondaryButton(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.readPackets();
          if (pasted != null && !pasted.isEmpty()) {
             this.storeCapturedPackets(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -4469,14 +4469,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void load_V_Str(String text) {
       if (this.payloadEditor != null) {
-         this.payloadEditor.read(text);
+         this.payloadEditor.setUtf8(text);
          this.payloadContentDirty = true;
          this.pushPayloadEditorToFields(false);
       }
    }
 
    private void read_V(String text) {
-      if (this.payloadEditor != null && this.payloadEditor.write(text)) {
+      if (this.payloadEditor != null && this.payloadEditor.setLogical(text)) {
          this.payloadContentDirty = true;
          this.pushPayloadEditorToFields(false);
       }
@@ -4497,7 +4497,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                channelField.setValue(this.payloadEditor.channel == null ? "" : this.payloadEditor.channel);
             }
 
-            this.modeIndices.put("payload_mode", this.payloadModeIndex(PayloadFieldCodec.EncodingMode.parse(this.payloadEditor.sync, this.payloadEditor.channel)));
+            this.modeIndices.put("payload_mode", this.payloadModeIndex(PayloadFieldCodec.EncodingMode.parse(this.payloadEditor.encodingMode, this.payloadEditor.channel)));
             ThemedTextInputBox commandField = this.textFields.get("payload_command_value");
             if (commandField != null && (force || !commandField.isFocused())) {
                commandField.setValue(String.valueOf(this.payloadEditor.commandApiValue));
@@ -4529,12 +4529,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                ThemedTextInputBox utf8View = this.textFields.get("payload_utf8_view");
                if (utf8View != null && (force || !utf8View.isFocused())) {
-                  utf8View.setValue(this.payloadEditor.read());
+                  utf8View.setValue(this.payloadEditor.utf8Text());
                }
 
                ThemedTextInputBox logicalView = this.textFields.get("payload_logical_view");
                if (logicalView != null && (force || !logicalView.isFocused())) {
-                  logicalView.setValue(this.payloadEditor.write());
+                  logicalView.setValue(this.payloadEditor.logicalText());
                }
             } finally {
                this.suppressPayloadListeners = false;
@@ -4753,7 +4753,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       String notice = this.payloadIssueText(built);
-      boolean modelBad = this.payloadEditor != null && this.payloadEditor.flush != null && !this.payloadEditor.flush.isBlank();
+      boolean modelBad = this.payloadEditor != null && this.payloadEditor.error != null && !this.payloadEditor.error.isBlank();
       int noticeColor = !modelBad && built.errors().isEmpty() ? (!built.warnings().isEmpty() ? -14249 : UiColorPalette.textSecondary()) : UiColorPalette.errorText();
       autismclient.gui.f.b.k.init(
          ctx, this.font, autismclient.gui.f.b.k.init(this.font, notice, Math.max(10, w), font, noticeColor), font, noticeColor, x, cy + 2, false
@@ -4916,8 +4916,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String payloadIssueText(PayloadFieldCodec.EncodeResult built) {
-      if (this.payloadEditor != null && this.payloadEditor.flush != null && !this.payloadEditor.flush.isBlank()) {
-         return "Fix: " + this.shortenIssue(this.payloadEditor.flush);
+      if (this.payloadEditor != null && this.payloadEditor.error != null && !this.payloadEditor.error.isBlank()) {
+         return "Fix: " + this.shortenIssue(this.payloadEditor.error);
       }
 
       String scriptIssue = this.payloadScriptIssue();
@@ -5270,7 +5270,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.payloadEditor != null) {
-                  this.payloadEditor.sync = PAYLOAD_MODES.get(newIdx).name();
+                  this.payloadEditor.encodingMode = PAYLOAD_MODES.get(newIdx).name();
                   this.payloadEditor.bumpRevision();
                   this.cachedPayloadSnapshot = null;
                   this.pushPayloadContentToFields(false);
@@ -5289,7 +5289,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
 
             if (this.payloadEditor != null) {
-               this.payloadEditor.sync = PAYLOAD_MODES.get(newIdx).name();
+               this.payloadEditor.encodingMode = PAYLOAD_MODES.get(newIdx).name();
                this.payloadEditor.bumpRevision();
                this.cachedPayloadSnapshot = null;
                this.pushPayloadContentToFields(false);
@@ -5451,7 +5451,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.payloadEditor.channel = template.channel();
                this.payloadEditor.direction = template.direction().name();
                this.payloadEditor.phase = template.phase().name();
-               this.payloadEditor.sync = template.encodingMode().name();
+               this.payloadEditor.encodingMode = template.encodingMode().name();
                this.payloadEditor.fields = new ArrayList<>(template.fields());
                this.payloadEditor.bumpRevision();
                this.payloadEditor.parseScript(this.payloadEditor.toScript());
@@ -5570,8 +5570,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private PayloadAction buildPayloadAction() {
       this.flushPendingPayloadEdit(true);
       if (this.payloadEditor != null) {
-         if (this.payloadEditor.flush != null && !this.payloadEditor.flush.isBlank()) {
-            throw new IllegalArgumentException(this.payloadEditor.flush);
+         if (this.payloadEditor.error != null && !this.payloadEditor.error.isBlank()) {
+            throw new IllegalArgumentException(this.payloadEditor.error);
          }
 
          PayloadAction action = this.payloadEditor.toAction(this.payloadActionDraft);
@@ -5945,7 +5945,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderActionButton(
          ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", OverlayActionButton.ButtonTone.SECONDARY, true, mx, my, () -> {
             autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
-            tmp.read();
+            tmp.resetDefaults();
             this.listFields.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
             this.listFields.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
          }
@@ -6918,7 +6918,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void startPacketClickTargetCapture(String fieldKey) {
       if (this.editingAction instanceof PacketClickAction) {
          this.capturingFieldKey = fieldKey;
-         ContainerCloseGuard.init(target -> this.applyPacketClickTarget(target));
+         ContainerCloseGuard.setSnapshotConsumer(target -> this.applyPacketClickTarget(target));
          this.hideOverlaysForCapture();
       }
    }
@@ -6973,7 +6973,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      ContainerCloseGuard.read();
+      ContainerCloseGuard.clearSnapshotConsumer();
       this.capturingFieldKey = null;
       this.finishCapture(false, false);
       return true;
@@ -7196,7 +7196,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private static void collectCaptureTokens(Set<String> tokens, MacroAction action, int limit) {
       if (action instanceof autismclient.util.macro.CaptureValueAction capture && tokens.size() < limit) {
-         for (String name : PatternCaptureMatcher.init(capture.matchMode, capture.pattern)) {
+         for (String name : PatternCaptureMatcher.captureNames(capture.matchMode, capture.pattern)) {
             if (tokens.size() >= limit) {
                return;
             }
@@ -7205,7 +7205,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (tokens.size() < limit) {
-            String root = MacroVariableStore.load(capture.saveAs);
+            String root = MacroVariableStore.rootKey(capture.saveAs);
             if (!root.isBlank()) {
                tokens.add("{" + root + "}");
             }
@@ -7215,19 +7215,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private static void collectActionOutputTokens(Set<String> tokens, MacroAction action) {
       if (action instanceof WaitForChatAction chat) {
-         for (String name : PatternCaptureMatcher.init(chat.effectiveMatchMode(), chat.pattern)) {
+         for (String name : PatternCaptureMatcher.captureNames(chat.effectiveMatchMode(), chat.pattern)) {
             tokens.add("{" + name + "}");
          }
 
          addVariableTokens(tokens, chat.saveAs, "sender", "message", "display", "source");
       } else if (action instanceof WaitForGuiAction gui) {
-         for (String name : PatternCaptureMatcher.init(gui.matchMode, gui.guiTitle)) {
+         for (String name : PatternCaptureMatcher.captureNames(gui.matchMode, gui.guiTitle)) {
             tokens.add("{" + name + "}");
          }
 
          addVariableTokens(tokens, gui.saveAs, "title", "type");
       } else if (action instanceof autismclient.util.macro.CaptureValueAction capture) {
-         for (String name : PatternCaptureMatcher.init(capture.matchMode, capture.pattern)) {
+         for (String name : PatternCaptureMatcher.captureNames(capture.matchMode, capture.pattern)) {
             tokens.add("{" + name + "}");
          }
 
@@ -7266,7 +7266,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          } else if (action instanceof WaitForPacketAction || action instanceof autismclient.util.macro.WaitPacketMatchAction) {
             addVariableTokens(tokens, root, "name", "class", "direction");
             if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatch) {
-               String cleanRoot = MacroVariableStore.load(root);
+               String cleanRoot = MacroVariableStore.rootKey(root);
                if (!cleanRoot.isBlank()) {
                   for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatch.effectiveRules()) {
                      if (rule.load != null && !rule.load.isBlank()) {
@@ -7276,7 +7276,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
             }
          } else if (action instanceof WaitGuiTypeAction gui) {
-            for (String name : PatternCaptureMatcher.init(gui.matchMode, gui.title)) {
+            for (String name : PatternCaptureMatcher.captureNames(gui.matchMode, gui.title)) {
                tokens.add("{" + name + "}");
             }
 
@@ -7295,7 +7295,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private static void addVariableTokens(Set<String> tokens, String root, String... properties) {
       if (root != null && !root.isBlank()) {
-         String clean = MacroVariableStore.load(root);
+         String clean = MacroVariableStore.rootKey(root);
          if (!clean.isBlank()) {
             tokens.add("{" + clean + "}");
 
@@ -7861,7 +7861,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          for (int i = firstSel; i < sel.size() && i <= catSelViewport.getLastVisibleRow(); i++) {
             int siy = catSelViewport.getRowY(i);
             if (siy != -2147483648) {
-               String display = RegistryDisplayNameCache.load(sel.get(i));
+               String display = RegistryDisplayNameCache.blockName(sel.get(i));
                autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.font,
@@ -7914,7 +7914,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<String> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
          blockIds(),
          this.filteredOptionCache.computeIfAbsent(key + "_catalog", ignored -> new ArrayList<>()),
-         idx -> matchesFilter(filter, idx, registryDisplayName(idx), RegistryDisplayNameCache.load(idx))
+         idx -> matchesFilter(filter, idx, registryDisplayName(idx), RegistryDisplayNameCache.blockName(idx))
       );
       int catItemW = w - 5 - 1;
       ScrollableListView catViewport = this.viewportFor(this.listViewports, key, x, cy, w, 60, 13, 5);
@@ -7927,7 +7927,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int iy = catViewport.getRowY(i);
          if (iy != -2147483648) {
             String id = filtered.get(i);
-            String display = RegistryDisplayNameCache.load(id);
+            String display = RegistryDisplayNameCache.blockName(id);
             boolean already = sel.contains(id);
             boolean hov = mx >= x && mx < x + catItemW && my >= iy && my < iy + 13;
             autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
@@ -8080,7 +8080,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private Set<String> actionOutputVariables() {
       LinkedHashSet<String> outputs = new LinkedHashSet<>();
       if (this.editingAction instanceof CaptureOutputAction captureOutput) {
-         String root = MacroVariableStore.load(captureOutput.load());
+         String root = MacroVariableStore.rootKey(captureOutput.load());
          if (!root.isBlank()) {
             outputs.add(root);
          }
@@ -8107,7 +8107,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (mode != PatternCaptureMatcher.MatchMode.MATCH) {
-         outputs.addAll(PatternCaptureMatcher.init(mode, pattern));
+         outputs.addAll(PatternCaptureMatcher.captureNames(mode, pattern));
       }
 
       return outputs;
@@ -8287,7 +8287,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       AutismSessionState.getInstance().setTimedCaptureMode(false);
       this.clearToasts();
       if (this.editingAction != null && this.editingAction.getType() == MacroActionType.PLACE) {
-         autismclient.util.BlockPreviewRenderer.load();
+         autismclient.util.BlockPreviewRenderer.clear();
       }
 
       if (save && this.editingAction != null && !this.isLegacyMulti()) {
@@ -8317,7 +8317,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.itemActionDraft = null;
       this.captureSession.clear();
       if (this.capturingFieldKey != null) {
-         ContainerCloseGuard.read();
+         ContainerCloseGuard.clearSnapshotConsumer();
          this.capturingFieldKey = null;
       }
 
@@ -8946,7 +8946,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.editingAction != null && this.editingAction.getType() == MacroActionType.XCARRY) {
-                  this.actionTag.putInt("safeClickDelayTicks", XCarryAction.write(this.actionTag.getIntOr("safeClickDelayTicks", 1)));
+                  this.actionTag.putInt("safeClickDelayTicks", XCarryAction.clampDelay(this.actionTag.getIntOr("safeClickDelayTicks", 1)));
                   this.actionTag
                      .putBoolean(
                         "safeClickDelayAfterPickup",
@@ -9746,7 +9746,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          if (action instanceof XCarryAction xCarryAction) {
             this.loadItemTargetListField("entries", xCarryAction.entryTargets, xCarryAction.entries);
-            this.actionTag.putInt("safeClickDelayTicks", XCarryAction.write(xCarryAction.safeClickDelayTicks));
+            this.actionTag.putInt("safeClickDelayTicks", XCarryAction.clampDelay(xCarryAction.safeClickDelayTicks));
             this.actionTag.putBoolean("safeClickDelayAfterPickup", xCarryAction.safeClickDelayAfterPickup);
             this.actionTag.putBoolean("safeClickDelayBeforeReturn", xCarryAction.safeClickDelayBeforeReturn);
             ListTag destinations = new ListTag();
@@ -10930,7 +10930,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ListTag packetList = new ListTag();
          if (packets != null) {
             for (AutismSessionState.DelayedPacket qp : packets) {
-               CompoundTag packetTag = MacroClipboardCodec.init(qp);
+               CompoundTag packetTag = MacroClipboardCodec.encode(qp);
                if (packetTag != null) {
                   packetList.add(packetTag);
                }
@@ -11149,14 +11149,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderSecondaryButton(ctx, modeX + modeW + 2, cy, capW, 13, "CAP", mx, my, this::captureWaitEntity);
       cy += 18;
       String filter = search != null ? search.getValue().trim().toLowerCase() : "";
-      List<String> filtered = this.filterCached("wait_entity_search", entityTypeIds(), filter, RegistryDisplayNameCache::read);
+      List<String> filtered = this.filterCached("wait_entity_search", entityTypeIds(), filter, RegistryDisplayNameCache::entityName);
       this.renderSelectableList(ctx, x, cy, w, mx, my, "wait_entity_search", filtered, 4, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, RegistryDisplayNameCache::read);
+      }, selected::contains, RegistryDisplayNameCache::entityName);
       cy += 66;
       autismclient.gui.f.b.k.init(ctx, this.font, "Nearby Entities", font, UiColorPalette.textBody(), x, cy + 2, false);
       cy += 13;
@@ -11336,7 +11336,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.renderCaptureButton(ctx, capBtnX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("targetItems"));
          cy += 18;
          String filter = search != null ? search.getValue().trim().toLowerCase() : "";
-         List<String> filtered = this.filterCached("store_items_search", itemIds(), filter, RegistryDisplayNameCache::init);
+         List<String> filtered = this.filterCached("store_items_search", itemIds(), filter, RegistryDisplayNameCache::itemName);
          this.renderSelectableList(ctx, x, cy, w, mx, my, "store_items_search", filtered, 6, value -> {
             if (selected.contains(value)) {
                selected.remove(value);
@@ -11346,7 +11346,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             this.listEditIndices.put("store_items_selected", -1);
             this.itemTargetLists.put("targetItems", this.readItemTargetList("targetItems"));
-         }, selected::contains, RegistryDisplayNameCache::init);
+         }, selected::contains, RegistryDisplayNameCache::itemName);
          cy += 82;
          cy = this.renderHint(
             ctx, x, cy, w, "Pick on an item adds it by name, from any slot on the screen. Ctrl+pick or an empty slot adds that exact slot."
@@ -12337,14 +12337,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderSecondaryButton(ctx, modeX + modeW + 2, cy, capW, 13, "CAP", mx, my, this::captureLookAtBlock);
       cy += 18;
       String filter = search != null ? search.getValue().trim().toLowerCase() : "";
-      List<String> filtered = this.filterCached("look_at_entity_search", entityTypeIds(), filter, RegistryDisplayNameCache::read);
+      List<String> filtered = this.filterCached("look_at_entity_search", entityTypeIds(), filter, RegistryDisplayNameCache::entityName);
       this.renderSelectableList(ctx, x, cy, w, mx, my, "look_at_entity_search", filtered, 4, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, RegistryDisplayNameCache::read);
+      }, selected::contains, RegistryDisplayNameCache::entityName);
       cy += 66;
       autismclient.gui.f.b.k.init(ctx, this.font, "Nearby Entities", font, UiColorPalette.textBody(), x, cy + 2, false);
       cy += 13;
@@ -12625,7 +12625,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             );
       }
 
-      if (!draft.saveAs.isBlank() && MacroVariableStore.load(draft.saveAs).isBlank()) {
+      if (!draft.saveAs.isBlank() && MacroVariableStore.rootKey(draft.saveAs).isBlank()) {
          behaviorHint = "Bad variable name";
       }
 
@@ -12886,7 +12886,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                : (this.actionTag == null ? "" : this.actionTag.getStringOr("pattern", ""));
             if (current.isBlank() || current.equals(this.capturePattern)) {
                if (!example.isBlank() && !selected.isBlank()) {
-                  String generated = autismclient.util.macro.CaptureValueAction.init(example, selected, variable);
+                  String generated = autismclient.util.macro.CaptureValueAction.generatePattern(example, selected, variable);
                   if (!generated.isBlank()) {
                      if (patternField != null) {
                         patternField.setValue(generated);
@@ -13077,13 +13077,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean listSource = draft.source == autismclient.util.macro.CaptureValueAction.CaptureSource.COMMAND_AUTOFILL
          || draft.source == autismclient.util.macro.CaptureValueAction.CaptureSource.TABLIST;
       if (!listSource) {
-         Set<String> captured = PatternCaptureMatcher.init(draft.matchMode, draft.pattern);
+         Set<String> captured = PatternCaptureMatcher.captureNames(draft.matchMode, draft.pattern);
          if (!captured.isEmpty()) {
             return captured.iterator().next();
          }
       }
 
-      return MacroVariableStore.load(draft.saveAs);
+      return MacroVariableStore.rootKey(draft.saveAs);
    }
 
    private String textFieldValueOr(String key, String fallback) {
@@ -13173,7 +13173,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          nameField.setHeight(13);
          nameField.render(ctx, mx, my, 0.0F);
          this.renderSecondaryButton(ctx, x + w - buttonW, y + 1, buttonW, 13, "Capture", mx, my, () -> {
-            String name = MacroVariableStore.load(nameField.getValue());
+            String name = MacroVariableStore.rootKey(nameField.getValue());
             if (!name.isBlank()) {
                patternField.insertText("{" + name + "}");
                this.modeIndices.put("matchMode", 1);
@@ -13384,7 +13384,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       try {
-         return XCarryAction.write(Integer.parseInt(field.getValue().trim()));
+         return XCarryAction.clampDelay(Integer.parseInt(field.getValue().trim()));
       } catch (NumberFormatException ignored) {
          return 1;
       }
@@ -13393,7 +13393,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void setSafeClickDelay(int ticks) {
       ThemedTextInputBox field = this.textFields.get("safeClickDelayTicks");
       if (field != null) {
-         field.setValue(String.valueOf(XCarryAction.write(ticks)));
+         field.setValue(String.valueOf(XCarryAction.clampDelay(ticks)));
       }
    }
 
@@ -13930,7 +13930,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void applyDefaultDelayPreset() {
       autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
-      tmp.read();
+      tmp.resetDefaults();
       this.listFields.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
       this.listFields.put("s2cPackets", new ArrayList<>(tmp.s2cPacketNames));
    }
@@ -14652,7 +14652,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       } else if (entry.startsWith("~")) {
          String[] parts = entry.split("~", 4);
          String rawName = parts.length >= 4 ? parts[3] : "";
-         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.entityName(parts[2]) : "?";
          String uuid = parts.length >= 2 ? parts[1] : "";
          String suffix = uuid.length() >= 4 ? uuid.substring(uuid.length() - 4) : uuid;
          String name = rawName == null ? "" : rawName.trim();
@@ -14660,7 +14660,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ? name + " (" + type + " #" + suffix + ")"
             : type + " #" + suffix;
       } else {
-         return RegistryDisplayNameCache.read(entry);
+         return RegistryDisplayNameCache.entityName(entry);
       }
    }
 

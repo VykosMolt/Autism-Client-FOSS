@@ -216,7 +216,7 @@ public class DisconnectAction implements MacroAction {
       }
    }
 
-   public void init(List<MacroAction> actions) {
+   public void setFollowingActions(List<MacroAction> actions) {
       this.init_List = actions;
    }
 

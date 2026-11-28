@@ -13,7 +13,7 @@ public class EventRingCheck {
    public static void main(String[] args) {
       AiEventLog ring = AiEventLog.getInstance();
       for (int i = 0; i < 300; i++) {
-         ring.init("e", new JsonObject());
+         ring.log("e", new JsonObject());
       }
 
       // Seqs 1..44 were evicted, 45..300 are kept.
@@ -25,12 +25,12 @@ public class EventRingCheck {
       Object connection = new Object();
       ring.auditReset(connection);
       check(ring.read(0, null, 256).isEmpty() && ring.droppedSince(0) == 0, "reset clears the ring and the drop count");
-      ring.init("after", new JsonObject());
+      ring.log("after", new JsonObject());
       check(ring.read(300, null, 10).size() == 1 && ring.nextSeq() == 301, "seq stays monotonic after reset");
       ring.auditReset(connection);
       check(ring.read(300, null, 10).size() == 1, "same connection (dimension change) keeps events");
       for (int i = 0; i < 260; i++) {
-         ring.init("e", new JsonObject());
+         ring.log("e", new JsonObject());
       }
 
       // Seqs 301..305 were evicted after the reset.

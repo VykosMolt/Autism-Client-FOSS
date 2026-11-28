@@ -185,11 +185,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    private void init(Minecraft mc, int invSlot, int count) {
-      autismclient.util.InventoryDropHelper.load(mc, invSlot, count);
+      autismclient.util.InventoryDropHelper.dropFromInventory(mc, invSlot, count);
    }
 
    private void load(Minecraft mc, int handlerSlotId, int count) {
-      autismclient.util.InventoryDropHelper.init(mc, handlerSlotId, count);
+      autismclient.util.InventoryDropHelper.dropFromHandler(mc, handlerSlotId, count);
    }
 
    @Override

@@ -14,7 +14,7 @@ public final class ClipCollisionHelper {
    private ClipCollisionHelper() {
    }
 
-   public static List<ClipCollisionHelper.ClipStep> init(Vec3 from, Vec3 to, boolean finalOnGround) {
+   public static List<ClipCollisionHelper.ClipStep> steps(Vec3 from, Vec3 to, boolean finalOnGround) {
       if (from != null && to != null) {
          if (to.y - from.y >= -3.0) {
             return List.of(new ClipCollisionHelper.ClipStep(to, finalOnGround));

@@ -175,11 +175,11 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
    private void submitRename() {
       String value = this.input.getValue().strip();
       if (!value.isEmpty()) {
-         this.init_V_Runnable(() -> this.onRename.accept(value));
+         this.closeThen(() -> this.onRename.accept(value));
       }
    }
 
-   public void init_V_Runnable(Runnable action) {
+   public void closeThen(Runnable action) {
       if (!this.closed) {
          this.closed = true;
          if (this.input != null) {
@@ -193,7 +193,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
    @Override
    public void onClose() {
-      this.init_V_Runnable(this.onDismiss);
+      this.closeThen(this.onDismiss);
    }
 
    @Override

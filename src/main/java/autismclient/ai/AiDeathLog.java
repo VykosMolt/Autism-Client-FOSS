@@ -17,7 +17,7 @@ final class AiDeathLog {
    private AiDeathLog() {
    }
 
-   static void init(Minecraft mc) {
+   static void capture(Minecraft mc) {
       if (mc.player != null && mc.level != null && (lastDeath == null || lastDeath.ageMillis() >= 2000L)) {
          Map<String, Integer> carried = new LinkedHashMap<>();
 

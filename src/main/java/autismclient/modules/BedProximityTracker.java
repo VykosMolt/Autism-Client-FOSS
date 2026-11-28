@@ -136,7 +136,7 @@ final class BedProximityTracker {
                      if (this.init_v_CachePool.init(player.getUUID(), team == null ? null : team.getName(), dye, this.init_I, 20)
                         && (module.bool("bed-include-team") || dye != own && (team == null || team != mc.player.getTeam()))
                         && (module.bool("bed-include-friends") || !TeamsModule.isFriend(player) || dye == own)) {
-                        int tint = PlayerDisplayNameParser.init_I(account, display, fallback);
+                        int tint = PlayerDisplayNameParser.displayColor(account, display, fallback);
                         String key = dye != null ? "color:" + dye.getName() : (team != null ? "team:" + team.getName() : "player:" + player.getUUID());
                         people.add(
                            new BedProximityTracker.Inner_StreamUtil(
@@ -196,8 +196,8 @@ final class BedProximityTracker {
    }
 
    static List<EspChunkWorker.EspBox> scanBeds(LevelChunk chunk, long time) {
-      return EspChunkWorker.load
-         .init(
+      return EspChunkWorker.beds
+         .scan(
             chunk,
             time,
             "beds",

@@ -1360,7 +1360,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.util.macro.CraftAction action = new autismclient.util.macro.CraftAction();
-      action.init(activeEntries);
+      action.setEntries(activeEntries);
       return action;
    }
 
@@ -2035,7 +2035,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
             if (this.action == AutismFabricatorOverlay.FabricatorAction.DROP && !queue) {
                int queuedCount = AutismSessionState.getInstance().flushDelayedPackets(handler);
-               int sent = InventoryDropHelper.init(MINECRAFT, slot, this.dropWholeStack ? 0 : repeats);
+               int sent = InventoryDropHelper.dropFromHandler(MINECRAFT, slot, this.dropWholeStack ? 0 : repeats);
                if (sent <= 0) {
                   this.showStatus("Nothing to drop", ChatFormatting.YELLOW);
                } else if (queuedCount > 0) {
@@ -2468,7 +2468,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (this.action.isPacket()) {
          return packet;
       } else {
-         return packet instanceof ServerboundContainerClickPacket clickSlotPacket ? PacketRegenerator.init(clickSlotPacket) : packet;
+         return packet instanceof ServerboundContainerClickPacket clickSlotPacket ? PacketRegenerator.regenerate(clickSlotPacket) : packet;
       }
    }
 

@@ -35,7 +35,7 @@ public final class LegacyMultiCheck {
       check(MacroExecutor.suppressLegacyMultiSteps(running.actions), "run reports a legacy block");
       check(running.actions.size() == saved.actions.size(), "run keeps physical indices");
       check(!running.actions.get(1).isEnabled(), "covered action is disabled");
-      check(!running.actions.get(2).isEnabled() && !JoinAction.init(running.actions, 0, false), "covered actions cannot affect Join lookahead");
+      check(!running.actions.get(2).isEnabled() && !JoinAction.hasJoinAhead(running.actions, 0, false), "covered actions cannot affect Join lookahead");
       check(running.actions.get(3) instanceof RaceAction && running.actions.get(4) instanceof DelayAction, "scope stops at the next block and preserves its rows");
       check(before.equals(saved.toTag()), "preparing the run leaves saved macro data intact");
 

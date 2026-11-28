@@ -85,7 +85,7 @@ public final class IncomingProjectileScanner {
       ProjectileBallistics.ProjectileInfo info = shot.info();
       Vec3 velocity = ProjectileBallistics.init(owner.getYRot(), owner.getXRot(), shot);
       if (info.init_Z()) {
-         Vec3 inherited = ProjectileBallistics.init(owner);
+         Vec3 inherited = ProjectileBallistics.inheritedVelocity(owner);
          if (owner instanceof RemotePlayer && owner.tickCount > 1) {
             Vec3 observed = owner.position().subtract(new Vec3(owner.xOld, owner.yOld, owner.zOld));
             if (init(observed) && observed.lengthSqr() < 9.0) {

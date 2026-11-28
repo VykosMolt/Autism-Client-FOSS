@@ -295,7 +295,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       this.switchBackDelay = 0;
       this.lastSlotSwitchTick = -2147483648;
       this.harvestedCells.clear();
-      this.retryLimiter.init();
+      this.retryLimiter.clear();
       this.walkGoal = null;
       this.lastGoalSearchTick = -2147483648;
       this.rowEnd = null;
@@ -370,7 +370,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                this.wireRotationCache = null;
                this.settingsKey = null;
                this.harvestedCells.clear();
-               this.retryLimiter.init();
+               this.retryLimiter.clear();
                this.walkGoal = null;
                this.rowEnd = null;
                this.rowEndTick = -2147483648;
@@ -419,7 +419,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   if (this.bool("movement")) {
                      this.poll_V_2();
                   } else {
-                     GridWalkNavigator.load();
+                     GridWalkNavigator.stop();
                      this.walkGoal = null;
                      this.requestRotation(graceGoal);
                   }
@@ -432,7 +432,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   this.switchBackDelay = 0;
                   boolean walkingThrough = this.bool("movement") && !this.load_Z && this.init_Z_RingBuffer_BufferH(target);
                   if (!walkingThrough) {
-                     GridWalkNavigator.load();
+                     GridWalkNavigator.stop();
                   }
 
                   this.walkGoal = null;
@@ -602,7 +602,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private void releaseControl() {
-      GridWalkNavigator.load();
+      GridWalkNavigator.stop();
       this.releaseMining();
       this.walkGoal = null;
       this.status = "";
@@ -773,7 +773,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
       }
 
-      AutoFarmModule.FarmTarget chosen = autismclient.util.FarmActionScheduler.init(
+      AutoFarmModule.FarmTarget chosen = autismclient.util.FarmActionScheduler.choose(
          options, sweep.yaw(), sweep.pitch(), MC.player.getInventory().getSelectedSlot(), previous
       );
       if (chosen == null) {
@@ -1115,7 +1115,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       Set<Block> blocks = new LinkedHashSet<>();
 
       for (String entry : this.list("crops")) {
-         Identifier identifier = Identifier.tryParse(RegistryIdValidator.init(entry));
+         Identifier identifier = Identifier.tryParse(RegistryIdValidator.normalize(entry));
          if (identifier != null) {
             BuiltInRegistries.BLOCK.getOptional(identifier).filter(autismclient.util.FarmCropCatalog::isCrop).ifPresent(blocks::add);
          }
@@ -1803,7 +1803,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          }
 
          this.init_V_Z_3(true);
-         if (!autismclient.util.SilentMiningCoordinator.init(this.id(), ray)) {
+         if (!autismclient.util.SilentMiningCoordinator.requestMining(this.id(), ray)) {
             return null;
          }
 
@@ -1887,7 +1887,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                   return null;
                }
 
-               if (!autismclient.util.SilentMiningCoordinator.init(this.id(), ray, hand)) {
+               if (!autismclient.util.SilentMiningCoordinator.requestMining(this.id(), ray, hand)) {
                   return null;
                }
 
@@ -2088,7 +2088,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (!autismclient.util.SilentMiningCoordinator.init(this.id(), ray, hand)) {
+      if (!autismclient.util.SilentMiningCoordinator.requestMining(this.id(), ray, hand)) {
          return null;
       }
 
@@ -2144,7 +2144,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (!autismclient.util.SilentMiningCoordinator.init(this.id(), ray, hand)) {
+      if (!autismclient.util.SilentMiningCoordinator.requestMining(this.id(), ray, hand)) {
          return null;
       }
 
@@ -2183,7 +2183,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private void init_V_BlockPos_2(BlockPos pos, Block crop, int tick) {
       this.forgetNearbyActions(pos);
       if ((this.bool("replant") || this.bool("plant")) && autismclient.util.FarmCropCatalog.seedFor(crop) != null && this.harvestedCells.get(pos.asLong()) == null) {
-         this.harvestedCells.init(pos.asLong(), new AutoFarmModule.HarvestedCell(pos.immutable(), crop, tick, AiServerEvidence.blockRevision(pos), false));
+         this.harvestedCells.put(pos.asLong(), new AutoFarmModule.HarvestedCell(pos.immutable(), crop, tick, AiServerEvidence.blockRevision(pos), false));
       }
    }
 
@@ -2191,7 +2191,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       int now = AutismSessionState.getInstance().getClientTick();
       ClientPacketListener connection = MC.getConnection();
       PlayerInfo info = connection == null ? null : connection.getPlayerInfo(MC.player.getUUID());
-      if (entry.init_Z() && !autismclient.util.BlockBreakGraceCalc.init(now, entry.tick(), info == null ? 0 : info.getLatency())) {
+      if (entry.init_Z() && !autismclient.util.BlockBreakGraceCalc.inGrace(now, entry.tick(), info == null ? 0 : info.getLatency())) {
          AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(entry.pos());
          return update == null || update.revision() <= entry.revision() || !update.state().isAir();
       } else {
@@ -2223,7 +2223,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
                   AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(pos);
                   if (!entry.init_Z() && update != null && update.revision() > entry.revision() && update.state().isAir()) {
-                     this.harvestedCells.init(pos.asLong(), new AutoFarmModule.HarvestedCell(pos, entry.block(), tick, entry.revision(), true));
+                     this.harvestedCells.put(pos.asLong(), new AutoFarmModule.HarvestedCell(pos, entry.block(), tick, entry.revision(), true));
                   }
 
                   return !this.canPlantOn(entry.block(), MC.level.getBlockState(pos.below()), pos.getX(), pos.getY(), pos.getZ());
@@ -2503,17 +2503,17 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       }
 
       if (goal == null) {
-         GridWalkNavigator.load();
+         GridWalkNavigator.stop();
          this.requestRotation(null);
       } else if (!GridWalkNavigator.read(goal)) {
          if (GridWalkNavigator.load(goal)) {
             this.walkGoal = null;
-            GridWalkNavigator.load();
+            GridWalkNavigator.stop();
             this.nextActionTick = tick + 2 + this.random.nextInt(3);
             this.lastGoalSearchTick = tick - 20;
             this.requestRotation(null);
          } else {
-            GridWalkNavigator.load();
+            GridWalkNavigator.stop();
             GridWalkNavigator.init_V_BlockPos_I(goal, 200);
             this.walkGoal = null;
             this.lastGoalSearchTick = tick - 20;
@@ -2539,10 +2539,10 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       } else {
          this.read_BlockPos = null;
          if (GridWalkNavigator.load(goal)) {
-            GridWalkNavigator.load();
+            GridWalkNavigator.stop();
             return false;
          } else {
-            GridWalkNavigator.load();
+            GridWalkNavigator.stop();
             GridWalkNavigator.init_V_BlockPos_I(goal, 200);
             this.queue = tick - 20;
             return false;

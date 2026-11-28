@@ -101,7 +101,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init(WaitForBlockAction action) {
+   public static CompletableFuture<Void> waitForBlock(WaitForBlockAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitBlockEntry condition = new MacroWaitRegistry.WaitBlockEntry(action, future);
       PENDING_WAITS.add(condition);
@@ -131,7 +131,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init(double x, double y, double z, double leeway, boolean checkRotation, float yaw, float pitch, float rotLeeway) {
+   public static CompletableFuture<Void> waitForPosition(double x, double y, double z, double leeway, boolean checkRotation, float yaw, float pitch, float rotLeeway) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitPosEntry condition = new MacroWaitRegistry.WaitPosEntry(x, y, z, leeway, checkRotation, yaw, pitch, rotLeeway, future);
       PENDING_WAITS.add(condition);
@@ -145,10 +145,10 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> awaitAnyWorldChange() {
-      return init(new WaitForWorldChangeAction());
+      return waitForWorldChange(new WaitForWorldChangeAction());
    }
 
-   public static CompletableFuture<Void> init(WaitForWorldChangeAction action) {
+   public static CompletableFuture<Void> waitForWorldChange(WaitForWorldChangeAction action) {
       Minecraft mc = Minecraft.getInstance();
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitWorldChangeEntry condition = new MacroWaitRegistry.WaitWorldChangeEntry(currentDimensionId(mc), action == null ? "" : action.targetDimension, future);
@@ -156,7 +156,7 @@ public class MacroWaitRegistry {
       return future;
    }
 
-   public static CompletableFuture<Void> init(WaitGamemodeChangeAction action) {
+   public static CompletableFuture<Void> waitForGamemode(WaitGamemodeChangeAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitGamemodeEntry condition = new MacroWaitRegistry.WaitGamemodeEntry(action, autismclient.util.FakeGamemodeManager.snapshot(), future);
       PENDING_WAITS.add(condition);
@@ -254,7 +254,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static void load(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       if (!PENDING_WAITS.isEmpty()) {
          List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (PENDING_WAITS) {
@@ -404,7 +404,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static CompletableFuture<Void> init(AddonCondition condition) {
+   public static CompletableFuture<Void> waitForAddonCondition(AddonCondition condition) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       if (condition == null) {
          future.complete(null);
@@ -426,7 +426,7 @@ public class MacroWaitRegistry {
       lastWorldChangeNanos = System.nanoTime();
    }
 
-   public static void write() {
+   public static void markWrite() {
       unusedLastWriteNanos = System.nanoTime();
    }
 
@@ -482,10 +482,10 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> waitForContainerItem(String itemName) {
-      return load(MacroItemTarget.parse(itemName));
+      return itemWait(MacroItemTarget.parse(itemName));
    }
 
-   public static CompletableFuture<Void> load(MacroItemTarget target) {
+   public static CompletableFuture<Void> itemWait(MacroItemTarget target) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitContainerItemEntry condition = new MacroWaitRegistry.WaitContainerItemEntry(target, future);
       PENDING_WAITS.add(condition);
@@ -499,16 +499,16 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> awaitSlotNumberChange(int slotNumber) {
-      return init(new WaitForSlotChangeAction(slotNumber));
+      return waitForSlotChange(new WaitForSlotChangeAction(slotNumber));
    }
 
-   public static CompletableFuture<Void> init(WaitForSoundAction action) {
+   public static CompletableFuture<Void> waitForSound(WaitForSoundAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       PENDING_WAITS.add(new MacroWaitRegistry.WaitSoundEntry(action, future));
       return future;
    }
 
-   public static void init(String soundId, double x, double y, double z) {
+   public static void onSound(String soundId, double x, double y, double z) {
       if (!PENDING_WAITS.isEmpty()) {
          Minecraft mc = Minecraft.getInstance();
          List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
@@ -517,7 +517,7 @@ public class MacroWaitRegistry {
                if (cond.isWaitCancelled()) {
                   toRemove.add(cond);
                } else if (cond instanceof MacroWaitRegistry.WaitSoundEntry sc && sc.matchesSound(mc, soundId, x, y, z)) {
-                  sc.action.init(soundId, x, y, z);
+                  sc.action.recordMatch(soundId, x, y, z);
                   sc.completeWait();
                   toRemove.add(sc);
                }
@@ -528,7 +528,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static CompletableFuture<Void> init(WaitForSlotChangeAction action) {
+   public static CompletableFuture<Void> waitForSlotChange(WaitForSlotChangeAction action) {
       Minecraft mc = Minecraft.getInstance();
       Map<Integer, String> initialNames = new HashMap<>();
       Map<Integer, Integer> initialCounts = new HashMap<>();
@@ -574,7 +574,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   public static CompletableFuture<Void> init(WaitForLanStepAction action) {
+   public static CompletableFuture<Void> waitForLanStep(WaitForLanStepAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitLanStepEntry cond = new MacroWaitRegistry.WaitLanStepEntry(action, future);
       if (cond.isLanStepReached()) {
@@ -1010,9 +1010,9 @@ public class MacroWaitRegistry {
       @Override
       public boolean isWaitSatisfied(Minecraft mc) {
          autismclient.util.FakeGamemodeManager.GamemodeSnapshot now = autismclient.util.FakeGamemodeManager.snapshot();
-         return now.realRevision() > this.baseline.realRevision() && this.action.init(this.normalizeMode(now.realMode()))
+         return now.realRevision() > this.baseline.realRevision() && this.action.matches(this.normalizeMode(now.realMode()))
             ? true
-            : this.action.detectFake && now.fakeRevision() > this.baseline.fakeRevision() && this.action.init(this.normalizeMode(now.displayedMode()));
+            : this.action.detectFake && now.fakeRevision() > this.baseline.fakeRevision() && this.action.matches(this.normalizeMode(now.displayedMode()));
       }
 
       private GameType normalizeMode(GameType mode) {
@@ -1261,7 +1261,7 @@ public class MacroWaitRegistry {
             return false;
          }
 
-         if (!this.titleLower.isEmpty() && !GuiScreenMatcher.init(screen, this.title)) {
+         if (!this.titleLower.isEmpty() && !GuiScreenMatcher.matchesTitle(screen, this.title)) {
             return false;
          }
 
@@ -1310,7 +1310,7 @@ public class MacroWaitRegistry {
       @Override
       public boolean isWaitSatisfied(Minecraft mc) {
          Screen screen = mc.gui.screen();
-         if (screen != null && !this.titleLower.isEmpty() && GuiScreenMatcher.init(screen, this.titleLower)) {
+         if (screen != null && !this.titleLower.isEmpty() && GuiScreenMatcher.matchesTitle(screen, this.titleLower)) {
             this.satisfied = true;
             return false;
          }
@@ -1857,7 +1857,7 @@ public class MacroWaitRegistry {
             return false;
          }
 
-         long optimalTime = ServerTickPhaseTracker.init(this.bufferMs, this.ignorePing);
+         long optimalTime = ServerTickPhaseTracker.optimalSendTime(this.bufferMs, this.ignorePing);
          return now >= optimalTime;
       }
 

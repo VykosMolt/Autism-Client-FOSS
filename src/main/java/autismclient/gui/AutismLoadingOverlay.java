@@ -148,7 +148,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       int y = centerY - drawH / 2;
       int color = ARGB.white(alpha);
       graphics.blit(
-         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
+         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.recolored(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
       );
    }
 

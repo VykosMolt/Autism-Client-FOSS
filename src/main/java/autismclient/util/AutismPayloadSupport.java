@@ -131,7 +131,7 @@ public final class AutismPayloadSupport {
       String protocolPhase = packetSnapshot == null ? PACKET_PROTOCOL_PHASES.getOrDefault(packet, "") : packetSnapshot.load();
       int packetId = packetSnapshot == null ? -1 : packetSnapshot.packetId();
       if (packetId < 0) {
-         packetId = PacketWireCaptureStore.init(protocolPhase, direction, packet.type());
+         packetId = PacketWireCaptureStore.numericId(protocolPhase, direction, packet.type());
       }
 
       return new AutismPayloadSupport.PayloadEntry(
@@ -158,7 +158,7 @@ public final class AutismPayloadSupport {
          if (packetId != null && packetId >= 0 && index[0] < frame.length) {
             boolean c2s = direction != null && direction.equalsIgnoreCase("C2S");
             boolean s2c = direction != null && direction.equalsIgnoreCase("S2C");
-            int expectedId = PacketWireCaptureStore.init(
+            int expectedId = PacketWireCaptureStore.numericId(
                protocolPhase, direction, c2s ? CommonPacketTypes.SERVERBOUND_CUSTOM_PAYLOAD : CommonPacketTypes.CLIENTBOUND_CUSTOM_PAYLOAD
             );
             if (expectedId >= 0 && packetId != expectedId) {
@@ -773,7 +773,7 @@ public final class AutismPayloadSupport {
       action.payloadData = toHexString(snapshot.rawBytes());
       action.payloadClassName = "";
       CustomPacketPayload payload = entry != null && entry.packet != null ? extractPayload(entry.packet) : null;
-      action.payloadJson = PayloadJsonCodec.init(
+      action.payloadJson = PayloadJsonCodec.encode(
          snapshot.direction(),
          action.channel,
          payload == null ? new AutismPayloadSupport.RawCustomPacketPayload(parseChannelId(action.channel), snapshot.rawBytes()) : payload

@@ -55,7 +55,7 @@ final class AiGameplay {
    private AiGameplay() {
    }
 
-   static JsonObject init() {
+   static JsonObject readMenu() {
       CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.snapshot();
       if (current == null) {
          return AiJson.objectOf("available", false);
@@ -102,7 +102,7 @@ final class AiGameplay {
       );
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation submitMenu(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.snapshot();
       long generation = args.has("generation") && !args.get("generation").isJsonNull() ? args.get("generation").getAsLong() : -9223372036854775808L;
@@ -174,14 +174,14 @@ final class AiGameplay {
             mc.getConnection().send(packet);
          }
 
-         autismclient.util.custommenu.CustomMenuTracker.init(current, response.replacement());
+         autismclient.util.custommenu.CustomMenuTracker.replace(current, response.replacement());
          if (mc.gui.screen() instanceof DialogScreen<?> screen) {
             screen.runAction(Optional.ofNullable(response.clientAction()));
          }
 
          return expected != null
             ? expected
-            : AiGameOperations.immediate(AiOperation.Status.UNCERTAIN, "Form submitted once; verify the server response before another submission", init());
+            : AiGameOperations.immediate(AiOperation.Status.UNCERTAIN, "Form submitted once; verify the server response before another submission", readMenu());
       } else {
          throw new IllegalArgumentException("Stale custom menu; inspect game:menu again");
       }
@@ -217,7 +217,7 @@ final class AiGameplay {
                editable.pages().stream().skip(offset).limit(8L).forEach(page -> pages.add(truncate(page.raw())));
             }
 
-            JsonObject dump = AiWorldReaders.init(item, offset / 8);
+            JsonObject dump = AiWorldReaders.dump(item, offset / 8);
             int dumpPage = dump.has("page") ? dump.get("page").getAsInt() : 0;
             int dumpPages = dump.has("pages") ? dump.get("pages").getAsInt() : 1;
             dump.remove("page");
@@ -266,7 +266,7 @@ final class AiGameplay {
       }
    }
 
-   static AiOperation load_AiOperation(JsonObject args) {
+   static AiOperation interactEntity(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final Entity entity = mc.level.getEntity(AiJson.getInt(args, "entityId", -1));
@@ -510,9 +510,9 @@ final class AiGameplay {
                   this.mineOp = autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "blocks",
-                        autismclient.ai.engine.AiBlockMine.init(ids),
+                        autismclient.ai.engine.AiBlockMine.jsonArray(ids),
                         "drops",
-                        autismclient.ai.engine.AiBlockMine.init(ids),
+                        autismclient.ai.engine.AiBlockMine.jsonArray(ids),
                         "held",
                         target,
                         "dropsOnly",
@@ -601,7 +601,7 @@ final class AiGameplay {
       return new AiGameplay.CapacityPreparation(
          () -> !beforeBreak && !matchingDropNearby(ids) || dropEntityObserved(ids),
          () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && ensureInventoryMenu(mc),
-         () -> AiTidy.init(
+         () -> AiTidy.create(
             AiJson.objectOf(
                "action",
                "drop",
@@ -610,7 +610,7 @@ final class AiGameplay {
                "maxDrops",
                2,
                "keep",
-               autismclient.ai.engine.AiBlockMine.init(ids),
+               autismclient.ai.engine.AiBlockMine.jsonArray(ids),
                "timeoutSeconds",
                Math.min(30, Math.max(5, seconds))
             )
@@ -660,7 +660,7 @@ final class AiGameplay {
                && drop.distanceToSqr(mc.player) <= 4096.0
                && ids.contains(BuiltInRegistries.ITEM.getKey(drop.getItem().getItem()).toString())) {
                observed = true;
-               if (!autismclient.ai.engine.AiBlockMine.init(mc.player.getInventory(), drop.getItem())) {
+               if (!autismclient.ai.engine.AiBlockMine.canStore(mc.player.getInventory(), drop.getItem())) {
                   return false;
                }
             }
@@ -672,7 +672,7 @@ final class AiGameplay {
 
          for (String id : ids) {
             for (Item item : AiItems.resolveItem(id).items()) {
-               if (autismclient.ai.engine.AiBlockMine.init(mc.player.getInventory(), item.getDefaultInstance())) {
+               if (autismclient.ai.engine.AiBlockMine.canStore(mc.player.getInventory(), item.getDefaultInstance())) {
                   return true;
                }
             }
@@ -868,7 +868,7 @@ final class AiGameplay {
                                  int burn = Math.max(1, AiItems.fuelBurnTime(stack) / Math.max(1, AiJson.getInt(args, "fuelBurnDivisor", 1)));
                                  int left = Math.max(1, this.targetCount - AiGameState.countInventoryItem(output));
                                  int items = Math.max(1, Math.min(stack.getCount(), (left * this.cookTicksPerItem + burn - 1) / burn));
-                                 int spare = this.fuelFlexible ? AiSmelt.init(stack.getItem()) : Math.max(0, AiGameState.countMainInventoryItem(wanted) - AiRunResources.mandatoryReservedCount(stack.getItem()));
+                                 int spare = this.fuelFlexible ? AiSmelt.spareFuel(stack.getItem()) : Math.max(0, AiGameState.countMainInventoryItem(wanted) - AiRunResources.mandatoryReservedCount(stack.getItem()));
                                  if (spare <= 0) {
                                     return this.finish(AiOperation.Status.FAILED, "Fuel is reserved for the active survival run: " + wanted);
                                  }
@@ -930,9 +930,9 @@ final class AiGameplay {
             String availableFuelId() {
                Item inputItem = AiItems.resolveItem(input).items().iterator().next();
                int left = Math.max(1, this.targetCount - AiGameState.countInventoryItem(output));
-               Item available = AiSmelt.init(this.fuelPlan.selectedFuel(), inputItem, left);
+               Item available = AiSmelt.availableFuel(this.fuelPlan.selectedFuel(), inputItem, left);
                if (available == null) {
-                  available = AiSmelt.init("", inputItem, left);
+                  available = AiSmelt.availableFuel("", inputItem, left);
                }
 
                return available == null ? null : BuiltInRegistries.ITEM.getKey(available).toString();
@@ -1024,7 +1024,7 @@ final class AiGameplay {
       }
    }
 
-   static AiOperation sync(JsonObject args) {
+   static AiOperation find(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final String blockArg = AiJson.getString(args, "block", "").trim();
@@ -1174,7 +1174,7 @@ final class AiGameplay {
       return out;
    }
 
-   static AiOperation flush(JsonObject args) {
+   static AiOperation survey(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final Set<String> wanted = new HashSet<>();

@@ -46,7 +46,7 @@ final class SchematicDocument {
       return Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, size - 1)));
    }
 
-   static void init(long[] packed, int index, int bits, int id) {
+   static void pack(long[] packed, int index, int bits, int id) {
       long bit = (long)index * bits;
       int word = (int)(bit >>> 6);
       int shift = (int)(bit & 63L);
@@ -168,7 +168,7 @@ final class SchematicDocument {
       for (SchematicDocument.Region r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
-               init();
+               checkInterrupted();
                progress.accept((int)(100L * done / Math.max(1L, this.volume)));
             }
 
@@ -201,7 +201,7 @@ final class SchematicDocument {
       for (SchematicDocument.Region r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
-               init();
+               checkInterrupted();
                progress.accept((int)(100L * done / Math.max(1L, this.volume)));
             }
 
@@ -214,7 +214,7 @@ final class SchematicDocument {
                int x = r.originX + rest % r.write;
                if (this.regionAt(x, y, z) == r) {
                   count++;
-                  BlockPos at = this.init(x, y, z, rotation, mirror);
+                  BlockPos at = this.transform(x, y, z, rotation, mirror);
                   minX = Math.min(minX, at.getX());
                   minY = Math.min(minY, at.getY());
                   minZ = Math.min(minZ, at.getZ());
@@ -257,7 +257,7 @@ final class SchematicDocument {
       return rotation % 180 == 0 ? this.sizeZ : this.sizeX;
    }
 
-   BlockPos init(int x, int y, int z, int rotation, String mirror) {
+   BlockPos transform(int x, int y, int z, int rotation, String mirror) {
       if (mirror.equals("x")) {
          x = this.sizeX - 1 - x;
       } else if (mirror.equals("z")) {
@@ -353,7 +353,7 @@ final class SchematicDocument {
       return property.getName(state.getValue(property));
    }
 
-   static void init() {
+   static void checkInterrupted() {
       if (Thread.currentThread().isInterrupted()) {
          throw new CancellationException();
       }
@@ -409,7 +409,7 @@ final class SchematicDocument {
          ArrayList<SchematicDocument.EntityData> entities = new ArrayList<>();
 
          for (String name : data.keySet()) {
-            init();
+            checkInterrupted();
             CompoundTag r = data.getCompoundOrEmpty(name);
             CompoundTag p = r.getCompoundOrEmpty("Position");
             CompoundTag s = r.getCompoundOrEmpty("Size");
@@ -504,7 +504,7 @@ final class SchematicDocument {
                label82:
                while (i < volume) {
                   if ((i & 4095) == 0) {
-                     init();
+                     checkInterrupted();
                   }
 
                   int value = 0;
@@ -522,7 +522,7 @@ final class SchematicDocument {
                            throw new IllegalArgumentException("Unknown Sponge palette index " + value);
                         }
 
-                        init(packed, i, bits, mapped);
+                        pack(packed, i, bits, mapped);
                         i++;
                         continue label82;
                      }

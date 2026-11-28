@@ -103,7 +103,7 @@ public final class AiLanSync {
       }
    }
 
-   public static JsonObject init(JsonObject args) {
+   public static JsonObject status(JsonObject args) {
       autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.getInstance();
       JsonObject out = new JsonObject();
       out.addProperty("running", lan.isRunning());
@@ -161,7 +161,7 @@ public final class AiLanSync {
       return out;
    }
 
-   public static JsonObject load(JsonObject args) {
+   public static JsonObject control(JsonObject args) {
       String action = AiJson.getString(args, "action", "");
       runAction(action, args);
       autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.getInstance();
@@ -305,7 +305,7 @@ public final class AiLanSync {
             throw new IllegalArgumentException("Unknown LAN action '" + action + "'");
       }
 
-      JsonObject out = init(new JsonObject());
+      JsonObject out = status(new JsonObject());
       out.addProperty("action", action);
       out.addProperty("dispatched", true);
       return out;
@@ -364,10 +364,10 @@ public final class AiLanSync {
    }
 
    private static boolean peerHasMacro(autismclient.util.LanSyncManager lan, String peer, String macro) {
-      String key = MacroNameNormalizer.init(macro);
+      String key = MacroNameNormalizer.normalize(macro);
 
       for (String remote : lan.getPeerMacroNames(peer)) {
-         if (MacroNameNormalizer.init(remote).equals(key)) {
+         if (MacroNameNormalizer.normalize(remote).equals(key)) {
             return true;
          }
       }

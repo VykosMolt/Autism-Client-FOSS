@@ -104,7 +104,7 @@ final class AiRecover {
                         this.atGrave = true;
                         return this.running("Already at the grave; sweeping drops");
                      } else {
-                        this.child = AiTravelFar.init(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.secondsLeft()));
+                        this.child = AiTravelFar.travel(death.position(), 1.5, true, allowDig, true, true, Math.min(240, this.secondsLeft()));
                         return this.running(
                            "Travelling to the grave at "
                               + death.position().toShortString()

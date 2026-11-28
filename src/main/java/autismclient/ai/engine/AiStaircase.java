@@ -197,7 +197,7 @@ public final class AiStaircase {
       return out;
    }
 
-   public static List<BlockPos> read(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
+   public static List<BlockPos> planStairs(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
       List<BlockPos> down = planSteps(start, target, maxSteps, blocked, noFloor);
       if (!down.isEmpty()) {
          return down;
@@ -373,7 +373,7 @@ public final class AiStaircase {
       };
    }
 
-   public static Predicate<BlockPos> init(Level level, Predicate<BlockState> keep) {
+   public static Predicate<BlockPos> protectedCells(Level level, Predicate<BlockState> keep) {
       return cell -> {
          BlockState state = level.getBlockState(cell);
          if (!state.isAir() && init(level, cell)) {
@@ -405,11 +405,11 @@ public final class AiStaircase {
       return false;
    }
 
-   public static Predicate<BlockPos> init(Level level) {
+   public static Predicate<BlockPos> noFloor(Level level) {
       return cell -> level.getBlockState(cell).getCollisionShape(level, cell).isEmpty() || !level.getFluidState(cell).isEmpty();
    }
 
-   public static Predicate<BlockState> init(String family) {
+   public static Predicate<BlockState> matchesFamily(String family) {
       return state -> AiMine.init(family, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
    }
 
@@ -428,18 +428,18 @@ public final class AiStaircase {
       }, usable);
    }
 
-   public static BlockPos load(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
+   public static BlockPos findTarget(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
       return init_BlockPos_Level_2(
-         level, from, radius, matches, p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.init(level, from, p), usable
+         level, from, radius, matches, p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.travelCost(level, from, p), usable
       );
    }
 
-   public static BlockPos init(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable, int batch) {
+   public static BlockPos findBatchTarget(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable, int batch) {
       if (batch <= 1) {
-         return load(level, from, radius, minDrop, matches, usable);
+         return findTarget(level, from, radius, minDrop, matches, usable);
       }
 
-      BlockPos first = load(level, from, radius, minDrop, matches, usable);
+      BlockPos first = findTarget(level, from, radius, minDrop, matches, usable);
       if (first == null) {
          return null;
       }
@@ -455,7 +455,7 @@ public final class AiStaircase {
          from,
          radius,
          matches,
-         p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.init(level, from, p),
+         p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.travelCost(level, from, p),
          p -> usable.test(p) && init_Z_BlockPos(p, batch, usableOre)
       );
       if (complete == null) {
@@ -471,11 +471,11 @@ public final class AiStaircase {
          from,
          radius,
          matches,
-         p -> AiBlockMine.init(level, first, p),
+         p -> AiBlockMine.travelCost(level, first, p),
          p -> usable.test(p) && init(first, p) && init_Z_BlockPos(p, missing, cell -> init(first, cell) && usableOre.test(cell))
       );
       return remainder != null
-            && !init_Z_D(AiBlockMine.init(level, from, complete), AiBlockMine.init(level, from, first), AiBlockMine.init(level, first, remainder))
+            && !init_Z_D(AiBlockMine.travelCost(level, from, complete), AiBlockMine.travelCost(level, from, first), AiBlockMine.travelCost(level, first, remainder))
          ? first
          : complete;
    }
@@ -569,7 +569,7 @@ public final class AiStaircase {
       return best;
    }
 
-   public static AiOperation init(List<BlockPos> steps, int timeoutSeconds) {
+   public static AiOperation followStepsOperation(List<BlockPos> steps, int timeoutSeconds) {
       return followStepsOperation(steps, timeoutSeconds, () -> false);
    }
 

@@ -27,7 +27,7 @@ public final class MacroToolBridge {
       return b == null ? List.of() : List.copyOf(b.tools());
    }
 
-   public static List<String> load() {
+   public static List<String> waypointNames() {
       MacroToolBridge.ToolBackend b = bridge;
       return b == null ? List.of() : List.copyOf(b.load());
    }
@@ -113,7 +113,7 @@ public final class MacroToolBridge {
       return var10000;
    }
 
-   public static void init(long owner, boolean cancelled) {
+   public static void endSession(long owner, boolean cancelled) {
       MacroToolBridge.ToolSession session = SESSIONS.remove(owner);
       if (session != null && cancelled) {
          for (MacroToolBridge.ToolJob job : session.jobs.values()) {

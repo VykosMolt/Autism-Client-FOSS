@@ -55,7 +55,7 @@ final class AiViewState {
                this.workStartedMs = now;
             }
 
-            this.statusLine = AiUiKit.flattenSingleLine(this.isWorking() ? AiGoal.init(this.service.getStatusLine()) : this.service.getStatusLine());
+            this.statusLine = AiUiKit.flattenSingleLine(this.isWorking() ? AiGoal.statusLine(this.service.getStatusLine()) : this.service.getStatusLine());
             this.activeSessionTitle = this.service.getActiveSessionTitle();
             this.activeSessionId = this.service.getActiveSessionId();
             this.objective = this.service.getObjective();

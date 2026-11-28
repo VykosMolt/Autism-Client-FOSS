@@ -75,7 +75,7 @@ public final class PvpHoleScanner {
       }
    }
 
-   public static void load() {
+   public static void tick() {
       tickScan();
    }
 

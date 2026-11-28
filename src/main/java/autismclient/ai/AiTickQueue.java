@@ -9,12 +9,12 @@ final class AiTickQueue {
    private final ConcurrentLinkedQueue<Runnable> pending = new ConcurrentLinkedQueue<>();
    private volatile Thread drainThread;
 
-   boolean init() {
+   boolean isOnTickThread() {
       return this.drainThread == Thread.currentThread();
    }
 
    void execute(Runnable action) {
-      if (this.init()) {
+      if (this.isOnTickThread()) {
          action.run();
       } else {
          this.pending.add(action);
@@ -35,7 +35,7 @@ final class AiTickQueue {
       return result;
    }
 
-   void init(Runnable tick, Consumer<Throwable> failure) {
+   void runPhase(Runnable tick, Consumer<Throwable> failure) {
       if (this.drainThread != null) {
          throw new IllegalStateException("AI tick phase is already running");
       }

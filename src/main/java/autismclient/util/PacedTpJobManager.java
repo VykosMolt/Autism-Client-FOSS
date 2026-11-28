@@ -61,7 +61,7 @@ public final class PacedTpJobManager {
    public static void init(String reason) {
       autismclient.util.g.PkgCls_a.init_V_Str(reason);
 
-      for (long id : init_dc.load()) {
+      for (long id : init_dc.pendingIds()) {
          init_dc.init(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
    }

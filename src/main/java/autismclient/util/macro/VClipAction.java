@@ -191,7 +191,7 @@ public class VClipAction implements MacroAction {
       Vec3 from = new Vec3(x, y, z);
       Vec3 target = new Vec3(x, targetY, z);
 
-      for (ClipCollisionHelper.ClipStep step : ClipCollisionHelper.init(from, target, true)) {
+      for (ClipCollisionHelper.ClipStep step : ClipCollisionHelper.steps(from, target, true)) {
          init(mc, new Pos(step.position(), step.onGround(), false));
          sent++;
       }

@@ -30,11 +30,11 @@ public final class EndPortalDisplayHelper {
       }
    }
 
-   public static String init(boolean hasTarget, boolean eyeDimension, boolean observing) {
+   public static String prompt(boolean hasTarget, boolean eyeDimension, boolean observing) {
       return !hasTarget && eyeDimension ? (observing ? "Reading Eye" : "Throw an Eye of Ender") : "";
    }
 
-   public static int init(int argb, int opacity) {
+   public static int withOpacity(int argb, int opacity) {
       int alpha = ((argb >>> 24) * Math.max(0, Math.min(255, opacity)) + 127) / 255;
       return alpha << 24 | argb & 16777215;
    }

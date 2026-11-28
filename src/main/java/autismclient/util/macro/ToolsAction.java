@@ -63,7 +63,7 @@ public final class ToolsAction implements MacroAction {
       return true;
    }
 
-   public boolean load() {
+   public boolean isNavigationTool() {
       return "game:goto".equals(this.toolId) || "game:navigate".equals(this.toolId);
    }
 
@@ -71,14 +71,14 @@ public final class ToolsAction implements MacroAction {
       JsonObject args = parseArgs(this.argumentsJson);
       resolveTemplates(args, mc);
       if (this.init()) {
-         if (this.load()) {
+         if (this.isNavigationTool()) {
             for (String key : new String[]{"x", "y", "z", "dx", "dy", "dz", "waypoint"}) {
                args.remove(key);
             }
          }
 
          if ("WAYPOINT".equals(this.destination)) {
-            if (!this.load()) {
+            if (!this.isNavigationTool()) {
                throw new IllegalArgumentException("This tool needs coordinates");
             }
 
@@ -107,7 +107,7 @@ public final class ToolsAction implements MacroAction {
                pz = pos.getZ();
             }
 
-            boolean relative = "OFFSET".equals(this.destination) && this.load();
+            boolean relative = "OFFSET".equals(this.destination) && this.isNavigationTool();
             args.addProperty(relative ? "dx" : "x", px);
             args.addProperty(relative ? "dy" : "y", py);
             args.addProperty(relative ? "dz" : "z", pz);

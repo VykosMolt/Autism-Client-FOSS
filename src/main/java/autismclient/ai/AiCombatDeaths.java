@@ -24,7 +24,7 @@ final class AiCombatDeaths {
       }
    }
 
-   void init(LivingEntity entity) {
+   void watch(LivingEntity entity) {
       this.track(entity.getUUID());
       if (this.counted.contains(entity.getUUID())) {
          this.tracked.put(entity.getUUID(), entity);
@@ -48,7 +48,7 @@ final class AiCombatDeaths {
       return false;
    }
 
-   void init(Minecraft mc) {
+   void sweep(Minecraft mc) {
       Iterator<Entry<UUID, LivingEntity>> iterator = this.tracked.entrySet().iterator();
 
       while (iterator.hasNext()) {

@@ -187,7 +187,7 @@ public class MacroLibraryManager {
       }
 
       for (AutismMacro macro : this.macros) {
-         if (macro != null && MacroNameNormalizer.init(macro.name, name)) {
+         if (macro != null && MacroNameNormalizer.sameName(macro.name, name)) {
             return macro;
          }
       }
@@ -274,7 +274,7 @@ public class MacroLibraryManager {
 
       for (AutismMacro macro : leaving) {
          if (macro != null && macro.name != null && (macro.folder == null || macro.folder.isEmpty())) {
-            keys.add(MacroNameNormalizer.init(macro.name));
+            keys.add(MacroNameNormalizer.normalize(macro.name));
          }
       }
 
@@ -347,7 +347,7 @@ public class MacroLibraryManager {
          if (insertBeforeName != null) {
             for (int i = 0; i < this.macros.size(); i++) {
                AutismMacro macro = this.macros.get(i);
-               if (macro != null && MacroNameNormalizer.init(macro.name, insertBeforeName)) {
+               if (macro != null && MacroNameNormalizer.sameName(macro.name, insertBeforeName)) {
                   index = i;
                   break;
                }
@@ -672,12 +672,12 @@ public class MacroLibraryManager {
             if (element instanceof CompoundTag macroTag) {
                try {
                   AutismMacro macro = new AutismMacro().fromTag(macroTag);
-                  Integer previous = (Integer)seen.get(MacroNameNormalizer.init(macro.name));
+                  Integer previous = (Integer)seen.get(MacroNameNormalizer.normalize(macro.name));
                   if (previous != null) {
                      AutismClientAddon.LOG.warn("Dropping macro '{}' shadowed by a name that differs only in case", ((AutismMacro)var12.get(previous)).name);
                      var12.set(previous, macro);
                   } else {
-                     seen.put(MacroNameNormalizer.init(macro.name), var12.size());
+                     seen.put(MacroNameNormalizer.normalize(macro.name), var12.size());
                      var12.add(macro);
                   }
                } catch (Throwable macroError) {

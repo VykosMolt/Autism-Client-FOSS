@@ -143,7 +143,7 @@ public final class PhaseModule extends Module {
       return false;
    }
 
-   public static VoxelShape init(VoxelShape original, BlockState state, BlockPos pos) {
+   public static VoxelShape collisionShape(VoxelShape original, BlockState state, BlockPos pos) {
       int mode = activeModeKind;
       if (mode == 0 || MC == null || !MC.isSameThread()) {
          return original;
@@ -369,7 +369,7 @@ public final class PhaseModule extends Module {
 
                player.noPhysics = true;
                if (player.isShiftKeyDown()) {
-                  player.setDeltaMovement(MovementModuleHooks.init(player, player.getDeltaMovement(), 0.179));
+                  player.setDeltaMovement(MovementModuleHooks.steerVelocity(player, player.getDeltaMovement(), 0.179));
                }
             }
          }

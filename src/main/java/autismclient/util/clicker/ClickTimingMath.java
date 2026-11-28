@@ -10,7 +10,7 @@ public final class ClickTimingMath {
    private ClickTimingMath() {
    }
 
-   public static long init(double cps) {
+   public static long intervalNanos(double cps) {
       if (cps > 0.0 && !Double.isInfinite(cps)) {
          return NANOS_PER_SECOND.divide(new BigDecimal(Double.toString(cps)), 0, RoundingMode.CEILING).longValueExact();
       } else {
@@ -18,20 +18,20 @@ public final class ClickTimingMath {
       }
    }
 
-   public static double init(ClickTechnique technique, double userUpper) {
+   public static double effectiveUpperCps(ClickTechnique technique, double userUpper) {
       double ceiling = Math.min(technique.load_D, 30.0);
       return Double.isFinite(userUpper) ? Math.min(userUpper, ceiling) : ceiling;
    }
 
-   public static double[] init(double lowCps, double highCps) {
+   public static double[] cpsToMs(double lowCps, double highCps) {
       return new double[]{1000.0 / highCps, 1000.0 / lowCps};
    }
 
-   public static double[] load(double fastMs, double slowMs) {
+   public static double[] msToCps(double fastMs, double slowMs) {
       return new double[]{1000.0 / slowMs, 1000.0 / fastMs};
    }
 
-   public static long load(double ms) {
+   public static long msToNanos(double ms) {
       return Math.round(ms * 1000000.0);
    }
 }

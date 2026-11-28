@@ -343,12 +343,12 @@ final class SchematicCapture {
    static Path init(Path folder, String name, List<SchematicCapture.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) throws IOException {
       Files.createDirectories(folder);
       CompoundTag root = init(chunks, trimAir, progress);
-      SchematicDocument.init();
+      SchematicDocument.checkInterrupted();
       Path temporary = Files.createTempFile(folder, ".capture-", ".tmp");
 
       try {
          NbtIo.writeCompressed(root, temporary);
-         SchematicDocument.init();
+         SchematicDocument.checkInterrupted();
          Path output = folder.resolve(name + ".litematic");
 
          for (int i = 2; Files.exists(output); i++) {
@@ -369,7 +369,7 @@ final class SchematicCapture {
    }
 
    private void read() {
-      SchematicDocument.init();
+      SchematicDocument.checkInterrupted();
       if (this.cancelled) {
          throw new CancellationException();
       }
@@ -382,7 +382,7 @@ final class SchematicCapture {
          int checked = 0;
 
          for (SchematicCapture.Inner_CachePool chunk : chunks) {
-            SchematicDocument.init();
+            SchematicDocument.checkInterrupted();
             SchematicCapture.Inner_StreamUtil chunkBounds = new SchematicCapture.Inner_StreamUtil();
             chunkBounds.init(chunk);
             chunkBounds.load(chunk);
@@ -438,7 +438,7 @@ final class SchematicCapture {
       int done = 0;
 
       for (Entry<SchematicCapture.Inner_CachePool, SchematicCapture.Inner_DataUtil> entry : areas.entrySet()) {
-         SchematicDocument.init();
+         SchematicDocument.checkInterrupted();
          SchematicCapture.Inner_CachePool chunk = entry.getKey();
          SchematicCapture.Inner_DataUtil a = entry.getValue();
          int w = a.max.getX() - a.min.getX() + 1;
@@ -452,7 +452,7 @@ final class SchematicCapture {
          ids.put(palette.get(0), 0);
 
          for (int y = 0; y < h; y++) {
-            SchematicDocument.init();
+            SchematicDocument.checkInterrupted();
             int worldY = a.min.getY() + y;
             PalettedContainer<BlockState> section = chunk.init_Map.get(worldY >> 4);
             if (section != null) {
@@ -538,7 +538,7 @@ final class SchematicCapture {
       long[] data = new long[(int)(((long)ids.length * bits + 63L) / 64L)];
 
       for (int i = 0; i < ids.length; i++) {
-         SchematicDocument.init(data, i, bits, ids[i]);
+         SchematicDocument.pack(data, i, bits, ids[i]);
       }
 
       return data;
@@ -677,7 +677,7 @@ final class SchematicCapture {
          int z1 = a.max.getZ();
 
          for (int sectionY : chunk.init_Map.keySet()) {
-            SchematicDocument.init();
+            SchematicDocument.checkInterrupted();
             PalettedContainer<BlockState> section = chunk.init_Map.get(sectionY);
             int bottom = sectionY << 4;
             int y0 = Math.max(bottom, a.min.getY());

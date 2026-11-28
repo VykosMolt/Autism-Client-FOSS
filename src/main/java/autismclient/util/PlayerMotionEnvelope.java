@@ -11,7 +11,7 @@ public final class PlayerMotionEnvelope {
    private PlayerMotionEnvelope() {
    }
 
-   public static AABB init(LocalPlayer player) {
+   public static AABB nextTickBox(LocalPlayer player) {
       double speed = Math.max(player.getSpeed(), player.getAttributeValue(Attributes.MOVEMENT_SPEED));
       if (!player.isSprinting()) {
          speed *= 1.3;

@@ -79,7 +79,7 @@ public final class AiBridgeDriver {
       }
    }
 
-   public static int[] init(double yaw) {
+   public static int[] cardinalStep(double yaw) {
       double x = -Math.sin(Math.toRadians(yaw));
       double z = Math.cos(Math.toRadians(yaw));
       return Math.abs(x) >= Math.abs(z) ? new int[]{(int)Math.signum(x), 0} : new int[]{0, (int)Math.signum(z)};
@@ -112,7 +112,7 @@ public final class AiBridgeDriver {
       this.liveWorld.clearCaches();
       AiBridger.Inner_DataUtil currentRot = new AiBridger.Inner_DataUtil(player.getYRot(), player.getXRot());
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
-      AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.init()
+      AiBridger.Inner_DataUtil wireRot = autismclient.ai.AiClientTick.isOnTickThread()
          ? (wire.initialized() ? new AiBridger.Inner_DataUtil(wire.currentYaw(), wire.currentPitch()) : null)
          : currentRot;
       AiBridger.Inner_StreamUtil cmd = this.bridger

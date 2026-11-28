@@ -107,7 +107,7 @@ final class AiGameState {
                      "maxDamage",
                      stack.getMaxDamage(),
                      "components",
-                     AiWorldReaders.init(stack)
+                     AiWorldReaders.summary(stack)
                   )
                );
             }
@@ -117,9 +117,9 @@ final class AiGameState {
          state.add("scoreboard", AiWorldReaders.scoreboard(mc));
          state.add("tabList", AiWorldReaders.tabList(mc));
          state.add("tabDecoration", AiWorldReaders.tabDecoration(mc));
-         state.add("bossBars", AiWorldReaders.read(mc));
+         state.add("bossBars", AiWorldReaders.bossBars(mc));
          state.add("vitals", AiWorldReaders.vitals(mc));
-         state.add("customMenu", AiGameplay.init());
+         state.add("customMenu", AiGameplay.readMenu());
          state.add("recentServerMessages", AiJson.GSON.toJsonTree(AiServerEvidence.recentServerMessages(6)));
          JsonArray chatLines = new JsonArray();
 
@@ -154,7 +154,7 @@ final class AiGameState {
                      "name",
                      stack.getHoverName().getString(),
                      "components",
-                     AiWorldReaders.init(stack)
+                     AiWorldReaders.summary(stack)
                   )
                );
             }
@@ -205,7 +205,7 @@ final class AiGameState {
          state.add("entities", entities);
          JsonArray projectiles = new JsonArray();
 
-         for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.init(mc)) {
+         for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.incoming(mc)) {
             if (projectiles.size() < 16) {
                projectiles.add(
                   AiJson.objectOf(

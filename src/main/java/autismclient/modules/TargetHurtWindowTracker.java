@@ -60,7 +60,7 @@ final class TargetHurtWindowTracker {
       }
    }
 
-   void init() {
+   void clear() {
       this.windows.clear();
       this.ringCount = this.ringIndex = 0;
    }

@@ -181,7 +181,7 @@ final class AuditBuilderShulkerStock {
    }
 
    private static AiCraftPlanner.CraftPlan plan(String item, int target) throws Exception {
-      return onClient(() -> AiCraftPlanner.init(AiCraft.buildRecipeGraph(), item, target));
+      return onClient(() -> AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), item, target));
    }
 
    private static int held(String item) throws Exception {

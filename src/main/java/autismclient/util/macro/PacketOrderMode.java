@@ -6,7 +6,7 @@ public enum PacketOrderMode {
    INSTANT,
    GRIM;
 
-   public static PacketOrderMode init(String raw, PacketOrderMode fallback) {
+   public static PacketOrderMode parse(String raw, PacketOrderMode fallback) {
       if (raw == null) {
          return fallback;
       }

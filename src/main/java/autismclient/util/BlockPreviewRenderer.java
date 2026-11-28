@@ -21,7 +21,7 @@ public final class BlockPreviewRenderer {
    private BlockPreviewRenderer() {
    }
 
-   public static void init() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
@@ -72,7 +72,7 @@ public final class BlockPreviewRenderer {
          );
    }
 
-   public static void init(BlockPos pos) {
+   public static void show(BlockPos pos) {
       previewPos = pos == null ? null : pos.immutable();
       previewShape = "Lines";
       lineColor = -50373;
@@ -86,21 +86,21 @@ public final class BlockPreviewRenderer {
       sideColor = side;
    }
 
-   public static void init(BlockPos pos, int color) {
+   public static void show(BlockPos pos, int color) {
       previewPos = pos == null ? null : pos.immutable();
       previewShape = "Lines";
       lineColor = color;
       sideColor = 0;
    }
 
-   public static void load(BlockPos pos) {
+   public static void clearIfAt(BlockPos pos) {
       BlockPos current = previewPos;
       if (current == null || pos == null || current.equals(pos)) {
          previewPos = null;
       }
    }
 
-   public static void load() {
+   public static void clear() {
       previewPos = null;
    }
 

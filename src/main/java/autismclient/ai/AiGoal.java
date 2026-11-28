@@ -18,7 +18,7 @@ public final class AiGoal {
    private AiGoal() {
    }
 
-   static void init(Object owner, int depth, String objective, String goal, String detail) {
+   static void set(Object owner, int depth, String objective, String goal, String detail) {
       long now = System.nanoTime();
       AiGoal.GoalEntry old = init_Map.get(owner);
       String g = update(goal);
@@ -32,7 +32,7 @@ public final class AiGoal {
       }
    }
 
-   static void init(Object owner) {
+   static void clear(Object owner) {
       if (init_Map.remove(owner) != null) {
          init(System.nanoTime());
       }
@@ -42,7 +42,7 @@ public final class AiGoal {
       return System.nanoTime() - read > 1500000000L ? AiTaskStatus.Inner_StreamUtil.EMPTY : init_cs_StreamUtil;
    }
 
-   static String init(String fallback) {
+   static String statusLine(String fallback) {
       AiTaskStatus.Inner_StreamUtil shown = init();
       return !shown.visible() ? fallback : shown.activity() + (shown.detail().isEmpty() ? "" : " (" + shown.detail() + ")");
    }
@@ -80,11 +80,11 @@ public final class AiGoal {
          String title = shallowest.objective.isEmpty() ? deepest.objective : shallowest.objective;
          init_cs_StreamUtil = new AiTaskStatus.Inner_StreamUtil(title.isEmpty() ? goal : title, goal, init_Str);
          read = now;
-         AiVisualization.init(init_Obj, init_cs_StreamUtil);
+         AiVisualization.showContent(init_Obj, init_cs_StreamUtil);
       }
    }
 
-   static String load(String phase) {
+   static String phaseLabel(String phase) {
       String var10000;
       switch (phase == null ? "" : phase) {
          case "WOOD":
@@ -124,7 +124,7 @@ public final class AiGoal {
       return var10000;
    }
 
-   static String read(String key) {
+   static String stepLabel(String key) {
       if (key != null && !key.isEmpty()) {
          int colon = key.indexOf(58);
          String kind = colon < 0 ? key : key.substring(0, colon);

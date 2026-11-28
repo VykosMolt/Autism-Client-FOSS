@@ -29,7 +29,7 @@ public class DelayPacketsAction implements MacroAction {
          % DelayPacketsAction.DelayMode.values().length];
    }
 
-   public void read() {
+   public void resetDefaults() {
       this.c2sPacketNames.clear();
       this.s2cPacketNames.clear();
       String[] defaultNames = new String[]{

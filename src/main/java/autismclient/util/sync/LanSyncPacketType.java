@@ -35,11 +35,11 @@ public enum LanSyncPacketType {
       this.init_I = id;
    }
 
-   public int init() {
+   public int id() {
       return this.init_I;
    }
 
-   public static LanSyncPacketType init(int id) {
+   public static LanSyncPacketType byId(int id) {
       for (LanSyncPacketType type : values()) {
          if (type.init_I == id) {
             return type;

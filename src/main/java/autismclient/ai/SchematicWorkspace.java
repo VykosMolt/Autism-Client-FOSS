@@ -682,7 +682,7 @@ public final class SchematicWorkspace {
                includeEntities = checkpoint.get("includeEntities").getAsBoolean();
             }
 
-            this.paste = SchematicPaste.init(
+            this.paste = SchematicPaste.create(
                this.mc,
                this.loaded.get(p.id()).document,
                origin(p),
@@ -840,7 +840,7 @@ public final class SchematicWorkspace {
          if (this.activeRecording != null) {
             this.activeRecording.putAt_V_Minecraft(this.mc);
             if (!this.activeRecording.readEx_Z && !this.activeRecording.fill_Z) {
-               AiVisualization.putAt(
+               AiVisualization.showDetail(
                   this.recordingVisOwner,
                   "Recording chunks",
                   this.activeRecording.putAt_Z ? this.activeRecording.putAt_Str : "",
@@ -871,7 +871,7 @@ public final class SchematicWorkspace {
          if (this.paste != null) {
             boolean terminal = this.paste.finished;
             SchematicPaste.PasteProgress progress = this.paste.progress;
-            AiVisualization.init(this.pasteVisualOwner, "Schematic paste", progress.phase(), progress.percent(), 100);
+            AiVisualization.showCount(this.pasteVisualOwner, "Schematic paste", progress.phase(), progress.percent(), 100);
             if (terminal || System.nanoTime() - this.load_J > 2000000000L) {
                SchematicLibrary.Placement p = this.placementsById.get(this.open);
                if (p != null) {
@@ -920,7 +920,7 @@ public final class SchematicWorkspace {
                SchematicLibrary.Placement p = this.placementsById.get(entry.getKey());
                SchematicWorkspace.Inner_StreamUtil data = entry.getValue();
                if (p != null && p.visible() && !p.id().equals(this.open) && data.preview != null && !data.preview.cells().isEmpty()) {
-                  AiVisualization.init(data.mover == null ? data : data.mover, now);
+                  AiVisualization.touch(data.mover == null ? data : data.mover, now);
                   if (oldest == null || data.lastUsedNanos < oldest.lastUsedNanos) {
                      oldest = data;
                      row = p;

@@ -9,7 +9,7 @@ public final class InventoryDropHelper {
    private InventoryDropHelper() {
    }
 
-   public static int init(Minecraft mc, int handlerSlotId, int count) {
+   public static int dropFromHandler(Minecraft mc, int handlerSlotId, int count) {
       if (autismclient.modules.aD.read_Z()) {
          return 0;
       }
@@ -45,14 +45,14 @@ public final class InventoryDropHelper {
       }
    }
 
-   public static int load(Minecraft mc, int inventorySlotId, int count) {
+   public static int dropFromInventory(Minecraft mc, int inventorySlotId, int count) {
       if (autismclient.modules.aD.read_Z()) {
          return 0;
       } else if (mc == null || mc.player == null) {
          return 0;
       } else if (inventorySlotId >= 0 && inventorySlotId < 36) {
          int handlerSlotId = InventorySlotHelper.toScreenSlot(mc, inventorySlotId);
-         return init(mc, handlerSlotId, count);
+         return dropFromHandler(mc, handlerSlotId, count);
       } else {
          return 0;
       }

@@ -76,16 +76,16 @@ public class WaitForGuiAction implements MacroAction {
       return allFound;
    }
 
-   public boolean init(Minecraft mc) {
-      return mc != null && this.init(mc.gui.screen()).isPresent();
+   public boolean matchesCurrent(Minecraft mc) {
+      return mc != null && this.capture(mc.gui.screen()).isPresent();
    }
 
-   public Optional<Map<String, MacroVarValue>> init(Screen screen) {
+   public Optional<Map<String, MacroVarValue>> capture(Screen screen) {
       if (screen == null) {
          return this.init();
       }
 
-      if (!GuiScreenMatcher.init(screen, this.guiType, "")) {
+      if (!GuiScreenMatcher.matches(screen, this.guiType, "")) {
          return Optional.empty();
       }
 
@@ -95,12 +95,12 @@ public class WaitForGuiAction implements MacroAction {
          if (!resolved.success()) {
             return Optional.empty();
          } else {
-            return !resolved.value().isBlank() && !GuiScreenMatcher.init(screen, this.guiType, resolved.value())
+            return !resolved.value().isBlank() && !GuiScreenMatcher.matches(screen, this.guiType, resolved.value())
                ? Optional.empty()
                : Optional.of(this.init(screen, title, Map.of()));
          }
       } else {
-         Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
+         Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.match(this.matchMode, this.guiTitle, title);
          return matched.isEmpty() ? Optional.empty() : Optional.of(this.init(screen, title, matched.get().variables()));
       }
    }
@@ -117,7 +117,7 @@ public class WaitForGuiAction implements MacroAction {
                return Optional.empty();
             }
          } else {
-            Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.init(this.matchMode, this.guiTitle, title);
+            Optional<PatternCaptureMatcher.CaptureResult> matched = PatternCaptureMatcher.match(this.matchMode, this.guiTitle, title);
             if (matched.isEmpty()) {
                return Optional.empty();
             }
@@ -190,7 +190,7 @@ public class WaitForGuiAction implements MacroAction {
       ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
-   public void init(CompoundTag tag) {
+   public void migrateFrom(CompoundTag tag) {
       this.fromTag(tag);
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.guiTitle = tag.getStringOr("title", tag.getStringOr("guiTitle", ""));

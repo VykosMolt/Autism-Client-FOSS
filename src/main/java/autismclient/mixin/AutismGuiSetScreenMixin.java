@@ -110,7 +110,7 @@ public class AutismGuiSetScreenMixin {
                } else if (aD.init_Z()) {
                   this.autism$setScreen(new StealthTitleScreen());
                   ci.cancel();
-               } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
+               } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.isEnabled()) {
                   this.autism$setScreen(new AutismTitleScreen());
                   ci.cancel();
                }

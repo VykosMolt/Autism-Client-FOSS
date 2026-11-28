@@ -28,11 +28,11 @@ public final class GifOverlayState {
       return s.enabled() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
    }
 
-   public static String init(String playerName) {
+   public static String capePath(String playerName) {
       return init(init, playerName, true);
    }
 
-   public static String load(String playerName) {
+   public static String shieldPath(String playerName) {
       return init(init, playerName, false);
    }
 

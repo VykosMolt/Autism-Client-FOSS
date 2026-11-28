@@ -32,7 +32,7 @@ public final class AiMiningPreparation {
    private AiMiningPreparation() {
    }
 
-   static boolean init(int blocks, double beforeTicks, double afterTicks, double setupTicks, int materialBlocks) {
+   static boolean worthPreparing(int blocks, double beforeTicks, double afterTicks, double setupTicks, int materialBlocks) {
       return blocks > materialBlocks && afterTicks < beforeTicks && (blocks - materialBlocks) * (beforeTicks - afterTicks) > setupTicks;
    }
 
@@ -226,7 +226,7 @@ public final class AiMiningPreparation {
 
                            double setup = 40 + (tableHeld ? 0 : 60) + cobble * before + (cobble > 0 ? 30 : 0) + woodTicks;
                            double saved = (blocks - cobble) * (before - after) - setup;
-                           if (init(blocks, before, after, setup, cobble) && saved > bestSaving) {
+                           if (worthPreparing(blocks, before, after, setup, cobble) && saved > bestSaving) {
                               bestSaving = saved;
                               chosen = tool;
                               chosenPlan = plan;
@@ -297,7 +297,7 @@ public final class AiMiningPreparation {
                               "block",
                               logId,
                               "drops",
-                              autismclient.ai.engine.AiBlockMine.init(List.of(logId)),
+                              autismclient.ai.engine.AiBlockMine.jsonArray(List.of(logId)),
                               "held",
                               AiCraft.countItem(logId) + logs,
                               "toolPrepared",
@@ -315,9 +315,9 @@ public final class AiMiningPreparation {
                         this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
                            AiJson.objectOf(
                               "blocks",
-                              autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
+                              autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:stone", "minecraft:cobblestone")),
                               "drops",
-                              autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:cobblestone")),
+                              autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:cobblestone")),
                               "held",
                               AiCraft.countItem("minecraft:cobblestone") + cobble,
                               "toolPrepared",
@@ -555,7 +555,7 @@ public final class AiMiningPreparation {
                   "block",
                   log,
                   "drops",
-                  autismclient.ai.engine.AiBlockMine.init(List.of(log)),
+                  autismclient.ai.engine.AiBlockMine.jsonArray(List.of(log)),
                   "held",
                   AiCraft.countItem(log) + extra,
                   "toolPrepared",
@@ -762,7 +762,7 @@ public final class AiMiningPreparation {
 
    static AiCraftPlanner.CraftPlan init(final AiCraftPlanner.RecipeGraph graph, final String tool, final boolean tableHeld, final String log, final int extraLogs) {
       String root = "autism:prepared_mining_tool";
-      return AiCraftPlanner.init(
+      return AiCraftPlanner.plan(
          new AiCraftPlanner.RecipeGraph() {
             @Override
             public List<AiCraftPlanner.RecipeSpec> recipesFor(String id) {

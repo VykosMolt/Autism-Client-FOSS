@@ -39,7 +39,7 @@ import net.minecraft.world.phys.Vec3;
 public class PacketRegenerator {
    private static final Map<Class<? extends Packet<?>>, PacketRegenerator.Regenerator<?>> init = new HashMap<>();
 
-   public static <T extends Packet<?>> T init(T original) {
+   public static <T extends Packet<?>> T regenerate(T original) {
       if (original == null) {
          return null;
       }

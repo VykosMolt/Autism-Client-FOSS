@@ -14,11 +14,11 @@ final class AiPlacementControls {
       return Math.max(0.5, Math.min(5.9999968E7, current + scroll));
    }
 
-   static Vec3 init(Vec3 eye, Vec3 direction, double distance) {
+   static Vec3 pointAlong(Vec3 eye, Vec3 direction, double distance) {
       return eye.add(direction.normalize().scale(distance));
    }
 
-   static double init(Vec3 eye, Vec3 direction, double y, double fallback) {
+   static double distanceToY(Vec3 eye, Vec3 direction, double y, double fallback) {
       double d = Math.abs(direction.y) > 1.0E-7 ? (y - eye.y) / direction.y : -1.0;
       return Double.isFinite(d) && d >= 0.5 && d <= 5.9999968E7 ? d : fallback;
    }

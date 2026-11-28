@@ -1454,7 +1454,7 @@ final class AiTools {
          "Waypoint exists in the scoped store."
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:packet_log",
             "autism",
             "protocol",
@@ -1491,7 +1491,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:packet_send",
             "autism",
             "protocol",
@@ -1515,7 +1515,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:packet_queue",
             "autism",
             "protocol",
@@ -1532,7 +1532,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:plugin_scan",
             "autism",
             "server-intel",
@@ -1549,7 +1549,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:plugin_scan_cached",
             "autism",
             "server-intel",
@@ -1566,7 +1566,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:lan",
             "autism",
             "lan",
@@ -1583,7 +1583,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:lan_control",
             "autism",
             "lan",
@@ -1625,7 +1625,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:screen",
             "autism",
             "screens",
@@ -1642,7 +1642,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:screen_click",
             "autism",
             "screens",
@@ -1659,7 +1659,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:screen_close",
             "autism",
             "screens",
@@ -1676,7 +1676,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:screen_store",
             "autism",
             "screens",
@@ -1693,7 +1693,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:macro_manage",
             "autism",
             "macros",
@@ -1711,7 +1711,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:macro_folders",
             "autism",
             "macros",
@@ -1728,7 +1728,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:profiles",
             "autism",
             "profiles",
@@ -1761,7 +1761,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:theme",
             "autism",
             "theme",
@@ -1781,7 +1781,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:packet_gui",
             "autism",
             "packets",
@@ -1798,7 +1798,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:packet_filter",
             "autism",
             "packets",
@@ -1815,7 +1815,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:waypoint_manage",
             "autism",
             "waypoints",
@@ -1850,7 +1850,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:proxies",
             "autism",
             "proxies",
@@ -1885,7 +1885,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:join_macro",
             "autism",
             "macros",
@@ -1905,7 +1905,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:server_info",
             "autism",
             "server-intel",
@@ -1922,7 +1922,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:hud",
             "autism",
             "hud",
@@ -1957,7 +1957,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:screen_type",
             "autism",
             "screens",
@@ -1976,7 +1976,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:connect",
             "autism",
             "screens",
@@ -1993,7 +1993,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:disconnect",
             "autism",
             "screens",
@@ -2010,7 +2010,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:eat",
             "autism",
             "survival",
@@ -2027,7 +2027,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:flee",
             "autism",
             "survival",
@@ -2119,7 +2119,7 @@ final class AiTools {
       );
       buildSchema.getAsJsonObject("properties").add("clearTerrain", JsonParser.parseString("{\"type\":\"boolean\"}"));
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:build",
             "autism",
             "building",
@@ -2147,7 +2147,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:telly",
             "autism",
             "movement",
@@ -2180,7 +2180,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:scaffold",
             "autism",
             "movement",
@@ -2223,7 +2223,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:dodge",
             "autism",
             "survival",
@@ -2241,7 +2241,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:danger",
             "autism",
             "survival",
@@ -2258,7 +2258,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:mlg",
             "autism",
             "survival",
@@ -2276,7 +2276,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:chop",
             "autism",
             "gathering",
@@ -2293,7 +2293,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:command",
             "autism",
             "server-chat",
@@ -2316,7 +2316,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:enchant_table",
             "autism",
             "enchanting",
@@ -2333,7 +2333,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:enchant",
             "autism",
             "enchanting",
@@ -2350,7 +2350,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:oracle",
             "autism",
             "oracle",
@@ -2368,7 +2368,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:addon",
             "autism",
             "addons",
@@ -2391,7 +2391,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:world_create",
             "autism",
             "screens",
@@ -2432,7 +2432,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:world_list",
             "autism",
             "screens",
@@ -2449,7 +2449,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "client:world_delete",
             "autism",
             "screens",
@@ -2466,7 +2466,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:collect",
             "autism",
             "gathering",
@@ -2571,7 +2571,7 @@ final class AiTools {
             )
          );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:goto",
             "autism",
             "navigation",
@@ -2588,7 +2588,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:find_biome",
             "autism",
             "oracle",
@@ -2609,7 +2609,7 @@ final class AiTools {
          )
       );
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             "game:mine",
             "autism",
             "gathering",
@@ -2684,7 +2684,7 @@ final class AiTools {
       }
 
       out.add(
-         AiCatalog.init(
+         AiCatalog.descriptor(
             id,
             "autism",
             family,
@@ -2752,7 +2752,7 @@ final class AiTools {
    }
 
    void reset() {
-      this.retryGuard.init();
+      this.retryGuard.reset();
       this.dispatchCounts.clear();
    }
 
@@ -2924,9 +2924,9 @@ final class AiTools {
             JsonObject raw = supplied != null && supplied.isJsonObject() ? supplied.getAsJsonObject() : new JsonObject();
             JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
             List<String> ignored = new ArrayList<>();
-            JsonObject arguments = !schema.has("type") && !schema.has("properties") ? raw : AiSchemas.init(schema, raw, !this.service.init_Z(), ignored);
+            JsonObject arguments = !schema.has("type") && !schema.has("properties") ? raw : AiSchemas.normalize(schema, raw, !this.service.init_Z(), ignored);
             if (schema.has("type") || schema.has("properties")) {
-               AiSchemas.init(schema, arguments);
+               AiSchemas.validate(schema, arguments);
             }
 
             if (id.equals("game:recipes")) {
@@ -2975,7 +2975,7 @@ final class AiTools {
                var10000 = var351;
             } else {
                JsonObject result = this.service.runOperation(generation, id, entry.fingerprint(), () -> this.read(id, arguments));
-               this.procedures.init(id, entry.fingerprint(), arguments, result);
+               this.procedures.remember(id, entry.fingerprint(), arguments, result);
                if (!ignored.isEmpty()) {
                   result.add("ignoredArguments", AiJson.GSON.toJsonTree(ignored));
                }
@@ -3022,7 +3022,7 @@ final class AiTools {
          }
          case "memory_search": {
             JsonObject var28 = AiJson.objectOf(
-               "memories", this.service.getMemoryStore().init(this.service.getDimensionId(), AiJson.getString(args, "query", ""), 20)
+               "memories", this.service.getMemoryStore().search(this.service.getDimensionId(), AiJson.getString(args, "query", ""), 20)
             );
             JsonObject var29 = var28;
             var10000 = var29;
@@ -3213,7 +3213,7 @@ final class AiTools {
       if (args.has("macro") && args.get("macro").isJsonObject()) {
          JsonObject data = args.getAsJsonObject("macro");
          String existing = this.service.onClientThread(generation, () -> {
-            autismclient.util.AutismMacro validated = AiMacroValidator.init(data, this.service.getCatalogSnapshot());
+            autismclient.util.AutismMacro validated = AiMacroValidator.validate(data, this.service.getCatalogSnapshot());
             autismclient.util.AutismMacro old = autismclient.util.MacroLibraryManager.getInstance().findByName(validated.name);
             return old == null ? "" : macroJson(old).toString();
          });
@@ -3229,7 +3229,7 @@ final class AiTools {
             .onClientThread(
                generation,
                () -> {
-                  autismclient.util.AutismMacro macro = AiMacroValidator.init(data, this.service.getCatalogSnapshot());
+                  autismclient.util.AutismMacro macro = AiMacroValidator.validate(data, this.service.getCatalogSnapshot());
                   autismclient.util.MacroLibraryManager manager = autismclient.util.MacroLibraryManager.getInstance();
                   autismclient.util.AutismMacro old = manager.findByName(macro.name);
                   if (!existing.equals(old == null ? "" : macroJson(old).toString())) {
@@ -3331,7 +3331,7 @@ final class AiTools {
             var10000 = !args.has("checkpoints") && !AiParkourRoute.putAt_Z_JsonObject(args) ? AiGoto.fromJsonCompat(args) : new AiParkourRoute(args);
             break;
          case "game:follow":
-            var10000 = AiFollow.init(args);
+            var10000 = AiFollow.create(args);
             break;
          case "game:surface":
             var10000 = autismclient.ai.engine.AiSeek.init(args);
@@ -3340,7 +3340,7 @@ final class AiTools {
             var10000 = autismclient.ai.engine.AiSeek.load(args);
             break;
          case "game:entities":
-            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.query(args));
             break;
          case "game:events":
             var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Events read", AiEventLog.readJson(args));
@@ -3394,13 +3394,13 @@ final class AiTools {
             var10000 = AiOracle.create(args);
             break;
          case "game:find_biome":
-            var10000 = AiOracle.load(args);
+            var10000 = AiOracle.findBiome(args);
             break;
          case "game:eat":
-            var10000 = AiSurvival.init(args);
+            var10000 = AiSurvival.eat(args);
             break;
          case "game:flee":
-            var10000 = AiSurvival.load(args);
+            var10000 = AiSurvival.flee(args);
             break;
          case "game:dodge":
             var10000 = AiDodge.init(args);
@@ -3412,10 +3412,10 @@ final class AiTools {
             var10000 = AiMlg.create(args);
             break;
          case "game:telly":
-            var10000 = AiTelly.init(args);
+            var10000 = AiTelly.create(args);
             break;
          case "game:scaffold":
-            var10000 = AiScaffoldWalk.init(args);
+            var10000 = AiScaffoldWalk.create(args);
             break;
          case "game:build":
             var10000 = AiBuilder.buildFromArgs(args);
@@ -3424,16 +3424,16 @@ final class AiTools {
             var10000 = AiFill.create(args);
             break;
          case "game:replace":
-            var10000 = AiFill.update(args);
+            var10000 = AiFill.replace(args);
             break;
          case "game:copy":
-            var10000 = AiFill.load(args);
+            var10000 = AiFill.copy(args);
             break;
          case "game:paste":
-            var10000 = AiFill.read(args);
+            var10000 = AiFill.paste(args);
             break;
          case "game:region":
-            var10000 = AiFill.write(args);
+            var10000 = AiFill.region(args);
             break;
          case "game:chop":
             var10000 = AiChop.init(args);
@@ -3459,10 +3459,10 @@ final class AiTools {
             var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read observed sign text", AiGameplay.readSignText(args));
             break;
          case "game:interact_entity":
-            var10000 = AiGameplay.load_AiOperation(args);
+            var10000 = AiGameplay.interactEntity(args);
             break;
          case "game:chat_click":
-            var10000 = AiChatOps.init(args);
+            var10000 = AiChatOps.create(args);
             break;
          case "game:command":
             var10000 = AiCommandOp.create(args);
@@ -3482,10 +3482,10 @@ final class AiTools {
             var10000 = AiCraft.craft(crafted);
             break;
          case "game:obtain":
-            var10000 = AiObtain.init(args);
+            var10000 = AiObtain.obtain(args);
             break;
          case "game:prospect":
-            var10000 = AiProspect.init(args);
+            var10000 = AiProspect.create(args);
             break;
          case "game:recover":
             var10000 = AiRecover.init(args);
@@ -3500,34 +3500,34 @@ final class AiTools {
             var10000 = AiBurrow.init(args);
             break;
          case "game:sleep":
-            var10000 = AiSleep.init(args);
+            var10000 = AiSleep.create(args);
             break;
          case "game:escape_hazard":
-            var10000 = AiHazardEscape.init(args);
+            var10000 = AiHazardEscape.create(args);
             break;
          case "game:breathe":
-            var10000 = AiBreathe.init(args);
+            var10000 = AiBreathe.create(args);
             break;
          case "game:fish":
-            var10000 = AiFish.init(args);
+            var10000 = AiFish.create(args);
             break;
          case "game:bucket":
-            var10000 = AiBucket.init(args);
+            var10000 = AiBucket.create(args);
             break;
          case "game:ride":
             var10000 = AiRide.init(args);
             break;
          case "game:redstone":
-            var10000 = AiRedstone.init(args);
+            var10000 = AiRedstone.create(args);
             break;
          case "game:shoot":
-            var10000 = AiRanged.init(args);
+            var10000 = AiRanged.create(args);
             break;
          case "game:tidy":
-            var10000 = AiTidy.init(args);
+            var10000 = AiTidy.create(args);
             break;
          case "game:barter":
-            var10000 = AiBarter.init(args);
+            var10000 = AiBarter.create(args);
             break;
          case "game:trade":
             var10000 = AiTrade.init(args);
@@ -3539,10 +3539,10 @@ final class AiTools {
             var10000 = AiDimension.init(args);
             break;
          case "game:portal_cast":
-            var10000 = AiPortalCast.init(args);
+            var10000 = AiPortalCast.create(args);
             break;
          case "game:nether_entry":
-            var10000 = AiNetherEntry.init(args);
+            var10000 = AiNetherEntry.create(args);
             break;
          case "game:speedrun":
             var10000 = AiSpeedrun.create(args);
@@ -3551,13 +3551,13 @@ final class AiTools {
             var10000 = AiNetherRun.create(args);
             break;
          case "game:stronghold":
-            var10000 = AiStronghold.init(args);
+            var10000 = AiStronghold.create(args);
             break;
          case "game:end_run":
             var10000 = AiEndRun.init(args);
             break;
          case "game:world_memory":
-            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Observed world memory and partial discovery coverage", AiWorldMemory.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Observed world memory and partial discovery coverage", AiWorldMemory.describe(args));
             break;
          case "game:run_resources":
             var10000 = AiGameOperations.immediate(
@@ -3574,7 +3574,7 @@ final class AiTools {
             );
             break;
          case "game:clear_crystals":
-            var10000 = AiCrystals.init(args);
+            var10000 = AiCrystals.create(args);
             break;
          case "game:dragon_fight":
             var10000 = AiDragon.create(args);
@@ -3586,19 +3586,19 @@ final class AiTools {
             var10000 = AiContainer.create(args);
             break;
          case "game:equip":
-            var10000 = AiEquip.init(args);
+            var10000 = AiEquip.create(args);
             break;
          case "game:smelt_auto":
-            var10000 = AiSmelt.load(args);
+            var10000 = AiSmelt.smelt(args);
             break;
          case "game:brew":
-            var10000 = AiBrew.init(args);
+            var10000 = AiBrew.create(args);
             break;
          case "game:smith":
-            var10000 = AiSmith.init(args);
+            var10000 = AiSmith.create(args);
             break;
          case "game:anvil":
-            var10000 = AiAnvil.init(args);
+            var10000 = AiAnvil.create(args);
             break;
          case "game:collect_drops":
             var10000 = AiGameplay.write(args);
@@ -3607,19 +3607,19 @@ final class AiTools {
             var10000 = AiCollect.init(args);
             break;
          case "game:smelt":
-            var10000 = AiSmelt.init(args);
+            var10000 = AiSmelt.create(args);
             break;
          case "game:survey":
-            var10000 = AiGameplay.flush(args);
+            var10000 = AiGameplay.survey(args);
             break;
          case "game:find":
-            var10000 = AiGameplay.sync(args);
+            var10000 = AiGameplay.find(args);
             break;
          case "game:menu":
-            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read current custom menu", AiGameplay.init());
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read current custom menu", AiGameplay.readMenu());
             break;
          case "game:submit_menu":
-            var10000 = AiGameplay.init_AiOperation(args);
+            var10000 = AiGameplay.submitMenu(args);
             break;
          default:
             var10000 = null;
@@ -3643,7 +3643,7 @@ final class AiTools {
             JsonObject action = args.deepCopy();
             action.addProperty("type", id.substring(6));
             action.remove("timeoutSeconds");
-            autismclient.util.AutismMacro m = AiMacroValidator.init(
+            autismclient.util.AutismMacro m = AiMacroValidator.validate(
                AiJson.objectOf("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.service.getCatalogSnapshot()
             );
             return this.macroOperation(m, args);
@@ -3667,8 +3667,8 @@ final class AiTools {
          if (id.equals("client:packet_log")) {
             String action = AiJson.getString(args, "action", "state");
             return action.equalsIgnoreCase("read")
-               ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read captured packet log", AiPacketLog.load(args))
-               : AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet capture control applied", AiPacketLog.init(args));
+               ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read captured packet log", AiPacketLog.readLog(args))
+               : AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet capture control applied", AiPacketLog.controlCapture(args));
          }
 
          if (id.equals("client:packet_send")) {
@@ -3684,7 +3684,7 @@ final class AiTools {
          }
 
          if (id.equals("client:lan")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read LAN Sync status", AiLanSync.init(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read LAN Sync status", AiLanSync.status(args));
          }
 
          if (id.equals("client:screen")) {
@@ -3706,11 +3706,11 @@ final class AiTools {
          }
 
          if (id.equals("client:macro_folders")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro folders", AiClientConfig.pop(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro folders", AiClientConfig.macroFolders(args));
          }
 
          if (id.equals("client:macro_manage")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro library", AiClientConfig.tick(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro library", AiClientConfig.macroLibrary(args));
          }
 
          if (id.equals("client:screen_store")) {
@@ -3718,27 +3718,27 @@ final class AiTools {
          }
 
          if (id.equals("client:packet_gui")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "GUI packet controls", AiClientConfig.write(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "GUI packet controls", AiClientConfig.guiPacketControls(args));
          }
 
          if (id.equals("client:packet_filter")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet filter", AiClientConfig.update(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet filter", AiClientConfig.packetFilter(args));
          }
 
          if (id.equals("client:waypoint_manage")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Waypoints", AiClientConfig.sync(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Waypoints", AiClientConfig.waypoints(args));
          }
 
          if (id.equals("client:proxies")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Proxies", AiClientConfig.close(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Proxies", AiClientConfig.proxies(args));
          }
 
          if (id.equals("client:join_macro")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Join macro", AiClientConfig.open(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Join macro", AiClientConfig.joinMacro(args));
          }
 
          if (id.equals("client:server_info")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Server info", AiClientConfig.poll(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Server info", AiClientConfig.serverInfo(args));
          }
 
          if (id.equals("client:profiles")) {
@@ -3746,11 +3746,11 @@ final class AiTools {
          }
 
          if (id.equals("client:theme")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Theme colours", AiClientConfig.load(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Theme colours", AiClientConfig.themeColors(args));
          }
 
          if (id.equals("client:hud")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "HUD elements", AiClientConfig.read(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "HUD elements", AiClientConfig.hudElements(args));
          }
 
          if (id.equals("client:connect")) {
@@ -3774,7 +3774,7 @@ final class AiTools {
          }
 
          if (id.equals("client:world_delete")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "World deleted", AiWorldCreate.load(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "World deleted", AiWorldCreate.deleteWorld(args));
          }
 
          if (mc.player != null && mc.level != null && mc.player.isAlive()) {
@@ -3788,13 +3788,13 @@ final class AiTools {
             AiOperation var10000;
             switch (id) {
                case "client:packets":
-                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read runtime protocol schemas", AiPacketLog.read(args));
+                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read runtime protocol schemas", AiPacketLog.readSchemas(args));
                   break;
                case "client:plugin_scan":
                   var10000 = AiServerIntel.create(args);
                   break;
                case "client:lan_control":
-                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", AiLanSync.load(args));
+                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", AiLanSync.control(args));
                   break;
                case "client:run_macro":
                   autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(AiJson.getString(args, "name", ""));

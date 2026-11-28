@@ -48,7 +48,7 @@ public class PacketClickAction implements MacroAction {
 
    private void load(ClientPacketListener conn) {
       if (this.init && this.target != null) {
-         autismclient.util.ContainerCloseGuard.init(this.target.containerId(), conn);
+         autismclient.util.ContainerCloseGuard.hold(this.target.containerId(), conn);
          this.init = false;
       } else {
          this.init = false;
@@ -57,7 +57,7 @@ public class PacketClickAction implements MacroAction {
 
    private void read() {
       if (this.init && this.target != null) {
-         autismclient.util.ContainerCloseGuard.init(this.target.containerId(), (ClientPacketListener)null);
+         autismclient.util.ContainerCloseGuard.hold(this.target.containerId(), (ClientPacketListener)null);
          this.init = false;
       } else {
          this.init = false;

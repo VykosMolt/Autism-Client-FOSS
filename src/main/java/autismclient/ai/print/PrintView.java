@@ -1554,7 +1554,7 @@ public final class PrintView implements SignalGetter {
          }
 
          @Override
-         public boolean sync(int x, int y, int z) {
+         public boolean isClimbable(int x, int y, int z) {
             return view.getBlockStateAt(x, y, z).is(BlockTags.CLIMBABLE);
          }
 

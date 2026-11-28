@@ -17,7 +17,7 @@ final class AiWalkingWork {
    private AiWalkingWork() {
    }
 
-   static void putAt(AiOperation var0, AiWrExecutor var1) {
+   static void register(AiOperation var0, AiWrExecutor var1) {
       executors.put(var0, new WeakReference<>(var1));
    }
 
@@ -32,6 +32,6 @@ final class AiWalkingWork {
    }
 
    // 5.3 external ABI bridges
-   static void bindExecutor(AiOperation op, AiWrExecutor exec) { putAt(op, exec); }
+   static void bindExecutor(AiOperation op, AiWrExecutor exec) { register(op, exec); }
    static void init(AiOperation op, Function<Predicate<AABB>, Vec3> look, Runnable click) { putAt(op, look, click); }
 }

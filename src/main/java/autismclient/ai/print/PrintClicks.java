@@ -961,7 +961,7 @@ final class PrintClicks {
    static boolean isSafeToInteract(PrintView view, PrintTarget target, AABB body) {
       BooleanProperty open = BlockStateProperties.OPEN;
       BlockState live = view.getBlockState(target.pos());
-      if (!PrintContainerAccess.init(view, target.pos(), live, body)) {
+      if (!PrintContainerAccess.canOpen(view, target.pos(), live, body)) {
          return false;
       }
 
@@ -996,7 +996,7 @@ final class PrintClicks {
 
       if (state.getBlock() instanceof PistonBaseBlock) {
          Direction facing = state.getValue(BlockStateProperties.FACING);
-         if (new AABB(cell.relative(facing)).intersects(body.deflate(1.0E-4)) && AiPistonPower.init(view, cell, facing)) {
+         if (new AABB(cell.relative(facing)).intersects(body.deflate(1.0E-4)) && AiPistonPower.isPowered(view, cell, facing)) {
             return true;
          }
       }

@@ -17,7 +17,7 @@ public final class LegacyCombatDetector {
    private LegacyCombatDetector() {
    }
 
-   public static boolean init(Player player) {
+   public static boolean isLegacyCombat(Player player) {
       if (player == null) {
          return false;
       }

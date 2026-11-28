@@ -180,7 +180,7 @@ public final class AiVisualization {
       statHudWidth = 0;
    }
 
-   public static void init(Object owner, String title, String activity, int completed, int target) {
+   public static void showCount(Object owner, String title, String activity, int completed, int target) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.taskStatus = AiTaskStatus.init(title, activity, completed, target);
@@ -189,7 +189,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void putAt(Object owner, String title, String activity, String detail, int percent) {
+   public static void showDetail(Object owner, String title, String activity, String detail, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.taskStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, detail, percent);
@@ -198,7 +198,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void load(Object owner, String title, String activity, int metersAway, int percent) {
+   public static void showProgress(Object owner, String title, String activity, int metersAway, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, metersAway + " m away", percent);
@@ -207,7 +207,7 @@ public final class AiVisualization {
       }
    }
 
-   static void init(Object owner, String title, String activity, int percent) {
+   static void showNavStatus(Object owner, String title, String activity, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, "", percent);
@@ -216,7 +216,7 @@ public final class AiVisualization {
       }
    }
 
-   static void init(Object owner, AiTaskStatus.Inner_StreamUtil content) {
+   static void showContent(Object owner, AiTaskStatus.Inner_StreamUtil content) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.content = content;
@@ -277,7 +277,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
+   public static void showPaceScript(Object owner, autismclient.ai.engine.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && script != null && settings.visualizePaths) {
          int length = script.flowTemp();
@@ -297,7 +297,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview, List<BlockPos> checkpoints, int checkpointIndex) {
+   public static void showPreview(Object owner, autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview, List<BlockPos> checkpoints, int checkpointIndex) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && preview != null && settings.visualizePaths && (l.pathSource != preview || l.lastCheckpointIndex != checkpointIndex)) {
          l.pathSource = preview;
@@ -600,7 +600,7 @@ public final class AiVisualization {
       return alpha << 24 | red << 16 | green << 8 | blue;
    }
 
-   public static void init(Object owner, List<BlockPos> targets) {
+   public static void showTargets(Object owner, List<BlockPos> targets) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeTargets && l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
          l.targetUpdateNanos = l.touchedNanos;
@@ -627,7 +627,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, BlockPos target) {
+   public static void showTarget(Object owner, BlockPos target) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeTargets && AiTerrain.isLoaded(l.level, target)) {
          BlockState state = l.level.getBlockState(target);
@@ -640,7 +640,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, BlockPos target, BlockState state) {
+   public static void showPlacement(Object owner, BlockPos target, BlockState state) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && state != null && settings.visualizeTargets) {
          l.hasTarget = true;
@@ -652,7 +652,7 @@ public final class AiVisualization {
                coloredGhost(
                   target,
                   state,
-                  init(
+                  cellColor(
                      state.equals(l.level.getBlockState(target)),
                      l.level.getBlockState(target).canBeReplaced(),
                      AiTerrain.isLoaded(l.level, target)
@@ -663,7 +663,7 @@ public final class AiVisualization {
       }
    }
 
-   static int init(boolean satisfied, boolean replaceable, boolean loaded) {
+   static int cellColor(boolean satisfied, boolean replaceable, boolean loaded) {
       return !loaded ? -885830 : (satisfied ? -12067963 : (replaceable ? -11093505 : -20923));
    }
 
@@ -675,26 +675,26 @@ public final class AiVisualization {
       return new AiVisualization.GhostBlock(p.immutable(), state, active ? -610078735 : 1885197528, false, true, active);
    }
 
-   static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
-      init(owner, origin, cells, cursor, preview, preview);
+   static void showPlan(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
+      showPlan(owner, origin, cells, cursor, preview, preview);
    }
 
    static void showCells(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.hiddenSolid = hiddenSolid;
-         init(owner, origin, cells, 0, true, true);
+         showPlan(owner, origin, cells, 0, true, true);
       }
    }
 
-   static void init(Object owner, long now) {
+   static void touch(Object owner, long now) {
       AiVisualization.OverlayLayer l = layers.get(owner);
       if (l != null) {
          l.touchedNanos = now;
       }
    }
 
-   static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview, boolean fullPlan) {
+   static void showPlan(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview, boolean fullPlan) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeGhosts && l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
          l.targetUpdateNanos = l.touchedNanos;
@@ -730,7 +730,7 @@ public final class AiVisualization {
                boolean loaded = AiTerrain.isLoaded(l.level, at);
                BlockState live = loaded ? l.level.getBlockState(at) : Blocks.AIR.defaultBlockState();
                boolean satisfied = loaded && AiBuilder.matchesSchematicCell(c, live);
-               int color = init(satisfied, live.canBeReplaced(), loaded);
+               int color = cellColor(satisfied, live.canBeReplaced(), loaded);
                if (fullPlan
                   && loaded
                   && !satisfied
@@ -748,7 +748,7 @@ public final class AiVisualization {
    }
 
    private static void updatePlanMesh(AiVisualization.OverlayLayer l, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
-      if (l.planMesh == null || !l.planMesh.init(origin, cells, preview)) {
+      if (l.planMesh == null || !l.planMesh.matches(origin, cells, preview)) {
          l.closeMesh();
          l.planMesh = new AiPlanMesh(origin, cells, preview, l.hiddenSolid);
       }
@@ -782,7 +782,7 @@ public final class AiVisualization {
          Minecraft mc = Minecraft.getInstance();
          Vec3 eye = mc.player == null ? Vec3.atCenterOf(origin) : mc.player.getEyePosition();
          int outlines = preview ? 0 : 12;
-         List<Integer> nearest = l.planMesh.init(eye, outlines, 4096, System.nanoTime() + 2000000L);
+         List<Integer> nearest = l.planMesh.nearest(eye, outlines, 4096, System.nanoTime() + 2000000L);
          List<AiVisualization.GhostBlock> out = new ArrayList<>(nearest.size());
 
          for (int i : nearest) {
@@ -796,14 +796,14 @@ public final class AiVisualization {
       }
    }
 
-   static void load(Object owner) {
+   static void refreshTargets(Object owner) {
       AiVisualization.OverlayLayer l = layers.get(owner);
       if (l != null) {
          l.targetUpdateNanos = 0L;
       }
    }
 
-   static void init(Object owner, boolean moving) {
+   static void setMoving(Object owner, boolean moving) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.moving = moving;
@@ -817,12 +817,12 @@ public final class AiVisualization {
       return Math.max(64, Math.min(4096, value));
    }
 
-   static int load(int value) {
+   static int clampPercent(int value) {
       return Math.max(0, Math.min(100, value));
    }
 
    static void setGhostLimit(int value) {
-      opacityPreview = load(value);
+      opacityPreview = clampPercent(value);
       opacityPreviewUntil = System.nanoTime() + 2000000000L;
    }
 
@@ -974,7 +974,7 @@ public final class AiVisualization {
          );
    }
 
-   public static void init(PoseStack matrices) {
+   public static void render(PoseStack matrices) {
       AiVisualization.RenderFrame f = frame;
       frame = AiVisualization.RenderFrame.EMPTY;
       Minecraft mc = Minecraft.getInstance();
@@ -988,7 +988,7 @@ public final class AiVisualization {
 
          AutismBufferSource source = ghostBufferAllocator.init();
          Pose pose = matrices.last();
-         int alpha = (opacityPreview >= 0 && System.nanoTime() < opacityPreviewUntil ? opacityPreview : load(settings.ghostOpacity)) * 255 / 100;
+         int alpha = (opacityPreview >= 0 && System.nanoTime() < opacityPreviewUntil ? opacityPreview : clampPercent(settings.ghostOpacity)) * 255 / 100;
          int quads = 0;
          int baked = 0;
          int planCells = 0;
@@ -996,8 +996,8 @@ public final class AiVisualization {
             for (AiPlanMesh plan : f.plans) {
                try {
                   plan.render(pose, f.camera, alpha, 512.0, started + 4000000L, f.world);
-                  quads += plan.close;
-                  planCells += plan.flush;
+                  quads += plan.quadCount;
+                  planCells += plan.cellCount;
                } catch (Throwable error) {
                   AutismClientAddon.LOG.warn("[AI] plan mesh draw failed; the plan stays outlined only", error);
                   plan.close();
@@ -1006,7 +1006,7 @@ public final class AiVisualization {
          }
 
          try {
-            VertexConsumer texture = source.init(autismclient.render.AutismRenderTypes.aiGhost());
+            VertexConsumer texture = source.buffer(autismclient.render.AutismRenderTypes.aiGhost());
             Set<Long> solid = new HashSet<>();
 
             for (AiVisualization.GhostBlock g : f.ghosts) {
@@ -1076,7 +1076,7 @@ public final class AiVisualization {
                }
             }
 
-            VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.aiPlanLines());
+            VertexConsumer lines = source.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
             Vec3 offset = f.camera.scale(-1.0);
             SchematicSelection selection = aP.init_cU();
             if (selection != null) {
@@ -1165,7 +1165,7 @@ public final class AiVisualization {
                }
             }
          } finally {
-            source.init();
+            source.drawAll();
             statQuads = quads;
             statGhosts = f.ghosts.size() + planCells;
             statSegments = f.route.size();
@@ -1327,7 +1327,7 @@ public final class AiVisualization {
          "fullPlanLayers",
          plans.size(),
          "fullPlanGhosts",
-         plans.stream().mapToInt(l -> l.planMesh != null ? l.planMesh.read() : l.ghosts.size()).sum(),
+         plans.stream().mapToInt(l -> l.planMesh != null ? l.planMesh.size() : l.ghosts.size()).sum(),
          "buildPlanLayers",
          plans.stream().filter(l -> l.priority == 50).count(),
          "miningTargets",
@@ -1351,7 +1351,7 @@ public final class AiVisualization {
          "quadBudget",
          16384,
          "opacity",
-         load(settings.ghostOpacity),
+         clampPercent(settings.ghostOpacity),
          "green",
          statGreen,
          "blue",

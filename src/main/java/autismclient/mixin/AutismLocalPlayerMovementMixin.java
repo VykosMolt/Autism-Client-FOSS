@@ -30,19 +30,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismLocalPlayerMovementMixin {
    @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)
    private void autism$noBlockPush(double x, double z, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && NoPushModule.init((LocalPlayer)(Object)this, "blocks")) {
+      if (!AutismLiteVariant.enabled() && NoPushModule.cancelsPush((LocalPlayer)(Object)this, "blocks")) {
          ci.cancel();
       }
    }
 
    @ModifyReturnValue(method = "itemUseSpeedMultiplier", at = @At("RETURN"))
    private float autism$noItemSlowdown(float multiplier) {
-      return !AutismLiteVariant.enabled() && NoSlowModule.init((LocalPlayer)(Object)this) ? 1.0F : multiplier;
+      return !AutismLiteVariant.enabled() && NoSlowModule.skipsItemSlow((LocalPlayer)(Object)this) ? 1.0F : multiplier;
    }
 
    @ModifyReturnValue(method = "isSlowDueToUsingItem", at = @At("RETURN"))
    private boolean autism$allowSprintWhileUsing(boolean slow) {
-      return !AutismLiteVariant.enabled() && slow && NoSlowModule.init((LocalPlayer)(Object)this) ? false : slow;
+      return !AutismLiteVariant.enabled() && slow && NoSlowModule.skipsItemSlow((LocalPlayer)(Object)this) ? false : slow;
    }
 
    @ModifyExpressionValue(

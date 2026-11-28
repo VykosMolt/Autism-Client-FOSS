@@ -17,7 +17,7 @@ public final class MerchantInteractHelper {
    private MerchantInteractHelper() {
    }
 
-   public static boolean init(Minecraft mc, Entity entity, double range) {
+   public static boolean inRange(Minecraft mc, Entity entity, double range) {
       if (mc.player != null && mc.level != null && entity != null && entity.isAlive() && !entity.isRemoved()) {
          Vec3 eye = mc.player.getEyePosition();
          Vec3 point = entity.getBoundingBox().getCenter();
@@ -29,10 +29,10 @@ public final class MerchantInteractHelper {
       }
    }
 
-   public static Entity init(Minecraft mc, boolean aimed, double range) {
+   public static Entity findMerchant(Minecraft mc, boolean aimed, double range) {
       if (mc.player != null && mc.level != null) {
          if (aimed) {
-            return mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof Merchant && init(mc, hit.getEntity(), range)
+            return mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof Merchant && inRange(mc, hit.getEntity(), range)
                ? hit.getEntity()
                : null;
          }
@@ -40,7 +40,7 @@ public final class MerchantInteractHelper {
          Entity best = null;
 
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof Merchant && init(mc, entity, range) && (best == null || mc.player.distanceToSqr(entity) < mc.player.distanceToSqr(best))) {
+            if (entity instanceof Merchant && inRange(mc, entity, range) && (best == null || mc.player.distanceToSqr(entity) < mc.player.distanceToSqr(best))) {
                best = entity;
             }
          }
@@ -51,7 +51,7 @@ public final class MerchantInteractHelper {
       }
    }
 
-   public static boolean init(Minecraft mc, Vec3 point) {
+   public static boolean lookAt(Minecraft mc, Vec3 point) {
       if (mc.player != null && mc.getConnection() != null) {
          RotationMath.Rotation current = RotationMath.ofPlayer(mc.player);
          RotationMath.Rotation goal = RotationMath.lookAt(point, mc.player.getEyePosition());
@@ -68,12 +68,12 @@ public final class MerchantInteractHelper {
       }
    }
 
-   public static boolean load(Minecraft mc, Entity entity, double range) {
-      if (init(mc, entity, range)
+   public static boolean interact(Minecraft mc, Entity entity, double range) {
+      if (inRange(mc, entity, range)
          && mc.gameMode != null
          && mc.gui.screen() == null
          && mc.player.containerMenu == mc.player.inventoryMenu
-         && init(mc, entity.getBoundingBox().getCenter())) {
+         && lookAt(mc, entity.getBoundingBox().getCenter())) {
          mc.gameMode.interact(mc.player, entity, new EntityHitResult(entity, entity.getBoundingBox().getCenter()), InteractionHand.MAIN_HAND);
          return true;
       } else {

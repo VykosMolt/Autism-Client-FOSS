@@ -72,7 +72,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       this.enabled = e;
    }
 
-   public boolean init(GameType mode) {
+   public boolean matches(GameType mode) {
       return mode == null ? false : this.match == WaitGamemodeChangeAction.MatchMode.ANY_CHANGE || mode == this.targetGameType();
    }
 

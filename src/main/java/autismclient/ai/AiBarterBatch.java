@@ -29,7 +29,7 @@ final class AiBarterBatch {
    private AiBarterBatch() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int target = Math.max(0, Math.min(64, AiJson.getInt(args, "pearls", 0)));
@@ -37,7 +37,7 @@ final class AiBarterBatch {
          final int baseline = AiCraft.countItem("minecraft:ender_pearl");
          final int pearlGoal = target + (additional ? baseline : 0);
          final int partners = Math.max(1, Math.min(4, AiJson.getInt(args, "partners", 3)));
-         final int budget = AiBarter.init(Math.max(0, AiJson.getInt(args, "gold", 0)), AiCraft.countItem("minecraft:gold_ingot"));
+         final int budget = AiBarter.budget(Math.max(0, AiJson.getInt(args, "gold", 0)), AiCraft.countItem("minecraft:gold_ingot"));
          if (budget == 0 && (target == 0 || baseline < pearlGoal)) {
             return AiGameOperations.immediate(
                AiOperation.Status.FAILED,
@@ -166,7 +166,7 @@ final class AiBarterBatch {
                      }
 
                      this.armorEquipAttempted = true;
-                     this.subOperation = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_boots"));
+                     this.subOperation = AiEquip.create(AiJson.objectOf("what", "armor", "prefer", "golden_boots"));
                      return this.running("Equipping gold armor for piglin neutrality");
                   } else {
                      if (this.offerTarget != null) {
@@ -274,7 +274,7 @@ final class AiBarterBatch {
                                     return this.running("Aiming at an adult barter partner");
                                  }
 
-                                 this.subOperation = AiEquip.init(AiJson.objectOf("what", "minecraft:gold_ingot"));
+                                 this.subOperation = AiEquip.create(AiJson.objectOf("what", "minecraft:gold_ingot"));
                               } else if (this.pendingTrades.isEmpty()) {
                                  this.approachedPiglin = partner;
                                  this.subOperation = AiGoto.travelToCompat(partner.blockPosition(), 2.5, true, false, false, 40);
@@ -317,7 +317,7 @@ final class AiBarterBatch {
                            return this.running("Collecting observed barter output " + collect);
                         }
                      } else {
-                        this.subOperation = AiTidy.init(
+                        this.subOperation = AiTidy.create(
                            AiJson.objectOf(
                               "action",
                               "drop",

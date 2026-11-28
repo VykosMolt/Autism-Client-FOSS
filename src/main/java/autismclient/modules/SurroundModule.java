@@ -762,7 +762,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       Set<Block> blocks = new HashSet<>();
 
       for (String entry : this.list("blocks")) {
-         Identifier identifier = Identifier.tryParse(RegistryIdValidator.init(entry));
+         Identifier identifier = Identifier.tryParse(RegistryIdValidator.normalize(entry));
          if (identifier != null) {
             BuiltInRegistries.BLOCK.getOptional(identifier).ifPresent(blocks::add);
          }

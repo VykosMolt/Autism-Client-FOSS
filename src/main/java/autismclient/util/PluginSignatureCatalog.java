@@ -210,7 +210,7 @@ public final class PluginSignatureCatalog {
       return !IGNORED_NAMESPACES.contains(namespace);
    }
 
-   public static synchronized boolean init(String serverAddress, String brand, AutismPayloadSupport.PayloadEntry snapshot) {
+   public static synchronized boolean observe(String serverAddress, String brand, AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot == null) {
          return false;
       }
@@ -304,7 +304,7 @@ public final class PluginSignatureCatalog {
       return String.join(",", channels).toLowerCase(Locale.ROOT);
    }
 
-   public static synchronized void init() {
+   public static synchronized void clear() {
       serverStates.clear();
    }
 

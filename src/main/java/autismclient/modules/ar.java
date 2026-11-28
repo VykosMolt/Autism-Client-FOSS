@@ -313,8 +313,8 @@ public final class ar {
                      boolean spawnerEnabled = spawnerEsp != null && spawnerEsp.isEnabled();
                      FrameEspCatalog.CatalogSnapshot frameEsp = FrameEspCatalog.snapshot();
                      boolean frameEnabled = FrameEspCatalog.init(frameEsp);
-                     boolean xrayBoxes = OreSimEspScanner.read_Z(xray);
-                     boolean xrayGhosts = OreSimEspScanner.write_Z(xray);
+                     boolean xrayBoxes = OreSimEspScanner.drawsBoxes(xray);
+                     boolean xrayGhosts = OreSimEspScanner.drawsGhosts(xray);
                      boolean waypointsEnabled = waypoints != null && waypoints.isEnabled();
                      Module trajectories = read_Module();
                      boolean trajectoriesEnabled = trajectories != null && trajectories.isEnabled();
@@ -537,7 +537,7 @@ public final class ar {
          load_List = List.of();
          Vec3 cam = load_Vec3;
          AutismBufferSource bufferSource = init_c_DataUtil.init();
-         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
+         VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
          for (ar.Inner_ConfigStore seg : lines) {
@@ -555,7 +555,7 @@ public final class ar {
             );
          }
 
-         bufferSource.init();
+         bufferSource.drawAll();
       }
    }
 
@@ -692,7 +692,7 @@ public final class ar {
       if (storageFill || blockFill || barrierFill || spawnerFill || frameFill || xrayFill || airFill || tpClickFill || ghostFill || !auraPreviewBoxes.isEmpty()
          )
        {
-         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+         VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
          if (!meshed) {
             if (xrayFill && xrayFrame != null) {
                xrayFrame.init(pose, buffer, cam, xrayFillAlpha);
@@ -741,17 +741,17 @@ public final class ar {
 
          for (EspHighlightBox preview : auraPreviewBoxes) {
             if (preview.box() != null) {
-               load(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.init_I());
+               load(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.fillColor());
             }
          }
       }
 
       if (!AutismLiteVariant.enabled() && (!trajectories.isEmpty() || TrajectoryStateCache.rememberedPearl() != null)) {
-         TrajectoryWorldRenderer.init(matrices, bufferSource, cam, trajectories);
+         TrajectoryWorldRenderer.render(matrices, bufferSource, cam, trajectories);
       }
 
       if (storageWire || blockWire || spawnerWire || frameWire || xrayWire || airWire || tpClickWire || ghostWire || !auraPreviewBoxes.isEmpty()) {
-         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
+         VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
          if (!meshed) {
             if (xrayWire && xrayFrame != null) {
                xrayFrame.load(pose, buffer, cam, 1.5F);
@@ -796,16 +796,16 @@ public final class ar {
 
          for (EspHighlightBox preview : auraPreviewBoxes) {
             if (preview.box() != null) {
-               init(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.load_I(), preview.init_F());
-            } else if (preview.init_Vec3() != null && preview.load_Vec3() != null) {
-               Vec3 from = preview.init_Vec3().subtract(cam);
-               Vec3 to = preview.load_Vec3().subtract(cam);
-               load(pose, buffer, from.x, from.y, from.z, to.x, to.y, to.z, preview.load_I(), preview.init_F());
+               init(pose, buffer, preview.box().move(-cam.x, -cam.y, -cam.z), preview.outlineColor(), preview.lineWidth());
+            } else if (preview.lineFrom() != null && preview.lineTo() != null) {
+               Vec3 from = preview.lineFrom().subtract(cam);
+               Vec3 to = preview.lineTo().subtract(cam);
+               load(pose, buffer, from.x, from.y, from.z, to.x, to.y, to.z, preview.outlineColor(), preview.lineWidth());
             }
          }
       }
 
-      bufferSource.init();
+      bufferSource.drawAll();
    }
 
    private static boolean init(
@@ -865,7 +865,7 @@ public final class ar {
          if (stale) {
             long perf = bK.load_J();
             Vec3 origin = anchor;
-            load_Z = init_P.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), buffer -> {
+            load_Z = init_P.build(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), buffer -> {
                if (xrayFill && xrayFrame != null) {
                   xrayFrame.init(init_PoseStack_Pose, buffer, origin, xrayFillAlpha);
                }
@@ -894,7 +894,7 @@ public final class ar {
                   frameFrame.init(init_PoseStack_Pose, buffer, origin, 0.35F);
                }
             });
-            read_Z = load_P.init(autismclient.render.AutismRenderTypes.tracerEspLines(), buffer -> {
+            read_Z = load_P.build(autismclient.render.AutismRenderTypes.tracerEspLines(), buffer -> {
                if (xrayWire && xrayFrame != null) {
                   xrayFrame.load(init_PoseStack_Pose, buffer, origin, 1.5F);
                }
@@ -937,11 +937,11 @@ public final class ar {
          double dz = init_Vec3.z - camera.z;
          Matrix4fc framePose = pose.pose();
          if (load_Z) {
-            init_P.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), framePose, dx, dy, dz);
+            init_P.draw(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), framePose, dx, dy, dz);
          }
 
          if (read_Z) {
-            load_P.init(autismclient.render.AutismRenderTypes.tracerEspLines(), framePose, dx, dy, dz);
+            load_P.draw(autismclient.render.AutismRenderTypes.tracerEspLines(), framePose, dx, dy, dz);
          }
 
          return true;
@@ -980,7 +980,7 @@ public final class ar {
       if (level != null) {
          CardinalLighting lighting = level.cardinalLighting();
          load(count, cam);
-         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.oreGhostSeeThrough());
+         VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.oreGhostSeeThrough());
 
          for (int i = 0; i < count; i++) {
             long packed = load_JArr[i];
@@ -1442,7 +1442,7 @@ public final class ar {
          return ar.Inner_CachePool.init_ar_CachePool();
       }
 
-      if (!OreSimEspScanner.init_Z(module)) {
+      if (!OreSimEspScanner.isOreSimMode(module)) {
          return ar.Inner_CachePool.init_ar_CachePool();
       }
 
@@ -1456,7 +1456,7 @@ public final class ar {
       }
 
       List<ar.Inner_StreamUtil> boxes = new ArrayList<>();
-      OreSimEspScanner.init(module, level, player, (OreSimEspScanner.OreSink)(pos, state) -> boxes.add(new ar.Inner_StreamUtil(new AABB(pos), OreSimEspScanner.init(module, state.getBlock()), true)));
+      OreSimEspScanner.init(module, level, player, (OreSimEspScanner.OreSink)(pos, state) -> boxes.add(new ar.Inner_StreamUtil(new AABB(pos), OreSimEspScanner.blockColor(module, state.getBlock()), true)));
       ar.Inner_CachePool next = ar.Inner_CachePool.init(
          level.getGameTime(), revision, player.chunkPosition().x(), player.chunkPosition().z(), boxes, List.of(), true, cached, level.getGameTime()
       );
@@ -1719,14 +1719,14 @@ public final class ar {
             GlyphVisitor waypointGlyphs = new GlyphVisitor() {
                @Override
                public void acceptRenderable(TextRenderable renderable) {
-                  renderable.render(textPose, bufferSource.init(renderable.renderType(DisplayMode.SEE_THROUGH)), 15728880, false);
+                  renderable.render(textPose, bufferSource.buffer(renderable.renderType(DisplayMode.SEE_THROUGH)), 15728880, false);
                }
             };
             Identifier discTexture = init_Identifier_Minecraft(mc);
             double baseRadius = snapshot.init_D();
             double maxRenderDist = 128.0;
             if (discTexture != null) {
-               VertexConsumer discBuffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(discTexture));
+               VertexConsumer discBuffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(discTexture));
 
                for (ar.Inner_NetHelper dot : snapshot.init_List()) {
                   double cx = (dot.init_AABB().minX + dot.init_AABB().maxX) * 0.5;
@@ -1818,7 +1818,7 @@ public final class ar {
                }
             }
 
-            bufferSource.init();
+            bufferSource.drawAll();
          }
       }
    }

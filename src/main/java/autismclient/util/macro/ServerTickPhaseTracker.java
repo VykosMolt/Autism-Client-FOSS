@@ -69,7 +69,7 @@ public class ServerTickPhaseTracker {
       lastSampleNanos = now;
    }
 
-   public static void init(Packet<?> packet) {
+   public static void onPacket(Packet<?> packet) {
       if (packet instanceof ClientboundSetTimePacket worldTimePacket) {
          onTimePacket(worldTimePacket);
       } else if (packet instanceof Pos || packet instanceof ClientboundSetEntityMotionPacket || packet instanceof ClientboundPlayerPositionPacket) {
@@ -118,7 +118,7 @@ public class ServerTickPhaseTracker {
       return nextTickNanos + (ticksElapsed + 1L) * 50000000L;
    }
 
-   public static long init(int bufferMs, boolean ignorePing) {
+   public static long optimalSendTime(int bufferMs, boolean ignorePing) {
       long nextTick = nextTickNanos();
       int pingMs = ignorePing ? 0 : getLatencyMs();
       long halfPingNanos = pingMs * 1000000L / 2L;
@@ -165,7 +165,7 @@ public class ServerTickPhaseTracker {
    }
 
    public static long load(int bufferMs, boolean ignorePing) {
-      long optimalTime = init(bufferMs, ignorePing);
+      long optimalTime = optimalSendTime(bufferMs, ignorePing);
       return Math.max(0L, (optimalTime - System.nanoTime()) / 1000000L);
    }
 
@@ -186,7 +186,7 @@ public class ServerTickPhaseTracker {
       return sampleCount;
    }
 
-   public static long write() {
+   public static long warmupMillis() {
       return firstPacketNanos == 0L ? 0L : (System.nanoTime() - firstPacketNanos) / 1000000L;
    }
 

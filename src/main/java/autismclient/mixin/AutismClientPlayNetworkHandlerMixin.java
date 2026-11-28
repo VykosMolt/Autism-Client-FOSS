@@ -261,8 +261,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          ScaffoldModule.onBlockUpdate(packet.getPos(), packet.getBlockState());
          AnchorAuraModule.onBlockUpdate(packet.getPos(), packet.getBlockState());
          AiServerEvidence.recordBlockStateUpdate(packet.getPos(), packet.getBlockState());
-         AiGridRevisions.init(packet.getPos());
-         AiScaffold.init(packet.getPos(), packet.getBlockState());
+         AiGridRevisions.bump(packet.getPos());
+         AiScaffold.onBlockChanged(packet.getPos(), packet.getBlockState());
       }
    }
 
@@ -275,10 +275,10 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
             ScaffoldModule.onBlockUpdate(pos, state);
             AnchorAuraModule.onBlockUpdate(pos, state);
             AiServerEvidence.recordBlockStateUpdate(pos, state);
-            AiScaffold.init(pos, state);
+            AiScaffold.onBlockChanged(pos, state);
             if (!bumped[0]) {
                bumped[0] = true;
-               AiGridRevisions.init(pos);
+               AiGridRevisions.bump(pos);
             }
          });
       }
@@ -713,7 +713,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
             }
 
             String soundId = packet.getSound().value().location().toString();
-            MacroWaitRegistry.init(soundId, entity.getX(), entity.getY(), entity.getZ());
+            MacroWaitRegistry.onSound(soundId, entity.getX(), entity.getY(), entity.getZ());
          } catch (Exception var6) {
          }
       }
@@ -729,7 +729,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleAddEntity", at = @At("RETURN"))
    private void autism$antiBotSpawn(ClientboundAddEntityPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         EndPortalModule.init((ClientPacketListener)(Object)this, packet);
+         EndPortalModule.onAddEntity((ClientPacketListener)(Object)this, packet);
       }
 
       if (!AutismLiteVariant.enabled() && packet.getType() == EntityTypes.PLAYER) {
@@ -806,7 +806,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          }
 
          String soundId = packet.getSound().value().location().toString();
-         MacroWaitRegistry.init(soundId, packet.getX(), packet.getY(), packet.getZ());
+         MacroWaitRegistry.onSound(soundId, packet.getX(), packet.getY(), packet.getZ());
       } catch (Exception var2) {
       }
    }

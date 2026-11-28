@@ -87,7 +87,7 @@ public final class AsyncJobRegistry {
       return expired;
    }
 
-   public synchronized List<Long> load() {
+   public synchronized List<Long> pendingIds() {
       List<Long> pending = new ArrayList<>();
 
       for (AsyncJobRegistry.JobState state : this.jobs.values()) {

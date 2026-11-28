@@ -236,7 +236,7 @@ final class AiFill {
       }
    }
 
-   static AiOperation load(JsonObject args) {
+   static AiOperation copy(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          AiFill.FillBox box = init_J_DataUtil(args);
@@ -246,7 +246,7 @@ final class AiFill {
 
          String name = AiClipboard.validateName(AiJson.getString(args, "name", ""));
          List<AiBuilder.CellSpec> cells = init(box, Minecraft.getInstance().level);
-         AiClipboard.init(name, List.copyOf(cells));
+         AiClipboard.saveClip(name, List.copyOf(cells));
          return AiGameOperations.immediate(
             AiOperation.Status.SUCCEEDED,
             "Copied " + cells.size() + " cells to clipboard \"" + name + "\"",
@@ -292,7 +292,7 @@ final class AiFill {
       }
    }
 
-   static AiOperation read(JsonObject args) {
+   static AiOperation paste(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String name = AiClipboard.validateName(AiJson.getString(args, "name", ""));
@@ -590,7 +590,7 @@ final class AiFill {
       return new int[]{maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1};
    }
 
-   static AiOperation write(JsonObject args) {
+   static AiOperation region(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String action = AiJson.getString(args, "action", "").trim().toLowerCase(Locale.ROOT);
@@ -667,7 +667,7 @@ final class AiFill {
 
                String name = AiClipboard.validateName(store);
                List<AiBuilder.CellSpec> cells = init(out, client.level);
-               AiClipboard.init(name, List.copyOf(cells));
+               AiClipboard.saveClip(name, List.copyOf(cells));
                data.addProperty("name", name);
                data.addProperty("cells", cells.size());
                data.addProperty("persisted", true);
@@ -683,7 +683,7 @@ final class AiFill {
 
                String name = AiClipboard.validateName(clipboard);
                AiFill.TransformedCells transformed = init(AiClipboard.load(name), action, step, amount, 4096);
-               AiClipboard.init(name, transformed.cells());
+               AiClipboard.saveClip(name, transformed.cells());
                int[] extents = init(transformed.cells());
                return AiGameOperations.immediate(
                   AiOperation.Status.SUCCEEDED,
@@ -716,7 +716,7 @@ final class AiFill {
       }
    }
 
-   static AiOperation update(JsonObject args) {
+   static AiOperation replace(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          AiFill.FillBox box = init_J_DataUtil(args);

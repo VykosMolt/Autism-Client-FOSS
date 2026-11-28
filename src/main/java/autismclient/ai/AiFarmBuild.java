@@ -376,7 +376,7 @@ final class AiFarmBuild {
       return null;
    }
 
-   static AiOperation init(JsonObject args, final String cropBlock, final String seedItem) {
+   static AiOperation create(JsonObject args, final String cropBlock, final String seedItem) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.level == null) {
          throw new IllegalArgumentException("Farming requires a connected living player");
@@ -410,7 +410,7 @@ final class AiFarmBuild {
          final String substrateId = substrate;
          final boolean soulSandFarm = AiFarmArea.isSoulSand(substrate);
          final AiFarmArea.Area chosenArea = selectedArea;
-         final BlockPos siteOrigin = this.chosenArea == null ? autismclient.ai.engine.AiStance.init(mc) : this.chosenArea.origin();
+         final BlockPos siteOrigin = this.chosenArea == null ? autismclient.ai.engine.AiStance.standingPos(mc) : this.chosenArea.origin();
          boolean siteTravelStarted;
          boolean seedExploreStarted;
          AiFarmBuild.BuildPhase phase = AiFarmBuild.BuildPhase.SEEDS;
@@ -634,8 +634,8 @@ final class AiFarmBuild {
 
                   return this.running("Fence materials ready");
                case DIRT:
-                  if (!ok && AiCraft.countItem(AiFarmArea.load(this.substrateId)) < this.substrateNeeded()) {
-                     return this.finish(r.status(), "Could not get " + AiFarmArea.load(this.substrateId) + " to level the field: " + r.message());
+                  if (!ok && AiCraft.countItem(AiFarmArea.levelingBlock(this.substrateId)) < this.substrateNeeded()) {
+                     return this.finish(r.status(), "Could not get " + AiFarmArea.levelingBlock(this.substrateId) + " to level the field: " + r.message());
                   }
 
                   this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.FOUNDATION : AiFarmBuild.BuildPhase.BUCKETS;
@@ -762,7 +762,7 @@ final class AiFarmBuild {
             if (!this.siteTravelStarted && Math.sqrt(mc.player.blockPosition().distSqr(this.siteOrigin)) > 32.0) {
                this.siteTravelStarted = true;
                this.stepOp = Math.sqrt(mc.player.blockPosition().distSqr(this.siteOrigin)) > 96.0
-                  ? AiTravelFar.init(this.siteOrigin, 3.0, true, true, true, true, 900)
+                  ? AiTravelFar.travel(this.siteOrigin, 3.0, true, true, true, true, 900)
                   : AiGoto.travelToCompat(this.siteOrigin, 3.0, true, true, true, 300);
                return this.running("Walking back to where the farm goes");
             }
@@ -842,7 +842,7 @@ final class AiFarmBuild {
 
          AiOperation.Result tickDirtPhase() {
             int need = this.substrateNeeded();
-            String base = AiFarmArea.load(this.substrateId);
+            String base = AiFarmArea.levelingBlock(this.substrateId);
             if (AiCraft.countItem(base) >= need) {
                this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.FOUNDATION : AiFarmBuild.BuildPhase.BUCKETS;
                return this.running(base + " in the bag");
@@ -853,9 +853,9 @@ final class AiFarmBuild {
                this.stepOp = autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
-                     autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),
                      "drops",
-                     autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt")),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:dirt")),
                      "held",
                      need,
                      "radius",
@@ -944,7 +944,7 @@ final class AiFarmBuild {
                return this.running("Ground already level");
             } else {
                this.stepOp = AiBuilder.buildSchematic(new AiBuilder.Blueprint(BlockPos.ZERO, cells), 900);
-               return this.running("Levelling " + cells.size() + " cells with " + AiFarmArea.load(this.substrateId));
+               return this.running("Levelling " + cells.size() + " cells with " + AiFarmArea.levelingBlock(this.substrateId));
             }
          }
 
@@ -970,7 +970,7 @@ final class AiFarmBuild {
                         ? s.is(Blocks.SOUL_SAND)
                         : s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.DIRT) || s.is(Blocks.DIRT_PATH) || s.is(Blocks.FARMLAND);
                      if (!correct && !s.hasBlockEntity()) {
-                        out.put(c.asLong(), new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), AiFarmArea.load(this.substrateId)));
+                        out.put(c.asLong(), new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), AiFarmArea.levelingBlock(this.substrateId)));
                      }
                   }
                }
@@ -1004,7 +1004,7 @@ final class AiFarmBuild {
             if ((!AiSchematicActions.read(state) || state.getFluidState().isSource())
                && (state.getCollisionShape(mc.level, p).isEmpty() || !state.getFluidState().isEmpty())
                && (!below || this.init_Z_2(p))) {
-               out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.load(this.substrateId)));
+               out.put(p.asLong(), new AiBuilder.CellSpec(p.getX(), p.getY(), p.getZ(), AiFarmArea.levelingBlock(this.substrateId)));
             }
          }
 
@@ -1243,7 +1243,7 @@ final class AiFarmBuild {
             } else {
                List<BlockPos> plots = new ArrayList<>(this.farmPlan.interior());
                plots.removeAll(this.farmPlan.waterCells());
-               this.stepOp = AiFieldWork.init(plots, this.farmPlan.origin(), layout.width(), layout.length(), cropBlock, seedItem);
+               this.stepOp = AiFieldWork.plantPlots(plots, this.farmPlan.origin(), layout.width(), layout.length(), cropBlock, seedItem);
                return this.running("Tilling and sowing " + layout.plots() + " plots on the move");
             }
          }
@@ -1283,7 +1283,7 @@ final class AiFarmBuild {
          }
 
          boolean load_Z_2() {
-            Block soil = BuiltInRegistries.BLOCK.getValue(Identifier.parse(AiFarmArea.read(this.substrateId)));
+            Block soil = BuiltInRegistries.BLOCK.getValue(Identifier.parse(AiFarmArea.soilBlock(this.substrateId)));
 
             for (BlockPos p : this.farmPlan.interior()) {
                if (!this.farmPlan.waterCells().contains(p) && !mc.level.getBlockState(p).is(soil)) {
@@ -1309,7 +1309,7 @@ final class AiFarmBuild {
             int sources = 0;
             List<String> problems = new ArrayList<>();
             Block crop = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cropBlock));
-            Block soil = BuiltInRegistries.BLOCK.getValue(Identifier.parse(AiFarmArea.read(this.substrateId)));
+            Block soil = BuiltInRegistries.BLOCK.getValue(Identifier.parse(AiFarmArea.soilBlock(this.substrateId)));
 
             for (BlockPos p : this.farmPlan.interior()) {
                if (this.farmPlan.waterCells().contains(p)) {
@@ -1322,7 +1322,7 @@ final class AiFarmBuild {
                   if (mc.level.getBlockState(p).is(soil)) {
                      farmland++;
                   } else if (problems.size() < 8) {
-                     problems.add("not " + AiFarmArea.read(this.substrateId) + " at " + p.toShortString());
+                     problems.add("not " + AiFarmArea.soilBlock(this.substrateId) + " at " + p.toShortString());
                   }
 
                   if (mc.level.getBlockState(p.above()).is(crop)) {
@@ -1362,7 +1362,7 @@ final class AiFarmBuild {
          }
 
          AiOperation init(String item, int count, int seconds) {
-            return AiObtain.init(
+            return AiObtain.obtain(
                AiJson.objectOf(
                   "item",
                   item,
@@ -1397,7 +1397,7 @@ final class AiFarmBuild {
                      }
 
                      this.fillStarted = true;
-                     this.stepOp = AiBucket.init(
+                     this.stepOp = AiBucket.create(
                         AiJson.objectOf(
                            "action",
                            "fill",
@@ -1465,7 +1465,7 @@ final class AiFarmBuild {
 
                AiOperation pourWaterOp() {
                   this.pourStarted = true;
-                  return AiBucket.init(
+                  return AiBucket.create(
                      AiJson.objectOf("action", "empty", "fluid", "water", "x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "timeoutSeconds", 15)
                   );
                }

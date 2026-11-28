@@ -37,7 +37,7 @@ public final class HandNoClipModule extends Module {
       this.add(new BoolSetting("break", "Break and Attack", true).build());
    }
 
-   public static HitResult init(Minecraft mc, HitResult pick, boolean attack, boolean entities) {
+   public static HitResult adjustPick(Minecraft mc, HitResult pick, boolean attack, boolean entities) {
       if (pick != null
          && pick.getType() == Type.BLOCK
          && mc.player != null

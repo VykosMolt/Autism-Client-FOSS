@@ -136,7 +136,7 @@ final class AiSpeedrun {
          return null;
       }
 
-      AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, "minecraft:bread", goal);
+      AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(graph, "minecraft:bread", goal);
       return plan.complete() && !plan.steps().isEmpty() ? plan : null;
    }
 
@@ -405,7 +405,7 @@ final class AiSpeedrun {
                   if (mc.player.isAlive() && AiServerEvidence.deathRevision() == this.deathRevision) {
                      AiRunResources.refreshReservations();
                      if (this.phase != null) {
-                        AiGoal.init(this, 0, "Beating the game", AiGoal.load(this.phase.name()), "");
+                        AiGoal.set(this, 0, "Beating the game", AiGoal.phaseLabel(this.phase.name()), "");
                      }
 
                      String dimension = AiWorldIdentity.currentDimensionId(mc);
@@ -503,7 +503,7 @@ final class AiSpeedrun {
 
                            AiSpeedrun.log(
                               "[AI] speedrun: {} at {} in {}; answering it first",
-                              mc.player.isInLava() ? "in lava" : (AiBreathe.init(mc.player) ? "out of air" : "on fire"),
+                              mc.player.isInLava() ? "in lava" : (AiBreathe.needsAir(mc.player) ? "out of air" : "on fire"),
                               mc.player.blockPosition().toShortString(),
                               this.phase
                            );
@@ -759,14 +759,14 @@ final class AiSpeedrun {
                }
 
                if (!(mc.player.getHealth() >= 12.0F) && System.nanoTime() >= this.healCooldownUntil) {
-                  if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.init(mc.player.getInventory()) >= 0 && this.mealAttempts++ < 3) {
-                     AiOperation.Result meal = this.init(AiSpeedrun.RunPhase.HEAL, AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)), null);
+                  if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0 && this.mealAttempts++ < 3) {
+                     AiOperation.Result meal = this.init(AiSpeedrun.RunPhase.HEAL, AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)), null);
                      this.guardLayerActive = true;
                      return meal;
                   } else {
                      this.mealAttempts = 0;
                      if (mc.player.getFoodData().getFoodLevel() < 18
-                        && AiSurvival.init(mc.player.getInventory()) < 0
+                        && AiSurvival.bestFoodSlot(mc.player.getInventory()) < 0
                         && mc.level.dimension() == Level.OVERWORLD
                         && System.nanoTime() > this.nextFoodTripAt) {
                         this.nextFoodTripAt = System.nanoTime() + 180000000000L;
@@ -976,7 +976,7 @@ final class AiSpeedrun {
                   if (AiRunResources.spareBuildingBlockCount() < 64) {
                      return this.init(
                         AiSpeedrun.RunPhase.KIT,
-                        AiObtain.init(AiJson.objectOf("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.secondsLeft()))),
+                        AiObtain.obtain(AiJson.objectOf("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.secondsLeft()))),
                         null
                      );
                   }
@@ -985,7 +985,7 @@ final class AiSpeedrun {
                   this.nightBurrows = 0;
                   return this.init(
                      AiSpeedrun.RunPhase.NETHER_ENTRY,
-                     AiNetherEntry.init(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
+                     AiNetherEntry.create(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
                      null
                   );
                } else {
@@ -998,7 +998,7 @@ final class AiSpeedrun {
                         if (!this.logStockTried && this.pickaxeCount() == 0 && AiItems.countInInventory(AiItems.resolveItem("log")) < 16) {
                            this.logStockTried = true;
                            return this.init(
-                              AiSpeedrun.RunPhase.WOOD, AiObtain.init(AiJson.objectOf("item", "log", "count", 16, "timeoutSeconds", 300)), null
+                              AiSpeedrun.RunPhase.WOOD, AiObtain.obtain(AiJson.objectOf("item", "log", "count", 16, "timeoutSeconds", 300)), null
                            );
                         }
 
@@ -1009,7 +1009,7 @@ final class AiSpeedrun {
                            this.woodenAxeTried = true;
                            return this.init(
                               AiSpeedrun.RunPhase.KIT,
-                              AiObtain.init(AiJson.objectOf("item", "minecraft:wooden_axe", "count", 1, "staged", true, "timeoutSeconds", 60)),
+                              AiObtain.obtain(AiJson.objectOf("item", "minecraft:wooden_axe", "count", 1, "staged", true, "timeoutSeconds", 60)),
                               null
                            );
                         }
@@ -1139,14 +1139,14 @@ final class AiSpeedrun {
                            return AiRunResources.spareBuildingBlockCount() < 64
                               ? this.init(
                                  AiSpeedrun.RunPhase.KIT,
-                                 AiObtain.init(
+                                 AiObtain.obtain(
                                     AiJson.objectOf("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.secondsLeft()))
                                  ),
                                  null
                               )
                               : this.init(
                                  AiSpeedrun.RunPhase.NETHER_ENTRY,
-                                 AiNetherEntry.init(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
+                                 AiNetherEntry.create(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
                                  null
                               );
                         }
@@ -1156,11 +1156,11 @@ final class AiSpeedrun {
                         }
 
                         this.armourEquipTried = true;
-                        return this.init(AiSpeedrun.RunPhase.EQUIP, AiEquip.init(AiJson.objectOf("what", "armor")), null);
+                        return this.init(AiSpeedrun.RunPhase.EQUIP, AiEquip.create(AiJson.objectOf("what", "armor")), null);
                      }
                   } else {
                      AiNetherRun.init_V();
-                     return this.init(AiSpeedrun.RunPhase.STRONGHOLD, AiStronghold.init(AiJson.objectOf("timeoutSeconds", Math.min(5400, this.secondsLeft()))), null);
+                     return this.init(AiSpeedrun.RunPhase.STRONGHOLD, AiStronghold.create(AiJson.objectOf("timeoutSeconds", Math.min(5400, this.secondsLeft()))), null);
                   }
                }
             }
@@ -1314,7 +1314,7 @@ final class AiSpeedrun {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.finished = true;
-               AiGoal.init(this);
+               AiGoal.clear(this);
                JsonObject debug = this.diagnostics
                   .snapshot(status.name(), this.phase == null ? "START" : this.phase.name(), message);
                if (this.phaseOp != null) {
@@ -1361,7 +1361,7 @@ final class AiSpeedrun {
 
             @Override
             public void cancel() {
-               AiGoal.init(this);
+               AiGoal.clear(this);
                if (!this.finished) {
                   this.finished = true;
                   this.diagnostics.snapshot("CANCELLED", this.phase == null ? "START" : this.phase.name(), this.lastMessage);
@@ -1427,7 +1427,7 @@ final class AiSpeedrun {
 
          int count = AiCraft.countItem(drop) + 1;
          log("[AI] speedrun food: {} {} in sight, hunting for {} {}", herd, type, count, drop);
-         return AiObtain.init(
+         return AiObtain.obtain(
             AiJson.objectOf(
                "item", drop, "count", count, "allowCombat", true, "staged", true, "radius", (int)Math.ceil(range), "timeoutSeconds", seconds
             )
@@ -1446,7 +1446,7 @@ final class AiSpeedrun {
          if (plan == null) {
             return null;
          } else {
-            return plan.requiresTable() && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") == 0 && !AiCraftPlanner.init(graph, "minecraft:crafting_table", 1).complete()
+            return plan.requiresTable() && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") == 0 && !AiCraftPlanner.plan(graph, "minecraft:crafting_table", 1).complete()
                ? null
                : AiCraft.craft(AiJson.objectOf("item", "minecraft:bread", "count", plan.target(), "timeoutSeconds", seconds));
          }
@@ -1545,7 +1545,7 @@ final class AiSpeedrun {
                   && mc.player.getHealth() >= 10.0F
                   && !mc.player.isOnFire()
                   && !AiLavaEscape.isInLava(mc)
-                  && !AiBreathe.init(mc.player);
+                  && !AiBreathe.needsAir(mc.player);
                if (AiSpeedrun.shouldCookNow(vitals.food(), AiRunResources.totalSafeFoodNutrition(), raw, this.cookingSteps, this.secondsLeft(), quiet, this.legOp)) {
                   AiOperation cooking = this.cookLeg();
                   if (cooking != null) {

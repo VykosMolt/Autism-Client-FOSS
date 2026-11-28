@@ -595,7 +595,7 @@ final class AiGhastReflect {
          if (threat.entityId() != ball.getId()) {
             Entity other = this.mc.level.getEntity(threat.entityId());
             if (other != null) {
-               AiProjectiles.ApproachMetrics danger = AiProjectiles.init(this.mc, other, landing, ticks);
+               AiProjectiles.ApproachMetrics danger = AiProjectiles.approach(this.mc, other, landing, ticks);
                if (danger != null && danger.closestApproach() <= 0.5 && danger.secondsToClosest() * 20.0 <= ticks + 5) {
                   return false;
                }

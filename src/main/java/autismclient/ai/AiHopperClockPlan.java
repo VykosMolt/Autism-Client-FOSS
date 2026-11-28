@@ -39,10 +39,10 @@ final class AiHopperClockPlan {
    }
 
    static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents) {
-      return init(states, contents, at -> true);
+      return plan(states, contents, at -> true);
    }
 
-   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents, Predicate<BlockPos> covered) {
+   static List<autismclient.ai.print.PrintClockSpec> plan(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.ContainerPlan> contents, Predicate<BlockPos> covered) {
       HashMap<BlockPos, AiSchematicMachinePlan.ContainerPlan> byPosition = new HashMap<>();
       contents.forEach(c -> byPosition.put(c.position(), c));
       ArrayList<autismclient.ai.print.PrintClockSpec> found = new ArrayList<>();

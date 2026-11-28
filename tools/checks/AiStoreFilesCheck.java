@@ -37,7 +37,7 @@ public class AiStoreFilesCheck {
       Path live = dir.resolve("sessions/s.transcript.jsonl");
       check(Files.isRegularFile(archive) && !Files.exists(live), "transcript rotated");
       store.appendLine("s", user("new"));
-      List<JsonObject> replay = store.init("s", 100000000L, false);
+      List<JsonObject> replay = store.replay("s", 100000000L, false);
       check(replay.size() == 6, "replay holds archive + live, got " + replay.size());
       check(replay.get(0).get("content").getAsString().startsWith("old-0"), "archive lines come first");
       check(replay.get(5).get("content").equals(new JsonPrimitive("new")), "live line comes last");

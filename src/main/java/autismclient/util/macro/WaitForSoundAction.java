@@ -136,7 +136,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
-   public void init(String soundId, double x, double y, double z) {
+   public void recordMatch(String soundId, double x, double y, double z) {
       this.matchedSoundId = soundId == null ? "" : soundId;
       this.matchedX = x;
       this.matchedY = y;

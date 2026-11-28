@@ -1049,7 +1049,7 @@ public final class AiPhysics {
    public record MoveInput(double forward, double strafe, boolean jump, boolean sprint, boolean sneak, float yaw) {
       public static final AiPhysics.MoveInput NONE = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, 0.0F);
 
-      public static AiPhysics.MoveInput run(float var0, boolean var1) {
+      public static AiPhysics.MoveInput running(float var0, boolean var1) {
          return new AiPhysics.MoveInput(1.0, 0.0, false, var1, false, var0);
       }
 
@@ -1245,20 +1245,20 @@ public final class AiPhysics {
    public interface PhysicsWorld {
       // 5.3 external ABI defaults (overridden by modules/i.java and ai/b/ArrayUtil.java)
       default double maxDropBlocks() { return 4.0; }
-      default double load() { return 0.1; }
+      default double baseMovementSpeed() { return 0.1; }
       default double blockFriction(int x, int y, int z) { return 0.6; }
       default double speedFactor(int x, int y, int z) { return 1.0; }
-      default boolean flush(int x, int y, int z) { return false; }
-      default double bounceFactor(int x, int y, int z) { return this.flush(x, y, z) ? 1.0 : 0.0; }
+      default boolean isSlimeBlock(int x, int y, int z) { return false; }
+      default double bounceFactor(int x, int y, int z) { return this.isSlimeBlock(x, y, z) ? 1.0 : 0.0; }
       default double jumpFactor(int x, int y, int z) { return 1.0; }
-      default boolean sync(int x, int y, int z) { return false; }
+      default boolean isClimbable(int x, int y, int z) { return false; }
       default int stuckBlockKindIn(AABB box) { return 0; }
       default boolean tracksStuckBlocks() { return false; }
       default boolean isLavaOrUnloaded(int x, int y, int z) { return false; }
       default boolean isWater(int x, int y, int z) { return false; }
       default boolean isInvisibleLightBlock(int x, int y, int z) { return false; }
       default boolean isPressurePlate(int x, int y, int z) { return false; }
-      default boolean update(int x, int y, int z) { return false; }
+      default boolean isHazard(int x, int y, int z) { return false; }
       default boolean init_Z(AABB q) { return this.putAt_Z_AABB(q); }
 
       default double putAt_D() {
@@ -1266,7 +1266,7 @@ public final class AiPhysics {
       }
 
       default double movementSpeed() {
-         return this.load();
+         return this.baseMovementSpeed();
       }
 
       default List<AABB> collisions(AABB var1) {
@@ -1334,7 +1334,7 @@ public final class AiPhysics {
       }
 
       default boolean closeOf(int var1, int var2, int var3) {
-         return this.flush(var1, var2, var3);
+         return this.isSlimeBlock(var1, var2, var3);
       }
 
       default double readEx_D(int var1, int var2, int var3) {
@@ -1346,7 +1346,7 @@ public final class AiPhysics {
       }
 
       default boolean state(int var1, int var2, int var3) {
-         return this.sync(var1, var2, var3);
+         return this.isClimbable(var1, var2, var3);
       }
 
       default int putAt_I_AABB(AABB var1) {
@@ -1366,7 +1366,7 @@ public final class AiPhysics {
       }
 
       default boolean prevEx(int var1, int var2, int var3) {
-         return this.update(var1, var2, var3);
+         return this.isHazard(var1, var2, var3);
       }
 
       default boolean prev(int var1, int var2, int var3) {

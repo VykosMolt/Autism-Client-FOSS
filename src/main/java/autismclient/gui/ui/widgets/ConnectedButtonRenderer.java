@@ -100,7 +100,7 @@ public final class ConnectedButtonRenderer {
          int iconX = bounds.read() + Math.max(3, (pill.read() - 4 - bounds.read() - groupW) / 2);
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          context.init_GuiGraphicsExtract()
-            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+            .blit(ThemeTextureRecolorer.recolored(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          context.init_PoolEntry()
             .drawFitted(
                context.init_GuiGraphicsExtract(),
@@ -209,7 +209,7 @@ public final class ConnectedButtonRenderer {
          int iconX = bounds.read() + 5;
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          context.init_GuiGraphicsExtract()
-            .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+            .blit(ThemeTextureRecolorer.recolored(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          int textX = iconX + iconSize + 4;
          context.init_PoolEntry()
             .drawFitted(context.init_GuiGraphicsExtract(), label, textX, context.init_PoolEntry().centerTextY(bounds), Math.max(1, bounds.init() - textX - 4), color);

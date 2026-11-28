@@ -417,7 +417,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return this.paused;
    }
 
-   public void load(boolean configurationOnly) {
+   public void setConfigurationOnly(boolean configurationOnly) {
       boolean leavingOfflineSetup = this.configurationOnly && !configurationOnly;
       this.configurationOnly = configurationOnly;
       if (configurationOnly) {
@@ -431,7 +431,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public synchronized void read(boolean paused) {
+   public synchronized void setPaused(boolean paused) {
       if (this.paused != paused) {
          if (paused) {
             this.drainPending();
@@ -801,7 +801,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       config.save();
    }
 
-   public synchronized void load(String name) {
+   public synchronized void blockPacket(String name) {
       if (name != null && !name.isBlank()) {
          if (this.blockedPackets.add(name.trim())) {
             this.rebuildBlockedKeys();
@@ -1033,7 +1033,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       OverlayBounds bounds = new OverlayBounds(this.windowX, this.windowY, this.panelWidth, panelHeight, this.windowVisible, this.windowCollapsed);
       int h = this.renderedHeight(bounds, this.windowCollapsed);
       boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.panelWidth && my >= this.windowY && my <= this.windowY + h;
-      return overPanel | this.contextMenu.init(mx, my);
+      return overPanel | this.contextMenu.handleClick(mx, my);
    }
 
    @Override
@@ -1068,7 +1068,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          int bodyMx = mx;
          int bodyMy = my;
-         if (this.contextMenu.init(mx, my)) {
+         if (this.contextMenu.handleClick(mx, my)) {
             bodyMx = -10000;
             bodyMy = -10000;
          }
@@ -1126,7 +1126,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
             if (this.contextMenu.isOpen()) {
                ctx.nextStratum();
-               this.contextMenu.init(ctx, mx, my);
+               this.contextMenu.render(ctx, mx, my);
             }
          }
       }
@@ -1445,7 +1445,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private void openContextMenu(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int mouseX, int mouseY) {
-      this.contextMenu.init(mouseX, mouseY, entry);
+      this.contextMenu.open(mouseX, mouseY, entry);
    }
 
    @Override
@@ -1550,7 +1550,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             if (mouseX >= x && mouseX < x + w) {
                switch (i) {
                   case 0:
-                     this.read(!this.paused);
+                     this.setPaused(!this.paused);
                      break;
                   case 1:
                      this.clearEntriesLocked();
@@ -1624,7 +1624,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int bx = this.windowX + this.panelWidth - 28;
             if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.packetClass != null) {
                String n = PacketNameResolver.nameOfClass((Class<? extends Packet<?>>)row.packetClass);
-               this.load(n);
+               this.blockPacket(n);
                return true;
             }
 
@@ -1658,7 +1658,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (!this.configurationOnly || !"Send".equals(action) && !"Replay".equals(action)) {
          switch (action) {
             case "Block":
-               this.load(e.name);
+               this.blockPacket(e.name);
                AutismClientMessaging.sendPrefixed("Blocked + purged from logger: " + e.name);
                break;
             case "Queue":
@@ -2408,7 +2408,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                if (AutismPacketLoggerOverlay.this.isBlocked(cls, PacketNameResolver.nameOfClass(cls))) {
                   AutismPacketLoggerOverlay.this.init_V_Class_Str(cls, PacketNameResolver.nameOfClass(cls));
                } else {
-                  AutismPacketLoggerOverlay.this.load(key);
+                  AutismPacketLoggerOverlay.this.blockPacket(key);
                }
 
                if (this.update_Z) {
@@ -2594,8 +2594,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       public final boolean inventoryPacket;
       public final boolean movementPacket;
       public final boolean payloadPacket;
-      public final String write;
-      public final String update;
+      public final String capturedBlockState;
+      public final String capturedScreen;
       public final AutismPayloadSupport.PayloadEntry payloadSnapshot;
       public final PacketStateDeltaTracker.Inner_DataUtil packetContext;
 
@@ -2625,8 +2625,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.inventoryPacket = inv;
          this.movementPacket = mov;
          this.payloadPacket = payload;
-         this.write = capturedBlockState;
-         this.update = capturedScreen;
+         this.capturedBlockState = capturedBlockState;
+         this.capturedScreen = capturedScreen;
          this.packetContext = packetContext == null ? PacketStateDeltaTracker.EMPTY_CAPTURE : packetContext;
       }
 
@@ -5025,7 +5025,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          if (!AutismPacketLoggerOverlay.this.configurationOnly && this.ensureRegistrationUnlocked()) {
             this.saveIfDirty();
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
+            PayloadSubscriptionManager.tick(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.status();
             if (skipped > 0 || status != null && status.read() > 0) {
                int count = status == null ? 0 : status.registered();
@@ -5329,12 +5329,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.saveIfDirty();
          if (!PayloadSubscriptionManager.isRegistrationUnlocked()) {
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
+            PayloadSubscriptionManager.tick(AutismPacketLoggerOverlay.MC, false);
             bi.read("Registration locked. Saved, nothing sent.");
             this.rebuildRows();
          } else {
             PayloadSubscriptionManager.requestSync();
-            PayloadSubscriptionManager.init(AutismPacketLoggerOverlay.MC, false);
+            PayloadSubscriptionManager.tick(AutismPacketLoggerOverlay.MC, false);
             PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.status();
             if (status != null && status.read() > 0) {
                bi.write("Payload channel cap reached: " + status.registered() + "/" + status.limit());

@@ -95,10 +95,10 @@ public interface PrintMachineJob {
    default void init(Map<Item, Integer> removed) {
    }
 
-   default void init(PrintContainerOrder order) {
+   default void setOrder(PrintContainerOrder order) {
    }
 
-   default boolean load_Z() {
+   default boolean isVerifiedSuccess() {
       return false;
    }
 

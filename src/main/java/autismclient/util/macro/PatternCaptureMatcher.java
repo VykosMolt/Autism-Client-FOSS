@@ -38,7 +38,7 @@ public final class PatternCaptureMatcher {
    private PatternCaptureMatcher() {
    }
 
-   public static Optional<PatternCaptureMatcher.CaptureResult> init(PatternCaptureMatcher.MatchMode mode, String pattern, String candidate) {
+   public static Optional<PatternCaptureMatcher.CaptureResult> match(PatternCaptureMatcher.MatchMode mode, String pattern, String candidate) {
       if (candidate == null) {
          return Optional.empty();
       }
@@ -62,7 +62,7 @@ public final class PatternCaptureMatcher {
       return var10000;
    }
 
-   public static Set<String> init(PatternCaptureMatcher.MatchMode mode, String pattern) {
+   public static Set<String> captureNames(PatternCaptureMatcher.MatchMode mode, String pattern) {
       Pattern parser = mode == PatternCaptureMatcher.MatchMode.REGEX ? NAMED_GROUP_PATTERN : TOKEN_PATTERN;
       String source = pattern == null ? "" : pattern;
       if (mode != PatternCaptureMatcher.MatchMode.REGEX) {
@@ -143,7 +143,7 @@ public final class PatternCaptureMatcher {
          return Optional.of(new PatternCaptureMatcher.CaptureResult(sourceCandidate, Map.of()));
       }
 
-      List<String> names = new ArrayList<>(init(PatternCaptureMatcher.MatchMode.REGEX, regex));
+      List<String> names = new ArrayList<>(captureNames(PatternCaptureMatcher.MatchMode.REGEX, regex));
 
       try {
          Matcher matcher = compileCached(regex).matcher(sourceCandidate);

@@ -38,7 +38,7 @@ public final class BedSleepDesyncHelper {
       return init_Z;
    }
 
-   public static void init(Minecraft mc) {
+   public static void tick(Minecraft mc) {
       if (init_Z) {
          LocalPlayer player = mc == null ? null : mc.player;
          if (player == null) {

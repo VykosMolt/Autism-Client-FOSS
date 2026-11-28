@@ -475,7 +475,7 @@ public final class InventoryTweaksModule extends Module {
             if (!stack.isEmpty()
                && this.listContains(stack, "auto-drop-items")
                && (!this.bool("only-full-stacks") || stack.getCount() >= stack.getMaxStackSize())) {
-               autismclient.util.InventoryDropHelper.load(CLIENT, slot, 0);
+               autismclient.util.InventoryDropHelper.dropFromInventory(CLIENT, slot, 0);
                return;
             }
          }

@@ -41,7 +41,7 @@ public final class FrameEspCatalog {
    private FrameEspCatalog() {
    }
 
-   public static List<String> init(Module module) {
+   public static List<String> itemIds(Module module) {
       String value = module == null ? "" : module.value("item-list");
       if (value == null) {
          value = "";
@@ -65,7 +65,7 @@ public final class FrameEspCatalog {
    }
 
    public static boolean isSelected(Module module, String itemId) {
-      return itemId != null && init(module).contains(itemId.toLowerCase(Locale.ROOT));
+      return itemId != null && itemIds(module).contains(itemId.toLowerCase(Locale.ROOT));
    }
 
    public static boolean isKnown(String itemId) {
@@ -127,7 +127,7 @@ public final class FrameEspCatalog {
       if (module != null && module.isEnabled()) {
          Map<Item, Integer> colors = new IdentityHashMap<>();
 
-         for (String id : init(module)) {
+         for (String id : itemIds(module)) {
             Item item = parseItem(id);
             if (item != null) {
                colors.put(item, colorFor(module, id));

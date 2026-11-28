@@ -13,8 +13,8 @@ public final class MacroVariableStore {
       this.vars.clear();
    }
 
-   public void init(String name, MacroVarValue value) {
-      String key = load(name);
+   public void set(String name, MacroVarValue value) {
+      String key = rootKey(name);
       if (!key.isEmpty() && value != null) {
          this.vars.put(key, value);
       }
@@ -22,7 +22,7 @@ public final class MacroVariableStore {
 
    public void putAll(Map<String, MacroVarValue> additions) {
       if (additions != null) {
-         additions.forEach(this::init);
+         additions.forEach(this::set);
       }
    }
 
@@ -61,7 +61,7 @@ public final class MacroVariableStore {
       return cleaned.matches("[a-z_][a-z0-9_.-]{0,63}") ? cleaned : "";
    }
 
-   public static String load(String name) {
+   public static String rootKey(String name) {
       String cleaned = init_Str_Str(name);
       return cleaned.contains(".") ? "" : cleaned;
    }

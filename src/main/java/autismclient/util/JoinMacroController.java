@@ -50,7 +50,7 @@ public final class JoinMacroController {
       config.save();
    }
 
-   public static void init(boolean enabled) {
+   public static void setEnabled(boolean enabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroEnabled = enabled && config.joinMacroName != null && !config.joinMacroName.isBlank();
       sync();
@@ -72,7 +72,7 @@ public final class JoinMacroController {
       return AutismConfig.getGlobal().joinMacroKeepEnabled;
    }
 
-   public static void load(boolean keepEnabled) {
+   public static void setKeepEnabled(boolean keepEnabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroKeepEnabled = keepEnabled;
       config.joinMacroTriggerJoin = init(JoinMacroController.JoinTrigger.init_aA_CachePool_Str(config.joinMacroTriggerJoin), keepEnabled).init();
@@ -118,7 +118,7 @@ public final class JoinMacroController {
       }
    }
 
-   public static void write() {
+   public static void reset() {
       init_V();
       init_Z = false;
       pendingMacro = null;
@@ -131,8 +131,8 @@ public final class JoinMacroController {
       }
    }
 
-   public static void init(ClientConfigurationPacketListenerImpl listener) {
-      write();
+   public static void onConfigurationStart(ClientConfigurationPacketListenerImpl listener) {
+      reset();
       configListener = listener;
       init_I++;
       if (hasMacro() && trigger().init_Z_I(init_I)) {
@@ -200,7 +200,7 @@ public final class JoinMacroController {
    }
 
    public static void update() {
-      write();
+      reset();
    }
 
    private static boolean auditStillOn(Connection bound) {
@@ -274,7 +274,7 @@ public final class JoinMacroController {
                            }
                         }
 
-                        autismclient.util.custommenu.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
+                        autismclient.util.custommenu.CustomMenuTracker.replace(seenGeneration, result.replacement(), snapshot.phase());
                         autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
                      }
                   }
@@ -367,11 +367,11 @@ public final class JoinMacroController {
       return result;
    }
 
-   public static boolean init(Map<String, String> values) {
+   public static boolean saveValues(Map<String, String> values) {
       Map<String, String> sealed = new LinkedHashMap<>();
       if (values != null) {
          for (Entry<String, String> entry : values.entrySet()) {
-            String name = JoinSecretKeyHelper.init(entry.getKey());
+            String name = JoinSecretKeyHelper.normalize(entry.getKey());
             if (!name.isEmpty()) {
                byte[] blob = autismclient.util.mm.a.DataUtil.init((entry.getValue() == null ? "" : entry.getValue()).getBytes(StandardCharsets.UTF_8));
                sealed.put(name, Base64.getEncoder().encodeToString(blob));

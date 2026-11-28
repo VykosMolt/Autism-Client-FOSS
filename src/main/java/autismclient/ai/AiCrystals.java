@@ -160,7 +160,7 @@ final class AiCrystals {
       return out;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600)));
@@ -474,7 +474,7 @@ final class AiCrystals {
                   }
                } else {
                   if (this.stepOp == null) {
-                     this.stepOp = AiRanged.init(
+                     this.stepOp = AiRanged.create(
                         AiJson.objectOf("entityId", this.currentTarget.entityId(), "count", 1, "timeoutSeconds", Math.min(8, this.legSeconds(45)))
                      );
                   }

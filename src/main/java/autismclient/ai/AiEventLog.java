@@ -39,7 +39,7 @@ final class AiEventLog {
       this.auditLastEvictedSeq = 0L;
    }
 
-   synchronized void init(String kind, JsonObject data) {
+   synchronized void log(String kind, JsonObject data) {
       if (this.events.size() >= 256) {
          this.auditLastEvictedSeq = this.events.pollFirst().seq();
          this.load++;

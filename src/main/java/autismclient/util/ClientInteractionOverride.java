@@ -343,7 +343,7 @@ public final class ClientInteractionOverride {
 
    public static void releaseHoldOverrides() {
       if (!AutismLiteVariant.enabled()) {
-         SilentMiningCoordinator.init();
+         SilentMiningCoordinator.clearOwner();
       }
 
       pendingGuardOwner = null;

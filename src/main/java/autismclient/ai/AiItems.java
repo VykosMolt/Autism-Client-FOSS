@@ -594,11 +594,11 @@ public final class AiItems {
    }
 
    public static int bestHotbarToolFor(BlockState state) {
-      return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, 9, false);
+      return BlockBreakSpeedHelper.bestToolSlot(Minecraft.getInstance(), state, 9, false);
    }
 
    public static int bestToolFor(BlockState state, int limit) {
-      return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, limit, false);
+      return BlockBreakSpeedHelper.bestToolSlot(Minecraft.getInstance(), state, limit, false);
    }
 
    public static boolean hasUsableToolFor(BlockState state) {

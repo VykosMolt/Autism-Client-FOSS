@@ -139,7 +139,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
 
    @Override
    protected void init() {
-      if (!CustomMainMenuGuard.init() && this.minecraft != null) {
+      if (!CustomMainMenuGuard.isEnabled() && this.minecraft != null) {
          this.minecraft.gui.setScreen(new TitleScreen());
       } else {
          this.layoutDirty = true;
@@ -737,7 +737,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          int logoY = this.stackY + introOffset(p) + Math.max(0, (this.cardH - drawH) / 2);
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            ThemeTextureRecolorer.init(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT),
+            ThemeTextureRecolorer.recolored(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT),
             logoX,
             logoY,
             0.0F,

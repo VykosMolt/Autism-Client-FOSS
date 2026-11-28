@@ -100,7 +100,7 @@ public final class MacroFolderLayout {
       String key = key(folder);
       if (this.init_Map.containsKey(key)) {
          if (macroName != null && !macroName.isBlank()) {
-            this.load.put(key, MacroNameNormalizer.init(macroName));
+            this.load.put(key, MacroNameNormalizer.normalize(macroName));
          } else {
             this.load.remove(key);
             this.read.remove(key);
@@ -117,7 +117,7 @@ public final class MacroFolderLayout {
                boolean passed = false;
 
                for (AutismMacro macro : looseInOrder) {
-                  String key = MacroNameNormalizer.init(macro.name);
+                  String key = MacroNameNormalizer.normalize(macro.name);
                   if (!passed) {
                      passed = key.equals(anchor);
                   } else if (!leavingKeys.contains(key)) {
@@ -142,7 +142,7 @@ public final class MacroFolderLayout {
          List<String> keys = new ArrayList<>(looseInOrder.size());
 
          for (AutismMacro macro : looseInOrder) {
-            keys.add(MacroNameNormalizer.init(macro.name));
+            keys.add(MacroNameNormalizer.normalize(macro.name));
          }
 
          for (String folder : new ArrayList<>(this.load.keySet())) {
@@ -379,7 +379,7 @@ public final class MacroFolderLayout {
          Map<String, Integer> slots = new HashMap<>();
 
          for (int i = 0; i < loose.size(); i++) {
-            slots.putIfAbsent(MacroNameNormalizer.init(loose.get(i).name), i);
+            slots.putIfAbsent(MacroNameNormalizer.normalize(loose.get(i).name), i);
          }
 
          boolean[] emitted = new boolean[folderKeys.size()];

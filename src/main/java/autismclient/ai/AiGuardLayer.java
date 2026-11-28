@@ -85,13 +85,13 @@ final class AiGuardLayer {
             return this.tickActiveGuardOp();
          }
 
-         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeBreatheEscape && !this.activeLavaEscape && zoneClient.player != null && AiBreathe.init(zoneClient.player)) {
+         if (environmentDamage && !AiThreats.isLegacyCombatEnabled() && !this.activeBreatheEscape && !this.activeLavaEscape && zoneClient.player != null && AiBreathe.needsAir(zoneClient.player)) {
             this.preemptForHazard(leg, cancelLeg);
             this.activeFlee = false;
             this.activeCombat = false;
             this.activeReason = "out of air";
             this.activeGuardOp = AiRunDiagnostics.trace(
-               "survival", this.ownerLabel + ": " + this.activeReason, AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25))
+               "survival", this.ownerLabel + ": " + this.activeReason, AiBreathe.create(AiJson.objectOf("timeoutSeconds", 25))
             );
             this.activeHazardEscape = true;
             this.activeBreatheEscape = true;
@@ -235,7 +235,7 @@ final class AiGuardLayer {
             }
          }
 
-         if (!AiThreats.isLegacyCombatEnabled() && this.activeGuardOp != null && !this.activeHazardEscape && AiCombatPriority.init(this.activeGuardAction) && AiDodge.init(zoneClient, false)) {
+         if (!AiThreats.isLegacyCombatEnabled() && this.activeGuardOp != null && !this.activeHazardEscape && AiCombatPriority.isLowPriority(this.activeGuardAction) && AiDodge.init(zoneClient, false)) {
             this.preemptForHazard(leg, cancelLeg);
             this.activeCombat = this.activeFlee = false;
             this.activeReason = "incoming projectile during maintenance";
@@ -275,7 +275,7 @@ final class AiGuardLayer {
          if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && (leg == null || leg.canInterruptNow())) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             boolean moving = motion.horizontalDistance() >= 0.12;
-            if (!AiThreats.isLegacyCombatEnabled() && !AiCover.init(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
+            if (!AiThreats.isLegacyCombatEnabled() && !AiCover.isTakingCover(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
                this.activeFlee = false;
                this.activeCombat = false;
                this.activeReason = "incoming projectile";
@@ -500,8 +500,8 @@ final class AiGuardLayer {
          return null;
       } else if (AiLavaEscape.isInLava(mc)) {
          return AiLavaEscape.init();
-      } else if (AiBreathe.init(mc.player)) {
-         return AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
+      } else if (AiBreathe.needsAir(mc.player)) {
+         return AiBreathe.create(AiJson.objectOf("timeoutSeconds", 25));
       } else if (AiPowderEscape.isInPowderSnow(mc)) {
          return AiPowderEscape.init();
       } else if (mc.player.isInWater()) {

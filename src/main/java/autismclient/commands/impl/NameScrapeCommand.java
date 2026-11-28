@@ -43,7 +43,7 @@ public final class NameScrapeCommand extends Command {
    }
 
    private static int init(int count, boolean deep) {
-      NameScrapeController.init(count, deep);
+      NameScrapeController.start(count, deep);
       return 1;
    }
 }

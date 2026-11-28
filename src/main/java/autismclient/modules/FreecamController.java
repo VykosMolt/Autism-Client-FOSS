@@ -341,7 +341,7 @@ public final class FreecamController {
          }
 
          if (released) {
-            GridWalkNavigator.read();
+            GridWalkNavigator.releaseHeldKeys();
          }
       }
    }

@@ -140,7 +140,7 @@ public final class PayloadStudyTracker {
             }
          }
 
-         PayloadSubscriptionManager.init(snapshot);
+         PayloadSubscriptionManager.observe(snapshot);
          payloadCount++;
          PayloadStudyTracker.Inner_DataUtil stats = statsByChannel.computeIfAbsent(channel, PayloadStudyTracker.Inner_DataUtil::new);
          stats.count++;

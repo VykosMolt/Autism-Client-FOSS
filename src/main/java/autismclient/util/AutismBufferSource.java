@@ -23,7 +23,7 @@ public final class AutismBufferSource implements AutoCloseable {
       this.stagedBuffer = new StagedVertexBuffer(() -> "AutismBufferSource", bufferSize);
    }
 
-   public VertexConsumer init(RenderType renderType) {
+   public VertexConsumer buffer(RenderType renderType) {
       if (!this.load.isEmpty() && this.load.getLast() == renderType && renderType.canConsolidateConsecutiveGeometry()) {
          return this.stagedBuffer.getVertexBuilder(this.draws.getLast());
       }
@@ -35,7 +35,7 @@ public final class AutismBufferSource implements AutoCloseable {
       return this.stagedBuffer.getVertexBuilder(draw);
    }
 
-   public void init() {
+   public void drawAll() {
       try {
          if (this.draws.isEmpty()) {
             return;

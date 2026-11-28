@@ -511,7 +511,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             values.add(value);
          }
 
-         this.storeValue(PipeDelimitedListUtil.init(values));
+         this.storeValue(PipeDelimitedListUtil.join(values));
          this.write("");
          this.pop = -1;
          this.tick = 0;
@@ -546,7 +546,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       List<String> values = this.mutableValues();
       if (index >= 0 && index < values.size()) {
          values.remove(index);
-         this.storeValue(PipeDelimitedListUtil.init(values));
+         this.storeValue(PipeDelimitedListUtil.join(values));
          if (this.pop == index) {
             this.clearEditor();
          } else if (this.pop > index) {
@@ -602,7 +602,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       String rawValue = this.module.value(this.setting.id());
       if (!rawValue.equals(this.lastRawValue)) {
          this.lastRawValue = rawValue;
-         this.parsedValues = List.copyOf(PipeDelimitedListUtil.init(rawValue));
+         this.parsedValues = List.copyOf(PipeDelimitedListUtil.split(rawValue));
          this.lastFilter = null;
          this.filteredCache = List.of();
       }
@@ -762,7 +762,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             values.add(name);
          }
 
-         this.storeValue(PipeDelimitedListUtil.init(values));
+         this.storeValue(PipeDelimitedListUtil.join(values));
       }
    }
 
@@ -795,7 +795,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                }
             }
 
-            this.storeValue(PipeDelimitedListUtil.init(values));
+            this.storeValue(PipeDelimitedListUtil.join(values));
          }
       }
    }
@@ -827,7 +827,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          }
 
          if (added > 0) {
-            this.storeValue(PipeDelimitedListUtil.init(values));
+            this.storeValue(PipeDelimitedListUtil.join(values));
             this.clampScroll();
             bi.init("Rank scan added " + added + " tag" + (added == 1 ? "." : "s."), -13248397);
          } else {
@@ -878,7 +878,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          List<String> values = this.mutableValues();
          int added = 0;
 
-         for (String entry : PipeDelimitedListUtil.init(source.value(sourceOptionId))) {
+         for (String entry : PipeDelimitedListUtil.split(source.value(sourceOptionId))) {
             if (entry != null && !entry.isBlank() && !load(values, entry)) {
                values.add(entry.trim());
                added++;
@@ -886,7 +886,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          }
 
          if (added > 0) {
-            this.storeValue(PipeDelimitedListUtil.init(values));
+            this.storeValue(PipeDelimitedListUtil.join(values));
             this.clampScroll();
             bi.init("Imported " + added + " name" + (added == 1 ? "." : "s."), -13248397);
          } else {

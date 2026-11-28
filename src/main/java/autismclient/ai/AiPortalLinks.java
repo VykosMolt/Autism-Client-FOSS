@@ -129,7 +129,7 @@ final class AiPortalLinks {
       }
    }
 
-   static void init(String from, BlockPos entrance, String to, BlockPos arrival, boolean safe, JsonObject entranceEvidence) {
+   static void recordLink(String from, BlockPos entrance, String to, BlockPos arrival, boolean safe, JsonObject entranceEvidence) {
       init_V();
       if (entrance != null && arrival != null && from != null && to != null && !from.equals(to)) {
          init_List.removeIf(link -> link.fromDimension.equals(from) && link.entrance.distSqr(entrance) < 16.0 && link.toDimension.equals(to));
@@ -144,7 +144,7 @@ final class AiPortalLinks {
                false,
                safe,
                entranceEvidence == null ? new JsonObject() : entranceEvidence.deepCopy(),
-               init(arrival)
+               entranceEvidence(arrival)
             )
          );
          AiRunTrace.emitServiceEvent(
@@ -164,7 +164,7 @@ final class AiPortalLinks {
       }
    }
 
-   static JsonObject init(BlockPos near) {
+   static JsonObject entranceEvidence(BlockPos near) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && near != null) {
          BlockPos seed = null;
@@ -333,7 +333,7 @@ final class AiPortalLinks {
       }
    }
 
-   static JsonObject init(Vec3 position, String from, String to) {
+   static JsonObject predictArrival(Vec3 position, String from, String to) {
       init_V();
       Double sourceScale = init_Map.get(from);
       Double targetScale = init_Map.get(to);
@@ -380,7 +380,7 @@ final class AiPortalLinks {
       return toJson();
    }
 
-   static BlockPos init(int radius) {
+   static BlockPos nearestKnownPortal(int radius) {
       init_V();
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && mc.level != null

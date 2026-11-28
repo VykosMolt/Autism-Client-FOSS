@@ -11,7 +11,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
 public final class StructureStorageFilter {
-   public static final List<StructureStorageFilter.StructureFilter> init = List.of(
+   public static final List<StructureStorageFilter.StructureFilter> STRUCTURES = List.of(
       init_aq_DataUtil_Str(
          "hide-trial-chambers", "Hide Trial Chambers", Blocks.TRIAL_SPAWNER, Blocks.VAULT, Blocks.CHISELED_TUFF, Blocks.TUFF_BRICKS, Blocks.POLISHED_TUFF
       ),
@@ -74,8 +74,8 @@ public final class StructureStorageFilter {
 
       long mask = 0L;
 
-      for (int i = 0; i < init.size(); i++) {
-         if (module.value(init.get(i).id()).equals("true")) {
+      for (int i = 0; i < STRUCTURES.size(); i++) {
+         if (module.value(STRUCTURES.get(i).id()).equals("true")) {
             mask |= 1L << i;
          }
       }
@@ -117,9 +117,9 @@ public final class StructureStorageFilter {
    private static long init_J_LevelChunkSection_J(LevelChunkSection section, long mask) {
       long found = 0L;
 
-      for (int i = 0; i < init.size(); i++) {
+      for (int i = 0; i < STRUCTURES.size(); i++) {
          if ((mask & 1L << i) != 0L) {
-            Set<Block> markers = init.get(i).init_Set();
+            Set<Block> markers = STRUCTURES.get(i).init_Set();
             if (section.maybeHas(state -> init_Z_Set_BlockState(markers, state))) {
                found |= 1L << i;
             }

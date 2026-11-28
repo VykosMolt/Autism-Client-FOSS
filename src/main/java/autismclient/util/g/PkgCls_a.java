@@ -1145,7 +1145,7 @@ public final class PkgCls_a {
    }
 
    private static Vec3 init_Vec3_a_ConfigStore_Vec3(PkgCls_a.Inner_ConfigStore job, Vec3 position) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.read()) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && TpClickModule.antiKick()) {
          long now = System.currentTimeMillis();
          if (now - job.tick < 1000L) {
             return position;
@@ -1364,7 +1364,7 @@ public final class PkgCls_a {
          mc.options.keyRight.setDown(false);
          mc.options.keyJump.setDown(false);
          mc.options.keyShift.setDown(false);
-         GridWalkNavigator.read();
+         GridWalkNavigator.releaseHeldKeys();
       }
    }
 
@@ -1741,7 +1741,7 @@ public final class PkgCls_a {
       }
 
       static PkgCls_a.Inner_TaskQueue init(Vec3 from, Vec3 to, boolean onGround) {
-         return new PkgCls_a.Inner_TaskQueue(to, true, onGround, ClipCollisionHelper.init(from, to, onGround));
+         return new PkgCls_a.Inner_TaskQueue(to, true, onGround, ClipCollisionHelper.steps(from, to, onGround));
       }
    }
 }

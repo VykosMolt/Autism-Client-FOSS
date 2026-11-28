@@ -123,7 +123,7 @@ public final class AiMotionSafety {
          var1 = var6;
          if (!var1.onGround()) {
             for (AiPhysics.MoveInput var10 : new AiPhysics.MoveInput[]{
-               AiPhysics.MoveInput.run(var3, var2.sprint()), AiPhysics.MoveInput.NONE, AiPhysics.MoveInput.run(var3 + 180.0F, false)
+               AiPhysics.MoveInput.running(var3, var2.sprint()), AiPhysics.MoveInput.NONE, AiPhysics.MoveInput.running(var3 + 180.0F, false)
             }) {
                AiStride.FallResult var11 = AiStride.putAt(var1, var10, false, var0);
                if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.putAt(var11.at(), var4, var0)) {
@@ -357,7 +357,7 @@ public final class AiMotionSafety {
          return null;
       }
 
-      AiPhysics.MoveInput var6 = AiPhysics.MoveInput.run(var2, false);
+      AiPhysics.MoveInput var6 = AiPhysics.MoveInput.running(var2, false);
       AiPhysics.MoveInput[] var7 = new AiPhysics.MoveInput[]{
          var6, AiPhysics.MoveInput.NONE.withYaw(var2), new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var2)
       };

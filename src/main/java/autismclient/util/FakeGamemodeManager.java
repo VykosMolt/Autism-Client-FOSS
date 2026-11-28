@@ -97,7 +97,7 @@ public final class FakeGamemodeManager {
       return new FakeGamemodeManager.GamemodeSnapshot(real, displayed, init_Z, init_J, load_J);
    }
 
-   public static GameType init(String input) {
+   public static GameType parseMode(String input) {
       if (input == null) {
          return null;
       }

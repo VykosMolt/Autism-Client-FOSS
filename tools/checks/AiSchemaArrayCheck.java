@@ -25,7 +25,7 @@ public class AiSchemaArrayCheck {
 
    static boolean valid(String id, String args) {
       try {
-         AiSchemas.init(schemaFor(id), JsonParser.parseString(args));
+         AiSchemas.validate(schemaFor(id), JsonParser.parseString(args));
          return true;
       } catch (IllegalArgumentException e) {
          return false;
@@ -44,8 +44,8 @@ public class AiSchemaArrayCheck {
          "{\"action\":\"withdraw\",\"x\":1,\"y\":64,\"z\":2,\"items\":[\"minecraft:stone\",{\"item\":\"minecraft:diamond\",\"count\":\"16\",\"extra\":1},{\"item\":\"minecraft:oak_log\",\"count\":null}]}"
       ).getAsJsonObject();
       List<String> ignored = new ArrayList<>();
-      JsonObject normalized = AiSchemas.init(containerSchema, raw, true, ignored);
-      AiSchemas.init(containerSchema, normalized);
+      JsonObject normalized = AiSchemas.normalize(containerSchema, raw, true, ignored);
+      AiSchemas.validate(containerSchema, normalized);
       var items = normalized.getAsJsonArray("items");
       check(items.get(1).getAsJsonObject().get("count").getAsInt() == 16, "anyOf object count string coerced to int");
       check(!items.get(1).getAsJsonObject().has("extra") && ignored.contains("items[].extra"), "anyOf object dropped unknown field");

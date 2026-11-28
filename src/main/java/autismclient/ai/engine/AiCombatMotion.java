@@ -31,7 +31,7 @@ public final class AiCombatMotion {
             }
 
             if (tick > 0 && state.onGround()) {
-               return !world.update(feet.getX(), feet.getY() - 1, feet.getZ());
+               return !world.isHazard(feet.getX(), feet.getY() - 1, feet.getZ());
             }
          }
 
@@ -78,7 +78,7 @@ public final class AiCombatMotion {
                || world.isLavaOrUnloaded(feet.getX(), feet.getY(), feet.getZ())
                || world.isWater(feet.getX(), feet.getY(), feet.getZ())
                || world.isPressurePlate(feet.getX(), feet.getY(), feet.getZ())
-               || world.update(feet.getX(), feet.getY() - 1, feet.getZ())) {
+               || world.isHazard(feet.getX(), feet.getY() - 1, feet.getZ())) {
                return null;
             }
 

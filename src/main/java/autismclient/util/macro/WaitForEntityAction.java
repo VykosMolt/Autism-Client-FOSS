@@ -109,7 +109,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
-   public void init(CompoundTag tag) {
+   public void migrateFrom(CompoundTag tag) {
       this.entityIds.clear();
       String entityId = tag.getStringOr("entityId", "");
       if (!entityId.isBlank()) {
@@ -274,10 +274,10 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
          if (e0.startsWith("~")) {
             String[] p = e0.split("~", 4);
             String display = p.length >= 4 ? p[3] : "";
-            String type = p.length >= 3 ? RegistryDisplayNameCache.read(p[2]) : "?";
+            String type = p.length >= 3 ? RegistryDisplayNameCache.entityName(p[2]) : "?";
             first = "SPEC " + (display != null && !display.isBlank() ? display : type);
          } else {
-            first = RegistryDisplayNameCache.read(e0);
+            first = RegistryDisplayNameCache.entityName(e0);
          }
 
          if (this.entityIds.size() > 1) {

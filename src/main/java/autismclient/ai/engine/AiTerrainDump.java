@@ -14,7 +14,7 @@ public final class AiTerrainDump {
    private AiTerrainDump() {
    }
 
-   public static String init(ClientLevel level, BlockPos center, BlockPos mark, int rxz, int ry) {
+   public static String dump(ClientLevel level, BlockPos center, BlockPos mark, int rxz, int ry) {
       Map<String, Character> legend = new LinkedHashMap<>();
       StringBuilder out = new StringBuilder(
          "terrain around "

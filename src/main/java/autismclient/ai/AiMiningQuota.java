@@ -96,7 +96,7 @@ public final class AiMiningQuota {
       return best;
    }
 
-   public boolean load(String id) {
+   public boolean count(String id) {
       String key = this.init_Str_Str(id);
       if (key == null) {
          return false;
@@ -120,7 +120,7 @@ public final class AiMiningQuota {
       return out;
    }
 
-   public JsonObject load() {
+   public JsonObject remaining() {
       JsonObject out = new JsonObject();
       this.requested.forEach((k, n) -> {
          if (n > this.mined.get(k)) {
@@ -130,7 +130,7 @@ public final class AiMiningQuota {
       return out;
    }
 
-   public static JsonObject init(JsonObject args, JsonObject data) {
+   public static JsonObject remaining(JsonObject args, JsonObject data) {
       JsonObject normalized = normalizeArgs(args);
       JsonObject progress = data.has("brokenByBlock") && data.get("brokenByBlock").isJsonObject() ? data.getAsJsonObject("brokenByBlock") : new JsonObject();
       JsonObject left = new JsonObject();

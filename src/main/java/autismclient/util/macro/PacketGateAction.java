@@ -30,7 +30,7 @@ public class PacketGateAction implements MacroAction {
       PacketGateManager.init(this, MacroExecutor.getCurrentRunId());
    }
 
-   ArrayList<String> init() {
+   ArrayList<String> packetNamesCopy() {
       return new ArrayList<>(this.packetNames);
    }
 

@@ -59,7 +59,7 @@ public final class IconHeaderNode extends LayoutNode {
             int contentX = drawX;
             if (this.icon != null) {
                int iconY = drawY + Math.max(1, (drawH - this.iconSize) / 2);
-               context.blitTexture(ThemeTextureRecolorer.init(this.icon, ThemePaletteManager.ColorRole.ACCENT), drawX, iconY, drawX + this.iconSize, iconY + this.iconSize);
+               context.blitTexture(ThemeTextureRecolorer.recolored(this.icon, ThemePaletteManager.ColorRole.ACCENT), drawX, iconY, drawX + this.iconSize, iconY + this.iconSize);
                contentX += this.iconSize + this.iconGap;
             }
 

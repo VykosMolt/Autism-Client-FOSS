@@ -19,7 +19,7 @@ public final class AttackReachHelper {
       return range.effectiveMaxRange(attacker) + range.hitboxMargin();
    }
 
-   public static double init(LivingEntity attacker, Vec3 look) {
+   public static double reachAlong(LivingEntity attacker, Vec3 look) {
       AttackRange range = attackRange(attacker);
       double forward = attacker.getMainHandItem().has(DataComponents.PIERCING_WEAPON) ? Math.max(0.0, attacker.getKnownMovement().dot(look)) : 0.0;
       return range.effectiveMaxRange(attacker) + forward;

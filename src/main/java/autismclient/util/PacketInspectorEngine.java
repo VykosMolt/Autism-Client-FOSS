@@ -591,7 +591,7 @@ public final class PacketInspectorEngine {
          builder.line("Block Pos: " + formatPos(playerAction.getPos()), UiColorPalette.textBright());
          builder.line("Face: " + playerAction.getDirection(), UiColorPalette.textBright());
          builder.line("Sequence: " + playerAction.getSequence(), UiColorPalette.textBody());
-         String capturedBlockState = entry == null ? null : entry.write;
+         String capturedBlockState = entry == null ? null : entry.capturedBlockState;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
             builder.line("Block: " + capturedBlockState, UiColorPalette.successText());
          } else {
@@ -626,7 +626,7 @@ public final class PacketInspectorEngine {
             builder.line("Held Item: " + describeStack(MC.player.getItemInHand(interactBlock.hand())), UiColorPalette.successText());
          }
 
-         String capturedBlockState = entry == null ? null : entry.write;
+         String capturedBlockState = entry == null ? null : entry.capturedBlockState;
          if (capturedBlockState != null && !capturedBlockState.isBlank()) {
             builder.line("Block: " + capturedBlockState, UiColorPalette.successText());
          } else {
@@ -3014,8 +3014,8 @@ public final class PacketInspectorEngine {
          if (syncId != null) {
             builder.line("Interaction: Close Handled Screen", UiColorPalette.textBright());
             builder.line("Sync Id: " + describeValue(syncId), UiColorPalette.textBright());
-            if (entry != null && entry.update != null && !entry.update.isBlank()) {
-               builder.line("Closed Screen: " + entry.update, UiColorPalette.successText());
+            if (entry != null && entry.capturedScreen != null && !entry.capturedScreen.isBlank()) {
+               builder.line("Closed Screen: " + entry.capturedScreen, UiColorPalette.successText());
             }
 
             if (syncId instanceof Number number && number.intValue() == 0) {
@@ -3764,7 +3764,7 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.init(method), method.getReturnType());
+      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
       return isIgnoredLabel(mappedLabel)
          ? false
          : isGetterName(method)
@@ -3781,7 +3781,7 @@ public final class PacketInspectorEngine {
    }
 
    private static String accessorLabel(Method method) {
-      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.init(method), method.getReturnType());
+      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
       return mappedLabel != null && !mappedLabel.isBlank() ? mappedLabel : init_Str_Str_Class(method.getName(), method.getReturnType());
    }
 
@@ -3890,11 +3890,11 @@ public final class PacketInspectorEngine {
    }
 
    private static String componentLabel(Class<?> ownerType, RecordComponent component) {
-      return component == null ? null : firstNonBlank(InspectorMappingsIndex.init(component.getAccessor()), component.getName());
+      return component == null ? null : firstNonBlank(InspectorMappingsIndex.methodAlias(component.getAccessor()), component.getName());
    }
 
    private static String fieldLabel(Field field) {
-      return field == null ? null : firstNonBlank(InspectorMappingsIndex.init(field), isObfuscatedLabel(field.getName()) ? null : field.getName());
+      return field == null ? null : firstNonBlank(InspectorMappingsIndex.fieldAlias(field), isObfuscatedLabel(field.getName()) ? null : field.getName());
    }
 
    private static Object recordComponentAt(Object owner, int index) {
@@ -4948,13 +4948,13 @@ public final class PacketInspectorEngine {
          return "Unknown";
       }
 
-      String alias = InspectorMappingsIndex.init(type);
+      String alias = InspectorMappingsIndex.classAlias(type);
       return alias != null && !alias.isBlank() ? flush_Str(alias) : flush_Str(type.getSimpleName().isEmpty() ? type.getName() : type.getSimpleName());
    }
 
    private static String flush_Str(String value) {
       if (value != null && !value.isEmpty()) {
-         String alias = firstNonBlank(InspectorMappingsIndex.aliasForClass(value.replace('/', '.')), InspectorMappingsIndex.load(value.substring(value.lastIndexOf(46) + 1)));
+         String alias = firstNonBlank(InspectorMappingsIndex.aliasForClass(value.replace('/', '.')), InspectorMappingsIndex.aliasForSimpleName(value.substring(value.lastIndexOf(46) + 1)));
          String source = (alias == null ? value : alias).replace('$', '.');
          if (source.endsWith("Packet")) {
             source = source.substring(0, source.length() - 6);
@@ -5054,7 +5054,7 @@ public final class PacketInspectorEngine {
 
       while (matcher.find()) {
          String original = matcher.group(1);
-         String alias = qualified ? InspectorMappingsIndex.aliasForClass(original) : InspectorMappingsIndex.load(original);
+         String alias = qualified ? InspectorMappingsIndex.aliasForClass(original) : InspectorMappingsIndex.aliasForSimpleName(original);
          if (alias != null && !alias.isBlank()) {
             matcher.appendReplacement(buffer, Matcher.quoteReplacement(alias));
             changed = true;
@@ -5188,7 +5188,7 @@ public final class PacketInspectorEngine {
          return this.lines;
       }
 
-      public String load() {
+      public String copyText() {
          return this.copyText;
       }
    }

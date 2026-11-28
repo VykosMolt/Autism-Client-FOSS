@@ -120,7 +120,7 @@ public final class AiBlockMine {
    private AiBlockMine() {
    }
 
-   public static boolean init(Container inventory, ItemStack incoming) {
+   public static boolean canStore(Container inventory, ItemStack incoming) {
       if (incoming.isEmpty()) {
          return false;
       }
@@ -138,7 +138,7 @@ public final class AiBlockMine {
    static AiFailure inventoryFullFailure(boolean dropsOnly, Container inventory, List<ItemStack> observed) {
       if (dropsOnly && !observed.isEmpty()) {
          for (ItemStack stack : observed) {
-            if (init(inventory, stack)) {
+            if (canStore(inventory, stack)) {
                return null;
             }
          }
@@ -302,7 +302,7 @@ public final class AiBlockMine {
       return true;
    }
 
-   public static double init(Level level, BlockPos feet, BlockPos target) {
+   public static double travelCost(Level level, BlockPos feet, BlockPos target) {
       double cost = init(feet, target);
       int here = level.getHeight(Types.MOTION_BLOCKING, feet.getX(), feet.getZ());
       if (feet.getY() >= here - 1) {
@@ -450,7 +450,7 @@ public final class AiBlockMine {
       }
    }
 
-   public static AiOperation init(JsonObject args, Set<Long> protectedCells) {
+   public static AiOperation dropsOnlyOperation(JsonObject args, Set<Long> protectedCells) {
       JsonObject options = args.deepCopy();
       options.addProperty("dropsOnly", true);
       return createMine(options, Set.copyOf(protectedCells));
@@ -716,7 +716,7 @@ public final class AiBlockMine {
                }
 
                if (!AutismLiteVariant.enabled()) {
-                  this.breathe = autismclient.ai.AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
+                  this.breathe = autismclient.ai.AiBreathe.create(AiJson.objectOf("timeoutSeconds", 25));
                }
 
                return this.running("Too little air for " + cell.toShortString() + " under water; surfacing first");
@@ -817,7 +817,7 @@ public final class AiBlockMine {
                         12L,
                         left
                      );
-                  AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.init(mc.level, feet, nearest, 6, 4));
+                  AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.dump(mc.level, feet, nearest, 6, 4));
                   this.descent = null;
                   this.descentTarget = null;
                   this.progressSince = 0L;
@@ -872,8 +872,8 @@ public final class AiBlockMine {
                }
 
                if (!AutismLiteVariant.enabled() && !result.terminal() && this.preparation == null) {
-                  AiVisualization.init(this, this.goalBlocks());
-                  AiVisualization.init(
+                  AiVisualization.showTargets(this, this.goalBlocks());
+                  AiVisualization.showCount(
                      this,
                      this.visualTitle(),
                      this.activityLabel(),
@@ -1883,7 +1883,7 @@ public final class AiBlockMine {
 
             void commitVein(BlockPos seed) {
                if (!treeMode && !approach && !dropsOnly) {
-                  this.veinCommitment.init(seed, this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
+                  this.veinCommitment.begin(seed, this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
                   this.goalSet.clear();
                } else {
                   this.veinCommitment.clear();
@@ -1891,7 +1891,7 @@ public final class AiBlockMine {
             }
 
             void refreshVein() {
-               this.veinCommitment.init(this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
+               this.veinCommitment.extend(this.knownTargets, cell -> !this.blacklistedCells.contains(cell.asLong()));
             }
 
             Vec3 dropLandingSpot(BlockPos cell) {
@@ -1910,7 +1910,7 @@ public final class AiBlockMine {
             }
 
             void countBroken(BlockPos cell) {
-               if (this.countedCells.add(cell.asLong()) && (quota == null || quota.load(this.blockIdByCell.get(cell.asLong())))) {
+               if (this.countedCells.add(cell.asLong()) && (quota == null || quota.count(this.blockIdByCell.get(cell.asLong())))) {
                   this.brokenCount++;
                }
             }
@@ -2013,8 +2013,8 @@ public final class AiBlockMine {
                }
 
                if (this.veinCommitment.isActive()) {
-                  this.veinCommitment.init(this.knownTargetCells());
-                  if (this.veinCommitment.init(System.nanoTime(), this.scanned, 250000000L)) {
+                  this.veinCommitment.retainPresent(this.knownTargetCells());
+                  if (this.veinCommitment.isFinished(System.nanoTime(), this.scanned, 250000000L)) {
                      this.veinCommitment.clear();
                   }
                }
@@ -2098,7 +2098,7 @@ public final class AiBlockMine {
                   this.travelCostTick = this.tickCount;
                }
 
-               return this.travelCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc.level, feet, target));
+               return this.travelCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.travelCost(mc.level, feet, target));
             }
 
             double diveCost(BlockPos target) {
@@ -2126,7 +2126,7 @@ public final class AiBlockMine {
             }
 
             boolean nearOwnDig(BlockPos air) {
-               return AiEditLedger.update(air);
+               return AiEditLedger.isNearRecentBreak(air);
             }
 
             void pruneKnownTargets() {
@@ -2669,7 +2669,7 @@ public final class AiBlockMine {
                   if (!candidates.contains(nearby)
                      && !this.blacklistedCells.contains(nearby.asLong())
                      && this.isTargetBlock(nearby)
-                     && (!this.veinCommitment.isActive() || this.veinCommitment.init(nearby.asLong()))
+                     && (!this.veinCommitment.isActive() || this.veinCommitment.isPending(nearby.asLong()))
                      && (!treeMode || this.treeLogs.isEmpty() || this.treeLogs.contains(nearby.asLong()))
                      && AiBlockMine.init(feet, nearby, treeMode && this.treeLogs.contains(nearby.asLong()))) {
                      candidates.add(nearby);
@@ -2873,7 +2873,7 @@ public final class AiBlockMine {
                               && !cell.equals(feet.above())
                               && !this.blacklistedCells.contains(key)
                               && this.isTargetBlock(cell)
-                              && (!known.contains(key) || !this.veinCommitment.load(key) && (!this.veinCommitment.isIdle() || !this.goalSet.contains(key)))
+                              && (!known.contains(key) || !this.veinCommitment.isCommitted(key) && (!this.veinCommitment.isIdle() || !this.goalSet.contains(key)))
                               && this.isEligibleTarget(cell)) {
                               if (known.add(key)) {
                                  this.knownTargets.add(cell);
@@ -3426,7 +3426,7 @@ public final class AiBlockMine {
                );
                if (quota != null) {
                   out.add("brokenByBlock", quota.brokenByBlock());
-                  out.add("remainingByBlock", quota.load());
+                  out.add("remainingByBlock", quota.remaining());
                }
 
                if (!this.treeLogs.isEmpty()) {
@@ -3641,7 +3641,7 @@ public final class AiBlockMine {
       return mc.level.getFluidState(pos).is(FluidTags.WATER);
    }
 
-   public static JsonArray init(Iterable<String> ids) {
+   public static JsonArray jsonArray(Iterable<String> ids) {
       JsonArray out = new JsonArray();
 
       for (String id : ids) {

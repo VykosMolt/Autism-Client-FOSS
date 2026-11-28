@@ -25,7 +25,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       return MacroActionType.WAIT_INVENTORY_PREDICATE;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean isSatisfied(Minecraft mc) {
       if (mc != null && mc.player != null) {
          MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(this.itemName, mc);
          if (!resolution.success()) {

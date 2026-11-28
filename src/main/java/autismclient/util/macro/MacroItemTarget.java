@@ -140,10 +140,10 @@ public final class MacroItemTarget {
             return this.displayName;
          }
 
-         String registryLabel = RegistryDisplayNameCache.init(this.registryId);
+         String registryLabel = RegistryDisplayNameCache.itemName(this.registryId);
          return !RegistryDisplayNameCache.init(this.displayName, this.registryId) && !this.displayName.equalsIgnoreCase(registryLabel) ? this.displayName : registryLabel;
       } else {
-         return this.hasRegistryId() ? RegistryDisplayNameCache.init(this.registryId) : "";
+         return this.hasRegistryId() ? RegistryDisplayNameCache.itemName(this.registryId) : "";
       }
    }
 

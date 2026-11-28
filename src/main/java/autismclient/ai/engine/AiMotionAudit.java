@@ -66,13 +66,13 @@ public final class AiMotionAudit {
       return ENABLED;
    }
 
-   public static void init(Minecraft mc) {
+   public static void markBusy(Minecraft mc) {
       if (ENABLED && mc.player != null) {
          lastBusyTick = mc.player.tickCount;
       }
    }
 
-   public static void init(Minecraft mc, String id, String activity) {
+   public static void sample(Minecraft mc, String id, String activity) {
       if (ENABLED && mc.player != null && (mc.player.tickCount != lastSampleTick || mc.player != lastSamplePlayer)) {
          lastSampleTick = mc.player.tickCount;
          lastSamplePlayer = mc.player;

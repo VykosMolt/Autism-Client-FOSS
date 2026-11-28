@@ -118,7 +118,7 @@ final class AiScreens {
             }
          }
 
-         out.add("menus", AiGameplay.init());
+         out.add("menus", AiGameplay.readMenu());
       } catch (Throwable t) {
          out.addProperty("screen", "unavailable");
          out.addProperty("error", init(String.valueOf(t.getMessage()), 128));

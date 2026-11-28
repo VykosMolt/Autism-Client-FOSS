@@ -101,7 +101,7 @@ public final class TrajectoryWorldRenderer {
       rememberedPearlId = -1;
    }
 
-   public static void init(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
+   public static void render(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
       Minecraft mc = Minecraft.getInstance();
       CameraRenderState state = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
       if (state.initialized && mc.level != null && mc.player != null && mc.getWindow().getHeight() >= 1) {
@@ -111,7 +111,7 @@ public final class TrajectoryWorldRenderer {
          Vec3 forward = new Vec3(state.orientation.transform(new Vector3f(0.0F, 0.0F, -1.0F)));
          float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
          double near = mc.options.getCameraType().isFirstPerson() && camera.distanceToSqr(mc.player.getEyePosition(partial)) < 0.25 ? 0.75 : 0.06;
-         List<FireballBlastPredictor.DestroyedBlock> blocks = TrajectoryStateCache.init(paths);
+         List<FireballBlastPredictor.DestroyedBlock> blocks = TrajectoryStateCache.blastPredictions(paths);
          blastBlockCount = blocks.size();
          ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
@@ -121,7 +121,7 @@ public final class TrajectoryWorldRenderer {
          for (int pass = 0; pass < 2; pass++) {
             boolean hidden = pass == 0;
             double opacity = hidden ? 0.78 : 1.0;
-            VertexConsumer lines = buffers.init(
+            VertexConsumer lines = buffers.buffer(
                hidden ? autismclient.render.AutismRenderTypes.trajectoryPath(true) : autismclient.render.AutismRenderTypes.trajectoryPath(false)
             );
 
@@ -129,7 +129,7 @@ public final class TrajectoryWorldRenderer {
                init_V_PoseStack_Pose(pose, lines, path, camera, forward, near, opacity);
             }
 
-            VertexConsumer markers = buffers.init(
+            VertexConsumer markers = buffers.buffer(
                hidden ? autismclient.render.AutismRenderTypes.trajectoryImpact(true) : autismclient.render.AutismRenderTypes.trajectoryImpact(false)
             );
 
@@ -159,13 +159,13 @@ public final class TrajectoryWorldRenderer {
 
          hitTargetCount = hitTargets.size();
          if (!hitTargets.isEmpty()) {
-            VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+            VertexConsumer fill = buffers.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (Entity entity : hitTargets) {
                WorldLineRenderer.init(pose, fill, entityBox(entity, camera, partial, 0.016), withAlpha(-44976, 72));
             }
 
-            VertexConsumer edge = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
+            VertexConsumer edge = buffers.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (Entity entity : hitTargets) {
                AABB box = entityBox(entity, camera, partial, 0.018);
@@ -176,10 +176,10 @@ public final class TrajectoryWorldRenderer {
          }
 
          if (!blocks.isEmpty()) {
-            VertexConsumer blastLines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
-            PearlGhostRenderer.init(pose, blastLines, blocks, camera);
-            VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
-            PearlGhostRenderer.load(pose, fill, blocks, camera);
+            VertexConsumer blastLines = buffers.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
+            PearlGhostRenderer.drawBlastOutlines(pose, blastLines, blocks, camera);
+            VertexConsumer fill = buffers.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+            PearlGhostRenderer.drawBlastFills(pose, fill, blocks, camera);
          }
 
          Vec3 rememberedGhost = remembered == null ? null : remembered.position();
@@ -193,19 +193,19 @@ public final class TrajectoryWorldRenderer {
          }
 
          if (rememberedGhost != null) {
-            int tint = TrajectoryStateCache.init(rememberedGhost);
+            int tint = TrajectoryStateCache.tintFor(rememberedGhost);
             ghostCount++;
             rememberedGhostShown = 1;
-            PearlGhostRenderer.init(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.58, 2);
-            PearlGhostRenderer.init(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.68, 1);
+            PearlGhostRenderer.drawGhost(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.58, 2);
+            PearlGhostRenderer.drawGhost(mc, matrices, buffers, mc.player, rememberedGhost, camera, partial, tint, 0.68, 1);
          }
 
          if (heldGhost != null && (rememberedGhost == null || heldGhost.distanceToSqr(rememberedGhost) > 0.25)) {
-            int tint = TrajectoryStateCache.init(heldGhost);
+            int tint = TrajectoryStateCache.tintFor(heldGhost);
             heldGhostTint = tint;
             ghostCount++;
-            PearlGhostRenderer.init(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.58, 2);
-            PearlGhostRenderer.init(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.68, 1);
+            PearlGhostRenderer.drawGhost(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.58, 2);
+            PearlGhostRenderer.drawGhost(mc, matrices, buffers, mc.player, heldGhost, camera, partial, tint, 0.68, 1);
          }
 
          frameNanos[frameCursor] = System.nanoTime() - start;

@@ -32,11 +32,11 @@ final class AiCombatPriority {
       return seen && (standingGap <= reach || horizontal < 3.5 && jumpGap <= reach);
    }
 
-   static boolean init(AiGuard.GuardAction action) {
+   static boolean isLowPriority(AiGuard.GuardAction action) {
       return action == AiGuard.GuardAction.EAT || action == AiGuard.GuardAction.TIDY;
    }
 
-   static boolean init(int hostiles, int ranged) {
+   static boolean anyThreat(int hostiles, int ranged) {
       return hostiles > 0 || ranged > 0;
    }
 
@@ -67,7 +67,7 @@ final class AiCombatPriority {
    }
 
    static boolean init_Z_X_DataUtil(AiGuard.GuardAction active, AiGuard.GuardAction next, int hostiles) {
-      return init(active) && hostiles > 0 || active == AiGuard.GuardAction.FIGHT && next == AiGuard.GuardAction.FLEE;
+      return isLowPriority(active) && hostiles > 0 || active == AiGuard.GuardAction.FIGHT && next == AiGuard.GuardAction.FLEE;
    }
 
    static float init_F_F(float current, Float preferred, List<Float> shots, double halfCone) {
@@ -90,7 +90,7 @@ final class AiCombatPriority {
          edges.add(new AiCombatPriority.ConeEdge(halfCone, 0, 0));
 
          for (float shot : shots) {
-            double relative = init(shot - anchor);
+            double relative = wrapDegrees(shot - anchor);
 
             for (int turn = -1; turn <= 1; turn++) {
                double low = Math.max(-halfCone, relative + turn * 360 - halfCone);
@@ -121,7 +121,7 @@ final class AiCombatPriority {
             }
 
             active += starts;
-            double distance = Math.abs(init(anchor + at - current));
+            double distance = Math.abs(wrapDegrees(anchor + at - current));
             if (active > bestCount || active == bestCount && distance < bestTurn) {
                bestCount = active;
                bestTurn = distance;
@@ -133,8 +133,8 @@ final class AiCombatPriority {
                double end = edges.get(i).at();
 
                for (int turn = -1; turn <= 1; turn++) {
-                  double nearest = Math.max(at, Math.min(end, init(current - anchor) + turn * 360));
-                  distance = Math.abs(init(anchor + nearest - current));
+                  double nearest = Math.max(at, Math.min(end, wrapDegrees(current - anchor) + turn * 360));
+                  distance = Math.abs(wrapDegrees(anchor + nearest - current));
                   if (active > bestCount || active == bestCount && distance < bestTurn) {
                      bestCount = active;
                      bestTurn = distance;
@@ -144,7 +144,7 @@ final class AiCombatPriority {
             }
          }
 
-         return (float)init(anchor + best);
+         return (float)wrapDegrees(anchor + best);
       } else {
          throw new IllegalArgumentException("Finite shot yaws and a shield half cone between 0 and 90 required");
       }
@@ -152,7 +152,7 @@ final class AiCombatPriority {
 
    static boolean coversAll(float yaw, List<Float> shots, double halfCone) {
       for (float shot : shots) {
-         if (Math.abs(init(shot - yaw)) > halfCone + 1.0E-5) {
+         if (Math.abs(wrapDegrees(shot - yaw)) > halfCone + 1.0E-5) {
             return false;
          }
       }
@@ -160,7 +160,7 @@ final class AiCombatPriority {
       return true;
    }
 
-   static double init(double degrees) {
+   static double wrapDegrees(double degrees) {
       double angle = degrees % 360.0;
       return angle >= 180.0 ? angle - 360.0 : (angle < -180.0 ? angle + 360.0 : angle);
    }

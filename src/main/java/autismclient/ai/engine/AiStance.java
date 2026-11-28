@@ -69,7 +69,7 @@ public final class AiStance {
       return feet.isEmpty() && head.isEmpty() && !floor.isEmpty();
    }
 
-   public static BlockPos init(Minecraft mc) {
+   public static BlockPos standingPos(Minecraft mc) {
       LocalPlayer player = mc.player;
       BlockPos block = player.blockPosition();
       if (player.isInWater() && mc.level.getFluidState(block).isEmpty() && mc.level.getFluidState(block.below()).is(FluidTags.WATER)) {

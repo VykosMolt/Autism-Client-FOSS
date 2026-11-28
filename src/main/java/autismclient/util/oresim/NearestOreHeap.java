@@ -29,11 +29,11 @@ final class NearestOreHeap {
       }
    }
 
-   boolean load() {
+   boolean overflowed() {
       return this.overflowed;
    }
 
-   void init(double distanceSquared, long packedPosition, int stateId) {
+   void offer(double distanceSquared, long packedPosition, int stateId) {
       if (this.size < this.distances.length) {
          this.distances[this.size] = distanceSquared;
          this.positions[this.size] = packedPosition;
@@ -50,7 +50,7 @@ final class NearestOreHeap {
       }
    }
 
-   int init(long[] outPositions, int[] outStates) {
+   int drain(long[] outPositions, int[] outStates) {
       if (outPositions.length >= this.size && outStates.length >= this.size) {
          int remaining = this.size;
 

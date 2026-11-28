@@ -88,7 +88,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    public void tick() {
       this.registerScanner();
       this.refreshSettings();
-      autismclient.util.PvpHoleScanner.load();
+      autismclient.util.PvpHoleScanner.tick();
    }
 
    @Override

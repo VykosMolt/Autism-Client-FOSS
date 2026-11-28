@@ -249,14 +249,14 @@ final class AiParallelSmelt implements AiOperation {
          this.collectTarget = Math.min(this.target, AiGameState.countInventoryItem(this.outputId) + amount);
       }
 
-      Item availableFuel = this.collecting ? this.recipe.fuel() : AiSmelt.init("", this.recipe.input(), amount);
+      Item availableFuel = this.collecting ? this.recipe.fuel() : AiSmelt.availableFuel("", this.recipe.input(), amount);
       String fuel = BuiltInRegistries.ITEM.getKey(availableFuel == null ? this.recipe.fuel() : availableFuel).toString();
       if (!this.keepCollectBaseline) {
          this.outputBaseline = AiGameState.countInventoryItem(this.outputId);
       }
 
       this.keepCollectBaseline = false;
-      this.child = AiSmelt.load(
+      this.child = AiSmelt.smelt(
          AiJson.objectOf(
             "item",
             this.outputId,
@@ -332,7 +332,7 @@ final class AiParallelSmelt implements AiOperation {
       int missing = this.target - AiGameState.countInventoryItem(this.outputId);
       int neededCobble = 8 + (this.inputId.equals("minecraft:cobblestone") ? missing : 0);
       int deficit = Math.max(0, neededCobble - AiCraft.countItem("minecraft:cobblestone"));
-      boolean tableEasy = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.init(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
+      boolean tableEasy = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
       double stoneDistance = deficit == 0 ? 0.0 : AiTerrain.nearestBlockDistSqr(this.mc, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8);
       boolean localStone = deficit == 0 || stoneDistance <= 64.0 && AiItems.hasUsableToolFor(Blocks.STONE.defaultBlockState());
       int setupTicks = 100 + deficit * 40 + (tableEasy ? 0 : 200);
@@ -346,9 +346,9 @@ final class AiParallelSmelt implements AiOperation {
             this.child = autismclient.ai.engine.AiBlockMine.create(
                AiJson.objectOf(
                   "blocks",
-                  autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
+                  autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:stone", "minecraft:cobblestone")),
                   "drops",
-                  autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:cobblestone")),
+                  autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:cobblestone")),
                   "held",
                   neededCobble,
                   "radius",
@@ -369,7 +369,7 @@ final class AiParallelSmelt implements AiOperation {
          return this.running(this.activity);
       } else if (this.furnaces.isEmpty()) {
          this.activity = "Obtain the first furnace and its prerequisites";
-         this.child = AiObtain.init(
+         this.child = AiObtain.obtain(
             AiJson.objectOf("item", this.recipe.stationId(), "count", 1, "staged", true, "timeoutSeconds", this.secondsLeft())
          );
          this.obtainingFirstFurnace = true;
@@ -415,7 +415,7 @@ final class AiParallelSmelt implements AiOperation {
    }
 
    private AiOperation.Result running(String message) {
-      AiVisualization.init(this, this.label, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.outputId), this.target);
+      AiVisualization.showCount(this, this.label, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.outputId), this.target);
       return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
    }
 

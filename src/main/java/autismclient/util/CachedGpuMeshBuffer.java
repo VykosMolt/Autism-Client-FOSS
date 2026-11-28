@@ -30,7 +30,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
       return this.init_GpuBuffer != null && !this.init_GpuBuffer.isClosed() && this.indexCount > 0;
    }
 
-   public boolean init(RenderType type, Consumer<VertexConsumer> emit) {
+   public boolean build(RenderType type, Consumer<VertexConsumer> emit) {
       this.release();
 
       try (ByteBufferBuilder scratch = new ByteBufferBuilder(1048576)) {
@@ -56,7 +56,7 @@ public final class CachedGpuMeshBuffer implements AutoCloseable {
       }
    }
 
-   public void init(RenderType type, Matrix4fc framePose, double offsetX, double offsetY, double offsetZ) {
+   public void draw(RenderType type, Matrix4fc framePose, double offsetX, double offsetY, double offsetZ) {
       if (this.hasBuffer()) {
          AutoStorageIndexBuffer sequential = RenderSystem.getSequentialBuffer(this.init_PrimitiveTopology);
          GpuBuffer indices = sequential.getBuffer(this.indexCount);

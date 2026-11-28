@@ -50,12 +50,12 @@ public final class AiRoutePolicy {
       return System.nanoTime() < readEx_J && putAt_LongPredicate.test(var0.asLong());
    }
 
-   public static void putAt(Set<Long> var0) {
+   public static void setClosedDoors(Set<Long> var0) {
       putAt_Set = Set.copyOf(var0);
       value_J = var0.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
    }
 
-   static boolean fill(BlockPos var0) {
+   static boolean isKnownClosedDoor(BlockPos var0) {
       return System.nanoTime() < value_J && (putAt_Set.contains(var0.asLong()) || putAt_Set.contains(var0.below().asLong()));
    }
 
@@ -70,7 +70,7 @@ public final class AiRoutePolicy {
    static void putAt_V_BlockPos_Block(BlockPos var0, Block var1) {
       AiRoutePolicy.Inner_TableCache var2 = putAt_ValueSink_TableCac;
       if (var2 == null || var2.putAt_Z(var0)) {
-         AiScaffold.init(var0, var1);
+         AiScaffold.recordPlaced(var0, var1);
       }
    }
 
@@ -472,7 +472,7 @@ public final class AiRoutePolicy {
       return var0 == AiPathfinder.MoveType.JUMP_GAP_3 || var0 == AiPathfinder.MoveType.PARKOUR_ASCEND;
    }
 
-   static boolean fill(AiPathfinder.MoveType var0) {
+   static boolean isGapJump(AiPathfinder.MoveType var0) {
       return var0 == AiPathfinder.MoveType.JUMP_GAP_2
          || var0 == AiPathfinder.MoveType.JUMP_GAP_3
          || var0 == AiPathfinder.MoveType.PARKOUR_ASCEND
@@ -545,7 +545,7 @@ public final class AiRoutePolicy {
    }
 
    static boolean putAt_Z_FileStore_SyncPool(AiPathfinder.MoveType var0, boolean var1, boolean var2) {
-      if (fill(var0)) {
+      if (isGapJump(var0)) {
          return !var1;
       }
 
@@ -571,7 +571,7 @@ public final class AiRoutePolicy {
          return false;
       }
 
-      boolean var6 = fill(var0) ? !var1 : var2;
+      boolean var6 = isGapJump(var0) ? !var1 : var2;
       return var6 && var3 > 6.0;
    }
 

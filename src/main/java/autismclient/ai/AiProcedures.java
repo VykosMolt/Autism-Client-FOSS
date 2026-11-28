@@ -17,7 +17,7 @@ final class AiProcedures {
       this.service = service;
    }
 
-   synchronized void init(String id, String fingerprint, JsonObject args, JsonObject result) {
+   synchronized void remember(String id, String fingerprint, JsonObject args, JsonObject result) {
       if (AiJson.getString(result, "status", "").equals("SUCCEEDED") && result.has("evidence")) {
          String proof = AiJson.getString(result.getAsJsonObject("evidence"), "id", "");
          args = args.deepCopy();

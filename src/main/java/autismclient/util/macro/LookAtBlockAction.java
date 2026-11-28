@@ -309,7 +309,7 @@ public class LookAtBlockAction implements MacroAction {
          return "Block (none)";
       }
 
-      String first = RegistryDisplayNameCache.load(this.blockIds.get(0));
+      String first = RegistryDisplayNameCache.blockName(this.blockIds.get(0));
       return this.blockIds.size() == 1 ? "Nearest " + first : "Nearest " + first + " (+" + (this.blockIds.size() - 1) + ")";
    }
 
@@ -323,10 +323,10 @@ public class LookAtBlockAction implements MacroAction {
       if (firstEntry.startsWith("~")) {
          String[] parts = firstEntry.split("~", 4);
          String rawName = parts.length >= 4 ? parts[3] : "";
-         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.entityName(parts[2]) : "?";
          first = rawName != null && !rawName.isBlank() ? rawName + " (" + type + ")" : type;
       } else {
-         first = RegistryDisplayNameCache.read(firstEntry);
+         first = RegistryDisplayNameCache.entityName(firstEntry);
       }
 
       return this.entityIds.size() == 1 ? "Nearest " + first : "Nearest " + first + " (+" + (this.entityIds.size() - 1) + ")";

@@ -61,7 +61,7 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"))
    private void autism$recordAttackInputs(Player player, Entity entity, CallbackInfo ci) {
-      autismclient.util.SprintStateTracker.init(player);
+      autismclient.util.SprintStateTracker.onAttackStart(player);
    }
 
    @Inject(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V", at = @At("RETURN"))

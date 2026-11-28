@@ -92,7 +92,7 @@ public final class OreSimEngine {
       return worldgenContext != null && !errored && !unsupportedDimension && !worldgenUnverified;
    }
 
-   public static boolean load_Z() {
+   public static boolean isBusy() {
       return contextLoading || generating;
    }
 
@@ -194,13 +194,13 @@ public final class OreSimEngine {
       }
    }
 
-   public static void load_V() {
+   public static void pause() {
       if (pausedSinceNanos == 0L) {
          pausedSinceNanos = System.nanoTime();
       }
    }
 
-   public static void read_V() {
+   public static void resume() {
       pausedSinceNanos = 0L;
    }
 
@@ -208,7 +208,7 @@ public final class OreSimEngine {
       return pausedSinceNanos != 0L;
    }
 
-   public static boolean init(long retentionNanos) {
+   public static boolean pausedLongerThan(long retentionNanos) {
       long since = pausedSinceNanos;
       if (since != 0L && System.nanoTime() - since >= retentionNanos) {
          pausedSinceNanos = 0L;
@@ -349,7 +349,7 @@ public final class OreSimEngine {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap built;
          boolean tagsVerified;
          try {
-            built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(key.seed(), key.dimension());
+            built = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.create(key.seed(), key.dimension());
             tagsVerified = built.init_Z();
          } catch (Throwable error) {
             fail(token, "Minecraft 26.3 worldgen bootstrap failed", error);
@@ -521,7 +521,7 @@ public final class OreSimEngine {
    private static OreSimEngine.ChunkOres extractOres(ChunkAccess chunk, BooleanSupplier cancelled) {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
-      autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
+      autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.isOre(state.getBlock()), (x, y, z, state) -> {
          int stateId = OreBlockCatalog.StateRegistry.init(state);
          if (stateId >= 0) {
             positions.add(BlockPos.asLong(x, y, z));
@@ -752,7 +752,7 @@ public final class OreSimEngine {
       return lastQueryCapped;
    }
 
-   public static int init(double eyeX, double eyeY, double eyeZ, int radius, IntPredicate stateAllowed, int cap, long[] outPos, int[] outState) {
+   public static int nearest(double eyeX, double eyeY, double eyeZ, int radius, IntPredicate stateAllowed, int cap, long[] outPos, int[] outState) {
       lastQueryCapped = false;
       if (cap > 0 && outPos != null && outState != null && !chunkOres.isEmpty()) {
          int limit = Math.min(cap, Math.min(outPos.length, outState.length));
@@ -789,7 +789,7 @@ public final class OreSimEngine {
                                     double py = BlockPos.getY(packed) + 0.5 - eyeY;
                                     double pz = BlockPos.getZ(packed) + 0.5 - eyeZ;
                                     double distance = px * px + py * py + pz * pz;
-                                    nearest.init(distance, packed, stateId);
+                                    nearest.offer(distance, packed, stateId);
                                  }
                               }
                            }
@@ -800,8 +800,8 @@ public final class OreSimEngine {
             }
          }
 
-         lastQueryCapped = nearest.load();
-         return nearest.init(outPos, outState);
+         lastQueryCapped = nearest.overflowed();
+         return nearest.drain(outPos, outState);
       } else {
          return 0;
       }

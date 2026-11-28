@@ -80,7 +80,7 @@ public final class CombatInteractionController {
          && mc.gameMode != null
          && mc.getConnection() != null
          && !mc.gameMode.isDestroying()
-         && !BlockAttackGraceWindow.init(mc)
+         && !BlockAttackGraceWindow.isWithinGrace(mc)
          && mc.getCameraEntity() == mc.player
          && !mc.player.isDeadOrDying()
          && !mc.player.isSpectator()
@@ -482,7 +482,7 @@ public final class CombatInteractionController {
       aimState.gcdStep = RotationMath.gcdStep();
       aimState.maxAccelUp = 18.0;
       aimState.forceWhiff = false;
-      aimState.legacyNoCooldown = LegacyCombatDetector.init(trackedPlayer);
+      aimState.legacyNoCooldown = LegacyCombatDetector.isLegacyCombat(trackedPlayer);
       aimState.targetChanged = close;
    }
 

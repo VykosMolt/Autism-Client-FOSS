@@ -218,7 +218,7 @@ public final class AiRunTrace {
          if (Files.isRegularFile(path)) {
             String line;
             try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-               while ((line = AiBoundedIo.init(reader, 1001000)) != null) {
+               while ((line = AiBoundedIo.readLine(reader, 1001000)) != null) {
                   if (!line.isBlank()) {
                      lines.add(line);
                   }

@@ -136,7 +136,7 @@ public final class AiDirectOps {
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          JsonObject effective = applyToolDefaults(id, args, schema);
          if (schema.has("type") || schema.has("properties")) {
-            AiSchemas.init(schema, effective);
+            AiSchemas.validate(schema, effective);
          }
 
          boolean action = entry.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE;
@@ -185,7 +185,7 @@ public final class AiDirectOps {
          }
 
          lastResult = null;
-         AiEventLog.getInstance().init("op_started", AiJson.objectOf("id", id, "source", "direct"));
+         AiEventLog.getInstance().log("op_started", AiJson.objectOf("id", id, "source", "direct"));
          AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + cancelHint() + "§7 cancels");
          return created.job;
       } else {
@@ -366,9 +366,9 @@ public final class AiDirectOps {
             }
 
             if (mc.player != null && mc.player.isAlive() && a.resources.contains("INPUT") && a.resources.contains("ROTATION")) {
-               String hazard = AiHazardEscape.init(mc);
+               String hazard = AiHazardEscape.currentHazard(mc);
                if (hazard != null && !a.kind.equals("environment") && !a.id.equals("game:escape_hazard") && !AiGuard.isSuppressed()) {
-                  interruptForDefense(a, AiHazardEscape.init(AiJson.objectOf("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
+                  interruptForDefense(a, AiHazardEscape.create(AiJson.objectOf("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
                }
 
                if (hazard == null
@@ -433,7 +433,7 @@ public final class AiDirectOps {
                            );
                         }
                      } else if (!a.id.equals("game:eat") && vitals.food() <= 6 && vitals.hasFood() && vitals.hostilesNear() == 0) {
-                        interruptForDefense(a, AiSurvival.init(AiJson.objectOf("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
+                        interruptForDefense(a, AiSurvival.eat(AiJson.objectOf("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
                      }
                   }
                }
@@ -471,7 +471,7 @@ public final class AiDirectOps {
                removeOp(a);
                lastResult = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
                finishOp(a, true, lastResult);
-               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
+               AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
                AutismClientMessaging.sendPrefixed(
                   "§c" + a.id + " failed [UNKNOWN]: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage())
                );
@@ -512,7 +512,7 @@ public final class AiDirectOps {
       a.defense = defense;
       a.kind = kind;
       AiEventLog.getInstance()
-         .init(
+         .log(
             "tools_survival_priority",
             AiJson.objectOf(
                "id",
@@ -536,7 +536,7 @@ public final class AiDirectOps {
          if (active == a) {
             String title = a.id.substring(a.id.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.id : Character.toUpperCase(title.charAt(0)) + title.substring(1);
-            AiVisualization.init(a, pretty, AiTaskStatus.init(a.lastMessage, "In progress"), -1);
+            AiVisualization.showNavStatus(a, pretty, AiTaskStatus.init(a.lastMessage, "In progress"), -1);
          }
       }
    }
@@ -566,7 +566,7 @@ public final class AiDirectOps {
          lastResult = result;
          finishOp(a, true, result);
          AiEventLog.getInstance()
-            .init(
+            .log(
                "op_failed",
                AiJson.objectOf(
                   "id", a.id, "status", result.status().name(), "failure", cause.name(), "data", AiRunResources.parseEvidenceJson(result.dataJson())
@@ -587,27 +587,27 @@ public final class AiDirectOps {
          String data = a.lastData == null ? "{}" : a.lastData;
          switch (result.status()) {
             case SUCCEEDED:
-               AiEventLog.getInstance().init("op_completed", AiJson.objectOf("id", a.id, "status", "SUCCEEDED"));
+               AiEventLog.getInstance().log("op_completed", AiJson.objectOf("id", a.id, "status", "SUCCEEDED"));
                AutismClientMessaging.sendPrefixed("§a" + a.id + ": " + result.message());
                if (!data.isBlank() && !data.equals("{}")) {
                   AutismClientMessaging.sendPrefixed("§8" + clipJson(data, dataLimitFor(verbosity)));
                }
                break;
             case UNCERTAIN:
-               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "UNCERTAIN", "failure", result.failure().name()));
+               AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", a.id, "status", "UNCERTAIN", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.id + " uncertain: " + result.message() + "§7 - reobserve before retrying");
                break;
             case CANCELLED:
-               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "CANCELLED", "failure", result.failure().name()));
+               AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", a.id, "status", "CANCELLED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.id + " cancelled: " + result.message());
                break;
             case TIMED_OUT:
                AiFailure failure = result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
-               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "TIMED_OUT", "failure", failure.name()));
+               AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", a.id, "status", "TIMED_OUT", "failure", failure.name()));
                AutismClientMessaging.sendPrefixed(failureLine(a.id, "timed out", failure, result.message(), verbosity));
                break;
             case FAILED:
-               AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", result.failure().name()));
+               AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", a.id, "status", "FAILED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed(failureLine(a.id, "failed", result.failure(), result.message(), verbosity));
          }
       }
@@ -708,7 +708,7 @@ public final class AiDirectOps {
    }
 
    public static Path schematicsDir() {
-      return AiSchematic.init();
+      return AiSchematic.directory();
    }
 
    public static AiToolSettings toolSettings() {

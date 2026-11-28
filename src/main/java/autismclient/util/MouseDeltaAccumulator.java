@@ -8,7 +8,7 @@ public final class MouseDeltaAccumulator {
    private MouseDeltaAccumulator() {
    }
 
-   public static void init(double dx, double dy, int clientTick) {
+   public static void add(double dx, double dy, int clientTick) {
       if (Double.isFinite(dx) && Double.isFinite(dy)) {
          pendingDx += dx;
          pendingDy += dy;
@@ -19,7 +19,7 @@ public final class MouseDeltaAccumulator {
       }
    }
 
-   public static boolean init(int withinTicks, int clientTick) {
+   public static boolean movedWithin(int withinTicks, int clientTick) {
       return lastTick != -2147483648 && clientTick - lastTick <= withinTicks;
    }
 

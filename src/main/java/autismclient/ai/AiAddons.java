@@ -172,7 +172,7 @@ public final class AiAddons {
       }
    }
 
-   static Path init(Path addonDir, String relative) {
+   static Path resolveInside(Path addonDir, String relative) {
       if (relative != null && !relative.isBlank()) {
          Path parsed;
          try {
@@ -630,7 +630,7 @@ public final class AiAddons {
    private static AiOperation read(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       Path dir = addonDir(id);
-      Path target = init(dir, AiJson.getString(args, "path", ""));
+      Path target = resolveInside(dir, AiJson.getString(args, "path", ""));
       if (!target.getFileName().toString().endsWith(".java")) {
          throw new IllegalArgumentException("Only .java source files can be written: " + target.getFileName());
       }
@@ -666,7 +666,7 @@ public final class AiAddons {
 
       String relative = AiJson.getString(args, "path", "");
       if (!relative.isBlank()) {
-         Path target = init(dir, relative);
+         Path target = resolveInside(dir, relative);
          if (!Files.isRegularFile(target)) {
             return init_AiOperation(AiOperation.Status.FAILED, "No such file in addon '" + id + "': " + relative, AiJson.objectOf("id", id));
          }

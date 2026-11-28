@@ -66,7 +66,7 @@ final class DebouncedPersistenceScheduler {
          init_AutismConfig = null;
       }
 
-      AutismConfigPersistence.load(config);
+      AutismConfigPersistence.persist(config);
    }
 
    static void init() {
@@ -82,7 +82,7 @@ final class DebouncedPersistenceScheduler {
          init("config-capture");
       }
 
-      AutismConfigPersistence.load(config);
+      AutismConfigPersistence.persist(config);
    }
 
    static void init(String key, long delayMs, Runnable work) {

@@ -19,7 +19,7 @@ public final class OnlinePlayerCollector {
 
    public static List<String> init(Minecraft mc, boolean probeHidden, final BooleanSupplier cancelled) {
       String self = init(mc);
-      LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
+      LinkedHashMap<String, String> names = CommandTabNameProber.probe(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
          List<CommandTabNameProber.ProbeVector> vectors = CommandTabNameProber.discoverVectors(connection);

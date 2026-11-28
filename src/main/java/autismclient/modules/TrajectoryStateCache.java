@@ -62,11 +62,11 @@ final class TrajectoryStateCache {
       }
    }
 
-   static List<FireballBlastPredictor.DestroyedBlock> init(List<TrajectoriesModule.Inner_CachePool> paths) {
+   static List<FireballBlastPredictor.DestroyedBlock> blastPredictions(List<TrajectoriesModule.Inner_CachePool> paths) {
       return init_List == paths ? blastPredictions : List.of();
    }
 
-   static int init(Vec3 destination) {
+   static int tintFor(Vec3 destination) {
       return init_Map.getOrDefault(destination, -12971);
    }
 
@@ -83,7 +83,7 @@ final class TrajectoryStateCache {
       return !am.init_Z() && mc.level == init_Level && mc.player == init_Obj && mc.player != null && mc.player.isAlive() ? PEARL_TRACKER.remembered() : null;
    }
 
-   static void init(Minecraft mc, boolean enabled) {
+   static void tickPearls(Minecraft mc, boolean enabled) {
       if (ensureContext(mc)) {
          PEARL_TRACKER.tick(mc, enabled);
       }

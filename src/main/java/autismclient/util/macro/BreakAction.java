@@ -45,7 +45,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
-      return AimTargetAction.AimTarget.init(this.blockPos);
+      return AimTargetAction.AimTarget.ofBlock(this.blockPos);
    }
 
    @Override
@@ -97,7 +97,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.interact = tag.getBooleanOr("interact", false);
       this.runNextSteps = tag.getBooleanOr("runNextSteps", false);
-      this.interactTiming = InteractTimingMode.init(tag.getStringOr("interactTiming", "WITH"), InteractTimingMode.WITH);
+      this.interactTiming = InteractTimingMode.parse(tag.getStringOr("interactTiming", "WITH"), InteractTimingMode.WITH);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);

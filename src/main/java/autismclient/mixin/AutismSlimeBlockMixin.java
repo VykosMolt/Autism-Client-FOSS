@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AutismSlimeBlockMixin {
    @Inject(method = "fallOn", at = @At("HEAD"), cancellable = true)
    private void autism$noFallAntiBounce(Level level, BlockState state, BlockPos pos, Entity entity, double fallDistance, CallbackInfo ci) {
-      if (MovementModuleHooks.init_Z(entity)) {
+      if (MovementModuleHooks.suppressesSlimeBounce(entity)) {
          ci.cancel();
       }
    }

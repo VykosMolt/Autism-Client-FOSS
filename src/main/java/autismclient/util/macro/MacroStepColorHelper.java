@@ -7,7 +7,7 @@ public final class MacroStepColorHelper {
    private MacroStepColorHelper() {
    }
 
-   public static int init(int index, int current, int lastCompletedStep, int nowColor) {
+   public static int stepColor(int index, int current, int lastCompletedStep, int nowColor) {
       if (index == current) {
          return nowColor;
       } else {

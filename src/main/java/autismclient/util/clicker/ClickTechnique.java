@@ -15,9 +15,9 @@ public enum ClickTechnique {
    public final double write_D;
    final double update_D;
    final double sync_D;
-   final double flush;
-   final double close;
-   final double open;
+   final double clockSd;
+   final double comfortRate;
+   final double highRate;
 
    ClickTechnique(
       String label, double ceiling, double defaultLow, double defaultHigh, double tempoTau, double tempoSd, double clockSd, double comfortRate, double highRate
@@ -28,16 +28,16 @@ public enum ClickTechnique {
       this.write_D = defaultHigh;
       this.update_D = tempoTau;
       this.sync_D = tempoSd;
-      this.flush = clockSd;
-      this.close = comfortRate;
-      this.open = highRate;
+      this.clockSd = clockSd;
+      this.comfortRate = comfortRate;
+      this.highRate = highRate;
    }
 
    public boolean init_Z() {
       return this != RAGE;
    }
 
-   public static ClickTechnique init(String label) {
+   public static ClickTechnique fromLabel(String label) {
       if (label != null) {
          for (ClickTechnique technique : values()) {
             if (technique.init_Str.equalsIgnoreCase(label.trim())) {

@@ -21,7 +21,7 @@ final class AiNativeSearch {
    private AiNativeSearch() {
    }
 
-   static boolean init(AiSettings.Provider p) {
+   static boolean isSupported(AiSettings.Provider p) {
       return Set.of(AiSettings.Provider.OPENAI, AiSettings.Provider.ANTHROPIC, AiSettings.Provider.GEMINI).contains(p);
    }
 
@@ -73,7 +73,7 @@ final class AiNativeSearch {
       return var10000;
    }
 
-   static JsonObject init(AiSettings settings, String query, Runnable checkpoint) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   static JsonObject search(AiSettings settings, String query, Runnable checkpoint) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (!query.isBlank() && query.length() <= 600) {
          String var10000;
          switch (settings.provider) {
@@ -108,7 +108,7 @@ final class AiNativeSearch {
             request.header("Authorization", "Bearer " + key);
          }
 
-         HttpResponse<byte[]> response = AiHttp.init(request.build(), 1000000, checkpoint);
+         HttpResponse<byte[]> response = AiHttp.send(request.build(), 1000000, checkpoint);
          if (response.statusCode() != 200) {
             throw new IOException("Native search HTTP " + response.statusCode() + "; check model search support or configure Brave");
          }

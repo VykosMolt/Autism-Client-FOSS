@@ -135,7 +135,7 @@ final class AiTidy {
    private AiTidy() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AiTidy.TidyAction action = parseAction(AiJson.getString(args, "action", "inspect"));

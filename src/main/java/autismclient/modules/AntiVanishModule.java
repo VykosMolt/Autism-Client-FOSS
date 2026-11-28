@@ -200,12 +200,12 @@ public final class AntiVanishModule extends Module {
                );
             }
          } else {
-            this.activityDetector.init();
+            this.activityDetector.reset();
          }
 
          if (!this.bool("vanish-tracker")) {
-            this.rosterTracker.write();
-            this.quitTracker.init();
+            this.rosterTracker.reset();
+            this.quitTracker.clear();
             this.detections.clear();
             this.alertedDetections.clear();
             this.pendingSuggestionProbes.clear();
@@ -220,7 +220,7 @@ public final class AntiVanishModule extends Module {
                this.tickListProbe(at);
             } else {
                this.request = null;
-               this.rosterTracker.load();
+               this.rosterTracker.clearPending();
             }
 
             this.pendingSuggestionProbes.values().removeIf(p -> at - p.at > 4000L);
@@ -256,7 +256,7 @@ public final class AntiVanishModule extends Module {
       if (module != null && module.isEnabled() && MC.isSameThread() && handler == MC.getConnection() && module.refreshSession() && module.worldActivityEnabled()) {
          long at = nowMillis();
          if (at - module.sessionStartAt >= 3000L) {
-            module.activityDetector.init(pos, state, at);
+            module.activityDetector.onBlockChange(pos, state, at);
          }
       }
    }
@@ -265,7 +265,7 @@ public final class AntiVanishModule extends Module {
       AntiVanishModule module = instance();
       if (module != null && module.isEnabled() && MC.isSameThread() && handler == MC.getConnection() && module.refreshSession() && module.worldActivityEnabled()) {
          long at = nowMillis();
-         module.activityDetector.init(packet, at, at - module.sessionStartAt >= 3000L);
+         module.activityDetector.onSectionUpdate(packet, at, at - module.sessionStartAt >= 3000L);
       }
    }
 
@@ -390,7 +390,7 @@ public final class AntiVanishModule extends Module {
                if (this.seenProfiles.size() > 8192) {
                   this.seenProfiles.clear();
                   this.seenProfilesOverflowed = true;
-                  this.rosterTracker.read();
+                  this.rosterTracker.clearLastSeen();
                }
             }
 
@@ -466,7 +466,7 @@ public final class AntiVanishModule extends Module {
       if (this.request != null && at - this.request.at > 4000L) {
          this.request = null;
          this.listProbeUnavailable = true;
-         this.rosterTracker.load();
+         this.rosterTracker.clearPending();
       }
 
       if (!this.listProbeUnavailable && this.request == null && at >= this.nextListProbeAt) {
@@ -514,7 +514,7 @@ public final class AntiVanishModule extends Module {
             && request.level == MC.level
             && at >= request.at
             && at - request.at <= 4000L) {
-            Optional<List<autismclient.util.ListCommandPlayerParser.ListedPlayer>> parsed = autismclient.util.ListCommandPlayerParser.init(packet.content());
+            Optional<List<autismclient.util.ListCommandPlayerParser.ListedPlayer>> parsed = autismclient.util.ListCommandPlayerParser.parse(packet.content());
             if (parsed.isEmpty()) {
                return false;
             }
@@ -548,7 +548,7 @@ public final class AntiVanishModule extends Module {
          long epoch = this.epoch;
          MC.execute(() -> {
             if (epoch == this.epoch && this.isEnabled() && MC.level == this.level && MC.player != null && this.worldActivityEnabled()) {
-               this.activityDetector.init_V_Packet_J(packet, nowMillis());
+               this.activityDetector.onOutgoingPacket(packet, nowMillis());
             }
          });
       }
@@ -572,8 +572,8 @@ public final class AntiVanishModule extends Module {
 
    private void updateDetections(long at) {
       if (!this.bool("vanish-tracker")) {
-         this.rosterTracker.write();
-         this.quitTracker.init();
+         this.rosterTracker.reset();
+         this.quitTracker.clear();
          this.detections.clear();
          this.alertedDetections.clear();
          this.pendingSuggestionProbes.clear();
@@ -659,15 +659,15 @@ public final class AntiVanishModule extends Module {
    }
 
    private void resetState() {
-      this.rosterTracker.write();
-      this.quitTracker.init();
+      this.rosterTracker.reset();
+      this.quitTracker.clear();
       this.detections.clear();
       this.alertedDetections.clear();
       this.lastGameModes.clear();
       this.pendingSuggestionProbes.clear();
       this.unusedNameMap.clear();
       this.epoch++;
-      this.activityDetector.init();
+      this.activityDetector.reset();
       this.lastActivityAlertAt = -1L;
       this.connection = null;
       this.level = null;

@@ -7,7 +7,7 @@ public final class JoinSecretKeyHelper {
    private JoinSecretKeyHelper() {
    }
 
-   public static String init(String name) {
+   public static String normalize(String name) {
       if (name == null) {
          return "";
       }

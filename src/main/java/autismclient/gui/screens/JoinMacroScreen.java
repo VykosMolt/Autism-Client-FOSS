@@ -149,7 +149,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private void openPasswordScreen() {
       if (this.minecraft != null) {
          this.minecraft.gui.setScreen(new LoginPasswordScreen(this, JoinMacroController.formValues(), updated -> {
-            if (!JoinMacroController.init(updated)) {
+            if (!JoinMacroController.saveValues(updated)) {
                bi.write("Secure encryption is unavailable; values were not saved.");
             }
          }));
@@ -184,7 +184,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          keep ? "Stays Enabled" : "Clears After",
          keep ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
          true,
-         () -> JoinMacroController.load(!JoinMacroController.keepEnabled())
+         () -> JoinMacroController.setKeepEnabled(!JoinMacroController.keepEnabled())
       );
       int triggerRowY = this.triggerRowY();
       autismclient.gui.f.b.k.init(

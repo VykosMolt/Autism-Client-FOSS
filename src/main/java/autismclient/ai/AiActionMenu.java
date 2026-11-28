@@ -147,7 +147,7 @@ final class AiActionMenu {
       this.write_Map.values().forEach(field -> field.setFocused(false));
    }
 
-   autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
+   autismclient.gui.ui.widgets.TextInputWidget inputForChar(char c) {
       return this.step == AiActionMenu.MenuStep.TARGET && (Character.isLetterOrDigit(c) || c == ' ' || c == '-')
          ? this.searchInput
          : null;
@@ -604,7 +604,7 @@ final class AiActionMenu {
             autismclient.gui.f.NetHelper.init(x + half + 2, y, half, h),
             this.schematicPlacement.isSearching() ? "Searching..." : "Best nearby site",
             this.schematicPlacement.isReadyToConfirm(),
-            this.schematicPlacement::flush
+            this.schematicPlacement::confirmPlacement
          );
          int var18 = y + h + 2;
          kit.drawCenteredRowText(
@@ -629,11 +629,11 @@ final class AiActionMenu {
             "Clear natural terrain in empty space",
             this.schematicPlacement.isClearTerrain(),
             "local-terrain",
-            () -> this.schematicPlacement.load(!this.schematicPlacement.isClearTerrain())
+            () -> this.schematicPlacement.setClearTerrain(!this.schematicPlacement.isClearTerrain())
          );
          int var21 = var20 + h + 2;
          autismclient.gui.f.NetHelper flyToggle = autismclient.gui.f.NetHelper.init(x, var21, w, h);
-         kit.drawToggleSwitch(flyToggle, "Assume Fly", this.schematicPlacement.isAssumeFly(), "local-assume-fly", () -> this.schematicPlacement.read(!this.schematicPlacement.isAssumeFly()));
+         kit.drawToggleSwitch(flyToggle, "Assume Fly", this.schematicPlacement.isAssumeFly(), "local-assume-fly", () -> this.schematicPlacement.setAssumeFly(!this.schematicPlacement.isAssumeFly()));
          kit.addTooltipRegion(
             flyToggle,
             "Use native flight already granted in Survival, including singleplayer. Never grants flight or items. Without permission, use ground movement."
@@ -922,7 +922,7 @@ final class AiActionMenu {
       }
    }
 
-   boolean init_Z_I_Z(int key, boolean typing) {
+   boolean handleKey(int key, boolean typing) {
       if (this.step != AiActionMenu.MenuStep.HOME && this.step != AiActionMenu.MenuStep.REVIEW) {
          switch (key) {
             case 257:
@@ -955,7 +955,7 @@ final class AiActionMenu {
       }
    }
 
-   boolean load_Z() {
+   boolean back() {
       if (this.step == AiActionMenu.MenuStep.TARGET && !this.searchInput.getValue().isEmpty()) {
          this.searchInput.setValue("");
          return true;
@@ -1011,7 +1011,7 @@ final class AiActionMenu {
          this.issue = "";
       }
 
-      this.host.init(this.searchInput);
+      this.host.focusInput(this.searchInput);
    }
 
    private void selectAction(AiActionMenu.MenuAction next) {
@@ -1046,7 +1046,7 @@ final class AiActionMenu {
       this.step = next.init() ? AiActionMenu.MenuStep.TARGET : AiActionMenu.MenuStep.REVIEW;
       this.read_cE_StreamUtil.scrollToTop();
       if (next.init()) {
-         this.host.init(this.searchInput);
+         this.host.focusInput(this.searchInput);
       } else {
          this.blur();
       }
@@ -1341,9 +1341,9 @@ final class AiActionMenu {
       }
    }
 
-   void write_V() {
+   void confirmPlacement() {
       if (this.schematicPlacement != null) {
-         this.schematicPlacement.flush();
+         this.schematicPlacement.confirmPlacement();
       }
    }
 
@@ -1370,7 +1370,7 @@ final class AiActionMenu {
          CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
             try {
                String path = AiAttachments.init();
-               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.init()) : null;
+               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.directory()) : null;
             } catch (Exception e) {
                throw new CompletionException(e);
             }
@@ -1383,7 +1383,7 @@ final class AiActionMenu {
                this.init_Map.remove(AiActionMenu.MenuAction.BUILD);
                if (this.selectedAction == AiActionMenu.MenuAction.BUILD) {
                   this.searchInput.setValue(file.name());
-                  this.host.init(this.searchInput);
+                  this.host.focusInput(this.searchInput);
                }
             }
          }));
@@ -1474,7 +1474,7 @@ final class AiActionMenu {
          boolean recipes = a == AiActionMenu.MenuAction.GET
             || a == AiActionMenu.MenuAction.CRAFT
             || a == AiActionMenu.MenuAction.SMELT;
-         boolean missing = recipes && (a == AiActionMenu.MenuAction.SMELT ? AiToolsSuggest.load() : AiToolsSuggest.init()).isEmpty();
+         boolean missing = recipes && (a == AiActionMenu.MenuAction.SMELT ? AiToolsSuggest.smeltableIds() : AiToolsSuggest.craftableIds()).isEmpty();
          v = new AiActionMenu.OptionBuild(world, now, this.load(a), previous, missing);
          this.init_Map.put(a, v);
       }
@@ -1606,14 +1606,14 @@ final class AiActionMenu {
       List<AiActionMenu.TargetCandidate> out = new ArrayList<>();
       switch (a) {
          case GET:
-            Set<String> craft = new HashSet<>(AiToolsSuggest.init());
-            Set<String> smelt = new HashSet<>(AiToolsSuggest.load());
-            Set<String> mined = AiObtain.init();
+            Set<String> craft = new HashSet<>(AiToolsSuggest.craftableIds());
+            Set<String> smelt = new HashSet<>(AiToolsSuggest.smeltableIds());
+            Set<String> mined = AiObtain.mineableItems();
 
             for (Item item : BuiltInRegistries.ITEM) {
                if (item != Items.AIR) {
                   Identifier id = BuiltInRegistries.ITEM.getKey(item);
-                  String shortId = AiToolsSuggest.init(id);
+                  String shortId = AiToolsSuggest.shortId(id);
                   boolean route = craft.contains(shortId)
                      || smelt.contains(shortId)
                      || !AiItems.sourceEntitiesFor(item).isEmpty()
@@ -1670,9 +1670,9 @@ final class AiActionMenu {
                   String species = key.getPath().substring(0, key.getPath().length() - 4).replace('_', ' ');
                   out.add(
                      new AiActionMenu.TargetCandidate(
-                        autismclient.util.RegistryDisplayNameCache.load(key.toString()),
+                        autismclient.util.RegistryDisplayNameCache.blockName(key.toString()),
                         species + " tree wood",
-                        autismclient.util.DisplayItemStackFactory.init(block),
+                        autismclient.util.DisplayItemStackFactory.forBlock(block),
                         List.of(n -> "chop " + amountPrefix(n) + species + " logs"),
                         "block",
                         key.toString(),
@@ -1683,7 +1683,7 @@ final class AiActionMenu {
             }
             break;
          case CRAFT:
-            for (String id : AiToolsSuggest.init()) {
+            for (String id : AiToolsSuggest.craftableIds()) {
                Item item = itemById(id);
                if (item != null) {
                   out.add(init_StreamUtil_StreamU_Str_2("craft", item, "item"));
@@ -1691,7 +1691,7 @@ final class AiActionMenu {
             }
             break;
          case SMELT:
-            for (String id : AiToolsSuggest.load()) {
+            for (String id : AiToolsSuggest.smeltableIds()) {
                Item item = itemById(id);
                if (item != null) {
                   out.add(init_StreamUtil_StreamU_Str_2("smelt", item, "item"));
@@ -1737,7 +1737,7 @@ final class AiActionMenu {
                      EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(key).orElse(null);
                      out.add(
                         new AiActionMenu.TargetCandidate(
-                           autismclient.util.RegistryDisplayNameCache.read(key.toString()),
+                           autismclient.util.RegistryDisplayNameCache.entityName(key.toString()),
                            words,
                            type == null ? ItemStack.EMPTY : spawnEggIcon(type),
                            List.of(n -> "fight " + amountPrefix(n) + words),
@@ -1753,10 +1753,10 @@ final class AiActionMenu {
          case FARM:
             for (String option : AiIntents.CROPS) {
                String crop = option.toLowerCase(Locale.ROOT);
-               String one = AiIntents.sync(crop);
-               String id = AiIntents.update(crop);
+               String one = AiIntents.singular(crop);
+               String id = AiIntents.cropId(crop);
                Block block = id == null ? null : blockById(id);
-               ItemStack icon = block == null ? ItemStack.EMPTY : autismclient.util.DisplayItemStackFactory.init(block);
+               ItemStack icon = block == null ? ItemStack.EMPTY : autismclient.util.DisplayItemStackFactory.forBlock(block);
                out.add(
                   new AiActionMenu.TargetCandidate(
                      "Build " + one + " farm",
@@ -1776,7 +1776,7 @@ final class AiActionMenu {
             }
             break;
          case BUILD:
-            Path dir = AiSchematic.init();
+            Path dir = AiSchematic.directory();
             if (Files.isDirectory(dir)) {
                try (Stream<Path> files = Files.list(dir)) {
                   files.filter(x$0 -> Files.isRegularFile(x$0))
@@ -1820,7 +1820,7 @@ final class AiActionMenu {
       String path = id.getPath();
       String words = path.replace('_', ' ');
       return new AiActionMenu.TargetCandidate(
-         autismclient.util.RegistryDisplayNameCache.init(id.toString()),
+         autismclient.util.RegistryDisplayNameCache.itemName(id.toString()),
          words,
          autismclient.util.DisplayItemStackFactory.displayStack(item),
          List.of(n -> verb + " " + amountPrefix(n) + words, n -> verb + " " + amountPrefix(n) + path),
@@ -1835,9 +1835,9 @@ final class AiActionMenu {
       String path = id.getPath();
       String words = path.replace('_', ' ');
       return new AiActionMenu.TargetCandidate(
-         autismclient.util.RegistryDisplayNameCache.load(id.toString()),
+         autismclient.util.RegistryDisplayNameCache.blockName(id.toString()),
          words,
-         autismclient.util.DisplayItemStackFactory.init(block),
+         autismclient.util.DisplayItemStackFactory.forBlock(block),
          List.of(n -> verb + " " + amountPrefix(n) + words, n -> verb + " " + amountPrefix(n) + path),
          "block",
          id.toString(),

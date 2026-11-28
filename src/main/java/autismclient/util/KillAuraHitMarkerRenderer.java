@@ -80,14 +80,14 @@ public final class KillAuraHitMarkerRenderer {
          );
    }
 
-   public static void init(AABB box) {
+   public static void markHit(AABB box) {
       if (box != null) {
          lastHitBox = box;
          lastHitMillis = System.currentTimeMillis();
       }
    }
 
-   public static void load() {
+   public static void clear() {
       lastHitBox = null;
    }
 

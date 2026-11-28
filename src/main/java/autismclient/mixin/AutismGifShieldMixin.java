@@ -47,14 +47,14 @@ public abstract class AutismGifShieldMixin {
       if (GifOverlayState.isShieldActive()) {
          String name = GifRenderContext.isShieldRendering() ? GifOverlayState.init_Str() : GifRenderContext.currentName();
          if (name != null && !name.isEmpty()) {
-            String path = GifOverlayState.load(name);
+            String path = GifOverlayState.shieldPath(name);
             if (path != null) {
                BannerPatternLayers patterns = components != null
                   ? components.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY)
                   : BannerPatternLayers.EMPTY;
                DyeColor baseColor = components != null ? components.get(DataComponents.BASE_COLOR) : null;
                if (patterns.layers().isEmpty() && baseColor == null) {
-                  Identifier texture = GifTextureManager.load(path, GifOverlayState.load_D(), GifOverlayState.write_Z(), GifOverlayState.write_D());
+                  Identifier texture = GifTextureManager.shieldTexture(path, GifOverlayState.load_D(), GifOverlayState.write_Z(), GifOverlayState.write_D());
                   if (texture != null) {
                      Compat263.submitModel(
                         submitNodeCollector,

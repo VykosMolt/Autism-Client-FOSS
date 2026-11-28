@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class MacroResourceLock {
    private final EnumMap<MacroResourceClassifier.MacroResource, Object> owners = new EnumMap<>(MacroResourceClassifier.MacroResource.class);
 
-   public synchronized AutoCloseable init(EnumSet<MacroResourceClassifier.MacroResource> resources) {
+   public synchronized AutoCloseable acquire(EnumSet<MacroResourceClassifier.MacroResource> resources) {
       EnumSet<MacroResourceClassifier.MacroResource> claimed = resources.clone();
 
       for (MacroResourceClassifier.MacroResource resource : claimed) {

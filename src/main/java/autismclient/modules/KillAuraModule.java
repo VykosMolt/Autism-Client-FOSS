@@ -115,7 +115,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    static final ValueRange SWING_OFFSET_DEFAULT = new ValueRange(-100, 50);
    static final int write_I = 0;
    static final ValueRange DEFAULT_CPS_RANGE = new ValueRange(9, 13);
-   static final ValueRange PRE_REACH_DEFAULT = TriggerBotModule.update_ValueRange;
+   static final ValueRange PRE_REACH_DEFAULT = TriggerBotModule.PRE_REACH_DEFAULT;
    static final int update_I = 20;
    static final int sync_I = 10;
    static final int flush_I = 100;
@@ -299,7 +299,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    @Override
    protected String externalSettingValue(String settingId) {
       if (!"auto-block".equals(settingId) && !"perfect-hit".equals(settingId)) {
-         return this.combatClicker == null ? null : this.combatClicker.init_Str_Str(settingId);
+         return this.combatClicker == null ? null : this.combatClicker.settingValue(settingId);
       } else {
          return this.value("block-hit");
       }
@@ -308,7 +308,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    @Override
    protected boolean setExternalSettingValue(String settingId, String value) {
       if (!"auto-block".equals(settingId) && !"perfect-hit".equals(settingId)) {
-         return this.combatClicker != null && this.combatClicker.init(settingId, value);
+         return this.combatClicker != null && this.combatClicker.setSettingValue(settingId, value);
       }
 
       this.setValueTransient("block-hit", value);
@@ -507,7 +507,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                }
 
                boolean wrongItem = !this.heldItemPassesFilter();
-               if (!autismclient.util.ManualInteractionYield.init() && !usingItem && !throwable && !wrongItem) {
+               if (!autismclient.util.ManualInteractionYield.isYielding() && !usingItem && !throwable && !wrongItem) {
                   if (!AutismLiteVariant.enabled() && KBDisplacementModule.init_Z_24()) {
                      this.stopBlockHit(false);
                      this.clickScheduler.suspend();
@@ -743,7 +743,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private void scheduleDoubleClick(Entity target, boolean lastChance) {
-      int gap = lastChance ? 0 : this.doubleClickSampler.init();
+      int gap = lastChance ? 0 : this.doubleClickSampler.sampleFollowUps();
       this.doubleClickTick = gap > 0 ? AutismSessionState.getInstance().getClientTick() + gap : -2147483648;
       this.doubleClickTargetId = target.getId();
    }
@@ -860,7 +860,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private void trackTargetMotion(LivingEntity target) {
-      this.motionTracker.init(target, AutismSessionState.getInstance().getClientTick());
+      this.motionTracker.track(target, AutismSessionState.getInstance().getClientTick());
       if (target == null) {
          this.trackedTargetId = -1;
          this.targetMovedSlightly = false;
@@ -1173,7 +1173,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          int falling = this.ticksUntilFalling();
          boolean strongerSoon = falling <= 1
             && this.shieldHitWindow.init_I(target.getUUID(), target.hurtTime, tick, this.estimateAttackDamage(true)) == 0
-            && this.inAttackRange(MC.player.getMainHandItem(), ShieldHitWindowHelper.init(target.getBoundingBox(), MC.player.getEyePosition()));
+            && this.inAttackRange(MC.player.getMainHandItem(), ShieldHitWindowHelper.closestPoint(target.getBoundingBox(), MC.player.getEyePosition()));
          if (strongerSoon) {
             open = Math.min(open, falling + 1);
          }
@@ -1263,7 +1263,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             double[] reach = enemyAttackRange(enemy);
             double distance = body.distanceToSqr(eye);
             if (ShieldHitWindowHelper.isInReachWindow(eye, body, reach[0], reach[1] + 0.5, reach[2])
-               && ShieldHitWindowHelper.init(eye, view, body)
+               && ShieldHitWindowHelper.isLookingAt(eye, view, body)
                && this.canSeeBox(enemy, eye, body)
                && this.shieldHitWindow.init_Z(enemy.getUUID(), enemy.hurtTime, AutismSessionState.getInstance().getClientTick(), this.bool("block-hit-after-hit"))
                && (everySide || blocksAtAngle(blocks, MC.player.getEyePosition(), eye, yaw))
@@ -1289,7 +1289,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean canSeeBox(LivingEntity enemy, Vec3 eye, AABB victim) {
-      Vec3 nearest = ShieldHitWindowHelper.init(victim, eye);
+      Vec3 nearest = ShieldHitWindowHelper.closestPoint(victim, eye);
       Vec3 center = victim.getCenter();
       Vec3[] points = new Vec3[]{
          nearest,
@@ -1311,7 +1311,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private double timerSpeedRatio() {
       double clientTickMs = MC.level.tickRateManager().millisecondsPerTick() / Math.max(0.05, MovementModuleHooks.speedTimerMultiplier());
-      return ShieldHitWindowHelper.load(clientTickMs);
+      return ShieldHitWindowHelper.tickScale(clientTickMs);
    }
 
    private boolean isBlockHitCpsMode() {
@@ -1555,7 +1555,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    boolean init_Z_I_7(int holdMillis) {
-      return this.currentTarget != null && BacktrackModule.init_Z_D_I(this.ticksUntilReady(this.currentTarget), holdMillis);
+      return this.currentTarget != null && BacktrackModule.attackWithinHold(this.ticksUntilReady(this.currentTarget), holdMillis);
    }
 
    @Override
@@ -1673,7 +1673,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          return 1.0 / 0.0;
       }
 
-      if (aura.canInteract(false, true) && !autismclient.util.ManualInteractionYield.init()) {
+      if (aura.canInteract(false, true) && !autismclient.util.ManualInteractionYield.isYielding()) {
          int tick = AutismSessionState.getInstance().getClientTick();
          Vec3 eyes = MC.player.getEyePosition();
          double range = aura.attackReach();
@@ -1880,7 +1880,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          look = RotationMath.ofPlayer(MC.player);
       }
 
-      return autismclient.util.CombatTargetScorer.init(entity, MC.player, look);
+      return autismclient.util.CombatTargetScorer.score(entity, MC.player, look);
    }
 
    private float belowNameScore(LivingEntity entity) {
@@ -2015,7 +2015,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          AttackRange itemRange = MC.player.getMainHandItem().get(DataComponents.ATTACK_RANGE);
          if (itemRange != null) {
             Vec3 from = eyes.add(direction.scale(itemRange.effectiveMinRange(MC.player)));
-            Vec3 to = eyes.add(direction.scale(autismclient.util.AttackReachHelper.init(MC.player, direction)));
+            Vec3 to = eyes.add(direction.scale(autismclient.util.AttackReachHelper.reachAlong(MC.player, direction)));
             AABB area = camera.getBoundingBox().expandTowards(to.subtract(eyes)).inflate(1.0);
             return ProjectileUtil.getManyEntityHitResult(
                   MC.level, camera, from, to, area, EntitySelector.CAN_BE_PICKED.and(predicate), itemRange.hitboxMargin(), Block.OUTLINE, true, true
@@ -2042,7 +2042,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          Vec3 eyes = camera.getEyePosition();
          double distanceSq = eyes.distanceToSqr(hit.getLocation());
          if (MC.player.getMainHandItem().has(DataComponents.PIERCING_WEAPON)) {
-            range = Math.max(range, autismclient.util.AttackReachHelper.init(MC.player, Vec3.directionFromRotation(rotation.pitch(), rotation.yaw())));
+            range = Math.max(range, autismclient.util.AttackReachHelper.reachAlong(MC.player, Vec3.directionFromRotation(rotation.pitch(), rotation.yaw())));
          }
 
          return distanceSq <= wallsRange * wallsRange || distanceSq <= range * range && this.hasLineOfSight(eyes, hit.getLocation(), camera) ? hit : null;
@@ -2215,7 +2215,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       } else if (target instanceof Player player && !this.hitMatchesReceivedPose(player, rotation)) {
          this.clickScheduler.carryOrNoteLoss("trackedYaw");
       } else if (AutismSessionState.getInstance().getClientTick() != this.slotSwitchTick && !this.trySwitchToWeapon(target) && (this.holdBorrowedWeapon(target) || !this.restoreSwitchBackSlot())) {
-         if (target instanceof Player && SprintStateTracker.read() && MC.player.getAttackStrengthScale(0.5F) > 0.9F) {
+         if (target instanceof Player && SprintStateTracker.isDesynced() && MC.player.getAttackStrengthScale(0.5F) > 0.9F) {
             this.clickScheduler.carryPending();
          } else {
             ItemStack mainHandStack = MC.player.getMainHandItem();
@@ -2250,7 +2250,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (this.isModernCombat() && !this.attackChargedIn(0) && !(MC.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
          Vec3 motion = new Vec3(target.getX() - target.xo, target.getY() - target.yo, target.getZ() - target.zo);
          return autismclient.util.AttackReachHelper.init(
-            MC.player.getEyePosition(), target.getBoundingBox(), ShieldHitWindowHelper.init(MC.player.getDeltaMovement()), ShieldHitWindowHelper.init(motion), this.attackReach()
+            MC.player.getEyePosition(), target.getBoundingBox(), ShieldHitWindowHelper.sanitizeMotion(MC.player.getDeltaMovement()), ShieldHitWindowHelper.sanitizeMotion(motion), this.attackReach()
          );
       } else {
          return false;
@@ -2328,7 +2328,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       int age = 2 + Math.min(10, latency / 100);
-      return this.motionTracker.init(AutismSessionState.getInstance().getClientTick(), age);
+      return this.motionTracker.positionAt(AutismSessionState.getInstance().getClientTick(), age);
    }
 
    static boolean bearingWithinTolerance(Vec3 eye, Vec3 target, float yaw) {
@@ -2845,7 +2845,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private void showHitMarker(Entity target) {
       if (this.bool("hit-marker")) {
-         autismclient.util.KillAuraHitMarkerRenderer.init(target.getBoundingBox().inflate(target.getPickRadius()));
+         autismclient.util.KillAuraHitMarkerRenderer.markHit(target.getBoundingBox().inflate(target.getPickRadius()));
       }
    }
 
@@ -2914,7 +2914,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean isModernCombat() {
-      return !autismclient.util.LegacyCombatDetector.init(MC.player);
+      return !autismclient.util.LegacyCombatDetector.isLegacyCombat(MC.player);
    }
 
    private float attackCooldownTicks() {
@@ -2956,7 +2956,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private float rollSwingOffset() {
       ValueRange offset = ValueRange.parse(this.value("swing-offset"), SWING_OFFSET_DEFAULT);
-      return (float)(this.swingTiming.init(offset.min(), offset.max(), 0.0) / 50.0);
+      return (float)(this.swingTiming.sampleOffset(offset.min(), offset.max(), 0.0) / 50.0);
    }
 
    private boolean attackWouldBeBlocked(LivingEntity target) {
@@ -3298,7 +3298,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          this.aimEngine.reset();
       }
 
-      autismclient.util.KillAuraHitMarkerRenderer.load();
+      autismclient.util.KillAuraHitMarkerRenderer.clear();
    }
 
    static final class FrameCatchUp {
@@ -3390,9 +3390,9 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
       void feedFrame(long now) {
          if (KillAuraModule.this.combatClicker != null) {
-            this.patternEngine.setPersonality(KillAuraModule.this.combatClicker.init_DataUtil_ConfigSto());
+            this.patternEngine.setPersonality(KillAuraModule.this.combatClicker.personality());
             autismclient.util.clicker.ClickProfile profile = KillAuraModule.this.combatClicker.profile();
-            this.carriedClicks.capacity = (profile.read > 20.000000001 ? 2 : 1) + (KillAuraModule.this.isBlockHitCpsMode() ? 1 : 0);
+            this.carriedClicks.capacity = (profile.cpsHigh > 20.000000001 ? 2 : 1) + (KillAuraModule.this.isBlockHitCpsMode() ? 1 : 0);
             if (KillAuraModule.this.isBlockHitCpsMode()) {
                this.frameCatchUp.catchUpClicks(this.patternEngine, now, this.active, profile, this.carriedClicks);
             } else {

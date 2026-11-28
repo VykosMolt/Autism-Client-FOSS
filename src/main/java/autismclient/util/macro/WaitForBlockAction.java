@@ -38,7 +38,7 @@ public class WaitForBlockAction implements MacroAction {
       } else if (this.blockIds.isEmpty()) {
          blockDesc = "no blocks set";
       } else {
-         blockDesc = RegistryDisplayNameCache.load(this.blockIds.get(0));
+         blockDesc = RegistryDisplayNameCache.blockName(this.blockIds.get(0));
          if (this.blockIds.size() > 1) {
             blockDesc = blockDesc + " (+" + (this.blockIds.size() - 1) + ")";
          }

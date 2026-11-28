@@ -43,7 +43,7 @@ public final class bi {
       } else {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
-            NameScrapeController.init(graphics);
+            NameScrapeController.render(graphics);
             if (init_f.hasToasts()) {
                int width = Math.min(320, Math.max(120, cA.init_I() - 16));
                int x = Math.max(8, (cA.init_I() - width) / 2);

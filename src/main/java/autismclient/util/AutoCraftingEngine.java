@@ -475,7 +475,7 @@ public final class AutoCraftingEngine {
                }
 
                packets.add(
-                  PacketRegenerator.init(
+                  PacketRegenerator.regenerate(
                      new ServerboundContainerClickPacket(
                         craftingHandler.containerId,
                         craftingHandler.getStateId(),

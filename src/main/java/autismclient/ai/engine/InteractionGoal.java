@@ -139,12 +139,12 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
          Vec3 centre = box.getCenter().add(this.target.getX(), this.target.getY(), this.target.getZ());
          if (this.init_Direction != null) {
             for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.target, this.init_Direction)) {
-               if (init(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D, this.init_Direction, null)) {
+               if (canReach(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D, this.init_Direction, null)) {
                   return true;
                }
             }
          } else {
-            if (load(planned, this.target, x, y, z, this.standEyeHeight, centre.x, centre.y, centre.z, this.init_D)) {
+            if (canReach(planned, this.target, x, y, z, this.standEyeHeight, centre.x, centre.y, centre.z, this.init_D)) {
                return true;
             }
 
@@ -154,14 +154,14 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
                   face.getStepY() * (box.maxY - box.minY) * 0.49,
                   face.getStepZ() * (box.maxZ - box.minZ) * 0.49
                );
-               if (load(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
+               if (canReach(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
                   return true;
                }
             }
 
             for (Direction face : Direction.values()) {
                for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.target, face)) {
-                  if (load(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
+                  if (canReach(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
                      return true;
                   }
                }
@@ -209,13 +209,13 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   static boolean load(
+   static boolean canReach(
       AiPathfinder.GridView grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
    ) {
-      return init(grid, target, x, y, z, eyeHeight, targetX, targetY, targetZ, reach, null, null);
+      return canReach(grid, target, x, y, z, eyeHeight, targetX, targetY, targetZ, reach, null, null);
    }
 
-   static boolean init(
+   static boolean canReach(
       AiPathfinder.GridView grid,
       BlockPos target,
       int x,

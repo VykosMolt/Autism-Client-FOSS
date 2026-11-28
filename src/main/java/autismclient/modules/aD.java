@@ -152,9 +152,9 @@ public final class aD {
       read_V();
       autismclient.util.bi.init_V();
       OverlayManager.getInstance().closeAll();
-      autismclient.util.BlockPreviewRenderer.load();
+      autismclient.util.BlockPreviewRenderer.clear();
       PayloadStudyTracker.reset();
-      PayloadSubscriptionManager.load();
+      PayloadSubscriptionManager.reset();
       AutismClientMessaging.clearClientMessages();
       AutismClientMessaging.clearChatInputHistory();
    }

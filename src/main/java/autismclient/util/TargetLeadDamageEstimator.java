@@ -11,7 +11,7 @@ public final class TargetLeadDamageEstimator {
    private final EntityMotionTracker init = new EntityMotionTracker();
 
    public void init(LivingEntity target, int tick) {
-      this.init.init(target, tick);
+      this.init.track(target, tick);
    }
 
    public AABB predictedBox(LivingEntity target, int tick, int horizonTicks, double maxLead) {

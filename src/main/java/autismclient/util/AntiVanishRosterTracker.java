@@ -31,7 +31,7 @@ public final class AntiVanishRosterTracker {
 
    public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
       if (profiles.size() > 4096) {
-         this.write();
+         this.reset();
       } else {
          Map<UUID, AntiVanishRosterTracker.RosterProfile> live = new HashMap<>();
          Set<String> names = new HashSet<>();
@@ -105,7 +105,7 @@ public final class AntiVanishRosterTracker {
 
          this.members.values().removeIf(mx -> now - mx.read_J > 30000L);
          if (this.members.size() > 4096) {
-            this.write();
+            this.reset();
          }
       }
    }
@@ -298,15 +298,15 @@ public final class AntiVanishRosterTracker {
       this.members.values().forEach(AntiVanishRosterTracker.RosterMember::init);
    }
 
-   public void load() {
+   public void clearPending() {
       this.pendingRequests.clear();
    }
 
-   public void read() {
+   public void clearLastSeen() {
       this.lastSeen.clear();
    }
 
-   public void write() {
+   public void reset() {
       this.members.clear();
       this.pendingRequests.clear();
       this.lastSeen.clear();

@@ -18,7 +18,7 @@ public final class AiLadderJump {
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, double var4
    ) {
       for (float var9 : new float[]{0.0F, -12.0F, 12.0F, -25.0F, 25.0F}) {
-         AiPhysics.MoveInput var10 = AiPhysics.MoveInput.run(var2 + var9, false);
+         AiPhysics.MoveInput var10 = AiPhysics.MoveInput.running(var2 + var9, false);
          ArrayList<AiPhysics.MoveInput> var11 = new ArrayList<>();
          AiPhysics.MotionState var12 = var1;
          boolean var13 = false;
@@ -111,7 +111,7 @@ public final class AiLadderJump {
 
       for (float var9 : new float[]{0.0F, -6.0F, 6.0F, -12.0F, 12.0F}) {
          float var10 = var4 + var9;
-         AiPhysics.MoveInput var11 = AiPhysics.MoveInput.run(var10, var3);
+         AiPhysics.MoveInput var11 = AiPhysics.MoveInput.running(var10, var3);
          AiPhysics.MotionState var12 = var1;
          ArrayList<AiPhysics.MoveInput> var13 = new ArrayList<>();
 
@@ -230,7 +230,7 @@ public final class AiLadderJump {
       for (int var8 = 0; var8 < 16; var8++) {
          AiPhysics.MoveInput var9 = AiJumpSolver.isInFluid(var0, var6)
             ? putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var6, var2, var7)
-            : AiPhysics.MoveInput.run(var7, false);
+            : AiPhysics.MoveInput.running(var7, false);
          if (var8 == 0 && var3 != 2) {
             var9 = var9.withStrafe(var3);
          }
@@ -361,10 +361,10 @@ public final class AiLadderJump {
          && !(var7 < -0.02)
          && !(var7 > 0.8)
          && !(Math.hypot(var1.x() - var6.x(), var1.z() - var6.z()) > 1.4)) {
-         AiPhysics.MoveInput var9 = AiPhysics.MoveInput.run(var2.inputs().getFirst().yaw(), var4);
+         AiPhysics.MoveInput var9 = AiPhysics.MoveInput.running(var2.inputs().getFirst().yaw(), var4);
 
          for (AiPhysics.MoveInput var13 : new AiPhysics.MoveInput[]{
-            var9, AiPhysics.MoveInput.run(var5, var4), AiPhysics.MoveInput.NONE.withYaw(var5)
+            var9, AiPhysics.MoveInput.running(var5, var4), AiPhysics.MoveInput.NONE.withYaw(var5)
          }) {
             AiPhysics.MotionState var14 = var1;
             int var15 = 0;

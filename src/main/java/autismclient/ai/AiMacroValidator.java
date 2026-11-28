@@ -24,7 +24,7 @@ public final class AiMacroValidator {
    private AiMacroValidator() {
    }
 
-   public static autismclient.util.AutismMacro init(JsonObject root, AiCatalog.Snapshot catalog) {
+   public static autismclient.util.AutismMacro validate(JsonObject root, AiCatalog.Snapshot catalog) {
       if (root == null) {
          throw new IllegalArgumentException("Macro requires a JSON object with a name and actions array");
       }
@@ -362,7 +362,7 @@ public final class AiMacroValidator {
       }
    }
 
-   public static String init(MacroActionType type) {
+   public static String describe(MacroActionType type) {
       String var10000;
       switch (type) {
          case REPEAT:

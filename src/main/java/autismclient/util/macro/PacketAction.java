@@ -42,7 +42,7 @@ public class PacketAction implements MacroAction {
                      }
 
                      if (this.regenerate) {
-                        Packet<?> regenerated = PacketRegenerator.init(packet);
+                        Packet<?> regenerated = PacketRegenerator.regenerate(packet);
                         if (regenerated == null) {
                            AutismClientMessaging.sendPrefixed("§cFailed to regenerate packet: " + packet.getClass().getSimpleName());
                            return;

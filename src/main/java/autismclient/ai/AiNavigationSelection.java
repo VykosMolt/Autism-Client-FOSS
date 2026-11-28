@@ -77,7 +77,7 @@ final class AiNavigationSelection extends AiPlacementSession {
       return args;
    }
 
-   void write() {
+   void startGoto() {
       try {
          AiDirectOps.run("game:goto", this.buildArgs(this.standingTarget.stance()));
       } catch (IllegalArgumentException | IllegalStateException e) {

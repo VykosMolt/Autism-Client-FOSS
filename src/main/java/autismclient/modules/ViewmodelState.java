@@ -14,14 +14,14 @@ public final class ViewmodelState {
    static volatile boolean offHand;
    static volatile float offHandScale;
    static volatile float offHandX;
-   static volatile float open;
-   static volatile float poll;
-   static volatile float push;
-   static volatile float pop;
+   static volatile float offHandY;
+   static volatile float offHandRotX;
+   static volatile float offHandRotY;
+   static volatile float offHandRotZ;
    static volatile int swingDuration = 6;
    static volatile int blockingAnimation;
-   static volatile float tick = 0.1F;
-   static volatile float run = 0.9F;
+   static volatile float oneSevenY = 0.1F;
+   static volatile float oneSevenSwingScale = 0.9F;
    static volatile boolean equipOffset = true;
    static volatile boolean ignoreBlocking = true;
    static volatile boolean ignorePlace = true;
@@ -88,19 +88,19 @@ public final class ViewmodelState {
    }
 
    public static float open_F() {
-      return open;
+      return offHandY;
    }
 
    public static float poll() {
-      return poll;
+      return offHandRotX;
    }
 
    public static float push() {
-      return push;
+      return offHandRotY;
    }
 
    public static float pop() {
-      return pop;
+      return offHandRotZ;
    }
 
    public static int swingDuration() {
@@ -112,11 +112,11 @@ public final class ViewmodelState {
    }
 
    public static float tick() {
-      return tick;
+      return oneSevenY;
    }
 
    public static float run() {
-      return run;
+      return oneSevenSwingScale;
    }
 
    public static boolean isEquipOffsetEnabled() {

@@ -205,7 +205,7 @@ public final class AiMemoryStore {
       }
    }
 
-   public synchronized void init(AiObservation observation) throws IOException {
+   public synchronized void addObservation(AiObservation observation) throws IOException {
       this.read_Map.put(observation.id(), observation);
 
       while (this.read_Map.size() > 512) {
@@ -285,7 +285,7 @@ public final class AiMemoryStore {
       return text.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
    }
 
-   public List<AiMemoryStore.Memory> init(String scope, String query, int limit) {
+   public List<AiMemoryStore.Memory> search(String scope, String query, int limit) {
       String[] terms = query.toLowerCase(Locale.ROOT).split("\\W+");
       return this.init_List
          .stream()
@@ -327,7 +327,7 @@ public final class AiMemoryStore {
       return List.copyOf(out);
    }
 
-   public List<AiMemoryStore.Memory> load(String worldScope, String query) {
+   public List<AiMemoryStore.Memory> searchWorld(String worldScope, String query) {
       String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       return this.init_List
          .stream()
@@ -363,7 +363,7 @@ public final class AiMemoryStore {
       }
    }
 
-   public synchronized void load() throws IOException {
+   public synchronized void reloadMemories() throws IOException {
       LinkedHashMap<String, AiMemoryStore.Memory> before = new LinkedHashMap<>(this.init_Map);
       this.init_Map.clear();
 

@@ -27,7 +27,7 @@ public abstract class AutismCrosshairHudMixin {
    ) {
       if ("hud/crosshair".equals(sprite.getPath())) {
          KillAuraModule.renderHud(graphics);
-         if (CrosshairRenderer.init(graphics)) {
+         if (CrosshairRenderer.render(graphics)) {
             return;
          }
       }

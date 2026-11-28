@@ -668,7 +668,7 @@ public final class am {
          init_am_StreamUtil = init("esp", revision, hidden, false);
          init_am_ConfigStore = init_am_ConfigStore_I_Z(revision, hidden);
          load_am_StreamUtil = init("tracers", revision, hidden, true);
-         SodiumRegionResourceProbe.init(init_am_JsonUtil.load_Z());
+         SodiumRegionResourceProbe.setActive(init_am_JsonUtil.load_Z());
       }
    }
 
@@ -1371,7 +1371,7 @@ public final class am {
 
       Set<Identifier> ids = new HashSet<>();
       Set<String> paths = new HashSet<>();
-      boolean oreSim = OreSimEspScanner.init_Z(module);
+      boolean oreSim = OreSimEspScanner.isOreSimMode(module);
       if (!oreSim) {
          for (String entry : module.list("whitelist")) {
             if (entry != null) {

@@ -247,7 +247,7 @@ public final class AiSlimeBounce {
       ArrayList<AiPhysics.MoveInput> var5 = new ArrayList<>();
       AiPhysics.MotionState var6 = var1;
       double var7 = var1.y();
-      AiPhysics.MoveInput var9 = AiPhysics.MoveInput.run(var2, var4);
+      AiPhysics.MoveInput var9 = AiPhysics.MoveInput.running(var2, var4);
       AiPhysics.MoveInput var10 = var9.withJump(true);
 
       for (int var11 = 0; var11 < 38; var11++) {

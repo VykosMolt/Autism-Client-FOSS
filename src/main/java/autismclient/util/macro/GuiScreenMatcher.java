@@ -18,7 +18,7 @@ public final class GuiScreenMatcher {
    private GuiScreenMatcher() {
    }
 
-   public static boolean init(Screen screen, String query) {
+   public static boolean matchesTitle(Screen screen, String query) {
       if (screen != null && !isClientScreen(screen)) {
          String trimmed = query == null ? "" : query.trim();
          if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("any")) {
@@ -39,13 +39,13 @@ public final class GuiScreenMatcher {
       }
    }
 
-   public static boolean init(Screen screen, String guiType, String titleFilter) {
+   public static boolean matches(Screen screen, String guiType, String titleFilter) {
       GuiScreenMatcher.GuiType type = init_f_DataUtil(guiType);
       if (type == null) {
          type = GuiScreenMatcher.GuiType.ANY;
       }
 
-      return !init(screen, type) ? false : titleFilter == null || titleFilter.isBlank() || init(screen, titleFilter);
+      return !init(screen, type) ? false : titleFilter == null || titleFilter.isBlank() || matchesTitle(screen, titleFilter);
    }
 
    public static boolean init(Screen screen, GuiScreenMatcher.GuiType type) {

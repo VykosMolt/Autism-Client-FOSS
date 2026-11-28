@@ -8,17 +8,17 @@ final class AiPerfMetrics {
    private long total;
    private volatile long sampleCount;
 
-   void init(long nanos) {
+   void add(long nanos) {
       this.total += nanos;
    }
 
-   void load(long nanos) {
+   void endSample(long nanos) {
       this.samples[(int)(this.sampleCount % this.samples.length)] = this.total + nanos;
       this.total = 0L;
       this.sampleCount++;
    }
 
-   JsonObject init() {
+   JsonObject summary() {
       int size = (int)Math.min(this.sampleCount, this.samples.length);
       long[] copy = Arrays.copyOf(this.samples, size);
       Arrays.sort(copy);

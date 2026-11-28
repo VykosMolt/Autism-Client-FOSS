@@ -11,12 +11,12 @@ final class AiHazardEscape {
    private AiHazardEscape() {
    }
 
-   static String init(Minecraft mc) {
+   static String currentHazard(Minecraft mc) {
       if (mc.player == null || mc.level == null) {
          return null;
       } else if (AiLavaEscape.isInLava(mc)) {
          return "in lava";
-      } else if (AiBreathe.init(mc.player)) {
+      } else if (AiBreathe.needsAir(mc.player)) {
          return "out of air";
       } else if (AiPowderEscape.isInPowderSnow(mc)) {
          return "in powder snow";
@@ -32,7 +32,7 @@ final class AiHazardEscape {
       }
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       final int seconds = Math.max(1, Math.min(30, AiJson.getInt(args, "timeoutSeconds", 25)));
       final Object level = mc.level;
@@ -54,7 +54,7 @@ final class AiHazardEscape {
                return this.finish(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.init_Str);
             }
 
-            String next = AiHazardEscape.init(mc);
+            String next = AiHazardEscape.currentHazard(mc);
             if (next == null && !this.guard.isActive()) {
                return this.finish(AiOperation.Status.SUCCEEDED, "Immediate environmental danger cleared");
             }

@@ -16,7 +16,7 @@ public final class BacktrackTrailHistory {
    private long read;
    private BacktrackTrailHistory.TrailFrame init_cP_DataUtil;
 
-   public void init() {
+   public void clear() {
       this.target = null;
       this.position = null;
       this.init_cP_DataUtil = null;
@@ -28,10 +28,10 @@ public final class BacktrackTrailHistory {
       return this.target == target && this.init_cP_DataUtil != null && now - this.read < 450000000L;
    }
 
-   public void init(Object target, AABB drawn, AABB received, Vec3 position, long now) {
+   public void add(Object target, AABB drawn, AABB received, Vec3 position, long now) {
       if (target != null && init(position) && init(drawn.getCenter()) && init(received.getCenter())) {
          if (this.target != target || this.position == null || this.position.distanceToSqr(position) > 16.0) {
-            this.init();
+            this.clear();
             this.target = target;
             this.position = position;
             this.load = now;
@@ -47,11 +47,11 @@ public final class BacktrackTrailHistory {
             }
          }
       } else {
-         this.init();
+         this.clear();
       }
    }
 
-   public List<autismclient.modules.EspHighlightBox> init(
+   public List<autismclient.modules.EspHighlightBox> boxes(
       Object target,
       AABB drawn,
       AABB received,
@@ -67,13 +67,13 @@ public final class BacktrackTrailHistory {
    ) {
       if (target != null && init(position) && init(drawn.getCenter()) && init(received.getCenter())) {
          if (holding) {
-            this.init(target, drawn, received, position, now);
+            this.add(target, drawn, received, position, now);
          }
 
          if (this.target == target && this.init_cP_DataUtil != null && !(this.position.distanceToSqr(position) > 16.0)) {
             double fade = holding ? 1.0 : Math.max(0.0, 1.0 - Math.max(0L, now - this.read) / 4.5E8);
             if (fade <= 0.0) {
-               this.init();
+               this.clear();
                return List.of();
             }
 
@@ -110,7 +110,7 @@ public final class BacktrackTrailHistory {
             if (delayed && drawn.getCenter().distanceToSqr(received.getCenter()) > 4.0E-4) {
                int delayedOutline = init_I_I_D(delayedColor, fade);
                boxes.add(new autismclient.modules.EspHighlightBox(drawn, init_I_I_D(delayedOutline, 0.12), delayedOutline));
-               boxes.add(autismclient.modules.EspHighlightBox.init(drawn.getCenter(), received.getCenter(), init_I_I_D(outline, 0.8), 2.0F));
+               boxes.add(autismclient.modules.EspHighlightBox.line(drawn.getCenter(), received.getCenter(), init_I_I_D(outline, 0.8), 2.0F));
             }
 
             if (history) {
@@ -120,7 +120,7 @@ public final class BacktrackTrailHistory {
                   if (last != null) {
                      double ageFade = Math.max(0.0, 1.0 - (now - sample.init_J()) / 6.5E8);
                      boxes.add(
-                        autismclient.modules.EspHighlightBox.init(
+                        autismclient.modules.EspHighlightBox.line(
                            last.init_Vec3().add(0.0, 0.035, 0.0), sample.init_Vec3().add(0.0, 0.035, 0.0), init_I_I_D(outline, ageFade * 0.8), 1.5F
                         )
                      );
@@ -132,11 +132,11 @@ public final class BacktrackTrailHistory {
 
             return List.copyOf(boxes);
          } else {
-            this.init();
+            this.clear();
             return List.of();
          }
       } else {
-         this.init();
+         this.clear();
          return List.of();
       }
    }

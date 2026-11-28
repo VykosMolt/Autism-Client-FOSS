@@ -30,7 +30,7 @@ final class AiSleep {
    private AiSleep() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(15, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));

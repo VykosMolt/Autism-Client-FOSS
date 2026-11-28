@@ -46,7 +46,7 @@ public final class EndPortalRenderer {
       }
 
       Vec3 target = m.target();
-      return !m.frames().isEmpty() || m.showsTracer() && target != null || init(m, target, WorldProjectionHelper.init());
+      return !m.frames().isEmpty() || m.showsTracer() && target != null || init(m, target, WorldProjectionHelper.cameraPosition());
    }
 
    private static boolean init(EndPortalModule module, Vec3 target, Vec3 camera) {
@@ -59,37 +59,37 @@ public final class EndPortalRenderer {
       }
    }
 
-   public static boolean load() {
+   public static boolean showsGuide() {
       EndPortalModule m = activeModule();
       return m != null && m.showsGuide() && MINECRAFT.gui.screen() == null;
    }
 
-   public static void init(PoseStack matrices) {
+   public static void render(PoseStack matrices) {
       EndPortalModule module = activeModule();
       if (module != null) {
-         Vec3 camera = WorldProjectionHelper.init();
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          Vec3 target = module.target();
          AutismBufferSource source = BUFFERS.init();
          int color = module.color();
          if (!module.frames().isEmpty()) {
-            VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
+            VertexConsumer fill = source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (BlockPos pos : module.frames()) {
-               WorldLineRenderer.init(matrices.last(), fill, frameBox(pos).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 32));
+               WorldLineRenderer.init(matrices.last(), fill, frameBox(pos).move(camera.scale(-1.0)), EndPortalDisplayHelper.withOpacity(color, 32));
             }
          }
 
          if (init(module, target, camera)) {
             EndPortalDisplayHelper.BeamColumn column = EndPortalDisplayHelper.init(camera, target, MINECRAFT.level.getMinY(), MINECRAFT.level.getMaxY() + 1.0);
             if (column != null) {
-               init(matrices, source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
+               init(matrices, source.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
             }
          }
 
-         VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
+         VertexConsumer lines = source.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (BlockPos pos : module.frames()) {
-            WorldLineRenderer.init(matrices.last(), lines, frameBox(pos).inflate(0.003).move(camera.scale(-1.0)), EndPortalDisplayHelper.init(color, 221), 1.5F);
+            WorldLineRenderer.init(matrices.last(), lines, frameBox(pos).inflate(0.003).move(camera.scale(-1.0)), EndPortalDisplayHelper.withOpacity(color, 221), 1.5F);
          }
 
          if (module.showsTracer() && target != null) {
@@ -107,7 +107,7 @@ public final class EndPortalRenderer {
             );
          }
 
-         source.init();
+         source.drawAll();
       }
    }
 
@@ -118,9 +118,9 @@ public final class EndPortalRenderer {
    private static void init(
       PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, double minY, double maxY, int color, int outer, int middle, int core
    ) {
-      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync(), minY, maxY), EndPortalDisplayHelper.init(color, outer));
-      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync() * 0.5, minY, maxY), EndPortalDisplayHelper.init(color, middle));
-      WorldLineRenderer.init(matrices.last(), fill, column.init(column.update(), minY, maxY), EndPortalDisplayHelper.init(color, core));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, outer));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync() * 0.5, minY, maxY), EndPortalDisplayHelper.withOpacity(color, middle));
+      WorldLineRenderer.init(matrices.last(), fill, column.init(column.update(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, core));
    }
 
    private static AABB frameBox(BlockPos p) {
@@ -134,7 +134,7 @@ public final class EndPortalRenderer {
       String label = module.showsCoordinates()
          ? EndPortalDisplayHelper.init(target, module.close(), module.open())
          : EndPortalDisplayHelper.init(MINECRAFT.player.position(), target, module.close(), module.open());
-      String prompt = EndPortalDisplayHelper.init(target != null, EndPortalModule.load_Z(), module.flush());
+      String prompt = EndPortalDisplayHelper.prompt(target != null, EndPortalModule.load_Z(), module.flush());
       if (!prompt.isEmpty()) {
          label = prompt;
       }
@@ -146,18 +146,18 @@ public final class EndPortalRenderer {
       if (target == null) {
          placement = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(0.0F, 0.0F, -1.0F, 180.0, ui.init_I(), ui.load_I(), size, scale, 104.0F * scale);
       } else {
-         if (!WorldProjectionHelper.init(PROJECTION)) {
+         if (!WorldProjectionHelper.projection(PROJECTION)) {
             return null;
          }
 
-         Vec3 camera = WorldProjectionHelper.init();
+         Vec3 camera = WorldProjectionHelper.cameraPosition();
          double y = module.close() ? target.y : camera.y;
          SCRATCH_VECTOR.set((float)(target.x - camera.x), (float)(y - camera.y), (float)(target.z - camera.z), 1.0F);
          PROJECTION.transform(SCRATCH_VECTOR);
          float yaw = MINECRAFT.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;
          float ring = 76.0F + (Math.max(size.init(), size.load()) / 2.0F + 24.0F) * scale;
          placement = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
-            SCRATCH_VECTOR.x, SCRATCH_VECTOR.y, SCRATCH_VECTOR.w, StrongholdTriangulator.init(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
+            SCRATCH_VECTOR.x, SCRATCH_VECTOR.y, SCRATCH_VECTOR.w, StrongholdTriangulator.relativeYaw(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
          );
       }
 

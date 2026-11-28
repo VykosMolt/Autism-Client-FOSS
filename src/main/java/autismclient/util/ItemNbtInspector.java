@@ -39,8 +39,8 @@ public final class ItemNbtInspector {
       String title = stack.isEmpty() ? "Item NBT" : stack.getHoverName().getString();
       ItemNbtInspector.InspectLineBuilder nice = new ItemNbtInspector.InspectLineBuilder(title);
       ItemNbtInspector.InspectLineBuilder raw = new ItemNbtInspector.InspectLineBuilder(title + " Raw");
-      String rawSnbt = ItemSnbtCodec.load(stack);
-      String giveCommand = ItemSnbtCodec.init(stack);
+      String rawSnbt = ItemSnbtCodec.snbt(stack);
+      String giveCommand = ItemSnbtCodec.giveCommand(stack);
       init_V_ItemStack_az_CachePool(stack, nice);
       init_V_Str_az_CachePool(rawSnbt, raw);
       return new ItemNbtInspector.ItemInspection(title, stack, nice.init_List(), raw.init_List(), nice.init_Str(), rawSnbt, giveCommand);
@@ -291,7 +291,7 @@ public final class ItemNbtInspector {
                builder.load("{}", UiColorPalette.textMuted());
             } else {
                for (Entry<String, Tag> entry : tag.entrySet()) {
-                  builder.load(entry.getKey() + ": " + ItemSnbtCodec.init(entry.getValue()), UiColorPalette.textBody());
+                  builder.load(entry.getKey() + ": " + ItemSnbtCodec.tagText(entry.getValue()), UiColorPalette.textBody());
                }
             }
          }
@@ -420,7 +420,7 @@ public final class ItemNbtInspector {
             String key = entry.getKey();
             String childPath = path.isBlank() ? key : path + "." + key;
             if (init_Z_Str(key)) {
-               ids.put(childPath, ItemSnbtCodec.init(entry.getValue()));
+               ids.put(childPath, ItemSnbtCodec.tagText(entry.getValue()));
             }
 
             init_V_Str(childPath, entry.getValue(), ids);
@@ -450,7 +450,7 @@ public final class ItemNbtInspector {
       } else if (value instanceof Component component) {
          return component.getString();
       } else {
-         return value instanceof CustomData customData ? ItemSnbtCodec.init(customData.copyTag()) : String.valueOf(value);
+         return value instanceof CustomData customData ? ItemSnbtCodec.tagText(customData.copyTag()) : String.valueOf(value);
       }
    }
 

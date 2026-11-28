@@ -705,7 +705,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.setupLayout();
    }
 
-   public void load(boolean configurationOnly) {
+   public void setConfigurationOnly(boolean configurationOnly) {
       if (this.configurationOnly != configurationOnly) {
          this.configurationOnly = configurationOnly;
          if (configurationOnly) {
@@ -3246,7 +3246,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int allocateProbeId() {
-      return this.scanIdAllocator.init();
+      return this.scanIdAllocator.nextBase();
    }
 
    public boolean hasServer() {
@@ -3975,7 +3975,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ServerboundCommandSuggestionPacket".equals(packet.getClass().getSimpleName())) {
          int id = this.invokeIntGetter(packet, -1, "getId", "id");
          String command = this.invokeStringGetter(packet, "getCommand", "command");
-         if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !CommandProbeIdAllocator.init(id)) {
+         if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !CommandProbeIdAllocator.isProbeId(id)) {
             MC.execute(() -> {
                try {
                   AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
@@ -3997,7 +3997,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void load(Packet<?> packet) {
+   public void onPacket(Packet<?> packet) {
       if (packet != null && !autismclient.modules.aD.init_Z()) {
          String simple = packet.getClass().getSimpleName();
          String command = null;
@@ -4027,7 +4027,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public void read(Packet<?> packet) {
+   public void onOpenScreen(Packet<?> packet) {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ClientboundOpenScreenPacket".equals(packet.getClass().getSimpleName())) {
          String title = this.componentText(this.invokeFirstGetter(packet, "getTitle", "title"));
          if (title != null && !title.isBlank()) {
@@ -4208,7 +4208,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public void onCommandSuggestions(int id, ClientboundCommandSuggestionsPacket packet) {
-      if (!CommandProbeIdAllocator.init(id)) {
+      if (!CommandProbeIdAllocator.isProbeId(id)) {
          MC.execute(
             () -> {
                AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
@@ -4488,7 +4488,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.recordScanFailure(session, "command tree update", error);
             }
          } else {
-            PluginSignatureCatalog.init();
+            PluginSignatureCatalog.clear();
             this.catalogRevision = -1L;
             if (currentAddress.equals(this.scanAddress) && this.scanDone && AutismConfig.getGlobal().autoProbePlugins) {
                this.restartScan();

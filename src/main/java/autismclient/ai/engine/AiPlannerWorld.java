@@ -76,11 +76,11 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       return this.speed;
    }
 
-   void putAt(double var1) {
+   void setSpeed(double var1) {
       this.speed = var1;
    }
 
-   boolean fill() {
+   boolean allowsManeuverShortcuts() {
       return this.cachedGrid != null && this.cachedGrid.allowManeuverShortcuts;
    }
 
@@ -863,7 +863,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    private AiSurface putAt_TableEntry_I(int var1, int var2, int var3) {
-      return AiSurface.init(this.putAt_B_I(var1, var2, var3));
+      return AiSurface.byId(this.putAt_B_I(var1, var2, var3));
    }
 
    byte putAt_B_I(int var1, int var2, int var3) {
@@ -891,24 +891,24 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    @Override
    public double putAt_D_I(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
-      return var4 == 0 ? 0.6 : AiSurface.init(var4).init_D;
+      return var4 == 0 ? 0.6 : AiSurface.byId(var4).init_D;
    }
 
    @Override
    public double fill_D(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
-      return var4 == 0 ? 1.0 : AiSurface.init(var4).load_D;
+      return var4 == 0 ? 1.0 : AiSurface.byId(var4).load_D;
    }
 
    @Override
    public double value_D(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
-      return var4 == 0 ? 1.0 : AiSurface.init(var4).read_D;
+      return var4 == 0 ? 1.0 : AiSurface.byId(var4).read_D;
    }
 
    @Override
    public double readEx_D(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
-      return var4 == 0 ? 0.0 : AiSurface.init(var4).write_D;
+      return var4 == 0 ? 0.0 : AiSurface.byId(var4).write_D;
    }
 }

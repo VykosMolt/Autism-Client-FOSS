@@ -36,7 +36,7 @@ public abstract class AutismCameraMixin {
    @ModifyArgs(method = "setupPerspective", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Projection;setupPerspective(FFFFF)V"))
    private void autism$aspectRatio(Args args) {
       if (!AutismLiteVariant.enabled()) {
-         args.set(3, AspectRatioModule.init(args.<Float>get(3), args.<Float>get(4)));
+         args.set(3, AspectRatioModule.adjustedAspect(args.<Float>get(3), args.<Float>get(4)));
       }
    }
 
@@ -116,9 +116,9 @@ public abstract class AutismCameraMixin {
             )
          );
          if (freeLook.init_Z_8()) {
-            this.setRotation(freeLook.init_F_3() + 180.0F, -freeLook.load_F());
+            this.setRotation(freeLook.cameraYaw() + 180.0F, -freeLook.cameraPitch());
          } else {
-            this.setRotation(freeLook.init_F_3(), freeLook.load_F());
+            this.setRotation(freeLook.cameraYaw(), freeLook.cameraPitch());
          }
 
          float scale = this.entity instanceof LivingEntity living ? living.getScale() : 1.0F;

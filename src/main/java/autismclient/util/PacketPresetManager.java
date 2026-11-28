@@ -131,7 +131,7 @@ public class PacketPresetManager {
       }
    }
 
-   public boolean init(String presetName, String presetJson, String sender) {
+   public boolean importShared(String presetName, String presetJson, String sender) {
       String sanitized = this.sanitizeName(presetName);
       if (sanitized != null && presetJson != null && !presetJson.isBlank()) {
          if (this.update(sanitized)) {

@@ -427,8 +427,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   );
                   double yawDifference = RotationMath.angleDelta(goal.yaw(), (float)yaw);
                   double pitchDifference = goal.pitch() - pitch;
-                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, RotationMath.gcdStep());
-                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, RotationMath.gcdStep());
+                  float step = FireballInterceptMath.turnStep(yawDifference, pitchDifference, strike, threat.init_D, RotationMath.gcdStep());
+                  int turn = FireballInterceptMath.turnTicks(yawDifference, pitchDifference, step, RotationMath.gcdStep());
                   boolean current = this.intercepting && !this.load_Z && this.interceptTarget == ball;
                   if (this.init_Z_I_D_2(turn, strike)) {
                      int start = this.get() ? turn : Math.max(turn, turnTicks(yawDifference, pitchDifference));
@@ -489,7 +489,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   );
                   if (this.get()) {
                      autismclient.util.SilentRotationManager.stepDangerRotation(
-                        MC.player, FireballInterceptMath.init(RotationMath.angleDelta(goal.yaw(), from.yaw()), goal.pitch() - from.pitch(), strike, best.init_D, RotationMath.gcdStep())
+                        MC.player, FireballInterceptMath.turnStep(RotationMath.angleDelta(goal.yaw(), from.yaw()), goal.pitch() - from.pitch(), strike, best.init_D, RotationMath.gcdStep())
                      );
                   } else {
                      double deadline = (strike >= 0.0 ? Math.min(strike, best.init_D) : best.init_D) - 2.0;
@@ -583,7 +583,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          }
 
          double floor = Double.isFinite(this.read_D) ? this.read_D : Math.floor(MC.player.getY());
-         int landing = FireballInterceptMath.init(MC.player.getY() - floor, MC.player.getDeltaMovement().y);
+         int landing = FireballInterceptMath.ticksToLand(MC.player.getY() - floor, MC.player.getDeltaMovement().y);
          Vec3 motion = MC.player.getDeltaMovement();
          AABB support = MC.player.getBoundingBox().move(motion.x * landing, floor - MC.player.getY() - 0.2, motion.z * landing).setMaxY(floor - 0.02);
          if (!MC.level.noCollision(MC.player, support)) {
@@ -802,7 +802,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   ItemStack stack = owner.getItemInHand(hand);
                   IncomingProjectileScanner.ProjectileKind kind = IncomingProjectileScanner.init(stack);
                   if (kind != null) {
-                     List<ProjectileBallistics.ProjectileShot> shots = ProjectileBallistics.init(owner, stack, true, true);
+                     List<ProjectileBallistics.ProjectileShot> shots = ProjectileBallistics.shots(owner, stack, true, true);
 
                      for (ProjectileBallistics.ProjectileShot shot : shots) {
                         if (!this.isKindOptionEnabled(kind, "aim-preview")) {
@@ -889,7 +889,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       PlayerInfo info = MC.getConnection() == null ? null : MC.getConnection().getPlayerInfo(owner.getUUID());
       PlayerTeam team = owner.getTeam();
       TextColor fallback = team == null ? null : team.getColor().map(TeamColor::textColor).orElse(null);
-      return PlayerDisplayNameParser.init_I(owner.getGameProfile().name(), info == null ? null : info.getTabListDisplayName(), fallback);
+      return PlayerDisplayNameParser.displayColor(owner.getGameProfile().name(), info == null ? null : info.getTabListDisplayName(), fallback);
    }
 
    @Override

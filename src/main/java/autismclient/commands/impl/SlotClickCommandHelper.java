@@ -80,12 +80,12 @@ final class SlotClickCommandHelper {
             ItemStack stack = mc.player.containerMenu.slots.get(handlerSlot).getItem();
             if (!stack.isEmpty()) {
                int actual = Math.min(requested, stack.getCount());
-               if (InventoryDropHelper.init(mc, handlerSlot, actual) > 0) {
+               if (InventoryDropHelper.dropFromHandler(mc, handlerSlot, actual) > 0) {
                   completed = actual;
                }
             }
          } else if (spec.kind() == SlotClickCommandHelper.DropMode.STACK) {
-            completed = InventoryDropHelper.init(mc, handlerSlot, 0) > 0 ? 1 : 0;
+            completed = InventoryDropHelper.dropFromHandler(mc, handlerSlot, 0) > 0 ? 1 : 0;
          } else {
             for (int i = 0; i < requested && ContainerClickExecutor.init(mc, handlerSlot, spec.init_I(), spec.input()); i++) {
                completed++;

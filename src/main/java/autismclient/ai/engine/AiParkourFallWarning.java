@@ -30,7 +30,7 @@ public final class AiParkourFallWarning {
       ArrayList var5 = new ArrayList();
       var5.add(
          new autismclient.gui.screens.PromptDialogScreen.Choice(
-            "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::putAt_V
+            "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::closeWarning
          )
       );
       var5.add(
@@ -75,14 +75,14 @@ public final class AiParkourFallWarning {
    }
 
    private void putAt_V_Consumer_Z(Consumer<Boolean> var1, boolean var2) {
-      this.putAt_RingBuffer.init_V_Runnable(() -> var1.accept(var2));
+      this.putAt_RingBuffer.closeThen(() -> var1.accept(var2));
    }
 
-   public boolean putAt_Z() {
+   public boolean openWarning() {
       return OverlayScreenController.openModalScreen(this.mc, this.putAt_RingBuffer);
    }
 
-   public void putAt_V() {
+   public void closeWarning() {
       this.putAt_RingBuffer.onClose();
    }
 

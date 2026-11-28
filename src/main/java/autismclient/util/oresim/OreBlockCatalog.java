@@ -41,7 +41,7 @@ public final class OreBlockCatalog {
    private OreBlockCatalog() {
    }
 
-   public static boolean init(Block block) {
+   public static boolean isOre(Block block) {
       if (block == null) {
          return false;
       }
@@ -153,7 +153,7 @@ public final class OreBlockCatalog {
       }
 
       public static int init(BlockState state) {
-         if (state != null && OreBlockCatalog.init(state.getBlock())) {
+         if (state != null && OreBlockCatalog.isOre(state.getBlock())) {
             Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             OreBlockCatalog.OreKind kind = id == null ? null : OreBlockCatalog.init(id.toString());
             return kind == null ? -1 : idFor(state, kind);

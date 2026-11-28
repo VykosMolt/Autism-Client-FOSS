@@ -98,7 +98,7 @@ public class NbtBookAction implements MacroAction {
          }
 
          mc.getConnection().send(new ServerboundEditBookPacket(hotbarSlot, pageList, this.sign ? Optional.of(bookTitle) : Optional.empty()));
-         int estimatedBytes = BookBotPageGenerator.init(pageList);
+         int estimatedBytes = BookBotPageGenerator.estimateBytes(pageList);
          AutismClientMessaging.sendPrefixed(
             "§aWrote book " + (bookIndex + 1) + "/" + totalBooks + " (~" + estimatedBytes / 1024 + "KB, " + pageList.size() + " pages)"
          );
@@ -132,7 +132,7 @@ public class NbtBookAction implements MacroAction {
    }
 
    private List<String> randomPages(int numPages) {
-      return BookBotPageGenerator.init(numPages, this.characters, this.read(), new Random());
+      return BookBotPageGenerator.generate(numPages, this.characters, this.read(), new Random());
    }
 
    public static File bookSourcesDir() {
@@ -187,7 +187,7 @@ public class NbtBookAction implements MacroAction {
 
          for (int i = 0; i < 36; i++) {
             if (i != keepSlot && !mc.player.getInventory().getItem(i).isEmpty()) {
-               autismclient.util.InventoryDropHelper.load(mc, i, 0);
+               autismclient.util.InventoryDropHelper.dropFromInventory(mc, i, 0);
             }
          }
       }
@@ -412,7 +412,7 @@ public class NbtBookAction implements MacroAction {
       }
 
       if (tag.contains("randomType")) {
-         this.randomType = BookBotPageGenerator.init(tag.getStringOr("randomType", "Utf8"));
+         this.randomType = BookBotPageGenerator.normalizeType(tag.getStringOr("randomType", "Utf8"));
       } else if (this.onlyAscii) {
          this.randomType = "Ascii";
       }
@@ -470,7 +470,7 @@ public class NbtBookAction implements MacroAction {
    }
 
    private String read() {
-      this.randomType = BookBotPageGenerator.init(this.randomType);
+      this.randomType = BookBotPageGenerator.normalizeType(this.randomType);
       this.onlyAscii = "Ascii".equals(this.randomType);
       return this.randomType;
    }

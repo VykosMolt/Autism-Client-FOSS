@@ -13,11 +13,11 @@ public interface AimTargetAction {
    AimTargetAction.AimTarget getAimTarget(Minecraft var1);
 
    record AimTarget(BlockPos blockPos, Entity entity, Vec3 point) {
-      public static AimTargetAction.AimTarget init(BlockPos pos) {
+      public static AimTargetAction.AimTarget ofBlock(BlockPos pos) {
          return pos == null ? null : new AimTargetAction.AimTarget(pos, null, null);
       }
 
-      public static AimTargetAction.AimTarget init(Entity entity) {
+      public static AimTargetAction.AimTarget ofEntity(Entity entity) {
          return entity == null ? null : new AimTargetAction.AimTarget(null, entity, null);
       }
 

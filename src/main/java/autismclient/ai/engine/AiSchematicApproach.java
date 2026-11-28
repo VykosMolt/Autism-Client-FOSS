@@ -151,7 +151,7 @@ public final class AiSchematicApproach implements AiOperation {
                         .filter(this.draft::init_Z_u_CachePool)
                         .findFirst()
                         .orElseThrow();
-                     PlacementGoal goal = PlacementGoal.init(
+                     PlacementGoal goal = PlacementGoal.create(
                            List.of(next),
                            mc.player.blockInteractionRange() - 0.25,
                            this.draft.eyeHeight,
@@ -159,7 +159,7 @@ public final class AiSchematicApproach implements AiOperation {
                            this.keepCells,
                            this.avoidCells
                         )
-                        .init(proofs);
+                        .withProofs(proofs);
                      boolean edits = !station.probe.walk;
                      int seconds = Math.max(1, (int)Math.ceil((this.deadline - System.nanoTime()) / 1.0E9));
                      AiGoto.GotoOptions options = new AiGoto.GotoOptions(true, this.look == null, 3, false, true, true);
@@ -319,10 +319,10 @@ public final class AiSchematicApproach implements AiOperation {
             this.targets = targets.stream().map(PlacementGoal.PlacementRequest::pos).collect(Collectors.toUnmodifiableSet());
             this.eyeHeight = this.mc.player.getEyeHeight(Pose.STANDING);
             if (this.mc.player.onGround()) {
-               this.load_Set.add(AiStance.init(this.mc));
+               this.load_Set.add(AiStance.standingPos(this.mc));
             }
 
-            this.placementGoal = PlacementGoal.init(targets, this.mc.player.blockInteractionRange() - 0.25, this.eyeHeight, volume, keep, avoid);
+            this.placementGoal = PlacementGoal.create(targets, this.mc.player.blockInteractionRange() - 0.25, this.eyeHeight, volume, keep, avoid);
             Set<BlockPos> unique = new HashSet<>();
             int radius = (int)Math.ceil(this.mc.player.blockInteractionRange());
 
@@ -694,10 +694,10 @@ public final class AiSchematicApproach implements AiOperation {
                      > Math.pow(this.mc.player.blockInteractionRange() + 0.9, 2.0)
                )) {
                BlockPlacementPlanner.PlacementPlan hit = probe.view == null
-                  ? PlacementGoal.init(this.mc, target.pos(), target.item(), target.constraint(), probe.position, 32)
+                  ? PlacementGoal.planPlacement(this.mc, target.pos(), target.item(), target.constraint(), probe.position, 32)
                   : this.init(target, probe.position, probe.body, probe.clearCells, probe.view);
                if (hit != null) {
-                  double height = PlacementGoal.init(this.mc, target.pos(), target.item(), target.constraint(), true);
+                  double height = PlacementGoal.standingEyeHeight(this.mc, target.pos(), target.item(), target.constraint(), true);
                   if (probe.supported
                      || !new AABB(probe.feet.below()).clip(probe.position.add(0.0, height, 0.0), hit.hit().getLocation()).isPresent()
                      )
@@ -1093,11 +1093,11 @@ public final class AiSchematicApproach implements AiOperation {
             }
          }
 
-         double height = PlacementGoal.init(this.mc, target.pos(), target.item(), constraint, true);
+         double height = PlacementGoal.standingEyeHeight(this.mc, target.pos(), target.item(), constraint, true);
          Vec3 eye = position.add(0.0, height, 0.0);
          double reach = this.mc.player.blockInteractionRange() - 0.25;
          BlockPlacementPlanner.HitValidator placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
-            && PlacementGoal.init(this.mc, cell, target.item(), constraint, eye, body, hitx);
+            && PlacementGoal.isValidHit(this.mc, cell, target.item(), constraint, eye, body, hitx);
          BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target.pos(), eye, reach, placement).withAutoSneak(true);
          if (constraint != null) {
             EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);

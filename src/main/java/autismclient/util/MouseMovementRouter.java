@@ -84,10 +84,10 @@ public final class MouseMovementRouter {
             SMOOTHER.push(deltaX, deltaY, 0.05);
          } else if (source != MouseMovementRouter.MovementSource.SCAFFOLD_TELLY && source != MouseMovementRouter.MovementSource.AUTO_FISH) {
             if (!(Math.abs(deltaX) < 1.0E-7) || !(Math.abs(deltaY) < 1.0E-7)) {
-               accumulatorFor(source).init(deltaX, deltaY);
+               accumulatorFor(source).add(deltaX, deltaY);
             }
          } else {
-            accumulatorFor(source).load(deltaX, deltaY);
+            accumulatorFor(source).set(deltaX, deltaY);
          }
       }
    }

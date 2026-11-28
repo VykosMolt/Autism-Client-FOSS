@@ -45,7 +45,7 @@ final class WTapController {
    void init(Player attacker, Entity entity) {
       if (attacker == MC.player
          && entity instanceof LivingEntity target
-         && SprintStateTracker.sync()
+         && SprintStateTracker.attackStartSprinting()
          && this.update()
          && MC.player.input.keyPresses.forward()
          && !MC.player.input.keyPresses.backward()
@@ -192,7 +192,7 @@ final class WTapController {
          && MC.player.isAlive()
          && !MC.player.isSpectator()
          && !MC.player.isUsingItem()
-         && !autismclient.util.ManualInteractionYield.init()
+         && !autismclient.util.ManualInteractionYield.isYielding()
          && !(MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
          && !MC.player.isPassenger()
          && !MC.player.getAbilities().flying

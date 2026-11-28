@@ -24,7 +24,7 @@ final class AiRegions {
    private long init_J;
    private long load = -1L;
 
-   void init(Path directory) throws IOException {
+   void loadFrom(Path directory) throws IOException {
       Path file = directory.resolve("regions.json");
       if (Files.exists(file)) {
          try {
@@ -59,7 +59,7 @@ final class AiRegions {
       }
    }
 
-   synchronized void init(AiRegions.Region region) {
+   synchronized void add(AiRegions.Region region) {
       AiRegions.Region existing = this.init_Map.get(region.key());
       if (existing != null) {
          LinkedHashSet<String> merged = new LinkedHashSet<>(existing.reachedFrom());
@@ -96,11 +96,11 @@ final class AiRegions {
       this.init_J++;
    }
 
-   List<AiRegions.Region> init(String scope) {
+   List<AiRegions.Region> inScope(String scope) {
       return this.init_List.stream().filter(r -> r.scope().equals(scope)).toList();
    }
 
-   void load(Path directory) throws IOException {
+   void saveIfDirty(Path directory) throws IOException {
       long captured;
       List<AiRegions.Region> snapshot;
       synchronized (this) {
@@ -118,7 +118,7 @@ final class AiRegions {
       }
    }
 
-   static String init(int x, int z) {
+   static String cellKey(int x, int z) {
       return Math.floorDiv(x, 32) + "," + Math.floorDiv(z, 32);
    }
 
@@ -180,7 +180,7 @@ final class AiRegions {
       return result;
    }
 
-   static List<int[]> init(List<AiRegions.Region> observations, Set<String> visited, int originX, int originZ, int maxDistance) {
+   static List<int[]> frontier(List<AiRegions.Region> observations, Set<String> visited, int originX, int originZ, int maxDistance) {
       Set<String> known = new HashSet<>(visited);
 
       for (AiRegions.Region region : observations) {
@@ -193,7 +193,7 @@ final class AiRegions {
          for (int[] delta : List.of(new int[]{32, 0}, new int[]{-32, 0}, new int[]{0, 32}, new int[]{0, -32})) {
             int x = Math.floorDiv(region.x(), 32) * 32 + 16 + delta[0];
             int z = Math.floorDiv(region.z(), 32) * 32 + 16 + delta[1];
-            String key = init(x, z);
+            String key = cellKey(x, z);
             if (!known.contains(key) && Math.hypot(x - originX, z - originZ) <= maxDistance) {
                candidates.putIfAbsent(key, new int[]{x, region.y(), z});
             }

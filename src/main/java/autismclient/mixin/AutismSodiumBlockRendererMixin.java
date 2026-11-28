@@ -35,7 +35,7 @@ public abstract class AutismSodiumBlockRendererMixin {
          this.autism$darkenTint = -1;
       } else {
          this.autism$xrayAlpha = xrayActive ? am.load(state, pos) : -1;
-         this.autism$goldenLever = goldenLeverActive && GoldenLeverModule.init(state);
+         this.autism$goldenLever = goldenLeverActive && GoldenLeverModule.isGoldenLeverBlock(state);
          this.autism$darkenTint = darkenActive ? am.init_I_BlockState_BlockPos(state, pos) : -1;
          if (this.autism$xrayAlpha == 0) {
             ci.cancel();

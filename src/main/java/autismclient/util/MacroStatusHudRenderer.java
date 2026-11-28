@@ -45,7 +45,7 @@ public final class MacroStatusHudRenderer {
    }
 
    public static void renderAt(GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, int maxLines) {
-      init(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
+      render(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
    }
 
    public static int layoutHeight(Font textRenderer, int panelWidth, int maxLines) {
@@ -56,7 +56,7 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   public static int init(
+   public static int render(
       GuiGraphicsExtractor context, Font textRenderer, int x, int y, int panelWidth, int maxLines, boolean topBorder, boolean bottomBorder, boolean rightBorder
    ) {
       return textRenderer != null && isVisibleCached(textRenderer, panelWidth, maxLines)
@@ -178,7 +178,7 @@ public final class MacroStatusHudRenderer {
 
             for (int i = scroll; i < scroll + visibleRows && i < total && i < actions.size(); i++) {
                MacroAction action = actions.get(i);
-               int color = MacroStepColorHelper.init(i, current, run.lastCompletedStep(), nowColor);
+               int color = MacroStepColorHelper.stepColor(i, current, run.lastCompletedStep(), nowColor);
                rows.add(
                   new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
                      autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, ACTION_FONT, color),

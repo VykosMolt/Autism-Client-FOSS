@@ -14,7 +14,7 @@ public final class WorldGenThreadScope {
       return depth != null && depth > 0;
    }
 
-   public static <T> T init(Supplier<T> operation) {
+   public static <T> T run(Supplier<T> operation) {
       Objects.requireNonNull(operation, "operation");
       Integer previous = DEPTH.get();
       DEPTH.set(previous == null ? 1 : previous + 1);

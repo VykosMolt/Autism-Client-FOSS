@@ -7,23 +7,23 @@ public final class BacktrackPositionTracker {
    private final VecDeltaCodec deltaCodec = new VecDeltaCodec();
    private volatile Vec3 position = Vec3.ZERO;
 
-   public void init(Vec3 protocolBase, Vec3 receivedPose) {
+   public void reset(Vec3 protocolBase, Vec3 receivedPose) {
       this.deltaCodec.setBase(protocolBase);
       this.position = receivedPose;
    }
 
-   public Vec3 init(long x, long y, long z) {
+   public Vec3 decode(long x, long y, long z) {
       Vec3 next = this.deltaCodec.decode(x, y, z);
-      this.init(next);
+      this.set(next);
       return next;
    }
 
-   public void init(Vec3 next) {
+   public void set(Vec3 next) {
       this.deltaCodec.setBase(next);
       this.position = next;
    }
 
-   public Vec3 init() {
+   public Vec3 position() {
       return this.position;
    }
 }

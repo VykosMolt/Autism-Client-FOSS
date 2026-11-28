@@ -39,6 +39,6 @@ public abstract class AutismLithiumSweeperVoxelShapeMixin extends ChunkAwareBloc
       if (!(this.context instanceof EntityCollisionContext ecc) || ecc.getEntity() != mc.player) {
          return original;
       }
-      return PhaseModule.init(AirJumpModule.init(original, this.pos), state, this.pos);
+      return PhaseModule.collisionShape(AirJumpModule.collisionShape(original, this.pos), state, this.pos);
    }
 }

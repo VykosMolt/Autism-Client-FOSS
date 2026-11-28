@@ -76,7 +76,7 @@ public final class CrosshairPresetGeometry {
 
       for (int y = 0; y < s0; y++) {
          for (int x = 0; x < s0; x++) {
-            int p = art.init((int)((x + 0.5) * unitPerPixel), (int)((y + 0.5) * unitPerPixel));
+            int p = art.pixelAt((int)((x + 0.5) * unitPerPixel), (int)((y + 0.5) * unitPerPixel));
             if (p >>> 24 == 0 && s0 < n) {
                p = init_I_m(art, x, y, unitPerPixel);
             }
@@ -109,7 +109,7 @@ public final class CrosshairPresetGeometry {
 
       for (int dy = (int)(y * unit); dy < y1; dy++) {
          for (int dx = (int)(x * unit); dx < x1; dx++) {
-            int sample = art.init(dx, dy);
+            int sample = art.pixelAt(dx, dy);
             if (sample >>> 24 > p >>> 24) {
                p = sample;
             }

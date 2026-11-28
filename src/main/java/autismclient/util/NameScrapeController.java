@@ -71,10 +71,10 @@ public final class NameScrapeController {
    }
 
    public static void start(int requestedLimit) {
-      init(requestedLimit, false);
+      start(requestedLimit, false);
    }
 
-   public static synchronized void init(int requestedLimit, boolean deep) {
+   public static synchronized void start(int requestedLimit, boolean deep) {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.getConnection() == null || mc.player == null) {
          AutismClientMessaging.sendPrefixed("Namescrape: join a server first.");
@@ -94,7 +94,7 @@ public final class NameScrapeController {
          ClientPacketListener connection = mc.getConnection();
          activeConnection = connection;
          String self = mc.player.getName().getString();
-         LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
+         LinkedHashMap<String, String> names = CommandTabNameProber.probe(mc, self);
          namesFound = names.size();
          List<CommandTabNameProber.ProbeVector> vectors = CommandTabNameProber.discoverVectors(connection);
          BackgroundTaskExecutor.submit("namescrape", () -> runProbe(names, connection, self, vectors));
@@ -189,7 +189,7 @@ public final class NameScrapeController {
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics) {
+   public static void render(GuiGraphicsExtractor graphics) {
       if (scraping) {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {

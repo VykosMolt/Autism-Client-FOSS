@@ -1101,7 +1101,7 @@ final class AiBuilder {
    }
 
    static boolean hasPistonPowerAt(Level level, BlockPos pos, Direction facing) {
-      return autismclient.ai.engine.AiPistonPower.init(level, pos, facing);
+      return autismclient.ai.engine.AiPistonPower.isPowered(level, pos, facing);
    }
 
    static boolean willRedstoneTorchBeLit(Level level, BlockPos pos, AiBuilder.CellSpec cell) {
@@ -2246,11 +2246,11 @@ final class AiBuilder {
          auditCells.add(planned);
          if (!substitutes.getOrDefault(cell.block(), List.of()).isEmpty()) {
             boolean waterAbove = world.getFluidState(target.above()).is(FluidTags.WATER);
-            collectSubstituteAlternatives(cell, AiCellMaterials.init(planned, live, waterAbove), substitutes, alternatives);
+            collectSubstituteAlternatives(cell, AiCellMaterials.requirements(planned, live, waterAbove), substitutes, alternatives);
          }
       }
 
-      List<AiCellMaterials.MaterialRequirement> plans = AiCellMaterials.init(auditCells, blueprint.origin(), world);
+      List<AiCellMaterials.MaterialRequirement> plans = AiCellMaterials.requirementsInWorld(auditCells, blueprint.origin(), world);
       return missingMaterialsForInventory(plans, inventory, alternatives);
    }
 
@@ -2648,7 +2648,7 @@ final class AiBuilder {
 
             BlockPos origin = auditOrigin(args, mc.player.blockPosition());
             AiSchematic.LoadedSchematic loaded = AiSchematic.load(
-               AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")),
+               AiSchematic.resolveFile(AiSchematic.directory(), AiJson.getString(args, "schematic", "")),
                origin,
                power.rotation(),
                power.mirror(),
@@ -3038,12 +3038,12 @@ final class AiBuilder {
                   deadline,
                   System::nanoTime,
                   owner -> {
-                     autismclient.ai.engine.AiRoutePolicy.putAt(closedDoors);
-                     AiVisualization.init(owner, blueprint.origin(), blueprint.cells(), blueprint.cells().size(), false, true);
-                     AiVisualization.init(owner, "Building schematic", "Restoring captured switch positions", -1, -1);
+                     autismclient.ai.engine.AiRoutePolicy.setClosedDoors(closedDoors);
+                     AiVisualization.showPlan(owner, blueprint.origin(), blueprint.cells(), blueprint.cells().size(), false, true);
+                     AiVisualization.showCount(owner, "Building schematic", "Restoring captured switch positions", -1, -1);
                   },
                   owner -> {
-                     autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
+                     autismclient.ai.engine.AiRoutePolicy.setClosedDoors(Set.of());
                      AiVisualization.clearOwner(owner);
                   }
                );
@@ -3279,7 +3279,7 @@ final class AiBuilder {
                if (this.scaffoldTracker != null) {
                   for (BlockPos step : AiSchematicActions.init(blueprint)) {
                      for (BlockPos support : List.of(step, step.below())) {
-                        if (AiScaffold.init(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())) {
+                        if (AiScaffold.matches(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())) {
                            this.scaffoldSupportKeys.add(support.asLong());
                         }
                      }
@@ -3311,7 +3311,7 @@ final class AiBuilder {
 
             void releaseJobReservations() {
                autismclient.ai.engine.AiRestock.reserveItemsForJob(Map.of());
-               autismclient.ai.engine.AiRoutePolicy.putAt(Set.of());
+               autismclient.ai.engine.AiRoutePolicy.setClosedDoors(Set.of());
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(0L);
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(0L);
                if (schematic) {
@@ -3363,7 +3363,7 @@ final class AiBuilder {
                }
 
                autismclient.ai.engine.AiRestock.reserveItemsForJob(this.reservedItems);
-               autismclient.ai.engine.AiRoutePolicy.putAt(this.closedRouteCells);
+               autismclient.ai.engine.AiRoutePolicy.setClosedDoors(this.closedRouteCells);
                autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(3000000000L);
                if (schematic) {
                   autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousBridgeCompat(3000000000L);
@@ -3387,7 +3387,7 @@ final class AiBuilder {
                   && mc.level != null
                   && mc.player.onGround()
                   && mc.player.getDeltaMovement().horizontalDistanceSqr() > 4.0E-4) {
-                  BlockPos floor = autismclient.ai.engine.AiStance.init(mc).below();
+                  BlockPos floor = autismclient.ai.engine.AiStance.standingPos(mc).below();
                   AiBuilder.CellSpec source = this.load_Map.get(floor.asLong());
                   if (source != null && AiBuilder.isCellSatisfied(source, mc.level.getBlockState(floor), power.substitutes(), true)) {
                      this.sourceFloorWalkingTicks++;
@@ -3395,7 +3395,7 @@ final class AiBuilder {
                }
 
                boolean wholePlan = schematic && this.ownsScaffolding;
-               AiVisualization.init(this, blueprint.origin(), wholePlan ? blueprint.cells() : this.orderedCells, this.cellCursor, false, wholePlan);
+               AiVisualization.showPlan(this, blueprint.origin(), wholePlan ? blueprint.cells() : this.orderedCells, this.cellCursor, false, wholePlan);
                boolean reserves = this.ownsScaffolding || !schematic;
                if (reserves && mc.level != null && this.reserveTickCooldown-- <= 0) {
                   this.reserveTickCooldown = 20;
@@ -3417,7 +3417,7 @@ final class AiBuilder {
 
                r = r == null ? this.tickBuild() : this.running(r.message());
                if (!r.terminal()) {
-                  AiVisualization.init(
+                  AiVisualization.showCount(
                      this,
                      schematic ? "Building schematic" : "Building",
                      AiTaskStatus.init(r.message(), "Preparing the build") + " / " + this.placedCount + " blocks placed",
@@ -3708,7 +3708,7 @@ final class AiBuilder {
                                  this.rejectedBatchCells.add(rejected.asLong());
                               }
                            } else {
-                              BlockPos feet = autismclient.ai.engine.AiStance.init(mc);
+                              BlockPos feet = autismclient.ai.engine.AiStance.standingPos(mc);
                               List<BlockPos> positions = this.activeApproachJob.positionsFrom(feet);
                               ArrayList<AiBuilder.CellSpec> scheduled = new ArrayList<>();
 
@@ -4035,7 +4035,7 @@ final class AiBuilder {
                                        continue;
                                     }
 
-                                    if (!AiBuildIntent.init(pos, mc.level, this.load_Map)) {
+                                    if (!AiBuildIntent.isSatisfied(pos, mc.level, this.load_Map)) {
                                        this.deferCurrentCell("waiting for the fluid volume to be held");
                                        continue;
                                     }
@@ -4349,7 +4349,7 @@ final class AiBuilder {
                                                       ? this.currentPlacementPlan
                                                       : (
                                                          schematic
-                                                            ? autismclient.ai.engine.PlacementGoal.init(
+                                                            ? autismclient.ai.engine.PlacementGoal.planPlacement(
                                                                mc, pos, item, this.constraintFor(cell, target), 72
                                                             )
                                                             : BlockPlacementPlanner.plan(request)
@@ -4875,7 +4875,7 @@ final class AiBuilder {
                if (this.outerScaffoldCells.isEmpty() && this.outerScaffoldBreakOp == null) {
                   AABB box = this.buildBounds.inflate(3.0);
 
-                  for (BlockPos cell : AiScaffold.init(
+                  for (BlockPos cell : AiScaffold.recordedIn(
                      (int)Math.floor(box.minX),
                      (int)Math.floor(box.minY),
                      (int)Math.floor(box.minZ),
@@ -4884,7 +4884,7 @@ final class AiBuilder {
                      (int)Math.ceil(box.maxZ) - 1
                   )) {
                      if (!this.buildBounds.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5)
-                        && AiScaffold.init(AiScaffold.recordedBlock(cell), mc.level.getBlockState(cell).getBlock())) {
+                        && AiScaffold.matches(AiScaffold.recordedBlock(cell), mc.level.getBlockState(cell).getBlock())) {
                         this.outerScaffoldCells.add(cell);
                      }
                   }
@@ -5050,7 +5050,7 @@ final class AiBuilder {
                      AABB cleanupVolume = schematic ? this.buildBounds.inflate(3.0) : this.buildBounds;
                      List<BlockPos> supports = schematic
                         ? this.removableScaffoldCells()
-                        : AiScaffold.init(
+                        : AiScaffold.recordedIn(
                            (int)Math.floor(cleanupVolume.minX),
                            (int)Math.floor(cleanupVolume.minY),
                            (int)Math.floor(cleanupVolume.minZ),
@@ -5073,7 +5073,7 @@ final class AiBuilder {
                      for (BlockPos cell : supports) {
                         if (!this.close_Set.contains(cell.asLong())
                            && !this.existingSupportKeys.contains(cell.asLong())
-                           && AiScaffold.init(this.scaffoldBlockAt(cell), mc.level.getBlockState(cell).getBlock())) {
+                           && AiScaffold.matches(this.scaffoldBlockAt(cell), mc.level.getBlockState(cell).getBlock())) {
                            this.drainSupports.add(cell);
                         }
                      }
@@ -5422,7 +5422,7 @@ final class AiBuilder {
                   .filter(
                      p -> !this.close_Set.contains(p.asLong())
                         && !this.existingSupportKeys.contains(p.asLong())
-                        && AiScaffold.init(this.scaffoldBlockAt(p), mc.level.getBlockState(p).getBlock())
+                        && AiScaffold.matches(this.scaffoldBlockAt(p), mc.level.getBlockState(p).getBlock())
                   )
                   .filter(p -> {
                      if (!AiSchematicActions.init(p, this.load_Map, mc.level)) {
@@ -5624,7 +5624,7 @@ final class AiBuilder {
                            return false;
                         } else {
                            return AiBuilder.toBlockState(cell).canSurvive(mc.level, pos) && !this.mustHoldCell(cell, pos)
-                              ? autismclient.ai.engine.PlacementGoal.init(mc, pos, item, this.constraintFor(cell, block), 72) != null
+                              ? autismclient.ai.engine.PlacementGoal.planPlacement(mc, pos, item, this.constraintFor(cell, block), 72) != null
                               : false;
                         }
                      } else {
@@ -5885,7 +5885,7 @@ final class AiBuilder {
                   }
                }
 
-               if (recovery && this.ownsScaffolding && AiGoto.recentNoRouteCountCompat(autismclient.ai.engine.AiStance.init(mc)) >= 3 && this.isStandingHighAboveOrigin(worker) && this.cachedHasApproach(worker)) {
+               if (recovery && this.ownsScaffolding && AiGoto.recentNoRouteCountCompat(autismclient.ai.engine.AiStance.standingPos(mc)) >= 3 && this.isStandingHighAboveOrigin(worker) && this.cachedHasApproach(worker)) {
                   Integer before = this.read_Map.get(BlockPos.asLong(worker.getX(), 0, worker.getZ()));
                   if (before == null || before > blueprint.origin().getY()) {
                      AutismClientAddon.LOG.info("[AI] build: stranded on the work at {}; its column opens down to the ground", worker.toShortString());
@@ -5899,7 +5899,7 @@ final class AiBuilder {
                if (this.scaffoldTracker != null) {
                   for (BlockPos support : this.scaffoldTracker.ownedCells()) {
                      if (!this.close_Set.contains(support.asLong())
-                        && AiScaffold.init(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())
+                        && AiScaffold.matches(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())
                         && AiSchematicActions.init(support, this.load_Map, mc.level)) {
                         keep.add(support.asLong());
                      }
@@ -5920,7 +5920,7 @@ final class AiBuilder {
                      if (!AiBuilder.canClearDuringRecovery(recovery, this.push_Set.contains(key), opening, pos.getY(), live)) {
                         AiBuilder.CellSpec wantedHere = this.load_Map.get(key);
                         boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.matchesIgnoringUnpairedChest(wantedHere, live);
-                        if (AiBuilder.isOccupiedOrMatchedScaffold(this.load_Map.get(key), live, stray || AiScaffold.init(this.scaffoldBlockAt(pos), live.getBlock()))) {
+                        if (AiBuilder.isOccupiedOrMatchedScaffold(this.load_Map.get(key), live, stray || AiScaffold.matches(this.scaffoldBlockAt(pos), live.getBlock()))) {
                            keep.add(key);
                         }
                      }
@@ -6213,7 +6213,7 @@ final class AiBuilder {
                   && !(placed.getBlock() instanceof TrapDoorBlock)
                   && !(placed.getBlock() instanceof FenceGateBlock)) {
                   AABB site = this.buildBounds.inflate(1.0);
-                  BlockPos feet = autismclient.ai.engine.AiStance.init(mc);
+                  BlockPos feet = autismclient.ai.engine.AiStance.standingPos(mc);
                   if (this.sync_Map.getOrDefault(target.asLong(), Set.of()).contains(feet.asLong())) {
                      return true;
                   }
@@ -6517,7 +6517,7 @@ final class AiBuilder {
                               && (!protectedNow.contains(feet.below().asLong()) || !floorShape.isEmpty() && !(Math.abs(floorShape.max(Axis.Y) - 1.0) > 0.001))) {
                               Vec3 position = Vec3.atBottomCenterOf(feet);
                               if (mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(position.subtract(mc.player.position())))) {
-                                 BlockPlacementPlanner.PlacementPlan proved = autismclient.ai.engine.PlacementGoal.init(mc, pos, item, constraint, position, 48);
+                                 BlockPlacementPlanner.PlacementPlan proved = autismclient.ai.engine.PlacementGoal.planPlacement(mc, pos, item, constraint, position, 48);
                                  if (proved != null
                                     && (
                                        !floorShape.isEmpty()
@@ -6587,7 +6587,7 @@ final class AiBuilder {
 
             boolean push(BlockPos target) {
                if (schematic && this.ownsScaffolding && this.cellCursor < this.orderedCells.size()) {
-                  BlockPos worker = autismclient.ai.engine.AiStance.init(mc);
+                  BlockPos worker = autismclient.ai.engine.AiStance.standingPos(mc);
                   if (target.getY() < worker.getY() + 2) {
                      return false;
                   }
@@ -7093,7 +7093,7 @@ final class AiBuilder {
                   Item item = AiBuilder.resolveBlock(cell).asItem();
                   if (this.countInInventory(item) != 0
                      && !autismclient.ai.engine.PlacementGoal.canPlace(mc, pos, item, this.constraintFor(cell, AiBuilder.resolveBlock(cell)))) {
-                     BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.init(
+                     BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.planPlacement(
                         mc, pos, item, this.constraintFor(cell, AiBuilder.resolveBlock(cell)), 32
                      );
                      if (candidate == null || this.read(cell, pos)) {
@@ -7243,7 +7243,7 @@ final class AiBuilder {
                                        BlockPos cell = pos.offset(dx, dy, dz);
                                        if (!this.buildBounds.contains(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5)
                                           && AiScaffold.recordedBlock(cell) != null
-                                          && AiScaffold.init(this.scaffoldBlockAt(cell), mc.level.getBlockState(cell).getBlock())) {
+                                          && AiScaffold.matches(this.scaffoldBlockAt(cell), mc.level.getBlockState(cell).getBlock())) {
                                           blocking = cell;
                                        }
                                     }
@@ -7897,13 +7897,13 @@ final class AiBuilder {
                   Boolean.getBoolean("autism.navigation.debug")
                      ? AiJson.objectOf(
                         "feet",
-                        autismclient.ai.engine.AiStance.init(mc).toShortString(),
+                        autismclient.ai.engine.AiStance.standingPos(mc).toShortString(),
                         "onGround",
                         mc.player.onGround(),
                         "floor",
-                        mc.level.getBlockState(autismclient.ai.engine.AiStance.init(mc).below()).toString(),
+                        mc.level.getBlockState(autismclient.ai.engine.AiStance.standingPos(mc).below()).toString(),
                         "head",
-                        mc.level.getBlockState(autismclient.ai.engine.AiStance.init(mc).above()).toString()
+                        mc.level.getBlockState(autismclient.ai.engine.AiStance.standingPos(mc).above()).toString()
                      )
                      : null,
                   "navigation",

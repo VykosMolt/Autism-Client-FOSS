@@ -25,7 +25,7 @@ final class AiRetryGuard {
       this.clock = clock;
    }
 
-   synchronized void init() {
+   synchronized void reset() {
       this.dispatchTimes.clear();
       this.init_Set.clear();
    }

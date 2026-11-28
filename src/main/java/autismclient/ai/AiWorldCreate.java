@@ -157,7 +157,7 @@ final class AiWorldCreate {
       return AiJson.objectOf("worlds", worlds);
    }
 
-   static JsonObject load(JsonObject args) {
+   static JsonObject deleteWorld(JsonObject args) {
       String name = AiJson.getString(args, "name", "").trim();
       if (name.isBlank()) {
          throw new IllegalArgumentException("name required");

@@ -155,7 +155,7 @@ public final class WaypointsCommand extends Command {
    }
 
    private static int waypointColor() {
-      return al.init_Module_Str("waypoints") instanceof WaypointsModule waypoints ? waypoints.init_I_23() : -12855297;
+      return al.init_Module_Str("waypoints") instanceof WaypointsModule waypoints ? waypoints.defaultColor() : -12855297;
    }
 
    static double[] parseCoords(String args, double px, double py, double pz) {

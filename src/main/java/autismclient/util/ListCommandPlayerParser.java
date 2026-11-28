@@ -15,7 +15,7 @@ public final class ListCommandPlayerParser {
    private ListCommandPlayerParser() {
    }
 
-   public static Optional<List<ListCommandPlayerParser.ListedPlayer>> init(Component message) {
+   public static Optional<List<ListCommandPlayerParser.ListedPlayer>> parse(Component message) {
       if (message != null
          && message.getSiblings().isEmpty()
          && message.getContents() instanceof TranslatableContents translated

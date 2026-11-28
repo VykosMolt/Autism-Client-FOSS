@@ -42,7 +42,7 @@ final class AiWorldScan {
    }
 
    static List<BlockPos> findBlocks(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
-      List<BlockPos> indexed = AiWorldMemory.init(target, radiusChunks, perChunk, cap);
+      List<BlockPos> indexed = AiWorldMemory.indexed(target, radiusChunks, perChunk, cap);
       if (!indexed.isEmpty()) {
          return indexed;
       }

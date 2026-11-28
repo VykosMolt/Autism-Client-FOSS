@@ -57,7 +57,7 @@ public final class CoordinateSpoofer {
       }
    }
 
-   public static void init(boolean spoofY) {
+   public static void setSpoofY(boolean spoofY) {
       spoofYEnabled = spoofY;
    }
 

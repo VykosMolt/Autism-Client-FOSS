@@ -75,7 +75,7 @@ public final class HumanizedAimStepper {
       return this.read_Z;
    }
 
-   public double[] init(
+   public double[] step(
       double goalYawDeg,
       double goalPitchDeg,
       double actualYawDeg,

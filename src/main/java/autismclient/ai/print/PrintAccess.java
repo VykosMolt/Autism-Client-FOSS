@@ -769,7 +769,7 @@ final class PrintAccess {
             this.removalTemps != null
                || this.core.phase == PrintCore.PrintPhase.TEARDOWN
                || this.core.isAboveBase(BlockPos.of(n.key))
-               || this.core.push_Z() && this.core.isAboveBase(BlockPos.of(this.rootKey))
+               || this.core.hasHighComponents() && this.core.isAboveBase(BlockPos.of(this.rootKey))
          )) {
          if (this.rootCanEscapeDown == null) {
             this.rootCanEscapeDown = this.core.canEscape(BlockPos.of(this.rootKey), null, null, true);
@@ -1460,7 +1460,7 @@ final class PrintAccess {
             int k = this.core.cellIndexByPos.get(BlockPos.asLong(x, yy, z));
             if (k >= 0
                && yy >= this.core.baseY + 8
-               && this.core.write_Z_I(k)
+               && this.core.inComponent(k)
                && this.core.isOpenTargetCell(BlockPos.of(BlockPos.asLong(x, yy, z)))) {
                return true;
             }
@@ -1566,7 +1566,7 @@ final class PrintAccess {
                BlockPos above = new BlockPos(cell.getX(), y, cell.getZ());
                if (y == this.lowestGoalY) {
                   int i = this.core.cellIndexByPos.get(above.asLong());
-                  return i >= 0 && this.core.isOpenTargetCell(above) && this.core.write_Z_I(i);
+                  return i >= 0 && this.core.isOpenTargetCell(above) && this.core.inComponent(i);
                }
 
                if (!this.view.getBlockState(above).isAir()) {
@@ -1612,7 +1612,7 @@ final class PrintAccess {
    }
 
    boolean placeableAsBridge(int i, Direction d) {
-      if (!this.core.push_Z_I(i)) {
+      if (!this.core.isRideCompatible(i)) {
          return false;
       }
 
@@ -3097,7 +3097,7 @@ final class PrintAccess {
             this.needsWayOut = PrintAccess.this.removalTemps != null
                || PrintAccess.this.core.phase == PrintCore.PrintPhase.TEARDOWN
                || PrintAccess.this.core.isAboveBase(BlockPos.of(node.key))
-               || PrintAccess.this.core.push_Z() && PrintAccess.this.core.isAboveBase(BlockPos.of(PrintAccess.this.rootKey));
+               || PrintAccess.this.core.hasHighComponents() && PrintAccess.this.core.isAboveBase(BlockPos.of(PrintAccess.this.rootKey));
             boolean lowered = node.feet < AccessSearch.this.startFeet - 0.5;
 
             for (PrintAccess.SearchNode at = node; !lowered && at != null && at.parent != null; at = at.parent) {

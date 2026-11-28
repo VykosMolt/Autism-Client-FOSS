@@ -26,7 +26,7 @@ public abstract class AutismBlockBehaviourMixin {
          && state.is(Blocks.COBWEB)
          && context instanceof EntityCollisionContext entity
          && entity.getEntity() instanceof LocalPlayer
-         && AntiWebModule.load(entity.getEntity())) {
+         && AntiWebModule.isSolidMode(entity.getEntity())) {
          cir.setReturnValue(Shapes.block());
       }
    }

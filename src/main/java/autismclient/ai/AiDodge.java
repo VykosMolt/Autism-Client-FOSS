@@ -43,8 +43,8 @@ final class AiDodge {
          return false;
       }
 
-      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
-         if (AiProjectiles.init(t)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
+         if (AiProjectiles.isImminent(t)) {
             Entity e = mc.level.getEntity(t.entityId());
             return true;
          }
@@ -112,8 +112,8 @@ final class AiDodge {
                      && this.mc.player.isAlive()) {
                      List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
-                     for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.mc)) {
-                        if (AiProjectiles.init(t)) {
+                     for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(this.mc)) {
+                        if (AiProjectiles.isImminent(t)) {
                            threats.add(t);
                         }
                      }
@@ -315,7 +315,7 @@ final class AiDodge {
             }
 
             Vec3 chooseDodgeTarget(AiProjectiles.IncomingProjectile dominant) {
-               Vec3 dir = AiProjectiles.init_Vec3(
+               Vec3 dir = AiProjectiles.dodgeDirection(
                   new Vec3(dominant.x(), dominant.y(), dominant.z()),
                   new Vec3(dominant.vx(), dominant.vy(), dominant.vz()),
                   dominant.gravity(),
@@ -350,11 +350,11 @@ final class AiDodge {
                            if (!contact) {
                               double clearance = 1.7976931348623157E308;
 
-                              for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(this.mc)) {
-                                 if (AiProjectiles.init(shot)) {
+                              for (AiProjectiles.IncomingProjectile shot : AiProjectiles.incoming(this.mc)) {
+                                 if (AiProjectiles.isImminent(shot)) {
                                     Entity projectile = this.mc.level.getEntity(shot.entityId());
                                     if (projectile != null) {
-                                       AiProjectiles.ApproachMetrics predicted = AiProjectiles.init(this.mc, projectile, landing, travelTicks);
+                                       AiProjectiles.ApproachMetrics predicted = AiProjectiles.approach(this.mc, projectile, landing, travelTicks);
                                        clearance = Math.min(clearance, predicted == null ? 10.0 : predicted.closestApproach());
                                     }
                                  }

@@ -207,7 +207,7 @@ final class SchematicLibrary {
 
             try {
                for (Path folder : roots) {
-                  SchematicDocument.init();
+                  SchematicDocument.checkInterrupted();
                   if (Files.isDirectory(folder)) {
                      Path base = folder.toRealPath();
 
@@ -215,7 +215,7 @@ final class SchematicLibrary {
                         Iterator<Path> it = paths.iterator();
 
                         while (it.hasNext()) {
-                           SchematicDocument.init();
+                           SchematicDocument.checkInterrupted();
                            Path file = it.next();
                            if (load_Z_Path(file) && Files.isRegularFile(file)) {
                               Path real = file.toRealPath();
@@ -253,7 +253,7 @@ final class SchematicLibrary {
                this.init(client, token, rows, "Reading block counts", 0);
 
                for (int i = 0; i < rows.size(); i++) {
-                  SchematicDocument.init();
+                  SchematicDocument.checkInterrupted();
                   SchematicLibrary.SchematicEntry entry = rows.get(i);
                   if (entry.blocks < 0L && entry.error.isEmpty()) {
                      try {

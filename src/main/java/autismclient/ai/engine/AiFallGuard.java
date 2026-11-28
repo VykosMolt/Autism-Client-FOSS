@@ -180,7 +180,7 @@ public final class AiFallGuard {
          int x = (int)Math.floor(state.x());
          int y = (int)Math.floor(state.y() + 0.001);
          int z = (int)Math.floor(state.z());
-         return !world.isWater(x, y, z) && !world.isLavaOrUnloaded(x, y, z) && !world.sync(x, y, z) && !world.sync(x, y + 1, z)
+         return !world.isWater(x, y, z) && !world.isLavaOrUnloaded(x, y, z) && !world.isClimbable(x, y, z) && !world.isClimbable(x, y + 1, z)
             ? load(world, state, new AiPhysics.MoveInput(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw()))
             : false;
       } else {
@@ -258,7 +258,7 @@ public final class AiFallGuard {
       int x = (int)Math.floor(s.x());
       int y = (int)Math.floor(s.y() + 0.001);
       int z = (int)Math.floor(s.z());
-      return world.sync(x, y, z) || world.sync(x, y + 1, z);
+      return world.isClimbable(x, y, z) || world.isClimbable(x, y + 1, z);
    }
 
    private static boolean load(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s) {

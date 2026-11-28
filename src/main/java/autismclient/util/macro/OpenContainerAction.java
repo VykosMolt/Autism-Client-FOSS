@@ -38,13 +38,13 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    @Override
    public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
-         return AimTargetAction.AimTarget.init(this.blockPos);
+         return AimTargetAction.AimTarget.ofBlock(this.blockPos);
       } else {
          autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
-            return target.isBlock() ? AimTargetAction.AimTarget.init(target.blockPos()) : AimTargetAction.AimTarget.init(target.resolveEntity(mc));
+            return target.isBlock() ? AimTargetAction.AimTarget.ofBlock(target.blockPos()) : AimTargetAction.AimTarget.ofEntity(target.resolveEntity(mc));
          }
       }
    }
@@ -150,10 +150,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       } else if (targetRef.startsWith("~")) {
          String[] parts = targetRef.split("~", 4);
          String name = parts.length >= 4 ? parts[3] : "?";
-         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.entityName(parts[2]) : "?";
          return name.isBlank() ? type : name + " (" + type + ")";
       } else {
-         return RegistryDisplayNameCache.read(targetRef);
+         return RegistryDisplayNameCache.entityName(targetRef);
       }
    }
 

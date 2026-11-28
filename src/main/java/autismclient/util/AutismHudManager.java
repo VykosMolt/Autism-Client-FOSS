@@ -1420,7 +1420,7 @@ public final class AutismHudManager {
       int unscaledW = layout.width();
       int unscaledH = layout.height();
       if ("bed_danger".equals(id) && !AutismLiteVariant.enabled()) {
-         autismclient.modules.BedDangerHudRenderer.init(context, font, x, y, editor);
+         autismclient.modules.BedDangerHudRenderer.renderHud(context, font, x, y, editor);
          if (editor || selected || hovered) {
             drawRectOutline(context, x, y, unscaledW, unscaledH, colorSetting(id, selected ? "accent-color" : "outline-color", -1426113733), 1);
          }
@@ -1533,7 +1533,7 @@ public final class AutismHudManager {
    private static void drawLogo(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha) {
       context.blit(
          RenderPipelines.GUI_TEXTURED,
-         ThemeTextureRecolorer.init(HUD_TEXTURE, ThemePaletteManager.ColorRole.ACCENT),
+         ThemeTextureRecolorer.recolored(HUD_TEXTURE, ThemePaletteManager.ColorRole.ACCENT),
          x,
          y,
          0.0F,
@@ -1973,7 +1973,7 @@ public final class AutismHudManager {
 
       try {
          String name = MC.gameMode.getPlayerMode().getName();
-         return name != null && !name.isBlank() ? RegistryDisplayNameCache.update(name) : "N/A";
+         return name != null && !name.isBlank() ? RegistryDisplayNameCache.genericName(name) : "N/A";
       } catch (Throwable ignored) {
          return MC.gameMode.toString();
       }
@@ -2146,9 +2146,9 @@ public final class AutismHudManager {
       } else if (hit instanceof BlockHitResult blockHit && MC.level != null) {
          BlockPos pos = blockHit.getBlockPos();
          Identifier id = BuiltInRegistries.BLOCK.getKey(MC.level.getBlockState(pos).getBlock());
-         return RegistryDisplayNameCache.load(id.toString()) + " " + formatBlockCoords(pos.getX(), pos.getY(), pos.getZ());
+         return RegistryDisplayNameCache.blockName(id.toString()) + " " + formatBlockCoords(pos.getX(), pos.getY(), pos.getZ());
       } else {
-         return RegistryDisplayNameCache.update(hit.getType().name());
+         return RegistryDisplayNameCache.genericName(hit.getType().name());
       }
    }
 
@@ -2252,7 +2252,7 @@ public final class AutismHudManager {
             if (boolSetting("looking_at", "show-block-id")) {
                name = id.toString();
             } else {
-               name = RegistryDisplayNameCache.load(id.toString());
+               name = RegistryDisplayNameCache.blockName(id.toString());
             }
 
             if (boolSetting("looking_at", "show-distance")) {
@@ -2260,7 +2260,7 @@ public final class AutismHudManager {
                name = name + " " + String.format(Locale.ROOT, "%.1fm", dist);
             }
          } else {
-            name = RegistryDisplayNameCache.update(hit.getType().name());
+            name = RegistryDisplayNameCache.genericName(hit.getType().name());
          }
 
          line.append(name, colorSetting("looking_at", "value-color", -791321));
@@ -2289,7 +2289,7 @@ public final class AutismHudManager {
          int pct = (int)Math.round(progress * 100.0);
          if (boolSetting("breaking_progress", "show-block-name")) {
             BlockPos pos = ((BlockHitResult)MC.hitResult).getBlockPos();
-            String blockName = RegistryDisplayNameCache.load(BuiltInRegistries.BLOCK.getKey(MC.level.getBlockState(pos).getBlock()).toString());
+            String blockName = RegistryDisplayNameCache.blockName(BuiltInRegistries.BLOCK.getKey(MC.level.getBlockState(pos).getBlock()).toString());
             line.append(blockName + ": ", colorSetting("breaking_progress", "label-color", -4743522));
          } else {
             line.append("Breaking: ", colorSetting("breaking_progress", "label-color", -4743522));
@@ -2404,7 +2404,7 @@ public final class AutismHudManager {
    private static String biomeText() {
       if (MC.level != null && MC.player != null) {
          try {
-            return MC.level.getBiome(viewBlockPos()).unwrapKey().map(key -> RegistryDisplayNameCache.update(key.identifier().toString())).orElse("Unknown");
+            return MC.level.getBiome(viewBlockPos()).unwrapKey().map(key -> RegistryDisplayNameCache.genericName(key.identifier().toString())).orElse("Unknown");
          } catch (Throwable ignored) {
             return "Unknown";
          }
@@ -2498,7 +2498,7 @@ public final class AutismHudManager {
       if (target == null) {
          return boolSetting("item_counter", "item-count-held") ? "Hand" : "Items";
       } else {
-         return RegistryDisplayNameCache.init(BuiltInRegistries.ITEM.getKey(target).toString());
+         return RegistryDisplayNameCache.itemName(BuiltInRegistries.ITEM.getKey(target).toString());
       }
    }
 
@@ -3547,7 +3547,7 @@ public final class AutismHudManager {
          String id = BUILTIN_ELEMENT_IDS.get(i);
          boolean hiddenBedDanger = "bed_danger".equals(id) && !editor;
          if (hiddenBedDanger && !AutismLiteVariant.enabled()) {
-            hiddenBedDanger = !autismclient.modules.BedDangerHudRenderer.init();
+            hiddenBedDanger = !autismclient.modules.BedDangerHudRenderer.isVisible();
          }
 
          AutismHudManager.CachedElementLayout current = !isShownInFpsElement(id) && getState(id).enabled && !hiddenBedDanger

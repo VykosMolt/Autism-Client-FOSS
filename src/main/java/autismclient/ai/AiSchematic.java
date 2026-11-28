@@ -238,7 +238,7 @@ final class AiSchematic {
       }
    }
 
-   static Path init() {
+   static Path directory() {
       return Minecraft.getInstance().gameDirectory.toPath().resolve("schematics");
    }
 

@@ -20,14 +20,14 @@ public final class RegistryIdValidator {
       }
    }
 
-   public static List<String> init(Kind type, List<String> values) {
+   public static List<String> invalidIds(Kind type, List<String> values) {
       List<String> invalid = new ArrayList<>();
       if (values == null) {
          return invalid;
       }
 
       for (String value : values) {
-         if (!value.isBlank() && !init(type, value)) {
+         if (!value.isBlank() && !isValid(type, value)) {
             invalid.add(value);
          }
       }
@@ -35,8 +35,8 @@ public final class RegistryIdValidator {
       return invalid;
    }
 
-   public static boolean init(Kind type, String id) {
-      String normalized = init(id);
+   public static boolean isValid(Kind type, String id) {
+      String normalized = normalize(id);
       if (type == Kind.STORAGE_LIST) {
          return autismclient.modules.StorageEspCatalog.byId(normalized) != null;
       }
@@ -67,7 +67,7 @@ public final class RegistryIdValidator {
       return var10000;
    }
 
-   public static String init(String id) {
+   public static String normalize(String id) {
       if (id == null) {
          return "";
       }

@@ -96,7 +96,7 @@ public class AutismModelBlockRendererMixin {
             }
          }
 
-         if (golden && GoldenLeverModule.init(state)) {
+         if (golden && GoldenLeverModule.isGoldenLeverBlock(state)) {
             this.quadInstance.multiplyColor(-11702);
          }
 

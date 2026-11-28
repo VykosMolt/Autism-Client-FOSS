@@ -913,7 +913,7 @@ public final class ScaffoldModule extends Module {
    @Override
    public void onEnable() {
       this.releaseControls(true);
-      this.failureRecorder.init();
+      this.failureRecorder.clear();
       this.rerollAimPitch();
       this.liveCaptureTick = -1;
       this.tellyCaptureTick = this.init_I_16();
@@ -3105,8 +3105,8 @@ public final class ScaffoldModule extends Module {
    private void captureLiveTrace(String outcome, ScaffoldModule.PlannedPlacement target) {
       if (this.isLiveCaptureActive() && MC.player != null) {
          if (this.liveCaptureTick == 0) {
-            AsyncTraceLogger.init("[scaffold-live] capture start");
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log("[scaffold-live] capture start");
+            AsyncTraceLogger.log(
                "[scaffold-why] legend lr=the reservation ledger, advisory only - it decides no key since the 12:52 ruling (known=landing solved, deficit=blocks still owed, pend=click already on the wire, landsolid=is the landing column's support already a block - winners take off T, losers F); strip=<stage>:<-removed+added> per stage, F/B/L/R/J/S/P keys, net=physical vs emitted - the jump and travel keys are ALWAYS the player's own; the only writers left are wire-sneak/lip-stop/reconcile/empty-stack (each sneak-only), lane (grounded steering) and the sprint drop for the non-sprint predictor; clk=<why code> past=<eye past face plane>/<margin needed> demand=<pitch the crossing needs>/<hard cap> drop=<eye height over the face>; rsv=<reserved chain cell>:<its own verdict> - oob/cooldown/behind/solid/no-repl/rowlock/ok or plan[<per-face codes>], where ip:<box|side|strict> is the body-clearance refusal and strict means the CATCH PREDICATE was shut; pick=<selection tier> plan=<last plan reject>; arcend=one line per landing, dy=+0.00 placed=0 is a jump that achieved nothing; arcchain=the same arc's two-click window - the landing support (planned/became a block) against every tick the riser above it was body-legal. clear ending BEFORE set means the level was never placeable, not merely missed"
             );
          }
@@ -3114,7 +3114,7 @@ public final class ScaffoldModule extends Module {
          Vec3 p = MC.player.position();
          Vec3 v = MC.player.getDeltaMovement();
          if (this.f_n_Z && !MC.player.onGround() && this.wantsJump()) {
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log(
                String.format(
                   Locale.ROOT,
                   "[scaffold-live] t%03d takeoff     vel=%.3f,%.3f,%.3f arc=%s foot=%s",
@@ -3144,7 +3144,7 @@ public final class ScaffoldModule extends Module {
 
          this.trackSupportTrace();
          if (!this.f_n_Z && MC.player.onGround() && this.f_aX_I >= 0) {
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log(
                String.format(
                   Locale.ROOT,
                   "[scaffold-why] t%03d arcend     from=t%03d ticks=%d lines=%d dy=%+.2f dxz=%.2f placed=%d set=%d aim=%d pace=%d notgt=%d drop=%d goal=%s end=%s",
@@ -3164,7 +3164,7 @@ public final class ScaffoldModule extends Module {
                   this.placeStatus
                )
             );
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log(
                String.format(
                   Locale.ROOT,
                   "[scaffold-why] t%03d arcchain   sup=%s plan=%s set=%s | ris=%s clear=%s..%s set=%s clk=%s rfail=%s relatch=%d land=%s",
@@ -3193,7 +3193,7 @@ public final class ScaffoldModule extends Module {
             this.f_o_Z = true;
             int placeAge = this.f_av_I == -2147483648 ? -1 : AutismSessionState.getInstance().getClientTick() - this.f_av_I;
             ScaffoldModule.PlannedPlacement held = this.pendingPlacement != null ? this.pendingPlacement : this.stickyPlacement;
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log(
                String.format(
                   Locale.ROOT,
                   "[scaffold-live] t%03d fall-start pos=%.2f,%.2f,%.2f vel=%.3f,%.3f,%.3f fall=%.1f placeage=%d arc=%s tgt=%s",
@@ -3217,7 +3217,7 @@ public final class ScaffoldModule extends Module {
          }
 
          this.f_n_Z = MC.player.onGround();
-         AsyncTraceLogger.init(
+         AsyncTraceLogger.log(
             String.format(
                Locale.ROOT,
                "[scaffold-live] t%03d %-11s pos=%.2f,%.2f,%.2f vel=%.3f,%.3f,%.3f step=%.3f,%.3f gnd=%s fall=%.1f sneak=%s twr=%s %s %s %s %s %s %s emitted=%s click=%s goal=%s %s %s src=%s eye=%s eff=%s target=%s %s",
@@ -3302,7 +3302,7 @@ public final class ScaffoldModule extends Module {
          if (this.f_bv_I == -2147483648) {
             this.f_bv_I = row;
          } else if (row != this.f_bv_I) {
-            AsyncTraceLogger.init(
+            AsyncTraceLogger.log(
                String.format(
                   Locale.ROOT,
                   "[scaffold-live] rollup y=%d>%d ticks=%d place=%d set=%d miss=%d aim=%d pace=%d notgt=%d drop=%d repl=%d veto=%d",
@@ -3530,7 +3530,7 @@ public final class ScaffoldModule extends Module {
       double laneMoved = Double.isNaN(this.lastLaneError) ? 0.0 / 0.0 : laneError - this.lastLaneError;
       double travel = Double.isNaN(this.lastCourseProgress) ? 0.0 / 0.0 : Math.abs(course - this.lastCourseProgress);
       double bps = blocksPerSecond(travel, this.driftGroundTicks, this.driftAirTicks);
-      AsyncTraceLogger.init(
+      AsyncTraceLogger.log(
          "[telly-cycle] air="
             + this.driftAirTicks
             + " ground="
@@ -3555,7 +3555,7 @@ public final class ScaffoldModule extends Module {
    private void captureTellyTrace(String outcome) {
       if (MC.player != null && this.tellyCaptureTick >= 0) {
          if (this.tellyCaptureTick == 0) {
-            AsyncTraceLogger.init("[telly-live] capture start");
+            AsyncTraceLogger.log("[telly-live] capture start");
          }
 
          Vec3 pos = MC.player.position();
@@ -3564,7 +3564,7 @@ public final class ScaffoldModule extends Module {
          double perp = vel.dot(this.anchorLeft());
          ScaffoldModule.KinematicsSnapshot drift = this.captureKinematics();
          this.accumulateDrift(drift, laneError, pos);
-         AsyncTraceLogger.init(
+         AsyncTraceLogger.log(
             String.format(
                Locale.ROOT,
                "[telly-live] t%03d %-9s pos=%.2f,%.2f,%.2f vel=%.3f,%.3f,%.3f step=%.3f,%.3f gnd=%s fall=%.1f sneak=%s %s anchor=%.0f emitted=%s %s lane=%+.3f/perp%+.3f/bias%+.1f/steer%+.1f%s off=%s air=%s/cd%d/p%d hold=%s phase=%s motion=%s bridgeY=%d bridge=%s tgt=%s raised=%s queued=%s cd=%d fail=%d %s",
@@ -3740,7 +3740,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void logWhyTrace(ScaffoldModule.PlannedPlacement target) {
-      AsyncTraceLogger.init(
+      AsyncTraceLogger.log(
          String.format(
             Locale.ROOT,
             "[scaffold-why] t%03d lr=%s | strip=%s | clk=%s %s | rsv=%s | pick=%s plan=%s | tgt=%s",
@@ -6917,7 +6917,7 @@ public final class ScaffoldModule extends Module {
          for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
             eye,
             next,
-            ClutchBlockPlanner.init(target.support(), target.face()),
+            ClutchBlockPlanner.faceBox(target.support(), target.face()),
             target.support(),
             target.face(),
             target.load(),
@@ -9705,7 +9705,7 @@ public final class ScaffoldModule extends Module {
       double cost = 1.0 / 0.0;
 
       for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
-         eye, nextEye, ClutchBlockPlanner.init(support, face), support, face, support, face, reach, from.yaw(), from.pitch(), gcd, 0.02
+         eye, nextEye, ClutchBlockPlanner.faceBox(support, face), support, face, support, face, reach, from.yaw(), from.pitch(), gcd, 0.02
       )) {
          RotationMath.Rotation look = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(counts.init(), from.yaw()), counts.load());
          if (!(side * RotationMath.angleDelta(look.yaw(), course) <= 0.0)) {
@@ -10679,7 +10679,7 @@ public final class ScaffoldModule extends Module {
       lastPublishedEye = null;
       writtenSneak = false;
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold) {
-         scaffold.failureRecorder.init();
+         scaffold.failureRecorder.clear();
          scaffold.clearSlotCache();
       }
 
@@ -10743,7 +10743,7 @@ public final class ScaffoldModule extends Module {
    }
 
    public static void onBlockUpdate(BlockPos cell, BlockState state) {
-      if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.isTellyOrEagleMode() && scaffold.failureRecorder.init(cell)) {
+      if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.isTellyOrEagleMode() && scaffold.failureRecorder.hasFailure(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.failureRecorder
             .init(new ScaffoldFailureRecorder.PlacementFact("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
@@ -13249,7 +13249,7 @@ public final class ScaffoldModule extends Module {
 
    private Input close(Input input) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      Input result = this.movementInputFixer.load(input, MC.player.getYRot(), this.activeRotation.yaw(), tick);
+      Input result = this.movementInputFixer.fix(input, MC.player.getYRot(), this.activeRotation.yaw(), tick);
       if (result == null) {
          return null;
       }
@@ -16508,7 +16508,7 @@ public final class ScaffoldModule extends Module {
       Set<Block> blocks = new HashSet<>();
 
       for (String entry : this.list("blocks")) {
-         Identifier id = Identifier.tryParse(RegistryIdValidator.init(entry));
+         Identifier id = Identifier.tryParse(RegistryIdValidator.normalize(entry));
          if (id != null) {
             BuiltInRegistries.BLOCK.getOptional(id).ifPresent(block -> {
                if (isScaffoldBlock(block)) {
@@ -17948,7 +17948,7 @@ public final class ScaffoldModule extends Module {
 
       if (this.isLiveCaptureActive() && MC != null && MC.player != null) {
          Vec3 p = MC.player.position();
-         AsyncTraceLogger.init(String.format(Locale.ROOT, "[scaffold-live] t%03d setback     pos=%.2f,%.2f,%.2f - position state cleared", this.liveCaptureTick, p.x, p.y, p.z));
+         AsyncTraceLogger.log(String.format(Locale.ROOT, "[scaffold-live] t%03d setback     pos=%.2f,%.2f,%.2f - position state cleared", this.liveCaptureTick, p.x, p.y, p.z));
       }
    }
 

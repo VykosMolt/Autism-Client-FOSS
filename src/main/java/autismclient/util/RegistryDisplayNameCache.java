@@ -17,26 +17,26 @@ public final class RegistryDisplayNameCache {
    private RegistryDisplayNameCache() {
    }
 
-   public static String init(String rawId) {
+   public static String itemName(String rawId) {
       String key = normalizeKey(rawId);
       return itemNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.ITEM, item -> item.getName(item.getDefaultInstance()).getString()));
    }
 
-   public static String load(String rawId) {
+   public static String blockName(String rawId) {
       String key = normalizeKey(rawId);
       return blockNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.BLOCK, block -> block.getName().getString()));
    }
 
-   public static String read(String rawId) {
+   public static String entityName(String rawId) {
       String key = normalizeKey(rawId);
       return entityNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.ENTITY_TYPE, entity -> entity.getDescription().getString()));
    }
 
    public static String write(String rawId) {
-      return update(rawId);
+      return genericName(rawId);
    }
 
-   public static String update(String rawId) {
+   public static String genericName(String rawId) {
       String key = normalizeKey(rawId);
       return genericNames.computeIfAbsent(key, RegistryDisplayNameCache::fallbackName);
    }
@@ -54,7 +54,7 @@ public final class RegistryDisplayNameCache {
    public static boolean init(String text, String rawId) {
       String trimmed = text == null ? "" : text.trim();
       String key = normalizeKey(rawId);
-      return trimmed.isEmpty() ? true : trimmed.equalsIgnoreCase(key) || trimmed.equalsIgnoreCase(sync(key)) || trimmed.equalsIgnoreCase(update(key));
+      return trimmed.isEmpty() ? true : trimmed.equalsIgnoreCase(key) || trimmed.equalsIgnoreCase(sync(key)) || trimmed.equalsIgnoreCase(genericName(key));
    }
 
    private static <T> String lookupName(String rawId, Registry<T> registry, Function<T, String> nameProvider) {

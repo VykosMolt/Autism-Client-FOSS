@@ -31,7 +31,7 @@ public class RotateAction implements MacroAction {
       return minStep * Math.pow(maxStep / minStep, normalized);
    }
 
-   public double init() {
+   public double step() {
       return stepForSmoothness(this.smoothness);
    }
 

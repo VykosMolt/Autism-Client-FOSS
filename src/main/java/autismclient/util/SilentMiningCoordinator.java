@@ -13,7 +13,7 @@ public final class SilentMiningCoordinator {
    private SilentMiningCoordinator() {
    }
 
-   public static boolean init(String requester, BlockHitResult ray) {
+   public static boolean requestMining(String requester, BlockHitResult ray) {
       if (requester != null && ClientInteractionOverride.queueHoldAttack(ray)) {
          owner = requester;
          return true;
@@ -22,7 +22,7 @@ public final class SilentMiningCoordinator {
       }
    }
 
-   public static boolean init(String requester, BlockHitResult ray, InteractionHand hand) {
+   public static boolean requestMining(String requester, BlockHitResult ray, InteractionHand hand) {
       if (requester != null && ClientInteractionOverride.queueHoldUse(ray, hand)) {
          owner = requester;
          return true;
@@ -41,7 +41,7 @@ public final class SilentMiningCoordinator {
       }
    }
 
-   static void init() {
+   static void clearOwner() {
       owner = null;
    }
 

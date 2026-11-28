@@ -14,7 +14,7 @@ public class AiAddonPathCheck {
 
    static boolean accepted(Path addon, String relative) {
       try {
-         AiAddons.init(addon, relative);
+         AiAddons.resolveInside(addon, relative);
          return true;
       } catch (IllegalArgumentException e) {
          return false;

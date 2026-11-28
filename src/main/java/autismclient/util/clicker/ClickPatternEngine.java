@@ -420,7 +420,7 @@ public final class ClickPatternEngine {
 
       double latent = this.level
          + this.frame
-         + this.profile.technique.flush * this.timingSpread() * r.nextGaussian()
+         + this.profile.technique.clockSd * this.timingSpread() * r.nextGaussian()
          + boundary
          + envelope
          + 0.7 * this.profile.flush * this.block
@@ -429,14 +429,14 @@ public final class ClickPatternEngine {
    }
 
    private long init_J_J(long interval, double fraction, double state) {
-      long high = Math.min(ClickTimingMath.load(this.profile.update), Math.min((long)(fraction * interval), interval - 2000000L));
+      long high = Math.min(ClickTimingMath.msToNanos(this.profile.holdHighMs), Math.min((long)(fraction * interval), interval - 2000000L));
       high = Math.max(1000000L, high);
-      long low = Math.min(Math.max(1000000L, ClickTimingMath.load(this.profile.write)), high);
+      long low = Math.min(Math.max(1000000L, ClickTimingMath.msToNanos(this.profile.holdLowMs)), high);
       return low + (long)Math.ceil((high - low) * sigmoid(state));
    }
 
    private long load_J_J(long interval) {
-      long pulse = ClickTimingMath.load(this.profile.pop);
+      long pulse = ClickTimingMath.msToNanos(this.profile.pop);
       long room = Math.min(interval / 2L, interval - 2000000L);
       return Math.max(1000000L, Math.min(pulse, room));
    }
@@ -464,8 +464,8 @@ public final class ClickPatternEngine {
       }
 
       double motorRate = technique == ClickTechnique.BUTTERFLY ? this.chunk * 0.5 : this.chunk;
-      double comfort = technique.close * this.personality.load();
-      double high = technique.open * this.personality.load();
+      double comfort = technique.comfortRate * this.personality.load();
+      double high = technique.highRate * this.personality.load();
       double q = Math.max(0.0, Math.min(1.0, (motorRate - comfort) / (high - comfort)));
       return q * q * (3.0 - 2.0 * q);
    }
@@ -793,7 +793,7 @@ public final class ClickPatternEngine {
          if (this.write_J == -9223372036854775808L) {
             long first = ClickPatternEngine.this.init(this.init_J, -0.8, ClickPatternEngine.this.open(), ClickPatternEngine.this.poll(), 0.0, this.init);
             double seconds = first / 1.0E9;
-            this.write_D = ClickPatternEngine.this.profile.tick;
+            this.write_D = ClickPatternEngine.this.profile.freeSpinDecayPerSecond;
             this.read_D = this.write_D / (1.0 - Math.exp(-this.write_D * seconds));
             this.write_J = this.init_J;
             this.read_I = 0;
@@ -844,8 +844,8 @@ public final class ClickPatternEngine {
          }
 
          this.read_J = at;
-         long low = ClickTimingMath.load(ClickPatternEngine.this.profile.poll);
-         long high = ClickTimingMath.load(ClickPatternEngine.this.profile.push);
+         long low = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.poll);
+         long high = ClickTimingMath.msToNanos(ClickPatternEngine.this.profile.push);
          long gap = low + (long)Math.ceil((high - low) * ClickPatternEngine.sigmoid(this.load_D));
          return Math.max(gap, ClickPatternEngine.this.open() - hold);
       }

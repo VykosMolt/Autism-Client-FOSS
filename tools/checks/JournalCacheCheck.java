@@ -24,7 +24,7 @@ public class JournalCacheCheck {
       Path live = dir.resolve("live.json");
       AiScaffold.JobScope open = AiScaffold.init(live, List.of());
       BlockPos pos = new BlockPos(1, 2, 3);
-      AiScaffold.init(pos, Blocks.DIRT);
+      AiScaffold.recordPlaced(pos, Blocks.DIRT);
       check(open.init(pos) == Blocks.DIRT, "live scope records the scaffold");
 
       for (int i = 0; i < 70; i++) {

@@ -21,7 +21,7 @@ public final class QueuedCombatAction {
    private QueuedCombatAction() {
    }
 
-   public static boolean init(String owner, BlockHitResult hit, InteractionHand hand, BooleanSupplier legal, Runnable dispatched) {
+   public static boolean queueUse(String owner, BlockHitResult hit, InteractionHand hand, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
          QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, hit, hand, null, legal, dispatched);
          if (!ClientInteractionOverride.queueUseBlock(hit, hand)) {
@@ -35,7 +35,7 @@ public final class QueuedCombatAction {
       }
    }
 
-   public static boolean init(String owner, EntityHitResult hit, BooleanSupplier legal, Runnable dispatched) {
+   public static boolean queueAttack(String owner, EntityHitResult hit, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
          QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, null, null, hit.getEntity(), legal, dispatched);
          if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
@@ -58,7 +58,7 @@ public final class QueuedCombatAction {
       return load == null || load.load();
    }
 
-   public static boolean init(String owner, BlockPos support) {
+   public static boolean isQueuedOn(String owner, BlockPos support) {
       return load != null
          && load.owner.equals(owner)
          && load.hit != null

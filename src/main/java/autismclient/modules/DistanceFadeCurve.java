@@ -4,7 +4,7 @@ public final class DistanceFadeCurve {
    private DistanceFadeCurve() {
    }
 
-   public static float init(double distance) {
+   public static float fade(double distance) {
       double t = Math.clamp((distance - 2.0) / 4.0, 0.0, 1.0);
       return (float)(t * t * (3.0 - 2.0 * t));
    }

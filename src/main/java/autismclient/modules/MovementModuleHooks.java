@@ -19,7 +19,7 @@ public final class MovementModuleHooks {
    private MovementModuleHooks() {
    }
 
-   public static boolean init_Z(Entity entity) {
+   public static boolean suppressesSlimeBounce(Entity entity) {
       return !AutismLiteVariant.enabled() && MC != null && entity == MC.player && autismclient.ai.AiDirectOps.isRunning()
          ? false
          : init_ai_DataUtil().init_Z() && MC != null && entity == MC.player;
@@ -93,7 +93,7 @@ public final class MovementModuleHooks {
       return al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.read();
    }
 
-   public static float init(LocalPlayer player) {
+   public static float sprintJumpYaw(LocalPlayer player) {
       Input keys = player.input.keyPresses;
       float yaw = player.getYRot();
       float multiplier;
@@ -117,13 +117,13 @@ public final class MovementModuleHooks {
       return yaw;
    }
 
-   public static Vec3 init(LocalPlayer player, Vec3 velocity, double speed) {
+   public static Vec3 steerVelocity(LocalPlayer player, Vec3 velocity, double speed) {
       Input keys = player.input.keyPresses;
       if (keys.forward() == keys.backward() && keys.left() == keys.right()) {
          return new Vec3(0.0, velocity.y, 0.0);
       }
 
-      double angle = Math.toRadians(init(player));
+      double angle = Math.toRadians(sprintJumpYaw(player));
       return new Vec3(-Math.sin(angle) * speed, velocity.y, Math.cos(angle) * speed);
    }
 
@@ -170,7 +170,7 @@ public final class MovementModuleHooks {
       }
    }
 
-   public static Vec3 init(Entity entity, MoverType type, Vec3 movement) {
+   public static Vec3 adjustMovement(Entity entity, MoverType type, Vec3 movement) {
       if (AutismLiteVariant.enabled()
          || !PkgCls_a.init_Z()
          || MC.player == null
@@ -182,7 +182,7 @@ public final class MovementModuleHooks {
          if (entity != MC.player) {
             if (MC.player != null && entity == MC.player.getVehicle() && !aD.init_Z()) {
                Vec3 adjusted = EntityControlModule.init(entity, type, movement);
-               adjusted = BoatFlyModule.init(entity, type, adjusted);
+               adjusted = BoatFlyModule.adjustMovement(entity, type, adjusted);
                if (type == MoverType.SELF && adjusted != movement) {
                   entity.setDeltaMovement(adjusted);
                }

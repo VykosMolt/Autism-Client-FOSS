@@ -694,7 +694,7 @@ public final class PacketDetailFormatter {
             }
 
             byte[] bytes = snapshot.plaintext();
-            out.read("Plaintext: " + bytes.length + " bytes " + PacketWireCaptureStore.init(bytes, 48), UiColorPalette.textMuted());
+            out.read("Plaintext: " + bytes.length + " bytes " + PacketWireCaptureStore.hexPreview(bytes, 48), UiColorPalette.textMuted());
          }
       }
    }

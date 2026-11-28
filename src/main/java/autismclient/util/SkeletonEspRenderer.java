@@ -66,19 +66,19 @@ public final class SkeletonEspRenderer {
       return !init_List.isEmpty();
    }
 
-   public static void init(PoseStack matrices) {
+   public static void render(PoseStack matrices) {
       List<SkeletonEspRenderer.Bone> bones = init_List;
       if (!bones.isEmpty()) {
          init_List = List.of();
          AutismBufferSource bufferSource = init_c_DataUtil.init();
-         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
+         VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
          for (SkeletonEspRenderer.Bone bone : bones) {
             init_V_PoseStack_Pose(pose, buffer, bone.init_Vec3, bone.load, bone.init_I, bone.init_F);
          }
 
-         bufferSource.init();
+         bufferSource.drawAll();
       }
    }
 

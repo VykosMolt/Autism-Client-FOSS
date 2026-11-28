@@ -135,19 +135,19 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.switchTab(AiAssistantOverlay.OverlayTab.MEMORY);
    }
 
-   void write_V() {
-      this.init(this.chatView.activeInput());
+   void focusActiveInput() {
+      this.focusInput(this.chatView.activeInput());
    }
 
-   int read_I() {
+   int contextMenuX() {
       return this.contextMenuX;
    }
 
-   int write_I() {
+   int contextMenuY() {
       return this.contextMenuY;
    }
 
-   void init(autismclient.gui.ui.widgets.TextInputWidget field) {
+   void focusInput(autismclient.gui.ui.widgets.TextInputWidget field) {
       for (autismclient.gui.ui.widgets.TextInputWidget other : this.inputs) {
          if (other != field) {
             other.setFocused(false);
@@ -157,33 +157,33 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       field.setFocused(true);
    }
 
-   void init(String id) {
-      this.contextMenu.init(this.contextMenuX, this.contextMenuY, id);
+   void openContextMenu(String id) {
+      this.contextMenu.open(this.contextMenuX, this.contextMenuY, id);
    }
 
    void openAction(String action, String query) {
-      this.load("chat");
+      this.showView("chat");
       this.chatView.openAction(action, query);
    }
 
-   void update_V() {
+   void confirmActionMenu() {
       this.chatView.actionMenu.confirm();
    }
 
-   void sync_V() {
-      this.load("settings");
+   void openSettings() {
+      this.showView("settings");
       this.settingsView.init_V();
    }
 
-   void flush_V() {
-      this.chatView.actionMenu.write_V();
+   void confirmPlacement() {
+      this.chatView.actionMenu.confirmPlacement();
    }
 
    void close_V() {
       this.chatView.actionMenu.update_V();
    }
 
-   JsonObject init_JsonObject() {
+   JsonObject actionMenuStatus() {
       return this.chatView.actionMenu.statusJson();
    }
 
@@ -191,11 +191,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.setVisible(false);
    }
 
-   void poll_V() {
+   void cancelActionMenu() {
       this.chatView.actionMenu.cancel();
    }
 
-   void load(String name) {
+   void showView(String name) {
       this.chatView.setAttachmentsEnabled("attachments".equals(name));
       switch (name == null ? "" : name) {
          case "settings":
@@ -212,7 +212,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             break;
          default:
             this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
-            this.sessionsDrawer.load();
+            this.sessionsDrawer.closeDrawer();
       }
 
       this.viewState.invalidate();
@@ -237,7 +237,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          }
 
          if (next != AiAssistantOverlay.OverlayTab.CHAT) {
-            this.sessionsDrawer.load();
+            this.sessionsDrawer.closeDrawer();
          }
 
          this.tab = next;
@@ -257,7 +257,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.renaming = true;
       this.renameInput.setValue(this.sessionTitle());
       this.renameInput.moveCursorToEnd();
-      this.init(this.renameInput);
+      this.focusInput(this.renameInput);
    }
 
    private void commitRename() {
@@ -298,7 +298,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             long now = System.currentTimeMillis();
             this.viewState.refresh(now, this.sessionsDrawer.open);
             this.recordMousePosition(mx, my);
-            boolean blocked = this.contextMenu.init(mx, my)
+            boolean blocked = this.contextMenu.handleClick(mx, my)
                || this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.isOverPopup(mx, my);
             this.ui.beginFrame(graphics, mx, my, blocked, delta);
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(
@@ -314,7 +314,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             switch (this.tab) {
                case CHAT:
                   this.chatView.render(this.ui, area, now);
-                  this.sessionsDrawer.init(this.ui, this.chatView.init_NetHelper(), now);
+                  this.sessionsDrawer.render(this.ui, this.chatView.init_NetHelper(), now);
                   break;
                case SETTINGS:
                   this.settingsView.render(this.ui, area, now);
@@ -327,7 +327,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                this.settingsView.renderPopups(this.ui);
             }
 
-            this.contextMenu.init(graphics, mx, my);
+            this.contextMenu.render(graphics, mx, my);
             if (!this.contextMenu.isOpen() && (this.tab != AiAssistantOverlay.OverlayTab.SETTINGS || !this.settingsView.hasOpenDropdown())) {
                this.ui.renderHoveredTooltip();
             }
@@ -460,7 +460,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                && this.sessionsDrawer.open
                && !this.sessionsDrawer.contains(x, y)
                && this.chatView.init_NetHelper().init_Z((int)x, (int)y)) {
-               this.sessionsDrawer.load();
+               this.sessionsDrawer.closeDrawer();
                return true;
             } else {
                this.ui.mouseClicked(x, y, button, this.inputs);
@@ -590,7 +590,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
             return true;
          } else if (this.sessionsDrawer.open) {
-            this.sessionsDrawer.load();
+            this.sessionsDrawer.closeDrawer();
             return true;
          } else {
             return false;
@@ -608,7 +608,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (focused == null && this.tab == AiAssistantOverlay.OverlayTab.CHAT && !this.sessionsDrawer.open && !this.contextMenu.isOpen()) {
          autismclient.gui.ui.widgets.TextInputWidget target = this.chatView.init_BitSetUtil_C(c);
          if (target != null) {
-            this.init(target);
+            this.focusInput(target);
             return target.charTyped(this.ui.layoutContext, c, mods);
          }
       }

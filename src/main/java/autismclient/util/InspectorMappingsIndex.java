@@ -21,7 +21,7 @@ public final class InspectorMappingsIndex {
    private InspectorMappingsIndex() {
    }
 
-   public static String init(Class<?> type) {
+   public static String classAlias(Class<?> type) {
       return type == null ? null : aliasForClass(type.getName());
    }
 
@@ -34,7 +34,7 @@ public final class InspectorMappingsIndex {
       }
    }
 
-   public static String load(String simpleName) {
+   public static String aliasForSimpleName(String simpleName) {
       if (simpleName != null && !simpleName.isBlank()) {
          ensureLoaded();
          String alias = simpleAliases.get(simpleName);
@@ -44,7 +44,7 @@ public final class InspectorMappingsIndex {
       }
    }
 
-   public static String init(Method method) {
+   public static String methodAlias(Method method) {
       if (method == null) {
          return null;
       }
@@ -53,7 +53,7 @@ public final class InspectorMappingsIndex {
       return methodAliases.get(memberKey(method.getDeclaringClass().getName(), method.getName(), methodDescriptor(method)));
    }
 
-   public static String init(Field field) {
+   public static String fieldAlias(Field field) {
       if (field == null) {
          return null;
       }

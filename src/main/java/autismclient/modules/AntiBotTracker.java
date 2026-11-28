@@ -228,16 +228,16 @@ public final class AntiBotTracker {
          }
       }
 
-      if (m.sync.get() && watched && !hitByLocalPlayerEntityIds.contains(id)) {
+      if (m.needHit.get() && watched && !hitByLocalPlayerEntityIds.contains(id)) {
          return "never hit";
-      } else if (m.flush.get() && watched && !swungArmEntityIds.contains(id)) {
+      } else if (m.needSwing.get() && watched && !swungArmEntityIds.contains(id)) {
          return "never swung";
-      } else if (m.close.get() && watched && !critHitEntityIds.contains(id)) {
+      } else if (m.needCrit.get() && watched && !critHitEntityIds.contains(id)) {
          return "never crit-hit";
-      } else if (m.open.get() && Math.abs(player.getAttributeValue(Attributes.SCALE) - 1.0) > 1.0E-4) {
+      } else if (m.oddScale.get() && Math.abs(player.getAttributeValue(Attributes.SCALE) - 1.0) > 1.0E-4) {
          return "odd scale";
       } else {
-         return m.poll.get() && !matchesArmorFilter(player, m) ? "armor rule" : null;
+         return m.requireArmor.get() && !matchesArmorFilter(player, m) ? "armor rule" : null;
       }
    }
 

@@ -48,7 +48,7 @@ public final class CustomSkyboxRenderer {
       return w != null && w.isEnabled() && w.bool("skybox") && Minecraft.getInstance().level != null;
    }
 
-   public static void init(float partialTick) {
+   public static void render(float partialTick) {
       Minecraft mc = Minecraft.getInstance();
       WorldModule w = init_bi();
       if (mc.level != null && w != null) {
@@ -67,7 +67,7 @@ public final class CustomSkyboxRenderer {
                   ? ThemeTextureRecolorer.recolor(init_IdentifierArr[face], ThemePaletteManager.getPalette().targetArgb(ThemePaletteManager.ColorRole.BACKDROP))
                   : ThemeTextureRecolorer.recolor(init_IdentifierArr[face], customColor);
                if (texture != null) {
-                  VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
+                  VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
                   float[] verts = init_FArr2[face];
                   float[] uvs = load_FArr2[face];
 
@@ -78,7 +78,7 @@ public final class CustomSkyboxRenderer {
                }
             }
 
-            bufferSource.init();
+            bufferSource.drawAll();
          } catch (Throwable var16) {
          }
       }

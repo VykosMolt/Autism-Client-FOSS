@@ -361,7 +361,7 @@ public final class f {
          this.add(new ColorSetting("crafter-color", "Crafter", -858214805).group("Colors").description("Crafter, pot, bookshelf"));
          this.add(new ColorSetting("other-color", "Other", -7566196).group("Colors").description("Fallback."));
 
-         for (StructureStorageFilter.StructureFilter structure : StructureStorageFilter.init) {
+         for (StructureStorageFilter.StructureFilter structure : StructureStorageFilter.STRUCTURES) {
             this.add(new BoolSetting(structure.id(), structure.load(), false).group("Ignore Structures"));
          }
       }
@@ -1025,7 +1025,7 @@ public final class f {
          if (this.read_Z) {
             if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.read()) {
                this.init_V_Z_9(false);
-            } else if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.getInstance().getClientTick())) {
+            } else if (autismclient.util.MouseDeltaAccumulator.movedWithin(0, AutismSessionState.getInstance().getClientTick())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1) + partialTick);
@@ -1036,7 +1036,7 @@ public final class f {
       @Override
       public void onMouseRotation(double deltaYaw, double deltaPitch) {
          if (this.read_Z) {
-            if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.getInstance().getClientTick())) {
+            if (autismclient.util.MouseDeltaAccumulator.movedWithin(0, AutismSessionState.getInstance().getClientTick())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1));
@@ -1706,7 +1706,7 @@ public final class f {
                autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
                if (macro == null) {
                   this.load("AutoFish auto stop rule not found: " + macroName);
-               } else if (!AutoFishMacroPresets.init(macro)) {
+               } else if (!AutoFishMacroPresets.isRaceEligible(macro)) {
                   this.load("AutoFish auto stop rule must start with a conditional.");
                } else {
                   autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
@@ -1786,7 +1786,7 @@ public final class f {
          for (int i = 0; i < actions.size(); i++) {
             MacroAction action = actions.get(i);
             if (action != null && action.isEnabled()) {
-               return autismclient.util.macro.RaceEligibilityChecker.init(action) ? i : -1;
+               return autismclient.util.macro.RaceEligibilityChecker.isEligible(action) ? i : -1;
             }
          }
 
@@ -2014,12 +2014,12 @@ public final class f {
 
       @Override
       protected String externalSettingValue(String settingId) {
-         return this.init_h == null ? null : this.init_h.init_Str_Str(settingId);
+         return this.init_h == null ? null : this.init_h.settingValue(settingId);
       }
 
       @Override
       protected boolean setExternalSettingValue(String settingId, String value) {
-         return this.init_h != null && this.init_h.init(settingId, value);
+         return this.init_h != null && this.init_h.setSettingValue(settingId, value);
       }
 
       @Override
@@ -2037,8 +2037,8 @@ public final class f {
          boolean right = "Right".equals(this.choice("button"));
          autismclient.util.clicker.KeyClickOutput output = right ? this.load_StreamUtil : this.init_StreamUtil;
          autismclient.util.clicker.KeyClickOutput other = right ? this.init_StreamUtil : this.load_StreamUtil;
-         output.init_V();
-         other.init_V();
+         output.activate();
+         other.activate();
          if (other.isPressed()) {
             other.release();
          }
@@ -2047,7 +2047,7 @@ public final class f {
             boolean holdDown = "Hold Down".equals(this.choice("mode"));
             boolean physical = output.isPhysicallyDown();
             autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
-            this.init_DataUtil.setPersonality(this.init_h.init_DataUtil_ConfigSto());
+            this.init_DataUtil.setPersonality(this.init_h.personality());
             output.setOwnsKey(holdDown && physical);
             if (physical && !this.init_Z) {
                if (holdDown) {
@@ -2136,12 +2136,12 @@ public final class f {
       private void read() {
          boolean right = "Right".equals(this.choice("button"));
          autismclient.util.VirtualInputDispatcher.setAttackHeld(!right);
-         autismclient.util.VirtualInputDispatcher.load(right);
+         autismclient.util.VirtualInputDispatcher.setUseHeld(right);
       }
 
       private void write() {
          autismclient.util.VirtualInputDispatcher.setAttackHeld(false);
-         autismclient.util.VirtualInputDispatcher.load(false);
+         autismclient.util.VirtualInputDispatcher.setUseHeld(false);
       }
    }
 
@@ -3276,7 +3276,7 @@ public final class f {
             this.setValue("nbt-imported-components", imported);
             this.setValue("nbt-imported-signature", this.read_Str_3());
             this.setValue("nbt-item-components", imported);
-            this.setValue("nbt-item-stack", autismclient.util.ItemNbtInspector.prettyPrint(autismclient.util.ItemSnbtCodec.load(stack)));
+            this.setValue("nbt-item-stack", autismclient.util.ItemNbtInspector.prettyPrint(autismclient.util.ItemSnbtCodec.snbt(stack)));
             this.setValue("nbt-item-stack-signature", this.read_Str_3());
             return true;
          } else {
@@ -3357,7 +3357,7 @@ public final class f {
                return ItemStack.EMPTY;
             }
 
-            String validationError = autismclient.util.ItemSnbtCodec.read(stack);
+            String validationError = autismclient.util.ItemSnbtCodec.validationError(stack);
             if (!validationError.isBlank()) {
                if (notifyErrors) {
                   AutismClientMessaging.sendPrefixed("Admin Tools: invalid item data: " + validationError);
@@ -3544,7 +3544,7 @@ public final class f {
 
       public boolean init_Z(String rawSnbt) {
          ItemStack parsed = autismclient.util.ItemSnbtCodec.parseStack(rawSnbt);
-         return !parsed.isEmpty() && autismclient.util.ItemSnbtCodec.read(parsed).isBlank() ? this.init(parsed, false) : false;
+         return !parsed.isEmpty() && autismclient.util.ItemSnbtCodec.validationError(parsed).isBlank() ? this.init(parsed, false) : false;
       }
 
       public void sync_V_9() {
@@ -4321,7 +4321,7 @@ public final class f {
          }
 
          if (stack != null && !stack.isEmpty()) {
-            String validationError = autismclient.util.ItemSnbtCodec.read(stack);
+            String validationError = autismclient.util.ItemSnbtCodec.validationError(stack);
             if (!validationError.isBlank()) {
                AutismClientMessaging.sendPrefixed("Admin Tools: invalid item data: " + validationError);
                return false;
@@ -4512,12 +4512,12 @@ public final class f {
 
       @Override
       protected String externalSettingValue(String settingId) {
-         return this.init_h == null ? null : this.init_h.init_Str_Str(settingId);
+         return this.init_h == null ? null : this.init_h.settingValue(settingId);
       }
 
       @Override
       protected boolean setExternalSettingValue(String settingId, String value) {
-         return this.init_h != null && this.init_h.init(settingId, value);
+         return this.init_h != null && this.init_h.setSettingValue(settingId, value);
       }
 
       @Override
@@ -4533,7 +4533,7 @@ public final class f {
             this.init_J = -9223372036854775808L;
          } else {
             autismclient.util.clicker.ClickProfile profile = this.init_h.profile();
-            this.init_DataUtil.setPersonality(this.init_h.init_DataUtil_ConfigSto());
+            this.init_DataUtil.setPersonality(this.init_h.personality());
             if (!this.init_Z) {
                this.init_DataUtil.applyProfile(now, profile, this.init_f_EventBus_DataUti);
                this.init_J = now;
@@ -5432,7 +5432,7 @@ public final class f {
 
       private void init() {
          if (MC != null) {
-            WindowIconManager.load(MC);
+            WindowIconManager.scheduleApply(MC);
             if (!AutismLiteVariant.enabled() && MC.gui.screen() instanceof autismclient.gui.screens.AutismTitleScreen) {
                MC.gui.setScreen(new autismclient.gui.screens.AutismTitleScreen());
             }
@@ -5514,7 +5514,7 @@ public final class f {
                String key = "color-" + id;
                boolean fresh = this.value(key) == null;
                if (this.setting(key) == null) {
-                  String label = RegistryDisplayNameCache.load(id);
+                  String label = RegistryDisplayNameCache.blockName(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, BlockEspCatalog.defaultColor(id)).group("Colors").visibleWhen(() -> BlockEspCatalog.isSelected(this, id)));
                }
 
@@ -5600,14 +5600,14 @@ public final class f {
       }
 
       private void init_V_40() {
-         for (String id : OreSimEspScanner.init_List(this)) {
+         for (String id : OreSimEspScanner.selectedIds(this)) {
             String key = "block-color-" + id;
             if (this.setting(key) == null) {
-               String label = RegistryDisplayNameCache.load(id);
+               String label = RegistryDisplayNameCache.blockName(id);
                this.add(
                   new ColorSetting(key, label.isBlank() ? id : label, -3355444)
                      .group("Colors")
-                     .visibleWhen(() -> this.load() && !this.read() && OreSimEspScanner.init(this, id))
+                     .visibleWhen(() -> this.load() && !this.read() && OreSimEspScanner.isSelected(this, id))
                      .build()
                );
             }
@@ -5624,7 +5624,7 @@ public final class f {
       @Override
       public void onDisable() {
          this.init_Str = "";
-         autismclient.util.oresim.OreSimEngine.load_V();
+         autismclient.util.oresim.OreSimEngine.pause();
          if (this.init_Z_43()) {
             am.init_V();
          }
@@ -6488,7 +6488,7 @@ public final class f {
 
       @Override
       public void onDisable() {
-         autismclient.util.BlockPreviewRenderer.load();
+         autismclient.util.BlockPreviewRenderer.clear();
          this.init_BlockPos = null;
       }
 
@@ -6497,7 +6497,7 @@ public final class f {
          this.init_BlockPos = pos == null ? null : pos.immutable();
          this.init_Direction = direction == null ? Direction.UP : direction;
          if (this.bool("render")) {
-            autismclient.util.BlockPreviewRenderer.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
+            autismclient.util.BlockPreviewRenderer.show(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
          }
 
          this.init_I = 0;
@@ -6511,9 +6511,9 @@ public final class f {
             && this.init_BlockPos != null
             && !AutoTotemModule.init_Z_6()) {
             if (!this.bool("render")) {
-               autismclient.util.BlockPreviewRenderer.load();
+               autismclient.util.BlockPreviewRenderer.clear();
             } else {
-               autismclient.util.BlockPreviewRenderer.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
+               autismclient.util.BlockPreviewRenderer.show(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
             }
 
             if (!MC.level.isOutsideBuildHeight(this.init_BlockPos)
@@ -6553,7 +6553,7 @@ public final class f {
 
       @Override
       public void onGameLeft() {
-         autismclient.util.BlockPreviewRenderer.load();
+         autismclient.util.BlockPreviewRenderer.clear();
          this.init_BlockPos = null;
       }
    }
@@ -6584,7 +6584,7 @@ public final class f {
             if (!SpawnerEspCatalog.init(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
-                  String label = RegistryDisplayNameCache.read(id);
+                  String label = RegistryDisplayNameCache.entityName(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> SpawnerEspCatalog.isSelected(this, id)));
                }
             }
@@ -7017,7 +7017,7 @@ public final class f {
          boolean randomMode = "Random".equals(this.choice("mode"));
          int pageCount = "File".equals(this.choice("mode")) ? 100 : Math.min(100, Math.max(1, this.integer("pages")));
          if (randomMode) {
-            return BookBotPageGenerator.init(pageCount, this.integer("characters"), this.choice("random-type"), this.init_Random);
+            return BookBotPageGenerator.generate(pageCount, this.integer("characters"), this.choice("random-type"), this.init_Random);
          } else {
             int chars = this.integer("characters");
             if (!custom.isBlank() && this.bool("word-wrap")) {
@@ -7217,9 +7217,9 @@ public final class f {
             && !ScaffoldModule.flush_Z_5()
             && !AutoTotemModule.init_Z_6()
             && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
-            && !autismclient.util.ManualInteractionYield.init()
+            && !autismclient.util.ManualInteractionYield.isYielding()
             && this.init_O.accepts(MC.player.getMainHandItem())
-            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, AutismSessionState.getInstance().getClientTick()))) {
+            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.movedWithin(4, AutismSessionState.getInstance().getClientTick()))) {
             LivingEntity target = this.init_LivingEntity_4();
             if (target == null) {
                this.init_V_46();
@@ -7278,7 +7278,7 @@ public final class f {
          this.init_F = current.yaw();
          this.load_Z = true;
          double gcd = RotationMath.gcdStep();
-         boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
+         boolean noCooldown = autismclient.util.LegacyCombatDetector.isLegacyCombat(MC.player);
          this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.AimFrame.computeAnchorAtHeight(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.clampInsideBox = true;
          this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.isTracking(target)
@@ -7393,7 +7393,7 @@ public final class f {
       }
 
       private void init_V_LivingEntity_4(LivingEntity target) {
-         this.init_cj.init(target, AutismSessionState.getInstance().getClientTick());
+         this.init_cj.track(target, AutismSessionState.getInstance().getClientTick());
          if (target.getId() != this.flush_I) {
             this.flush_I = target.getId();
             this.init_Z = false;
@@ -7516,7 +7516,7 @@ public final class f {
          int var10000;
          switch (priority) {
             case "Smart":
-               var10000 = Double.compare(autismclient.util.CombatTargetScorer.init(a, MC.player, current), autismclient.util.CombatTargetScorer.init(b, MC.player, current));
+               var10000 = Double.compare(autismclient.util.CombatTargetScorer.score(a, MC.player, current), autismclient.util.CombatTargetScorer.score(b, MC.player, current));
                break;
             case "Type":
                var10000 = Integer.compare(this.init_I_LivingEntity_3(a), this.init_I_LivingEntity_3(b));
@@ -8155,7 +8155,7 @@ public final class f {
                if (forward) {
                   autismclient.util.VirtualInputDispatcher.setSlot(clamped);
                } else {
-                  autismclient.util.VirtualInputDispatcher.init(clamped, this.read_I);
+                  autismclient.util.VirtualInputDispatcher.requestSlot(clamped, this.read_I);
                }
 
                if (forward) {
@@ -8174,11 +8174,11 @@ public final class f {
             int limit = this.bool("consider-inventory") ? 36 : 9;
             int best = -1;
             if (this.bool("prefer-silk-touch")) {
-               best = autismclient.util.BlockBreakSpeedHelper.init(MC, state, limit, this.bool("ignore-durability"), true);
+               best = autismclient.util.BlockBreakSpeedHelper.bestToolSlot(MC, state, limit, this.bool("ignore-durability"), true);
             }
 
             if (best < 0) {
-               best = autismclient.util.BlockBreakSpeedHelper.init(MC, state, limit, this.bool("ignore-durability"), false);
+               best = autismclient.util.BlockBreakSpeedHelper.bestToolSlot(MC, state, limit, this.bool("ignore-durability"), false);
             }
 
             if (best < 0) {
@@ -8228,8 +8228,8 @@ public final class f {
 
          ItemStack candidate = MC.player.getInventory().getItem(candidateSlot);
          ItemStack current = MC.player.getInventory().getItem(Math.max(0, Math.min(8, selectedSlot)));
-         float candidateSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, candidate, state);
-         float currentSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, current, state);
+         float candidateSpeed = autismclient.util.BlockBreakSpeedHelper.breakSpeed(MC, candidate, state);
+         float currentSpeed = autismclient.util.BlockBreakSpeedHelper.breakSpeed(MC, current, state);
          return this.bool("prefer-silk-touch") && candidateSpeed > 1.0F && autismclient.util.BlockBreakSpeedHelper.hasSilkTouch(MC, candidate)
             ? !(currentSpeed > 1.0F) || !autismclient.util.BlockBreakSpeedHelper.hasSilkTouch(MC, current)
             : candidateSpeed > currentSpeed;
@@ -8419,11 +8419,11 @@ public final class f {
       }
 
       private void init() {
-         for (String id : FrameEspCatalog.init(this)) {
+         for (String id : FrameEspCatalog.itemIds(this)) {
             if (!FrameEspCatalog.isKnown(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
-                  String label = RegistryDisplayNameCache.init(id);
+                  String label = RegistryDisplayNameCache.itemName(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, FrameEspCatalog.defaultColor(id)).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
                }
             }
@@ -8548,7 +8548,7 @@ public final class f {
       public void tick() {
          autismclient.util.CoordinateSpoofer.SpoofMode m = this.init_V_DataUtil();
          autismclient.util.CoordinateSpoofer.init(m);
-         autismclient.util.CoordinateSpoofer.init(this.bool("fake-y"));
+         autismclient.util.CoordinateSpoofer.setSpoofY(this.bool("fake-y"));
          if (m == autismclient.util.CoordinateSpoofer.SpoofMode.CUSTOM) {
             this.init_V_48();
          }

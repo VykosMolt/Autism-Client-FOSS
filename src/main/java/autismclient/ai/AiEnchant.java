@@ -119,7 +119,7 @@ final class AiEnchant {
          !input.isEmpty() && input.isEnchantable()
       );
       if (!input.isEmpty()) {
-         inputJson.add("components", AiWorldReaders.init(input));
+         inputJson.add("components", AiWorldReaders.summary(input));
       }
 
       return AiJson.objectOf(
@@ -236,7 +236,7 @@ final class AiEnchant {
                               "count",
                               now.getCount(),
                               "components",
-                              AiWorldReaders.init(now),
+                              AiWorldReaders.summary(now),
                               "resultNote",
                               "These are the enchantments the server actually applied; use game:inspect_item for the full component dump."
                            );

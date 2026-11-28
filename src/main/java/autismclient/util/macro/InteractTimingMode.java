@@ -9,7 +9,7 @@ public enum InteractTimingMode {
    AFTER_PLUS,
    CUSTOM;
 
-   public static InteractTimingMode init(String raw, InteractTimingMode fallback) {
+   public static InteractTimingMode parse(String raw, InteractTimingMode fallback) {
       if (raw == null) {
          return fallback;
       }

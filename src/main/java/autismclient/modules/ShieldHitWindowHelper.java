@@ -37,25 +37,25 @@ final class ShieldHitWindowHelper {
          : init_l_CachePool_Z(threat, raised, 0, raiseTicks, ticksUntilClick);
    }
 
-   static double load(double clientTickMs) {
+   static double tickScale(double clientTickMs) {
       return Double.isFinite(clientTickMs) && !(clientTickMs <= 0.0) ? Math.clamp(50.0 / clientTickMs, 0.25, 4.0) : 1.0;
    }
 
-   static Vec3 init(Vec3 delta) {
+   static Vec3 sanitizeMotion(Vec3 delta) {
       return Double.isFinite(delta.lengthSqr()) && delta.lengthSqr() <= 2.25 ? delta : Vec3.ZERO;
    }
 
-   static Vec3 init(AABB box, Vec3 eye) {
+   static Vec3 closestPoint(AABB box, Vec3 eye) {
       return new Vec3(Math.clamp(eye.x, box.minX, box.maxX), Math.clamp(eye.y, box.minY, box.maxY), Math.clamp(eye.z, box.minZ, box.maxZ));
    }
 
-   static boolean init(Vec3 eye, Vec3 view, AABB victim) {
+   static boolean isLookingAt(Vec3 eye, Vec3 view, AABB victim) {
       Vec3 direction = view.normalize();
       if (victim.contains(eye)) {
          return true;
       }
 
-      Vec3 closest = init(victim, eye);
+      Vec3 closest = closestPoint(victim, eye);
       ArrayList<Vec3> points = new ArrayList<>();
       points.add(closest);
       points.add(victim.getCenter());
@@ -100,7 +100,7 @@ final class ShieldHitWindowHelper {
    }
 
    static boolean unusedAimedInReachWindow(Vec3 eye, Vec3 view, AABB victim, double minReach, double maxReach, double margin) {
-      return init(eye, view, victim) && isInReachWindow(eye, victim, minReach, maxReach + 0.5, margin);
+      return isLookingAt(eye, view, victim) && isInReachWindow(eye, victim, minReach, maxReach + 0.5, margin);
    }
 
    static int init(AABB body, Vec3 motion, ShieldHitWindowHelper.CollisionClipper collision) {
@@ -323,14 +323,14 @@ final class ShieldHitWindowHelper {
             if (latest.distanceToSqr(this.lastPosition) > 1.0E-8) {
                int elapsed = Math.max(1, tick - this.lastTick);
                Vec3 delta = latest.subtract(this.lastPosition);
-               this.velocity = elapsed <= 3 && delta.lengthSqr() <= 2.25 ? ShieldHitWindowHelper.init(delta.scale(1.0 / elapsed)) : Vec3.ZERO;
+               this.velocity = elapsed <= 3 && delta.lengthSqr() <= 2.25 ? ShieldHitWindowHelper.sanitizeMotion(delta.scale(1.0 / elapsed)) : Vec3.ZERO;
                this.lastPosition = latest;
                this.lastTick = tick;
             }
          } else {
             this.lastPosition = latest;
             this.lastTick = tick;
-            this.velocity = ShieldHitWindowHelper.init(fallback);
+            this.velocity = ShieldHitWindowHelper.sanitizeMotion(fallback);
          }
 
          return tick - this.lastTick <= 2 ? this.velocity : Vec3.ZERO;

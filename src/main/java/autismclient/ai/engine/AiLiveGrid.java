@@ -68,7 +68,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.Inner_DataUtil.of(var1), 0L);
    }
 
-   public ClientLevel putAt_ClientLevel() {
+   public ClientLevel level() {
       return this.level;
    }
 
@@ -93,7 +93,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    @Override
-   public long putAt_J() {
+   public long revision() {
       return this.putAt_PoolStore_CacheHel.revision;
    }
 
@@ -263,13 +263,13 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       if (var2 >= this.minY && var2 <= this.maxY) {
          BlockState var4 = this.blockAt(var1, var2, var3);
          if (var4 == null) {
-            return AiSurface.NORMAL.init();
+            return AiSurface.NORMAL.id();
          }
 
          AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
-         return var5 == null ? AiSurface.NORMAL.init() : var5.surface();
+         return var5 == null ? AiSurface.NORMAL.id() : var5.surface();
       } else {
-         return AiSurface.NORMAL.init();
+         return AiSurface.NORMAL.id();
       }
    }
 
@@ -519,7 +519,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       try {
          if (var0.isAir()) {
             return new AiLiveGrid.CellTraits(
-               AiPathfinder.CellInfo.air(), (short)0, (short)0, AiSurface.NORMAL.init(), 0.0F, false, false, false, false, false, false
+               AiPathfinder.CellInfo.air(), (short)0, (short)0, AiSurface.NORMAL.id(), 0.0F, false, false, false, false, false, false
             );
          }
 
@@ -596,7 +596,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
          short var28 = var6.isEmpty() ? 0 : (var6 == Shapes.block() ? 1 : AiShapes.shapeId(var6.toAabbs()));
          double var29 = var4 instanceof SlimeBlock ? 1.0 : (var4 instanceof BedBlock ? 0.75 : 0.0);
-         byte var31 = AiSurface.init(var4.getFriction(), var4.getSpeedFactor(), var4.getJumpFactor(), var29).init();
+         byte var31 = AiSurface.classify(var4.getFriction(), var4.getSpeedFactor(), var4.getJumpFactor(), var29).id();
          short var32 = AiShapes.shapeId(var0.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
          return new AiLiveGrid.CellTraits(
             var27,
@@ -609,7 +609,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             var26,
             var0.requiresCorrectToolForDrops(),
             AiPathfinder.LiveGridView.isOreBlock(var0),
-            AiChunkMemory.init(var18)
+            AiChunkMemory.isNotableBlock(var18)
          );
       } catch (RuntimeException var33) {
          return null;
@@ -770,7 +770,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             }
          }
 
-         var1.init(var3, var4, var6, var8, var9, var10);
+         var1.storeChunk(var3, var4, var6, var8, var9, var10);
       }
    }
 

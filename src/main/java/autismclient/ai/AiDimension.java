@@ -302,7 +302,7 @@ final class AiDimension {
                            return this.running("Arrived in " + AiDimension.currentDimension() + "; waiting for the world");
                         } else {
                            String hazard = this.arrivalHazard();
-                           AiPortalLinks.init(this.startDimension, this.load_BlockPos, AiDimension.currentDimension(), mc.player.blockPosition(), hazard == null, this.load_JsonObject);
+                           AiPortalLinks.recordLink(this.startDimension, this.load_BlockPos, AiDimension.currentDimension(), mc.player.blockPosition(), hazard == null, this.load_JsonObject);
                            if (!AiDimension.currentDimension().equals(target)) {
                               return this.finish(AiOperation.Status.UNCERTAIN, "Portal led to " + AiDimension.currentDimension() + " rather than " + target);
                            } else {
@@ -410,7 +410,7 @@ final class AiDimension {
                               boolean inside = mc.level.getBlockState(feet).getBlock() == portalBlock
                                  || mc.level.getBlockState(feet.above()).getBlock() == portalBlock;
                               if (inside && this.load_JsonObject.isEmpty()) {
-                                 this.load_JsonObject = AiPortalLinks.init(this.load_BlockPos);
+                                 this.load_JsonObject = AiPortalLinks.entranceEvidence(this.load_BlockPos);
                               }
 
                               if (!inside) {
@@ -1467,7 +1467,7 @@ final class AiDimension {
                      "observedLinks",
                      AiPortalLinks.snapshotJson()
                   );
-                  out.add("arrivalSearchPrediction", AiPortalLinks.init(this.startPos, this.startDimension, target));
+                  out.add("arrivalSearchPrediction", AiPortalLinks.predictArrival(this.startPos, this.startDimension, target));
                   if (this.load_BlockPos != null) {
                      out.addProperty("portalAt", this.load_BlockPos.toShortString());
                   }

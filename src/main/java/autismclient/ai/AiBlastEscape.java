@@ -12,7 +12,7 @@ final class AiBlastEscape {
    private AiBlastEscape() {
    }
 
-   static Float init(Minecraft mc, Creeper primary) {
+   static Float retreatYaw(Minecraft mc, Creeper primary) {
       if (mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable() && !mc.player.isUsingItem() && !mc.player.isShiftKeyDown()) {
          Vec3 start = mc.player.position();
          Vec3 away = start.subtract(primary.position());
@@ -51,7 +51,7 @@ final class AiBlastEscape {
                   }
 
                   if (!(clearance < 0.0)) {
-                     double score = clearance * 2.0 + finalDistance - Math.abs(AiCombatPriority.init(yaw - mc.player.getYRot())) * 0.002;
+                     double score = clearance * 2.0 + finalDistance - Math.abs(AiCombatPriority.wrapDegrees(yaw - mc.player.getYRot())) * 0.002;
                      if (score > bestScore) {
                         bestScore = score;
                         best = yaw;
@@ -67,7 +67,7 @@ final class AiBlastEscape {
       }
    }
 
-   static void init(Minecraft mc, float yaw) {
+   static void retreat(Minecraft mc, float yaw) {
       if (mc.player.isUsingItem()) {
          mc.gameMode.releaseUsingItem(mc.player);
       }

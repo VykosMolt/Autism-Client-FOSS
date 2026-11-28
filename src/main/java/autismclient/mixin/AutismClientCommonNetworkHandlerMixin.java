@@ -116,13 +116,13 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handleShowDialog", at = @At("TAIL"))
    private void autism$trackCustomMenu(ClientboundShowDialogPacket packet, CallbackInfo ci) {
       String phase = (Object)this instanceof ClientConfigurationPacketListener ? "CONFIGURATION" : "PLAY";
-      CustomMenuTracker.init(packet, phase);
+      CustomMenuTracker.onInbound(packet, phase);
    }
 
    @Inject(method = "handleClearDialog", at = @At("TAIL"))
    private void autism$clearCustomMenu(ClientboundClearDialogPacket packet, CallbackInfo ci) {
       String phase = (Object)this instanceof ClientConfigurationPacketListener ? "CONFIGURATION" : "PLAY";
-      CustomMenuTracker.init(packet, phase);
+      CustomMenuTracker.onInbound(packet, phase);
    }
 
    @Inject(method = "handlePing", at = @At("HEAD"))

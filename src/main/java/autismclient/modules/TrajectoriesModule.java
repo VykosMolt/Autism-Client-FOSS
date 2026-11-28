@@ -84,7 +84,7 @@ public final class TrajectoriesModule extends Module {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         TrajectoryStateCache.init(MC, this.bool("item-pearl"));
+         TrajectoryStateCache.tickPearls(MC, this.bool("item-pearl"));
       }
    }
 
@@ -143,7 +143,7 @@ public final class TrajectoriesModule extends Module {
                }
             }
 
-            Vec3 inherited = ProjectileBallistics.init(player);
+            Vec3 inherited = ProjectileBallistics.inheritedVelocity(player);
             TrajectoriesModule.Inner_DataUtil frame = new TrajectoriesModule.Inner_DataUtil(
                MC.level,
                player,
@@ -161,7 +161,7 @@ public final class TrajectoriesModule extends Module {
             if (!frame.equals(this.lastFrame) || !ItemStack.matches(stack, this.lastStack)) {
                List<TrajectoriesModule.Inner_ConfigStore> flights = new ArrayList<>(3);
 
-               for (ProjectileBallistics.ProjectileShot shot : ProjectileBallistics.init(player, stack, true, true)) {
+               for (ProjectileBallistics.ProjectileShot shot : ProjectileBallistics.shots(player, stack, true, true)) {
                   ProjectileBallistics.Trajectory result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
                   if (result.points().size() > 1) {
                      flights.add(

@@ -2903,7 +2903,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    private void tickSlotRestore() {
       if (this.restoreToSlot >= 0 && MC.player != null) {
          if ((!this.engaged || this.disengaging || this.slotsReleased) && --this.slotRestoreTicksLeft >= 0 && MC.player.getInventory().getSelectedSlot() == this.restoreFromSlot) {
-            autismclient.util.VirtualInputDispatcher.init(this.restoreToSlot, this.restoreFromSlot);
+            autismclient.util.VirtualInputDispatcher.requestSlot(this.restoreToSlot, this.restoreFromSlot);
          } else {
             this.restoreToSlot = -1;
          }

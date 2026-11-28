@@ -532,7 +532,7 @@ final class ClutchBlockPlanner {
       }
 
       if (nextFace != null) {
-         for (Vec3 point : init_List_Vec3(clickEye, nextEye, init(support, face), placed, nextFace, margin)) {
+         for (Vec3 point : init_List_Vec3(clickEye, nextEye, faceBox(support, face), placed, nextFace, margin)) {
             Vec3 look = point.subtract(clickEye);
             if (look.lengthSqr() <= reach * reach
                && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)
@@ -545,7 +545,7 @@ final class ClutchBlockPlanner {
       return false;
    }
 
-   static AABB init(BlockPos support, Direction face) {
+   static AABB faceBox(BlockPos support, Direction face) {
       double p = facePlane(support.getX(), support.getY(), support.getZ(), face);
       AABB var10000;
       switch (face.getAxis()) {
@@ -814,7 +814,7 @@ final class ClutchBlockPlanner {
          int centre = (int)Math.round(((min + max) * 0.5 - base) / gcd);
          List<ClutchBlockPlanner.AimAngles> result = new ArrayList<>(8);
          List<Double> scores = new ArrayList<>(8);
-         AABB followingRect = init(placed, nextFace);
+         AABB followingRect = faceBox(placed, nextFace);
 
          for (int step = 0; step <= Math.max(centre - low, high - centre) * 2; step++) {
             int count = centre + (step % 2 == 0 ? step / 2 : -(step + 1) / 2);

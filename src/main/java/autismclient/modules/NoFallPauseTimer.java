@@ -18,13 +18,13 @@ public final class NoFallPauseTimer {
       init_Z = true;
    }
 
-   public static void load() {
+   public static void reset() {
       init_Z = false;
       load_J = 0L;
       load_I = 0;
    }
 
-   public static void read() {
+   public static void tick() {
       if (init_Z) {
          Minecraft mc = Minecraft.getInstance();
          boolean grounded = mc.player != null && mc.player.onGround();

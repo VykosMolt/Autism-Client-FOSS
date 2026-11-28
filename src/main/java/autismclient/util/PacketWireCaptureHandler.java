@@ -15,7 +15,7 @@ public final class PacketWireCaptureHandler extends ChannelDuplexHandler {
    @Override
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (init() && msg instanceof ByteBuf buf) {
-         PacketWireCaptureStore.init(ctx.channel(), this.init, buf);
+         PacketWireCaptureStore.captureRaw(ctx.channel(), this.init, buf);
       }
 
       super.channelRead(ctx, msg);
@@ -24,7 +24,7 @@ public final class PacketWireCaptureHandler extends ChannelDuplexHandler {
    @Override
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
       if (init() && msg instanceof ByteBuf buf) {
-         PacketWireCaptureStore.init(ctx.channel(), this.init, buf);
+         PacketWireCaptureStore.captureRaw(ctx.channel(), this.init, buf);
       }
 
       super.write(ctx, msg, promise);

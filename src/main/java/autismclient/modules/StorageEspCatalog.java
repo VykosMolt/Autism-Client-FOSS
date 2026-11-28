@@ -136,8 +136,8 @@ public final class StorageEspCatalog {
                   for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                      LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                      if (chunk != null) {
-                        for (EspChunkWorker.EspBox entry : EspChunkWorker.write
-                           .init(chunk, gameTime, stamp, (scanned, out) -> scanChunk(level, scanned, blockTargets, colors, hideMask, out))) {
+                        for (EspChunkWorker.EspBox entry : EspChunkWorker.storage
+                           .scan(chunk, gameTime, stamp, (scanned, out) -> scanChunk(level, scanned, blockTargets, colors, hideMask, out))) {
                            Vec3 trace = entry.tracer();
                            if (!(distanceSq(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                               if (boxEmit != null) {

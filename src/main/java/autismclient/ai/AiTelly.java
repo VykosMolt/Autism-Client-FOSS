@@ -72,7 +72,7 @@ final class AiTelly {
       return false;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final AiTelly.TellyPlan plan = AiTelly.TellyPlan.parse(args);
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
@@ -114,7 +114,7 @@ final class AiTelly {
                      length = Math.abs(az);
                   }
                } else {
-                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.yawDegrees());
+                  int[] d = autismclient.ai.engine.AiBridgeDriver.cardinalStep(plan.yawDegrees());
                   dx = d[0];
                   dz = d[1];
                   length = plan.blocks() - this.init_List.size();

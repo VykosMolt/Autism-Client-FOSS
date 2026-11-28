@@ -221,7 +221,7 @@ public class PacketNameResolver {
 
    private static String resolveText(String text) {
       if (text != null && !text.isEmpty()) {
-         String normalizedText = load(text);
+         String normalizedText = normalizeCached(text);
          if (normalizedText.isEmpty()) {
             return null;
          }
@@ -246,7 +246,7 @@ public class PacketNameResolver {
 
    private static String resolveTextFor(String text, String direction) {
       if (text != null && !text.isEmpty()) {
-         String normalizedText = load(text);
+         String normalizedText = normalizeCached(text);
          if (normalizedText.isEmpty()) {
             return null;
          }
@@ -288,21 +288,21 @@ public class PacketNameResolver {
    }
 
    private static boolean init_Z_Str(String normalizedText, String registeredName, Class<? extends Packet<?>> registeredClass) {
-      String normalizedRegistered = load(registeredName);
+      String normalizedRegistered = normalizeCached(registeredName);
       if (normalizedRegistered.equals(normalizedText)) {
          return true;
       }
 
-      String strippedRegistered = load(stripPacketSuffix(registeredName));
+      String strippedRegistered = normalizeCached(stripPacketSuffix(registeredName));
       if (strippedRegistered.equals(normalizedText)) {
          return true;
       }
 
-      String className = load(registeredClass.getName());
+      String className = normalizeCached(registeredClass.getName());
       if (!className.equals(normalizedText) && !normalizedText.endsWith(className)) {
-         String simpleName = load(registeredClass.getSimpleName());
+         String simpleName = normalizeCached(registeredClass.getSimpleName());
          if (!simpleName.equals(normalizedText) && !normalizedText.endsWith(simpleName)) {
-            String canonicalName = load(registeredClass.getCanonicalName());
+            String canonicalName = normalizeCached(registeredClass.getCanonicalName());
             return canonicalName.isEmpty() || !canonicalName.equals(normalizedText) && !normalizedText.endsWith(canonicalName)
                ? normalizedText.endsWith(normalizedRegistered) || normalizedText.endsWith(strippedRegistered)
                : true;
@@ -329,12 +329,12 @@ public class PacketNameResolver {
    }
 
    private static void alias(Map<String, String> aliases, String canonicalName, String... variants) {
-      aliases.put(load(canonicalName), canonicalName);
-      aliases.put(load(stripPacketSuffix(canonicalName)), canonicalName);
+      aliases.put(normalizeCached(canonicalName), canonicalName);
+      aliases.put(normalizeCached(stripPacketSuffix(canonicalName)), canonicalName);
 
       for (String variant : variants) {
          if (variant != null && !variant.isEmpty()) {
-            aliases.put(load(variant), canonicalName);
+            aliases.put(normalizeCached(variant), canonicalName);
          }
       }
    }
@@ -360,11 +360,11 @@ public class PacketNameResolver {
    }
 
    private static boolean init_Z_Str(String name) {
-      String normalized = load(name);
+      String normalized = normalizeCached(name);
       return normalized.startsWith("class") && normalized.length() > 5;
    }
 
-   public static String load(String value) {
+   public static String normalizeCached(String value) {
       if (value != null && !value.isEmpty()) {
          if (normalizedCache.size() > 4096) {
             normalizedCache.clear();

@@ -158,7 +158,7 @@ public final class SchematicDecodeCheck {
       int bits = SchematicDocument.bitsForPaletteSize(palette.size());
       long[] packed = new long[(int)(((long)values.length * bits + 63L) / 64L)];
       for (int i = 0; i < values.length; i++) {
-         SchematicDocument.init(packed, i, bits, values[i]);
+         SchematicDocument.pack(packed, i, bits, values[i]);
       }
 
       r.putLongArray("BlockStates", packed);

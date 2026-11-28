@@ -117,7 +117,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          CompletableFuture.<AiSchematicPlacement.LoadedSchematic>supplyAsync(
                () -> {
                   try {
-                     Path path = AiSchematic.resolveFile(AiSchematic.init(), name);
+                     Path path = AiSchematic.resolveFile(AiSchematic.directory(), name);
                      long size = Files.size(path);
                      long modified = Files.getLastModifiedTime(path).toMillis();
                      AiSchematic.LoadedSchematic schematic = AiSchematic.load(path, BlockPos.ZERO, 0, "none", false, 2097152);
@@ -250,7 +250,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       if (mode == null) {
          return choice + ": flight state unavailable.";
       } else {
-         boolean permitted = autismclient.ai.print.PrintFlightPermission.init(assumeFly, mode, mayfly, instabuild);
+         boolean permitted = autismclient.ai.print.PrintFlightPermission.canFly(assumeFly, mode, mayfly, instabuild);
          if (mode == GameType.CREATIVE) {
             return choice + (permitted ? " / native Creative flight available." : " / no Creative flight; use ground movement.");
          } else if (mode != GameType.SURVIVAL) {
@@ -279,7 +279,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       } else if (this.update_Z) {
          return "Preparing nearby placement comparison...";
       } else if (this.search != null) {
-         return "Comparing nearby sites: " + this.search.comparedCount() + "/" + this.search.load();
+         return "Comparing nearby sites: " + this.search.comparedCount() + "/" + this.search.candidateCount();
       } else if (!this.impossibleReason.isEmpty()) {
          return "Some saved cells may be skipped during construction.";
       } else {
@@ -365,12 +365,12 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   void load(boolean value) {
+   void setClearTerrain(boolean value) {
       this.sync = value;
       this.open();
    }
 
-   void read(boolean value) {
+   void setAssumeFly(boolean value) {
       this.flush = value;
    }
 
@@ -416,8 +416,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
                this.origin = hit.getBlockPos().relative(hit.getDirection());
                this.init_D = Vec3.atCenterOf(this.origin).distanceTo(eye);
             } else {
-               this.init_D = AiPlacementControls.init(eye, direction, this.origin.getY() + 0.5, this.init_D);
-               this.init_V_Vec3(AiPlacementControls.init(eye, direction, this.init_D));
+               this.init_D = AiPlacementControls.distanceToY(eye, direction, this.origin.getY() + 0.5, this.init_D);
+               this.init_V_Vec3(AiPlacementControls.pointAlong(eye, direction, this.init_D));
             }
 
             this.init_Vec3 = direction;
@@ -437,7 +437,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             BlockPos before = this.origin;
             Vec3 eye = Minecraft.getInstance().gameRenderer.mainCamera().position();
             this.init_Vec3 = this.init_Vec3_D(0.5, 0.5, 1.0, 1.0);
-            this.init_V_Vec3(AiPlacementControls.init(eye, this.init_Vec3, this.init_D));
+            this.init_V_Vec3(AiPlacementControls.pointAlong(eye, this.init_Vec3, this.init_D));
             if (!this.origin.equals(before)) {
                this.open();
             }
@@ -458,7 +458,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          Vec3 direction = this.init_Vec3;
          if (!(direction.lengthSqr() < 0.5)) {
             this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
-            this.init_V_Vec3(AiPlacementControls.init(eye, direction, this.init_D));
+            this.init_V_Vec3(AiPlacementControls.pointAlong(eye, direction, this.init_D));
             this.open();
          }
       }
@@ -528,8 +528,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
          this.sizedCells = this.survivalCells;
       }
 
-      AiVisualization.load(this);
-      AiVisualization.init(this, this.origin, this.survivalCells, 0, true);
+      AiVisualization.refreshTargets(this);
+      AiVisualization.showPlan(this, this.origin, this.survivalCells, 0, true);
       this.bounds = this.survivalCells.isEmpty()
          ? null
          : new AABB(
@@ -542,7 +542,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          );
    }
 
-   void flush() {
+   void confirmPlacement() {
       if (this.isReadyToConfirm()) {
          Minecraft mc = Minecraft.getInstance();
          if (this.bounds != null && this.bounds.getXsize() * this.bounds.getYsize() * this.bounds.getZsize() > 1000000.0) {
@@ -623,11 +623,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
    private void poll() {
       if (this.isActive()) {
-         AiVisualization.init(this, this.origin, this.survivalCells, 0, true);
+         AiVisualization.showPlan(this, this.origin, this.survivalCells, 0, true);
       }
 
       if (this.search != null) {
-         this.search.init(4096, System.nanoTime() + 2000000L);
+         this.search.step(4096, System.nanoTime() + 2000000L);
          if (this.search.isDone() || this.search.init_J() > 1500000L || System.nanoTime() - this.searchStartedAt > 8000000000L) {
             AiPlacementSearch.CandidateScore found = this.search.getResult();
             this.search = null;
@@ -755,7 +755,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          return List.of();
       }
 
-      List<AiCellMaterials.MaterialRequirement> needed = AiCellMaterials.combine(AiCellMaterials.init(this.survivalCells, this.origin, this.level));
+      List<AiCellMaterials.MaterialRequirement> needed = AiCellMaterials.combine(AiCellMaterials.requirementsInWorld(this.survivalCells, this.origin, this.level));
       Inventory inventory = Minecraft.getInstance().player.getInventory();
       JsonObject missingMaterials = creative ? new JsonObject() : AiBuilder.missingMaterialsForContainer(needed, inventory, true);
       List<String> out = new ArrayList<>();

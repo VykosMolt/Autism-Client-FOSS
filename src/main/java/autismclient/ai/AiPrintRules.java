@@ -59,7 +59,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    public static List<autismclient.ai.print.PrintTarget> targetsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
       AiSchematic.LoadedSchematic loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
-      return init(AiBuilder.normalizeSchematicBlueprint(loaded.blueprint()));
+      return targets(AiBuilder.normalizeSchematicBlueprint(loaded.blueprint()));
    }
 
    public static AiPrintRules.PrintInputs init(Path file, BlockPos origin, int rotation, String mirror, Provider registries, boolean fixtureContents) {
@@ -81,7 +81,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          });
       }
 
-      return new AiPrintRules.PrintInputs(init(normalized), actions.vehicles(), hoppers, actions.outcomes(), Map.copyOf(contents), actions);
+      return new AiPrintRules.PrintInputs(targets(normalized), actions.vehicles(), hoppers, actions.outcomes(), Map.copyOf(contents), actions);
    }
 
    public static Map<Long, ListTag> containerContentsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
@@ -149,14 +149,14 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          );
       }
 
-      return init(AiBuilder.normalizeSchematicBlueprint(new AiBuilder.Blueprint(origin, cells)));
+      return targets(AiBuilder.normalizeSchematicBlueprint(new AiBuilder.Blueprint(origin, cells)));
    }
 
    private static <T extends Comparable<T>> String propertyValue(BlockState state, Property<T> property) {
       return property.getName(state.getValue(property));
    }
 
-   static List<autismclient.ai.print.PrintTarget> init(AiBuilder.Blueprint blueprint) {
+   static List<autismclient.ai.print.PrintTarget> targets(AiBuilder.Blueprint blueprint) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
       ArrayList<autismclient.ai.print.PrintTarget> targets = new ArrayList<>(cells.size());
 
@@ -549,7 +549,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       }
    }
 
-   public static boolean init(Block block) {
+   public static boolean isMachineBlock(Block block) {
       return block instanceof PistonBaseBlock
          || block instanceof DispenserBlock
          || block instanceof CrafterBlock

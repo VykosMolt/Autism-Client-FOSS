@@ -42,7 +42,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       }
 
       Input bed = BedDefenderModule.overrideInput(this, aura);
-      Input safe = SafeWalkModule.init(this, bed);
+      Input safe = SafeWalkModule.adjustInput(this, bed);
       if (!AutismLiteVariant.enabled()) {
          safe = AiFallGuard.init(this, safe);
       }

@@ -120,10 +120,10 @@ final class AiFarm {
             return FIELD_CROPS.contains(crop) ? harvestField(args, crop, YIELD_BY_CROP.get(crop)) : init(args, crop, YIELD_BY_CROP.get(crop));
          } else if (action == AiFarm.Inner_DataUtil.PLANT) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
-            return AiFarmPlant.init(args, crop, load(crop));
+            return AiFarmPlant.create(args, crop, load(crop));
          } else if (action == AiFarm.Inner_DataUtil.BUILD) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
-            return AiFarmBuild.init(args, crop, load(crop));
+            return AiFarmBuild.create(args, crop, load(crop));
          } else {
             return breed(args);
          }
@@ -291,7 +291,7 @@ final class AiFarm {
                   }
 
                   if (this.mc.gui.screen() != null) {
-                     autismclient.util.BlockAttackGraceWindow.init();
+                     autismclient.util.BlockAttackGraceWindow.clear();
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      this.aim.clear();
                      return this.running("Harvest paused while a screen is open");
@@ -372,7 +372,7 @@ final class AiFarm {
                               if (this.currentWork == null
                                  || this.currentWork.kind() != AiFarm.Inner_BufferHelper.REPLANT
                                  || !(this.action instanceof AiActedOperation actedOp)
-                                 || !actedOp.init()) {
+                                 || !actedOp.hasActed()) {
                                  return this.running(this.activityText());
                               }
 
@@ -897,7 +897,7 @@ final class AiFarm {
                            ClientPacketListener connection = this.mc.getConnection();
                            PlayerInfo info = connection == null ? null : connection.getPlayerInfo(this.mc.player.getUUID());
                            this.replantNotBefore
-                              .put(w.cell().asLong(), this.mc.player.tickCount + autismclient.util.BlockBreakGraceCalc.init(info == null ? 0 : info.getLatency()));
+                              .put(w.cell().asLong(), this.mc.player.tickCount + autismclient.util.BlockBreakGraceCalc.graceTicks(info == null ? 0 : info.getLatency()));
                            this.followUps.addFirst(AiFarm.Inner_CachePool.replant(w.cell(), this.replantBase, this.replantFace));
                         }
 
@@ -1470,7 +1470,7 @@ final class AiFarm {
          rest.addProperty("count", target);
          rest.addProperty("additional", false);
          return new AiOperation() {
-            AiOperation fieldOp = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
+            AiOperation fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
             boolean fallbackStarted;
             boolean dropSweepStarted;
 
@@ -1484,7 +1484,7 @@ final class AiFarm {
                if (!this.dropSweepStarted && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem(cropItem) >= target && this.hasFieldDrops()) {
                   this.fieldOp.cancel();
                   this.dropSweepStarted = true;
-                  this.fieldOp = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
+                  this.fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
                   return AiGameOperations.result(AiOperation.Status.RUNNING, "Collecting the field's remaining drops", new JsonObject());
                }
 

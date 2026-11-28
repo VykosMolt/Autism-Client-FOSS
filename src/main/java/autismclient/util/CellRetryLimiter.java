@@ -24,7 +24,7 @@ public final class CellRetryLimiter<T> {
       return true;
    }
 
-   public void init() {
+   public void clear() {
       this.init.clear();
    }
 

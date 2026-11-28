@@ -24,20 +24,20 @@ public final class EndPortalMemoryCache {
       return current;
    }
 
-   public void init(long now) {
+   public void start(long now) {
       if (this.load < 0L) {
          this.load = now;
       }
    }
 
-   public void load(long now) {
+   public void expire(long now) {
       if (this.load >= 0L && now - this.load >= 360000L) {
          this.init_Map.clear();
       }
    }
 
-   public void read(long now) {
-      this.load(now);
+   public void stop(long now) {
+      this.expire(now);
       this.load = -1L;
    }
 

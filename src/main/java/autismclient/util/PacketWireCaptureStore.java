@@ -23,17 +23,17 @@ public final class PacketWireCaptureStore {
    private PacketWireCaptureStore() {
    }
 
-   public static void init(Packet<?> packet, String direction, String protocolPhase, PacketType<?> packetType, ByteBuf source) {
+   public static void capture(Packet<?> packet, String direction, String protocolPhase, PacketType<?> packetType, ByteBuf source) {
       if (packet != null && source != null) {
-         init(packet, direction, protocolPhase, packetType, init(source));
+         captureBytes(packet, direction, protocolPhase, packetType, copyBytes(source));
       }
    }
 
-   public static void init(Packet<?> packet, String direction, String protocolPhase, PacketType<?> packetType, byte[] bytes) {
+   public static void captureBytes(Packet<?> packet, String direction, String protocolPhase, PacketType<?> packetType, byte[] bytes) {
       if (packet != null && bytes != null) {
          int numericPacketId = readVarInt(bytes);
          if (numericPacketId < 0) {
-            numericPacketId = init(protocolPhase, direction, packetType);
+            numericPacketId = numericId(protocolPhase, direction, packetType);
          }
 
          packetCaptures.put(
@@ -62,14 +62,14 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public static void init(Channel channel, String direction, ByteBuf source) {
+   public static void captureRaw(Channel channel, String direction, ByteBuf source) {
       if (channel != null && source != null) {
          PacketWireCaptureStore.ChannelCapture previous = channelStates.get(channel);
          if (previous == null) {
             previous = PacketWireCaptureStore.ChannelCapture.init_bn_DataUtil();
          }
 
-         channelStates.put(channel, previous.withCapture(direction, init(source)));
+         channelStates.put(channel, previous.withCapture(direction, copyBytes(source)));
       }
    }
 
@@ -77,7 +77,7 @@ public final class PacketWireCaptureStore {
       return channel == null ? null : channelStates.get(channel);
    }
 
-   public static byte[] init(ByteBuf source) {
+   public static byte[] copyBytes(ByteBuf source) {
       if (source == null) {
          return PacketCaptureState.EMPTY_BYTES;
       }
@@ -92,7 +92,7 @@ public final class PacketWireCaptureStore {
       return bytes;
    }
 
-   public static String init(byte[] bytes, int maxBytes) {
+   public static String hexPreview(byte[] bytes, int maxBytes) {
       return AutismPayloadSupport.toHexPreview(bytes, maxBytes);
    }
 
@@ -117,7 +117,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public static int init(String protocolPhase, String direction, PacketType<?> packetType) {
+   public static int numericId(String protocolPhase, String direction, PacketType<?> packetType) {
       if (packetType == null) {
          return -1;
       } else {

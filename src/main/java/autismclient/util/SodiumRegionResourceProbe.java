@@ -72,7 +72,7 @@ public final class SodiumRegionResourceProbe {
       }
    }
 
-   public static void init(boolean active) {
+   public static void setActive(boolean active) {
       if (init_Z != active) {
          invalidate();
       }

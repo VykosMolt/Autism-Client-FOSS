@@ -440,7 +440,7 @@ final class AiParkourRoute implements AiOperation {
          if (var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach) {
             this.paceTicks++;
             if (!AutismLiteVariant.enabled()) {
-               AiVisualization.init(this, var26.putAt_TextPool_IoHelper, var30.flowState(), this.waypoints, this.pollAt_I);
+               AiVisualization.showPaceScript(this, var26.putAt_TextPool_IoHelper, var30.flowState(), this.waypoints, this.pollAt_I);
             }
 
             return new AiOperation.Result(
@@ -559,7 +559,7 @@ final class AiParkourRoute implements AiOperation {
             this.putAt_BufferCore = new autismclient.ai.engine.AiParkourFallWarning(
                var22, var27, var2x -> this.putAt(var1, var2x.booleanValue()), () -> this.prevEx_Z = true
             );
-            if (!this.putAt_BufferCore.putAt_Z()) {
+            if (!this.putAt_BufferCore.openWarning()) {
                this.putAt_BufferCore = null;
             }
          }
@@ -619,7 +619,7 @@ final class AiParkourRoute implements AiOperation {
       AiParkourRoute.PlaybackState var9 = this.putAt_RenderCodec_CacheH;
       autismclient.ai.engine.AiPaceScript.Inner_JsonCache var10 = this.putAt_TextPool_JsonCache;
       if (var10 != null && !AutismLiteVariant.enabled()) {
-         AiVisualization.init(this, var10, this.waypoints, this.pollAt_I);
+         AiVisualization.showPreview(this, var10, this.waypoints, this.pollAt_I);
       }
 
       if (var9 != null && var10 != null && !(var10.length() <= 0.0)) {
@@ -812,7 +812,7 @@ final class AiParkourRoute implements AiOperation {
 
       this.readEx_Z = true;
       if (this.putAt_BufferCore != null) {
-         this.putAt_BufferCore.putAt_V();
+         this.putAt_BufferCore.closeWarning();
          this.putAt_BufferCore = null;
       }
 

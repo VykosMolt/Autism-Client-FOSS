@@ -50,7 +50,7 @@ public class ChunkMemoryCheck {
       Path blocked = tmp.resolve("blocked");
       Files.writeString(blocked, "not a directory");
       set(m, "init_Path", blocked.resolve("dim"));
-      m.init(0, 0, 60, 4, flags, Map.of());
+      m.storeChunk(0, 0, 60, 4, flags, Map.of());
       save.invoke(m);
       drain(m);
       check(dirty.contains(AiGridRevisions.chunkKey(0, 0)), "failed save must re-mark the chunk dirty");
@@ -99,7 +99,7 @@ public class ChunkMemoryCheck {
          Files.writeString(c, "x");
          c.toFile().setLastModified(1_000_000L + i * 1000L);
       }
-      m.init(0, 0, 60, 4, flags, Map.of());
+      m.storeChunk(0, 0, 60, 4, flags, Map.of());
       save.invoke(m);
       drain(m);
       long left;

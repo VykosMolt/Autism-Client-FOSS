@@ -40,7 +40,7 @@ final class AiRanged {
    private AiRanged() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final String spec = AiJson.getString(args, "target", "hostiles").trim();
@@ -244,7 +244,7 @@ final class AiRanged {
 
             autismclient.util.RotationMath.Rotation solveArc(Entity at) {
                ItemStack held = mc.player.getMainHandItem();
-               List<autismclient.modules.ProjectileBallistics.ProjectileShot> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
+               List<autismclient.modules.ProjectileBallistics.ProjectileShot> possible = autismclient.modules.ProjectileBallistics.shots(mc.player, held, true, false);
                if (possible.isEmpty()) {
                   return null;
                }
@@ -258,7 +258,7 @@ final class AiRanged {
                }
 
                float yaw = autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()).yaw();
-               Vec3 inherited = autismclient.modules.ProjectileBallistics.init(mc.player);
+               Vec3 inherited = autismclient.modules.ProjectileBallistics.inheritedVelocity(mc.player);
                float best = 0.0F / 0.0F;
 
                for (float pitch = 45.0F; pitch >= -60.0F; pitch -= 2.0F) {

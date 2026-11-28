@@ -230,7 +230,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
 
       int frameH = this.getRenderedFrameHeight();
       boolean overPanel = mx >= this.windowX && mx <= this.windowX + this.windowWidth && my >= this.windowY && my <= this.windowY + frameH;
-      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? true : overPanel;
+      return this.activeContextMenu != null && this.activeContextMenu.handleClick(mx, my) ? true : overPanel;
    }
 
    @Override
@@ -266,7 +266,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    protected int maskMouseCoordIfMenuCovers(int mouse, int axis) {
       if (this.activeContextMenu != null && this.activeContextMenu.isOpen()) {
          int otherAxis = axis == 0 ? this.lastMouseY : this.lastMouseX;
-         boolean covered = axis == 0 ? this.activeContextMenu.init(mouse, otherAxis) : this.activeContextMenu.init(otherAxis, mouse);
+         boolean covered = axis == 0 ? this.activeContextMenu.handleClick(mouse, otherAxis) : this.activeContextMenu.handleClick(otherAxis, mouse);
          return covered ? -10000 : mouse;
       } else {
          return mouse;
@@ -279,10 +279,10 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    protected int maskMouseXIfMenuCovers(int mx, int my) {
-      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? -10000 : mx;
+      return this.activeContextMenu != null && this.activeContextMenu.handleClick(mx, my) ? -10000 : mx;
    }
 
    protected int maskMouseYIfMenuCovers(int mx, int my) {
-      return this.activeContextMenu != null && this.activeContextMenu.init(mx, my) ? -10000 : my;
+      return this.activeContextMenu != null && this.activeContextMenu.handleClick(mx, my) ? -10000 : my;
    }
 }

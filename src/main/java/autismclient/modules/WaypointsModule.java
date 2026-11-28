@@ -46,7 +46,7 @@ public final class WaypointsModule extends Module {
       );
    }
 
-   public int init_I_23() {
+   public int defaultColor() {
       return this.defaultColor.get();
    }
 

@@ -7,7 +7,7 @@ public final class MacroResourceClassifier {
    private MacroResourceClassifier() {
    }
 
-   public static EnumSet<MacroResourceClassifier.MacroResource> init(MacroAction action) {
+   public static EnumSet<MacroResourceClassifier.MacroResource> classify(MacroAction action) {
       EnumSet<MacroResourceClassifier.MacroResource> resources = EnumSet.noneOf(MacroResourceClassifier.MacroResource.class);
       if (action instanceof ToolsAction) {
          return resources;
@@ -105,7 +105,7 @@ public final class MacroResourceClassifier {
       return resources;
    }
 
-   public static EnumSet<MacroResourceClassifier.MacroResource> init(List<MacroAction> actions) {
+   public static EnumSet<MacroResourceClassifier.MacroResource> classifyAll(List<MacroAction> actions) {
       EnumSet<MacroResourceClassifier.MacroResource> resources = EnumSet.noneOf(MacroResourceClassifier.MacroResource.class);
       if (actions == null) {
          return resources;
@@ -113,7 +113,7 @@ public final class MacroResourceClassifier {
 
       for (MacroAction action : actions) {
          if (action != null && action.isEnabled() && RaceAction.load(action)) {
-            resources.addAll(init(action));
+            resources.addAll(classify(action));
          }
       }
 

@@ -384,8 +384,8 @@ final class AiOracle {
 
    private static long hideVillagesMask() {
       if (hideVillagesBit < 0L) {
-         for (int i = 0; i < autismclient.modules.StructureStorageFilter.init.size(); i++) {
-            if ("hide-villages".equals(autismclient.modules.StructureStorageFilter.init.get(i).id())) {
+         for (int i = 0; i < autismclient.modules.StructureStorageFilter.STRUCTURES.size(); i++) {
+            if ("hide-villages".equals(autismclient.modules.StructureStorageFilter.STRUCTURES.get(i).id())) {
                hideVillagesBit = 1L << i;
                break;
             }
@@ -453,7 +453,7 @@ final class AiOracle {
                Vec3 eye = mc.player.getEyePosition();
                long[] outPos = new long[cap];
                int[] outState = new int[cap];
-               int n = autismclient.util.oresim.OreSimEngine.init(
+               int n = autismclient.util.oresim.OreSimEngine.nearest(
                   eye.x,
                   eye.y,
                   eye.z,
@@ -537,7 +537,7 @@ final class AiOracle {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               autismclient.util.oresim.OreSimEngine.load_V();
+               autismclient.util.oresim.OreSimEngine.pause();
             }
          }
       };
@@ -721,7 +721,7 @@ final class AiOracle {
             return existing;
          }
 
-         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap created = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.init(seed, dimension);
+         autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap created = autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap.create(seed, dimension);
          WORLDGEN_CACHE.put(key, created);
          return created;
       }
@@ -839,7 +839,7 @@ final class AiOracle {
       }
    }
 
-   static AiOperation load(JsonObject args) {
+   static AiOperation findBiome(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.level == null) {
          throw new IllegalArgumentException("Biome location requires a connected living player");

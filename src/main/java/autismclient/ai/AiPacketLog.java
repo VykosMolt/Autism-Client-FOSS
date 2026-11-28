@@ -55,7 +55,7 @@ public final class AiPacketLog {
    private AiPacketLog() {
    }
 
-   public static JsonObject init(JsonObject args) {
+   public static JsonObject controlCapture(JsonObject args) {
       AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
@@ -64,11 +64,11 @@ public final class AiPacketLog {
       String action = AiJson.getString(args, "action", "state").trim().toLowerCase(Locale.ROOT);
       switch (action) {
          case "start":
-            overlay.read(false);
+            overlay.setPaused(false);
             autismclient.util.PacketCaptureState.write();
             break;
          case "stop":
-            overlay.read(true);
+            overlay.setPaused(true);
             break;
          case "clear":
             overlay.clearEntries();
@@ -101,7 +101,7 @@ public final class AiPacketLog {
                throw new IllegalArgumentException("block accepts at most 64 names per call");
             }
 
-            overlay.load(name.getAsString());
+            overlay.blockPacket(name.getAsString());
          }
       }
 
@@ -118,7 +118,7 @@ public final class AiPacketLog {
       }
    }
 
-   public static JsonObject load(JsonObject args) {
+   public static JsonObject readLog(JsonObject args) {
       AutismPacketLoggerOverlay overlay = ModuleRuntimeManager.getInstance().getOrCreatePacketLoggerOverlay();
       if (overlay == null) {
          throw new IllegalStateException("Packet logger overlay is unavailable");
@@ -200,12 +200,12 @@ public final class AiPacketLog {
          "payload",
          entry.payloadPacket
       );
-      if (entry.write != null) {
-         out.addProperty("blockState", entry.write);
+      if (entry.capturedBlockState != null) {
+         out.addProperty("blockState", entry.capturedBlockState);
       }
 
-      if (entry.update != null) {
-         out.addProperty("screen", entry.update);
+      if (entry.capturedScreen != null) {
+         out.addProperty("screen", entry.capturedScreen);
       }
 
       if (entry.payloadSnapshot != null) {
@@ -284,18 +284,18 @@ public final class AiPacketLog {
                   "plaintextLength",
                   plaintext.length,
                   "hexPrefix",
-                  PacketWireCaptureStore.init(plaintext, 64)
+                  PacketWireCaptureStore.hexPreview(plaintext, 64)
                )
             );
          }
       }
 
       if (entry.packetClass != null) {
-         out.addProperty("inspector", truncate(PacketInspectorEngine.inspect(entry).load(), 4096));
+         out.addProperty("inspector", truncate(PacketInspectorEngine.inspect(entry).copyText(), 4096));
       }
    }
 
-   public static JsonObject read(JsonObject args) {
+   public static JsonObject readSchemas(JsonObject args) {
       String query = AiJson.getString(args, "query", "").toLowerCase(Locale.ROOT);
       String direction = args.has("direction") ? normalizeDirection(AiJson.getString(args, "direction", "Both")) : "Both";
       int offset = clampOffset(AiJson.getInt(args, "offset", 0));
@@ -342,18 +342,18 @@ public final class AiPacketLog {
    }
 
    static int packetIdFor(Class<?> packetClass, String direction) {
-      return init(packetTypesByClass().get(packetClass), direction);
+      return numericId(packetTypesByClass().get(packetClass), direction);
    }
 
-   static int init(PacketType<?> type, String direction) {
+   static int numericId(PacketType<?> type, String direction) {
       if (type == null) {
          return -1;
       }
 
       try {
-         int id = PacketWireCaptureStore.init("PLAY", direction, type);
+         int id = PacketWireCaptureStore.numericId("PLAY", direction, type);
          if (id < 0) {
-            id = PacketWireCaptureStore.init("CONFIGURATION", direction, type);
+            id = PacketWireCaptureStore.numericId("CONFIGURATION", direction, type);
          }
 
          return id;

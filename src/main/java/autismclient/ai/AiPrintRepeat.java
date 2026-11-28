@@ -146,7 +146,7 @@ final class AiPrintRepeat implements AiOperation {
                this.pendingCopy = this.prepareWorker
                   .init(
                      () -> {
-                        List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
+                        List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.targets(shifted));
                         return new AiPrintRepeat.PreparedCopy(
                            shifted,
                            AiBuilder.stripPoweredLevers(shifted),

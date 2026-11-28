@@ -9,7 +9,7 @@ import net.minecraft.world.phys.AABB;
 public final class StickyPlacementSelector {
    private StickyPlacementSelector.StickyKey stickyKey;
 
-   public <T> int init(List<T> options, Function<T, BlockPlacementPlanner.SupportCandidate> option) {
+   public <T> int startIndex(List<T> options, Function<T, BlockPlacementPlanner.SupportCandidate> option) {
       if (this.stickyKey != null) {
          for (int i = 0; i < options.size(); i++) {
             if (this.stickyKey.equals(StickyPlacementSelector.StickyKey.of(option.apply(options.get(i))))) {
@@ -21,11 +21,11 @@ public final class StickyPlacementSelector {
       return 0;
    }
 
-   public void init(BlockPlacementPlanner.SupportCandidate option) {
+   public void remember(BlockPlacementPlanner.SupportCandidate option) {
       this.stickyKey = StickyPlacementSelector.StickyKey.of(option);
    }
 
-   public void init() {
+   public void clear() {
       this.stickyKey = null;
    }
 

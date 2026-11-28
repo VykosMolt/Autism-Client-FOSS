@@ -270,7 +270,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private void resetState() {
       this.clearPlan();
       this.recentlyPlaced.clear();
-      this.externalBreaks.init();
+      this.externalBreaks.clear();
       this.init_Map.clear();
       this.load_Set.clear();
       this.stepCells = Set.of();
@@ -650,7 +650,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             while ((edit = this.blockEdits.poll()) != null) {
                this.load_Set.remove(edit.pos());
                if (this.stepCells.contains(edit.pos())) {
-                  this.externalBreaks.init(edit.pos(), edit.solid(), this.init_Map.containsKey(edit.pos()));
+                  this.externalBreaks.onBlockEdit(edit.pos(), edit.solid(), this.init_Map.containsKey(edit.pos()));
                }
             }
 
@@ -660,14 +660,14 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                if (MC.level.isLoaded(step.cell()) && !this.load_Set.contains(step.cell())) {
                   BlockState existing = MC.level.getBlockState(step.cell());
                   this.externalBreaks
-                     .init(
+                     .onBlockEdit(
                         step.cell(), !existing.canBeReplaced(), this.init_Map.containsKey(step.cell()) || step.cell().equals(mining)
                      );
                }
             }
 
             int repairSlot = this.materialSlot(0);
-            boolean repairing = repairSlot >= 0 && steps.stream().anyMatch(step -> this.externalBreaks.init(step.cell()));
+            boolean repairing = repairSlot >= 0 && steps.stream().anyMatch(step -> this.externalBreaks.wasExternallyBroken(step.cell()));
             ItemStack repairMaterial = repairing ? MC.player.getInventory().getItem(repairSlot) : ItemStack.EMPTY;
             double limit = reach + 1.0;
             double limitSq = limit * limit;
@@ -677,7 +677,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             List<BedDefenderModule.Inner_CachePool> ghosts = new ArrayList<>();
 
             for (BedDefenderModule.Inner_TaskQueue step : steps) {
-               ItemStack layerMaterial = repairing && this.externalBreaks.init(step.cell()) ? repairMaterial : materials[step.layer()];
+               ItemStack layerMaterial = repairing && this.externalBreaks.wasExternallyBroken(step.cell()) ? repairMaterial : materials[step.layer()];
                if (MC.level.isLoaded(step.cell())
                   && !MC.level.isOutsideBuildHeight(step.cell())
                   && this.canPlaceAt(step.cell(), layerMaterial)) {
@@ -714,7 +714,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             this.ghosts = List.copyOf(ghosts);
             this.currentLayer = ghosts.stream()
-               .filter(cell -> !repairing || this.externalBreaks.init(cell.pos()))
+               .filter(cell -> !repairing || this.externalBreaks.wasExternallyBroken(cell.pos()))
                .mapToInt(BedDefenderModule.Inner_CachePool::layer)
                .min()
                .orElse(0);
@@ -741,7 +741,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
 
             int selectedLayer = this.currentLayer;
-            pool.removeIf(cell -> repairing ? !this.externalBreaks.init(cell.cell()) : cell.layer() != selectedLayer && (layers != 1 || cell.layer() != 2));
+            pool.removeIf(cell -> repairing ? !this.externalBreaks.wasExternallyBroken(cell.cell()) : cell.layer() != selectedLayer && (layers != 1 || cell.layer() != 2));
             if (!requiredRisers.isEmpty()) {
                pool.removeIf(cell -> !requiredRisers.contains(cell.cell()));
             }
@@ -1560,7 +1560,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          }
       }
 
-      return FaceVisibilitySolver.init(request.eyePos(), option.faceRect(), option.face(), blockers, preferred);
+      return FaceVisibilitySolver.visiblePoints(request.eyePos(), option.faceRect(), option.face(), blockers, preferred);
    }
 
    private autismclient.util.BlockPlacementPlanner.Query init_U_StateCache_ce_DataUtil(RotationMath.Rotation from, ItemStack material, boolean sneaking, StringBuilder trace) {
@@ -1814,7 +1814,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       Set<Block> blocks = new LinkedHashSet<>();
 
       for (String entry : this.list("blocks")) {
-         Identifier identifier = Identifier.tryParse(RegistryIdValidator.init(entry));
+         Identifier identifier = Identifier.tryParse(RegistryIdValidator.normalize(entry));
          if (identifier != null) {
             BuiltInRegistries.BLOCK.getOptional(identifier).ifPresent(blocks::add);
          }
@@ -1831,7 +1831,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          Set<Block> blocks = new LinkedHashSet<>();
 
          for (String entry : key.split("\\|")) {
-            Identifier id = Identifier.tryParse(RegistryIdValidator.init(entry));
+            Identifier id = Identifier.tryParse(RegistryIdValidator.normalize(entry));
             if (id != null) {
                BuiltInRegistries.BLOCK.getOptional(id).ifPresent(blocks::add);
             }

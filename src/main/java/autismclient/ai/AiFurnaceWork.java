@@ -74,7 +74,7 @@ final class AiFurnaceWork implements AiOperation {
          AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
 
          for (Entry<String, Integer> preparation : plan.crafts().entrySet()) {
-            AiCraftPlanner.CraftPlan craft = AiCraftPlanner.init(graph, preparation.getKey(), preparation.getValue());
+            AiCraftPlanner.CraftPlan craft = AiCraftPlanner.plan(graph, preparation.getKey(), preparation.getValue());
             if (craft.complete() && !craft.satisfied() && !craft.requiresTable()) {
                return true;
             }
@@ -332,7 +332,7 @@ final class AiFurnaceWork implements AiOperation {
          if (this.ticks + routeLength(this.route, this.mc.player.blockPosition()) + 120 < this.cookBudgetTicks) {
             for (Entry<String, Integer> preparation : this.plan.crafts().entrySet()) {
                if (this.preparedItems.add(preparation.getKey())) {
-                  AiCraftPlanner.CraftPlan recipe = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), preparation.getKey(), preparation.getValue());
+                  AiCraftPlanner.CraftPlan recipe = AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), preparation.getKey(), preparation.getValue());
                   if (recipe.complete()
                      && !recipe.satisfied()
                      && !recipe.requiresTable()
@@ -407,7 +407,7 @@ final class AiFurnaceWork implements AiOperation {
 
          if (this.flush >= 4 && !this.read_Z) {
             if (this.mineOp == null) {
-               this.mineOp = AiGameplay.sync(AiJson.objectOf("block", "ore", "radius", 64, "limit", 32));
+               this.mineOp = AiGameplay.find(AiJson.objectOf("block", "ore", "radius", 64, "limit", 32));
             }
 
             AiOperation.Result scan = this.mineOp.tick();
@@ -456,7 +456,7 @@ final class AiFurnaceWork implements AiOperation {
                   blocks.add(id);
                }
 
-               this.load_AiOperation = AiGameplay.flush(AiJson.objectOf("blocks", blocks, "radius", 16));
+               this.load_AiOperation = AiGameplay.survey(AiJson.objectOf("blocks", blocks, "radius", 16));
             }
 
             this.aim
@@ -624,9 +624,9 @@ final class AiFurnaceWork implements AiOperation {
          "returnRouteCells",
          this.route.size(),
          "returnEditsAllowed",
-         this.furnaceReturn != null && AiJson.getBoolean(this.furnaceReturn.init(), "returnEditsAllowed", false),
+         this.furnaceReturn != null && AiJson.getBoolean(this.furnaceReturn.json(), "returnEditsAllowed", false),
          "returnRecovery",
-         this.furnaceReturn == null ? new JsonObject() : this.furnaceReturn.init(),
+         this.furnaceReturn == null ? new JsonObject() : this.furnaceReturn.json(),
          "preparations",
          this.preparationReceipts,
          "resourceTargets",

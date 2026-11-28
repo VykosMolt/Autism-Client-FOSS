@@ -211,8 +211,8 @@ final class AiGameOperations {
             boolean interactionStarted;
 
             @Override
-            public boolean init() {
-               return this.interactOp instanceof AiActedOperation inner && inner.init();
+            public boolean hasActed() {
+               return this.interactOp instanceof AiActedOperation inner && inner.hasActed();
             }
 
             @Override
@@ -442,7 +442,7 @@ final class AiGameOperations {
          }
 
          @Override
-         public boolean init() {
+         public boolean hasActed() {
             return this.clicked;
          }
       };
@@ -569,7 +569,7 @@ final class AiGameOperations {
                      }
 
                      if (r.status() != AiOperation.Status.SUCCEEDED && this.currentGoal != null) {
-                        this.failedRegions.add(AiRegions.init(this.currentGoal.getX(), this.currentGoal.getZ()));
+                        this.failedRegions.add(AiRegions.cellKey(this.currentGoal.getX(), this.currentGoal.getZ()));
                      }
 
                      this.arrivedRegion = r.status() == AiOperation.Status.SUCCEEDED ? this.regionCell : "";
@@ -631,7 +631,7 @@ final class AiGameOperations {
                      }
                   }
 
-                  String regionCell = AiRegions.init(this.surveyCenter.getX(), this.surveyCenter.getZ());
+                  String regionCell = AiRegions.cellKey(this.surveyCenter.getX(), this.surveyCenter.getZ());
                   AiService service = AiService.getExistingInstance();
                   if (!regionCell.equals(this.regionCell) && service != null) {
                      service.recordSurveyRegion(this.surveyCenter, this.beds, this.bells, this.paths, this.farmland, villagers, this.arrivedRegion);
@@ -689,9 +689,9 @@ final class AiGameOperations {
                   if (service != null) {
                      HashSet<String> excluded = new HashSet<>(this.visitedRegions);
                      excluded.addAll(this.failedRegions);
-                     int[] frontier = AiRegions.init(service.getDimensionRegions(), excluded, this.origin.getX(), this.origin.getZ(), this.maxDistance)
+                     int[] frontier = AiRegions.frontier(service.getDimensionRegions(), excluded, this.origin.getX(), this.origin.getZ(), this.maxDistance)
                         .stream()
-                        .filter(px -> !this.failedRegions.contains(AiRegions.init(px[0], px[2])))
+                        .filter(px -> !this.failedRegions.contains(AiRegions.cellKey(px[0], px[2])))
                         .min(Comparator.comparingDouble(px -> this.client.player.position().distanceToSqr(px[0], px[1], px[2])))
                         .orElse(null);
                      if (frontier != null) {
@@ -700,7 +700,7 @@ final class AiGameOperations {
                   }
 
                   this.currentGoal = next;
-                  this.travelOp = AiTravelFar.init(next, 4.0, true, false, false, false, 180);
+                  this.travelOp = AiTravelFar.travel(next, 4.0, true, false, false, false, 180);
                   return AiGameOperations.result(
                      AiOperation.Status.RUNNING, "Exploring a new frontier", AiJson.objectOf("target", next.toShortString())
                   );

@@ -93,8 +93,8 @@ final class AiCombat {
    static AiProjectiles.IncomingProjectile nextIncoming(Minecraft mc) {
       AiProjectiles.IncomingProjectile best = null;
 
-      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
-         if (AiProjectiles.init(t) && (best == null || t.secondsToClosest() < best.secondsToClosest())) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
+         if (AiProjectiles.isImminent(t) && (best == null || t.secondsToClosest() < best.secondsToClosest())) {
             best = t;
          }
       }
@@ -105,8 +105,8 @@ final class AiCombat {
    static AiProjectiles.IncomingProjectile load(Minecraft mc) {
       AiProjectiles.IncomingProjectile best = null;
 
-      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
-         if (AiProjectiles.init(shot)
+      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.incoming(mc)) {
+         if (AiProjectiles.isImminent(shot)
             && AiDefense.init(mc, mc.level.getEntity(shot.entityId()))
             && AiDefense.init(mc, init(shot))
             && (best == null || shot.secondsToClosest() < best.secondsToClosest())) {
@@ -124,8 +124,8 @@ final class AiCombat {
    static Vec3 init_Vec3_Minecraft_Vec3(Minecraft mc, Vec3 preferred) {
       List<AiProjectiles.IncomingProjectile> threats = new ArrayList<>();
 
-      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
-         if (AiProjectiles.init(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, init(shot))) {
+      for (AiProjectiles.IncomingProjectile shot : AiProjectiles.incoming(mc)) {
+         if (AiProjectiles.isImminent(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, init(shot))) {
             threats.add(shot);
          }
       }
@@ -651,7 +651,7 @@ final class AiCombat {
                   return this.finish(AiOperation.Status.FAILED, "Player died during the fight");
                }
 
-               this.deaths.init(mc);
+               this.deaths.sweep(mc);
                this.killed = this.deaths.killCount();
                this.sync_I++;
                this.lowestHealth = Math.min(this.lowestHealth, mc.player.getHealth());
@@ -799,7 +799,7 @@ final class AiCombat {
                         if (mc.player.getFoodData().getFoodLevel() < eatBelow && this.update_Z_2()) {
                            this.cancelChild();
                            this.releaseAllInputs();
-                           this.load_AiOperation = AiSurvival.init(AiJson.objectOf("timeoutSeconds", 15));
+                           this.load_AiOperation = AiSurvival.eat(AiJson.objectOf("timeoutSeconds", 15));
                            return this.running("Disengaging to eat");
                         }
                      }
@@ -837,7 +837,7 @@ final class AiCombat {
                         this.target = this.selectTarget();
                         this.flush_I = this.sync_I;
                         if (this.target instanceof LivingEntity requested) {
-                           this.deaths.init(requested);
+                           this.deaths.watch(requested);
                         }
 
                         this.read_I = 0;
@@ -991,7 +991,7 @@ final class AiCombat {
                                  mc.options.keySprint.setDown(false);
                                  this.lowerShield();
                                  if (!this.defensiveDetour && this.target instanceof LivingEntity requested) {
-                                    this.deaths.init(requested);
+                                    this.deaths.watch(requested);
                                  }
 
                                  mc.gameMode.attack(mc.player, this.target);
@@ -1139,7 +1139,7 @@ final class AiCombat {
                      this.lowerShield();
                      mc.options.keySprint.setDown(false);
                      if (!this.defensiveDetour && this.target instanceof LivingEntity requested) {
-                        this.deaths.init(requested);
+                        this.deaths.watch(requested);
                      }
 
                      mc.gameMode.attack(mc.player, this.target);
@@ -1754,9 +1754,9 @@ final class AiCombat {
             }
 
             void retreatFrom(Entity source) {
-               Float safeRetreat = source instanceof Creeper creeper ? AiBlastEscape.init(mc, creeper) : null;
+               Float safeRetreat = source instanceof Creeper creeper ? AiBlastEscape.retreatYaw(mc, creeper) : null;
                if (safeRetreat != null) {
-                  AiBlastEscape.init(mc, safeRetreat);
+                  AiBlastEscape.retreat(mc, safeRetreat);
                } else {
                   Vec3 away = mc.player.position().subtract(source.position());
                   if (away.lengthSqr() < 1.0E-4) {
@@ -1919,8 +1919,8 @@ final class AiCombat {
             }
 
             boolean projectileIncoming() {
-               for (AiProjectiles.IncomingProjectile shot : AiProjectiles.init(mc)) {
-                  if (AiProjectiles.init(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, AiCombat.init(shot))) {
+               for (AiProjectiles.IncomingProjectile shot : AiProjectiles.incoming(mc)) {
+                  if (AiProjectiles.isImminent(shot) && AiDefense.init(mc, mc.level.getEntity(shot.entityId())) && AiDefense.init(mc, AiCombat.init(shot))) {
                      return true;
                   }
                }
@@ -2012,7 +2012,7 @@ final class AiCombat {
                   this.target = next;
                   this.defensiveDetour = explicitId >= 0 && next.getId() != explicitId || !this.matchesTargetFilter(next);
                   if (!this.defensiveDetour && next instanceof LivingEntity requested) {
-                     this.deaths.init(requested);
+                     this.deaths.watch(requested);
                   }
 
                   this.flush_I = this.sync_I;

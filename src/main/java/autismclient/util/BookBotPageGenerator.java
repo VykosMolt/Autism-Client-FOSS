@@ -17,8 +17,8 @@ public final class BookBotPageGenerator {
    private BookBotPageGenerator() {
    }
 
-   public static List<String> init(int requestedPages, int requestedCharsPerPage, String randomType, Random random) {
-      String type = init(randomType);
+   public static List<String> generate(int requestedPages, int requestedCharsPerPage, String randomType, Random random) {
+      String type = normalizeType(randomType);
       if ("PaperMC".equals(type)) {
          return randomPages(random);
       }
@@ -42,7 +42,7 @@ public final class BookBotPageGenerator {
       return out;
    }
 
-   public static String init(String value) {
+   public static String normalizeType(String value) {
       if (value == null) {
          return "Utf8";
       }
@@ -101,7 +101,7 @@ public final class BookBotPageGenerator {
       return pages;
    }
 
-   public static int init(List<String> pages) {
+   public static int estimateBytes(List<String> pages) {
       if (pages != null && !pages.isEmpty()) {
          int bytes = 0;
 

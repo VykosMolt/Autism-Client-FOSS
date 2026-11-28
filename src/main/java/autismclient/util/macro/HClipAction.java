@@ -185,7 +185,7 @@ public class HClipAction implements MacroAction {
    }
 
    private static int init_I_Minecraft(Minecraft mc, Vec3 from, Vec3 to, boolean grounded) {
-      List<ClipCollisionHelper.ClipStep> steps = ClipCollisionHelper.init(from, to, grounded);
+      List<ClipCollisionHelper.ClipStep> steps = ClipCollisionHelper.steps(from, to, grounded);
 
       for (ClipCollisionHelper.ClipStep step : steps) {
          init(mc, new Pos(step.position(), step.onGround(), false));

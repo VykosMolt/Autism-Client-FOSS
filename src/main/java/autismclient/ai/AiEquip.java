@@ -32,7 +32,7 @@ final class AiEquip {
    private AiEquip() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          String what = AiJson.getString(args, "what", "").trim().toLowerCase(Locale.ROOT);

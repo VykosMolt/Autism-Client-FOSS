@@ -48,13 +48,13 @@ public final class CombatAimSpeedController {
       return enemy != null && this.trackedEnemy == enemy && this.boostUntilTick - tick >= 0;
    }
 
-   public void init(Object from, Object to) {
+   public void retarget(Object from, Object to) {
       if (from != null && this.trackedEnemy == from) {
          this.trackedEnemy = to;
       }
    }
 
-   public void load(Object enemy, int tick, int latencyMs) {
+   public void boostFor(Object enemy, int tick, int latencyMs) {
       this.boost(enemy, tick, LatencyTickWindow.windowTicks(latencyMs) + 2);
    }
 

@@ -39,11 +39,11 @@ final class AiSessionsDrawer {
          this.view.invalidate();
          this.scroller.scrollToTop();
       } else {
-         this.load();
+         this.closeDrawer();
       }
    }
 
-   void load() {
+   void closeDrawer() {
       this.open = false;
       this.init_Str = null;
       this.load_Str = null;
@@ -66,7 +66,7 @@ final class AiSessionsDrawer {
       return true;
    }
 
-   void init(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
+   void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
       if (this.open && area.sync() >= 30) {
          if (this.init_Str != null && !this.renameInput.isFocused()) {
             this.init_Str = null;
@@ -140,7 +140,7 @@ final class AiSessionsDrawer {
          PacketUtil.load(kit.graphics, row, 3, colors.cardSurfaceElevated);
       }
 
-      kit.addInteractiveRegion(row, () -> this.openSession(id), () -> this.host.init(id), null);
+      kit.addInteractiveRegion(row, () -> this.openSession(id), () -> this.host.openContextMenu(id), null);
       kit.drawStatusDot(
          row.read() + 5, row.write() + row.sync() / 2, 2.0F, AiChatView.stateColor(kit, active ? this.view.runState.name() : meta.state())
       );
@@ -195,9 +195,9 @@ final class AiSessionsDrawer {
 
    private void createSession() {
       this.service.createSession();
-      this.load();
+      this.closeDrawer();
       this.view.invalidate();
-      this.host.write_V();
+      this.host.focusActiveInput();
    }
 
    private void openSession(String id) {
@@ -205,7 +205,7 @@ final class AiSessionsDrawer {
          this.service.switchSession(id);
       }
 
-      this.load();
+      this.closeDrawer();
       this.view.invalidate();
    }
 
@@ -235,14 +235,14 @@ final class AiSessionsDrawer {
             this.init_Str = id;
             this.renameInput.setValue(meta == null ? "" : displayTitle(meta));
             this.renameInput.moveCursorToEnd();
-            this.host.init(this.renameInput);
+            this.host.focusInput(this.renameInput);
             break;
          case 1:
             if (!this.service.branchSession(id)) {
                autismclient.util.bi.read("Nothing to branch yet");
             } else {
                autismclient.util.bi.load("Branched into a new chat");
-               this.load();
+               this.closeDrawer();
             }
 
             this.view.invalidate();

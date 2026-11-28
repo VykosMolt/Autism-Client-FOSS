@@ -29,7 +29,7 @@ public final class AiBreathe {
    private AiBreathe() {
    }
 
-   static boolean init(Player player) {
+   static boolean needsAir(Player player) {
       if (!player.isUnderWater()) {
          return false;
       }
@@ -47,7 +47,7 @@ public final class AiBreathe {
       }
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int seconds = Math.max(5, Math.min(60, AiJson.getInt(args, "timeoutSeconds", 25)));

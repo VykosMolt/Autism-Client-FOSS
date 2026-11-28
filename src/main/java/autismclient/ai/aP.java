@@ -110,11 +110,11 @@ public final class aP {
          }
 
          if (!init_Z_aR(placement)) {
-            AiAssistant.getInstance().poll();
+            AiAssistant.getInstance().hideOverlay();
          }
 
          if (load(placement)) {
-            AiVisualization.init(placement, true);
+            AiVisualization.setMoving(placement, true);
          }
 
          autismclient.gui.ui.widgets.TextInputWidget.clearGlobalFocus();
@@ -134,7 +134,7 @@ public final class aP {
    public static boolean init_Z_Z_cy_CachePool(boolean parkour, AiToolCallParser.ParkourFlags options) {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.MethodUtil.init()) {
          AiNavigationSelection selection = new AiNavigationSelection(parkour, options);
-         init_V_aR_Runnable(selection, selection::write);
+         init_V_aR_Runnable(selection, selection::startGoto);
          return init_aP != null && init_aP.init_aR == selection;
       } else {
          return false;
@@ -190,7 +190,7 @@ public final class aP {
       if (mode != null) {
          if (mode.init_aR.isActive() && mc.gui.screen() == null && mc.isWindowActive()) {
             if (load(mode.init_aR)) {
-               AiVisualization.init(mode.init_aR, mode.load_Z);
+               AiVisualization.setMoving(mode.init_aR, mode.load_Z);
             }
 
             if (mode.load_Z) {
@@ -203,7 +203,7 @@ public final class aP {
    }
 
    public static boolean init_Z_I_KeyEvent(int action, KeyEvent event) {
-      boolean wasHeld = init_aO.init(Compat263.keyEventGlfwKey(event));
+      boolean wasHeld = init_aO.isHeld(Compat263.keyEventGlfwKey(event));
       boolean owned = init_aO.init(Compat263.keyEventGlfwKey(event), action != 0);
       aP mode = init_aP;
       if (mode == null) {
@@ -297,7 +297,7 @@ public final class aP {
    }
 
    public static boolean init_Z_I_I(int button, int action) {
-      boolean wasHeld = init_aO.init(init_I_I(button));
+      boolean wasHeld = init_aO.isHeld(init_I_I(button));
       boolean owned = init_aO.init(init_I_I(button), action != 0);
       aP mode = init_aP;
       if (mode != null && action == 1 && !wasHeld) {
@@ -373,7 +373,7 @@ public final class aP {
          }
 
          if (load(this.init_aR)) {
-            AiVisualization.init(this.init_aR, false);
+            AiVisualization.setMoving(this.init_aR, false);
          }
 
          if (!use && this.init_aR.isActive()) {

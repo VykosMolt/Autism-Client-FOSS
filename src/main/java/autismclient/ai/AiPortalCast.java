@@ -443,7 +443,7 @@ final class AiPortalCast {
       return missing;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          boolean hasTarget = args.has("x") && args.has("y") && args.has("z");
@@ -1517,7 +1517,7 @@ final class AiPortalCast {
                }
 
                AiOperation fillBucketOp(String fluid, BlockPos source, int seconds) {
-                  return AiBucket.init(
+                  return AiBucket.create(
                      AiJson.objectOf(
                         "action", "fill", "fluid", fluid, "x", source.getX(), "y", source.getY(), "z", source.getZ(), "timeoutSeconds", seconds
                      )

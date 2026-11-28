@@ -10,7 +10,7 @@ public final class AiPistonPower {
    private AiPistonPower() {
    }
 
-   public static boolean init(SignalGetter world, BlockPos position, Direction facing) {
+   public static boolean isPowered(SignalGetter world, BlockPos position, Direction facing) {
       for (Direction direction : DIRECTIONS) {
          if (direction != facing && world.hasSignal(position.relative(direction), direction)) {
             return true;

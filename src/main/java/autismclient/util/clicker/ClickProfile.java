@@ -4,11 +4,11 @@ public final class ClickProfile {
    public static final double init_D = 0.5;
    public final ClickTechnique technique;
    public final double load_D;
-   public final double read;
+   public final double cpsHigh;
    public final long minIntervalNanos;
    public final long maxIntervalNanos;
-   public final double write;
-   public final double update;
+   public final double holdLowMs;
+   public final double holdHighMs;
    public final double sync;
    public final double flush;
    public final double close;
@@ -19,7 +19,7 @@ public final class ClickProfile {
    public final double push;
    public final double pop;
    public final boolean freeSpin;
-   public final double tick;
+   public final double freeSpinDecayPerSecond;
 
    private ClickProfile(ClickProfile.ProfileBuilder b) {
       this.technique = b.technique == null ? ClickTechnique.NORMAL : b.technique;
@@ -27,7 +27,7 @@ public final class ClickProfile {
       if (this.technique == ClickTechnique.RAGE) {
          double cps = clamp(finiteOr(b.cpsHigh, this.technique.write_D), 1.0, ceiling);
          this.load_D = cps;
-         this.read = cps;
+         this.cpsHigh = cps;
       } else {
          double lo = finiteOr(b.cpsLow, 0.0 / 0.0);
          double hi = finiteOr(b.cpsHigh, 0.0 / 0.0);
@@ -50,15 +50,15 @@ public final class ClickProfile {
          }
 
          this.load_D = lo;
-         this.read = hi;
+         this.cpsHigh = hi;
       }
 
-      this.minIntervalNanos = ClickTimingMath.init(ClickTimingMath.init(this.technique, this.read));
-      this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.init(this.load_D));
+      this.minIntervalNanos = ClickTimingMath.intervalNanos(ClickTimingMath.effectiveUpperCps(this.technique, this.cpsHigh));
+      this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.intervalNanos(this.load_D));
       double holdLo = clamp(finiteOr(b.holdLowMs, 40.0), 1.0, 1000.0);
       double holdHi = clamp(finiteOr(b.holdHighMs, 90.0), 1.0, 1000.0);
-      this.write = Math.min(holdLo, holdHi);
-      this.update = Math.max(holdLo, holdHi);
+      this.holdLowMs = Math.min(holdLo, holdHi);
+      this.holdHighMs = Math.max(holdLo, holdHi);
       this.sync = clamp(finiteOr(b.update, 1.0), 0.0, 2.0);
       this.flush = clamp(finiteOr(b.sync, 0.5), 0.0, 1.0);
       this.close = clamp(finiteOr(b.flush, 1.0), 0.0, 3.0);
@@ -73,7 +73,7 @@ public final class ClickProfile {
       this.push = Math.max(rLo, rHi);
       this.pop = clamp(finiteOr(b.push, 10.0), 1.0, 100.0);
       this.freeSpin = b.freeSpin;
-      this.tick = clamp(finiteOr(b.freeSpinDecayPerSecond, 1.0), 0.1, 20.0);
+      this.freeSpinDecayPerSecond = clamp(finiteOr(b.freeSpinDecayPerSecond, 1.0), 0.1, 20.0);
    }
 
    public static ClickProfile.ProfileBuilder builder(ClickTechnique technique) {

@@ -59,7 +59,7 @@ final class AiModelCatalog {
       }
    }
 
-   boolean init(long token) {
+   boolean isCurrent(long token) {
       return this.init_J == token;
    }
 
@@ -67,7 +67,7 @@ final class AiModelCatalog {
       return this.init_Z;
    }
 
-   boolean load() {
+   boolean isScanning() {
       return this.load;
    }
 

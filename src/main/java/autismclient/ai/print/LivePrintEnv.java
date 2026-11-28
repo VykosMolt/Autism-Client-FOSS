@@ -78,7 +78,7 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public void recordPlacedBlock(BlockPos position, BlockState state) {
-      AiScaffold.init(position, state.getBlock());
+      AiScaffold.recordPlaced(position, state.getBlock());
    }
 
    @Override
@@ -409,7 +409,7 @@ public final class LivePrintEnv implements PrintEnv {
             return false;
          case CONFIRMED:
          case SWAPPED_DIFFERENT_STACK:
-            this.creativeStock.init(this.pendingSwapSourceSlot, this.pendingSwapHotbarSlot);
+            this.creativeStock.swapSlots(this.pendingSwapSourceSlot, this.pendingSwapHotbarSlot);
             p.getInventory().setSelectedSlot(this.pendingSwapHotbarSlot);
             this.pendingHandSwap = null;
             this.mismatchedSwapCount = state == AiContainerTransactions.ReceiptState.CONFIRMED ? 0 : this.mismatchedSwapCount + 1;
@@ -453,7 +453,7 @@ public final class LivePrintEnv implements PrintEnv {
    public boolean isFlightPermitted() {
       boolean allowed = this.player() != null
          && this.mc.gameMode != null
-         && PrintFlightPermission.init(
+         && PrintFlightPermission.canFly(
             this.flightAllowedByConfig,
             this.mc.gameMode.getPlayerMode(),
             this.player().getAbilities().mayfly,
@@ -556,7 +556,7 @@ public final class LivePrintEnv implements PrintEnv {
    public boolean giveCreativeStackReserved(ItemStack stack, Predicate<ItemStack> reserved) {
       LocalPlayer p = this.player();
       if (p != null && this.isCreativeMode() && this.mc.gui.screen() == null && p.containerMenu == p.inventoryMenu) {
-         int slot = this.creativeStock.init(i -> p.getInventory().getItem(i), reserved);
+         int slot = this.creativeStock.stockedSlot(i -> p.getInventory().getItem(i), reserved);
          if (slot < 0) {
             return false;
          }
@@ -571,7 +571,7 @@ public final class LivePrintEnv implements PrintEnv {
    private void setCreativeSlot(LocalPlayer p, int slot, ItemStack stack) {
       p.getInventory().setItem(slot, stack);
       this.mc.gameMode.handleCreativeModeItemAdd(stack.copy(), toInventoryMenuSlot(slot));
-      this.creativeStock.init(slot, stack);
+      this.creativeStock.recordSlot(slot, stack);
    }
 
    @Override
@@ -661,7 +661,7 @@ public final class LivePrintEnv implements PrintEnv {
       if (p != null && this.mc.gameMode != null) {
          if (AiMenuClose.load()) {
             this.releaseControls();
-         } else if (!PrintFlightPermission.init(c.fly, this.canUseFlight(), p.getAbilities().flying)) {
+         } else if (!PrintFlightPermission.flightMatches(c.fly, this.canUseFlight(), p.getAbilities().flying)) {
             this.releaseControls();
          } else {
             ((AutismPlayerAccessor)p).autism$setJumpTriggerTime(0);
@@ -770,7 +770,7 @@ public final class LivePrintEnv implements PrintEnv {
                }
 
                if (c.digPos != null && this.mc.gui.screen() == null) {
-                  BlockAttackGraceWindow.init(p);
+                  BlockAttackGraceWindow.note(p);
                   if (!c.digPos.equals(this.activeDigPos)) {
                      this.mc.gameMode.startDestroyBlock(c.digPos, c.digFace);
                      this.activeDigPos = c.digPos;

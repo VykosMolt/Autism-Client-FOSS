@@ -259,7 +259,7 @@ public final class AiSchematicMachinePlan {
       List<AiSchematicMachinePlan.ContainerPlan> decoded = this.init(origin, registries, this.containerStates.keySet(), unavailable);
       HashMap<BlockPos, BlockState> source = new HashMap<>();
       this.write.forEach((key, state) -> source.put(origin.offset(BlockPos.of(key)), state));
-      List<autismclient.ai.print.PrintClockSpec> clocks = AiHopperClockPlan.init(
+      List<autismclient.ai.print.PrintClockSpec> clocks = AiHopperClockPlan.plan(
          source,
          decoded,
          at -> this.clockSections.contains(SectionPos.asLong(at.getX() - origin.getX() >> 4, at.getY() - origin.getY() >> 4, at.getZ() - origin.getZ() >> 4))

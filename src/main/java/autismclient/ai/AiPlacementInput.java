@@ -23,7 +23,7 @@ final class AiPlacementInput {
       return this.init_Z || !this.pressedKeys.isEmpty();
    }
 
-   boolean init(int key) {
+   boolean isHeld(int key) {
       return this.pressedKeys.contains(key);
    }
 

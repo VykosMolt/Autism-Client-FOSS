@@ -31,7 +31,7 @@ public final class BlockInspectionService {
    private BlockInspectionService() {
    }
 
-   public static boolean init() {
+   public static boolean isBusy() {
       return init_Z || pendingInspection != null;
    }
 

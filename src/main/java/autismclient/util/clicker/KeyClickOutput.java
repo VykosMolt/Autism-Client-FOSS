@@ -53,7 +53,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       }
    }
 
-   public void init_V() {
+   public void activate() {
       this.activeGeneration = generation;
    }
 
@@ -121,7 +121,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       this.releaseAtNanos = -9223372036854775808L;
    }
 
-   public boolean init(long now, long holdNanos) {
+   public boolean press(long now, long holdNanos) {
       if (this.pressNanos != -9223372036854775808L && now - this.pressNanos < 50000000L) {
          return false;
       }
@@ -135,7 +135,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       return true;
    }
 
-   public void read(long now) {
+   public void releaseIfDue(long now) {
       if (this.load_Z && this.releaseAtNanos != -9223372036854775808L && now >= this.releaseAtNanos) {
          this.init_V_J(now);
       }
@@ -156,7 +156,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       }
    }
 
-   public static void write() {
+   public static void closeAll() {
       synchronized (OUTPUTS) {
          for (KeyClickOutput output : OUTPUTS) {
             output.close();
@@ -180,7 +180,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          }
       } else if (MINECRAFT.hitResult instanceof EntityHitResult hit
          && hit.getEntity() instanceof Player
-         && SprintStateTracker.read()
+         && SprintStateTracker.isDesynced()
          && !(MINECRAFT.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
          while (this.consumedClicks < this.pendingClicks && mapping.consumeClick()) {
             this.consumedClicks++;
@@ -201,7 +201,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       this.consumedClicks = 0;
    }
 
-   public static void update() {
+   public static void nextGeneration() {
       generation++;
    }
 

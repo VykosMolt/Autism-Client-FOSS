@@ -75,7 +75,7 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
       return String.format(Locale.ROOT, "%.1f", this.healthThreshold);
    }
 
-   public String write() {
+   public String statusText() {
       return this.below ? "Waiting for health to drop below " + this.thresholdText() : "Waiting for health to rise above " + this.thresholdText();
    }
 

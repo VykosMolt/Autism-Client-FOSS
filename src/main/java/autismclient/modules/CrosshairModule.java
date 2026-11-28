@@ -140,7 +140,7 @@ public final class CrosshairModule extends Module {
    public CrosshairPixelArt art() {
       String raw = this.text("art");
       if (this.drawn == null || !raw.equals(this.raw)) {
-         CrosshairPixelArt decoded = CrosshairPixelArt.init(raw);
+         CrosshairPixelArt decoded = CrosshairPixelArt.decode(raw);
          this.drawn = decoded != null ? decoded : defaultArt();
          this.raw = raw;
       }
@@ -160,7 +160,7 @@ public final class CrosshairModule extends Module {
       return CrosshairPresetGeometry.init(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
-   public CrosshairRenderState.Inner_DataUtil init_q_DataUtil_m(CrosshairPixelArt drawing) {
+   public CrosshairRenderState.Inner_DataUtil renderState(CrosshairPixelArt drawing) {
       return new CrosshairRenderState.Inner_DataUtil(
          this.getStyle(),
          this.decimal("scale"),
@@ -182,7 +182,7 @@ public final class CrosshairModule extends Module {
    }
 
    private void init_V_50() {
-      CrosshairRenderState.init(this.init_q_DataUtil_m(this.art()));
+      CrosshairRenderState.init(this.renderState(this.art()));
    }
 
    private void openEditor() {

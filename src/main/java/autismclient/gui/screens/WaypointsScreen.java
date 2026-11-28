@@ -654,7 +654,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
    }
 
    private static int defaultWaypointColor() {
-      return al.init_Module_Str("waypoints") instanceof WaypointsModule waypoints ? waypoints.init_I_23() : -12855297;
+      return al.init_Module_Str("waypoints") instanceof WaypointsModule waypoints ? waypoints.defaultColor() : -12855297;
    }
 
    private List<AutismWaypoints.Waypoint> waypointRows() {

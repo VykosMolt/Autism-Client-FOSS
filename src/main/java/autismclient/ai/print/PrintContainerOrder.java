@@ -33,23 +33,23 @@ public final class PrintContainerOrder {
       this.init_Obj = env.worldToken();
    }
 
-   public void init(PrintMachineJob job) {
+   public void track(PrintMachineJob job) {
       this.init_LongOpenHashSet.add(job.position().asLong());
-      job.init(this);
+      job.setOrder(this);
    }
 
    public boolean init_Z(BlockPos at) {
       return this.init_LongOpenHashSet.contains(at.asLong());
    }
 
-   public boolean init_Z() {
+   public boolean isIdle() {
       return this.init_LongOpenHashSet.isEmpty();
    }
 
-   public void load(PrintMachineJob job) {
+   public void complete(PrintMachineJob job) {
       long key = job.position().asLong();
       this.init_Long2ObjectLinkedO.remove(key);
-      if (!job.load_Z() || !this.init_EventBus.hasChunkAt(job.position()) || !job.matchesSource(this.init_EventBus.getBlockState(job.position()))) {
+      if (!job.isVerifiedSuccess() || !this.init_EventBus.hasChunkAt(job.position()) || !job.matchesSource(this.init_EventBus.getBlockState(job.position()))) {
          this.init_V(job.position());
       } else if (this.read()) {
          PrintContainerOrder.OrderEntry previous = this.init_Long2ObjectOpenHas.get(key);
@@ -72,12 +72,12 @@ public final class PrintContainerOrder {
    }
 
    public void init(long key) {
-      this.init(
+      this.onBlockChange(
          key, null, this.init_EventBus.hasChunkAt(BlockPos.of(key)) ? this.init_EventBus.getBlockState(BlockPos.of(key)) : PrintView.UNLOADED_SENTINEL
       );
    }
 
-   public void init(long key, BlockState before, BlockState after) {
+   public void onBlockChange(long key, BlockState before, BlockState after) {
       PrintContainerOrder.OrderEntry receipt = this.init_Long2ObjectOpenHas.get(key);
       if ((
             receipt == null
@@ -96,7 +96,7 @@ public final class PrintContainerOrder {
       }
    }
 
-   public boolean load() {
+   public boolean hasPending() {
       return !this.init_Long2ObjectLinkedO.isEmpty();
    }
 

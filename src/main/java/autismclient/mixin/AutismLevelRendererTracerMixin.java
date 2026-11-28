@@ -39,7 +39,7 @@ public class AutismLevelRendererTracerMixin {
       boolean waypoints = ar.read_Z();
       boolean skeleton = SkeletonEspRenderer.hasSkeletons();
       boolean ai = !AutismLiteVariant.enabled() && AiVisualization.hasContent();
-      boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.init();
+      boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.isActive();
       boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.isActive();
       boolean portal = !AutismLiteVariant.enabled() && EndPortalRenderer.init_Z();
       if (tracers || esp || waypoints || skeleton || ai || danger || beds || portal) {
@@ -54,7 +54,7 @@ public class AutismLevelRendererTracerMixin {
          }
 
          if (skeleton) {
-            SkeletonEspRenderer.init(matrixStack);
+            SkeletonEspRenderer.render(matrixStack);
          }
 
          if (waypoints) {
@@ -63,11 +63,11 @@ public class AutismLevelRendererTracerMixin {
 
          if (!AutismLiteVariant.enabled()) {
             if (ai) {
-               AiVisualization.init(matrixStack);
+               AiVisualization.render(matrixStack);
             }
 
             if (danger) {
-               PearlGhostRenderer.init(matrixStack);
+               PearlGhostRenderer.render(matrixStack);
             }
 
             if (beds) {
@@ -75,7 +75,7 @@ public class AutismLevelRendererTracerMixin {
             }
 
             if (portal) {
-               EndPortalRenderer.init(matrixStack);
+               EndPortalRenderer.render(matrixStack);
             }
          }
       }

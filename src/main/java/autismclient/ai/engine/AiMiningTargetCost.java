@@ -6,7 +6,7 @@ public final class AiMiningTargetCost {
    private AiMiningTargetCost() {
    }
 
-   public static double init(List<Double> breaks, int remaining, double movementTicks, double startTicks) {
+   public static double estimateTicks(List<Double> breaks, int remaining, double movementTicks, double startTicks) {
       int useful = Math.min(Math.max(0, remaining), breaks.size());
       if (useful == 0) {
          return 1.0 / 0.0;
@@ -26,7 +26,7 @@ public final class AiMiningTargetCost {
       return ticks / useful;
    }
 
-   public static int init(List<AiMiningTargetCost.TargetChoice> choices) {
+   public static int pickQuickest(List<AiMiningTargetCost.TargetChoice> choices) {
       double quickest = 1.0 / 0.0;
 
       for (AiMiningTargetCost.TargetChoice choice : choices) {

@@ -50,7 +50,7 @@ public final class TpClickModule extends Module {
       return al.init_Module_Str("tp-click") instanceof TpClickModule tpClick && tpClick.bool("no-fall");
    }
 
-   public static boolean read() {
+   public static boolean antiKick() {
       return al.init_Module_Str("tp-click") instanceof TpClickModule tpClick && tpClick.bool("anti-kick");
    }
 

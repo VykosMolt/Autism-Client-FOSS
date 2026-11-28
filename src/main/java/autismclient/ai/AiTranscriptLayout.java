@@ -32,7 +32,7 @@ final class AiTranscriptLayout {
       return this.lines;
    }
 
-   List<AiTranscriptLayout.MessageBlock> load() {
+   List<AiTranscriptLayout.MessageBlock> blocks() {
       return this.blocks;
    }
 

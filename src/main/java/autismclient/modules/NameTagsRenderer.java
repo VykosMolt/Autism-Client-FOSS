@@ -92,7 +92,7 @@ public final class NameTagsRenderer {
    private NameTagsRenderer() {
    }
 
-   public static void init(GuiGraphicsExtractor context) {
+   public static void render(GuiGraphicsExtractor context) {
       if (!aD.init_Z() && (AutismLiteVariant.enabled() || autismclient.e.PathHelper.init())) {
          if (mc == null || mc.level == null || mc.player == null) {
             reset();
@@ -124,7 +124,7 @@ public final class NameTagsRenderer {
    }
 
    private static void renderTags(GuiGraphicsExtractor context, Module module) {
-      if (WorldProjectionHelper.init(SCRATCH_MATRIX)) {
+      if (WorldProjectionHelper.projection(SCRATCH_MATRIX)) {
          if (lastLevel != mc.level) {
             reset();
             lastLevel = mc.level;
@@ -158,7 +158,7 @@ public final class NameTagsRenderer {
             double maxDist = module.decimal("max-distance");
             double itemsMaxDist = module.decimal("items-max-distance");
             double groupRadius = module.decimal("group-radius");
-            Vec3 camPos = WorldProjectionHelper.init();
+            Vec3 camPos = WorldProjectionHelper.cameraPosition();
             NameTagsRenderer.Projection projection = new NameTagsRenderer.Projection(camPos, SCRATCH_MATRIX, cA.init_I(), cA.load_I());
             float tickDelta = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             Entity self = mc.player;
@@ -191,7 +191,7 @@ public final class NameTagsRenderer {
                                  tag.frame = frame;
                                  tag.update(tick, revision, fontEpoch, showHealth, showDistance, dist, friend, showArmor, showHeldItem, showEnchantments);
                                  if (!(tag.init_aj_ConfigStore.width <= 0.0F)) {
-                                    float tagScale = init(baseScale, distanceScale, dist);
+                                    float tagScale = scaleFor(baseScale, distanceScale, dist);
                                     drawTag(context, screen[0], screen[1], tag, tagScale);
                                  }
                               }
@@ -293,7 +293,7 @@ public final class NameTagsRenderer {
       Component label;
       if (entity instanceof Player player) {
          String accountName = player.getGameProfile().name();
-         if (!PlayerDisplayNameParser.init(accountName)) {
+         if (!PlayerDisplayNameParser.isPlausibleAccountName(accountName)) {
             return Component.empty();
          }
 
@@ -440,13 +440,13 @@ public final class NameTagsRenderer {
             float[] screen = project(x, y, z, projection);
             if (screen != null) {
                double dist = Math.sqrt(distanceSq(camPos, x, y, z));
-               drawLines(context, screen[0], screen[1], group.load, -1, init(baseScale, distanceScale, dist));
+               drawLines(context, screen[0], screen[1], group.load, -1, scaleFor(baseScale, distanceScale, dist));
             }
          }
       }
    }
 
-   static float init(double baseScale, boolean distanceScale, double dist) {
+   static float scaleFor(double baseScale, boolean distanceScale, double dist) {
       if (!distanceScale) {
          return Math.max(0.05F, (float)baseScale);
       }

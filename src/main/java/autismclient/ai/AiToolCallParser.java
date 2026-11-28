@@ -822,7 +822,7 @@ public final class AiToolCallParser {
       }
    }
 
-   public static List<String> init(String input, Collection<String> ids, int max) {
+   public static List<String> nearestIds(String input, Collection<String> ids, int max) {
       if (input != null && !input.isBlank() && ids != null && !ids.isEmpty()) {
          String needle = input.trim().toLowerCase(Locale.ROOT);
          String needleLocal = needle.contains(":") ? needle.substring(needle.indexOf(58) + 1) : needle;

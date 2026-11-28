@@ -42,7 +42,7 @@ public final class CrosshairRenderer {
    private CrosshairRenderer() {
    }
 
-   public static boolean init(GuiGraphicsExtractor graphics) {
+   public static boolean render(GuiGraphicsExtractor graphics) {
       CrosshairRenderState.Inner_DataUtil look = CrosshairRenderState.current();
       if (look == null) {
          return false;

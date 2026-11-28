@@ -33,14 +33,14 @@ public final class ContainerCloseGuard {
       return counter != null && counter.get() > 0;
    }
 
-   public static void init(int containerId, ServerboundContainerClosePacket pkt) {
+   public static void defer(int containerId, ServerboundContainerClosePacket pkt) {
       if (pkt != null) {
          deferredCloses.put(containerId, pkt);
          lastTouched.put(containerId, System.currentTimeMillis());
       }
    }
 
-   public static void init(int containerId, ClientPacketListener conn) {
+   public static void hold(int containerId, ClientPacketListener conn) {
       AtomicInteger counter = holdCounts.get(containerId);
       if (counter == null) {
          flushDeferredClose(containerId, conn);
@@ -86,7 +86,7 @@ public final class ContainerCloseGuard {
       }
    }
 
-   public static void load(int newContainerId) {
+   public static void onOpen(int newContainerId) {
       if (holdCounts.remove(newContainerId) != null) {
          deferredCloses.remove(newContainerId);
          lastTouched.remove(newContainerId);
@@ -126,7 +126,7 @@ public final class ContainerCloseGuard {
       return !lastTouched.isEmpty();
    }
 
-   public static void init(Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer) {
+   public static void setSnapshotConsumer(Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer) {
       snapshotConsumer = consumer;
    }
 
@@ -150,7 +150,7 @@ public final class ContainerCloseGuard {
       }
    }
 
-   public static void read() {
+   public static void clearSnapshotConsumer() {
       snapshotConsumer = null;
    }
 }

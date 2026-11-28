@@ -133,14 +133,14 @@ public final class OverlaySuiteController {
    }
 
    public static OverlaySuiteController create(Font font) {
-      return init(font, null);
+      return create(font, null);
    }
 
-   public static OverlaySuiteController init(Font font, AutismOverlay tiedOverlay) {
+   public static OverlaySuiteController create(Font font, AutismOverlay tiedOverlay) {
       return new OverlaySuiteController(font, tiedOverlay);
    }
 
-   public void init() {
+   public void saveStates() {
       if (this.init_AutismLANSyncOverl != null) {
          this.init_AutismLANSyncOverl.saveState();
       }

@@ -20,7 +20,7 @@ public final class BedDefenderGhostRenderer {
    private BedDefenderGhostRenderer() {
    }
 
-   public static void init() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
@@ -61,7 +61,7 @@ public final class BedDefenderGhostRenderer {
                                  for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
                                     BlockPos p = cell.pos();
                                     if (level.isLoaded(p) && level.getBlockState(p).canBeReplaced()) {
-                                       float fade = cell.layer() <= nextLayer ? 1.0F : DistanceFadeCurve.init(Math.sqrt(new AABB(p).distanceToSqr(camera)));
+                                       float fade = cell.layer() <= nextLayer ? 1.0F : DistanceFadeCurve.fade(Math.sqrt(new AABB(p).distanceToSqr(camera)));
                                        int layerAlpha = Math.round(alpha * fade);
                                        if (layerAlpha != 0) {
                                           autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(

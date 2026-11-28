@@ -231,7 +231,7 @@ final class AiStride {
          for (float var15 : new float[]{var5, var9, var9 - 15.0F, var9 + 15.0F, Math.round(var9 / 90.0F) * 90.0F}) {
             if (!(Math.abs(Mth.wrapDegrees(var15 - var9)) > 55.0F)) {
                for (boolean var19 : new boolean[]{var6, false}) {
-                  AiPhysics.MoveInput var20 = AiPhysics.MoveInput.run(var15, var19);
+                  AiPhysics.MoveInput var20 = AiPhysics.MoveInput.running(var15, var19);
                   AiPhysics.MotionState var21 = var1;
 
                   for (int var22 = 1; var22 < var11; var22++) {
@@ -286,7 +286,7 @@ final class AiStride {
             AiStride.StridePlan var16 = null;
 
             for (int var20 : putAt_IArr) {
-               AiPhysics.MoveInput var21 = AiPhysics.MoveInput.run(var15 + var20, true);
+               AiPhysics.MoveInput var21 = AiPhysics.MoveInput.running(var15 + var20, true);
 
                for (int var22 = 0; var22 < 3; var22++) {
                   AiStride.StridePlan var23 = new AiStride.StridePlan(null, var21, var22 == 0, var22 == 2 ? 2 : 0, 0, 0.0);

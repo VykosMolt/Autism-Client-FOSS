@@ -20,7 +20,7 @@ public abstract class AutismGuiRendererPanoramaMixin {
 
    @Inject(method = "registerPanoramaTextures", at = @At("TAIL"))
    private void autism$registerCustomPanorama(TextureManager textureManager, CallbackInfo ci) {
-      ThemeTextureRecolorer.init(textureManager);
+      ThemeTextureRecolorer.register(textureManager);
    }
 
    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/CubeMap;render(FF)V"))

@@ -15,7 +15,7 @@ public abstract class AutismCrystalViewModelMixin {
       require = 0
    )
    private float autism$crystalBounce(float original) {
-      return CrystalAuraModule.open() ? original * CrystalAuraModule.write_F_2() : original;
+      return CrystalAuraModule.isCrystalViewEnabled() ? original * CrystalAuraModule.crystalViewBounce() : original;
    }
 
    @ModifyVariable(
@@ -24,6 +24,6 @@ public abstract class AutismCrystalViewModelMixin {
       require = 0
    )
    private float autism$crystalSpin(float animationAngle) {
-      return CrystalAuraModule.open() ? animationAngle * CrystalAuraModule.read_F_3() : animationAngle;
+      return CrystalAuraModule.isCrystalViewEnabled() ? animationAngle * CrystalAuraModule.crystalViewSpin() : animationAngle;
    }
 }

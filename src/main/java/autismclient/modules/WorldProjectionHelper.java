@@ -19,7 +19,7 @@ final class WorldProjectionHelper {
    private WorldProjectionHelper() {
    }
 
-   static boolean init(Matrix4f dest) {
+   static boolean projection(Matrix4f dest) {
       Minecraft mc = Minecraft.getInstance();
       GameRenderer renderer = mc.gameRenderer;
       LocalPlayer player = mc.player;
@@ -60,7 +60,7 @@ final class WorldProjectionHelper {
       }
    }
 
-   static Vec3 init() {
+   static Vec3 cameraPosition() {
       Minecraft mc = Minecraft.getInstance();
       CameraRenderState camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
       return camera.initialized ? camera.pos : mc.gameRenderer.mainCamera().position();

@@ -136,7 +136,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return result;
    }
 
-   PlacementGoal init(Map<Long, PlacementGoal.ClickGeometry> placements) {
+   PlacementGoal withProofs(Map<Long, PlacementGoal.ClickGeometry> placements) {
       if (AutismLiteVariant.enabled()) {
          throw new IllegalStateException();
       }
@@ -170,10 +170,10 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    public static PlacementGoal ofTargets(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells) {
-      return init(targets, reach, eyeHeight, workVolume, protectedCells, Set.of());
+      return create(targets, reach, eyeHeight, workVolume, protectedCells, Set.of());
    }
 
-   public static PlacementGoal init(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, Set<Long> avoid) {
+   public static PlacementGoal create(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells, Set<Long> avoid) {
       if (AutismLiteVariant.enabled()) {
          throw new IllegalStateException();
       }
@@ -203,7 +203,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return this.workVolume;
    }
 
-   public boolean load() {
+   public boolean hasProtectedCells() {
       return this.protectedCells != null;
    }
 
@@ -335,7 +335,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                }
 
                Vec3 point = proof.point().add(-proof.face().getStepX() * 0.001, -proof.face().getStepY() * 0.001, -proof.face().getStepZ() * 0.001);
-               return InteractionGoal.init(grid, proof.support(), x, y, z, proof.eyeHeight(), point.x, point.y, point.z, this.reach, proof.face(), null);
+               return InteractionGoal.canReach(grid, proof.support(), x, y, z, proof.eyeHeight(), point.x, point.y, point.z, this.reach, proof.face(), null);
             } else {
                return false;
             }
@@ -415,7 +415,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                                  double edgeX = Mth.clamp(x + 0.5, support.getX() + box.minX + 0.035, support.getX() + box.maxX - 0.035);
                                  double edgeZ = Mth.clamp(z + 0.5, support.getZ() + box.minZ + 0.035, support.getZ() + box.maxZ - 0.035);
                                  if (this.constraint.acceptsRay(edgeX - x - 0.5, hitY - y - actualEyeHeight, edgeZ - z - 0.5)
-                                    && InteractionGoal.init(
+                                    && InteractionGoal.canReach(
                                        grid,
                                        support,
                                        x,
@@ -438,7 +438,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                                  double aimedX = hitX - Math.sin(yawRadians) * (box.maxX - box.minX) * 0.25;
                                  double aimedZ = hitZ + Math.cos(yawRadians) * (box.maxZ - box.minZ) * 0.25;
                                  if (this.constraint.acceptsRay(aimedX - x - 0.5, hitY - y - actualEyeHeight, aimedZ - z - 0.5)
-                                    && InteractionGoal.init(
+                                    && InteractionGoal.canReach(
                                        grid,
                                        support,
                                        x,
@@ -457,7 +457,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                               }
 
                               if ((this.constraint == null || this.constraint.acceptsRay(hitX - x - 0.5, hitY - y - actualEyeHeight, hitZ - z - 0.5))
-                                 && InteractionGoal.init(
+                                 && InteractionGoal.canReach(
                                     grid,
                                     support,
                                     x,
@@ -487,8 +487,8 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   public boolean init(Minecraft mc) {
-      if (mc.player == null || !this.rejected.contains(AiStance.init(mc).asLong()) && (this.allowedStances == null || this.allowedStances.contains(AiStance.init(mc).asLong()))) {
+   public boolean acceptsStance(Minecraft mc) {
+      if (mc.player == null || !this.rejected.contains(AiStance.standingPos(mc).asLong()) && (this.allowedStances == null || this.allowedStances.contains(AiStance.standingPos(mc).asLong()))) {
          if (this.load(mc)) {
             return true;
          }
@@ -515,7 +515,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
             }
          }
 
-         BlockPlacementPlanner.PlacementPlan hit = init(mc, this.targetBlock, this.item, this.constraint, 72);
+         BlockPlacementPlanner.PlacementPlan hit = planPlacement(mc, this.targetBlock, this.item, this.constraint, 72);
          if (hit != null && this.item instanceof BlockItem blockItem) {
             BlockState state = blockItem.getBlock()
                .getStateForPlacement(
@@ -545,7 +545,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, int rays) {
+   public static BlockPlacementPlanner.PlacementPlan planPlacement(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, int rays) {
       return planPlacement(
          mc,
          target,
@@ -564,20 +564,20 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          : constraint != null && constraint.crouchForLook();
    }
 
-   public static double init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, boolean future) {
+   public static double standingEyeHeight(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, boolean future) {
       double standing = future ? mc.player.getEyeHeight(Pose.STANDING) : mc.player.getEyeHeight();
       return canPlace(mc, target, item, constraint) ? Math.min(standing, mc.player.getEyeHeight(Pose.CROUCHING)) : standing;
    }
 
    private static Vec3 eyePosition(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, boolean future) {
-      return feet.add(0.0, init(mc, target, item, constraint, future), 0.0);
+      return feet.add(0.0, standingEyeHeight(mc, target, item, constraint, future), 0.0);
    }
 
    private static BlockPlaceContext placeContext(Player player, ItemStack stack, BlockHitResult hit, Vec3 eye) {
       return AutismLiteVariant.enabled() ? new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit) : new AiPlacementContext(player, stack, hit, eye);
    }
 
-   public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, int rays) {
+   public static BlockPlacementPlanner.PlacementPlan planPlacement(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, int rays) {
       AABB body = new AABB(feet.x - 0.3, feet.y, feet.z - 0.3, feet.x + 0.3, feet.y + 1.8, feet.z + 0.3);
       return planPlacement(mc, target, item, constraint, eyePosition(mc, target, item, constraint, feet, true), body, mc.player.blockInteractionRange() - 0.25, rays);
    }
@@ -591,7 +591,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          }
       }
 
-      BlockPlacementPlanner.HitValidator placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
+      BlockPlacementPlanner.HitValidator placement = (hit, cell) -> isValidHit(mc, cell, item, constraint, eye, body, hit);
       BlockPlacementPlanner.Query request = new BlockPlacementPlanner.Query(target, eye, reach, placement)
          .withSneaking(mc.player.isShiftKeyDown())
          .withAutoSneak(constraint != null)
@@ -658,7 +658,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   static boolean init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, BlockHitResult hit) {
+   static boolean isValidHit(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, BlockHitResult hit) {
       if (hit == null || target == null) {
          return false;
       } else if (!(item instanceof BlockItem blockItem)) {
@@ -711,7 +711,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return max > min ? new AABB(rect.minX, min, rect.minZ, rect.maxX, max, rect.maxZ) : null;
    }
 
-   public boolean update(BlockPos feet) {
+   public boolean rejectStance(BlockPos feet) {
       if (this.rejected.size() < 64) {
          this.rejected.add(feet.asLong());
          return true;

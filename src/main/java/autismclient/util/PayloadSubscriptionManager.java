@@ -34,7 +34,7 @@ public final class PayloadSubscriptionManager {
       update = 0;
    }
 
-   public static synchronized void load() {
+   public static synchronized void reset() {
       load_Z = true;
       update = 0;
       init_Str = "";
@@ -124,7 +124,7 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public static synchronized void init(AutismPayloadSupport.PayloadEntry snapshot) {
+   public static synchronized void observe(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot != null && "S2C".equalsIgnoreCase(snapshot.direction())) {
          learnObservedChannel(snapshot.channel());
 
@@ -144,7 +144,7 @@ public final class PayloadSubscriptionManager {
       return List.copyOf(channels);
    }
 
-   public static void init(Minecraft mc, boolean packetLoggerCapturing) {
+   public static void tick(Minecraft mc, boolean packetLoggerCapturing) {
       if (load_Z && !autismclient.modules.aD.read_Z() && isConnected(mc)) {
          synchronized (PayloadSubscriptionManager.class) {
             if (update > 0) {

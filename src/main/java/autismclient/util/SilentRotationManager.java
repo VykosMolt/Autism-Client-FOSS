@@ -201,7 +201,7 @@ public final class SilentRotationManager {
       lastHumanizedTick = tick;
       usedHumanizedStep = true;
       RotationMath.Rotation at = RotationStreamPlanner.currentRotation(streamState);
-      double[] want = humanizedStepper.init(goal.yaw(), goal.pitch(), at.yaw(), at.pitch(), tolerance, maxYawStep, maxPitchStep, true);
+      double[] want = humanizedStepper.step(goal.yaw(), goal.pitch(), at.yaw(), at.pitch(), tolerance, maxYawStep, maxPitchStep, true);
       return RotationStreamPlanner.stepBy(streamState, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), 18.0);
    }
 

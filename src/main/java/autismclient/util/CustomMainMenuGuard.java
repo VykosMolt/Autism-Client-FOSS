@@ -4,7 +4,7 @@ public final class CustomMainMenuGuard {
    private CustomMainMenuGuard() {
    }
 
-   public static boolean init() {
+   public static boolean isEnabled() {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
@@ -14,6 +14,6 @@ public final class CustomMainMenuGuard {
    }
 
    public static boolean load() {
-      return autismclient.modules.aD.init_Z() || !init();
+      return autismclient.modules.aD.init_Z() || !isEnabled();
    }
 }

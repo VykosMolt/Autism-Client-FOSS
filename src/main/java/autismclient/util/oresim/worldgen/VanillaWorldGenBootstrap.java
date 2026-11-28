@@ -93,7 +93,7 @@ public final class VanillaWorldGenBootstrap {
       this.init_LevelHeightAccesso = LevelHeightAccessor.create(dimensionType.minY(), dimensionType.height());
    }
 
-   public static VanillaWorldGenBootstrap init(long seed, ResourceKey<Level> dimension) {
+   public static VanillaWorldGenBootstrap create(long seed, ResourceKey<Level> dimension) {
       VanillaWorldGenBootstrap.BootstrapState bootstrap = init_ConfigStore_DataUt();
       Provider lookup = bootstrap.registries();
       ResourceKey<LevelStem> stemKey = init(dimension);

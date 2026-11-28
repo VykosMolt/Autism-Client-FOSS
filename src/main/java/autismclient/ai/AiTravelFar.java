@@ -18,7 +18,7 @@ final class AiTravelFar {
    private AiTravelFar() {
    }
 
-   static AiOperation init(BlockPos target, double radius, boolean groundTarget, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
+   static AiOperation travel(BlockPos target, double radius, boolean groundTarget, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
       return travelWithStrategy(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST);
    }
 

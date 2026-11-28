@@ -46,11 +46,11 @@ final class AiScriptHost implements AutoCloseable {
       this.tools = tools;
    }
 
-   JsonObject init(String source, int timeout, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   JsonObject run(String source, int timeout, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       return this.runScript(source, timeout, cancelled, new JsonObject());
    }
 
-   JsonObject init(String source, JsonArray fixtures, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   JsonObject check(String source, JsonArray fixtures, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (fixtures.size() <= 4 && fixtures.toString().length() <= 64000) {
          this.runScript(source, 3, cancelled, AiJson.objectOf("validateOnly", true));
          JsonArray results = new JsonArray();
@@ -158,7 +158,7 @@ final class AiScriptHost implements AutoCloseable {
 
             label165:
             while (true) {
-               Future<String> next = this.executor.submit(() -> AiBoundedIo.init(input, 256000));
+               Future<String> next = this.executor.submit(() -> AiBoundedIo.readLine(input, 256000));
 
                while (!cancelled.getAsBoolean()) {
                   if (System.nanoTime() > deadline) {
@@ -215,7 +215,7 @@ final class AiScriptHost implements AutoCloseable {
                throw new CancellationException();
             }
          } finally {
-            this.init();
+            this.killProcessTree();
             LIVE_PROCESSES.remove(live);
             output.close();
             input.close();
@@ -225,7 +225,7 @@ final class AiScriptHost implements AutoCloseable {
       }
    }
 
-   void init() {
+   void killProcessTree() {
       Process p = this.process;
       if (p != null) {
          try {
@@ -266,7 +266,7 @@ final class AiScriptHost implements AutoCloseable {
 
    @Override
    public void close() {
-      this.init();
+      this.killProcessTree();
       this.executor.shutdownNow();
    }
 

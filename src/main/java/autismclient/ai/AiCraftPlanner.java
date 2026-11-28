@@ -18,7 +18,7 @@ public final class AiCraftPlanner {
    private AiCraftPlanner() {
    }
 
-   public static AiCraftPlanner.CraftPlan init(AiCraftPlanner.RecipeGraph graph, String itemId, int quantity) {
+   public static AiCraftPlanner.CraftPlan plan(AiCraftPlanner.RecipeGraph graph, String itemId, int quantity) {
       int held = Math.max(0, graph.held(itemId));
       if (quantity > 0 && held < quantity) {
          AiCraftPlanner.StockLedger state = new AiCraftPlanner.StockLedger(graph);

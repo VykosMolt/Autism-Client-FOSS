@@ -113,7 +113,7 @@ public final class SpawnerEspCatalog {
                for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                   LevelChunk chunk = chunks.getChunk(playerChunkX + dx, playerChunkZ + dz, ChunkStatus.FULL, false);
                   if (chunk != null) {
-                     for (EspChunkWorker.EspBox entry : EspChunkWorker.sync.init(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
+                     for (EspChunkWorker.EspBox entry : EspChunkWorker.spawners.scan(chunk, gameTime, stamp, (scanned, out) -> init(level, scanned, module, listValue, out))) {
                         Vec3 trace = entry.tracer();
                         if (!(init(playerPos, trace.x, trace.y, trace.z) > maxDistSq)) {
                            if (boxEmit != null) {

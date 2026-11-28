@@ -23,7 +23,7 @@ public final class BoatFlyModule extends Module {
       this.add(new DoubleSetting("upward-speed", "Upward Speed", 0.3, 0.0, 5.0, 0.05).description("Sets upward speed.").build());
    }
 
-   static Vec3 init(Entity vehicle, MoverType type, Vec3 movement) {
+   static Vec3 adjustMovement(Entity vehicle, MoverType type, Vec3 movement) {
       BoatFlyModule module = instance;
       if (module == null || !module.isEnabled() || aD.read_Z()) {
          return movement;

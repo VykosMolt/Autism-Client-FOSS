@@ -718,7 +718,7 @@ public final class PrintCore {
          }
 
          if (this.chunkWork != null) {
-            this.chunkWork.init(i, this.cellStates[i], value);
+            this.chunkWork.onCellChanged(i, this.cellStates[i], value);
          }
 
          if (this.columnHead != null && this.cellStates[i] == 0 != (value == 0)) {
@@ -1720,7 +1720,7 @@ public final class PrintCore {
       }
 
       if (job.b_() && job.needsAccess()) {
-         this.containerOrder.init(job);
+         this.containerOrder.track(job);
       }
    }
 
@@ -1883,7 +1883,7 @@ public final class PrintCore {
    }
 
    private void completeMachineJob(PrintMachineJob job) {
-      this.containerOrder.load(job);
+      this.containerOrder.complete(job);
       this.releaseQuietInput(job);
       if (job == this.earlyFillJob) {
          this.earlyFills++;
@@ -1931,7 +1931,7 @@ public final class PrintCore {
    private boolean restoreRefillableJobs() {
       boolean restored = false;
 
-      for (int i = 0; i < 64 && this.containerOrder.load(); i++) {
+      for (int i = 0; i < 64 && this.containerOrder.hasPending(); i++) {
          PrintMachineJob job = this.containerOrder.pollNext();
          long key = job.position().asLong();
          if (!this.machineJobs.containsKey(key)) {
@@ -1966,7 +1966,7 @@ public final class PrintCore {
          this.activity = null;
       }
 
-      return restored || this.containerOrder.load();
+      return restored || this.containerOrder.hasPending();
    }
 
    private void skipMachineJob(PrintMachineJob job) {
@@ -2323,7 +2323,7 @@ public final class PrintCore {
       this.fallWaitTicks = 0;
       this.airPeakY = this.env.playerMotionState().onGround() ? this.env.playerMotionState().y() : 0.0 / 0.0;
       this.lastYaw = this.lastPitch = 0.0F / 0.0F;
-      this.headWindow.init();
+      this.headWindow.reset();
       this.steadyAimTicks = 0;
       this.aimChangedNanos = this.env.nanoTime();
    }
@@ -2879,7 +2879,7 @@ public final class PrintCore {
    private void queueBlockChange(long key, BlockState before) {
       BlockState actual = this.env.getBlockState(BlockPos.of(key));
       if (before != actual) {
-         this.containerOrder.init(key, before, actual);
+         this.containerOrder.onBlockChange(key, before, actual);
       }
 
       if (!this.pendingBlockChanges.containsKey(key)) {
@@ -3040,7 +3040,7 @@ public final class PrintCore {
       return this.remainingNeeds.getOrDefault(item, 0);
    }
 
-   public boolean init_Z_Item(Item item) {
+   public boolean hasItem(Item item) {
       return item != null && this.isItemAvailable(item);
    }
 
@@ -4073,7 +4073,7 @@ public final class PrintCore {
 
          if (live.getBlock() instanceof PistonBaseBlock
             && !live.getValue(PistonBaseBlock.EXTENDED)
-            && autismclient.ai.engine.AiPistonPower.init(this.view, at, live.getValue(PistonBaseBlock.FACING))) {
+            && autismclient.ai.engine.AiPistonPower.isPowered(this.view, at, live.getValue(PistonBaseBlock.FACING))) {
             return false;
          }
 
@@ -4521,7 +4521,7 @@ public final class PrintCore {
          return null;
       }
 
-      if (this.containerOrder.init_Z() && this.earlyFillCandidates.isEmpty() && !EARLY_FILLS) {
+      if (this.containerOrder.isIdle() && this.earlyFillCandidates.isEmpty() && !EARLY_FILLS) {
          return null;
       }
 
@@ -4944,7 +4944,7 @@ public final class PrintCore {
          long k = BlockPos.asLong(x, y, z);
          if (y == floorY) {
             int i = this.cellIndexByPos.get(k);
-            return i >= 0 && this.write_Z_I(i) && this.isOpenTargetCell(BlockPos.of(k));
+            return i >= 0 && this.inComponent(i) && this.isOpenTargetCell(BlockPos.of(k));
          }
 
          if (!this.temporaryBlocks.containsKey(k) && !this.view.getBlockState(BlockPos.of(k)).isAir()) {
@@ -4963,7 +4963,7 @@ public final class PrintCore {
       boolean floorHere = false;
 
       for (int i = 0; i < this.targets.length && !floorHere; i++) {
-         if (this.cellStates[i] == 0 && this.targets[i].pos().getY() == lowest && this.write_Z_I(i) && !this.init_Z_I_D(i, -1.0 / 0.0)) {
+         if (this.cellStates[i] == 0 && this.targets[i].pos().getY() == lowest && this.inComponent(i) && !this.init_Z_I_D(i, -1.0 / 0.0)) {
             floorHere = true;
          }
       }
@@ -4973,7 +4973,7 @@ public final class PrintCore {
       }
 
       for (int i = 0; i < this.targets.length; i++) {
-         if (this.targets[i].pos().getY() == lowest && this.write_Z_I(i) && (this.cellStates[i] == 3 || this.cellStates[i] == 2)) {
+         if (this.targets[i].pos().getY() == lowest && this.inComponent(i) && (this.cellStates[i] == 3 || this.cellStates[i] == 2)) {
             return null;
          }
       }
@@ -5007,7 +5007,7 @@ public final class PrintCore {
       return null;
    }
 
-   boolean push_Z() {
+   boolean hasHighComponents() {
       if (this.hasHighComponents == null) {
          if (this.componentOf == null) {
             this.buildComponents();
@@ -5027,7 +5027,7 @@ public final class PrintCore {
       return this.hasHighComponents;
    }
 
-   boolean write_Z_I(int i) {
+   boolean inComponent(int i) {
       if (this.componentOf == null) {
          this.buildComponents();
       }
@@ -5041,7 +5041,7 @@ public final class PrintCore {
 
          for (int i = 0; i < this.targets.length; i++) {
             BlockPos p = this.targets[i].pos();
-            if (p.getY() >= this.baseY + 8 && this.write_Z_I(i)) {
+            if (p.getY() >= this.baseY + 8 && this.inComponent(i)) {
                this.cellsByColumn.computeIfAbsent(BlockPos.asLong(p.getX(), 0, p.getZ()), k -> new IntArrayList()).add(i);
             }
          }
@@ -5073,7 +5073,7 @@ public final class PrintCore {
             && this.targets[i].pos().getY() + 2 <= feetY
             && this.env.hasChunkAt(this.targets[i].pos())
             && this.hasSolidNeighborAt(this.targets[i].pos())
-            && !this.write_Z_I(i)) {
+            && !this.inComponent(i)) {
             out.add(i);
          }
       }
@@ -5091,7 +5091,7 @@ public final class PrintCore {
             && !this.isOutOfReach(i)
             && this.targets[i].pos().getY() <= lowest + 1
             && (this.cellHasSolidNeighbor(i) || this.hasSolidNeighborAt(this.targets[i].pos()))
-            && !this.write_Z_I(i)) {
+            && !this.inComponent(i)) {
             if (this.next(i)) {
                this.giveUpCell(i, "set aside " + this.setAsideCounts.get(i) + " times: " + this.noWorkReason);
                set++;
@@ -5164,7 +5164,7 @@ public final class PrintCore {
       int i = this.cellIndexByPos.get(cell.asLong());
       if (i >= 0
          && this.cellStates[i] == 0
-         && this.push_Z_I(i)
+         && this.isRideCompatible(i)
          && this.update_Z_I(i)
          && this.read_Z_I(i)
          && !this.hasUnownedTemporaryBelow(cell)
@@ -5203,7 +5203,7 @@ public final class PrintCore {
 
    boolean update_Z_I(int i) {
       BlockPos cell = this.targets[i].pos();
-      return !this.temporaryBlocks.containsKey(cell.below().asLong()) || !this.isAboveBase(cell) || !this.push_Z();
+      return !this.temporaryBlocks.containsKey(cell.below().asLong()) || !this.isAboveBase(cell) || !this.hasHighComponents();
    }
 
    private int columnIndex(BlockPos p) {
@@ -6512,7 +6512,7 @@ public final class PrintCore {
       double rideFeet = this.view.standingHeightAt(t.pos().getX(), t.pos().getY(), t.pos().getZ());
       boolean rideFloor = rideFeet == t.pos().getY() && (reach.isReachable(self) || anywhere);
       if (rideFloor
-         && this.push_Z_I(r)
+         && this.isRideCompatible(r)
          && this.read_Z_I(r)
          && this.update_Z_I(r)
          && !this.hasUnownedTemporaryBelow(t.pos())
@@ -6677,12 +6677,12 @@ public final class PrintCore {
       if (pending != null
          && actual.getBlock() instanceof ShulkerBoxBlock
          && !this.earlyFillsSetAside.contains(pending.position().asLong())
-         && PrintContainerAccess.init(this.view, this.targets[r].pos(), actual, null)) {
+         && PrintContainerAccess.canOpen(this.view, this.targets[r].pos(), actual, null)) {
          this.view.pushHypothesis(pos, state);
 
          boolean fits;
          try {
-            fits = PrintContainerAccess.init(this.view, this.targets[r].pos(), actual, null);
+            fits = PrintContainerAccess.canOpen(this.view, this.targets[r].pos(), actual, null);
          } finally {
             this.view.popHypothesis(pos);
          }
@@ -7355,7 +7355,7 @@ public final class PrintCore {
    }
 
    boolean isFailedWalk(long from, double fromFeet, long to, double toFeet) {
-      return this.failedWalks.load(this.view, from, fromFeet, to, toFeet);
+      return this.failedWalks.isKnownFailedWalk(this.view, from, fromFeet, to, toFeet);
    }
 
    boolean isOutOfReach(int i) {
@@ -7479,7 +7479,7 @@ public final class PrintCore {
 
          if (!this.init_Z_I(i, reach.feetYOf(key), key)
             && (
-               !this.write_Z_I(i)
+               !this.inComponent(i)
                   || !(c.getY() >= reach.feetYOf(key) + 2.0)
                   || !this.temporaryBlocks
                      .containsKey(BlockPos.asLong(BlockPos.getX(key), (int)Math.floor(reach.feetYOf(key) - 0.001), BlockPos.getZ(key)))
@@ -7547,7 +7547,7 @@ public final class PrintCore {
          }
       }
 
-      if (this.write_Z_I(i)) {
+      if (this.inComponent(i)) {
          this.init_Z_I_D(i, -1.0 / 0.0);
          int f = this.componentOf[i];
          h = h * 31L + (this.componentAnchored[f] ? 1 : 2) + 4L * this.componentOpen[f];
@@ -7622,7 +7622,7 @@ public final class PrintCore {
                && !this.init_Z_I(i, body.y(), reach.startKey)
                && this.read_Z_I(i)
                && (
-                  !this.write_Z_I(i)
+                  !this.inComponent(i)
                      || !(t.pos().getY() >= body.y() + 2.0)
                      || !this.temporaryBlocks.containsKey(BlockPos.containing(body.x(), body.y() - 0.001, body.z()).asLong())
                )) {
@@ -7710,7 +7710,7 @@ public final class PrintCore {
                   && !isBodyCell(key, c)
                   && !this.write_Z_J(key)
                   && (
-                     !this.write_Z_I(i)
+                     !this.inComponent(i)
                         || !(c.getY() >= reach.feetYOf(key) + 2.0)
                         || !this.temporaryBlocks
                            .containsKey(BlockPos.asLong(BlockPos.getX(key), (int)Math.floor(reach.feetYOf(key) - 0.001), BlockPos.getZ(key)))
@@ -7888,7 +7888,7 @@ public final class PrintCore {
             && !this.init_Z_I(i, body.y(), reach.startKey)
             && !(target.pos().distToCenterSqr(feet.x, feet.y + 1.27, feet.z) > 25.0)
             && (
-               !this.write_Z_I(i)
+               !this.inComponent(i)
                   || !(target.pos().getY() >= feet.y + 2.0)
                   || !this.temporaryBlocks.containsKey(BlockPos.containing(feet.x, feet.y - 0.001, feet.z).asLong())
             )) {
@@ -7954,7 +7954,7 @@ public final class PrintCore {
                         && !this.init_Z_I(i, feet.y, batch.stanceKey)
                         && this.read_Z_I(i)
                         && (
-                           !this.write_Z_I(i)
+                           !this.inComponent(i)
                               || !(target.pos().getY() >= feet.y + 2.0)
                               || !this.temporaryBlocks.containsKey(BlockPos.containing(feet.x, feet.y - 0.001, feet.z).asLong())
                         )) {
@@ -8156,7 +8156,7 @@ public final class PrintCore {
          this.escapeCacheTick = this.env.currentTick();
       }
 
-      if ((this.phase == PrintCore.PrintPhase.TEARDOWN || this.push_Z())
+      if ((this.phase == PrintCore.PrintPhase.TEARDOWN || this.hasHighComponents())
          && this.isAboveBase(BlockPos.of(reach.startKey))
          && this.canEscapeCached(reach.startKey, true, checks)
          && !this.canLeaveStance(reach, key, true, checks)) {
@@ -8337,7 +8337,7 @@ public final class PrintCore {
                         BlockState here = this.view.getBlockState(cell);
                         if ((here.isAir() || here.canBeReplaced()) && this.view.isPassableCell(cell.above()) && this.view.isPassableCell(cell.above(2))) {
                            int ti = this.cellIndexByPos.get(cell.asLong());
-                           boolean own = ti >= 0 && this.cellStates[ti] == 0 && this.push_Z_I(ti);
+                           boolean own = ti >= 0 && this.cellStates[ti] == 0 && this.isRideCompatible(ti);
                            label390:
                            if (ti < 0 || own) {
                               if (!own) {
@@ -8365,7 +8365,7 @@ public final class PrintCore {
 
                                  boolean useful = false;
                                  int topCell = this.cellIndexByPos.get(BlockPos.asLong(x, y0 + k, z));
-                                 if (topCell >= 0 && this.cellStates[topCell] == 0 && this.push_Z_I(topCell) && goals.contains(topCell)) {
+                                 if (topCell >= 0 && this.cellStates[topCell] == 0 && this.isRideCompatible(topCell) && goals.contains(topCell)) {
                                     useful = true;
                                  }
 
@@ -8485,7 +8485,7 @@ public final class PrintCore {
    private boolean set(BlockPos here) {
       autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(6000);
       int own = this.cellIndexByPos.get(here.asLong());
-      if (own >= 0 && this.cellStates[own] == 0 && this.push_Z_I(own)) {
+      if (own >= 0 && this.cellStates[own] == 0 && this.isRideCompatible(own)) {
          return true;
       }
 
@@ -9243,7 +9243,7 @@ public final class PrintCore {
                                                    }
 
                                                    if (body.onGround()
-                                                      && !world.update((int)Math.floor(body.x()), (int)Math.floor(body.y() - 0.01), (int)Math.floor(body.z()))) {
+                                                      && !world.isHazard((int)Math.floor(body.x()), (int)Math.floor(body.y() - 0.01), (int)Math.floor(body.z()))) {
                                                       return true;
                                                    }
                                                 }
@@ -9655,7 +9655,7 @@ public final class PrintCore {
             && sk != BlockPos.asLong(p.getX(), p.getY() + 1, p.getZ())) {
             autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.findClickAt(reach, sk, probe, budget);
             if (click != null) {
-               boolean keepDown = this.isAboveBase(BlockPos.of(sk)) && (this.push_Z() || p.distChessboard(BlockPos.of(sk)) <= 8);
+               boolean keepDown = this.isAboveBase(BlockPos.of(sk)) && (this.hasHighComponents() || p.distChessboard(BlockPos.of(sk)) <= 8);
                if (keepDown ? this.write_Z_BlockPos_BlockPos(BlockPos.of(sk), p) : this.canEscapeAfterDig(BlockPos.of(sk), p)) {
                   this.logTrace(why + ": digging out " + p.toShortString());
                   PrintCore.PrintStep dig = new PrintCore.DigStep(p, false, sk, click.crouch(), click.feet());
@@ -10191,7 +10191,7 @@ public final class PrintCore {
       return false;
    }
 
-   boolean push_Z_I(int i) {
+   boolean isRideCompatible(int i) {
       if (this.rideCompatible[i] != 0) {
          return this.rideCompatible[i] > 0;
       }
@@ -12762,7 +12762,7 @@ public final class PrintCore {
    }
 
    private boolean init_Z_I_Vec3(int cell, Vec3 point) {
-      if (cell >= 0 && !(point.y < this.targets[cell].pos().getY() - 0.001) && this.write_Z_I(cell)) {
+      if (cell >= 0 && !(point.y < this.targets[cell].pos().getY() - 0.001) && this.inComponent(cell)) {
          double half = 0.3;
          AABB sole = new AABB(point.x - half, point.y - 0.025, point.z - half, point.x + half, point.y + 0.001, point.z + half);
 
@@ -13835,7 +13835,7 @@ public final class PrintCore {
 
       if (head && this.env.isHeadRotationAligned(yaw, pitch) == null && this.isAimAligned(yaw, pitch, false)) {
          Direction wanted = autismclient.ai.engine.AiPlacementContext.init(yaw, pitch)[0];
-         if (!this.headWindow.init(wanted, this.env.nanoTime())) {
+         if (!this.headWindow.isStableFacing(wanted, this.env.nanoTime())) {
             return false;
          }
 
@@ -13862,7 +13862,7 @@ public final class PrintCore {
    }
 
    private void trackAim() {
-      this.headWindow.init(this.env.serverYaw(), this.env.serverPitch(), this.env.currentTick(), this.env.nanoTime());
+      this.headWindow.observe(this.env.serverYaw(), this.env.serverPitch(), this.env.currentTick(), this.env.nanoTime());
       if (Math.abs(PrintGeometry.yawDelta(this.lastYaw, this.env.playerYaw())) < 0.01 && Math.abs(this.lastPitch - this.env.playerPitch()) < 0.01) {
          this.steadyAimTicks++;
       } else {
@@ -13930,7 +13930,7 @@ public final class PrintCore {
             return true;
          }
 
-         if (this.isAboveBase(here) && (this.push_Z() || pos.distChessboard(here) <= 8) && this.canEscape(here, null, null, true)) {
+         if (this.isAboveBase(here) && (this.hasHighComponents() || pos.distChessboard(here) <= 8) && this.canEscape(here, null, null, true)) {
             if (!this.canEscape(here, pos, placed, true)) {
                return true;
             }
@@ -17866,7 +17866,7 @@ public final class PrintCore {
                                     && !PrintCore.this.init_Z_I(i, this.body.y(), this.safety.reach.startKey)
                                     && !(target.pos().distToCenterSqr(feet.x, feet.y + 1.27, feet.z) > 25.0)
                                     && (
-                                       !PrintCore.this.write_Z_I(i)
+                                       !PrintCore.this.inComponent(i)
                                           || !(target.pos().getY() >= feet.y + 2.0)
                                           || !PrintCore.this.temporaryBlocks.containsKey(BlockPos.containing(feet.x, feet.y - 0.001, feet.z).asLong())
                                     )
@@ -17913,7 +17913,7 @@ public final class PrintCore {
                                     && !PrintCore.this.init_Z_I(i, this.body.y(), this.safety.reach.startKey)
                                     && PrintCore.this.read_Z_I(i)
                                     && (
-                                       !PrintCore.this.write_Z_I(i)
+                                       !PrintCore.this.inComponent(i)
                                           || !(t.pos().getY() >= this.body.y() + 2.0)
                                           || !PrintCore.this.temporaryBlocks
                                              .containsKey(
@@ -18164,7 +18164,7 @@ public final class PrintCore {
                   || PrintCore.isBodyCell(key, c)
                   || PrintCore.this.write_Z_J(key)
                   || PrintCore.this.init_Z_I(i, this.safety.reach.feetYOf(key), key)
-                  || PrintCore.this.write_Z_I(i)
+                  || PrintCore.this.inComponent(i)
                      && c.getY() >= this.safety.reach.feetYOf(key) + 2.0
                      && PrintCore.this.temporaryBlocks
                         .containsKey(
@@ -20543,7 +20543,7 @@ public final class PrintCore {
                PrintCore.this.irregularColumns.add(column);
             }
 
-            if (p.getY() >= PrintCore.this.baseY + 8 && PrintCore.this.write_Z_I(i)) {
+            if (p.getY() >= PrintCore.this.baseY + 8 && PrintCore.this.inComponent(i)) {
                PrintCore.this.cellsByColumn.computeIfAbsent(column, ignored -> new IntArrayList()).add(i);
             }
          }
@@ -20617,7 +20617,7 @@ public final class PrintCore {
          }
 
          int tiCell = PrintCore.this.cellIndexByPos.get(cell.asLong());
-         boolean own = tiCell >= 0 && PrintCore.this.cellStates[tiCell] == 0 && PrintCore.this.push_Z_I(tiCell);
+         boolean own = tiCell >= 0 && PrintCore.this.cellStates[tiCell] == 0 && PrintCore.this.isRideCompatible(tiCell);
          if (!own && !PrintCore.this.load_Z_BlockPos_BlockState(cell, PrintCore.defaultStateOf(this.init_Item))) {
             PrintCore.this.logTrace("pillar: temporary material would disturb " + cell.toShortString());
             this.init_Z = true;
@@ -20662,7 +20662,7 @@ public final class PrintCore {
             return null;
          }
 
-         if (tiCell >= 0 && PrintCore.this.cellStates[tiCell] == 0 && PrintCore.this.push_Z_I(tiCell) && !PrintCore.this.update_Z_I(tiCell)) {
+         if (tiCell >= 0 && PrintCore.this.cellStates[tiCell] == 0 && PrintCore.this.isRideCompatible(tiCell) && !PrintCore.this.update_Z_I(tiCell)) {
             PrintCore.this.logTrace("pillar: keeps access column open below " + cell.toShortString());
             this.init_Z = true;
             return null;
@@ -20672,7 +20672,7 @@ public final class PrintCore {
          if (this.init_Float == null
             && tiCell >= 0
             && PrintCore.this.cellStates[tiCell] == 0
-            && PrintCore.this.push_Z_I(tiCell)
+            && PrintCore.this.isRideCompatible(tiCell)
             && PrintCore.this.view.getBlockState(cell.below()).isFaceSturdy(PrintCore.this.view, cell.below(), Direction.UP)) {
             BlockHitResult probe = new BlockHitResult(
                new Vec3(
@@ -21294,7 +21294,7 @@ public final class PrintCore {
                                  this.stage = 1;
                               } else {
                                  int i = PrintCore.this.cellIndexByPos.get(cell.asLong());
-                                 boolean own = i >= 0 && PrintCore.this.cellStates[i] == 0 && PrintCore.this.push_Z_I(i);
+                                 boolean own = i >= 0 && PrintCore.this.cellStates[i] == 0 && PrintCore.this.isRideCompatible(i);
                                  if (i >= 0 && !own) {
                                     this.stage = 1;
                                  } else {
@@ -21413,7 +21413,7 @@ public final class PrintCore {
          long top = BlockPos.asLong(this.update, this.flush + this.close, this.sync);
          if (this.stage == 3) {
             int own = PrintCore.this.cellIndexByPos.get(top);
-            if (own >= 0 && PrintCore.this.cellStates[own] == 0 && PrintCore.this.push_Z_I(own) && this.load_IntArrayList.contains(own)) {
+            if (own >= 0 && PrintCore.this.cellStates[own] == 0 && PrintCore.this.isRideCompatible(own) && this.load_IntArrayList.contains(own)) {
                this.init(PrintCore.this.targets[own], null, true);
             } else {
                this.candidateFeet = PrintClicks.getCandidateFeetPositions(PrintCore.this.view, top, this.flush + this.close);
@@ -23165,7 +23165,7 @@ public final class PrintCore {
                            for (int i : this.frontier) {
                               if (PrintCore.this.targets[i].pos().getY() < low
                                  && PrintCore.this.targets[i].kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE
-                                 && !PrintCore.this.write_Z_I(i)
+                                 && !PrintCore.this.inComponent(i)
                                  && PrintCore.this.hasSolidNeighborAt(PrintCore.this.targets[i].pos())) {
                                  needy.add(i);
                               }
@@ -26987,7 +26987,7 @@ public final class PrintCore {
                         if (this.init_List == null) {
                            BlockPos c = PrintCore.this.targets[this.cell].pos();
                            if (PrintCore.this.init_Z_I(this.cell, this.safety.reach.feetYOf(key), key)
-                              || PrintCore.this.write_Z_I(this.cell)
+                              || PrintCore.this.inComponent(this.cell)
                                  && c.getY() >= this.safety.reach.feetYOf(key) + 2.0
                                  && PrintCore.this.temporaryBlocks
                                     .containsKey(
@@ -28634,7 +28634,7 @@ public final class PrintCore {
                      this.stage = 3;
                   } else if (this.stage == 3) {
                      if (PrintCore.this.isAboveBase(this.init_BlockPos)
-                        && (PrintCore.this.push_Z() || this.target.distChessboard(this.init_BlockPos) <= 8)) {
+                        && (PrintCore.this.hasHighComponents() || this.target.distChessboard(this.init_BlockPos) <= 8)) {
                         this.escape = this.starts == null
                            ? PrintCore.this.new EscapeProof(this.policy, this.init_BlockPos.asLong(), true)
                            : this.starts.init(this.init_BlockPos.asLong(), true);
@@ -28999,7 +28999,7 @@ public final class PrintCore {
                   if (Math.abs(b.x() - (BlockPos.getX(fromKey) + 0.5)) <= 2.0
                      && Math.abs(b.z() - (BlockPos.getZ(fromKey) + 0.5)) <= 2.0
                      && Math.abs(b.y() - fromFeet) <= 3.0) {
-                     PrintCore.this.failedWalks.init(PrintCore.this.view, fromKey, fromFeet, key, this.reach.feetYOf(key));
+                     PrintCore.this.failedWalks.recordFailedWalk(PrintCore.this.view, fromKey, fromFeet, key, this.reach.feetYOf(key));
                   }
 
                   PrintCore.this.failedWalkStances.add(this.route.get(this.route.size() - 1));
@@ -31628,7 +31628,7 @@ public final class PrintCore {
 
                   this.init_I = 2;
                }
-            } else if ((PrintCore.this.phase == PrintCore.PrintPhase.TEARDOWN || PrintCore.this.push_Z())
+            } else if ((PrintCore.this.phase == PrintCore.PrintPhase.TEARDOWN || PrintCore.this.hasHighComponents())
                && PrintCore.this.isAboveBase(BlockPos.of(this.reach.startKey))) {
                PrintAccess.SearchStatus origin = this.init(this.reach.startKey, true, left);
                if (origin == PrintAccess.SearchStatus.SEARCHING || origin == PrintAccess.SearchStatus.INVALIDATED) {

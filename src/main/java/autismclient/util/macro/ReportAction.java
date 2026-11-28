@@ -345,7 +345,7 @@ public class ReportAction implements MacroAction {
       return RaceAction.createCondition(this.endConditionType);
    }
 
-   public int init(List<MacroAction> actions, int headerIndex) {
+   public int coveredCount(List<MacroAction> actions, int headerIndex) {
       if (actions != null && headerIndex >= 0 && headerIndex < actions.size()) {
          int max = Math.max(0, Math.min(this.conditionCount, actions.size() - headerIndex - 1));
          int count = 0;

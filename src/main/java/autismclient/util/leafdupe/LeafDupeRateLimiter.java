@@ -27,7 +27,7 @@ public final class LeafDupeRateLimiter {
       }
    }
 
-   public void init() {
+   public void reset() {
       this.init_J = 0L;
       this.sentCount = 0;
    }

@@ -356,7 +356,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
    }
 
    private void init(List<EnchantmentAttributeEditorScreen.AvailableRow> rows, String filter, String id, String label) {
-      String resolved = label != null && !label.isBlank() ? label : RegistryDisplayNameCache.update(id);
+      String resolved = label != null && !label.isBlank() ? label : RegistryDisplayNameCache.genericName(id);
       String searchable = (id + " " + resolved).toLowerCase(Locale.ROOT);
       if (filter.isEmpty() || searchable.contains(filter)) {
          rows.add(new EnchantmentAttributeEditorScreen.AvailableRow(id, resolved));

@@ -70,7 +70,7 @@ public class AutismOverlaysScreen extends Screen {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          if (module != null && module.isActive()) {
             try {
-               this.suiteController = OverlaySuiteController.init(this.font, this.tiedOverlay);
+               this.suiteController = OverlaySuiteController.create(this.font, this.tiedOverlay);
             } catch (Throwable error) {
                AutismClientAddon.LOG.warn("Host screen window set failed to build", error);
             }
@@ -94,7 +94,7 @@ public class AutismOverlaysScreen extends Screen {
    public void removed() {
       if (this.suiteController != null && !OverlayScreenController.shouldInterceptBackgroundScreen()) {
          try {
-            this.suiteController.init();
+            this.suiteController.saveStates();
          } catch (Throwable error) {
             AutismClientAddon.LOG.warn("Host screen window set failed to save", error);
          }

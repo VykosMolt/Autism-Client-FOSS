@@ -12,14 +12,14 @@ public final class AiPrinterSupportPolicy {
    private AiPrinterSupportPolicy() {
    }
 
-   public static boolean init(BlockState state) {
+   public static boolean isPlainBlock(BlockState state) {
       Block block = state.getBlock();
       return state.getProperties().isEmpty()
          && !state.hasBlockEntity()
          && !state.isSignalSource()
          && state.getFluidState().isEmpty()
          && !(block instanceof FallingBlock)
-         && !AiPrintRules.init(block)
+         && !AiPrintRules.isMachineBlock(block)
          && block != Blocks.MAGMA_BLOCK
          && block != Blocks.SLIME_BLOCK
          && block != Blocks.HONEY_BLOCK

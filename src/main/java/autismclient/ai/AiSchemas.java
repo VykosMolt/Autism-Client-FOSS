@@ -16,7 +16,7 @@ final class AiSchemas {
    private AiSchemas() {
    }
 
-   static JsonObject init(JsonObject schema, JsonObject value, boolean dropUnknown, List<String> ignored) {
+   static JsonObject normalize(JsonObject schema, JsonObject value, boolean dropUnknown, List<String> ignored) {
       JsonElement out = coerce(schema, value.deepCopy(), "", dropUnknown, ignored, 0);
       return out.isJsonObject() ? out.getAsJsonObject() : value;
    }
@@ -184,7 +184,7 @@ final class AiSchemas {
       }
    }
 
-   static void init(JsonObject schema, JsonElement value) {
+   static void validate(JsonObject schema, JsonElement value) {
       validate(schema, value, "arguments", 0);
    }
 

@@ -26,7 +26,7 @@ public class AutismLivingEntityMovementMixin {
 
    @Inject(method = "aiStep", at = @At("HEAD"))
    private void autism$removeGroundJumpDelay(CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && this.noJumpDelay > 0 && (Object)this instanceof LocalPlayer && NoJumpDelayModule.init((LivingEntity)(Object)this)) {
+      if (!AutismLiteVariant.enabled() && this.noJumpDelay > 0 && (Object)this instanceof LocalPlayer && NoJumpDelayModule.shouldSkipDelay((LivingEntity)(Object)this)) {
          this.noJumpDelay = 0;
       }
    }

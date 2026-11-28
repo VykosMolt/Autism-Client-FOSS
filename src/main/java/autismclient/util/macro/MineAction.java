@@ -41,7 +41,7 @@ public class MineAction implements PacketOrderAware, MacroAction {
          return "Mine: (none)";
       }
 
-      String first = RegistryDisplayNameCache.load(this.targetBlocks.get(0));
+      String first = RegistryDisplayNameCache.blockName(this.targetBlocks.get(0));
       return this.targetBlocks.size() == 1 ? "Mine: " + first : "Mine: " + first + " (+" + (this.targetBlocks.size() - 1) + ")";
    }
 

@@ -7,7 +7,7 @@ final class AiBoundedIo {
    private AiBoundedIo() {
    }
 
-   static String init(Reader reader, int limit) throws IOException {
+   static String readLine(Reader reader, int limit) throws IOException {
       StringBuilder line = new StringBuilder();
 
       int c;

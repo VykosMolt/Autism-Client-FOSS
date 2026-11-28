@@ -12,19 +12,19 @@ public final class BlockAttackGraceWindow {
    private BlockAttackGraceWindow() {
    }
 
-   public static void init(LocalPlayer player) {
+   public static void note(LocalPlayer player) {
       if (player != null) {
          notedPlayer = new WeakReference<>(player);
          notedTick = player.tickCount;
       }
    }
 
-   public static void init() {
+   public static void clear() {
       notedPlayer = new WeakReference<>(null);
       notedTick = -2147483648;
    }
 
-   public static boolean init(Minecraft mc) {
+   public static boolean isWithinGrace(Minecraft mc) {
       return mc != null && mc.player != null && notedPlayer.get() == mc.player ? withinGrace(mc.player.tickCount, notedTick) : false;
    }
 

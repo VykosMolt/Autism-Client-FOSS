@@ -67,7 +67,7 @@ final class AiObtain {
    private AiObtain() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation obtain(JsonObject args) {
       return obtainAtDepth(args, 0, new LinkedHashSet<>());
    }
 
@@ -319,7 +319,7 @@ final class AiObtain {
                   if (!this.triedStrategies.contains(AiObtain.ObtainStrategy.CRAFT) && !this.craftableItems().isEmpty()) {
                      AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
                      if (this.craftableItems().stream().anyMatch(item -> {
-                        AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
+                        AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
                         return plan.complete() && !plan.steps().isEmpty();
                      })) {
                         return AiObtain.ObtainStrategy.CRAFT;
@@ -347,7 +347,7 @@ final class AiObtain {
                         .stream()
                         .anyMatch(
                            item -> item instanceof BlockItem form
-                              && !AiObtain.init().contains(BuiltInRegistries.ITEM.getKey(item).toString())
+                              && !AiObtain.mineableItems().contains(BuiltInRegistries.ITEM.getKey(item).toString())
                               && AiObtain.init_Z_Item_Block(item, form.getBlock())
                               && this.canHarvestWithHeldTools(form.getBlock().defaultBlockState())
                               && AiTerrain.nearestBlockDistSqr(mc, List.of(form.getBlock()), 8) <= 64.0
@@ -472,7 +472,7 @@ final class AiObtain {
                            return null;
                         } else {
                            String outputId = BuiltInRegistries.ITEM.getKey(output).toString();
-                           AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, outputId, goal);
+                           AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(graph, outputId, goal);
                            if (!plan.complete() && depth < 5) {
                               Entry<String, Integer> shortfall = this.missingCraftInput(plan);
                               if (shortfall != null) {
@@ -596,10 +596,10 @@ final class AiObtain {
                                     .filter(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0)
                                     .findFirst()
                                     .orElseThrow();
-                                 Item fuel = AiSmelt.init("", source, missing);
+                                 Item fuel = AiSmelt.availableFuel("", source, missing);
                                  int burnDivisor = AiSmelt.burnDivisor(cooking.station());
                                  int burn = fuel == null ? 0 : AiItems.fuelBurnTime(new ItemStack(fuel)) / burnDivisor;
-                                 int fuelCount = fuel == null ? 0 : AiSmelt.init(fuel);
+                                 int fuelCount = fuel == null ? 0 : AiSmelt.spareFuel(fuel);
                                  int furnaceCount = AiParallelSmelt.furnaceCountFor(missing);
                                  if (fuelCount < AiParallelSmelt.fuelNeeded(missing, furnaceCount, cooking.cookTimeTicks(), burn)) {
                                     ItemStack fuelStack = fuel == null ? ItemStack.EMPTY : new ItemStack(fuel);
@@ -659,7 +659,7 @@ final class AiObtain {
                                     .max()
                                     .orElse(0);
                                  int batchGoal = Math.min(goal, AiItems.countInInventory(this.init_af_DataUtil) + largestInput);
-                                 return AiSmelt.load(AiJson.objectOf("item", outputId, "count", batchGoal, "timeoutSeconds", legSeconds));
+                                 return AiSmelt.smelt(AiJson.objectOf("item", outputId, "count", batchGoal, "timeoutSeconds", legSeconds));
                               } catch (IllegalArgumentException e) {
                                  this.strategyDetail = "smelt " + outputId + " (" + e.getMessage() + ")";
                                  return null;
@@ -679,7 +679,7 @@ final class AiObtain {
                         return this.mineOrDescendOp(mineId, missing, legSeconds);
                      case PROSPECT:
                         this.strategyDetail = "prospect " + spec;
-                        return AiProspect.init(AiJson.objectOf("item", spec, "count", goal, "timeoutSeconds", legSeconds));
+                        return AiProspect.create(AiJson.objectOf("item", spec, "count", goal, "timeoutSeconds", legSeconds));
                      case HUNT:
                         List<EntityType<?>> mobs = this.sourceMobs();
                         if (mobs.isEmpty()) {
@@ -719,7 +719,7 @@ final class AiObtain {
                   if (this.nearestLivingOf(mobs, 160.0) == null && AiObtain.allPassive(mobs)) {
                      this.strategyDetail = "look for " + String.join(",", names);
                      List<Item> items = List.copyOf(this.init_af_DataUtil.items());
-                     return AiNetherRun.load(
+                     return AiNetherRun.then(
                         AiObtain.searchForEntity(e -> mobs.contains(e.getType()) && AiObtain.sheepMatchesWool(e, items), String.join(",", names), legSeconds),
                         () -> this.approachMobThenHunt(mobs, fightArgs, this.init_I_19())
                      );
@@ -988,9 +988,9 @@ final class AiObtain {
                   return autismclient.ai.engine.AiBlockMine.create(
                      AiJson.objectOf(
                         "blocks",
-                        autismclient.ai.engine.AiBlockMine.init(blocks),
+                        autismclient.ai.engine.AiBlockMine.jsonArray(blocks),
                         "drops",
-                        autismclient.ai.engine.AiBlockMine.init(this.init_af_DataUtil.itemIds()),
+                        autismclient.ai.engine.AiBlockMine.jsonArray(this.init_af_DataUtil.itemIds()),
                         "held",
                         goal,
                         "trees",
@@ -1321,7 +1321,7 @@ final class AiObtain {
                      this.visualTitle = "Getting " + label;
                   }
 
-                  AiVisualization.init(this, this.visualTitle, AiTaskStatus.init(message, "Preparing materials"), AiItems.countInInventory(this.init_af_DataUtil), goal);
+                  AiVisualization.showCount(this, this.visualTitle, AiTaskStatus.init(message, "Preparing materials"), AiItems.countInInventory(this.init_af_DataUtil), goal);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusData().toString(), List.of());
                }
 
@@ -1382,7 +1382,7 @@ final class AiObtain {
    }
 
    static boolean init_Z_Item_Block(Item item, Block block) {
-      if (item instanceof BlockItem form && form.getBlock() == block && !init().contains(BuiltInRegistries.ITEM.getKey(item).toString())) {
+      if (item instanceof BlockItem form && form.getBlock() == block && !mineableItems().contains(BuiltInRegistries.ITEM.getKey(item).toString())) {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.player != null) {
             for (int slot = 0; slot < 36; slot++) {
@@ -1412,7 +1412,7 @@ final class AiObtain {
       for (Item item : craftable) {
          if (item != null) {
             String id = BuiltInRegistries.ITEM.getKey(item).toString();
-            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, id, goal);
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(graph, id, goal);
             int missing = 0;
 
             for (int amount : plan.missing().values()) {
@@ -1807,13 +1807,13 @@ final class AiObtain {
       }
    }
 
-   static Set<String> init() {
+   static Set<String> mineableItems() {
       return AiItems.directMineableItems();
    }
 
-   static AiCraftPlanner.RecipeGraph init(final AiCraftPlanner.RecipeGraph inner) {
+   static AiCraftPlanner.RecipeGraph withMining(final AiCraftPlanner.RecipeGraph inner) {
       final Minecraft mc = Minecraft.getInstance();
-      final Set<String> mineable = init();
+      final Set<String> mineable = mineableItems();
       final Map<String, Double> distances = new HashMap<>();
       return new AiCraftPlanner.RecipeGraph() {
          @Override

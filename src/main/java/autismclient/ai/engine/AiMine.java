@@ -170,7 +170,7 @@ public final class AiMine {
                      data.addProperty("broken", this.close);
                      if (quota != null) {
                         data.add("brokenByBlock", quota.brokenByBlock());
-                        data.add("remainingByBlock", quota.load());
+                        data.add("remainingByBlock", quota.remaining());
                      }
 
                      this.cancel();
@@ -241,7 +241,7 @@ public final class AiMine {
                            return this.running("Break failed; trying another");
                         case load:
                            this.init_RefQueue_DataUtil.stopCompat();
-                           if (quota == null || quota.load(this.blockIdByCell.get(this.target.asLong()))) {
+                           if (quota == null || quota.count(this.blockIdByCell.get(this.target.asLong()))) {
                               this.close++;
                            }
 
@@ -822,7 +822,7 @@ public final class AiMine {
                   "brokenByBlock",
                   quota == null ? null : quota.brokenByBlock(),
                   "remainingByBlock",
-                  quota == null ? null : quota.load(),
+                  quota == null ? null : quota.remaining(),
                   "block",
                   blockArg,
                   "broken",

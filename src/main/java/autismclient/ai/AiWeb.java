@@ -35,7 +35,7 @@ final class AiWeb {
    private AiWeb() {
    }
 
-   static JsonObject init(AiSettings settings, String query, Runnable checkpoint) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   static JsonObject search(AiSettings settings, String query, Runnable checkpoint) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (!query.isBlank() && query.length() <= 600) {
          String key = settings.key("BRAVE");
          if (key.isBlank()) {
@@ -43,7 +43,7 @@ final class AiWeb {
          }
 
          URI uri = URI.create("https://api.search.brave.com/res/v1/web/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&count=8");
-         HttpResponse<byte[]> response = AiHttp.init(
+         HttpResponse<byte[]> response = AiHttp.send(
             HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(30L)).header("X-Subscription-Token", key).header("Accept", "application/json").GET().build(),
             1000000,
             checkpoint

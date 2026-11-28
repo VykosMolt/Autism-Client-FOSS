@@ -97,14 +97,14 @@ public final class EndPortalModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_cR.read(nowMillis());
+      this.init_cR.stop(nowMillis());
       this.init_V_4();
       this.init_J = -1L;
    }
 
    @Override
    public void onDisable() {
-      this.init_cR.init(nowMillis());
+      this.init_cR.start(nowMillis());
       this.init_V_4();
       EspChunkWorker.reset();
    }
@@ -172,7 +172,7 @@ public final class EndPortalModule extends Module {
    @Override
    public void tick() {
       if (!this.isEnabled()) {
-         this.init_cR.load(nowMillis());
+         this.init_cR.expire(nowMillis());
       } else if (!this.push()) {
          this.init_V_4();
       } else {
@@ -196,7 +196,7 @@ public final class EndPortalModule extends Module {
       }
    }
 
-   public static void init(ClientPacketListener listener, ClientboundAddEntityPacket packet) {
+   public static void onAddEntity(ClientPacketListener listener, ClientboundAddEntityPacket packet) {
       if (packet.getType() == EntityTypes.EYE_OF_ENDER) {
          EndPortalModule module = active();
          if (module != null
@@ -281,7 +281,7 @@ public final class EndPortalModule extends Module {
          LevelChunk chunk = MC.level.getChunkSource().getChunk(cx + offset[0], cz + offset[1], ChunkStatus.FULL, false);
          if (chunk != null) {
             scanned++;
-            List<EspChunkWorker.EspBox> entries = EspChunkWorker.read.init(chunk, MC.level.getGameTime(), "end-portal", EndPortalModule::init);
+            List<EspChunkWorker.EspBox> entries = EspChunkWorker.endPortals.scan(chunk, MC.level.getGameTime(), "end-portal", EndPortalModule::init);
             int x = chunk.getPos().x();
             int z = chunk.getPos().z();
             Set<Long> current = new HashSet<>();

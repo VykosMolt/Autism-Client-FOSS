@@ -16,7 +16,7 @@ public final class BlastShieldPosFinder {
    private BlastShieldPosFinder() {
    }
 
-   public static List<BlockPos> init(AABB body, AABB nextBody, Vec3 source) {
+   public static List<BlockPos> candidates(AABB body, AABB nextBody, Vec3 source) {
       Vec3 middle = body.getCenter();
       Vec3 toward = source.subtract(middle);
       if (isFinite(source) && isFinite(middle) && !(toward.lengthSqr() < 1.0E-8)) {

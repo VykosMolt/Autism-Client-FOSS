@@ -92,7 +92,7 @@ final class ClickerSettingsGroup {
    }
 
    autismclient.util.clicker.ClickTechnique technique() {
-      return autismclient.util.clicker.ClickTechnique.init(this.techniqueSetting.get());
+      return autismclient.util.clicker.ClickTechnique.fromLabel(this.techniqueSetting.get());
    }
 
    autismclient.util.clicker.ClickProfile profile() {
@@ -100,7 +100,7 @@ final class ClickerSettingsGroup {
       return section == null ? autismclient.util.clicker.ClickProfile.forTechnique(this.technique()) : section.profile();
    }
 
-   autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
+   autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore personality() {
       if (this.cachedHandTraits == null) {
          try {
             autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.shared();
@@ -115,12 +115,12 @@ final class ClickerSettingsGroup {
       return this.cachedHandTraits;
    }
 
-   String init_Str_Str(String settingId) {
+   String settingValue(String settingId) {
       ClickerSettingsGroup.TechniqueSection section = this.sectionFor(settingId);
       return section == null ? null : section.intervalValue();
    }
 
-   boolean init(String settingId, String value) {
+   boolean setSettingValue(String settingId, String value) {
       ClickerSettingsGroup.TechniqueSection section = this.sectionFor(settingId);
       if (section == null) {
          return false;
@@ -350,7 +350,7 @@ final class ClickerSettingsGroup {
          }
 
          ValueRange band = this.cpsBand.get();
-         double[] ms = autismclient.util.clicker.ClickTimingMath.init(band.min(), band.max());
+         double[] ms = autismclient.util.clicker.ClickTimingMath.cpsToMs(band.min(), band.max());
          return new ValueRange(ms[0], ms[1]).toString();
       }
 
@@ -369,7 +369,7 @@ final class ClickerSettingsGroup {
          } else {
             ValueRange ms = ValueRange.parse(value, null);
             if (ms != null && ms.min() > 0.0) {
-               double[] band = autismclient.util.clicker.ClickTimingMath.load(ms.min(), ms.max());
+               double[] band = autismclient.util.clicker.ClickTimingMath.msToCps(ms.min(), ms.max());
                ClickerSettingsGroup.this.module.setLinkedValue(this.cpsKey, new ValueRange(band[0], band[1]).toString());
             }
          }

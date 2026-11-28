@@ -18,7 +18,7 @@ public final class PrintContainerAccess {
       return Shulker.getProgressDeltaAabb(1.0F, state.getValue(ShulkerBoxBlock.FACING), 0.0F, 0.5F, Vec3.atBottomCenterOf(at)).deflate(1.0E-6);
    }
 
-   static boolean init(PrintView view, BlockPos at, BlockState state, AABB body) {
+   static boolean canOpen(PrintView view, BlockPos at, BlockState state, AABB body) {
       if (!(state.getBlock() instanceof ShulkerBoxBlock)) {
          return true;
       }
@@ -27,7 +27,7 @@ public final class PrintContainerAccess {
       return (body == null || !lid.intersects(body)) && view.isBoxClear(lid);
    }
 
-   public static boolean init(Level level, BlockPos at) {
+   public static boolean canOpen(Level level, BlockPos at) {
       BlockState state = level.getBlockState(at);
       if (!(state.getBlock() instanceof ShulkerBoxBlock)) {
          return true;

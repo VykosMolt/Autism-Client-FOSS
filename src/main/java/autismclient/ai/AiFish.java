@@ -44,7 +44,7 @@ final class AiFish {
    private AiFish() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final Module module = autismclient.modules.al.init_Module_Str("auto-fish");

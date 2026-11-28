@@ -32,12 +32,12 @@ final class ScaffoldFailureRecorder {
       }
    }
 
-   synchronized boolean init(BlockPos cell) {
+   synchronized boolean hasFailure(BlockPos cell) {
       return cell != null && this.init_Map.containsKey(cell);
    }
 
    synchronized ScaffoldFailureRecorder.FailureCapture init(String reason, BlockPos cell, int sequence, int tick, long now) {
-      if (this.init(cell) && (!this.init_Z || now - this.init_J >= 4000000000L)) {
+      if (this.hasFailure(cell) && (!this.init_Z || now - this.init_J >= 4000000000L)) {
          ScaffoldFailureRecorder.FailureCapture capture = new ScaffoldFailureRecorder.FailureCapture(!this.init_Z, reason, cell.immutable(), sequence, tick, List.copyOf(this.init_ArrayDeque));
          this.init_Z = true;
          this.init_J = now;
@@ -47,7 +47,7 @@ final class ScaffoldFailureRecorder {
       }
    }
 
-   synchronized void init() {
+   synchronized void clear() {
       this.init_ArrayDeque.clear();
       this.init_Map.clear();
       this.init_J = -9223372036854775808L;

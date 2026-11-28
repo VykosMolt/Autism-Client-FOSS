@@ -56,23 +56,23 @@ final class AiForage {
          Entry<String, Integer> meat = raw.entrySet().stream().max(Entry.comparingByValue()).orElseThrow();
          if (AiCraft.countItem("minecraft:furnace") == 0 && !AiSmelt.hasStationNearby(mc, "minecraft:furnace")) {
             if (AiItems.countFreeSlots() < 2) {
-               return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 2, "timeoutSeconds", Math.min(60, seconds)));
+               return AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 2, "timeoutSeconds", Math.min(60, seconds)));
             } else {
                AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
-               boolean table = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.init(graph, "minecraft:crafting_table", 1).complete();
-               if (!AiCraftPlanner.init(graph, "minecraft:furnace", 1).complete()) {
-                  return AiObtain.init(AiJson.objectOf("item", "minecraft:furnace", "count", 1, "timeoutSeconds", Math.min(180, seconds)));
+               boolean table = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.plan(graph, "minecraft:crafting_table", 1).complete();
+               if (!AiCraftPlanner.plan(graph, "minecraft:furnace", 1).complete()) {
+                  return AiObtain.obtain(AiJson.objectOf("item", "minecraft:furnace", "count", 1, "timeoutSeconds", Math.min(180, seconds)));
                } else {
                   return table
                      ? AiCraft.craft(AiJson.objectOf("item", "minecraft:furnace", "count", 1, "timeoutSeconds", Math.min(60, seconds)))
-                     : AiObtain.init(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(180, seconds)));
+                     : AiObtain.obtain(AiJson.objectOf("item", "minecraft:crafting_table", "count", 1, "timeoutSeconds", Math.min(180, seconds)));
                }
             }
          } else {
             String fuel = AiSpeedrun.fuelFor(meat.getValue());
             if (fuel != null) {
                String output = AiSpeedrun.COOKED.get(meat.getKey());
-               return AiSmelt.load(
+               return AiSmelt.smelt(
                   AiJson.objectOf(
                      "item",
                      output,
@@ -98,7 +98,7 @@ final class AiForage {
                         45
                      )
                   )
-                  : AiObtain.init(
+                  : AiObtain.obtain(
                      AiJson.objectOf(
                         "item", "minecraft:coal", "count", Math.max(2, (meat.getValue() + 7) / 8), "timeoutSeconds", Math.min(180, seconds)
                      )
@@ -130,7 +130,7 @@ final class AiForage {
          }
 
          if (bedCount() < 7 && AiItems.countFreeSlots() < 2) {
-            return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 3));
+            return AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 3));
          }
 
          int stringForBow = AiRunResources.countUsableItem("minecraft:bow", 24) > 0 ? 0 : 3;
@@ -141,7 +141,7 @@ final class AiForage {
          for (String color : WOOL_COLORS) {
             if (bedCount() < 7 && AiCraft.countItem("minecraft:" + color + "_wool") >= 3) {
                if (AiItems.countInInventory(AiItems.resolveItem("planks")) < 3) {
-                  return AiObtain.init(AiJson.objectOf("item", "planks", "count", 3, "timeoutSeconds", 60));
+                  return AiObtain.obtain(AiJson.objectOf("item", "planks", "count", 3, "timeoutSeconds", 60));
                }
 
                return AiCraft.craft(
@@ -152,13 +152,13 @@ final class AiForage {
 
          if (AiRunResources.countUsableItem("minecraft:bow", 24) == 0 && AiCraft.countItem("minecraft:string") >= 3) {
             return AiCraft.countItem("minecraft:stick") < 3
-               ? AiObtain.init(AiJson.objectOf("item", "minecraft:stick", "count", 3, "timeoutSeconds", 60))
+               ? AiObtain.obtain(AiJson.objectOf("item", "minecraft:stick", "count", 3, "timeoutSeconds", 60))
                : AiCraft.craft(AiJson.objectOf("item", "minecraft:bow", "count", AiCraft.countItem("minecraft:bow") + 1, "timeoutSeconds", 30));
          }
 
          if (AiRunResources.totalArrowCount() < 24 && AiCraft.countItem("minecraft:flint") > 0 && AiCraft.countItem("minecraft:feather") > 0) {
             return AiCraft.countItem("minecraft:stick") < 1
-               ? AiObtain.init(AiJson.objectOf("item", "minecraft:stick", "count", 1, "timeoutSeconds", 60))
+               ? AiObtain.obtain(AiJson.objectOf("item", "minecraft:stick", "count", 1, "timeoutSeconds", 60))
                : AiCraft.craft(AiJson.objectOf("item", "minecraft:arrow", "count", AiCraft.countItem("minecraft:arrow") + 4, "timeoutSeconds", 30));
          }
 
@@ -166,7 +166,7 @@ final class AiForage {
             BlockPos gravel = AiWorldScan.findNearestBlock(s -> s.is(Blocks.GRAVEL), 2);
             if (gravel != null && gravel.distSqr(mc.player.blockPosition()) <= range * range) {
                int want = Math.min(4, Math.min(AiCraft.countItem("minecraft:feather"), (24 - AiRunResources.totalArrowCount() + 3) / 4));
-               return AiObtain.init(AiJson.objectOf("item", "minecraft:flint", "count", want, "radius", (int)Math.ceil(range), "timeoutSeconds", 45));
+               return AiObtain.obtain(AiJson.objectOf("item", "minecraft:flint", "count", want, "radius", (int)Math.ceil(range), "timeoutSeconds", 45));
             }
          }
 
@@ -241,7 +241,7 @@ final class AiForage {
          BlockPos source = best;
          return AiNetherRun.sequence(
             AiGoto.travelToCompat(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true),
-            () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 10))
+            () -> AiBucket.create(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
       } else {
          return null;
@@ -259,7 +259,7 @@ final class AiForage {
    }
 
    static AiOperation huntFor(String type, String drop, double range) {
-      return AiNetherRun.init(
+      return AiNetherRun.fightThenPickup(
          AiCombat.init(
             AiJson.objectOf("target", type, "count", 1, "radius", (int)Math.ceil(range), "useShield", true, "retreatHealth", 8, "timeoutSeconds", 40)
          ),
@@ -465,7 +465,7 @@ final class AiForage {
       if (mc.player != null && mc.player.onGround() && write(mc, mc.player.blockPosition())) {
          for (Entity e : AiWorldScan.findEntitiesByType("minecraft:enderman", range)) {
             if (Math.abs(e.getY() - mc.player.getY()) <= 12.0 && mc.player.hasLineOfSight(e)) {
-               return AiNetherRun.init(
+               return AiNetherRun.fightThenPickup(
                   huntEnderman(e.getId(), p -> write(mc, p), () -> {}),
                   "minecraft:ender_pearl",
                   () -> AiGameplay.write(AiJson.objectOf("item", "minecraft:ender_pearl", "count", 64, "radius", 16, "timeoutSeconds", 15))

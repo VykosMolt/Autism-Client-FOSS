@@ -15,10 +15,10 @@ final class AiModuleScope implements AiOperation {
    private boolean cancelled;
 
    static AiOperation wrap(Supplier<AiOperation> factory) {
-      return load(() -> new AiDeferredOperation(factory));
+      return scoped(() -> new AiDeferredOperation(factory));
    }
 
-   static AiOperation load(Supplier<AiOperation> factory) {
+   static AiOperation scoped(Supplier<AiOperation> factory) {
       AiModuleScope scope = new AiModuleScope();
       AiModuleScope previous = CURRENT.get();
       CURRENT.set(scope);

@@ -68,7 +68,7 @@ final class AiProspect {
       return kind.equals("ancient_debris") ? "ancient_debris" : kind + "_ore";
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final String spec = AiJson.getString(args, "item", "");

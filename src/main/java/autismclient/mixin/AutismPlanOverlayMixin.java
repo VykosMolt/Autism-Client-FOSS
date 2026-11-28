@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismPlanOverlayMixin {
    @ModifyReturnValue(method = "getBlockState", at = @At("RETURN"))
    private BlockState autism$planBlock(BlockState original, BlockPos pos) {
-      BlockState planned = AiPrinterWorld.init((Level)(Object)this, pos);
+      BlockState planned = AiPrinterWorld.plannedState((Level)(Object)this, pos);
       return planned != null ? planned : original;
    }
 
    @ModifyReturnValue(method = "getFluidState", at = @At("RETURN"))
    private FluidState autism$planFluid(FluidState original, BlockPos pos) {
-      BlockState planned = AiPrinterWorld.init((Level)(Object)this, pos);
+      BlockState planned = AiPrinterWorld.plannedState((Level)(Object)this, pos);
       return planned != null ? planned.getFluidState() : original;
    }
 }

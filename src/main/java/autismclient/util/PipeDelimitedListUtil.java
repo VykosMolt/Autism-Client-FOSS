@@ -7,7 +7,7 @@ public final class PipeDelimitedListUtil {
    private PipeDelimitedListUtil() {
    }
 
-   public static List<String> init(String value) {
+   public static List<String> split(String value) {
       List<String> out = new ArrayList<>();
       if (value != null && !value.isBlank()) {
          for (String raw : value.split("\\|")) {
@@ -23,7 +23,7 @@ public final class PipeDelimitedListUtil {
       }
    }
 
-   public static String init(List<String> values) {
+   public static String join(List<String> values) {
       return values == null ? "" : String.join("|", values);
    }
 }

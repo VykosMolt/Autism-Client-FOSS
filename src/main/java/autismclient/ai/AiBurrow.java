@@ -693,14 +693,14 @@ final class AiBurrow {
                         mc.player.getHealth(),
                         mc.player.getMaxHealth(),
                         mc.player.getFoodData().getFoodLevel(),
-                        AiSurvival.init(mc.player.getInventory()) >= 0,
+                        AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0,
                         this.init_Z_6(),
                         autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         this.canInterruptNow(),
                         this.requiresReconciliationAfterEmergency()
                      )) {
                      this.update_I++;
-                     this.load_AiOperation = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
+                     this.load_AiOperation = AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                      return this.running("Eating in the sealed shelter to enable regeneration");
                   }
 

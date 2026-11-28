@@ -82,7 +82,7 @@ public final class CustomMenuAction implements MacroAction {
                }
             }
 
-            autismclient.util.custommenu.CustomMenuTracker.init(seenGeneration, result.replacement(), snapshot.phase());
+            autismclient.util.custommenu.CustomMenuTracker.replace(seenGeneration, result.replacement(), snapshot.phase());
             autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
             return;
          }

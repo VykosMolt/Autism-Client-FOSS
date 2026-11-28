@@ -16,7 +16,7 @@ public final class BlockBreakSpeedHelper {
    private BlockBreakSpeedHelper() {
    }
 
-   public static float init(Minecraft mc, ItemStack stack, BlockState state) {
+   public static float breakSpeed(Minecraft mc, ItemStack stack, BlockState state) {
       if (stack != null && !stack.isEmpty() && state != null) {
          float speed;
          try {
@@ -70,14 +70,14 @@ public final class BlockBreakSpeedHelper {
    }
 
    public static float mainHandSpeed(Minecraft mc, BlockState state) {
-      return mc != null && mc.player != null ? init(mc, mc.player.getMainHandItem(), state) : 0.0F;
+      return mc != null && mc.player != null ? breakSpeed(mc, mc.player.getMainHandItem(), state) : 0.0F;
    }
 
-   public static int init(Minecraft mc, BlockState state, int limit, boolean ignoreDurability) {
-      return init(mc, state, limit, ignoreDurability, false);
+   public static int bestToolSlot(Minecraft mc, BlockState state, int limit, boolean ignoreDurability) {
+      return bestToolSlot(mc, state, limit, ignoreDurability, false);
    }
 
-   public static int init(Minecraft mc, BlockState state, int limit, boolean ignoreDurability, boolean requireSilkTouch) {
+   public static int bestToolSlot(Minecraft mc, BlockState state, int limit, boolean ignoreDurability, boolean requireSilkTouch) {
       if (mc != null && mc.player != null && state != null) {
          int best = -1;
          float bestSpeed = -1.0F;
@@ -86,7 +86,7 @@ public final class BlockBreakSpeedHelper {
          for (int slot = 0; slot < limit; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (!stack.isEmpty() && (ignoreDurability || !stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 2)) {
-               float speed = init(mc, stack, state);
+               float speed = breakSpeed(mc, stack, state);
                if (!(speed <= 1.0F) && (!requireSilkTouch || hasSilkTouch(mc, stack))) {
                   boolean better = speed > bestSpeed || speed == bestSpeed && best >= 0 && slotCost(slot, selected) < slotCost(best, selected);
                   if (better) {
@@ -107,7 +107,7 @@ public final class BlockBreakSpeedHelper {
       return slot < 9 ? Math.abs(slot - selected) : 100 + slot;
    }
 
-   public static boolean init(Minecraft mc, BlockState state, boolean considerInventory, boolean ignoreDurability) {
+   public static boolean switchToBestTool(Minecraft mc, BlockState state, boolean considerInventory, boolean ignoreDurability) {
       return init(mc, state, considerInventory, ignoreDurability, false);
    }
 
@@ -123,11 +123,11 @@ public final class BlockBreakSpeedHelper {
       int limit = considerInventory ? 36 : 9;
       int best = -1;
       if (preferSilkTouch) {
-         best = init(mc, state, limit, ignoreDurability, true);
+         best = bestToolSlot(mc, state, limit, ignoreDurability, true);
       }
 
       if (best < 0) {
-         best = init(mc, state, limit, ignoreDurability, false);
+         best = bestToolSlot(mc, state, limit, ignoreDurability, false);
       }
 
       if (best < 0) {
@@ -137,8 +137,8 @@ public final class BlockBreakSpeedHelper {
       int selected = mc.player.getInventory().getSelectedSlot();
       ItemStack bestStack = mc.player.getInventory().getItem(best);
       ItemStack heldStack = mc.player.getInventory().getItem(selected);
-      float bestSpeed = init(mc, bestStack, state);
-      float heldSpeed = init(mc, heldStack, state);
+      float bestSpeed = breakSpeed(mc, bestStack, state);
+      float heldSpeed = breakSpeed(mc, heldStack, state);
       boolean silkChosen = preferSilkTouch && bestSpeed > 1.0F && hasSilkTouch(mc, bestStack);
       if (silkChosen) {
          if (heldSpeed > 1.0F && hasSilkTouch(mc, heldStack)) {

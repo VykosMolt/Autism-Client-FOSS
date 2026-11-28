@@ -159,7 +159,7 @@ final class ModuleSettingsView {
 
          this.drawScrollbar(context, listArea, contentHeight, scroll);
          if (preview != null && module instanceof CrosshairModule crosshair) {
-            CrosshairPreviewRenderer.init(context, preview.load(), crosshair.init_q_DataUtil_m(crosshair.art()));
+            CrosshairPreviewRenderer.init(context, preview.load(), crosshair.renderState(crosshair.art()));
          }
       }
    }
@@ -774,7 +774,7 @@ final class ModuleSettingsView {
             raw -> {
                List<String> names = new ArrayList<>();
 
-               for (String entry : PipeDelimitedListUtil.init(raw)) {
+               for (String entry : PipeDelimitedListUtil.split(raw)) {
                   Identifier id = Identifier.tryParse(entry);
                   String name = id == null
                      ? entry

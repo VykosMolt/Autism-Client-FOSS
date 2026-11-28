@@ -374,13 +374,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    private static void init_V_Minecraft_MapStore_StreamUti(Minecraft mc, ItemAction.Inner_StreamUtil e) {
       boolean cursorPickupAll = e.pickupTarget() != null || e.clickType() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
       if (cursorPickupAll) {
-         autismclient.util.ContainerPickUpAllHelper.init(mc, e.pickupTarget(), e.read());
+         autismclient.util.ContainerPickUpAllHelper.pickUpAll(mc, e.pickupTarget(), e.read());
       } else if (e.clickType() != autismclient.util.ContainerClickType.DROP_ITEM && e.clickType() != autismclient.util.ContainerClickType.DROP_STACK) {
          for (int j = 0; j < e.read(); j++) {
             autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.button(), e.clickType().toContainerInput());
          }
       } else {
-         autismclient.util.InventoryDropHelper.init(mc, e.load(), e.clickType() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
+         autismclient.util.InventoryDropHelper.dropFromHandler(mc, e.load(), e.clickType() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
       }
    }
 
@@ -410,16 +410,16 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                MacroItemTarget t = e.pickupTarget();
 
                for (int j = 0; j < e.read(); j++) {
-                  plan.add(() -> autismclient.util.ContainerPickUpAllHelper.init(mc, t, 1));
+                  plan.add(() -> autismclient.util.ContainerPickUpAllHelper.pickUpAll(mc, t, 1));
                }
             } else if (e.clickType() == autismclient.util.ContainerClickType.DROP_STACK) {
                int fs = e.load();
-               plan.add(() -> autismclient.util.InventoryDropHelper.init(mc, fs, 0));
+               plan.add(() -> autismclient.util.InventoryDropHelper.dropFromHandler(mc, fs, 0));
             } else if (e.clickType() == autismclient.util.ContainerClickType.DROP_ITEM) {
                int fs = e.load();
 
                for (int j = 0; j < e.read(); j++) {
-                  plan.add(() -> autismclient.util.InventoryDropHelper.init(mc, fs, 1));
+                  plan.add(() -> autismclient.util.InventoryDropHelper.dropFromHandler(mc, fs, 1));
                }
             } else {
                int fs = e.load();

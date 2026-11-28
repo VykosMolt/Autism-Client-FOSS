@@ -33,7 +33,7 @@ final class AiPlacementSearch {
       this.init_Z = clearTerrain;
    }
 
-   void init(int budget, long deadline) {
+   void step(int budget, long deadline) {
       while (!this.load_Z && budget-- > 0 && System.nanoTime() < deadline) {
          if (this.load_Map == null) {
             if (this.init_I >= this.init_List.size()) {
@@ -141,7 +141,7 @@ final class AiPlacementSearch {
       return Math.min(this.init_I, this.init_List.size());
    }
 
-   int load() {
+   int candidateCount() {
       return this.init_List.size();
    }
 

@@ -550,7 +550,7 @@ final class AiIntents {
                }
 
                if ((m = PLANT_PATTERN.matcher(c)).matches()) {
-                  String crop = update(m.group(1) != null ? m.group(1) : m.group(2));
+                  String crop = cropId(m.group(1) != null ? m.group(1) : m.group(2));
                   return crop == null
                      ? null
                      : new AiIntents.IntentStep(raw, "game:farm", AiJson.objectOf("action", "plant", "crop", crop), "plant a " + crop + " field");
@@ -580,7 +580,7 @@ final class AiIntents {
                      );
                } else if (!(m = KILL_PATTERN.matcher(c)).matches()) {
                   if ((m = HARVEST_PATTERN.matcher(c)).matches()) {
-                     String crop = update(m.group(5));
+                     String crop = cropId(m.group(5));
                      if (crop == null) {
                         return null;
                      }
@@ -599,7 +599,7 @@ final class AiIntents {
                      String what = cleanItemWords(m.group(5));
                      String output = SMELT_OUTPUTS.get(what);
                      if (output == null) {
-                        output = SMELT_OUTPUTS.get(sync(what));
+                        output = SMELT_OUTPUTS.get(singular(what));
                      }
 
                      if (output == null) {
@@ -682,7 +682,7 @@ final class AiIntents {
                   List<String> targets = new ArrayList<>();
 
                   for (String one : who.split("\\s+or\\s+(?:an?\\s+|the\\s+)?")) {
-                     String id = HOSTILE_WORDS.contains(one.trim()) ? "hostiles" : lookups.entityId().apply(sync(one.trim()));
+                     String id = HOSTILE_WORDS.contains(one.trim()) ? "hostiles" : lookups.entityId().apply(singular(one.trim()));
                      if (id == null) {
                         return null;
                      }
@@ -755,10 +755,10 @@ final class AiIntents {
 
    private static String itemOrFamilySpec(String words) {
       String family = words.replace(' ', '_');
-      if (!ITEM_FAMILIES.contains(family) && !ITEM_FAMILIES.contains(sync(words).replace(' ', '_'))) {
+      if (!ITEM_FAMILIES.contains(family) && !ITEM_FAMILIES.contains(singular(words).replace(' ', '_'))) {
          return resolveItemId(words);
       } else {
-         return ITEM_FAMILIES.contains(family) ? family : sync(words).replace(' ', '_');
+         return ITEM_FAMILIES.contains(family) ? family : singular(words).replace(' ', '_');
       }
    }
 
@@ -772,7 +772,7 @@ final class AiIntents {
          }
       } catch (RuntimeException e) {
          String near = fuzzyItemId(words);
-         return near != null ? near : fuzzyItemId(sync(words));
+         return near != null ? near : fuzzyItemId(singular(words));
       }
    }
 
@@ -876,11 +876,11 @@ final class AiIntents {
          String t = tokens[i];
          if (!t.isEmpty()) {
             String two = i + 1 < tokens.length ? t + " " + tokens[i + 1] : null;
-            if (two != null && update(two) != null && crop == null) {
-               crop = update(two);
+            if (two != null && cropId(two) != null && crop == null) {
+               crop = cropId(two);
                i++;
-            } else if (update(t) != null && crop == null) {
-               crop = update(t);
+            } else if (cropId(t) != null && crop == null) {
+               crop = cropId(t);
             } else {
                switch (t) {
                   case "small":
@@ -987,11 +987,11 @@ final class AiIntents {
 
          return false;
       } else {
-         String crop = update(a.replaceAll("[^a-z ]", " ").trim());
+         String crop = cropId(a.replaceAll("[^a-z ]", " ").trim());
          if (crop == null) {
             for (String word : a.split("[^a-z]+")) {
-               if (update(word) != null) {
-                  crop = update(word);
+               if (cropId(word) != null) {
+                  crop = cropId(word);
                   break;
                }
             }
@@ -1006,12 +1006,12 @@ final class AiIntents {
       }
    }
 
-   static String update(String words) {
+   static String cropId(String words) {
       if (words == null) {
          return null;
       }
 
-      String w = sync(words.trim()).replaceAll("\\s+(?:farm|field|seed|crop|plant)$", "").trim();
+      String w = singular(words.trim()).replaceAll("\\s+(?:farm|field|seed|crop|plant)$", "").trim();
       String var10000;
       switch (w) {
          case "wheat":
@@ -1040,7 +1040,7 @@ final class AiIntents {
       return var10000;
    }
 
-   static String sync(String words) {
+   static String singular(String words) {
       String w = words.trim();
       if (w.endsWith("zombies") || w.endsWith("cookies") || w.endsWith("pies")) {
          return w.substring(0, w.length() - 1);
@@ -1074,7 +1074,7 @@ final class AiIntents {
          return Math.max(1, Math.min(2304, count));
       } else {
          String family = spec.replace("minecraft:", "");
-         boolean plural = !sync(words).equals(words.trim()) || m.group(3) != null;
+         boolean plural = !singular(words).equals(words.trim()) || m.group(3) != null;
          if (family.contains("seed")) {
             return 8;
          } else {

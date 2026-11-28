@@ -132,10 +132,10 @@ public final class AutismProfileManager {
    }
 
    public synchronized AutismProfile load_AutismProfile(String name) {
-      return this.init(name, true, false, true);
+      return this.create(name, true, false, true);
    }
 
-   public synchronized AutismProfile init(String name, boolean autoSave, boolean ownMacroLibrary, boolean ownThemeColor) {
+   public synchronized AutismProfile create(String name, boolean autoSave, boolean ownMacroLibrary, boolean ownThemeColor) {
       if (this.isNameTaken(name, null)) {
          return null;
       }
@@ -276,7 +276,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void read(AutismProfile p, boolean own) {
+   public synchronized void setOwnThemeColor(AutismProfile p, boolean own) {
       if (p != null && p.ownThemeColor != own) {
          p.ownThemeColor = own;
          p.updatedAt = System.currentTimeMillis();
@@ -348,7 +348,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public synchronized void read(AutismProfile p) {
+   public synchronized void switchToAsync(AutismProfile p) {
       if (p != null && !this.write && !p.id.equals(this.load_Str)) {
          this.write = true;
          Runnable applyJob = autismclient.gui.ThemeApplyProgressOverlay.init("Switching Profile", "Applying profile…");
@@ -534,7 +534,7 @@ public final class AutismProfileManager {
       }
    }
 
-   public void load() {
+   public void tick() {
       if (this.snapshotPending) {
          synchronized (this) {
             if (this.snapshotPending && System.currentTimeMillis() >= this.snapshotDueAt) {

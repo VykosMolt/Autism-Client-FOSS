@@ -23,7 +23,7 @@ public class AssertAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      if (!this.init(mc)) {
+      if (!this.holds(mc)) {
          String out;
          if (this.message != null && !this.message.isBlank()) {
             MacroTemplateResolver.ResolveResult resolved = MacroVariableContext.resolveTemplate(this.message, mc);
@@ -43,7 +43,7 @@ public class AssertAction implements MacroAction {
       }
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean holds(Minecraft mc) {
       if (mc == null) {
          return false;
       }
@@ -63,7 +63,7 @@ public class AssertAction implements MacroAction {
                var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse(itemResolution.value()));
                break;
             case GUI_TYPE:
-               var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.value(), "");
+               var10000 = GuiScreenMatcher.matches(mc.gui.screen(), guiResolution.value(), "");
                break;
             case LOOKING_AT_ENTITY:
                var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.value());

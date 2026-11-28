@@ -25,7 +25,7 @@ public class WaitDurabilityAction implements MacroAction {
       return MacroActionType.WAIT_DURABILITY;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean isSatisfied(Minecraft mc) {
       if (mc != null && mc.player != null) {
          boolean var10000;
          switch (this.targetMode) {

@@ -68,7 +68,7 @@ public final class AiSessions {
       }
    }
 
-   public synchronized boolean init_Z_Str(String id) {
+   public synchronized boolean contains(String id) {
       return this.init_Set.contains(id);
    }
 
@@ -82,7 +82,7 @@ public final class AiSessions {
       return removed;
    }
 
-   public synchronized List<AiSessions.SessionMeta> load() {
+   public synchronized List<AiSessions.SessionMeta> sessions() {
       return this.metaById.values().stream().sorted(Comparator.comparingLong(AiSessions.SessionMeta::lastActiveAt).reversed()).toList();
    }
 
@@ -192,10 +192,10 @@ public final class AiSessions {
    }
 
    public List<JsonObject> init_List_Str_J(String id, long charBudget) {
-      return this.init(id, charBudget, true);
+      return this.replay(id, charBudget, true);
    }
 
-   public synchronized List<JsonObject> init(String id, long charBudget, boolean plainHead) {
+   public synchronized List<JsonObject> replay(String id, long charBudget, boolean plainHead) {
       List<JsonObject> parsed = new ArrayList<>();
 
       // the rotated archive holds the older lines, so it is read first and the live file appended
@@ -203,7 +203,7 @@ public final class AiSessions {
          if (Files.isRegularFile(file)) {
             String line;
             try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-               while ((line = AiBoundedIo.init(reader, 1001000)) != null) {
+               while ((line = AiBoundedIo.readLine(reader, 1001000)) != null) {
                   if (!line.isBlank()) {
                      try {
                         parsed.add(JsonParser.parseString(line).getAsJsonObject());

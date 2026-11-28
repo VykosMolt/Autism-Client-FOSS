@@ -138,7 +138,7 @@ public final class AiPlacer {
          return AiPlacer.PlaceStatus.WORKING;
       } else {
          if (!AutismLiteVariant.enabled()) {
-            AiVisualization.init(this, this.targetPos, this.targetBlock.defaultBlockState());
+            AiVisualization.showPlacement(this, this.targetPos, this.targetBlock.defaultBlockState());
          }
 
          if (mc.level.getBlockState(this.targetPos).getBlock() != this.targetBlock) {

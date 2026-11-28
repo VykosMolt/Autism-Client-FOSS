@@ -44,7 +44,7 @@ final class BedTargetAimSolver {
          );
 
          for (Direction side : Direction.values()) {
-            points.addAll(FaceVisibilitySolver.init(eye, box, side, blockers, preferred));
+            points.addAll(FaceVisibilitySolver.visiblePoints(eye, box, side, blockers, preferred));
          }
       }
 

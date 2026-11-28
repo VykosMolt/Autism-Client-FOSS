@@ -76,7 +76,7 @@ public final class SprintStateTracker {
       return serverSprinting;
    }
 
-   public static boolean load() {
+   public static boolean predictedServerSprinting() {
       return predictedServerSprinting;
    }
 
@@ -84,11 +84,11 @@ public final class SprintStateTracker {
       return clientSprinting != previousSprinting ? clientSprinting : predictedServerSprinting;
    }
 
-   public static boolean read() {
+   public static boolean isDesynced() {
       return serverSprinting != localSprinting;
    }
 
-   public static void init(Player attacker) {
+   public static void onAttackStart(Player attacker) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && attacker == mc.player) {
          attackLocalSprinting = localSprinting;
@@ -117,7 +117,7 @@ public final class SprintStateTracker {
       return attackServerSprinting;
    }
 
-   public static boolean sync() {
+   public static boolean attackStartSprinting() {
       return attackStartSprinting;
    }
 

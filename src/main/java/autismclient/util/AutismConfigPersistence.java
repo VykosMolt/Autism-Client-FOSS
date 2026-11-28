@@ -8,11 +8,11 @@ final class AutismConfigPersistence {
    private AutismConfigPersistence() {
    }
 
-   static void init(AutismConfig config) {
+   static void schedule(AutismConfig config) {
       DebouncedPersistenceScheduler.init(config);
    }
 
-   static void load(AutismConfig source) {
+   static void persist(AutismConfig source) {
       AutismConfig snapshot;
       try {
          snapshot = AutismConfigSnapshotter.load(source);

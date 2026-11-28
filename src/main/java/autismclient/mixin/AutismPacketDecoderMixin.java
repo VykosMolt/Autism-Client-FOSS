@@ -32,7 +32,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
          original.call(ctx, input, out);
       } else {
          int outSizeBeforeDecode = out == null ? 0 : out.size();
-         byte[] incomingPlaintext = PacketCaptureState.isLoggerCapture(captureState) ? PacketWireCaptureStore.init(input) : PacketCaptureState.EMPTY_BYTES;
+         byte[] incomingPlaintext = PacketCaptureState.isLoggerCapture(captureState) ? PacketWireCaptureStore.copyBytes(input) : PacketCaptureState.EMPTY_BYTES;
          original.call(ctx, input, out);
          if (out != null && !out.isEmpty()) {
             int start = Math.max(0, Math.min(outSizeBeforeDecode, out.size()));
@@ -45,7 +45,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
                for (int i = start; i < out.size(); i++) {
                   if (out.get(i) instanceof Packet<?> packet) {
                      if (capturePlaintext) {
-                        PacketWireCaptureStore.init(packet, "S2C", protocol, packet.type(), incomingPlaintext);
+                        PacketWireCaptureStore.captureBytes(packet, "S2C", protocol, packet.type(), incomingPlaintext);
                      }
 
                      if (capturePayloads && autism$isPayloadCarrier(packet)) {

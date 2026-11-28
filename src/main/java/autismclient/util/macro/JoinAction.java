@@ -41,7 +41,7 @@ public class JoinAction implements MacroAction {
    public void execute(Minecraft mc) {
    }
 
-   public static boolean init(List<MacroAction> actions, int from, boolean loops) {
+   public static boolean hasJoinAhead(List<MacroAction> actions, int from, boolean loops) {
       if (actions == null) {
          return false;
       }
@@ -56,7 +56,7 @@ public class JoinAction implements MacroAction {
       return false;
    }
 
-   public static boolean init(boolean playerLeft, boolean stopOnLeave, boolean joinsAgain) {
+   public static boolean shouldContinue(boolean playerLeft, boolean stopOnLeave, boolean joinsAgain) {
       return playerLeft ? !stopOnLeave && !joinsAgain : joinsAgain || !stopOnLeave;
    }
 

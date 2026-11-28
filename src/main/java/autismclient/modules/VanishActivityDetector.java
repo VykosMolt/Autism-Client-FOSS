@@ -142,12 +142,12 @@ final class VanishActivityDetector {
       }
    }
 
-   void init(BlockPos pos, BlockState after, long at) {
+   void onBlockChange(BlockPos pos, BlockState after, long at) {
       if (isChunkLoaded(pos) && !(MINECRAFT.player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 1024.0)) {
          BlockState before = MINECRAFT.level.getBlockState(pos);
-         this.tracker.init(pos, blockId(after));
+         this.tracker.onChange(pos, blockId(after));
          if (before.getBlock() instanceof MovingPistonBlock || after.getBlock() instanceof MovingPistonBlock) {
-            this.tracker.init(pos, 1.5, at + 3000L);
+            this.tracker.explain(pos, 1.5, at + 3000L);
          }
 
          this.load(pos, before, at);
@@ -166,13 +166,13 @@ final class VanishActivityDetector {
                      new autismclient.util.UnexplainedBlockTracker.BlockChange(pos.immutable(), blockId(before), blockId(after), kind, at)
                   );
             } else {
-               this.tracker.init(pos, 1.5, at + 2000L);
+               this.tracker.explain(pos, 1.5, at + 2000L);
             }
          }
       }
    }
 
-   void init(ClientboundSectionBlocksUpdatePacket packet, long at, boolean armed) {
+   void onSectionUpdate(ClientboundSectionBlocksUpdatePacket packet, long at, boolean armed) {
       List<Entry<BlockPos, BlockState>> updates = new ArrayList<>();
       int[] total = new int[]{0};
       BlockPos[] first = new BlockPos[]{null};
@@ -188,7 +188,7 @@ final class VanishActivityDetector {
       });
       if (total[0] <= 4 && armed) {
          for (Entry<BlockPos, BlockState> update : updates) {
-            this.init(update.getKey(), update.getValue(), at);
+            this.onBlockChange(update.getKey(), update.getValue(), at);
          }
       } else if (first[0] != null) {
          this.tracker.suppress(first[0], at + 3500L);
@@ -210,22 +210,22 @@ final class VanishActivityDetector {
             Direction moving = event.getB0() == 0 ? direction : direction.getOpposite();
 
             for (BlockPos p : resolver.getToPush()) {
-               this.tracker.init(p, 1.5, at + 3000L);
-               this.tracker.init(p.relative(moving), 1.5, at + 3000L);
+               this.tracker.explain(p, 1.5, at + 3000L);
+               this.tracker.explain(p.relative(moving), 1.5, at + 3000L);
             }
 
             for (BlockPos p : resolver.getToDestroy()) {
-               this.tracker.init(p, 1.5, at + 3000L);
+               this.tracker.explain(p, 1.5, at + 3000L);
             }
 
             for (int i = 0; i <= 13; i++) {
-               this.tracker.init(event.getPos().relative(direction, i), 1.5, at + 3000L);
+               this.tracker.explain(event.getPos().relative(direction, i), 1.5, at + 3000L);
             }
          }
 
          return true;
       } else if (packet instanceof ClientboundExplodePacket explosion) {
-         this.tracker.init(BlockPos.containing(explosion.center()), Math.max(12.0F, explosion.radius() * 2.0F + 6.0F), at + 4000L);
+         this.tracker.explain(BlockPos.containing(explosion.center()), Math.max(12.0F, explosion.radius() * 2.0F + 6.0F), at + 4000L);
          return true;
       } else if (!(packet instanceof ClientboundLevelEventPacket event)) {
          return false;
@@ -243,7 +243,7 @@ final class VanishActivityDetector {
       }
    }
 
-   void init_V_Packet_J(Packet<?> packet, long at) {
+   void onOutgoingPacket(Packet<?> packet, long at) {
       if (packet instanceof ServerboundPlayerActionPacket action) {
          if (action.getAction() == Action.START_DESTROY_BLOCK
             || action.getAction() == Action.STOP_DESTROY_BLOCK
@@ -287,7 +287,7 @@ final class VanishActivityDetector {
       }
 
       this.suppressedUntil.put(pos.asLong(), at + 30000L);
-      this.tracker.init(pos, 0.0, at + 30000L);
+      this.tracker.explain(pos, 0.0, at + 30000L);
    }
 
    void expire(long at) {
@@ -306,7 +306,7 @@ final class VanishActivityDetector {
             if (entity != null && entity != MINECRAFT.player && !(entity.distanceToSqr(MINECRAFT.player) > 4096.0)) {
                BlockPos pos = entity.blockPosition();
                if (entity instanceof Player) {
-                  this.tracker.init(pos, 8.0, at + 1500L);
+                  this.tracker.explain(pos, 8.0, at + 1500L);
                } else {
                   int kind = entity instanceof Enderman
                      ? 1
@@ -346,7 +346,7 @@ final class VanishActivityDetector {
       for (Entry<Long, VanishActivityDetector.PendingChange> entry : this.pendingChanges.entrySet()) {
          BlockPos pos = BlockPos.of(entry.getKey());
          if (this.load(pos, at) || this.read(pos, at)) {
-            this.tracker.init(pos, 0.0, at + 1000L);
+            this.tracker.explain(pos, 0.0, at + 1000L);
          }
       }
 
@@ -524,7 +524,7 @@ final class VanishActivityDetector {
       return this.tracker.activeReadings(at);
    }
 
-   void init() {
+   void reset() {
       this.tracker.clear();
       this.suppressedUntil.clear();
       this.pendingChanges.clear();

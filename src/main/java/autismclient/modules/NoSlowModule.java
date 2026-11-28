@@ -33,7 +33,7 @@ public final class NoSlowModule extends Module {
          : null;
    }
 
-   public static boolean init(LocalPlayer player) {
+   public static boolean skipsItemSlow(LocalPlayer player) {
       NoSlowModule module = activeFor((Entity)player);
       if (module != null && player.isUsingItem()) {
          ItemStack stack = player.getUseItem();
@@ -65,7 +65,7 @@ public final class NoSlowModule extends Module {
       return module != null && (player.isCrouching() && module.bool("sneak") || player.isVisuallyCrawling() && module.bool("crawl"));
    }
 
-   public static boolean init(Entity entity, Block block) {
+   public static boolean skipsBlockSlow(Entity entity, Block block) {
       NoSlowModule module = activeFor(entity);
       return module != null
          && (

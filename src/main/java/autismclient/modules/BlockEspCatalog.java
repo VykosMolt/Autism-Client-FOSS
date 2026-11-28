@@ -129,7 +129,7 @@ final class BlockEspCatalog {
    static void load(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
          int maxTargets = init_I_Str(module.value("max-targets"), 1024, 64, 8192);
-         init(level, player, init_Set, "minecraft:barrier", maxTargets, Map.of(Blocks.BARRIER, -50373), EspChunkWorker.update, boxEmit, traceEmit);
+         init(level, player, init_Set, "minecraft:barrier", maxTargets, Map.of(Blocks.BARRIER, -50373), EspChunkWorker.blocks, boxEmit, traceEmit);
       }
    }
 

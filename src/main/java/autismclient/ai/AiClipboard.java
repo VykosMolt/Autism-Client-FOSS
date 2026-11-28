@@ -37,7 +37,7 @@ final class AiClipboard {
       }
    }
 
-   static synchronized void init(String name, List<AiBuilder.CellSpec> cells) {
+   static synchronized void saveClip(String name, List<AiBuilder.CellSpec> cells) {
       saveClip(name, cells, defaultDirectory());
    }
 

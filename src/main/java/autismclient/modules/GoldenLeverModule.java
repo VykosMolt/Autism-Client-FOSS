@@ -41,11 +41,11 @@ public final class GoldenLeverModule extends Module {
       return tintActive();
    }
 
-   public static boolean init(ItemStack stack) {
+   public static boolean isGoldenLever(ItemStack stack) {
       return tintActive() && stack != null && stack.is(Items.LEVER);
    }
 
-   public static boolean init(BlockState state) {
+   public static boolean isGoldenLeverBlock(BlockState state) {
       return tintActive() && state != null && state.is(Blocks.LEVER);
    }
 

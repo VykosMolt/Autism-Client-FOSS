@@ -276,7 +276,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
          && !BlinkPacketManager.isHoldingActionsOnly()
-         && !autismclient.util.ManualInteractionYield.init();
+         && !autismclient.util.ManualInteractionYield.isYielding();
    }
 
    @Override
@@ -429,7 +429,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                finish += 2.0;
             }
 
-            if (!Double.isFinite(budget) || this.route.init_Z() && BedBreachRouteSolver.init(finish, budget, critical)) {
+            if (!Double.isFinite(budget) || this.route.init_Z() && BedBreachRouteSolver.fitsBudget(finish, budget, critical)) {
                this.routeTick = this.clientTick();
                this.statusText = this.route.first().init_Z() ? "Breaking bed" : "Opening bed";
                autismclient.util.SilentRotationManager.requestRotation(this.id(), 12, goal);
@@ -487,10 +487,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                         this.lastHit = visible;
                      }
 
-                     if (!autismclient.util.SilentMiningCoordinator.init(this.id(), this.lastHit)) {
+                     if (!autismclient.util.SilentMiningCoordinator.requestMining(this.id(), this.lastHit)) {
                         this.stopMining();
                      }
-                  } else if (hit != null && lastStep[0] <= 18.0 && lastStep[1] <= 18.0 && autismclient.util.SilentMiningCoordinator.init(this.id(), hit)) {
+                  } else if (hit != null && lastStep[0] <= 18.0 && lastStep[1] <= 18.0 && autismclient.util.SilentMiningCoordinator.requestMining(this.id(), hit)) {
                      this.miningStarted = true;
                      this.miningPos = hit.getBlockPos().immutable();
                      this.lastHit = hit;

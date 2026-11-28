@@ -82,7 +82,7 @@ final class AiStronghold {
       return navigation;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(120, Math.min(5400, AiJson.getInt(args, "timeoutSeconds", 2400)));
@@ -300,7 +300,7 @@ final class AiStronghold {
                         }
 
                         String hazard = AiPortalLinks.arrivalHazard();
-                        AiPortalLinks.init("minecraft:overworld", this.endEntrance, "minecraft:the_end", mc.player.blockPosition(), hazard == null, this.init_JsonObject);
+                        AiPortalLinks.recordLink("minecraft:overworld", this.endEntrance, "minecraft:the_end", mc.player.blockPosition(), hazard == null, this.init_JsonObject);
                         return this.finish(
                            hazard == null ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
                            hazard == null ? "Verified End arrival after " + this.throwCount + " throws" : "End arrival requires recovery: " + hazard
@@ -547,15 +547,15 @@ final class AiStronghold {
                         }
 
                         if (AiRunResources.isCampaignActive() && !AiRunResources.isMandatoryArmorEquipped()) {
-                           return this.startChild("equip End armor", AiEquip.init(AiJson.objectOf("what", "armor")));
+                           return this.startChild("equip End armor", AiEquip.create(AiJson.objectOf("what", "armor")));
                         }
 
-                        if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.init(mc.player.getInventory()) >= 0) {
-                           return this.startChild("eat before entering the End", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
+                        if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0) {
+                           return this.startChild("eat before entering the End", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
                         }
 
                         if (mc.player.getHealth() < 16.0F && mc.player.getFoodData().getFoodLevel() >= 18) {
-                           return this.startChild("heal before entering the End", AiCover.init(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
+                           return this.startChild("heal before entering the End", AiCover.create(AiJson.objectOf("healTo", 18, "timeoutSeconds", 90)));
                         }
 
                         if (AiRunResources.totalSafeFoodNutrition() < 32) {
@@ -571,13 +571,13 @@ final class AiStronghold {
                         if (AiRunResources.spareBuildingBlockCount() < 32) {
                            return this.startChild(
                               "secure End building blocks",
-                              AiObtain.init(AiJson.objectOf("item", "minecraft:cobblestone", "count", 32, "timeoutSeconds", 120))
+                              AiObtain.obtain(AiJson.objectOf("item", "minecraft:cobblestone", "count", 32, "timeoutSeconds", 120))
                            );
                         }
 
                         if (deficits.has("fallbackWeapon")) {
                            return this.startChild(
-                              "secure a fallback weapon", AiObtain.init(AiJson.objectOf("item", "minecraft:iron_sword", "count", 1, "timeoutSeconds", 120))
+                              "secure a fallback weapon", AiObtain.obtain(AiJson.objectOf("item", "minecraft:iron_sword", "count", 1, "timeoutSeconds", 120))
                            );
                         }
 
@@ -810,7 +810,7 @@ final class AiStronghold {
                                  }
 
                                  if (!this.isHolding("minecraft:ender_eye")) {
-                                    return this.startChild("hold an eye", AiEquip.init(AiJson.objectOf("what", "minecraft:ender_eye")));
+                                    return this.startChild("hold an eye", AiEquip.create(AiJson.objectOf("what", "minecraft:ender_eye")));
                                  }
 
                                  if (!this.canReachFrame(mc.player.getEyePosition(), target) && mc.player.onGround() && this.frameStanceMoves < 8) {
@@ -938,7 +938,7 @@ final class AiStronghold {
                                  );
                               } else {
                                  return !this.isHolding("minecraft:ender_eye")
-                                    ? this.startChild("hold an eye", AiEquip.init(AiJson.objectOf("what", "minecraft:ender_eye")))
+                                    ? this.startChild("hold an eye", AiEquip.create(AiJson.objectOf("what", "minecraft:ender_eye")))
                                     : this.startEyeThrow();
                               }
                            }
@@ -1325,7 +1325,7 @@ final class AiStronghold {
                      keep.add(id);
                   }
 
-                  return this.startChild("tidy the bag for the eyes", AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 4, "keep", keep)));
+                  return this.startChild("tidy the bag for the eyes", AiTidy.create(AiJson.objectOf("action", "drop", "freeSlots", 4, "keep", keep)));
                } else {
                   return this.startChild(
                      "craft " + count + " eyes of ender",

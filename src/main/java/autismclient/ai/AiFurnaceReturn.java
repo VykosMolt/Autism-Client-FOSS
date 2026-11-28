@@ -150,7 +150,7 @@ final class AiFurnaceReturn implements AiOperation {
          return AiGameOperations.result(
             AiOperation.Status.RUNNING,
             (this.init_Z ? "Repairing a changed furnace return route: " : "Replanning a walk back to the furnace: ") + r.message(),
-            this.init()
+            this.json()
          );
       } else {
          boolean uncertain = r.status() == AiOperation.Status.UNCERTAIN || this.travel.requiresReconciliationAfterEmergency();
@@ -164,7 +164,7 @@ final class AiFurnaceReturn implements AiOperation {
             this.init_Z = true;
             this.reason = "Existing walking return unavailable: " + r.message();
             return AiGameOperations.result(
-               AiOperation.Status.RUNNING, "Walking route changed; allow bounded repairs without digging straight down", this.init()
+               AiOperation.Status.RUNNING, "Walking route changed; allow bounded repairs without digging straight down", this.json()
             );
          } else {
             return this.finish(r.status() == AiOperation.Status.SUCCEEDED ? AiOperation.Status.FAILED : r.status(), r.message());
@@ -172,7 +172,7 @@ final class AiFurnaceReturn implements AiOperation {
       }
    }
 
-   JsonObject init() {
+   JsonObject json() {
       return AiJson.objectOf(
          "returnMode",
          this.init_Z ? "repair_changed_route" : "walk_existing_terrain",
@@ -194,7 +194,7 @@ final class AiFurnaceReturn implements AiOperation {
    }
 
    private AiOperation.Result finish(AiOperation.Status status, String message) {
-      JsonObject data = this.init();
+      JsonObject data = this.json();
       this.cancel();
       return AiGameOperations.result(status, message, data);
    }

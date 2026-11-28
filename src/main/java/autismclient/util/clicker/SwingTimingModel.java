@@ -22,7 +22,7 @@ public final class SwingTimingModel {
       this.noise = 0.9 * this.random.nextGaussian();
    }
 
-   public double init(double lowMs, double highMs, double hesitationChance) {
+   public double sampleOffset(double lowMs, double highMs, double hesitationChance) {
       double low = Math.min(lowMs, highMs);
       double high = Math.max(lowMs, highMs);
       double ms = low + (high - low) * this.random.nextDouble();
@@ -33,14 +33,14 @@ public final class SwingTimingModel {
       return ms;
    }
 
-   public long init(double lowMs, double highMs) {
+   public long sampleHoldNanos(double lowMs, double highMs) {
       double low = Math.max(1.0, Math.min(lowMs, highMs));
       double high = Math.max(low, Math.max(lowMs, highMs));
       this.noise = 0.4 * this.noise + 0.9 * this.random.nextGaussian();
-      return ClickTimingMath.load(low + (high - low) * sigmoid(this.noise));
+      return ClickTimingMath.msToNanos(low + (high - low) * sigmoid(this.noise));
    }
 
-   public static boolean init(double shownCharge, int ticker, double delayTicks, double msPerTick, double offsetMs) {
+   public static boolean isReady(double shownCharge, int ticker, double delayTicks, double msPerTick, double offsetMs) {
       if (delayTicks <= 0.0) {
          return true;
       } else {

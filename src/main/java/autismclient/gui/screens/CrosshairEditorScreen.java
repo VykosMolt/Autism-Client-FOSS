@@ -542,7 +542,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box) {
-      CrosshairRenderState.Inner_DataUtil look = this.module.init_q_DataUtil_m(this.currentArt());
+      CrosshairRenderState.Inner_DataUtil look = this.module.renderState(this.currentArt());
       CrosshairRenderState.Inner_DataUtil shown = new CrosshairRenderState.Inner_DataUtil(
          CrosshairPresetGeometry.Inner_NetHelper.CUSTOM,
          look.init_D(),
@@ -1116,7 +1116,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private void resizeCanvas(int newSize) {
       if (newSize != this.canvasSize && CrosshairPixelArt.isValidSize(newSize)) {
          this.pushUndo(new CrosshairEditorScreen.CanvasSnapshot(this.canvasSize, (int[])this.pixels.clone()));
-         this.pixels = new CrosshairPixelArt(this.canvasSize, this.pixels).load(newSize).pixels();
+         this.pixels = new CrosshairPixelArt(this.canvasSize, this.pixels).resized(newSize).pixels();
          this.canvasSize = newSize;
          this.markCanvasDirty();
       }

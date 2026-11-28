@@ -332,7 +332,7 @@ final class AiPlan {
          JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          if (schema.has("type") || schema.has("properties")) {
             try {
-               AiSchemas.init(schema, arguments);
+               AiSchemas.validate(schema, arguments);
             } catch (IllegalArgumentException e) {
                throw new IllegalArgumentException("Plan step '" + id + "' (" + capability + "): " + e.getMessage());
             }

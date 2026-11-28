@@ -407,7 +407,7 @@ final class AiDanger {
    }
 
    private static void collectProjectileSources(Minecraft mc, List<AiDanger.ThreatSource> out) {
-      for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(mc)) {
+      for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
          String type = t.type();
          String kind = type.indexOf(58) >= 0 ? type.substring(type.indexOf(58) + 1) : type;
          float power = explosionPower(kind, false, 0.0);

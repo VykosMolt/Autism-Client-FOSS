@@ -62,7 +62,7 @@ final class AiBarter {
       }
    }
 
-   static int init(int goldArg, int carried) {
+   static int budget(int goldArg, int carried) {
       return goldArg > 0 ? Math.min(goldArg, carried) : carried;
    }
 
@@ -70,8 +70,8 @@ final class AiBarter {
       return alive && "minecraft:piglin".equals(typeId) && !baby && !converting;
    }
 
-   static AiOperation init(JsonObject args) {
-      return AiBarterBatch.init(args);
+   static AiOperation create(JsonObject args) {
+      return AiBarterBatch.create(args);
    }
 
    static AiOperation createBarterOp(JsonObject args) {
@@ -92,7 +92,7 @@ final class AiBarter {
          } else {
             return new AiOperation() {
                final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final int goldToTrade = AiBarter.init(goldArg, AiGameState.countMainInventoryItem("minecraft:gold_ingot"));
+               final int goldToTrade = AiBarter.budget(goldArg, AiGameState.countMainInventoryItem("minecraft:gold_ingot"));
                final int pearlsAtStart = AiGameState.countInventoryItem("minecraft:ender_pearl");
                final int originalSlot = mc.player.getInventory().getSelectedSlot();
                final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
@@ -217,7 +217,7 @@ final class AiBarter {
                               if (!this.armorChecked) {
                                  this.armorChecked = true;
                                  if (!this.wearsGoldArmor()) {
-                                    this.armorOp = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_*"));
+                                    this.armorOp = AiEquip.create(AiJson.objectOf("what", "armor", "prefer", "golden_*"));
                                     return this.running("Equipping a gold armor piece for piglin neutrality");
                                  }
                               }

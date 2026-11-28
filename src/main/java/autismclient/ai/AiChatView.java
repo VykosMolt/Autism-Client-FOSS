@@ -81,7 +81,7 @@ final class AiChatView {
 
    boolean init_Z_I_BitSetUtil(int key, autismclient.gui.ui.widgets.TextInputWidget focused) {
       return this.view.settings.builtIn && (focused == null || this.actionMenu.inputs().contains(focused))
-         ? this.actionMenu.init_Z_I_Z(key, focused != null)
+         ? this.actionMenu.handleKey(key, focused != null)
          : false;
    }
 
@@ -96,7 +96,7 @@ final class AiChatView {
          this.init_Z = false;
          return true;
       } else {
-         return this.actionMenu.load_Z();
+         return this.actionMenu.back();
       }
    }
 
@@ -110,7 +110,7 @@ final class AiChatView {
    }
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
-      return this.view.settings.builtIn ? this.actionMenu.init_BitSetUtil_C(c) : null;
+      return this.view.settings.builtIn ? this.actionMenu.inputForChar(c) : null;
    }
 
    autismclient.gui.f.NetHelper init_NetHelper() {
@@ -332,7 +332,7 @@ final class AiChatView {
             kit.pushClip(v);
             int top = v.write() - this.transcriptScroll.offset;
             int viewBottom = this.transcriptScroll.offset + v.sync();
-            List<AiTranscriptLayout.MessageBlock> blocks = this.transcriptLayout.load();
+            List<AiTranscriptLayout.MessageBlock> blocks = this.transcriptLayout.blocks();
 
             for (int i = this.transcriptLayout.firstBlockAt(this.transcriptScroll.offset); i < blocks.size(); i++) {
                AiTranscriptLayout.MessageBlock block = blocks.get(i);
@@ -814,7 +814,7 @@ final class AiChatView {
          CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
             try {
                String path = AiAttachments.init();
-               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.init()) : null;
+               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.directory()) : null;
             } catch (Exception e) {
                throw new CompletionException(e);
             }
@@ -825,7 +825,7 @@ final class AiChatView {
                autismclient.util.bi.write("Could not attach schematic: " + cause.getMessage());
             } else if (file != null && draftSession.equals(this.lastSessionId) && !this.attachments.contains(file)) {
                this.attachments.add(file);
-               this.host.init(this.input);
+               this.host.focusInput(this.input);
             }
          }));
       }
@@ -904,7 +904,7 @@ final class AiChatView {
       if (!this.attachmentPending) {
          String text = this.input.getValue().isBlank() && !this.attachments.isEmpty() ? "" : this.takeComposerInput();
          if (text == null) {
-            this.host.init(this.input);
+            this.host.focusInput(this.input);
          } else {
             this.service.enqueueObjective(AiAttachments.init(text, this.attachments));
             this.attachments.clear();
@@ -923,7 +923,7 @@ final class AiChatView {
    private void sync() {
       if (this.input.getValue().isBlank()) {
          this.load_Z = true;
-         this.host.init(this.input);
+         this.host.focusInput(this.input);
       } else {
          String text = this.takeComposerInput();
          this.service.rejectPlan(text);

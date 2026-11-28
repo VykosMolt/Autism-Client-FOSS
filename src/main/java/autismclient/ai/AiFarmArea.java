@@ -81,11 +81,11 @@ final class AiFarmArea {
       return "soul_sand".equals(substrate);
    }
 
-   static String load(String substrate) {
+   static String levelingBlock(String substrate) {
       return isSoulSand(substrate) ? "minecraft:soul_sand" : "minecraft:dirt";
    }
 
-   static String read(String substrate) {
+   static String soilBlock(String substrate) {
       return isSoulSand(substrate) ? "minecraft:soul_sand" : "minecraft:farmland";
    }
 

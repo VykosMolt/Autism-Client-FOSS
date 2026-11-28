@@ -132,7 +132,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.setVisible(!this.visible);
    }
 
-   public void load(boolean configurationOnly) {
+   public void setConfigurationOnly(boolean configurationOnly) {
       this.configurationOnly = configurationOnly;
       LanSyncManager.getInstance().setConfigurationOnly(configurationOnly);
       if (configurationOnly && this.inputBox != null) {
@@ -453,7 +453,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       Set<String> myMacroKeys = new LinkedHashSet<>();
 
       for (AutismMacro macro : myMacroList) {
-         myMacroKeys.add(MacroNameNormalizer.init(macro.name));
+         myMacroKeys.add(MacroNameNormalizer.normalize(macro.name));
       }
 
       if (peer.equals(sync.getLocalUsername())) {
@@ -466,7 +466,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       for (AutismMacro macro : peerMacroData.values()) {
          if (macro != null) {
-            peerMacroKeys.add(MacroNameNormalizer.init(macro.name));
+            peerMacroKeys.add(MacroNameNormalizer.normalize(macro.name));
          }
       }
 
@@ -1399,7 +1399,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                Set<String> myMacroKeys = new LinkedHashSet<>();
 
                for (AutismMacro m : myMacroList) {
-                  String key = MacroNameNormalizer.init(m.name);
+                  String key = MacroNameNormalizer.normalize(m.name);
                   myMacroKeys.add(key);
                   displayNames.put(key, m.name);
                }
@@ -1417,7 +1417,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
                   for (AutismMacro m : peerMacroData.values()) {
                      if (m != null) {
-                        String key = MacroNameNormalizer.init(m.name);
+                        String key = MacroNameNormalizer.normalize(m.name);
                         peerMacroKeys.add(key);
                         displayNames.putIfAbsent(key, m.name);
                      }
@@ -1583,7 +1583,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             if (!peer.equals(sync.getLocalUsername()) && !missingPeerSet.contains(peer)) {
                Map<String, AutismMacro> peerMacros = allRemote.get(peer);
                if (peerMacros != null) {
-                  AutismMacro remoteMacro = peerMacros.get(MacroNameNormalizer.init(macroName));
+                  AutismMacro remoteMacro = peerMacros.get(MacroNameNormalizer.normalize(macroName));
                   int differences = countDifferences(localMacro, remoteMacro);
                   if (differences > 0) {
                      differentPeers.put(peer, differences);
@@ -1677,7 +1677,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int clipBottom,
       int rowPitch
    ) {
-      boolean isCurrent = MacroNameNormalizer.init(macroName, assigned);
+      boolean isCurrent = MacroNameNormalizer.sameName(macroName, assigned);
       int importW = allowImport ? 42 : 0;
       int assignW = Math.max(24, detailRx - (detailLx - 2) - importW - 2);
       boolean rowVisible = cy + rowPitch > clipTop && cy < clipBottom;
@@ -1753,7 +1753,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             this.init_List.add(new AutismLANSyncOverlay.ClickButton(importX, cy, importW - 4, rowPitch, () -> {
                Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
                Map<String, AutismMacro> peerMacros = allRemote.get(peerKey);
-               AutismMacro sourceMacro = peerMacros != null ? peerMacros.get(MacroNameNormalizer.init(mName)) : null;
+               AutismMacro sourceMacro = peerMacros != null ? peerMacros.get(MacroNameNormalizer.normalize(mName)) : null;
                if (sourceMacro == null) {
                   AutismClientMessaging.sendPrefixed("§cMacro not found: " + mName);
                } else {

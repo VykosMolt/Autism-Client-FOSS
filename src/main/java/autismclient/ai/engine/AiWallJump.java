@@ -211,7 +211,7 @@ public final class AiWallJump {
 
                   for (int var85 = 0; var85 < var58; var85++) {
                      var81 = Float.isNaN(var81) ? var79 : var81 + Math.clamp(putAt(var79 - var81), -var12, var12);
-                     AiPhysics.MoveInput var87 = AiPhysics.MoveInput.run(var81, var66);
+                     AiPhysics.MoveInput var87 = AiPhysics.MoveInput.running(var81, var66);
                      var83 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var83, var87, var9);
                      if (var83 == null || !var83.body().onGround()) {
                         break;
@@ -372,7 +372,7 @@ public final class AiWallJump {
                for (float var24 : var10) {
                   float var25 = var3.yaw() + var24 * var3.side();
                   if (Float.isNaN(var16) || !(Math.abs(putAt(var25 - var16)) > 30.01F)) {
-                     AiPhysics.MoveInput var26 = AiPhysics.MoveInput.run(var25, var20);
+                     AiPhysics.MoveInput var26 = AiPhysics.MoveInput.running(var25, var20);
                      AiWallJump.SearchNode var27 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var15, var26, var9);
                      if (var27 != null && var27.body().onGround()) {
                         AiPhysics.MotionState var28 = var27.body();
@@ -411,7 +411,7 @@ public final class AiWallJump {
          for (AiWallJump.SearchNode var13 : (Iterable<AiWallJump.SearchNode>)(Iterable<?>)(var7)) {
             for (boolean var17 : var9) {
                for (float var21 : new float[]{0.0F, -30.0F, -45.0F, -60.0F, -80.0F, -100.0F, -120.0F, 30.0F}) {
-                  AiPhysics.MoveInput var22 = AiPhysics.MoveInput.run(var3.yaw() + var21 * var3.side(), var17);
+                  AiPhysics.MoveInput var22 = AiPhysics.MoveInput.running(var3.yaw() + var21 * var3.side(), var17);
                   AiWallJump.SearchNode var23 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var13, var22, var6);
                   if (var23 != null && var23.body().onGround()) {
                      AiPhysics.MotionState var24 = var23.body();

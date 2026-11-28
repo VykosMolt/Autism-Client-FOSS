@@ -43,7 +43,7 @@ public final class ManualInteractionYield {
    private ManualInteractionYield() {
    }
 
-   public static boolean init() {
+   public static boolean isYielding() {
       refresh(Minecraft.getInstance());
       return yielding;
    }
@@ -91,7 +91,7 @@ public final class ManualInteractionYield {
       }
    }
 
-   public static HitResult init(Minecraft mc, HitResult silentPick) {
+   public static HitResult adjustPick(Minecraft mc, HitResult silentPick) {
       if (mc == null || !(mc.player != null && silentPick instanceof BlockHitResult blockPick) || blockPick.getType() != Type.BLOCK) {
          return silentPick;
       } else if (!SilentMovementCoordinator.isSafeWalkActive() && SilentMovementCoordinator.activeRotation() != null) {

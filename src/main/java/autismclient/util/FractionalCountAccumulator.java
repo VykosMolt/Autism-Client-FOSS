@@ -6,7 +6,7 @@ public final class FractionalCountAccumulator {
    private double read;
    private double write;
 
-   public void init(double x, double y) {
+   public void add(double x, double y) {
       if (Double.isFinite(x)) {
          this.init += x;
       }
@@ -16,7 +16,7 @@ public final class FractionalCountAccumulator {
       }
    }
 
-   public void load(double x, double y) {
+   public void set(double x, double y) {
       this.init = Double.isFinite(x) ? x : 0.0;
       this.load = Double.isFinite(y) ? y : 0.0;
    }

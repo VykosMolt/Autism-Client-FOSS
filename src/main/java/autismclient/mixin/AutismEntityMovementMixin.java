@@ -30,14 +30,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AutismEntityMovementMixin {
    @WrapOperation(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;push(DDD)V"))
    private void autism$noEntityPush(Entity receiving, double x, double y, double z, Operation<Void> original) {
-      if (AutismLiteVariant.enabled() || !(receiving instanceof LocalPlayer) || !NoPushModule.init(receiving, "entities")) {
+      if (AutismLiteVariant.enabled() || !(receiving instanceof LocalPlayer) || !NoPushModule.cancelsPush(receiving, "entities")) {
          original.call(receiving, x, y, z);
       }
    }
 
    @WrapOperation(method = "getBlockSpeedFactor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getSpeedFactor()F"))
    private float autism$noBlockSlowdown(Block block, Operation<Float> original) {
-      return !AutismLiteVariant.enabled() && (Object)this instanceof LocalPlayer && NoSlowModule.init((Entity)(Object)this, block) ? 1.0F : original.call(block);
+      return !AutismLiteVariant.enabled() && (Object)this instanceof LocalPlayer && NoSlowModule.skipsBlockSlow((Entity)(Object)this, block) ? 1.0F : original.call(block);
    }
 
    @Inject(method = "makeStuckInBlock", at = @At("HEAD"), cancellable = true)
@@ -45,7 +45,7 @@ public class AutismEntityMovementMixin {
       if (!AutismLiteVariant.enabled()) {
          Entity entity = (Entity)(Object)this;
          if (entity instanceof LocalPlayer
-            && (state.is(Blocks.COBWEB) && AntiWebModule.init_Z(entity) || state.is(Blocks.SWEET_BERRY_BUSH) && NoSlowModule.init(entity, state.getBlock()))) {
+            && (state.is(Blocks.COBWEB) && AntiWebModule.isActiveFor(entity) || state.is(Blocks.SWEET_BERRY_BUSH) && NoSlowModule.skipsBlockSlow(entity, state.getBlock()))) {
             entity.resetFallDistance();
             ci.cancel();
          }
@@ -54,13 +54,13 @@ public class AutismEntityMovementMixin {
 
    @ModifyVariable(method = "move", at = @At("HEAD"), argsOnly = true)
    private Vec3 autism$modifyLocalPlayerMovement(Vec3 movement, MoverType type) {
-      return MovementModuleHooks.init((Entity)(Object)this, type, movement);
+      return MovementModuleHooks.adjustMovement((Entity)(Object)this, type, movement);
    }
 
    @Redirect(method = "getBlockBounciness", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getBounceRestitution()F"))
    private float autism$antiBounceRestitution(Block block) {
       Entity entity = (Entity)(Object)this;
-      return block instanceof SlimeBlock && MovementModuleHooks.init_Z(entity) ? 0.0F : block.getBounceRestitution();
+      return block instanceof SlimeBlock && MovementModuleHooks.suppressesSlimeBounce(entity) ? 0.0F : block.getBounceRestitution();
    }
 
    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)

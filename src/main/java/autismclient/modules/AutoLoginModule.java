@@ -52,7 +52,7 @@ public final class AutoLoginModule extends Module {
       this.init_CachePool.load(System.currentTimeMillis());
    }
 
-   public static void init(Packet<?> packet) {
+   public static void onPacket(Packet<?> packet) {
       AutoLoginModule module = init_CharEncoder;
       if (module != null && module.isEnabled()) {
          try {
@@ -110,7 +110,7 @@ public final class AutoLoginModule extends Module {
                }
             }
 
-            autismclient.util.custommenu.CustomMenuTracker.init(snapshot, result.replacement());
+            autismclient.util.custommenu.CustomMenuTracker.replace(snapshot, result.replacement());
             if (result.clientAction() != null && Module.MC != null) {
                Module.MC.execute(() -> {
                   if (Module.MC.gui.screen() instanceof DialogScreen<?> dialog) {

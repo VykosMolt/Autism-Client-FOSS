@@ -22,7 +22,7 @@ public class WaitEntityTargetAction implements MacroAction {
       return MacroActionType.WAIT_ENTITY_TARGET;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean isSatisfied(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          MacroTemplateResolver.ResolveResult entityResolution = MacroVariableContext.resolveTemplate(this.entityId, mc);
          if (!entityResolution.success()) {

@@ -103,7 +103,7 @@ final class AiEntityQuery {
       return out;
    }
 
-   static JsonObject init(JsonObject args) {
+   static JsonObject query(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          double radius = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "radius", 32.0)));

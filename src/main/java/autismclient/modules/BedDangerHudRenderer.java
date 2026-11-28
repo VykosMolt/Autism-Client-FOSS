@@ -11,21 +11,21 @@ public final class BedDangerHudRenderer {
    private BedDangerHudRenderer() {
    }
 
-   public static boolean init() {
+   public static boolean isVisible() {
       DangerModule module = DangerModule.instance();
       return module != null && module.isEnabled() && module.bool("bed-warning") && !module.bedProximity().isEmpty();
    }
 
-   static void init(GuiGraphicsExtractor graphics, DangerModule module) {
+   static void render(GuiGraphicsExtractor graphics, DangerModule module) {
       Minecraft mc = Minecraft.getInstance();
-      if (init() && mc.player != null && mc.gui.screen() == null && !aD.init_Z()) {
+      if (isVisible() && mc.player != null && mc.gui.screen() == null && !aD.init_Z()) {
          autismclient.util.AutismHudManager.renderElement(graphics, mc.font, "bed_danger");
       }
    }
 
    private static BedDangerHudRenderer.HudLayout init_u_DataUtil(Font font) {
       DangerModule module = DangerModule.instance();
-      List<Component> lines = init()
+      List<Component> lines = isVisible()
          ? module.bedProximity().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
          : List.of(Component.literal("Player  20 m").withColor(16755285));
       float scale = module == null ? 1.0F : (float)module.decimal("bed-warning-scale");
@@ -41,8 +41,8 @@ public final class BedDangerHudRenderer {
       return new int[]{Math.max(1, (int)Math.ceil(layout.init_I * layout.init_F)), Math.max(1, (int)Math.ceil(layout.load * layout.init_F))};
    }
 
-   public static void init(GuiGraphicsExtractor graphics, Font font, int x, int y, boolean editor) {
-      if (editor || init()) {
+   public static void renderHud(GuiGraphicsExtractor graphics, Font font, int x, int y, boolean editor) {
+      if (editor || isVisible()) {
          BedDangerHudRenderer.HudLayout layout = init_u_DataUtil(font);
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, 0, 0);
          graphics.pose().pushMatrix();

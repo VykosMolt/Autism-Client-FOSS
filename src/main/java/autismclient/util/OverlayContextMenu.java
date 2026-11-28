@@ -39,7 +39,7 @@ public class OverlayContextMenu<T> {
       return this.target;
    }
 
-   public void init(int mouseX, int mouseY, T target) {
+   public void open(int mouseX, int mouseY, T target) {
       this.target = target;
       this.sync = mouseX;
       this.flush = mouseY;
@@ -118,7 +118,7 @@ public class OverlayContextMenu<T> {
       }
    }
 
-   public boolean init(double mx, double my) {
+   public boolean handleClick(double mx, double my) {
       if (!this.isOpen()) {
          return false;
       }
@@ -129,7 +129,7 @@ public class OverlayContextMenu<T> {
       return mx >= this.sync && mx < this.sync + w && my >= this.flush && my < this.flush + h;
    }
 
-   public void init(GuiGraphicsExtractor ctx, int mx, int my) {
+   public void render(GuiGraphicsExtractor ctx, int mx, int my) {
       if (this.isOpen()) {
          this.read();
          String[] items = this.visibleItems();

@@ -197,7 +197,7 @@ public final class BacktrackModule extends Module {
             case "render-smoothing":
             case "position-color":
             case "delayed-color":
-               this.trailHistory.init();
+               this.trailHistory.clear();
                break;
             default:
                this.load(true);
@@ -330,7 +330,7 @@ public final class BacktrackModule extends Module {
             if (this.target != null) {
                long now = System.nanoTime();
                if (this.init_Z_J_2(now)
-                  && this.init_Z_AABB_3(this.target.getBoundingBox(), this.positionTracker.init(), this.player.getEyePosition(), now)) {
+                  && this.init_Z_AABB_3(this.target.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), now)) {
                   this.init_V_Z_4(false);
                } else {
                   this.init_V_Z_4(true);
@@ -350,7 +350,7 @@ public final class BacktrackModule extends Module {
       LivingEntity selected = this.selectTarget();
       if (selected != this.target) {
          this.init_V_Z_4(true);
-         this.trailHistory.init();
+         this.trailHistory.clear();
          this.init_Vec3 = null;
          this.target = selected;
          if (this.target != null) {
@@ -358,7 +358,7 @@ public final class BacktrackModule extends Module {
             Vec3 received = interpolation != null && interpolation.hasActiveInterpolation()
                ? Compat263.interpPos(interpolation)
                : this.target.position();
-            this.positionTracker.init(this.target.getPositionCodec().getBase(), received);
+            this.positionTracker.reset(this.target.getPositionCodec().getBase(), received);
             this.packetQueue.bind(this.level, this.player, this.connection, this.target);
             this.init_V_AABB(this.target.getBoundingBox(), received, this.player.getEyePosition(), System.nanoTime());
          }
@@ -434,8 +434,8 @@ public final class BacktrackModule extends Module {
                      if (aura.activeTarget() == this.target && aura.init_Z_I_7(lookahead)) {
                         return true;
                      }
-                  } else if (autismclient.util.LegacyCombatDetector.init(this.player)
-                     || init_Z_D_I(
+                  } else if (autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player)
+                     || attackWithinHold(
                         (1.0F - this.player.getAttackStrengthScale(0.0F)) * this.player.getCurrentItemAttackStrengthDelay(), lookahead
                      )) {
                      return true;
@@ -470,7 +470,7 @@ public final class BacktrackModule extends Module {
          && module.isSameSession()
          && module.load_Z_10()
          && module.integer("hold-time") > 0
-         && autismclient.util.LegacyCombatDetector.init(attacker)) {
+         && autismclient.util.LegacyCombatDetector.isLegacyCombat(attacker)) {
          if (module.init_Z_LivingEntity_J(module.target, System.nanoTime())) {
             return false;
          }
@@ -493,7 +493,7 @@ public final class BacktrackModule extends Module {
          } else {
             AABB drawn = victim.getBoundingBox();
             Vec3 current = victim.position();
-            AABB latest = drawn.move(this.positionTracker.init().subtract(current));
+            AABB latest = drawn.move(this.positionTracker.position().subtract(current));
             if (rayHits(latest, eye, look, reach - 0.035)) {
                return true;
             } else if (this.packetQueue.size() != 0 && this.read(now)) {
@@ -531,7 +531,7 @@ public final class BacktrackModule extends Module {
          && this.player.hasLineOfSight(candidate);
    }
 
-   public static boolean init_Z_D_I(double ticksUntilAttack, int holdMillis) {
+   public static boolean attackWithinHold(double ticksUntilAttack, int holdMillis) {
       return Double.isFinite(ticksUntilAttack) && ticksUntilAttack <= Math.max(0, Math.min(300, holdMillis)) / 50.0 + 1.0;
    }
 
@@ -624,7 +624,7 @@ public final class BacktrackModule extends Module {
             this.open = System.nanoTime();
             this.init_Vec3 = null;
             this.init_V_Z_4(true);
-            this.trailHistory.init();
+            this.trailHistory.clear();
             return false;
          } else {
             if (!this.load_Z_10()) {
@@ -648,21 +648,21 @@ public final class BacktrackModule extends Module {
 
                return false;
             } else {
-               Vec3 before = this.positionTracker.init();
+               Vec3 before = this.positionTracker.position();
                Vec3 next = before;
                boolean matches = false;
                boolean moved = false;
                if (packet instanceof ClientboundMoveEntityPacket move && move.getEntity(this.level) == this.target) {
                   matches = true;
                   if (move.hasPosition()) {
-                     next = this.positionTracker.init(Compat263.moveEntityXa(move), Compat263.moveEntityYa(move), Compat263.moveEntityZa(move));
+                     next = this.positionTracker.decode(Compat263.moveEntityXa(move), Compat263.moveEntityYa(move), Compat263.moveEntityZa(move));
                      moved = true;
                   }
                } else if (packet instanceof ClientboundEntityPositionSyncPacket sync && sync.id() == this.target.getId()) {
                   moved = true;
                   matches = true;
                   next = Compat263.entityPosSyncValues(sync).position();
-                  this.positionTracker.init(next);
+                  this.positionTracker.set(next);
                } else if (packet instanceof ClientboundRotateHeadPacket head && head.getEntity(this.level) == this.target) {
                   matches = true;
                } else if (packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.target.getId()) {
@@ -699,7 +699,7 @@ public final class BacktrackModule extends Module {
                }
 
                if (moved && this.bool("server-position")) {
-                  this.trailHistory.init(this.target, box, box.move(next.subtract(this.target.position())), next, now);
+                  this.trailHistory.add(this.target, box, box.move(next.subtract(this.target.position())), next, now);
                }
 
                this.push++;
@@ -720,12 +720,12 @@ public final class BacktrackModule extends Module {
       this.read_LivingEntity = victim;
       this.update = at;
       if (victim == this.target) {
-         this.init_V_AABB(victim.getBoundingBox(), this.positionTracker.init(), this.player.getEyePosition(), at);
+         this.init_V_AABB(victim.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), at);
       }
    }
 
    private void load(LivingEntity victim, long now) {
-      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.init(this.player) && (this.poll == 0L || now - this.poll > 75000000L)) {
+      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player) && (this.poll == 0L || now - this.poll > 75000000L)) {
          int ping = this.pingMillis();
 
          for (long attack : this.recentHitTimes) {
@@ -806,7 +806,7 @@ public final class BacktrackModule extends Module {
    }
 
    private void load(boolean replay) {
-      this.trailHistory.init();
+      this.trailHistory.clear();
       if (replay && this.isSameSession()) {
          this.init_V_Z_4(true);
       }
@@ -833,14 +833,14 @@ public final class BacktrackModule extends Module {
    public static Vec3 backtrackedPosition(LivingEntity entity) {
       BacktrackModule module = instance;
       return module != null && module.target == entity && module.isSameSession() && module.level.getEntity(entity.getId()) == entity
-         ? module.positionTracker.init()
+         ? module.positionTracker.position()
          : null;
    }
 
    static Vec3 init_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 eyes) {
       BacktrackModule module = instance;
       if (module != null && module.target == entity && module.packetQueue.size() != 0 && module.isSameSession()) {
-         Vec3 received = module.positionTracker.init();
+         Vec3 received = module.positionTracker.position();
          AABB drawn = entity.getBoundingBox();
          long now = System.nanoTime();
          if (!module.init_Z_AABB_3(drawn, received, eyes, now)) {
@@ -861,7 +861,7 @@ public final class BacktrackModule extends Module {
             && module.isSameSession()
             && module.target.isAlive()
             && module.level.getEntity(module.target.getId()) == module.target
-         ? space.intersects(module.target.getBoundingBox().move(module.positionTracker.init().subtract(module.target.position())))
+         ? space.intersects(module.target.getBoundingBox().move(module.positionTracker.position().subtract(module.target.position())))
          : false;
    }
 
@@ -877,7 +877,7 @@ public final class BacktrackModule extends Module {
          this.run,
          this.get,
          this.maxHeldMillis,
-         live ? this.positionTracker.init() : null,
+         live ? this.positionTracker.position() : null,
          this.epoch,
          this.read_Str,
          this.isSameSession() ? this.pingMillis() : 0,
@@ -893,11 +893,11 @@ public final class BacktrackModule extends Module {
          return List.of();
       } else if (module.target != null && module.isSameSession() && module.bool("server-position")) {
          float partial = CLIENT.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-         Vec3 received = module.positionTracker.init();
+         Vec3 received = module.positionTracker.position();
          AABB body = module.target.getBoundingBox();
          AABB drawn = body.move(module.target.getPosition(partial).subtract(module.target.position()));
          return module.trailHistory
-            .init(
+            .boxes(
                module.target,
                drawn,
                body.move(received.subtract(module.target.position())),
@@ -912,7 +912,7 @@ public final class BacktrackModule extends Module {
                am.init_I_Module(module, "delayed-color", -1191201708)
             );
       } else {
-         module.trailHistory.init();
+         module.trailHistory.clear();
          return List.of();
       }
    }

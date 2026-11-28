@@ -106,11 +106,11 @@ final class AiFieldWork {
       return out;
    }
 
-   static AiOperation init(List<BlockPos> field, String cropBlock, String seedItem, String cropItem, int target) {
-      return init(field, cropBlock, seedItem, cropItem, target, true);
+   static AiOperation harvest(List<BlockPos> field, String cropBlock, String seedItem, String cropItem, int target) {
+      return harvest(field, cropBlock, seedItem, cropItem, target, true);
    }
 
-   static AiOperation init(final List<BlockPos> field, String cropBlock, final String seedItem, final String cropItem, final int target, final boolean replant) {
+   static AiOperation harvest(final List<BlockPos> field, String cropBlock, final String seedItem, final String cropItem, final int target, final boolean replant) {
       if (field.isEmpty()) {
          throw new IllegalArgumentException("Choose a nonempty field");
       }
@@ -129,7 +129,7 @@ final class AiFieldWork {
          maxZ = Math.max(maxZ, p.getZ());
       }
 
-      final List<Vec3> path = AiFieldPlan.init(field, 3, mc.player.blockPosition());
+      final List<Vec3> path = AiFieldPlan.sweepPath(field, 3, mc.player.blockPosition());
       final int minXf = minX;
       final int minZf = minZ;
       final int maxXf = maxX;
@@ -182,7 +182,7 @@ final class AiFieldWork {
             if (!this.update_Z && mc.player != null && mc.level != null) {
                this.ticks++;
                if (mc.gui.screen() != null) {
-                  autismclient.util.BlockAttackGraceWindow.init();
+                  autismclient.util.BlockAttackGraceWindow.clear();
                   this.load_V_2();
                   this.aim.clear();
                   this.load_Z = false;
@@ -193,7 +193,7 @@ final class AiFieldWork {
                this.reconcileReplants();
                if (!this.rowSweep && this.externalReplants >= 3 && AiFieldPlan.init(field)) {
                   path.clear();
-                  path.addAll(AiFieldPlan.init(field, 1, mc.player.blockPosition()));
+                  path.addAll(AiFieldPlan.sweepPath(field, 1, mc.player.blockPosition()));
                   this.pathIndex = 1;
                   this.rowSweep = true;
                   this.load_Z = false;
@@ -357,7 +357,7 @@ final class AiFieldWork {
                         long revision = AiServerEvidence.blockRevision(best);
                         BlockState before = mc.level.getBlockState(best);
                         if (autismclient.ai.engine.AiBlockDigger.continueBreakingBlockCompat(mc, best, ray.getDirection())
-                           && AiReplantEvidence.init(before, mc.level.getBlockState(best), crop)) {
+                           && AiReplantEvidence.wasHarvested(before, mc.level.getBlockState(best), crop)) {
                            this.brokenCount++;
                            acted = true;
                            if (fixedRow) {
@@ -417,7 +417,7 @@ final class AiFieldWork {
                         if (ripe == 0 && !this.unresolvedReplants.isEmpty()) {
                            boolean waiting = this.unresolvedReplants
                               .stream()
-                              .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.init(this.ticks, this.init_Map.get(key), this.pingMs()));
+                              .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.inGrace(this.ticks, this.init_Map.get(key), this.pingMs()));
                            if (lying.isEmpty() && bare > 0 && AiGameState.countInventoryItem(seedItem) <= 0 && !waiting) {
                               return this.finish(AiOperation.Status.FAILED, "Harvest needs " + seedItem + " to replant " + bare + " plots");
                            }
@@ -639,7 +639,7 @@ final class AiFieldWork {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.util.BlockAttackGraceWindow.init();
+            autismclient.util.BlockAttackGraceWindow.clear();
             if (mc.player != null) {
                this.load_V_2();
             }
@@ -704,7 +704,7 @@ final class AiFieldWork {
 
    static void releaseControls(Minecraft mc) {
       mc.options.keyAttack.setDown(false);
-      if (mc.gameMode != null && mc.gameMode.isDestroying() && !autismclient.util.BlockAttackGraceWindow.init(mc)) {
+      if (mc.gameMode != null && mc.gameMode.isDestroying() && !autismclient.util.BlockAttackGraceWindow.isWithinGrace(mc)) {
          mc.gameMode.stopDestroyBlock();
       }
 
@@ -717,10 +717,10 @@ final class AiFieldWork {
       mc.player.setSprinting(false);
    }
 
-   static AiOperation init(final List<BlockPos> plots, final BlockPos origin, final int width, final int length, String cropBlock, final String seedItem) {
+   static AiOperation plantPlots(final List<BlockPos> plots, final BlockPos origin, final int width, final int length, String cropBlock, final String seedItem) {
       final Minecraft mc = Minecraft.getInstance();
       final Block crop = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cropBlock));
-      final List<Vec3> path = AiFieldPlan.init(plots, 9, mc.player.blockPosition());
+      final List<Vec3> path = AiFieldPlan.sweepPath(plots, 9, mc.player.blockPosition());
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
          final Set<Long> init_Set = new HashSet<>();
@@ -766,7 +766,7 @@ final class AiFieldWork {
             if (!this.load_Z && mc.player != null && mc.level != null) {
                this.ticks++;
                if (mc.gui.screen() != null) {
-                  autismclient.util.BlockAttackGraceWindow.init();
+                  autismclient.util.BlockAttackGraceWindow.clear();
                   this.releaseControls();
                   this.aim.clear();
                   return this.running("Field work paused while a screen is open");
@@ -1123,7 +1123,7 @@ final class AiFieldWork {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.util.BlockAttackGraceWindow.init();
+            autismclient.util.BlockAttackGraceWindow.clear();
             if (mc.player != null) {
                this.releaseControls();
             }

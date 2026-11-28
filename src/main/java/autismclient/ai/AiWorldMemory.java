@@ -60,7 +60,7 @@ final class AiWorldMemory {
    private AiWorldMemory() {
    }
 
-   static void init(Minecraft mc) {
+   static void tick(Minecraft mc) {
       if (mc.level != null && mc.player != null) {
          load(mc);
          long now = AiThreats.currentClientTick();
@@ -81,7 +81,7 @@ final class AiWorldMemory {
                if (live != null) {
                   long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
                   AiWorldMemory.ChunkScan remembered = init_LinkedHashMap.get(key);
-                  int revision = autismclient.ai.engine.AiGridRevisions.init(key);
+                  int revision = autismclient.ai.engine.AiGridRevisions.revisionOf(key);
                   if (remembered == null) {
                      init_LinkedHashMap.put(key, new AiWorldMemory.ChunkScan(live, revision));
                   } else if (remembered.init_WeakReference.get() != live || remembered.read != revision || remembered.init_Z && now - remembered.init_J > 600L) {
@@ -107,7 +107,7 @@ final class AiWorldMemory {
                int cz = (int)entry.getKey().longValue();
                LevelChunk live = mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                if (live != null) {
-                  int revision = autismclient.ai.engine.AiGridRevisions.init(entry.getKey());
+                  int revision = autismclient.ai.engine.AiGridRevisions.revisionOf(entry.getKey());
                   if (chunk.init_WeakReference.get() != live || chunk.read != revision) {
                      chunk.init(live, revision);
                   }
@@ -300,7 +300,7 @@ final class AiWorldMemory {
       }
    }
 
-   static void init(String resetWorld) {
+   static void reset(String resetWorld) {
       if (resetWorld == null || resetWorld.equals(init_Str)) {
          load_Map.clear();
          load_Z = true;
@@ -395,7 +395,7 @@ final class AiWorldMemory {
       );
    }
 
-   static List<BlockPos> init(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
+   static List<BlockPos> indexed(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.level == init_Obj && mc.player != null && mc.getConnection() == load_Obj) {
          List<BlockPos> out = new ArrayList<>();
@@ -437,7 +437,7 @@ final class AiWorldMemory {
       }
    }
 
-   static JsonObject init(JsonObject args) {
+   static JsonObject describe(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
          load(mc);
@@ -457,7 +457,7 @@ final class AiWorldMemory {
                available++;
             }
 
-            if (loaded && entry.getValue().init_Z && entry.getValue().read == autismclient.ai.engine.AiGridRevisions.init(entry.getKey())) {
+            if (loaded && entry.getValue().init_Z && entry.getValue().read == autismclient.ai.engine.AiGridRevisions.revisionOf(entry.getKey())) {
                complete++;
             }
 

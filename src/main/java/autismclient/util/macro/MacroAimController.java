@@ -32,7 +32,7 @@ public final class MacroAimController {
       return init_ce_DataUtil != null;
    }
 
-   public static void init(RotationMath.Rotation rotation) {
+   public static void setRotation(RotationMath.Rotation rotation) {
       init_ce_DataUtil = rotation;
    }
 
@@ -40,7 +40,7 @@ public final class MacroAimController {
       init_ce_DataUtil = null;
    }
 
-   public static RotationMath.Rotation init(Minecraft mc, AimTargetAction.AimTarget target) {
+   public static RotationMath.Rotation rotationTo(Minecraft mc, AimTargetAction.AimTarget target) {
       if (mc != null && mc.player != null && mc.level != null && target != null) {
          Vec3 eyes = mc.player.getEyePosition();
          if (target.entity() != null) {
@@ -128,17 +128,17 @@ public final class MacroAimController {
       return value * value;
    }
 
-   public static float init(LocalPlayer player, float vanillaYaw) {
+   public static float yaw(LocalPlayer player, float vanillaYaw) {
       RotationMath.Rotation rotation = activeRotationFor(player);
       return rotation == null ? vanillaYaw : rotation.yaw();
    }
 
-   public static float load(LocalPlayer player, float vanillaPitch) {
+   public static float pitch(LocalPlayer player, float vanillaPitch) {
       RotationMath.Rotation rotation = activeRotationFor(player);
       return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
-   public static Vec3 init(LocalPlayer player, Vec3 vanillaVector) {
+   public static Vec3 viewVector(LocalPlayer player, Vec3 vanillaVector) {
       RotationMath.Rotation rotation = activeRotationFor(player);
       return rotation == null ? vanillaVector : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }

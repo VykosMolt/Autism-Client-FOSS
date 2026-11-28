@@ -192,11 +192,11 @@ final class AiFarmPlacement extends AiPlacementSession {
                this.write = this.init_BlockPos_BlockPos(hit.getBlockPos());
                this.init_D = Vec3.atCenterOf(this.write).distanceTo(eye);
             } else {
-               this.init_D = AiPlacementControls.init(eye, direction, this.write.getY() + 1, this.init_D);
-               this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, direction, this.init_D));
+               this.init_D = AiPlacementControls.distanceToY(eye, direction, this.write.getY() + 1, this.init_D);
+               this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
             }
          } else {
-            this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, direction, this.init_D));
+            this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, direction, this.init_D));
          }
 
          this.write_V();
@@ -231,7 +231,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          }
 
          this.init_D = AiPlacementControls.adjustDistance(this.init_D, scroll);
-         this.write = this.clampToWorldBorder(AiPlacementControls.init(eye, this.init_Vec3, this.init_D));
+         this.write = this.clampToWorldBorder(AiPlacementControls.pointAlong(eye, this.init_Vec3, this.init_D));
          this.write_V();
       }
    }
@@ -269,15 +269,15 @@ final class AiFarmPlacement extends AiPlacementSession {
       BlockPos origin;
       if (!this.load_Z) {
          origin = this.write;
-         cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
+         cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.soilBlock(this.load_Str)));
       } else {
          AiFarmArea.Area area = this.getArea();
          origin = area.origin();
          cells = new ArrayList<>();
          if (!area.validate(this.load_Str).isEmpty()) {
-            cells.add(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
-            AiVisualization.load(this);
-            AiVisualization.init(this, origin, cells, 0, true);
+            cells.add(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.soilBlock(this.load_Str)));
+            AiVisualization.refreshTargets(this);
+            AiVisualization.showPlan(this, origin, cells, 0, true);
             return;
          }
 
@@ -286,13 +286,13 @@ final class AiFarmPlacement extends AiPlacementSession {
          for (int x = 0; x < area.width(); x++) {
             for (int z = 0; z < area.length(); z++) {
                boolean water = layout.water(x, z);
-               cells.add(new AiBuilder.CellSpec(x, 0, z, water ? "minecraft:water" : AiFarmArea.read(this.load_Str)));
+               cells.add(new AiBuilder.CellSpec(x, 0, z, water ? "minecraft:water" : AiFarmArea.soilBlock(this.load_Str)));
             }
          }
       }
 
-      AiVisualization.load(this);
-      AiVisualization.init(this, origin, cells, 0, true);
+      AiVisualization.refreshTargets(this);
+      AiVisualization.showPlan(this, origin, cells, 0, true);
    }
 
    @Override

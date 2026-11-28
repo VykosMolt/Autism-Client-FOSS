@@ -73,7 +73,7 @@ public final class CachePool {
          int iconY = bounds.write() + Math.max(1, (bounds.sync() - iconSize) / 2);
          if (!autismclient.gui.sdf.SdfIconRenderer.init(context.init_GuiGraphicsExtract(), icon, iconX, iconY, iconSize, iconSize, colors.textPrimary)) {
             context.init_GuiGraphicsExtract()
-               .blit(ThemeTextureRecolorer.init(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+               .blit(ThemeTextureRecolorer.recolored(icon, ThemePaletteManager.ColorRole.ACCENT), iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
          }
 
          context.init_PoolEntry()

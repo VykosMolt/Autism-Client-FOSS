@@ -54,7 +54,7 @@ public final class OreSimRegionGenerator {
       } else if (cancelled == null) {
          throw new IllegalArgumentException("Cancellation supplier must not be null");
       } else {
-         return WorldGenThreadScope.init(() -> this.load(minChunkX, minChunkZ, size, cancelled));
+         return WorldGenThreadScope.run(() -> this.load(minChunkX, minChunkZ, size, cancelled));
       }
    }
 

@@ -88,7 +88,7 @@ final class AiSurvival {
       AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
       Entity threat = nearestThreat(mc);
       if (threat != null && AiThreats.classify(threat) == AiThreats.ThreatKind.AVOID) {
-         return load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
+         return flee(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 
       if (threat != null && vitals.hostilesNear() == 0) {
@@ -98,10 +98,10 @@ final class AiSurvival {
       }
 
       AiOperation defense = AiGuard.createResponseOperation(policy, vitals, Math.max(1, Math.min(15, seconds)));
-      return defense != null ? defense : load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
+      return defense != null ? defense : flee(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation eat(JsonObject args) {
       final Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final int target = Math.max(1, Math.min(20, AiJson.getInt(args, "food", 18)));
@@ -207,7 +207,7 @@ final class AiSurvival {
                            this.mc.gameMode.releaseUsingItem(this.mc.player);
                            return this.running("Releasing stalled food use before one bounded retry");
                         } else if (!this.swapPending) {
-                           int slot = AiSurvival.init(inventory);
+                           int slot = AiSurvival.bestFoodSlot(inventory);
                            if (slot < 0) {
                               return this.finish(AiOperation.Status.FAILED, "No food in inventory");
                            }
@@ -319,7 +319,7 @@ final class AiSurvival {
       }
    }
 
-   static AiOperation load(JsonObject args) {
+   static AiOperation flee(JsonObject args) {
       final Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final double radius = Math.max(1.0, Math.min(64.0, AiJson.getDouble(args, "radius", 12.0)));
@@ -362,7 +362,7 @@ final class AiSurvival {
                   }
 
                   Creeper immediateBlast = safeHandoff ? AiCombat.mostDangerousCreeper(this.mc) : null;
-                  Float retreatYaw = immediateBlast == null ? null : AiBlastEscape.init(this.mc, immediateBlast);
+                  Float retreatYaw = immediateBlast == null ? null : AiBlastEscape.retreatYaw(this.mc, immediateBlast);
                   if (retreatYaw != null) {
                      if (this.leg != null) {
                         this.leg.cancel();
@@ -372,7 +372,7 @@ final class AiSurvival {
                      this.pendingResult = null;
                      this.candidates = null;
                      this.shielding = false;
-                     AiBlastEscape.init(this.mc, retreatYaw);
+                     AiBlastEscape.retreat(this.mc, retreatYaw);
                      this.blastSprint = true;
                      return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
@@ -408,7 +408,7 @@ final class AiSurvival {
                               this.shielding = true;
                               AutismClientAddon.LOG
                                  .info("[AI] flee: shielding an igniting creeper at {} blocks", creeper.distanceTo(this.mc.player));
-                              this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
+                              this.leg = AiCover.create(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                               AiOperation.Result shield = this.leg.tick();
                               return shield.terminal() ? this.finish(shield.status(), shield.message()) : shield;
                            }
@@ -453,8 +453,8 @@ final class AiSurvival {
                         this.unusedThreatCount = positions.size();
                         this.projectileIncoming = false;
 
-                        for (AiProjectiles.IncomingProjectile t : AiProjectiles.init(this.mc)) {
-                           if (AiProjectiles.init(t)) {
+                        for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(this.mc)) {
+                           if (AiProjectiles.isImminent(t)) {
                               this.projectileIncoming = true;
                               break;
                            }
@@ -530,7 +530,7 @@ final class AiSurvival {
                            .orElse(null);
                         if (creeper != null && AiShield.init(this.mc) != null && AiShield.init(this.mc, creeper) != null) {
                            this.shielding = true;
-                           this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
+                           this.leg = AiCover.create(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                            AiOperation.Result first = this.leg.tick();
                            return first.terminal() ? this.finish(first.status(), first.message()) : first;
                         } else {
@@ -625,7 +625,7 @@ final class AiSurvival {
       }
    }
 
-   static int init(Inventory inventory) {
+   static int bestFoodSlot(Inventory inventory) {
       for (int tier = 0; tier < 3; tier++) {
          for (int region = 0; region < 2; region++) {
             int best = -1;

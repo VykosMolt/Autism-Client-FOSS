@@ -18,7 +18,7 @@ public final class DisplayItemStackFactory {
       return item != null && item != Items.AIR ? new ItemStack(init_Holder(item)) : ItemStack.EMPTY;
    }
 
-   public static ItemStack init(Block block) {
+   public static ItemStack forBlock(Block block) {
       return block == null ? ItemStack.EMPTY : displayStack(block.asItem());
    }
 

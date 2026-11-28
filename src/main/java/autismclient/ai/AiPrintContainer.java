@@ -106,7 +106,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       return new AiPrintContainer(env, source, true, true, false);
    }
 
-   static AiPrintContainer load(autismclient.ai.print.LivePrintEnv env, AiSchematicMachinePlan.ContainerPlan contents) {
+   static AiPrintContainer create(autismclient.ai.print.LivePrintEnv env, AiSchematicMachinePlan.ContainerPlan contents) {
       return new AiPrintContainer(env, contents, false, false, true);
    }
 
@@ -168,7 +168,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean matchesSource(BlockState state) {
-      return AiSavedContents.init(this.state, state, this.hasSource) && (!this.lockedHopper || !state.getValue(BlockStateProperties.ENABLED));
+      return AiSavedContents.matchesSaved(this.state, state, this.hasSource) && (!this.lockedHopper || !state.getValue(BlockStateProperties.ENABLED));
    }
 
    @Override
@@ -177,12 +177,12 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public void init(autismclient.ai.print.PrintContainerOrder order) {
+   public void setOrder(autismclient.ai.print.PrintContainerOrder order) {
       this.order = order;
    }
 
    @Override
-   public boolean load_Z() {
+   public boolean isVerifiedSuccess() {
       return this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.contentsVerified && this.sameWorld();
    }
 
@@ -397,7 +397,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          )
          && this.sameWorld()
          && this.stateStillMatches()) {
-         if (!autismclient.ai.print.PrintContainerAccess.init(this.mc.level, this.pos)) {
+         if (!autismclient.ai.print.PrintContainerAccess.canOpen(this.mc.level, this.pos)) {
             return false;
          } else {
             BlockState actual = this.env.getBlockState(this.pos);
@@ -424,7 +424,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       }
 
       BlockState actual = this.env.getBlockState(this.pos);
-      return AiSavedContents.init(this.state, actual, this.hasSource)
+      return AiSavedContents.matchesSaved(this.state, actual, this.hasSource)
          && (!this.lockedHopper || this.optional && !this.flush || !actual.getValue(BlockStateProperties.ENABLED));
    }
 
@@ -452,7 +452,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
       }
 
       if (!this.stateStillMatches()) {
-         if (this.lockedHopper && AiSavedContents.init(this.state, this.env.getBlockState(this.pos), this.hasSource)) {
+         if (this.lockedHopper && AiSavedContents.matchesSaved(this.state, this.env.getBlockState(this.pos), this.hasSource)) {
             if (this.hopperUnlockSinceTick == -9223372036854775808L) {
                this.hopperUnlockSinceTick = this.env.currentTick();
             }
@@ -471,7 +471,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          }
       } else {
          this.hopperUnlockSinceTick = -9223372036854775808L;
-         if (!autismclient.ai.print.PrintContainerAccess.init(this.mc.level, this.pos)) {
+         if (!autismclient.ai.print.PrintContainerAccess.canOpen(this.mc.level, this.pos)) {
             return this.setStatus(
                autismclient.ai.print.PrintMachineJob.JobStatus.CONFLICT, "The saved shulker lid is obstructed at " + this.pos.toShortString()
             );

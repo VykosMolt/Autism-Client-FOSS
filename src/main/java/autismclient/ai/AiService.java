@@ -483,7 +483,7 @@ public final class AiService {
       } else if (player.isFullyFrozen()) {
          return "freezing in powder snow";
       } else {
-         return AiBreathe.init(player) ? "running out of air under water" : null;
+         return AiBreathe.needsAir(player) ? "running out of air under water" : null;
       }
    }
 
@@ -512,7 +512,7 @@ public final class AiService {
                   }
 
                   this.memoryStore.reload();
-                  this.regions.init(this.memoryStore.directory());
+                  this.regions.loadFrom(this.memoryStore.directory());
                   AiSourceKnowledge.load();
                   AiPlaybooks.load();
                   autismclient.util.PacketSchemaRegistry.schemaClassCount();
@@ -545,7 +545,7 @@ public final class AiService {
                      }
 
                      AiService.SessionState preliminary = this.currentSession();
-                     List<AiSessions.SessionMeta> metas = this.sessionStore.load();
+                     List<AiSessions.SessionMeta> metas = this.sessionStore.sessions();
                      if (!metas.isEmpty()) {
                         boolean keepPreliminary = !isSessionEmpty(preliminary);
                         if (keepPreliminary) {
@@ -619,7 +619,7 @@ public final class AiService {
          .execute(
             () -> {
                try {
-                  String rebuilt = AiContext.init(contracts, snapshot, "Inspect the installed client", "Read-only qualification smoke", List.of(), 96000);
+                  String rebuilt = AiContext.build(contracts, snapshot, "Inspect the installed client", "Read-only qualification smoke", List.of(), 96000);
                   if (!rebuilt.contains(contracts.revision())) {
                      throw new IllegalStateException("Missing catalog revision in mandatory context");
                   }
@@ -724,7 +724,7 @@ public final class AiService {
    }
 
    List<AiRegions.Region> getDimensionRegions() {
-      return this.regions.init(this.observationScope);
+      return this.regions.inScope(this.observationScope);
    }
 
    void recordSurveyRegion(BlockPos position, int beds, int bells, int paths, int farmland, int villagers, String from) {
@@ -744,11 +744,11 @@ public final class AiService {
          villagers,
          from.isBlank() ? List.of() : List.of(from)
       );
-      this.regions.init(region);
+      this.regions.add(region);
       AiObservation proof = new AiObservation(evidenceId, this.observationSession, this.observationScope, System.currentTimeMillis(), "terrain-survey", AiJson.GSON.toJson(region));
       this.storageExecutor.execute(() -> {
          try {
-            this.memoryStore.init(proof);
+            this.memoryStore.addObservation(proof);
          } catch (Exception e) {
             this.appendTranscript("error", e.getMessage());
          }
@@ -815,8 +815,8 @@ public final class AiService {
       AiSessions storeRef = this.sessionStore;
       List<AiSessions.SessionMeta> metas = new ArrayList<>();
       if (storeRef != null) {
-         for (AiSessions.SessionMeta m : storeRef.load()) {
-            if (!storeRef.init_Z_Str(m.id()) || m.id().equals(this.currentSessionId)) {
+         for (AiSessions.SessionMeta m : storeRef.sessions()) {
+            if (!storeRef.contains(m.id()) || m.id().equals(this.currentSessionId)) {
                metas.add(m);
             }
          }
@@ -1009,7 +1009,7 @@ public final class AiService {
                   this.transitionRunState(AiService.RunState.IDLE, "Session deleted");
                }
 
-               String next = pickFallbackSessionId(this.sessionStore.load(), id, this.sessionStore::init_Z_Str);
+               String next = pickFallbackSessionId(this.sessionStore.sessions(), id, this.sessionStore::contains);
                AiService.SessionState target = next == null ? null : this.sessions.get(next);
                this.activateSession(target != null ? target : new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis()));
                if (next != null && target == null) {
@@ -1125,7 +1125,7 @@ public final class AiService {
 
       if (capability.equals("game:build") && arguments.has("schematic")) {
          try {
-            AiLocalRequest.stampSource(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
+            AiLocalRequest.stampSource(local, AiSchematic.resolveFile(AiSchematic.directory(), AiJson.getString(arguments, "schematic", "")));
          } catch (IOException e) {
             throw new IllegalArgumentException("Schematic is no longer available: " + e.getMessage(), e);
          }
@@ -1168,7 +1168,7 @@ public final class AiService {
                      Minecraft.getInstance().execute(this::cancelActiveOperation);
                      AiScriptHost script = this.scriptHost;
                      if (script != null) {
-                        Thread.ofVirtual().start(script::init);
+                        Thread.ofVirtual().start(script::killProcessTree);
                      }
                   } else if (AiChatPolicy.write(prompt)) {
                      this.appendTranscript("user", prompt);
@@ -1588,7 +1588,7 @@ public final class AiService {
 
       AiScriptHost h = this.scriptHost;
       if (h != null) {
-         Thread.ofVirtual().start(h::init);
+         Thread.ofVirtual().start(h::killProcessTree);
       }
 
       Minecraft.getInstance().execute(this::revertSettingDeltas);
@@ -1622,7 +1622,7 @@ public final class AiService {
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[AI] tick failed", t);
       } finally {
-         this.perfMetrics.load(System.nanoTime() - start);
+         this.perfMetrics.endSample(System.nanoTime() - start);
       }
    }
 
@@ -1667,7 +1667,7 @@ public final class AiService {
             this.observationSession = UUID.randomUUID().toString();
             this.lastInventoryCounts = null;
             AiEventLog.getInstance().auditReset(mc.getConnection());
-            AiEventLog.getInstance().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.currentDimensionId(mc)));
+            AiEventLog.getInstance().log("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.currentDimensionId(mc)));
             AiRunTrace trace = AiRunTrace.current();
             if (trace != null && (isExecutingState(this.runState) || this.runState == AiService.RunState.PAUSED)) {
                String nowDimension = AiWorldIdentity.currentDimensionId(mc);
@@ -1690,7 +1690,7 @@ public final class AiService {
 
                AiScriptHost active_scripts = this.scriptHost;
                if (active_scripts != null) {
-                  Thread.ofVirtual().start(active_scripts::init);
+                  Thread.ofVirtual().start(active_scripts::killProcessTree);
                }
 
                this.tools.reset();
@@ -1734,7 +1734,7 @@ public final class AiService {
             }
 
             if (mc.player != null && !mc.player.isAlive()) {
-               AiDeathLog.init(mc);
+               AiDeathLog.capture(mc);
             }
 
             this.logWorldEvents(mc);
@@ -1860,7 +1860,7 @@ public final class AiService {
             } else {
                if (this.tickCounter % 100 == 0) {
                   this.storageExecutor.execute(() -> {
-                     this.qualificationPerformance = this.perfMetrics.init();
+                     this.qualificationPerformance = this.perfMetrics.summary();
                      if (Boolean.getBoolean("autism.ai.smoke")) {
                         try {
                            AiJson.writeAtomicJson(this.memoryStore.directory().resolve("qualification-performance.json"), this.qualificationPerformance);
@@ -1871,7 +1871,7 @@ public final class AiService {
                   });
                   this.storageExecutor.execute(() -> {
                      try {
-                        this.regions.load(this.memoryStore.directory());
+                        this.regions.saveIfDirty(this.memoryStore.directory());
                      } catch (Exception ex) {
                         this.appendTranscript("error", "Region persistence: " + ex.getMessage());
                      }
@@ -1893,7 +1893,7 @@ public final class AiService {
                      if (this.lastHealth >= 0.0F && health < this.lastHealth - 0.01F) {
                         this.lastDamageMs = System.currentTimeMillis();
                         AiEventLog.getInstance()
-                           .init(
+                           .log(
                               "player_damaged",
                               AiJson.objectOf(
                                  "amount", Math.round((this.lastHealth - health) * 10.0F) / 10.0, "health", Math.round(health * 10.0F) / 10.0
@@ -1926,7 +1926,7 @@ public final class AiService {
                      }
 
                      AiService.ActiveOperation hazardPending = this.activeOperation;
-                     String urgentHazard = AiHazardEscape.init(mc);
+                     String urgentHazard = AiHazardEscape.currentHazard(mc);
                      if (!this.settings.planMode
                         && urgentHazard != null
                         && !AiGuard.isSuppressed()
@@ -1941,7 +1941,7 @@ public final class AiService {
                            this.activeOperation = null;
                         }
 
-                        AiEventLog.getInstance().init("hazard_reflex", AiJson.objectOf("hazard", urgentHazard, "priority", "before-combat"));
+                        AiEventLog.getInstance().log("hazard_reflex", AiJson.objectOf("hazard", urgentHazard, "priority", "before-combat"));
                         if (this.startHostOperation(
                            mc,
                            "game:escape_hazard",
@@ -1969,7 +1969,7 @@ public final class AiService {
                            this.releaseOperationResources(threatPending, true);
                            threatPending.result().complete(interrupted);
                            this.activeOperation = null;
-                           AiEventLog.getInstance().init("hazard_interrupt", AiJson.objectOf("hazard", hazard));
+                           AiEventLog.getInstance().log("hazard_interrupt", AiJson.objectOf("hazard", hazard));
                            AiRunTrace trace = AiRunTrace.current();
                            if (trace != null) {
                               trace.recordOpInterrupt("hazard");
@@ -1984,7 +1984,7 @@ public final class AiService {
                               );
                            }
 
-                           if (AiBreathe.init(mc.player)) {
+                           if (AiBreathe.needsAir(mc.player)) {
                               this.startHostOperation(
                                  mc, "game:breathe", AiJson.objectOf("timeoutSeconds", 25), "breathe", "Out of air - swimming up to breathe."
                               );
@@ -2008,8 +2008,8 @@ public final class AiService {
 
                         AiDanger.Assessment danger = AiDanger.assess(mc);
                         boolean lethalImminent = wouldExplosionKill(danger.worstSource());
-                        boolean projectileThreat = AiProjectiles.init(mc).stream().anyMatch(AiProjectiles::init);
-                        boolean unsafeMeal = threatPending.id().equals("game:eat") && (AiCombatPriority.init(hostiles, ranged) || AiSurvival.nearestThreat(mc) != null);
+                        boolean projectileThreat = AiProjectiles.incoming(mc).stream().anyMatch(AiProjectiles::isImminent);
+                        boolean unsafeMeal = threatPending.id().equals("game:eat") && (AiCombatPriority.anyThreat(hostiles, ranged) || AiSurvival.nearestThreat(mc) != null);
                         if ((
                               isUnderAttackPressure(hostiles, health, now - this.lastDamageMs)
                                  || isUnderAttackPressure(ranged, health, now - this.lastDamageMs)
@@ -2035,7 +2035,7 @@ public final class AiService {
                            threatPending.result().complete(interrupted);
                            this.activeOperation = null;
                            AiEventLog.getInstance()
-                              .init(
+                              .log(
                                  "threat_interrupt",
                                  AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
                               );
@@ -2113,7 +2113,7 @@ public final class AiService {
                            && hostiles == 0
                            && ranged == 0
                            && threatPending.operation().canInterruptNow()
-                           && AiSurvival.init(mc.player.getInventory()) >= 0) {
+                           && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0) {
                            boolean announce = now - this.lastHungerAnnounceMs > 10000L;
                            this.lastHungerAnnounceMs = now;
                            this.releaseOperationResources(threatPending, true);
@@ -2124,7 +2124,7 @@ public final class AiService {
                                  )
                               );
                            this.activeOperation = null;
-                           AiEventLog.getInstance().init("hunger_interrupt", AiJson.objectOf("food", food));
+                           AiEventLog.getInstance().log("hunger_interrupt", AiJson.objectOf("food", food));
                            this.startHostOperation(
                               mc,
                               "game:eat",
@@ -2170,14 +2170,14 @@ public final class AiService {
                         }
 
                         boolean lethalImminent = wouldExplosionKill(AiDanger.assess(mc).worstSource());
-                        boolean projectileThreat = AiProjectiles.init(mc).stream().anyMatch(AiProjectiles::init);
+                        boolean projectileThreat = AiProjectiles.incoming(mc).stream().anyMatch(AiProjectiles::isImminent);
                         if (isUnderAttackPressure(hostiles, health, idleNow - this.lastDamageMs)
                            || isUnderAttackPressure(ranged, health, idleNow - this.lastDamageMs)
                            || lethalImminent
                            || projectileThreat) {
                            this.lastIdleThreatMs = idleNow;
                            AiEventLog.getInstance()
-                              .init(
+                              .log(
                                  "idle_threat",
                                  AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
                               );
@@ -2231,7 +2231,7 @@ public final class AiService {
                   if (mc.player != null
                      && mc.player.isAlive()
                      && isBusyState(this.runState)
-                     && AiBreathe.init(mc.player)
+                     && AiBreathe.needsAir(mc.player)
                      && (this.activeOperation == null || this.activeOperation.hostParked() || !AiGuard.isSuppressed())) {
                      AiService.ActiveOperation reflex = this.activeOperation;
                      if (reflex != null && reflex.hostParked() && !reflex.id().equals("game:breathe") && !reflex.id().equals("game:escape_hazard")) {
@@ -2299,7 +2299,7 @@ public final class AiService {
                               AiOperation.Result result = current.operation().tick();
                               this.stateReason = result.message();
                               this.operationDataJson = result.dataJson();
-                              autismclient.ai.engine.AiMotionAudit.init(mc, current.id(), result.message());
+                              autismclient.ai.engine.AiMotionAudit.sample(mc, current.id(), result.message());
                               if (this.tickCounter % 20 == 0 && !result.terminal()) {
                                  AiService.SessionState s = this.currentSession();
                                  synchronized (s) {
@@ -2413,11 +2413,11 @@ public final class AiService {
             this.deathArmed = false;
             BlockPos p = mc.player.blockPosition();
             AiEventLog.getInstance()
-               .init("death", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ(), "dimension", mc.level.dimension().identifier().toString()));
+               .log("death", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ(), "dimension", mc.level.dimension().identifier().toString()));
          } else if (mc.player.isAlive() && !this.deathArmed) {
             this.deathArmed = true;
             BlockPos p = mc.player.blockPosition();
-            AiEventLog.getInstance().init("respawn", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
+            AiEventLog.getInstance().log("respawn", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
          }
 
          if (this.tickCounter % 5 == 0) {
@@ -2428,7 +2428,7 @@ public final class AiService {
                   now.add(e.getId());
                   if (this.targetingMonsterIds.add(e.getId())) {
                      AiEventLog.getInstance()
-                        .init(
+                        .log(
                            "entity_attacking", AiJson.objectOf("id", e.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString())
                         );
                   }
@@ -2453,9 +2453,9 @@ public final class AiService {
                this.lastInventoryCounts.forEach((item, count) -> merged.merge(item, -count, Integer::sum));
                merged.forEach((item, delta) -> {
                   if (delta > 0) {
-                     AiEventLog.getInstance().init("item_obtained", AiJson.objectOf("item", item, "count", delta));
+                     AiEventLog.getInstance().log("item_obtained", AiJson.objectOf("item", item, "count", delta));
                   } else if (delta < 0) {
-                     AiEventLog.getInstance().init("item_lost", AiJson.objectOf("item", item, "count", -delta));
+                     AiEventLog.getInstance().log("item_lost", AiJson.objectOf("item", item, "count", -delta));
                   }
                });
             }
@@ -2466,7 +2466,7 @@ public final class AiService {
    }
 
    private void cancelActiveOperation() {
-      if (!AiClientTick.init()) {
+      if (!AiClientTick.isOnTickThread()) {
          AiClientTick.execute(this::cancelActiveOperation);
       } else {
          AiService.ActiveOperation current = this.activeOperation;
@@ -2479,7 +2479,7 @@ public final class AiService {
    }
 
    private void revertSettingDeltas() {
-      if (!AiClientTick.init()) {
+      if (!AiClientTick.isOnTickThread()) {
          AiClientTick.execute(this::revertSettingDeltas);
       } else {
          this.cancelActiveOperation();
@@ -2506,7 +2506,7 @@ public final class AiService {
    }
 
    private void releaseOperationResources(AiService.ActiveOperation current, boolean cancel) {
-      if (!AiClientTick.init()) {
+      if (!AiClientTick.isOnTickThread()) {
          AiClientTick.execute(() -> this.releaseOperationResources(current, cancel));
       } else {
          boolean input = current.resources().contains("INPUT");
@@ -2647,7 +2647,7 @@ public final class AiService {
 
             AiOperation inner;
             try {
-               inner = AiModuleScope.load(() -> {
+               inner = AiModuleScope.scoped(() -> {
                   AiModuleScope.init();
                   return AiGuard.allowDuringLowHealth(Objects.requireNonNull(AiTools.operation(id, args)));
                });
@@ -2732,7 +2732,7 @@ public final class AiService {
             this.checkGeneration(g);
             return action.get();
          } finally {
-            this.perfMetrics.init(System.nanoTime() - start);
+            this.perfMetrics.add(System.nanoTime() - start);
          }
       });
 
@@ -2770,7 +2770,7 @@ public final class AiService {
       this.latestObservation = o;
 
       try {
-         this.memoryStore.init(o);
+         this.memoryStore.addObservation(o);
       } catch (IOException e) {
          this.appendTranscript("error", "Observation retained in this session; journal write failed: " + e.getMessage());
       }
@@ -2844,7 +2844,7 @@ public final class AiService {
 
             try {
                this.operationDataJson = "{}";
-               AiOperation operation = AiModuleScope.load(() -> {
+               AiOperation operation = AiModuleScope.scoped(() -> {
                   if (id.startsWith("game:") && fresh.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE) {
                      AiModuleScope.init();
                   }
@@ -2872,7 +2872,7 @@ public final class AiService {
             }
          }
       );
-      AiEventLog.getInstance().init("op_started", AiJson.objectOf("id", id));
+      AiEventLog.getInstance().log("op_started", AiJson.objectOf("id", id));
 
       AiOperation.Result result;
       while (true) {
@@ -2886,9 +2886,9 @@ public final class AiService {
       }
 
       if (result.status() == AiOperation.Status.SUCCEEDED) {
-         AiEventLog.getInstance().init("op_completed", AiJson.objectOf("id", id, "status", result.status().name()));
+         AiEventLog.getInstance().log("op_completed", AiJson.objectOf("id", id, "status", result.status().name()));
       } else {
-         AiEventLog.getInstance().init("op_failed", AiJson.objectOf("id", id, "status", result.status().name(), "failure", result.failure().name()));
+         AiEventLog.getInstance().log("op_failed", AiJson.objectOf("id", id, "status", result.status().name(), "failure", result.failure().name()));
       }
 
       AiObservation full = this.observe(g, result.status() == AiOperation.Status.SUCCEEDED ? "verified-operation" : "operation-result");
@@ -3127,7 +3127,7 @@ public final class AiService {
       );
 
       try {
-         this.memoryStore.init(this.lastUserObservation);
+         this.memoryStore.addObservation(this.lastUserObservation);
          if (text.toLowerCase(Locale.ROOT).matches("(?s).*\\b(i prefer|remember that|from now on|always use|never use)\\b.*")) {
             this.memoryStore
                .init(
@@ -3304,7 +3304,7 @@ public final class AiService {
                }
 
                try {
-                  history.addAll(AiHistory.forProvider(pinned.provider, storeRef.init(sid, replay, false)));
+                  history.addAll(AiHistory.forProvider(pinned.provider, storeRef.replay(sid, replay, false)));
                } catch (Exception e) {
                   this.appendToSession(s, "error", "Transcript could not be loaded; continuing from the saved task state: " + e.getMessage());
                }
@@ -3709,7 +3709,7 @@ public final class AiService {
 
             boolean unchanged;
             try {
-               unchanged = AiLocalRequest.isSourceUnchanged(local, AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
+               unchanged = AiLocalRequest.isSourceUnchanged(local, AiSchematic.resolveFile(AiSchematic.directory(), AiJson.getString(args, "schematic", "")));
             } catch (IllegalArgumentException missing) {
                unchanged = false;
             }
@@ -4031,7 +4031,7 @@ public final class AiService {
          String id = item.contains(":") ? item : "minecraft:" + item;
          int count = Math.max(1, AiJson.getInt(step.arguments(), "count", 1));
          return this.onClientThread(gen, () -> {
-            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), id, count);
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.plan(AiCraft.buildRecipeGraph(), id, count);
             return plan.complete() && (!plan.requiresTable() || AiCraft.canAccessCraftingTable());
          });
       } catch (InterruptedException e) {
@@ -4086,7 +4086,7 @@ public final class AiService {
             return step;
          }
       } else {
-         JsonObject remaining = AiMiningQuota.init(step.arguments(), data);
+         JsonObject remaining = AiMiningQuota.remaining(step.arguments(), data);
          return new AiIntents.IntentStep(step.clause(), step.capability(), remaining, step.describe(), step.asks());
       }
    }
@@ -4600,7 +4600,7 @@ public final class AiService {
             throw new IllegalStateException("Fixture checks never call live game tools");
          })) {
          this.scriptHost = host;
-         return host.init(
+         return host.check(
             AiJson.getString(args, "source", ""),
             args.has("fixtures") ? args.getAsJsonArray("fixtures") : new JsonArray(),
             () -> g != this.runGeneration.get()
@@ -4621,9 +4621,9 @@ public final class AiService {
          this.scriptHost = host;
          this.scriptDeadlineNanos = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800))) * 1000000000L;
          String source = AiJson.getString(args, "source", "");
-         JsonObject checked = host.init(source, args.has("fixtures") ? args.getAsJsonArray("fixtures") : new JsonArray(), () -> g != this.runGeneration.get());
+         JsonObject checked = host.check(source, args.has("fixtures") ? args.getAsJsonArray("fixtures") : new JsonArray(), () -> g != this.runGeneration.get());
          liveStarted = true;
-         JsonObject result = host.init(source, AiJson.getInt(args, "timeoutSeconds", 1800), () -> g != this.runGeneration.get());
+         JsonObject result = host.run(source, AiJson.getInt(args, "timeoutSeconds", 1800), () -> g != this.runGeneration.get());
          result.add("preflight", checked);
          return result;
       } catch (CancellationException e) {
@@ -4655,7 +4655,7 @@ public final class AiService {
    }
 
    JsonObject search(String query, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
-      if (this.settings.nativeSearch && AiNativeSearch.init(this.settings.provider)) {
+      if (this.settings.nativeSearch && AiNativeSearch.isSupported(this.settings.provider)) {
          this.checkGeneration(g);
          AiService.SessionState s = this.currentSession();
          if (s.requests >= this.settings.maxRequests) {
@@ -4664,12 +4664,12 @@ public final class AiService {
 
          s.requests++;
          s.push++;
-         JsonObject result = AiNativeSearch.init(this.settings, query, () -> this.checkGeneration(g));
+         JsonObject result = AiNativeSearch.search(this.settings, query, () -> this.checkGeneration(g));
          s.tokens = s.tokens + result.get("tokens").getAsLong();
          this.checkGeneration(g);
          return result;
       } else {
-         return AiWeb.init(this.settings, query, () -> this.checkGeneration(g));
+         return AiWeb.search(this.settings, query, () -> this.checkGeneration(g));
       }
    }
 
@@ -5147,7 +5147,7 @@ public final class AiService {
    }
 
    public List<AiMemoryStore.Memory> searchMemories(String query) {
-      return this.memoryStore.load(this.worldEpochKey, query);
+      return this.memoryStore.searchWorld(this.worldEpochKey, query);
    }
 
    public void forgetMemory(String id) {
@@ -5314,7 +5314,7 @@ public final class AiService {
                      "user",
                      AiJson.objectOf("correction", text).toString()
                   );
-                  this.memoryStore.init(proof);
+                  this.memoryStore.addObservation(proof);
                   AiMemoryStore.Memory saved = this.memoryStore
                      .init(
                         old.kind() == AiMemoryStore.MemoryKind.USER ? AiMemoryStore.MemoryKind.USER : AiMemoryStore.MemoryKind.HYPOTHESIS,
@@ -5409,7 +5409,7 @@ public final class AiService {
       String worldKey = Minecraft.getInstance().player == null ? "offline" : AiWorldIdentity.currentWorldKey(Minecraft.getInstance());
       String dimension = AiWorldIdentity.currentDimensionId(Minecraft.getInstance());
       AiPortalLinks.reset(worldOnly ? worldKey : null);
-      AiWorldMemory.init(worldOnly ? worldKey : null);
+      AiWorldMemory.reset(worldOnly ? worldKey : null);
       this.storageExecutor.execute(() -> {
          try {
             Path portalDirectory = this.memoryStore.directory().resolve("portal-memory");
@@ -5451,7 +5451,7 @@ public final class AiService {
                   }
                });
             } else {
-               this.memoryStore.load();
+               this.memoryStore.reloadMemories();
             }
 
             this.appendTranscript("system", "Memory reset");

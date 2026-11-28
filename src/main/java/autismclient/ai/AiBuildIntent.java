@@ -171,7 +171,7 @@ final class AiBuildIntent {
       return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, blockOf(cell));
    }
 
-   static boolean init(AiBuilder.CellSpec cell, BlockState live) {
+   static boolean matches(AiBuilder.CellSpec cell, BlockState live) {
       return AiBuilder.matchesStrictState(cell, live);
    }
 
@@ -179,8 +179,8 @@ final class AiBuildIntent {
       return AiBuilder.matchesSchematicCell(cell, live);
    }
 
-   static boolean init(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
-      if (init(cell, live)) {
+   static boolean matches(AiBuilder.CellSpec cell, BlockState live, Map<String, List<String>> substitutes) {
+      if (matches(cell, live)) {
          return true;
       } else {
          return substitutes != null && !substitutes.isEmpty() ? AiBuilder.matchesCellOrSubstitute(cell, live, substitutes) : false;
@@ -201,7 +201,7 @@ final class AiBuildIntent {
       return kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT;
    }
 
-   static boolean init(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {
+   static boolean isSatisfied(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {
       if (target != null && world != null && wanted != null) {
          AiBuilder.CellSpec cell = wanted.get(target.asLong());
          if (cell == null) {

@@ -29,12 +29,12 @@ public final class LauncherQuickActions {
       module.notifyDelayToggle(newValue, sent);
    }
 
-   public static void read() {
+   public static void flushQueue() {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       module.notifyQueueFlushed(module.flushPacketQueue());
    }
 
-   public static void write() {
+   public static void clearQueue() {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       module.notifyQueueCleared(module.clearPacketQueue());
    }
@@ -43,7 +43,7 @@ public final class LauncherQuickActions {
       GuiDesyncHelper.load(MINECRAFT, false);
    }
 
-   public static void sync() {
+   public static void desync() {
       if (!GuiDesyncHelper.load(MINECRAFT)) {
          AutismClientMessaging.sendPrefixed("Failed to desync: no open networked GUI.");
       }
@@ -53,7 +53,7 @@ public final class LauncherQuickActions {
       GuiDesyncHelper.init(MINECRAFT);
    }
 
-   public static void close() {
+   public static void restoreGui() {
       if (autismclient.modules.ModuleRuntimeManager.getInstance().restoreStoredGuiAsync()) {
          bi.init("GUI restored.", -13248397);
       } else {
@@ -61,7 +61,7 @@ public final class LauncherQuickActions {
       }
    }
 
-   public static void open() {
+   public static void copyScreenTitle() {
       ScreenTitleCopier.init();
    }
 

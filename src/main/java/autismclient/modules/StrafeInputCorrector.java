@@ -15,7 +15,7 @@ final class StrafeInputCorrector {
       double f = (raw.forward() ? 1 : 0) - (raw.backward() ? 1 : 0);
       double s = (raw.left() ? 1 : 0) - (raw.right() ? 1 : 0);
       if (f == 0.0 && s == 0.0) {
-         this.init();
+         this.reset();
          return raw;
       }
 
@@ -68,7 +68,7 @@ final class StrafeInputCorrector {
       return new Input(f, b, l, r, raw.jump(), raw.shift(), f && raw.sprint());
    }
 
-   void init() {
+   void reset() {
       this.lastPosition = null;
       this.lastTick = -2147483648;
       this.load = -2147483648;

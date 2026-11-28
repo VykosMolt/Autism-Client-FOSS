@@ -31,11 +31,11 @@ public final class ToolsActionSchemaBuilder {
          .hideWhenEnum("operation", "RUN");
       if (action.init()) {
          builder.enumField(
-               "destination", "Destination", action.load() ? new String[]{"CURRENT", "CUSTOM", "WAYPOINT", "OFFSET"} : new String[]{"CURRENT", "CUSTOM"}
+               "destination", "Destination", action.isNavigationTool() ? new String[]{"CURRENT", "CUSTOM", "WAYPOINT", "OFFSET"} : new String[]{"CURRENT", "CUSTOM"}
             )
             .showWhenEnum("operation", "RUN");
          builder.blockPos("position", "Position").xyzKeys("x", "y", "z").dynamic();
-         ArrayList<String> waypoints = new ArrayList<>(MacroToolBridge.load());
+         ArrayList<String> waypoints = new ArrayList<>(MacroToolBridge.waypointNames());
          if (!waypoints.contains(action.waypoint)) {
             waypoints.addFirst(action.waypoint);
          }
@@ -59,7 +59,7 @@ public final class ToolsActionSchemaBuilder {
             for (Entry<String, JsonElement> entry : properties.entrySet()) {
                String name = entry.getKey();
                if ((!action.init() || !Set.of("x", "y", "z").contains(name))
-                  && (!action.load() || !Set.of("waypoint", "dx", "dy", "dz", "entity", "player", "direction", "distance").contains(name))) {
+                  && (!action.isNavigationTool() || !Set.of("waypoint", "dx", "dy", "dz", "entity", "player", "direction", "distance").contains(name))) {
                   JsonObject property = entry.getValue().getAsJsonObject();
                   String type = property.has("type") && property.get("type").isJsonPrimitive() ? property.get("type").getAsString() : "string";
                   String key = "toolArg." + name;

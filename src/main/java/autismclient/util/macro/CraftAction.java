@@ -32,7 +32,7 @@ public class CraftAction implements MacroAction {
       return copies;
    }
 
-   public void init(List<CraftAction.CraftEntry> values) {
+   public void setEntries(List<CraftAction.CraftEntry> values) {
       this.entries.clear();
       if (values != null) {
          for (CraftAction.CraftEntry entry : values) {

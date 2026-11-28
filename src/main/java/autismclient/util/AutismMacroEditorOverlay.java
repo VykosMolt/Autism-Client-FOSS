@@ -959,7 +959,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             this.lastClickedStableId = stableId;
             this.lastClickTime = now;
-            this.contextMenu.init(mouseX, mouseY, index);
+            this.contextMenu.open(mouseX, mouseY, index);
          }
       }
    }
@@ -1827,7 +1827,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (source instanceof autismclient.util.macro.RaceAction race) {
             moveCount = race.countBodyActions(this.macro.actions, fromIndex) + 1;
          } else if (source instanceof autismclient.util.macro.ReportAction report) {
-            moveCount = report.init(this.macro.actions, fromIndex) + 1;
+            moveCount = report.coveredCount(this.macro.actions, fromIndex) + 1;
          } else if (source instanceof autismclient.util.macro.MultiAction multi) {
             moveCount = multi.init(this.macro.actions, fromIndex) + 1;
          } else if (source instanceof autismclient.util.macro.PacketGateAction) {
@@ -2259,7 +2259,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          for (int i = bodyIndex - 1; i >= 0; i--) {
             MacroAction action = this.macro.actions.get(i);
             if (action instanceof autismclient.util.macro.ReportAction report) {
-               int end = i + report.init(this.macro.actions, i);
+               int end = i + report.coveredCount(this.macro.actions, i);
                return bodyIndex <= end ? i : -1;
             }
 
@@ -2469,7 +2469,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       } else if (action instanceof autismclient.util.macro.RaceAction race) {
          return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, false, index, race.countBodyActions(this.macro.actions, index), 0, "RACE");
       } else if (action instanceof autismclient.util.macro.ReportAction report) {
-         return new AutismMacroEditorOverlay.BlockGroupLayout(true, true, false, index, report.init(this.macro.actions, index), 0, "REPORT");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, true, false, index, report.coveredCount(this.macro.actions, index), 0, "REPORT");
       } else if (action instanceof autismclient.util.macro.PacketGateAction) {
          return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, true, index, this.sync_I(index), 0, "GATE START");
       } else if (action instanceof autismclient.util.macro.MultiAction multi) {
@@ -2486,7 +2486,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          } else {
             int reportHeader = this.write_I_2(index);
             if (reportHeader >= 0 && this.macro.actions.get(reportHeader) instanceof autismclient.util.macro.ReportAction report) {
-               int childCount = report.init(this.macro.actions, reportHeader);
+               int childCount = report.coveredCount(this.macro.actions, reportHeader);
                int offset = index - reportHeader;
                return new AutismMacroEditorOverlay.BlockGroupLayout(false, true, false, reportHeader, childCount, offset, offset == 1 ? "START" : "END");
             } else {
@@ -2599,7 +2599,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (AutismSessionState.getInstance().isUseCustomPackets()) {
          action.write();
       } else {
-         action.read();
+         action.resetDefaults();
       }
 
       this.appendAction(action);
@@ -4721,7 +4721,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (index < 0) {
             this.onActionsChanged();
          } else {
-            int oldCount = report.init(this.macro.actions, index);
+            int oldCount = report.coveredCount(this.macro.actions, index);
             MacroAction oldStart = oldCount >= 1 && index + 1 < this.macro.actions.size() ? this.macro.actions.get(index + 1) : null;
             MacroAction oldEnd = oldCount >= 2 && index + 2 < this.macro.actions.size() ? this.macro.actions.get(index + 2) : null;
             MacroAction newStart = report.createStartAction();
@@ -4780,8 +4780,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                      MacroLibraryManager.getInstance().save();
                   }
 
-                  if (!previousName.isBlank() && MacroNameNormalizer.load(previousName, savedOrUpdated.name)) {
-                     if (!MacroNameNormalizer.init(previousName, savedOrUpdated.name) && LanSyncManager.getInstance().isInSession()) {
+                  if (!previousName.isBlank() && MacroNameNormalizer.changed(previousName, savedOrUpdated.name)) {
+                     if (!MacroNameNormalizer.sameName(previousName, savedOrUpdated.name) && LanSyncManager.getInstance().isInSession()) {
                         LanSyncManager.getInstance().notifyMacroDeleted(previousName);
                      }
                   }
@@ -4847,7 +4847,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int panelMouseX = mouseX;
          int panelMouseY = mouseY;
          if (this.isOverPalette(mouseX, mouseY)
-            || this.contextMenu.init(mouseX, mouseY)
+            || this.contextMenu.handleClick(mouseX, mouseY)
             || !this.dropdowns.isEmpty() && autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns)) {
             panelMouseX = -10000;
             panelMouseY = -10000;
@@ -5164,7 +5164,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             if (!this.collapsed && this.contextMenu.isOpen()) {
                context.nextStratum();
-               this.contextMenu.init(context, mouseX, mouseY);
+               this.contextMenu.render(context, mouseX, mouseY);
             }
          }
       }
@@ -5674,7 +5674,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             if (this.contextMenu.init(mouseX, mouseY, button, (idx, label, i) -> this.onContextMenuItem(idx, i))) {
                return true;
             }
-         } else if (button == 1 && !this.contextMenu.init(mouseX, mouseY)) {
+         } else if (button == 1 && !this.contextMenu.handleClick(mouseX, mouseY)) {
             this.contextMenu.close();
          }
       }
@@ -5799,7 +5799,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                if (button == 1 && index >= 0 && index < this.macro.actions.size()) {
                   int lockedRowY = y + index * this.rowHeight();
                   if (this.isRowVisible(lockedRowY) && mouseX < this.rowButtonsRight()) {
-                     this.contextMenu.init((int)mouseX, (int)mouseY, index);
+                     this.contextMenu.open((int)mouseX, (int)mouseY, index);
                   }
                }
 
@@ -5850,7 +5850,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                         if (action instanceof autismclient.util.macro.RaceAction race) {
                            target = Math.min(this.macro.actions.size() - 1, index + race.countBodyActions(this.macro.actions, index) + 1);
                         } else if (action instanceof autismclient.util.macro.ReportAction report) {
-                           target = Math.min(this.macro.actions.size() - 1, index + report.init(this.macro.actions, index) + 1);
+                           target = Math.min(this.macro.actions.size() - 1, index + report.coveredCount(this.macro.actions, index) + 1);
                         } else if (action instanceof autismclient.util.macro.MultiAction multi) {
                            target = Math.min(this.macro.actions.size() - 1, index + multi.init(this.macro.actions, index) + 1);
                         } else if (action instanceof autismclient.util.macro.PacketGateAction) {
@@ -5986,7 +5986,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             this.macro.actions.subList(index, end).clear();
             this.onActionsChanged();
          } else if (action instanceof autismclient.util.macro.ReportAction report) {
-            int count = report.init(this.macro.actions, index);
+            int count = report.coveredCount(this.macro.actions, index);
             int end = Math.min(this.macro.actions.size(), index + count + 1);
             if (editor != null) {
                for (int i = index; i < end; i++) {

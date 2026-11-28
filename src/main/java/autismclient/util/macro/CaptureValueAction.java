@@ -301,7 +301,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          }
 
          if (this.matchMode != PatternCaptureMatcher.MatchMode.MATCH && this.pattern != null && !this.pattern.isBlank()) {
-            Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.init(this.matchMode, this.pattern, captured.text);
+            Optional<PatternCaptureMatcher.CaptureResult> result = PatternCaptureMatcher.match(this.matchMode, this.pattern, captured.text);
             if (result.isEmpty()) {
                return CaptureValueAction.CaptureResult.failure("Pattern does not match");
             }
@@ -368,7 +368,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       CaptureValueAction.NumberModifier modifier = this.numberModifier == null ? CaptureValueAction.NumberModifier.NONE : this.numberModifier;
       if (modifier != CaptureValueAction.NumberModifier.NONE && values != null && !values.isEmpty()) {
          BigDecimal operand = BigDecimal.valueOf(this.numberModifierAmount);
-         String outputName = MacroVariableStore.load(this.saveAs);
+         String outputName = MacroVariableStore.rootKey(this.saveAs);
          boolean targetTracked = !outputName.isBlank() && values.containsKey(outputName);
          Map<String, MacroVarValue> modified = new LinkedHashMap<>();
          boolean ok = false;
@@ -471,7 +471,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          outputs.putAll(patternValues);
       }
 
-      String outputName = MacroVariableStore.load(saveAs);
+      String outputName = MacroVariableStore.rootKey(saveAs);
       if (!outputName.isBlank() && sourceValue != null) {
          outputs.putIfAbsent(outputName, sourceValue);
       }
@@ -490,7 +490,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    static Map<String, MacroVarValue> init(Map<String, MacroVarValue> values, String saveAs, CaptureValueAction.NumberMode mode) {
       if (values != null && !values.isEmpty()) {
          MacroTemplateResolver.ResolveMode style = mode == CaptureValueAction.NumberMode.DROP_CENTS ? MacroTemplateResolver.ResolveMode.WHOLE : MacroTemplateResolver.ResolveMode.AUTO;
-         String outputName = MacroVariableStore.load(saveAs);
+         String outputName = MacroVariableStore.rootKey(saveAs);
          Map<String, MacroVarValue> normalized = new LinkedHashMap<>();
          values.forEach((name, value) -> normalized.put(name, init_l(value, !outputName.isBlank() && outputName.equals(name), style)));
          return normalized;
@@ -771,7 +771,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          MacroVariableContext.remove(this.saveAs);
       }
 
-      for (String name : PatternCaptureMatcher.init(this.matchMode, this.pattern)) {
+      for (String name : PatternCaptureMatcher.captureNames(this.matchMode, this.pattern)) {
          MacroVariableContext.remove(name);
       }
    }
@@ -785,9 +785,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String init(String example, String selected, String variableName) {
+   public static String generatePattern(String example, String selected, String variableName) {
       if (example != null && selected != null && !selected.isBlank()) {
-         String root = MacroVariableStore.load(variableName);
+         String root = MacroVariableStore.rootKey(variableName);
          if (root.isBlank()) {
             if (variableName != null && !variableName.isBlank()) {
                return "";
@@ -959,7 +959,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       public String textOf(String variableName) {
-         String clean = MacroVariableStore.load(variableName);
+         String clean = MacroVariableStore.rootKey(variableName);
          MacroVarValue value = clean.isBlank() ? null : this.variables.get(clean);
          return value == null ? "" : value.asString();
       }

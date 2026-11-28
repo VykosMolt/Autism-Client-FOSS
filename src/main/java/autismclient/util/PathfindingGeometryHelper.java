@@ -4,15 +4,15 @@ final class PathfindingGeometryHelper {
    private PathfindingGeometryHelper() {
    }
 
-   static int init(int x, int z, int goalX, int goalZ) {
+   static int heuristic(int x, int z, int goalX, int goalZ) {
       return 9 * (Math.abs(x - goalX) + Math.abs(z - goalZ));
    }
 
-   static boolean init(double fromFloor, double toFloor, double stepHeight) {
+   static boolean canStep(double fromFloor, double toFloor, double stepHeight) {
       return toFloor - fromFloor <= stepHeight + 1.0E-5 && fromFloor - toFloor < 0.5;
    }
 
-   static boolean init(double ax, double az, double bx, double bz, double minX, double minZ, double maxX, double maxZ) {
+   static boolean segmentHitsBox(double ax, double az, double bx, double bz, double minX, double minZ, double maxX, double maxZ) {
       double dx = bx - ax;
       double dz = bz - az;
       double enter = 0.0;

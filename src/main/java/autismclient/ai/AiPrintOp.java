@@ -89,7 +89,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    AiPrintOp(AiBuilder.Blueprint blueprint, int timeoutSeconds, AiBuilder.BuildOptions power) {
-      this(blueprint, timeoutSeconds, power, AiPrintRules.init(blueprint));
+      this(blueprint, timeoutSeconds, power, AiPrintRules.targets(blueprint));
    }
 
    AiPrintOp(AiBuilder.Blueprint blueprint, int timeoutSeconds, AiBuilder.BuildOptions power, List<autismclient.ai.print.PrintTarget> preparedTargets) {
@@ -143,7 +143,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       for (autismclient.ai.print.PrintClockSpec clock : actions.clocks()) {
-         this.core.attachMachineJob(AiPrintClock.init(this.env, clock));
+         this.core.attachMachineJob(AiPrintClock.create(this.env, clock));
       }
 
       this.core.trace = Boolean.getBoolean("autism.ai.print.trace");
@@ -409,7 +409,7 @@ final class AiPrintOp implements AiOperation {
             return this.init_AiOperation_Result_Str_9("Preparing to recover " + itemId(this.requestedItem));
          }
 
-         if (!this.env.isCreativeMode() && this.core.init_Z_Item(this.core.getMissingHandItem())) {
+         if (!this.env.isCreativeMode() && this.core.hasItem(this.core.getMissingHandItem())) {
             this.env.applyControls(controls);
             return this.init_AiOperation_Result_Str_9("Recovering temporary " + itemId(this.core.getMissingHandItem()));
          }
@@ -417,7 +417,7 @@ final class AiPrintOp implements AiOperation {
          if (this.env.isCreativeMode() || !this.supply.canSupply(this.core.getMissingHandItem())) {
             this.env.applyControls(controls);
             if (this.tickCount % 4L == 0L) {
-               AiVisualization.init(this, this.blueprint.origin(), this.blueprint.cells(), this.core.placedCount(), false, true);
+               AiVisualization.showPlan(this, this.blueprint.origin(), this.blueprint.cells(), this.core.placedCount(), false, true);
             }
 
             AiOperation.Result var10000;
@@ -472,7 +472,7 @@ final class AiPrintOp implements AiOperation {
             this.revisitQueue.addLast(position);
          } else {
             BlockState state = this.env.getBlockState(position);
-            if (AiScaffold.init(this.scaffold.init(position), state.getBlock())) {
+            if (AiScaffold.matches(this.scaffold.init(position), state.getBlock())) {
                this.core.notifyBlockChanged(position, state);
             } else {
                AiScaffold.forget(position);
@@ -510,7 +510,7 @@ final class AiPrintOp implements AiOperation {
          phase = var10000;
       }
 
-      AiVisualization.init(this, "Building schematic", phase, this.core.placedCount(), this.core.cellCount());
+      AiVisualization.showCount(this, "Building schematic", phase, this.core.placedCount(), this.core.cellCount());
       return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_42().toString(), List.of());
    }
 
@@ -743,7 +743,7 @@ final class AiPrintOp implements AiOperation {
          if (this.mc.level == this.level) {
             for (BlockPos p : this.jobScope.ownedCells()) {
                BlockState state = this.mc.level.getBlockState(p);
-               if (AiScaffold.init(this.jobScope.init(p), state.getBlock())) {
+               if (AiScaffold.matches(this.jobScope.init(p), state.getBlock())) {
                   this.core.notifyBlockChanged(p, state);
                }
             }
@@ -1115,7 +1115,7 @@ final class AiPrintOp implements AiOperation {
                return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.NO_REACHABLE_TARGET));
             }
 
-            if (!autismclient.ai.engine.AiBlockMine.init(AiPrintOp.this.mc.player.getInventory(), new ItemStack(Items.DIRT))) {
+            if (!autismclient.ai.engine.AiBlockMine.canStore(AiPrintOp.this.mc.player.getInventory(), new ItemStack(Items.DIRT))) {
                return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.INVENTORY_FULL));
             }
 

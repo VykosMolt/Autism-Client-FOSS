@@ -16,7 +16,7 @@ public final class EntityMotionTracker {
    private final Vec3[] positions = new Vec3[32];
    private final int[] ticks = new int[32];
 
-   public void init(LivingEntity target, int tick) {
+   public void track(LivingEntity target, int tick) {
       if (target == null) {
          this.load_I = -2147483648;
          this.init_Vec3 = null;
@@ -45,14 +45,14 @@ public final class EntityMotionTracker {
       this.ticks[slot] = tick;
    }
 
-   public Vec3 init(int tick, int age) {
+   public Vec3 positionAt(int tick, int age) {
       int wanted = tick - Math.max(0, Math.min(this.positions.length - 1, age));
       int slot = wanted & this.positions.length - 1;
       return this.positions[slot] != null && this.ticks[slot] == wanted ? this.positions[slot] : this.init_Vec3;
    }
 
    public void reset() {
-      this.init(null, 0);
+      this.track(null, 0);
    }
 
    public boolean isTracking(LivingEntity target) {

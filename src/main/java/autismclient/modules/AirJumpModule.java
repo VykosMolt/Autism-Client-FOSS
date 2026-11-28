@@ -43,7 +43,7 @@ public final class AirJumpModule extends Module {
       }
    }
 
-   public static VoxelShape init(VoxelShape original, BlockPos pos) {
+   public static VoxelShape collisionShape(VoxelShape original, BlockPos pos) {
       if (MC != null && MC.isSameThread() && MC.player != null && MC.options != null) {
          return al.init_Module_Str("air-jump") instanceof AirJumpModule airJump
                && airJump.isEnabled()

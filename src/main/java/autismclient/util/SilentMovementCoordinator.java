@@ -62,8 +62,8 @@ public final class SilentMovementCoordinator {
          }
 
          if (SilentRotationManager.isVisibleAimActive() || shouldSkipMoveFix(rotation)) {
-            combatMoveFixer.init();
-            bedNukerMoveFixer.init();
+            combatMoveFixer.reset();
+            bedNukerMoveFixer.reset();
             return input;
          }
 
@@ -82,17 +82,17 @@ public final class SilentMovementCoordinator {
 
             return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
          } else if (!"crystal-aura".equals(aimOwner) && !"anchor-aura".equals(aimOwner)) {
-            combatMoveFixer.init();
+            combatMoveFixer.reset();
             if ("bed-nuker".equals(SilentRotationManager.getActiveOwnerId())) {
                return bedNukerMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));
             }
 
-            bedNukerMoveFixer.init();
+            bedNukerMoveFixer.reset();
             if (isClutchMoveFixActive()) {
-               return clutchMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick());
+               return clutchMoveFixer.fix(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick());
             }
 
-            clutchMoveFixer.init();
+            clutchMoveFixer.reset();
             return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.yaw());
          } else {
             return combatMoveFixer.load(input, mc.player.getYRot(), rotation.yaw(), AutismSessionState.getInstance().getClientTick(), LedgeFootingPredictor.init(mc.player));

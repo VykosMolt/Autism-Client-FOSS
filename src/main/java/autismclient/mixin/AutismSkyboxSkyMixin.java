@@ -13,7 +13,7 @@ public abstract class AutismSkyboxSkyMixin {
    @Inject(method = "renderSkyDisc", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$skyboxPanorama(CallbackInfo ci) {
       if (CustomSkyboxRenderer.isActive()) {
-         CustomSkyboxRenderer.init(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+         CustomSkyboxRenderer.render(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
          ci.cancel();
       }
    }

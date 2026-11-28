@@ -76,7 +76,7 @@ final class AiProjectiles {
       }
    }
 
-   static List<AiProjectiles.IncomingProjectile> init(Minecraft mc) {
+   static List<AiProjectiles.IncomingProjectile> incoming(Minecraft mc) {
       try {
          if (mc.player != null && mc.level != null) {
             int now = autismclient.util.AutismSessionState.getInstance().getClientTick();
@@ -94,7 +94,7 @@ final class AiProjectiles {
                   Vec3 velocity = entity.getDeltaMovement();
                   if (!(velocity.lengthSqr() < 1.0E-6)) {
                      double gravity = gravityOf(entity);
-                     AiProjectiles.ApproachMetrics prediction = init(mc, entity, mc.player.getBoundingBox(), 0);
+                     AiProjectiles.ApproachMetrics prediction = approach(mc, entity, mc.player.getBoundingBox(), 0);
                      out.add(
                         new AiProjectiles.IncomingProjectile(
                            entity.getId(),
@@ -128,7 +128,7 @@ final class AiProjectiles {
       }
    }
 
-   static AiProjectiles.ApproachMetrics init(Minecraft mc, Entity projectile, AABB destination, int travelTicks) {
+   static AiProjectiles.ApproachMetrics approach(Minecraft mc, Entity projectile, AABB destination, int travelTicks) {
       double gravity = gravityOf(projectile);
       Vec3 position = projectile.position();
       Vec3 velocity = projectile.getDeltaMovement();
@@ -306,13 +306,13 @@ final class AiProjectiles {
       }
    }
 
-   static boolean init(AiProjectiles.IncomingProjectile t) {
+   static boolean isImminent(AiProjectiles.IncomingProjectile t) {
       return t.secondsToClosest() >= 0.0 && t.secondsToClosest() <= 2.5 && t.closestApproach() <= 1.2;
    }
 
    static boolean noImminentThreat(List<AiProjectiles.IncomingProjectile> scan) {
       for (AiProjectiles.IncomingProjectile t : scan) {
-         if (init(t)) {
+         if (isImminent(t)) {
             return false;
          }
       }
@@ -320,7 +320,7 @@ final class AiProjectiles {
       return true;
    }
 
-   static Vec3 init_Vec3(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
+   static Vec3 dodgeDirection(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
       if (projVel.x * projVel.x + projVel.z * projVel.z < 1.0E-6) {
          double ax = playerEye.x - projPos.x;
          double az = playerEye.z - projPos.z;

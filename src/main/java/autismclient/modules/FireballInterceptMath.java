@@ -9,7 +9,7 @@ final class FireballInterceptMath {
    private FireballInterceptMath() {
    }
 
-   static int init(double height, double verticalMotion) {
+   static int ticksToLand(double height, double verticalMotion) {
       if (Double.isFinite(height) && Double.isFinite(verticalMotion)) {
          for (int tick = 1; tick <= 20; tick++) {
             height += verticalMotion;
@@ -26,7 +26,7 @@ final class FireballInterceptMath {
       }
    }
 
-   static float init(double yawDifference, double pitchDifference, double strike, double impact, double gcd) {
+   static float turnStep(double yawDifference, double pitchDifference, double strike, double impact, double gcd) {
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       double deadline = strike >= 0.0 ? Math.min(strike, impact) : impact;
       int intervals = Double.isFinite(deadline) ? Math.max(1, (int)Math.floor(deadline)) : 1;
@@ -34,7 +34,7 @@ final class FireballInterceptMath {
       return (float)Math.max(60.0, difference / intervals + quantum);
    }
 
-   static int init(double yawDifference, double pitchDifference, float step, double gcd) {
+   static int turnTicks(double yawDifference, double pitchDifference, float step, double gcd) {
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       long counts = Math.max(Math.abs(Math.round(yawDifference / quantum)), Math.abs(Math.round(pitchDifference / quantum)));
       long capacity = Math.max(1L, (long)Math.floor(step / quantum + 1.0E-9));

@@ -68,7 +68,7 @@ public final class ThemePaletteManager {
          }
 
          try {
-            ThemeTextureRecolorer.load();
+            ThemeTextureRecolorer.invalidate();
          } catch (Throwable var2) {
          }
       }

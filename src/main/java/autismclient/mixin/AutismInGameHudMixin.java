@@ -83,7 +83,7 @@ public abstract class AutismInGameHudMixin {
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;
          boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.load_Z();
-         boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.load();
+         boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.showsGuide();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
             UiClipStack.getInstance().clear(context);
             if (macroFrameWork) {
@@ -225,7 +225,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (macroRunning) {
-                        MacroStatusHudRenderer.init(context, MC.font, x, y, 172, 10, false, true, false);
+                        MacroStatusHudRenderer.render(context, MC.font, x, y, 172, 10, false, true, false);
                      }
 
                      if (!AutismLiteVariant.enabled() && portalGuide) {
@@ -237,7 +237,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (nametagsVisible) {
-                        NameTagsRenderer.init(context);
+                        NameTagsRenderer.render(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && bedsVisible) {
@@ -245,11 +245,11 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && activity.init(4096L)) {
-                        autismclient.modules.DangerHudRenderer.init(context);
+                        autismclient.modules.DangerHudRenderer.render(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && activity.init(8192L)) {
-                        TrajectoryOffscreenIndicator.init(context);
+                        TrajectoryOffscreenIndicator.render(context);
                      }
                   };
                   if (mainHudVisible) {

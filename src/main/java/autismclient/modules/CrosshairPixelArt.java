@@ -43,7 +43,7 @@ public final class CrosshairPixelArt {
       return this.size;
    }
 
-   public int init(int x, int y) {
+   public int pixelAt(int x, int y) {
       return x >= 0 && y >= 0 && x < this.size && y < this.size ? this.pixels[y * this.size + x] : 0;
    }
 
@@ -61,7 +61,7 @@ public final class CrosshairPixelArt {
       return true;
    }
 
-   public CrosshairPixelArt load(int newSize) {
+   public CrosshairPixelArt resized(int newSize) {
       if (isValidSize(newSize) && newSize != this.size) {
          int[] out = new int[newSize * newSize];
 
@@ -109,7 +109,7 @@ public final class CrosshairPixelArt {
       }
    }
 
-   public static CrosshairPixelArt init(String encoded) {
+   public static CrosshairPixelArt decode(String encoded) {
       if (encoded == null) {
          return null;
       }

@@ -162,7 +162,7 @@ final class SchematicPaste {
       }
    }
 
-   static SchematicPaste init(Minecraft mc, SchematicDocument document, BlockPos origin, int rotation, String mirror, boolean includeAir, boolean includeEntities, JsonObject checkpoint) {
+   static SchematicPaste create(Minecraft mc, SchematicDocument document, BlockPos origin, int rotation, String mirror, boolean includeAir, boolean includeEntities, JsonObject checkpoint) {
       IntegratedServer server = mc.getSingleplayerServer();
       if (server != null && !server.isPublished() && mc.level != null) {
          ServerLevel level = server.getLevel(mc.level.dimension());
@@ -298,7 +298,7 @@ final class SchematicPaste {
                      this.phase = 2;
                   } else {
                      SchematicDocument.BlockEntityData saved = this.document.blockEntities.get(this.blockEntityIndex);
-                     BlockPos local = this.document.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.rotation, this.mirror);
+                     BlockPos local = this.document.transform(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.rotation, this.mirror);
                      BlockPos at = this.origin.offset(local);
                      if (!this.loadChunk(at.getX() >> 4, at.getZ() >> 4)) {
                         break;
@@ -586,13 +586,13 @@ final class SchematicPaste {
          }
       }
 
-      BlockPos p0 = doc.init(0, 0, 0, rotation, mirror);
-      BlockPos dx = doc.init(1, 0, 0, rotation, mirror).subtract(p0);
-      BlockPos dz = doc.init(0, 0, 1, rotation, mirror).subtract(p0);
+      BlockPos p0 = doc.transform(0, 0, 0, rotation, mirror);
+      BlockPos dx = doc.transform(1, 0, 0, rotation, mirror).subtract(p0);
+      BlockPos dz = doc.transform(0, 0, 1, rotation, mirror).subtract(p0);
       boolean multiRegion = doc.regions.size() > 1;
 
       for (SchematicDocument.Region r : doc.regions) {
-         SchematicDocument.init();
+         SchematicDocument.checkInterrupted();
          if (includeAir || !Arrays.stream(r.palette).allMatch(BlockStateBase::isAir)) {
             int cellIndex = 0;
 
@@ -610,7 +610,7 @@ final class SchematicPaste {
                   for (int sx = r.originX; sx < r.originX + r.write; wz += dx.getZ()) {
                      int idx = cellIndex++;
                      if ((idx & 4095) == 0) {
-                        SchematicDocument.init();
+                        SchematicDocument.checkInterrupted();
                      }
 
                      if (includeAir || !r.stateAtIndex(idx).isAir() && (!multiRegion || doc.regionAt(sx, sy, sz) == r)) {
@@ -650,8 +650,8 @@ final class SchematicPaste {
       TreeMap<Long, List<SchematicPaste.YRange>> ranges = new TreeMap<>();
 
       for (SchematicDocument.Region r : doc.regions) {
-         BlockPos a = doc.init(r.originX, r.load, r.read, rotation, mirror);
-         BlockPos b = doc.init(r.originX + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
+         BlockPos a = doc.transform(r.originX, r.load, r.read, rotation, mirror);
+         BlockPos b = doc.transform(r.originX + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
          int x0 = origin.getX() + Math.min(a.getX(), b.getX()) >> 4;
          int x1 = origin.getX() + Math.max(a.getX(), b.getX()) >> 4;
          int z0 = origin.getZ() + Math.min(a.getZ(), b.getZ()) >> 4;

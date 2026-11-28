@@ -31,8 +31,8 @@ public final class AutoFishMacroPresets {
       return var10000;
    }
 
-   public static boolean init(AutismMacro macro) {
-      return RaceEligibilityChecker.init(macro);
+   public static boolean isRaceEligible(AutismMacro macro) {
+      return RaceEligibilityChecker.hasEligible(macro);
    }
 
    public static boolean isStopPreset(String name) {
@@ -41,7 +41,7 @@ public final class AutoFishMacroPresets {
          : init(name, "AutoFish - Free Slots Stop") || init(name, "AutoFish - Durability Stop") || init(name, "AutoFish - Custom Stop");
    }
 
-   public static boolean load(AutismMacro macro) {
+   public static boolean isStopMacro(AutismMacro macro) {
       return macro != null && isStopPreset(macro.name);
    }
 
@@ -70,7 +70,7 @@ public final class AutoFishMacroPresets {
       AutismMacro existing = manager.findByName(preferredName);
       if (existing != null) {
          boolean changed = false;
-         if (!init(existing)) {
+         if (!isRaceEligible(existing)) {
             existing.actions.add(0, firstCondition);
             changed = true;
          }
@@ -130,7 +130,7 @@ public final class AutoFishMacroPresets {
       if (macro != null && macro.actions != null) {
          for (int i = 0; i < macro.actions.size(); i++) {
             MacroAction action = macro.actions.get(i);
-            if (action != null && action.isEnabled() && RaceEligibilityChecker.init(action)) {
+            if (action != null && action.isEnabled() && RaceEligibilityChecker.isEligible(action)) {
                int next = i + 1;
                if (next < macro.actions.size() && init(macro.actions.get(next))) {
                   macro.actions.remove(next);

@@ -175,7 +175,7 @@ public class AutismMinecraftClientMixin {
 
    @Inject(method = "tick", at = @At("HEAD"))
    private void autism$onTickHead(CallbackInfo ci) {
-      WindowIconManager.read((Minecraft)(Object)this);
+      WindowIconManager.tick((Minecraft)(Object)this);
       AutismSessionState.getInstance().incrementClientTick();
       VirtualInputDispatcher.open();
       al.update_V();
@@ -238,7 +238,7 @@ public class AutismMinecraftClientMixin {
       if (client.gui.screen() instanceof TitleScreen) {
          if (aD.init_Z()) {
             client.gui.setScreen(new StealthTitleScreen());
-         } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
+         } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.isEnabled()) {
             client.gui.setScreen(new AutismTitleScreen());
          }
       }
@@ -250,7 +250,7 @@ public class AutismMinecraftClientMixin {
          Minecraft client = (Minecraft)(Object)this;
          if (aD.init_Z() && client.gui.screen() instanceof AutismTitleScreen) {
             client.gui.setScreen(new StealthTitleScreen());
-         } else if (!aD.init_Z() && client.gui.screen() instanceof StealthTitleScreen && CustomMainMenuGuard.init()) {
+         } else if (!aD.init_Z() && client.gui.screen() instanceof StealthTitleScreen && CustomMainMenuGuard.isEnabled()) {
             client.gui.setScreen(new AutismTitleScreen());
          }
       }
@@ -267,7 +267,7 @@ public class AutismMinecraftClientMixin {
             }
          } else {
             Minecraft client = (Minecraft)(Object)this;
-            if (client.hitResult instanceof BlockHitResult && autismclient.util.BlockAttackGraceWindow.init(client)) {
+            if (client.hitResult instanceof BlockHitResult && autismclient.util.BlockAttackGraceWindow.isWithinGrace(client)) {
                cir.setReturnValue(false);
             } else if (RemoteViewController.isActive()) {
                cir.setReturnValue(false);
@@ -295,7 +295,7 @@ public class AutismMinecraftClientMixin {
          ci.cancel();
       } else if (RemoteViewController.isActive()) {
          ci.cancel();
-      } else if (autismclient.util.BlockAttackGraceWindow.init((Minecraft)(Object)this)) {
+      } else if (autismclient.util.BlockAttackGraceWindow.isWithinGrace((Minecraft)(Object)this)) {
          ci.cancel();
       } else if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
@@ -408,8 +408,8 @@ public class AutismMinecraftClientMixin {
       }
 
       Minecraft client = (Minecraft)(Object)this;
-      HitResult hit = ManualInteractionYield.init(client, original);
-      return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
+      HitResult hit = ManualInteractionYield.adjustPick(client, original);
+      return !AutismLiteVariant.enabled() ? HandNoClipModule.adjustPick(client, hit, true, true) : hit;
    }
 
    @ModifyExpressionValue(
@@ -422,8 +422,8 @@ public class AutismMinecraftClientMixin {
       }
 
       Minecraft client = (Minecraft)(Object)this;
-      HitResult hit = ManualInteractionYield.init(client, original);
-      return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
+      HitResult hit = ManualInteractionYield.adjustPick(client, original);
+      return !AutismLiteVariant.enabled() ? HandNoClipModule.adjustPick(client, hit, true, true) : hit;
    }
 
    @ModifyExpressionValue(
@@ -435,8 +435,8 @@ public class AutismMinecraftClientMixin {
          return original;
       } else if (!ClientInteractionOverride.ownsUseInput() && !ScaffoldModule.init_Z_26()) {
          Minecraft client = (Minecraft)(Object)this;
-         HitResult hit = ManualInteractionYield.init(client, original);
-         return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, false, false) : hit;
+         HitResult hit = ManualInteractionYield.adjustPick(client, original);
+         return !AutismLiteVariant.enabled() ? HandNoClipModule.adjustPick(client, hit, false, false) : hit;
       } else {
          return original;
       }
@@ -516,7 +516,7 @@ public class AutismMinecraftClientMixin {
          ClientInteractionOverride.cleanupAfterInputTick();
          VirtualInputDispatcher.poll();
          if (!AutismLiteVariant.enabled()) {
-            autismclient.util.clicker.KeyClickOutput.write();
+            autismclient.util.clicker.KeyClickOutput.closeAll();
          }
 
          if (!AutismLiteVariant.enabled()) {
@@ -592,7 +592,7 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "runTick", at = @At("TAIL"))
    private void autism$onInputFrame(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         autismclient.util.clicker.KeyClickOutput.update();
+         autismclient.util.clicker.KeyClickOutput.nextGeneration();
          al.poll_V();
          autismclient.util.clicker.KeyClickOutput.sync();
       }

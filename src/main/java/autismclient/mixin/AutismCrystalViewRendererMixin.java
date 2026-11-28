@@ -16,11 +16,11 @@ public abstract class AutismCrystalViewRendererMixin {
       require = 0
    )
    private void autism$crystalScale(PoseStack instance, float x, float y, float z, Operation<Void> original) {
-      if (!CrystalAuraModule.open()) {
+      if (!CrystalAuraModule.isCrystalViewEnabled()) {
          original.call(instance, x, y, z);
       } else {
-         instance.translate(0.0F, CrystalAuraModule.load_F_5(), 0.0F);
-         float scale = CrystalAuraModule.init_F_9();
+         instance.translate(0.0F, CrystalAuraModule.crystalViewY(), 0.0F);
+         float scale = CrystalAuraModule.crystalViewSize();
          original.call(instance, x * scale, y * scale, z * scale);
       }
    }

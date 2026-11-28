@@ -151,7 +151,7 @@ public final class AiBlockDigger {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         AiVisualization.init(this, var1);
+         AiVisualization.showTarget(this, var1);
       }
 
       this.nextLookDirection = var3;
@@ -190,7 +190,7 @@ public final class AiBlockDigger {
                   this.stop();
                   return this.failWithReason("turned into " + var14.getBlock().getName().getString());
                } else {
-                  AiEditLedger.init(this.activeTarget, this.activeTargetState);
+                  AiEditLedger.recordBreak(this.activeTarget, this.activeTargetState);
                   this.stop();
                   return AiBlockDigger.DigState.fill;
                }
@@ -263,7 +263,7 @@ public final class AiBlockDigger {
                   }
 
                   this.aimTickCallback.run();
-                  AiMotionAudit.init(this.minecraft);
+                  AiMotionAudit.markBusy(this.minecraft);
                   if (!AiAim.isLookingAtBlock(this.activeTarget)) {
                      tickDestroyDelay(this.minecraft);
                      float var21 = this.minecraft.player.getYRot();
@@ -313,7 +313,7 @@ public final class AiBlockDigger {
             BlockState var13 = this.minecraft.level.getBlockState(var1);
             if (var13.isAir()) {
                if (var1.equals(this.lastStoppedTarget) && this.lastStoppedState != null) {
-                  AiEditLedger.init(var1, this.lastStoppedState);
+                  AiEditLedger.recordBreak(var1, this.lastStoppedState);
                }
 
                this.lastStoppedTarget = null;
@@ -391,7 +391,7 @@ public final class AiBlockDigger {
 
                            this.aimPointConsumer.accept(this.resolveAimPoint(var1, var6));
                            this.aimTickCallback.run();
-                           AiMotionAudit.init(this.minecraft);
+                           AiMotionAudit.markBusy(this.minecraft);
                            if (!AiAim.isLookingAtBlock(var1)) {
                               tickDestroyDelay(this.minecraft);
                               float var7 = this.minecraft.player.getYRot();
@@ -466,7 +466,7 @@ public final class AiBlockDigger {
          return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
       }
 
-      AiEditLedger.init(this.activeTarget, this.activeTargetState);
+      AiEditLedger.recordBreak(this.activeTarget, this.activeTargetState);
       this.stop();
       return AiBlockDigger.DigState.fill;
    }
@@ -519,7 +519,7 @@ public final class AiBlockDigger {
       }
 
       lastAttackTick = var0.player.tickCount;
-      BlockAttackGraceWindow.init(var0.player);
+      BlockAttackGraceWindow.note(var0.player);
       return false;
    }
 
@@ -795,7 +795,7 @@ public final class AiBlockDigger {
       this.restock.reset();
       if (this.activelyDigging && this.activeTarget != null && this.activeTargetState != null && this.minecraft.level != null) {
          if (this.minecraft.level.getBlockState(this.activeTarget).isAir()) {
-            AiEditLedger.init(this.activeTarget, this.activeTargetState);
+            AiEditLedger.recordBreak(this.activeTarget, this.activeTargetState);
          } else {
             this.lastStoppedTarget = this.activeTarget;
             this.lastStoppedState = this.activeTargetState;
@@ -804,7 +804,7 @@ public final class AiBlockDigger {
 
       if (this.activelyDigging && this.minecraft.gameMode != null && this.isGameModeDestroying(this.activeTarget)) {
          this.minecraft.gameMode.stopDestroyBlock();
-         BlockAttackGraceWindow.init();
+         BlockAttackGraceWindow.clear();
       }
 
       this.activelyDigging = false;

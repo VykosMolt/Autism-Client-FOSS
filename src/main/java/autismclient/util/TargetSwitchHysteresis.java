@@ -10,7 +10,7 @@ public final class TargetSwitchHysteresis {
    private TargetSwitchHysteresis() {
    }
 
-   public static boolean init(String mode, double challengerScore, double incumbentScore) {
+   public static boolean shouldSwitch(String mode, double challengerScore, double incumbentScore) {
       boolean var10000;
       switch (mode) {
          case "HP":

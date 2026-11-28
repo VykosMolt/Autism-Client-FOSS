@@ -945,7 +945,7 @@ public final class AutismSessionState {
             } else if (qp.isExactReplay()) {
                newPackets.add(new AutismSessionState.DelayedPacket(qp.packet, qp.delay, qp.id, qp.replayMode));
             } else {
-               Packet<?> regenerated = PacketRegenerator.init(qp.packet);
+               Packet<?> regenerated = PacketRegenerator.regenerate(qp.packet);
                if (regenerated != null) {
                   newPackets.add(new AutismSessionState.DelayedPacket(regenerated, qp.delay, qp.id, qp.replayMode));
                } else {
@@ -1184,7 +1184,7 @@ public final class AutismSessionState {
 
    private Packet<?> preparePacketForSend(AutismSessionState.DelayedPacket queuedPacket) {
       if (queuedPacket != null && queuedPacket.packet != null) {
-         return queuedPacket.isExactReplay() ? queuedPacket.packet : PacketRegenerator.init(queuedPacket.packet);
+         return queuedPacket.isExactReplay() ? queuedPacket.packet : PacketRegenerator.regenerate(queuedPacket.packet);
       } else {
          return null;
       }

@@ -9,12 +9,12 @@ public final class CustomMenuTracker {
    private CustomMenuTracker() {
    }
 
-   public static void init(Packet<?> packet, String phase) {
-      store.init(packet, phase);
+   public static void onInbound(Packet<?> packet, String phase) {
+      store.acceptInbound(packet, phase);
    }
 
-   public static void load(Packet<?> packet, String phase) {
-      store.load(packet, phase);
+   public static void onPacket(Packet<?> packet, String phase) {
+      store.handle(packet, phase);
    }
 
    public static CustomMenuSnapshot snapshot() {
@@ -25,12 +25,12 @@ public final class CustomMenuTracker {
       return store.generation();
    }
 
-   public static void init(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
-      store.init(expected, replacement);
+   public static void replace(CustomMenuSnapshot expected, CustomMenuSnapshot replacement) {
+      store.replace(expected, replacement);
    }
 
-   public static void init(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
-      store.init(seenGeneration, replacement, phase);
+   public static void replace(long seenGeneration, CustomMenuSnapshot replacement, String phase) {
+      store.replace(seenGeneration, replacement, phase);
    }
 
    public static void clear() {

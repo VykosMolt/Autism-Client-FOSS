@@ -203,7 +203,7 @@ public final class StrongholdTriangulator {
       return new Vec3(ray.init.x + ray.load.x * ahead, player.y, ray.init.z + ray.load.z * ahead);
    }
 
-   public static double init(Vec3 camera, Vec3 target, float yaw) {
+   public static double relativeYaw(Vec3 camera, Vec3 target, float yaw) {
       double degrees = Math.toDegrees(Math.atan2(-(target.x - camera.x), target.z - camera.z)) - yaw;
       double relative = Math.IEEEremainder(degrees, 360.0);
       return relative == 0.0 ? 0.0 : relative;

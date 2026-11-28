@@ -143,9 +143,9 @@ final class AiCollect {
                final AiOperation gather = autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
                      "blocks",
-                     autismclient.ai.engine.AiBlockMine.init(sources.isEmpty() ? List.of(item) : sources),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(sources.isEmpty() ? List.of(item) : sources),
                      "drops",
-                     autismclient.ai.engine.AiBlockMine.init(List.of(item)),
+                     autismclient.ai.engine.AiBlockMine.jsonArray(List.of(item)),
                      "held",
                      target,
                      "radius",

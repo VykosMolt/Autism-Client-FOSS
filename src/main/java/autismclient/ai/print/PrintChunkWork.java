@@ -50,7 +50,7 @@ final class PrintChunkWork {
       return (state == 0 || state == 2 || state == 1) && kind != PrintTarget.TargetKind.FLOW && kind != PrintTarget.TargetKind.PARTNER;
    }
 
-   void init(int i, byte before, byte after) {
+   void onCellChanged(int i, byte before, byte after) {
       if (this.core.phase != PrintCore.PrintPhase.VERIFY) {
          this.resetAudit();
       }

@@ -131,7 +131,7 @@ public final class AiScaffold {
       return false;
    }
 
-   public static void init(BlockPos cell, Block block) {
+   public static void recordPlaced(BlockPos cell, Block block) {
       init_LinkedHashMap.put(cell.asLong(), block);
 
       for (AiScaffold.JobScope scope : init_Set) {
@@ -161,7 +161,7 @@ public final class AiScaffold {
 
       Minecraft client = Minecraft.getInstance();
       ClientLevel level = client == null ? null : client.level;
-      if (was != null && level != null && init(was, level.getBlockState(cell).getBlock())) {
+      if (was != null && level != null && matches(was, level.getBlockState(cell).getBlock())) {
          String caller = StackWalker.getInstance()
             .walk(
                frames -> frames.skip(1L)
@@ -184,10 +184,10 @@ public final class AiScaffold {
       }
    }
 
-   public static void init(BlockPos pos, BlockState state) {
+   public static void onBlockChanged(BlockPos pos, BlockState state) {
       if (!load_LinkedHashMap.isEmpty()) {
          AiScaffold.ScaffoldRecord forgotten = load_LinkedHashMap.remove(pos.asLong());
-         if (forgotten != null && System.nanoTime() - forgotten.nanos() <= 10000000000L && init(forgotten.block(), state.getBlock())) {
+         if (forgotten != null && System.nanoTime() - forgotten.nanos() <= 10000000000L && matches(forgotten.block(), state.getBlock())) {
             init_LinkedHashMap.put(pos.asLong(), forgotten.block());
 
             for (AiScaffold.JobScope scope : forgotten.scopes()) {
@@ -219,7 +219,7 @@ public final class AiScaffold {
       return false;
    }
 
-   public static boolean init(Block recorded, Block live) {
+   public static boolean matches(Block recorded, Block live) {
       return recorded != null && (recorded == live || isDirtLike(recorded) && isDirtLike(live));
    }
 
@@ -227,7 +227,7 @@ public final class AiScaffold {
       return block == Blocks.DIRT || block == Blocks.GRASS_BLOCK || block == Blocks.MYCELIUM;
    }
 
-   public static List<BlockPos> init(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   public static List<BlockPos> recordedIn(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       List<BlockPos> out = new ArrayList<>();
 
       for (long key : init_LinkedHashMap.keySet()) {

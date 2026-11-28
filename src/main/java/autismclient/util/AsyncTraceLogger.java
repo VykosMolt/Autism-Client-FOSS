@@ -12,7 +12,7 @@ public final class AsyncTraceLogger {
    private AsyncTraceLogger() {
    }
 
-   public static void init(String line) {
+   public static void log(String line) {
       if (line != null) {
          ensureWriter();
          if (!QUEUE.offer(line)) {

@@ -202,7 +202,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
-      return AimTargetAction.AimTarget.init(this.blockPos);
+      return AimTargetAction.AimTarget.ofBlock(this.blockPos);
    }
 
    @Override
@@ -264,7 +264,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.raycast = tag.getBooleanOr("raycast", false);
       this.sneakMode = tag.getStringOr("sneakMode", "Packet");
       this.interact = tag.getBooleanOr("interact", false);
-      this.interactTiming = InteractTimingMode.init(tag.getStringOr("interactTiming", "AFTER"), InteractTimingMode.AFTER);
+      this.interactTiming = InteractTimingMode.parse(tag.getStringOr("interactTiming", "AFTER"), InteractTimingMode.AFTER);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.guiName = tag.getStringOr("guiName", "");
       this.enabled = tag.getBooleanOr("enabled", true);

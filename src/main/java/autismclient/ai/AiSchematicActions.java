@@ -364,7 +364,7 @@ final class AiSchematicActions {
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
                      if (mc.player.onGround() && ++this.ticks <= 60) {
-                        if (autismclient.ai.engine.PlacementGoal.init(mc, target, AiBuilder.toBlockState(cell).getBlock().asItem(), constraint, 72) != null) {
+                        if (autismclient.ai.engine.PlacementGoal.planPlacement(mc, target, AiBuilder.toBlockState(cell).getBlock().asItem(), constraint, 72) != null) {
                            return this.finish(AiOperation.Status.SUCCEEDED, "Support side exposed");
                         }
 
@@ -674,7 +674,7 @@ final class AiSchematicActions {
                      public AiOperation.Result tick() {
                         AiOperation.Result r = build.tick();
                         if (r.status() == AiOperation.Status.SUCCEEDED && init(pos)) {
-                           AiScaffold.init(pos, mc.level.getBlockState(pos).getBlock());
+                           AiScaffold.recordPlaced(pos, mc.level.getBlockState(pos).getBlock());
                            owned.add(pos.asLong());
                         }
 
@@ -1110,7 +1110,7 @@ final class AiSchematicActions {
                if (AiBuilder.needsWaterlogToggleOnly(cell, live)) {
                   BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);
                   if (hit != null && !(mc.player.getEyePosition().distanceToSqr(hit.getLocation()) > 16.0)) {
-                     this.child = AiBucket.init(
+                     this.child = AiBucket.create(
                         AiJson.objectOf(
                            "action",
                            "true".equals(cell.properties().get("waterlogged")) ? "empty" : "fill",
@@ -1171,13 +1171,13 @@ final class AiSchematicActions {
    }
 
    static List<AiCellMaterials.MaterialRequirement> materialPlans(AiBuilder.CellSpec cell) {
-      return AiCellMaterials.init(cell);
+      return AiCellMaterials.requirements(cell);
    }
 
    static List<AiCellMaterials.MaterialRequirement> materialPlans(AiBuilder.CellSpec cell, BlockPos target) {
       Minecraft mc = Minecraft.getInstance();
       boolean waterAbove = mc.level.getFluidState(target.above()).is(FluidTags.WATER);
-      return AiCellMaterials.init(cell, mc.level.getBlockState(target), waterAbove);
+      return AiCellMaterials.requirements(cell, mc.level.getBlockState(target), waterAbove);
    }
 
    static List<Item> materials(AiBuilder.CellSpec cell) {
@@ -1361,7 +1361,7 @@ final class AiSchematicActions {
                            this.child = AiGoto.approachBlockToInteractCompat(target.below(), 30, protectedCells, true, Direction.UP, 1.0);
                            return this.running("Approaching a visible receiving face for the water cell");
                         } else {
-                           this.child = AiBucket.init(
+                           this.child = AiBucket.create(
                               AiJson.objectOf("action", "empty", "fluid", fluid, "x", target.getX(), "y", target.getY(), "z", target.getZ())
                            );
                            return this.running("Emptying a " + fluid + " bucket");
@@ -1509,7 +1509,7 @@ final class AiSchematicActions {
 
          AiOperation waterBucketAbove(String action) {
             BlockPos pos = target.above();
-            return AiBucket.init(
+            return AiBucket.create(
                AiJson.objectOf("action", action, "fluid", "water", "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 10)
             );
          }
@@ -1573,7 +1573,7 @@ final class AiSchematicActions {
    }
 
    static boolean clickCreatedDirt(boolean clicked, Block live, long beforeRevision, long currentRevision) {
-      return clicked && currentRevision > beforeRevision && AiScaffold.init(Blocks.DIRT, live);
+      return clicked && currentRevision > beforeRevision && AiScaffold.matches(Blocks.DIRT, live);
    }
 
    static boolean resultPlacedBlocks(AiOperation.Result result) {
@@ -1590,7 +1590,7 @@ final class AiSchematicActions {
 
    static void markScaffoldIfCreated(BlockPos support, Block block, boolean createdByOperation) {
       if (createdByOperation && !AiScaffold.isScaffold(support)) {
-         AiScaffold.init(support, block);
+         AiScaffold.recordPlaced(support, block);
       }
    }
 
@@ -1627,7 +1627,7 @@ final class AiSchematicActions {
                   if (!mc.player.getBoundingBox().intersects(new AABB(support))
                      && mc.level.getBlockState(support).canBeReplaced()
                      && mc.level.getBlockState(support).getFluidState().isEmpty()
-                     && autismclient.ai.engine.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
+                     && autismclient.ai.engine.PlacementGoal.planPlacement(mc, support, Items.DIRT, null, 72) != null) {
                      this.supportRevisionBefore = AiServerEvidence.blockRevision(support);
                      this.placer.start(support, Items.DIRT);
                      this.placingDirectly = true;
@@ -1662,7 +1662,7 @@ final class AiSchematicActions {
                   this.fallbackBuilding = false;
                   if (createdByFallback) {
                      Block live = mc.level.getBlockState(support).getBlock();
-                     AiSchematicActions.markScaffoldIfCreated(support, live, AiScaffold.init(Blocks.DIRT, live));
+                     AiSchematicActions.markScaffoldIfCreated(support, live, AiScaffold.matches(Blocks.DIRT, live));
                   }
 
                   this.child.cancel();

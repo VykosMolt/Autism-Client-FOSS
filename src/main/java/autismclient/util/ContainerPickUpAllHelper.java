@@ -18,14 +18,14 @@ public final class ContainerPickUpAllHelper {
    }
 
    public static boolean pickUpAll(Minecraft mc) {
-      return init(mc, null, 1);
+      return pickUpAll(mc, null, 1);
    }
 
    public static boolean pickUpAll(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard) {
-      return init(mc, carriedGuard, 1);
+      return pickUpAll(mc, carriedGuard, 1);
    }
 
-   public static boolean init(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
+   public static boolean pickUpAll(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }

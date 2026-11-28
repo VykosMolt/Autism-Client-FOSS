@@ -76,7 +76,7 @@ public final class AiToolsSuggest {
       return new AiToolsSuggest.ArgCursor(position, remaining.substring(cut), cut);
    }
 
-   public static CompletableFuture<Suggestions> init(String sub, SuggestionsBuilder builder) {
+   public static CompletableFuture<Suggestions> suggestArgs(String sub, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining();
       AiToolsSuggest.ArgCursor cursor = sub.equals("mine") ? load(remaining) : init(remaining);
       int pos = cursor.position();
@@ -147,7 +147,7 @@ public final class AiToolsSuggest {
       return new AiToolsSuggest.ArgCursor(token.position() == 0 ? 0 : 1, token.current(), start + token.offset());
    }
 
-   public static CompletableFuture<Suggestions> init(SuggestionsBuilder builder) {
+   public static CompletableFuture<Suggestions> suggestTools(SuggestionsBuilder builder) {
       AiToolsSuggest.ArgCursor cursor = init(builder.getRemaining());
       SuggestionsBuilder at = builder.createOffset(builder.getStart() + cursor.offset());
 
@@ -163,7 +163,7 @@ public final class AiToolsSuggest {
       return at.buildFuture();
    }
 
-   public static CompletableFuture<Suggestions> load(SuggestionsBuilder builder) {
+   public static CompletableFuture<Suggestions> suggestFamilies(SuggestionsBuilder builder) {
       try {
          Set<String> families = new TreeSet<>();
 
@@ -184,14 +184,14 @@ public final class AiToolsSuggest {
       List var10000;
       switch (sub) {
          case "craft":
-            var10000 = position == 0 ? init() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? craftableIds() : (position == 1 ? init : List.of());
             break;
          case "obtain":
          case "collect":
             var10000 = position == 0 ? read() : (position == 1 ? init : List.of());
             break;
          case "smelt":
-            var10000 = position == 0 ? load() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? smeltableIds() : (position == 1 ? init : List.of());
             break;
          case "mine":
             var10000 = position == 0 ? write() : (position == 1 ? init : List.of());
@@ -256,11 +256,11 @@ public final class AiToolsSuggest {
       }
    }
 
-   static String init(Identifier id) {
+   static String shortId(Identifier id) {
       return id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
    }
 
-   static synchronized List<String> init() {
+   static synchronized List<String> craftableIds() {
       Minecraft mc = Minecraft.getInstance();
       List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> plans = autismclient.util.AutoCraftingEngine.getResolvedCraftingRecipes(mc);
       if (plans == update) {
@@ -270,11 +270,11 @@ public final class AiToolsSuggest {
       Set<String> ids = new TreeSet<>();
 
       for (autismclient.util.AutoCraftingEngine.ResolvedRecipe plan : plans) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
+         ids.add(shortId(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
       for (autismclient.util.AutoCraftingEngine.StationRecipe plan : autismclient.util.AutoCraftingEngine.getStonecutterRecipes(mc)) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
+         ids.add(shortId(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
       sync = List.copyOf(ids);
@@ -282,7 +282,7 @@ public final class AiToolsSuggest {
       return sync;
    }
 
-   static synchronized List<String> load() {
+   static synchronized List<String> smeltableIds() {
       List<autismclient.util.AutoCraftingEngine.SmeltRecipe> plans = autismclient.util.AutoCraftingEngine.getSmeltRecipes(Minecraft.getInstance());
       if (plans == flush) {
          return close;
@@ -291,7 +291,7 @@ public final class AiToolsSuggest {
       Set<String> ids = new TreeSet<>();
 
       for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : plans) {
-         ids.add(init(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
+         ids.add(shortId(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
       close = List.copyOf(ids);
@@ -310,7 +310,7 @@ public final class AiToolsSuggest {
 
       for (Item item : BuiltInRegistries.ITEM) {
          if (item != Items.AIR) {
-            ids.add(init(BuiltInRegistries.ITEM.getKey(item)));
+            ids.add(shortId(BuiltInRegistries.ITEM.getKey(item)));
          }
       }
 
@@ -344,7 +344,7 @@ public final class AiToolsSuggest {
          Identifier key = BuiltInRegistries.BLOCK.getKey(block);
          String path = key.getPath();
          if (path.endsWith("_log") || path.endsWith("_wood") || path.endsWith("_stem") || path.endsWith("_hyphae")) {
-            ids.add(init(key));
+            ids.add(shortId(key));
          }
       }
 

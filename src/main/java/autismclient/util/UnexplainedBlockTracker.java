@@ -22,7 +22,7 @@ public final class UnexplainedBlockTracker {
    private final List<UnexplainedBlockTracker.Explanation> explanations = new ArrayList<>();
    private final List<UnexplainedBlockTracker.ChangeStreak> streaks = new ArrayList<>();
 
-   public void init(BlockPos pos, String after) {
+   public void onChange(BlockPos pos, String after) {
       UnexplainedBlockTracker.BlockChange old = this.changes.get(pos.asLong());
       if (old != null && !old.load.equals(after)) {
          this.changes.remove(pos.asLong());
@@ -66,7 +66,7 @@ public final class UnexplainedBlockTracker {
       this.streaks.removeIf(s -> chunkKey(s.origin) == chunk);
    }
 
-   public void init(BlockPos pos, double radius, long until) {
+   public void explain(BlockPos pos, double radius, long until) {
       this.explanations.add(new UnexplainedBlockTracker.Explanation(pos.immutable(), radius * radius, until));
       this.changes.values().removeIf(c -> c.pos.distSqr(pos) <= radius * radius);
       this.streaks

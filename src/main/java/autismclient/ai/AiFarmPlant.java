@@ -40,7 +40,7 @@ final class AiFarmPlant {
       return !state.isAir() && state.getFluidState().isEmpty() ? state.is(Blocks.SNOW) || state.canBeReplaced() || state.is(BlockTags.SMALL_FLOWERS) : false;
    }
 
-   static AiOperation init(final JsonObject args, final String cropBlock, final String seedItem) {
+   static AiOperation create(final JsonObject args, final String cropBlock, final String seedItem) {
       Minecraft client = Minecraft.getInstance();
       if (client.player == null || client.level == null) {
          throw new IllegalArgumentException("Farming requires a connected living player");
@@ -154,7 +154,7 @@ final class AiFarmPlant {
                         maxZ = Math.max(maxZ, c.getZ());
                      }
 
-                     this.fieldWork = AiFieldWork.init(level, new BlockPos(minX, y, minZ), maxX - minX + 1, maxZ - minZ + 1, cropBlock, seedItem);
+                     this.fieldWork = AiFieldWork.plantPlots(level, new BlockPos(minX, y, minZ), maxX - minX + 1, maxZ - minZ + 1, cropBlock, seedItem);
                   }
 
                   AiOperation.Result w = this.fieldWork.tick();
@@ -203,7 +203,7 @@ final class AiFarmPlant {
          }
 
          void layOut() {
-            BlockPos feet = autismclient.ai.engine.AiStance.init(this.mc);
+            BlockPos feet = autismclient.ai.engine.AiStance.standingPos(this.mc);
             if (soulSand) {
                this.candidates = this.plotCellsAround(feet);
             } else {

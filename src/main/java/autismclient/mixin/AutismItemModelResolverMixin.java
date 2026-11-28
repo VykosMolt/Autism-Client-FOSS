@@ -25,7 +25,7 @@ public class AutismItemModelResolverMixin {
       int seed,
       CallbackInfo ci
    ) {
-      if (GoldenLeverModule.init(item)) {
+      if (GoldenLeverModule.isGoldenLever(item)) {
          GoldenLeverModule.init(output);
       }
    }

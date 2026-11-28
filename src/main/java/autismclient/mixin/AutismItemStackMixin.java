@@ -16,7 +16,7 @@ public class AutismItemStackMixin {
    // One hook, nothing allocated per call. The golden lever's own name is not censored, as before.
    @ModifyReturnValue(method = "getHoverName", at = @At("RETURN"))
    private Component autism$hoverName(Component original) {
-      return GoldenLeverModule.init((ItemStack)(Object)this) ? GoldenLeverModule.label() : as.init_Component(original);
+      return GoldenLeverModule.isGoldenLever((ItemStack)(Object)this) ? GoldenLeverModule.label() : as.init_Component(original);
    }
 
    @ModifyReturnValue(method = "getTooltipImage", at = @At("RETURN"))

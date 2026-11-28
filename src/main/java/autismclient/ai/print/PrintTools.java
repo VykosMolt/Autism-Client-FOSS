@@ -220,7 +220,7 @@ final class PrintTools {
                Item item = stack.getItem();
                if (!avoid.contains(item) && stock.applyAsInt(item) > 0 && seen.add(item) && item instanceof BlockItem blockItem) {
                   BlockState state = blockItem.getBlock().defaultBlockState();
-                  if (AiPrinterSupportPolicy.init(state)) {
+                  if (AiPrinterSupportPolicy.isPlainBlock(state)) {
                      boolean cheap = init.contains(item);
                      if (cheap || schematicItems.contains(item)) {
                         int needed = open.applyAsInt(item);

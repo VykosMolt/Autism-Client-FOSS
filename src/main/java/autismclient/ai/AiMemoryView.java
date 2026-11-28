@@ -335,7 +335,7 @@ final class AiMemoryView {
       this.id = null;
       this.editInput.setValue(memory.text());
       this.editInput.moveCursorToEnd();
-      this.host.init(this.editInput);
+      this.host.focusInput(this.editInput);
    }
 
    private void commitEdit() {

@@ -18,7 +18,7 @@ final class PrintFailedWalks {
       this.init_LinkedHashMap.clear();
    }
 
-   boolean init(PrintView view, long from, double fromFeet, long to, double toFeet) {
+   boolean recordFailedWalk(PrintView view, long from, double fromFeet, long to, double toFeet) {
       if (!view.hasAnyHypothesis()
          && Double.isFinite(fromFeet)
          && Double.isFinite(toFeet)
@@ -55,7 +55,7 @@ final class PrintFailedWalks {
       }
    }
 
-   boolean load(PrintView view, long from, double fromFeet, long to, double toFeet) {
+   boolean isKnownFailedWalk(PrintView view, long from, double fromFeet, long to, double toFeet) {
       PrintFailedWalks.WalkEdge edge = PrintFailedWalks.WalkEdge.of(from, fromFeet, to, toFeet);
       Long2ObjectOpenHashMap<BlockState> reads = this.init_LinkedHashMap.get(edge);
       if (reads == null) {

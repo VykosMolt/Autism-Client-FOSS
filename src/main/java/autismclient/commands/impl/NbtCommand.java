@@ -68,7 +68,7 @@ public class NbtCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");
       } else {
          try {
-            Minecraft.getInstance().keyboardHandler.setClipboard(ItemSnbtCodec.init(stack));
+            Minecraft.getInstance().keyboardHandler.setClipboard(ItemSnbtCodec.giveCommand(stack));
             bi.init("Copied /give command.");
          } catch (Throwable t) {
             bi.write("Copy failed.");

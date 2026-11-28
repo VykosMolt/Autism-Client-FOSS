@@ -14,8 +14,8 @@ public final class AiClientTick {
    private AiClientTick() {
    }
 
-   public static boolean init() {
-      return QUEUE.init();
+   public static boolean isOnTickThread() {
+      return QUEUE.isOnTickThread();
    }
 
    static void execute(Runnable action) {
@@ -27,7 +27,7 @@ public final class AiClientTick {
    }
 
    public static void tick(Minecraft client) {
-      QUEUE.init(() -> {
+      QUEUE.runPhase(() -> {
          try {
             AiMacroTools.tick(client);
             AiDirectOps.init(client);

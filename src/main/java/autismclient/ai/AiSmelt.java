@@ -82,7 +82,7 @@ final class AiSmelt {
       }
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation create(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu instanceof AbstractFurnaceMenu) {
          JsonObject copy = args.deepCopy();
@@ -106,17 +106,17 @@ final class AiSmelt {
             copy.addProperty("z", hit.getBlockPos().getZ());
          }
 
-         return load(copy);
+         return smelt(copy);
       } else {
          throw new IllegalArgumentException("Open a furnace, smoker or blast furnace first");
       }
    }
 
-   static AiOperation load(JsonObject args) {
-      return init(args, null);
+   static AiOperation smelt(JsonObject args) {
+      return smelt(args, null);
    }
 
-   static AiOperation init(final JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan) {
+   static AiOperation smelt(final JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          String outputSpec = AiJson.getString(args, "item", "");
@@ -217,7 +217,7 @@ final class AiSmelt {
                   long heat = (long)itemsLeft * cookTicksPerItem;
                   int seconds = Math.max(30, Math.min(300, this.secondsLeft() - 20));
                   if (AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())) {
-                     return AiObtain.init(
+                     return AiObtain.obtain(
                         AiJson.objectOf(
                            "item", "minecraft:coal", "count", (int)Math.ceil(heat / (1600.0 / divisor)), "additional", true, "timeoutSeconds", seconds
                         )
@@ -225,7 +225,7 @@ final class AiSmelt {
                   }
 
                   int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.engine.AiRestock.reservedWood();
-                  return AiObtain.init(AiJson.objectOf("item", "planks", "count", planks, "timeoutSeconds", seconds));
+                  return AiObtain.obtain(AiJson.objectOf("item", "planks", "count", planks, "timeoutSeconds", seconds));
                }
 
                @Override
@@ -435,7 +435,7 @@ final class AiSmelt {
                      if (!this.read_Z) {
                         if (AiGameState.countInventoryItem(resolved.stationId()) <= 0 && !this.flush) {
                            this.flush = true;
-                           this.read_AiOperation = AiObtain.init(
+                           this.read_AiOperation = AiObtain.obtain(
                               AiJson.objectOf(
                                  "item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(30, Math.min(300, this.secondsLeft()))
                               )
@@ -599,7 +599,7 @@ final class AiSmelt {
                }
 
                AiOperation.Result init(String message) {
-                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the furnace"), AiGameState.countInventoryItem(outputId), target);
+                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.init(message, "Preparing the furnace"), AiGameState.countInventoryItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.receipt().toString(), List.of());
                }
 
@@ -722,8 +722,8 @@ final class AiSmelt {
    static AiOperation init(JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan, int items) {
       int seconds = Math.max(30, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 600) / 2));
       final AiOperation fuel = AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())
-         ? AiObtain.init(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
-         : AiObtain.init(
+         ? AiObtain.obtain(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
+         : AiObtain.obtain(
             AiJson.objectOf(
                "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.engine.AiRestock.reservedWood(), "timeoutSeconds", seconds
             )
@@ -756,7 +756,7 @@ final class AiSmelt {
             }
 
             try {
-               this.load = AiSmelt.init(retry, workPlan);
+               this.load = AiSmelt.smelt(retry, workPlan);
             } catch (IllegalArgumentException e) {
                return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, e.getMessage(), "{}");
             }
@@ -818,7 +818,7 @@ final class AiSmelt {
       viable.sort(Comparator.comparingInt(Inner_DataUtil::stationTier));
 
       for (Inner_DataUtil candidate : viable) {
-         Item fuel = init(fuelSpec, candidate.input(), items);
+         Item fuel = availableFuel(fuelSpec, candidate.input(), items);
          if (fuel != null) {
             return new AiSmelt.SmeltRecipe(candidate.output(), candidate.input(), fuel, candidate.plan().station());
          }
@@ -859,7 +859,7 @@ final class AiSmelt {
       }
    }
 
-   static boolean init(Minecraft mc, String output, String input) {
+   static boolean canSmelt(Minecraft mc, String output, String input) {
       Item wanted = load(output);
       Item source = load(input);
       return autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, wanted)
@@ -895,7 +895,7 @@ final class AiSmelt {
       }
    }
 
-   static Item init(String fuelSpec, Item input, int items) {
+   static Item availableFuel(String fuelSpec, Item input, int items) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return null;
@@ -974,7 +974,7 @@ final class AiSmelt {
       return fallback == null ? null : fallback.item();
    }
 
-   static int init(Item fuel) {
+   static int spareFuel(Item fuel) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && fuel != null) {
          int count = Math.max(0, AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(fuel).toString()) - AiRunResources.mandatoryReservedCount(fuel));

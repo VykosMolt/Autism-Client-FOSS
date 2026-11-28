@@ -17,7 +17,7 @@ public final class AiPrinterWorld {
    private AiPrinterWorld() {
    }
 
-   public static BlockState init(Level reading, BlockPos pos) {
+   public static BlockState plannedState(Level reading, BlockPos pos) {
       if (init_LongOpenHashSet != null && reading == load_Level && Thread.currentThread() == load_Thread) {
          init_LongOpenHashSet.add(pos.asLong());
       }

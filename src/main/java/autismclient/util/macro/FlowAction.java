@@ -21,7 +21,7 @@ public class FlowAction implements MacroAction {
       return MacroActionType.FLOW;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean shouldRun(Minecraft mc) {
       return !this.conditional || this.condition == null || this.condition.evaluate(mc);
    }
 

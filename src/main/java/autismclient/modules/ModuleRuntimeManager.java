@@ -282,12 +282,12 @@ public final class ModuleRuntimeManager {
       if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
          autismclient.util.PacketCaptureState.expireIfDue(this);
          if (!AutismLiteVariant.enabled()) {
-            AutismProfileManager.getInstance().load();
+            AutismProfileManager.getInstance().tick();
          }
 
          autismclient.util.macro.PingSpoofScheduler.update();
          BlinkPacketManager.tick();
-         autismclient.util.BedSleepDesyncHelper.init(MC);
+         autismclient.util.BedSleepDesyncHelper.tick(MC);
          boolean hidden = aD.init_Z();
          if (hidden) {
             this.autoProbePending = false;
@@ -303,7 +303,7 @@ public final class ModuleRuntimeManager {
          bK.read_V();
          PayloadNotificationTracker.init();
          if (!hidden) {
-            PayloadSubscriptionManager.init(MC, this.isPacketLoggerCapturing());
+            PayloadSubscriptionManager.tick(MC, this.isPacketLoggerCapturing());
          }
 
          autismclient.util.LanSyncManager lanSync = autismclient.util.LanSyncManager.getInstance();
@@ -315,12 +315,12 @@ public final class ModuleRuntimeManager {
 
          if (!hidden && autismclient.util.macro.MacroWaitRegistry.hasPendingWaits()) {
             long perf = bK.read_J();
-            autismclient.util.macro.MacroWaitRegistry.load(MC);
+            autismclient.util.macro.MacroWaitRegistry.tick(MC);
             bK.load("join.macroConditions.tick", perf);
          }
 
          AutismSessionState shared = AutismSessionState.getInstance();
-         NoFallPauseTimer.read();
+         NoFallPauseTimer.tick();
          if (!hidden && shared.isStaggeredSendActive()) {
             shared.tickStaggeredSend();
          }
@@ -452,9 +452,9 @@ public final class ModuleRuntimeManager {
       this.joinedPlayConnection = false;
       this.spawnedInWorld = false;
       this.autoProbePending = false;
-      PluginSignatureCatalog.init();
+      PluginSignatureCatalog.clear();
       PayloadNotificationTracker.load();
-      PayloadSubscriptionManager.load();
+      PayloadSubscriptionManager.reset();
       AutismServerInfoOverlay leftOverlay = this.getServerInfoOverlay();
       if (leftOverlay != null) {
          leftOverlay.resetForDisconnect();
@@ -572,7 +572,7 @@ public final class ModuleRuntimeManager {
          AutismServerInfoOverlay overlay = this.getOrCreateAutoProbeServerInfo();
          if (overlay != null) {
             overlay.onOutgoingPacket(packet);
-            overlay.load(packet);
+            overlay.onPacket(packet);
          }
       }
    }
@@ -586,7 +586,7 @@ public final class ModuleRuntimeManager {
             }
 
             if (packet instanceof ClientboundOpenScreenPacket) {
-               overlay.read(packet);
+               overlay.onOpenScreen(packet);
             }
 
             if (packet instanceof ClientboundCommandsPacket
@@ -1074,7 +1074,7 @@ public final class ModuleRuntimeManager {
                AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.inspectPacket(packet, direction);
                PayloadStudyTracker.recordPayload(snapshot);
                if (inbound) {
-                  PayloadSubscriptionManager.init(snapshot);
+                  PayloadSubscriptionManager.observe(snapshot);
                }
             } catch (Throwable var10) {
             }
@@ -1086,7 +1086,7 @@ public final class ModuleRuntimeManager {
                      return;
                   }
 
-                  boolean changed = PluginSignatureCatalog.init(this.getCurrentServerAddress(), this.getCurrentServerBrand(), snapshot);
+                  boolean changed = PluginSignatureCatalog.observe(this.getCurrentServerAddress(), this.getCurrentServerBrand(), snapshot);
                   if (changed) {
                      AutismServerInfoOverlay overlay = this.getServerInfoOverlay();
                      if (overlay != null) {
@@ -1107,12 +1107,12 @@ public final class ModuleRuntimeManager {
          boolean inbound = "S2C".equalsIgnoreCase(snapshot.direction());
          if (inbound) {
             PayloadSubscriptionManager.learnObservedChannel(channel);
-            PayloadSubscriptionManager.init(snapshot);
+            PayloadSubscriptionManager.observe(snapshot);
          }
 
          if (inbound && PluginSignatureCatalog.isKnownPluginChannel(channel)) {
             try {
-               boolean changed = PluginSignatureCatalog.init(this.getCurrentServerAddress(), this.getCurrentServerBrand(), snapshot);
+               boolean changed = PluginSignatureCatalog.observe(this.getCurrentServerAddress(), this.getCurrentServerBrand(), snapshot);
                if (changed) {
                   AutismServerInfoOverlay overlay = this.getServerInfoOverlay();
                   if (overlay != null) {

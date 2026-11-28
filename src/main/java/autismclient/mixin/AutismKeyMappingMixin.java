@@ -132,7 +132,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
          mc.options.keyShift.setDown(true);
       }
 
-      GridWalkNavigator.read();
+      GridWalkNavigator.releaseHeldKeys();
    }
 
    @Unique

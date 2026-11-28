@@ -7,7 +7,7 @@ public final class NoJumpDelayModule extends Module {
       super("no-jump-delay", "NoJumpDelay", ae.load_ae, "Remove the cooldown between grounded jumps.");
    }
 
-   public static boolean init(LivingEntity entity) {
+   public static boolean shouldSkipDelay(LivingEntity entity) {
       return entity == MC.player && entity.onGround() && !aD.read_Z() && al.init_Z_Str("no-jump-delay");
    }
 }

@@ -149,13 +149,13 @@ public final class GridWalkNavigator {
    }
 
    public static void reset() {
-      load();
+      stop();
       update_HashMap.clear();
       sync_HashMap.clear();
       flush_HashMap.clear();
    }
 
-   public static void load() {
+   public static void stop() {
       releaseKeys();
       path.clear();
       pathIndex = 0;
@@ -262,7 +262,7 @@ public final class GridWalkNavigator {
             && player.onGround()
             && !isFireOrPowderSnow(Mth.floor(px), feetY, Mth.floor(pz))
             && !isFireOrPowderSnow(Mth.floor(px), feetY + 1, Mth.floor(pz))
-            && PathfindingGeometryHelper.init(floorHeight(nodeX, nodeY, nodeZ), floorHeight(node.init_I, node.y, node.z), 0.6)) {
+            && PathfindingGeometryHelper.canStep(floorHeight(nodeX, nodeY, nodeZ), floorHeight(node.init_I, node.y, node.z), 0.6)) {
             double nx = node.init_I + 0.5 - px;
             double nz = node.z + 0.5 - pz;
             double fraction = Math.min(1.0, 0.8 / Math.max(0.001, Math.hypot(nx, nz)));
@@ -513,7 +513,7 @@ public final class GridWalkNavigator {
       applyKeyMask(0);
    }
 
-   public static void read() {
+   public static void releaseHeldKeys() {
       heldKeyMask = 0;
    }
 
@@ -772,7 +772,7 @@ public final class GridWalkNavigator {
       int best = 2147483647;
 
       for (long key : goalKeys) {
-         best = Math.min(best, PathfindingGeometryHelper.init(x, z, BlockPos.getX(key), BlockPos.getZ(key)));
+         best = Math.min(best, PathfindingGeometryHelper.heuristic(x, z, BlockPos.getX(key), BlockPos.getZ(key)));
       }
 
       return best;
@@ -857,7 +857,7 @@ public final class GridWalkNavigator {
          }
 
          double nextFloor = floorHeight(cx, cellY, cz);
-         if (!autismclient.util.PathfindingGeometryHelper.init(lastFloor, nextFloor, 0.6)) {
+         if (!autismclient.util.PathfindingGeometryHelper.canStep(lastFloor, nextFloor, 0.6)) {
             return false;
          }
 
@@ -875,7 +875,7 @@ public final class GridWalkNavigator {
 
    private static int init_I_I(int x, int feetY, int z, double fromFloor) {
       for (int y = feetY + 1; y >= feetY - 1; y--) {
-         if (isStandable(x, y, z) && PathfindingGeometryHelper.init(fromFloor, floorHeight(x, y, z), 0.6)) {
+         if (isStandable(x, y, z) && PathfindingGeometryHelper.canStep(fromFloor, floorHeight(x, y, z), 0.6)) {
             return y;
          }
       }
@@ -893,7 +893,7 @@ public final class GridWalkNavigator {
          for (AABB box : shape.toAabbs()) {
             if (!(box.maxY <= bounds.minY)
                && !(box.minY >= bounds.maxY)
-               && autismclient.util.PathfindingGeometryHelper.init(ax, az, bx, bz, box.minX - half, box.minZ - half, box.maxX + half, box.maxZ + half)) {
+               && autismclient.util.PathfindingGeometryHelper.segmentHitsBox(ax, az, bx, bz, box.minX - half, box.minZ - half, box.maxX + half, box.maxZ + half)) {
                return false;
             }
          }
